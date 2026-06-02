@@ -4,6 +4,7 @@ const path = require('path');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const crypto = require('crypto');
+const newsRouter = require('./news');
 
 // -----------------------------
 // Конфигурация и Безопасность
@@ -94,7 +95,8 @@ setInterval(() => {
 
 app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' })); // Limit body size
-app.use(express.static(PUBLIC_DIR, { 
+app.use('/api/news', newsRouter);
+app.use(express.static(PUBLIC_DIR, {
     maxAge: '1d', 
     etag: true,
     setHeaders: (res) => {
