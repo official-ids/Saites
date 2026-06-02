@@ -29,9 +29,12 @@
             --bg-card: #FFFFFF;
             --text-primary: #1D1D1F;
             --text-secondary: #86868B;
+            --text-tertiary: #AEAEB2;          /* ← ДОБАВИТЬ */
             --accent-blue: #0071E3;
+            --accent: #0071E3;                  /* ← ДОБАВИТЬ (алиас) */
             --accent-blue-hover: #0077ED;
             --border-light: rgba(0, 0, 0, 0.05);
+            --border: rgba(0, 0, 0, 0.1);       /* ← ДОБАВИТЬ */
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
             --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
             --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
@@ -46,7 +49,10 @@
                 --bg-card: #1C1C1E;
                 --text-primary: #F5F5F7;
                 --text-secondary: #86868B;
+                --text-tertiary: #636366;        /* ← ДОБАВИТЬ */
+                --accent: #0A84FF;               /* ← ДОБАВИТЬ (светлее для dark) */
                 --border-light: rgba(255, 255, 255, 0.1);
+                --border: rgba(255, 255, 255, 0.15);  /* ← ДОБАВИТЬ */
                 --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
                 --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
                 --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
@@ -587,27 +593,72 @@
         </div>
     </div>
 
-    <footer>
-        <div class="footer-grid">
-            <div class="footer-col">
-                <h4>Oris</h4>
-                <a href="#" data-modal="privacyModal">Конфиденциальность</a>
-                <a href="#" data-modal="termsModal">Условия</a>
-                <a href="#" data-modal="collabModal">Сотрудничество</a>
+<footer style="background: var(--bg-card); border-top: 1px solid var(--border); padding: 60px 24px 40px; margin-top: 80px;">
+    <div style="max-width: 980px; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px;">
+            
+            <!-- Oris -->
+            <div>
+                <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Oris</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="#" data-modal="privacyModal" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Конфиденциальность</a>
+                    <a href="#" data-modal="termsModal" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Условия использования</a>
+                    <a href="#" data-modal="collabModal" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Сотрудничество</a>
+                </div>
             </div>
-            <div class="footer-col">
-                <h4>Поддержка</h4>
-                <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer">Telegram Assistant</a>
-                <a href="mailto:di44avolod@ya.ru">Email Support</a>
+
+            <!-- Проекты -->
+            <div>
+                <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Проекты</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="/news" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Новости</a>
+                    <a href="/changelog" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">История изменений</a>
+                    <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">
+                        Исходный код
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                </div>
             </div>
-            <div class="footer-col">
-                <h4>Разработчикам</h4>
-                <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer">Source Code</a>
-                <a href="/changelog.html">Changelog</a>
+
+            <!-- Поддержка -->
+            <div>
+                <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Поддержка</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">
+                        Telegram-бот
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                    <a href="mailto:di44avolod@ya.ru" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">
+                        Email
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Нижняя часть футера -->
+        <div style="border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" fill="none" stroke="var(--accent)" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                    &copy; <span id="currentYear"></span> Oris Inc. Все права защищены.
+                </span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-tertiary);">
+                Сделано с ❤️ в России
             </div>
         </div>
-        <p class="copyright">&copy; <span id="currentYear"></span> Oris Inc. All rights reserved.</p>
-    </footer>
+    </div>
+</footer>
 
     <script>
         (function() {
