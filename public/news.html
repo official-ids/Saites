@@ -1797,12 +1797,14 @@
                     </div>
 
                     <div class="admin-token-field" id="adminTokenField">
-                        <div class="form-group">
-                            <label class="form-label" for="adminTokenInput">Admin Token</label>
-                            <input type="password" class="form-input" id="adminTokenInput" placeholder="Введите токен администратора..." autocomplete="off">
-                            <div class="form-help">Токен выдается администратором системы</div>
-                        </div>
-                    </div>
+    <form id="adminTokenForm" action="#" method="POST" onsubmit="return false;">
+        <div class="form-group">
+            <label class="form-label" for="adminTokenInput">Admin Token</label>
+            <input type="password" class="form-input" id="adminTokenInput" name="password" placeholder="Введите токен администратора..." autocomplete="current-password">
+            <div class="form-help">Токен выдается администратором системы</div>
+        </div>
+    </form>
+</div>
 
                     <div class="form-group" id="nicknameField">
                         <label class="form-label" for="nicknameInput">Имя пользователя</label>
@@ -2439,40 +2441,58 @@
             // Рендер области авторизации
             // ============================================
             function renderAuthArea() {
-                const area = document.getElementById('authArea');
-                if (!State.user) {
-                    area.innerHTML = `<button class="btn btn-primary" id="loginBtn" style="padding: 6px 14px; font-size: 0.85rem;">Войти</button>`;
-                    document.getElementById('loginBtn').addEventListener('click', () => {
-                        State.authMode = 'login';
-                        openAuthModal();
-                    });
-                } else {
-                    const isAdmin = State.user.role === 'admin';
-                    const avatarSrc = isAdmin 
-                        ? '/favicon.svg' 
-                        : AvatarGenerator.generate(State.user.id);
-                    const displayName = isAdmin ? 'Oris' : State.user.nickname;
-                    const verifiedBadge = isAdmin ? `
-                        <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>` : '';
+    const area = document.getElementById('authArea');
+    if (!area) return;
 
-                    area.innerHTML = `
-                        <div class="user-chip" id="userChip" title="Выйти">
-                            <div class="user-avatar">
-                                <img src="${avatarSrc}" alt="avatar">
-                            </div>
-                            <span class="user-name ${isAdmin ? 'admin' : ''}">${Security.safeText(displayName)}</span>
-                            ${verifiedBadge}
-                        </div>
-                    `;
-                    document.getElementById('userChip').addEventListener('click', () => {
-                        if (confirm('Выйти из аккаунта?')) {
-                            logout();
-                        }
-                    });
-                }
+    if (!State.user) {
+        area.innerHTML = `<button class="btn btn-primary" id="loginBtn" style="padding: 6px 14px; font-size: 0.85rem;">Войти</button>`;
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                State.authMode = 'login';
+                openAuthModal();
+            });
+        }
+    } else {
+        // Скрываем вкладку "Мои" для читателей
+        const myTab = document.querySelector('[data-filter="mine"]');
+        if (myTab) {
+            myTab.style.display = State.user.role === 'admin' ? '' : 'none';
+        }
+
+        // Выносим тяжелый рендер в requestAnimationFrame
+        requestAnimationFrame(() => {
+            const isAdmin = State.user.role === 'admin';
+            const avatarSrc = isAdmin 
+                ? '/favicon.svg' 
+                : AvatarGenerator.generate(State.user.id);
+            const displayName = isAdmin ? 'Oris' : State.user.nickname;
+            const verifiedBadge = isAdmin ? `
+                <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>` : '';
+
+            area.innerHTML = `
+                <div class="user-chip" id="userChip" title="Выйти">
+                    <div class="user-avatar">
+                        <img src="${avatarSrc}" alt="avatar">
+                    </div>
+                    <span class="user-name ${isAdmin ? 'admin' : ''}">${Security.safeText(displayName)}</span>
+                    ${verifiedBadge}
+                </div>
+            `;
+
+            const userChip = document.getElementById('userChip');
+            if (userChip) {
+                userChip.addEventListener('click', () => {
+                    if (confirm('Выйти из аккаунта?')) {
+                        logout();
+                    }
+                });
             }
+        });
+    }
+}
 
             function logout() {
                 State.user = null;
@@ -2496,14 +2516,21 @@
             // Auth Modal
             // ============================================
             function openAuthModal() {
-                document.getElementById('authModalTitle').textContent = 
-                    State.authMode === 'register' ? 'Регистрация' : 'Вход в аккаунт';
-                document.getElementById('authSubmitText').textContent = 
-                    State.authMode === 'register' ? 'Создать аккаунт' : 'Войти';
-                
-                showAuthStep(1);
-                UI.openModal('authModal');
-            }
+    // Проверка: существуют ли элементы перед использованием
+    const titleEl = document.getElementById('authModalTitle');
+    const submitBtn = document.getElementById('authSubmitBtn');
+    const submitText = document.getElementById('authSubmitText');
+    
+    if (titleEl) {
+        titleEl.textContent = State.authMode === 'register' ? 'Регистрация' : 'Вход в аккаунт';
+    }
+    if (submitBtn && submitText) {
+        submitText.textContent = State.authMode === 'register' ? 'Создать аккаунт' : 'Войти';
+    }
+    
+    showAuthStep(1);
+    UI.openModal('authModal');
+}
 
             function showAuthStep(step) {
                 document.getElementById('authStep1').classList.toggle('hidden', step !== 1);
@@ -3637,6 +3664,12 @@
             // ============================================
             function bindFilterEvents() {
                 document.querySelectorAll('#filterTabs .filter-tab').forEach(tab => {
+
+                    if (tab.dataset.filter === 'mine' && State.user && State.user.role !== 'admin') {
+            tab.style.display = 'none';
+            return;
+        }
+
                     tab.addEventListener('click', () => {
                         document.querySelectorAll('#filterTabs .filter-tab').forEach(t => t.classList.remove('active'));
                         tab.classList.add('active');

@@ -33,7 +33,8 @@ const K = {
     COMMENT_LIKES: (id) => `news:comment_likes:${id}`,
     COMMENT_DISLIKES: (id) => `news:comment_dislikes:${id}`,
     POST_COMMENTS: (postId) => `news:post_comments:${postId}`,
-    USER_COMMENTS: (userId) => `news:user_comments:${userId}`
+    USER_COMMENTS: (userId) => `news:user_comments:${userId}`,
+    POSTS_INDEX: 'news:posts:index'  // ← ДОБАВИТЬ ЭТУ СТРОКУ
 };
 
 // -----------------------------
@@ -101,7 +102,7 @@ async function generateReaderId() {
     const id = READER_ID_MIN + counter - 1;
     
     if (id > READER_ID_MAX) {
-        throw new Error('Достигнут лимит读者. Обратитесь к администратору.');
+        throw new Error('Достигнут лимит пользователей. Обратитесь к администратору.');
     }
     
     return String(id).padStart(4, '0');
@@ -114,26 +115,25 @@ async function getPostWithUserData(postId, userId) {
     const post = await kv.get(K.POST(postId));
     if (!post) return null;
 
-    const [likesSet, dislikesSet] = await Promise.all([
-        kv.smembers(K.POST_LIKES(postId)),
-        kv.smembers(K.POST_DISLIKES(postId))
-    ]);
-
-    post.likes = likesSet.length;
-    post.dislikes = dislikesSet.length;
-    post.isLiked = userId ? likesSet.includes(userId) : false;
-    post.isDisliked = userId ? dislikesSet.includes(userId) : false;
+    // Счётчики likes/dislikes/commentsCount уже есть в объекте поста
+    if (post.likes === undefined) post.likes = 0;
+    if (post.dislikes === undefined) post.dislikes = 0;
+    if (post.commentsCount === undefined) post.commentsCount = 0;
 
     if (userId) {
-        const favorites = await kv.smembers(K.POST_FAV(userId));
-        post.isFavorited = favorites.includes(postId);
+        const [likesSet, dislikesSet, favorites] = await Promise.all([
+            kv.sismember(K.POST_LIKES(postId), userId),
+            kv.sismember(K.POST_DISLIKES(postId), userId),
+            kv.sismember(K.POST_FAV(userId), postId)
+        ]);
+        post.isLiked = !!likesSet;
+        post.isDisliked = !!dislikesSet;
+        post.isFavorited = !!favorites;
     } else {
+        post.isLiked = false;
+        post.isDisliked = false;
         post.isFavorited = false;
     }
-
-    // Считаем количество комментариев
-    const commentsIds = await kv.smembers(K.POST_COMMENTS(postId));
-    post.commentsCount = commentsIds.length;
 
     return post;
 }
@@ -280,23 +280,24 @@ router.get('/auth/me', requireAuth, async (req, res) => {
 // Получить все посты
 router.get('/posts', optionalAuth, async (req, res) => {
     try {
-        // Получаем все ключи постов
-        const postKeys = [];
-        let cursor = 0;
+        // Получаем все ID постов из индекса (быстро, 1 запрос)
+        const postIds = await kv.smembers(K.POSTS_INDEX);
         
-        // Сканируем KV для поиска всех постов
-        do {
-            const result = await kv.scan(cursor, { match: 'news:post:*', count: 100 });
-            cursor = result[0];
-            postKeys.push(...result[1]);
-        } while (cursor !== 0);
+        if (!postIds || postIds.length === 0) {
+            return res.json({ posts: [] });
+        }
+
+        // Массовое получение всех постов одним запросом (вместо N запросов)
+        const keys = postIds.map(id => K.POST(id));
+        const postsData = await kv.mget(...keys);
 
         const posts = [];
-        for (const key of postKeys) {
-            const post = await kv.get(key);
+        const userId = req.user?.id;
+
+        for (const post of postsData) {
             if (post) {
-                const enriched = await getPostWithUserData(post.id, req.user?.id);
-                posts.push(enriched);
+                const enriched = await getPostWithUserData(post.id, userId);
+                if (enriched) posts.push(enriched);
             }
         }
 
@@ -338,10 +339,14 @@ router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
             authorName: req.user.nickname,
             createdAt: now,
             updatedAt: now,
-            isPinned: false
+            isPinned: false,
+            likes: 0,           // ← ДОБАВИТЬ
+            dislikes: 0,        // ← ДОБАВИТЬ
+            commentsCount: 0    // ← ДОБАВИТЬ
         };
 
         await kv.set(K.POST(postId), post);
+        await kv.sadd(K.POSTS_INDEX, postId); 
 
         const enriched = await getPostWithUserData(postId, req.user.id);
         return res.json({ post: enriched });
@@ -407,6 +412,7 @@ router.delete('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
 
         // Удаляем сам пост и связанные данные
         await kv.del(K.POST(id));
+        await kv.srem(K.POSTS_INDEX, id);
         await kv.del(K.POST_LIKES(id));
         await kv.del(K.POST_DISLIKES(id));
         await kv.del(K.POST_COMMENTS(id));
@@ -425,27 +431,35 @@ router.post('/posts/:id/like', requireAuth, async (req, res) => {
         const userId = req.user.id;
 
         const post = await kv.get(K.POST(id));
-        if (!post) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
+        // Используем транзакцию для атомарности
         const alreadyLiked = await kv.sismember(K.POST_LIKES(id), userId);
+        const wasDisliked = await kv.sismember(K.POST_DISLIKES(id), userId);
         
+        let newLikes = post.likes || 0;
+        let newDislikes = post.dislikes || 0;
+
         if (alreadyLiked) {
-            // Убираем лайк
             await kv.srem(K.POST_LIKES(id), userId);
+            newLikes = Math.max(0, newLikes - 1);
         } else {
-            // Ставим лайк и убираем дизлайк если был
             await kv.sadd(K.POST_LIKES(id), userId);
-            await kv.srem(K.POST_DISLIKES(id), userId);
+            newLikes += 1;
+            if (wasDisliked) {
+                await kv.srem(K.POST_DISLIKES(id), userId);
+                newDislikes = Math.max(0, newDislikes - 1);
+            }
         }
 
-        const likesSet = await kv.smembers(K.POST_LIKES(id));
-        const dislikesSet = await kv.smembers(K.POST_DISLIKES(id));
+        // Обновляем пост
+        post.likes = newLikes;
+        post.dislikes = newDislikes;
+        await kv.set(K.POST(id), post);
 
         return res.json({
-            likes: likesSet.length,
-            dislikes: dislikesSet.length,
+            likes: newLikes,
+            dislikes: newDislikes,
             isLiked: !alreadyLiked,
             isDisliked: false
         });
@@ -455,32 +469,39 @@ router.post('/posts/:id/like', requireAuth, async (req, res) => {
     }
 });
 
-// Дизлайк поста
 router.post('/posts/:id/dislike', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         const post = await kv.get(K.POST(id));
-        if (!post) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
         const alreadyDisliked = await kv.sismember(K.POST_DISLIKES(id), userId);
+        const wasLiked = await kv.sismember(K.POST_LIKES(id), userId);
+
+        let newLikes = post.likes || 0;
+        let newDislikes = post.dislikes || 0;
 
         if (alreadyDisliked) {
             await kv.srem(K.POST_DISLIKES(id), userId);
+            newDislikes = Math.max(0, newDislikes - 1);
         } else {
             await kv.sadd(K.POST_DISLIKES(id), userId);
-            await kv.srem(K.POST_LIKES(id), userId);
+            newDislikes += 1;
+            if (wasLiked) {
+                await kv.srem(K.POST_LIKES(id), userId);
+                newLikes = Math.max(0, newLikes - 1);
+            }
         }
 
-        const likesSet = await kv.smembers(K.POST_LIKES(id));
-        const dislikesSet = await kv.smembers(K.POST_DISLIKES(id));
+        post.likes = newLikes;
+        post.dislikes = newDislikes;
+        await kv.set(K.POST(id), post);
 
         return res.json({
-            likes: likesSet.length,
-            dislikes: dislikesSet.length,
+            likes: newLikes,
+            dislikes: newDislikes,
             isLiked: false,
             isDisliked: !alreadyDisliked
         });
@@ -609,6 +630,12 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
 
         await kv.set(K.COMMENT(commentId), comment);
         await kv.sadd(K.POST_COMMENTS(postId), commentId);
+                // Обновляем счётчик комментариев в посте
+        const postForCount = await kv.get(K.POST(postId));
+        if (postForCount) {
+            postForCount.commentsCount = (postForCount.commentsCount || 0) + 1;
+            await kv.set(K.POST(postId), postForCount);
+        }
         await kv.sadd(K.USER_COMMENTS(req.user.id), commentId);
 
         const enriched = await getCommentWithUserData(commentId, req.user.id);
@@ -683,6 +710,12 @@ router.delete('/comments/:id', requireAuth, async (req, res) => {
             await kv.del(K.COMMENT_LIKES(commentId));
             await kv.del(K.COMMENT_DISLIKES(commentId));
             await kv.srem(K.POST_COMMENTS(comment.postId), commentId);
+                        // Уменьшаем счётчик в посте
+            const pForCount = await kv.get(K.POST(comment.postId));
+            if (pForCount) {
+                pForCount.commentsCount = Math.max(0, (pForCount.commentsCount || 0) - 1);
+                await kv.set(K.POST(comment.postId), pForCount);
+            }
             if (comment.authorId) {
                 await kv.srem(K.USER_COMMENTS(comment.authorId), commentId);
             }
