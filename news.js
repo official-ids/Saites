@@ -164,15 +164,21 @@ router.post('/auth/register', async (req, res) => {
     try {
         const { nickname, role, adminToken } = req.body;
 
-        if (role === 'admin') {
+                if (role === 'admin') {
             // Проверка admin token
             if (!ADMIN_TOKEN) {
                 return res.status(500).json({ error: 'Admin token не настроен на сервере' });
             }
-            if (!adminToken || !crypto.timingSafeEqual(
-                Buffer.from(adminToken), 
-                Buffer.from(ADMIN_TOKEN)
-            )) {
+            
+            // Безопасное сравнение токенов (timing-safe)
+            const isTokenValid = adminToken 
+                && adminToken.length === ADMIN_TOKEN.length
+                && crypto.timingSafeEqual(
+                    Buffer.from(adminToken), 
+                    Buffer.from(ADMIN_TOKEN)
+                );
+            
+            if (!isTokenValid) {
                 return res.status(403).json({ error: 'Неверный admin token' });
             }
 

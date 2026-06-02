@@ -270,7 +270,13 @@ function verifyAdminToken(req, res, next) {
 
     const token = authHeader.split(' ')[1];
     
-    if (!ADMIN_TOKEN || !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(ADMIN_TOKEN))) {
+    // Безопасное сравнение с проверкой длины
+    const isValid = ADMIN_TOKEN 
+        && token 
+        && token.length === ADMIN_TOKEN.length
+        && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(ADMIN_TOKEN));
+    
+    if (!isValid) {
         return res.status(403).json({ error: 'Forbidden: Invalid token' });
     }
 
