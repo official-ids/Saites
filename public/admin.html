@@ -257,11 +257,23 @@
     <div class="container">
         <!-- Auth Section -->
         <div id="authSection" class="section active">
-            <div class="form-group">
-                <label for="tokenInput">Authentication Token</label>
-                <input type="password" id="tokenInput" placeholder="Enter secure token..." autocomplete="off" spellcheck="false">
-            </div>
-            <button class="btn btn-primary" id="loginBtn" style="width: 100%">Access Panel</button>
+            <form id="loginForm" action="#" method="POST" autocomplete="on" novalidate>
+                <input type="text" name="username" value="oris-admin" autocomplete="username" style="display:none;" tabindex="-1" aria-hidden="true">
+                
+                <div class="form-group">
+                    <label for="tokenInput">Authentication Token</label>
+                    <input 
+                        type="password" 
+                        id="tokenInput" 
+                        name="password"
+                        placeholder="Enter secure token..." 
+                        autocomplete="current-password" 
+                        spellcheck="false"
+                        required
+                    >
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%">Access Panel</button>
+            </form>
         </div>
 
         <!-- Editor Section -->
@@ -386,11 +398,11 @@
                     }
                 },
 
-                bindEvents() {
-                    // Login
-                    document.getElementById('loginBtn').addEventListener('click', () => this.login());
-                    UI.elements.token.addEventListener('keydown', e => {
-                        if (e.key === 'Enter') this.login();
+                    bindEvents() {
+                    // Login Form Submit
+                    document.getElementById('loginForm').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.login();
                     });
 
                     // Logout
