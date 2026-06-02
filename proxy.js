@@ -54,8 +54,8 @@ app.use(helmet({
                 "https://cdnjs.cloudflare.com"
             ],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://cdnjs.cloudflare.com"],
-            imgSrc: ["'self'", "data:", "blob:"],
-            connectSrc: ["'self'", "https://api.github.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https://i.ytimg.com", "https://yt3.ggpht.com", "https://yt3.googleusercontent.com"],
+            connectSrc: ["'self'", "https://api.github.com", "https://www.youtube.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
@@ -392,6 +392,200 @@ app.post('/api/admin/save', verifyAdminToken, (req, res, next) => {
 app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
     handleSave(req, res, next, CHANGELOG_FILE, GITHUB_CHANGELOG_PATH, 'changelog', 'docs: update changelog via admin');
 });
+
+
+// -----------------------------
+// YouTube: Channel Data API
+// -----------------------------
+const YOUTUBE_HANDLE = 'MRPakeleksis';
+
+// Кэш канала (5 минут)
+let ytChannelCache = { data: null, timestamp: 0 };
+let ytVideosCache = { data: null, timestamp: 0 };
+const YT_CACHE_TTL = 5 * 60 * 1000;
+
+// Получить метаданные канала (имя, аватар, описание, подписчики, channel_id)
+app.get('/api/youtube/channel', async (req, res, next) => {
+    try {
+        const now = Date.now();
+        if (ytChannelCache.data && (now - ytChannelCache.timestamp) < YT_CACHE_TTL) {
+            return res.json(ytChannelCache.data);
+        }
+
+        const response = await fetch(`https://www.youtube.com/@${YOUTUBE_HANDLE}`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8',
+                'Accept': 'text/html,application/xhtml+xml'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`YouTube responded ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // Извлечение метатегов
+        const extractMeta = (property) => {
+            const match = html.match(new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, 'i'))
+                       || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${property}["']`, 'i'));
+            return match ? match[1] : null;
+        };
+
+        const extractCanonical = () => {
+            const match = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
+            return match ? match[1] : null;
+        };
+
+        // Извлечение channel_id из canonical URL
+        const canonical = extractCanonical();
+        const channelIdMatch = canonical ? canonical.match(/\/channel\/(UC[\w-]+)/) : null;
+        const channelId = channelIdMatch ? channelIdMatch[1] : null;
+
+        // Извлечение количества подписчиков из ytInitialData
+        let subscribers = null;
+        const ytDataMatch = html.match(/var ytInitialData = ({.+?});<\/script>/s);
+        if (ytDataMatch) {
+            try {
+                const data = JSON.parse(ytDataMatch[1]);
+                // Ищем subscriberCountText в header
+                const header = data?.header?.c4TabbedHeaderRenderer
+                            || data?.header?.pageHeaderRenderer;
+                
+                if (header?.subscriberCountText?.simpleText) {
+                    subscribers = header.subscriberCountText.simpleText;
+                }
+                
+                // Альтернативный путь через metadata
+                if (!subscribers) {
+                    const metadataStr = JSON.stringify(data);
+                    const subMatch = metadataStr.match(/"subscriberCountText":\{"simpleText":"([^"]+)"/);
+                    if (subMatch) subscribers = subMatch[1];
+                }
+
+                // Описание канала
+                if (!extractMeta('og:description')) {
+                    // Попробуем из header
+                }
+            } catch (e) {
+                console.warn('Failed to parse ytInitialData:', e.message);
+            }
+        }
+
+        const channelData = {
+            handle: `@${YOUTUBE_HANDLE}`,
+            name: extractMeta('og:title') || YOUTUBE_HANDLE,
+            description: extractMeta('og:description') || '',
+            avatar: extractMeta('og:image') || '',
+            channelId: channelId,
+            subscribers: subscribers || '—',
+            url: `https://www.youtube.com/@${YOUTUBE_HANDLE}`
+        };
+
+        ytChannelCache = { data: channelData, timestamp: now };
+        res.json(channelData);
+    } catch (err) {
+        console.error('[youtube/channel]', err);
+        next(err);
+    }
+});
+
+// Получить список последних видео через RSS feed
+app.get('/api/youtube/videos', async (req, res, next) => {
+    try {
+        const now = Date.now();
+        if (ytVideosCache.data && (now - ytVideosCache.timestamp) < YT_CACHE_TTL) {
+            return res.json(ytVideosCache.data);
+        }
+
+        // Сначала получаем channel_id
+        let channelId = ytChannelCache.data?.channelId;
+        
+        if (!channelId) {
+            // Запрашиваем данные канала
+            const chRes = await fetch(`/api/youtube/channel`, { redirect: 'manual' });
+            // Лучше сделать прямой fetch
+            const htmlRes = await fetch(`https://www.youtube.com/@${YOUTUBE_HANDLE}`, {
+                headers: { 'User-Agent': 'Mozilla/5.0.0 Safari/537.36' }
+            });
+            const html = await htmlRes.text();
+            const match = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["'][^"']*\/channel\/(UC[\w-]+)/i);
+            channelId = match ? match[1] : null;
+        }
+
+        if (!channelId) {
+            return res.status(404).json({ error: 'Channel ID not found' });
+        }
+
+        // Получаем RSS feed
+        const rssRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
+        if (!rssRes.ok) {
+            throw new Error(`RSS feed failed: ${rssRes.status}`);
+        }
+        
+        const xml = await rssRes.text();
+        
+        // Парсим XML через regex (без внешних зависимостей)
+        const videos = [];
+        const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
+        let entryMatch;
+        
+        while ((entryMatch = entryRegex.exec(xml)) !== null) {
+            const entry = entryMatch[1];
+            
+            const getTag = (tag) => {
+                const m = entry.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+                return m ? m[1].trim() : null;
+            };
+            
+            const getAttr = (tag, attr) => {
+                const m = entry.match(new RegExp(`<${tag}[^>]*${attr}=["']([^"']+)["']`, 'i'));
+                return m ? m[1] : null;
+            };
+
+            const videoId = getTag('yt:videoId') || getTag('videoId');
+            const title = getTag('title');
+            const published = getTag('published');
+            const authorName = getTag('name');
+            const viewsStr = getTag('media:statistics');
+            
+            // Извлекаем views из <media:statistics views="12345"/>
+            const viewsMatch = entry.match(/<media:statistics[^>]+views=["'](\d+)["']/i);
+            const views = viewsMatch ? parseInt(viewsMatch[1]) : 0;
+
+            if (videoId && title) {
+                videos.push({
+                    id: videoId,
+                    title: decodeXmlEntities(title),
+                    published: published,
+                    author: authorName,
+                    views: views,
+                    thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+                    thumbnailMaxRes: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+                    url: `https://www.youtube.com/watch?v=${videoId}`
+                });
+            }
+        }
+
+        ytVideosCache = { data: videos, timestamp: now };
+        res.json(videos);
+    } catch (err) {
+        console.error('[youtube/videos]', err);
+        next(err);
+    }
+});
+
+// Декодирование XML-сущностей
+function decodeXmlEntities(str) {
+    return str
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'");
+}
 
 // -----------------------------
 // Статические страницы и ошибки
