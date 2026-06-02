@@ -14,12 +14,24 @@
     {
       "src": "public/**",
       "use": "@vercel/static"
+    },
+    {
+      "src": "658234/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "{favicon.ico,favicon.svg,*.png,*.webmanifest}",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/proxy.js"
+    },
+    {
+      "src": "/658234/(.*)",
+      "dest": "/658234/$1"
     },
     {
       "src": "/(.*)",

@@ -3,6 +3,7 @@ node_modules/
 
 # Переменные окружения (ключи, пароли)
 .env
+.env.local
 
 # Логи
 *.log
@@ -17,3 +18,5 @@ Desktop.ini
 
 # Приватные данные (раскомментируйте, если не хотите публиковать saites.txt)
 # saites.txt
+.vercel
+.env*

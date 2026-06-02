@@ -2,427 +2,554 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Oris Administration Panel">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
     <title>Oris Admin</title>
-    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --bg: #ffffff;
-            --card-bg: #f5f5f7;
-            --text-main: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --border: rgba(0,0,0,0.08);
-            --danger: #ff3b30;
-            --success: #34c759;
+            /* Apple System Colors (Light) */
+            --bg-body: #F5F5F7;
+            --bg-card: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --accent: #0071E3;
+            --accent-hover: #0077ED;
+            --danger: #FF3B30;
+            --success: #34C759;
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Apple System Colors (Dark) */
+                --bg-body: #000000;
+                --bg-card: #1C1C1E;
+                --text-primary: #F5F5F7;
+                --text-secondary: #86868B;
+                --border: rgba(255, 255, 255, 0.1);
+                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+                --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background: var(--bg);
-            color: var(--text-main);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 24px;
+            justify-content: center;
+            padding: 24px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
+            opacity: 0;
+            animation: fadeInDown 0.6s var(--transition) forwards;
         }
 
         h1 {
-            font-size: 2.4rem;
+            font-size: 2rem;
             font-weight: 600;
             letter-spacing: -0.02em;
         }
 
         .container {
             width: 100%;
-            max-width: 720px;
-            background: var(--card-bg);
-            border-radius: 24px;
+            max-width: 680px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
             padding: 40px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-            transition: box-shadow 0.3s;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeInUp 0.6s 0.1s var(--transition) forwards;
         }
 
-        .auth-section, .editor-section {
-            display: none;
-        }
+        /* Sections */
+        .section { display: none; }
+        .section.active { display: block; animation: scaleIn 0.3s var(--transition); }
 
-        .auth-section.active, .editor-section.active {
-            display: block;
-            animation: fadeIn 0.4s ease;
-        }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .form-group {
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
             margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: rgba(142, 142, 147, 0.08);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Form Elements */
+        .form-group { margin-bottom: 24px; }
 
         label {
             display: block;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-size: 0.8rem;
+            font-weight: 600;
             color: var(--text-secondary);
             margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        input[type="password"],
-        textarea {
+        input[type="password"], textarea {
             width: 100%;
             padding: 14px 16px;
-            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
             font-size: 0.95rem;
+            background: var(--bg-body);
+            color: var(--text-primary);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            background: #ffffff;
-            color: var(--text-main);
-            transition: border-color 0.2s, box-shadow 0.2s;
-            outline: none;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
             resize: vertical;
         }
 
-        input[type="password"]:focus,
-        textarea:focus {
+        input[type="password"]:focus, textarea:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+            background: var(--bg-card);
         }
 
-        textarea {
-            min-height: 340px;
-            line-height: 1.7;
-        }
+        textarea { min-height: 360px; line-height: 1.6; tab-size: 4; }
 
+        /* Buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 12px 28px;
-            border-radius: 14px;
+            padding: 12px 24px;
+            border-radius: 99px;
             font-family: inherit;
             font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
-            border: 1px solid transparent;
-            transition: background 0.2s, transform 0.1s, opacity 0.2s;
-            -webkit-tap-highlight-color: transparent;
+            border: none;
+            transition: all 0.2s ease;
+            user-select: none;
         }
 
-        .btn:active {
-            transform: scale(0.97);
-        }
+        .btn:active { transform: scale(0.96); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .btn:disabled {
-            opacity: 0.5;
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3); }
+
+        .btn-secondary { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
+        .btn-secondary:hover:not(:disabled) { background: rgba(142, 142, 147, 0.2); }
+
+        .btn-danger { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+        .btn-danger:hover:not(:disabled) { background: rgba(255, 59, 48, 0.2); }
+
+        .button-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+        .header-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+
+        /* Status Toast */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card);
+            padding: 12px 24px;
+            border-radius: 99px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0;
             pointer-events: none;
-            transform: none;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: #ffffff;
-            border-color: var(--accent);
-        }
-
-        .btn-primary:hover {
-            background: #0077ed;
-        }
-
-        .btn-secondary {
-            background: #ffffff;
-            color: var(--text-main);
-            border-color: var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: #f0f0f5;
-        }
-
-        .btn-danger {
-            background: #ffffff;
-            color: var(--danger);
-            border-color: var(--danger);
-            margin-left: 12px;
-        }
-
-        .btn-danger:hover {
-            background: #fff0ef;
-        }
-
-        .button-group {
+            transition: all 0.3s var(--transition);
+            z-index: 100;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-top: 24px;
-            flex-wrap: wrap;
+            gap: 8px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
-        .status-message {
-            margin-top: 16px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            padding: 10px 18px;
-            border-radius: 12px;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
+        .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+        .toast.success { color: var(--success); }
+        .toast.error { color: var(--danger); }
+        .toast.info { color: var(--accent); }
 
-        .status-message.success {
-            background: rgba(52,199,89,0.1);
-            color: var(--success);
-            display: block;
-        }
-
-        .status-message.error {
-            background: rgba(255,59,48,0.1);
-            color: var(--danger);
-            display: block;
-        }
-
-        .status-message.info {
-            background: rgba(0,113,227,0.1);
-            color: var(--accent);
-            display: block;
-        }
-
-        .logout-link {
-            text-align: right;
-            margin-bottom: 16px;
-        }
-
-        .logout-link button {
-            background: none;
-            border: none;
-            color: var(--accent);
-            font-weight: 500;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
+        /* Responsive */
         @media (max-width: 640px) {
-            .container {
-                padding: 28px 20px;
-                border-radius: 18px;
-            }
-            h1 {
-                font-size: 2rem;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .auth-section.active, .editor-section.active, .status-message {
-                animation: none;
-            }
+            .container { padding: 24px; border-radius: 0; height: 100vh; max-width: 100%; border: none; box-shadow: none; background: var(--bg-body); }
+            body { padding: 0; justify-content: flex-start; }
+            header { margin-top: 20px; margin-bottom: 20px; }
+            textarea { min-height: calc(100vh - 320px); }
+            .button-group { flex-direction: column; }
+            .btn { width: 100%; }
         }
     </style>
 </head>
 <body>
+
     <header>
         <h1>Oris Admin</h1>
     </header>
 
     <div class="container">
-        <!-- Секция авторизации -->
-        <div id="authSection" class="auth-section active">
+        <!-- Auth Section -->
+        <div id="authSection" class="section active">
             <div class="form-group">
-                <label for="tokenInput">Токен доступа</label>
-                <input type="password" id="tokenInput" placeholder="Введите ADMIN_TOKEN" autocomplete="off">
+                <label for="tokenInput">Authentication Token</label>
+                <input type="password" id="tokenInput" placeholder="Enter secure token..." autocomplete="off" spellcheck="false">
             </div>
-            <button class="btn btn-primary" id="loginBtn">Войти</button>
-            <div id="authStatus" class="status-message"></div>
+            <button class="btn btn-primary" id="loginBtn" style="width: 100%">Access Panel</button>
         </div>
 
-        <!-- Секция редактора -->
-        <div id="editorSection" class="editor-section">
-            <div class="logout-link">
-                <button id="logoutBtn">Выйти</button>
+        <!-- Editor Section -->
+        <div id="editorSection" class="section">
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="logoutBtn" style="padding: 8px 16px; font-size: 0.85rem;">Sign Out</button>
             </div>
+
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-mode="sites">Sites Config</button>
+                <button class="tab-btn" data-mode="changelog">Changelog</button>
+            </div>
+            
             <div class="form-group">
-                <label for="contentTextarea">Содержимое saites.txt</label>
-                <textarea id="contentTextarea" placeholder="Загрузка..."></textarea>
+                <label id="editorLabel" for="contentTextarea">saites.txt Configuration</label>
+                <textarea id="contentTextarea" placeholder="Loading content..." spellcheck="false"></textarea>
             </div>
+            
             <div class="button-group">
-                <button class="btn btn-primary" id="saveBtn">Сохранить</button>
-                <button class="btn btn-secondary" id="reloadContentBtn">Обновить содержимое</button>
-                <button class="btn btn-danger" id="clearCacheBtn">Сбросить кэш</button>
+                <button class="btn btn-primary" id="saveBtn">Save Changes</button>
+                <button class="btn btn-secondary" id="reloadContentBtn">Reload</button>
+                <button class="btn btn-danger" id="clearCacheBtn">Flush Cache</button>
             </div>
-            <div id="editorStatus" class="status-message"></div>
         </div>
+    </div>
+
+    <!-- Status Toast -->
+    <div id="toast" class="toast">
+        <span id="toastIcon"></span>
+        <span id="toastMessage"></span>
     </div>
 
     <script>
         (function() {
             'use strict';
 
-            const authSection = document.getElementById('authSection');
-            const editorSection = document.getElementById('editorSection');
-            const tokenInput = document.getElementById('tokenInput');
-            const loginBtn = document.getElementById('loginBtn');
-            const authStatus = document.getElementById('authStatus');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const contentTextarea = document.getElementById('contentTextarea');
-            const saveBtn = document.getElementById('saveBtn');
-            const reloadContentBtn = document.getElementById('reloadContentBtn');
-            const clearCacheBtn = document.getElementById('clearCacheBtn');
-            const editorStatus = document.getElementById('editorStatus');
-
-            let authToken = '';
-
-            function showMessage(element, message, type) {
-                element.textContent = message;
-                element.className = `status-message ${type}`;
-                setTimeout(() => {
-                    element.className = 'status-message';
-                    element.textContent = '';
-                }, 5000);
-            }
-
-            function switchToEditor() {
-                authSection.classList.remove('active');
-                editorSection.classList.add('active');
-                loadContent();
-            }
-
-            function switchToAuth() {
-                authToken = '';
-                editorSection.classList.remove('active');
-                authSection.classList.add('active');
-                tokenInput.value = '';
-                contentTextarea.value = '';
-                // опционально сохранять токен в sessionStorage
-                sessionStorage.removeItem('oris_admin_token');
-            }
-
-            // Проверка токена при загрузке
-            const savedToken = sessionStorage.getItem('oris_admin_token');
-            if (savedToken) {
-                authToken = savedToken;
-                switchToEditor();
-            }
-
-            loginBtn.addEventListener('click', () => {
-                const token = tokenInput.value.trim();
-                if (!token) {
-                    showMessage(authStatus, 'Введите токен', 'error');
-                    return;
+            // --- Security Utilities ---
+            const Security = {
+                sanitize(str) {
+                    if (!str) return '';
+                    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+                    return String(str).replace(/[&<>"']/g, c => map[c]);
+                },
+                
+                safeSetContent(el, content) {
+                    el.value = content; // value property is inherently safe from XSS
                 }
-                authToken = token;
-                // Не проверяем токен заранее, просто переключаемся
-                sessionStorage.setItem('oris_admin_token', token);
-                switchToEditor();
-            });
+            };
 
-            tokenInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') loginBtn.click();
-            });
+            // --- UI Manager ---
+            const UI = {
+                elements: {
+                    auth: document.getElementById('authSection'),
+                    editor: document.getElementById('editorSection'),
+                    token: document.getElementById('tokenInput'),
+                    textarea: document.getElementById('contentTextarea'),
+                    label: document.getElementById('editorLabel'),
+                    toast: document.getElementById('toast'),
+                    toastMsg: document.getElementById('toastMessage'),
+                    toastIcon: document.getElementById('toastIcon'),
+                    tabs: document.querySelectorAll('.tab-btn')
+                },
 
-            logoutBtn.addEventListener('click', () => {
-                switchToAuth();
-            });
+                showSection(name) {
+                    this.elements.auth.classList.toggle('active', name === 'auth');
+                    this.elements.editor.classList.toggle('active', name === 'editor');
+                    if (name === 'auth') this.elements.token.focus();
+                },
 
-            async function loadContent() {
-                try {
-                    contentTextarea.disabled = true;
-                    showMessage(editorStatus, 'Загрузка содержимого...', 'info');
-                    const response = await fetch('/api/admin/content', {
-                        headers: {
-                            'Authorization': `Bearer ${authToken}`
+                setActiveTab(mode) {
+                    this.elements.tabs.forEach(tab => {
+                        tab.classList.toggle('active', tab.dataset.mode === mode);
+                    });
+                    this.elements.label.textContent = mode === 'sites' 
+                        ? 'saites.txt Configuration' 
+                        : 'changelog.txt Content';
+                },
+
+                showToast(message, type = 'info') {
+                    const icons = { 
+                        success: '✓', 
+                        error: '✕', 
+                        info: 'ℹ' 
+                    };
+                    
+                    this.elements.toast.className = `toast ${type}`;
+                    this.elements.toastMsg.textContent = message;
+                    this.elements.toastIcon.textContent = icons[type] || '';
+                    
+                    this.elements.toast.classList.add('visible');
+                    
+                    clearTimeout(this._toastTimer);
+                    this._toastTimer = setTimeout(() => {
+                        this.elements.toast.classList.remove('visible');
+                    }, 3000);
+                },
+
+                setLoading(btn, isLoading) {
+                    if (isLoading) {
+                        btn.dataset.originalText = btn.textContent;
+                        btn.textContent = 'Processing...';
+                        btn.disabled = true;
+                    } else {
+                        btn.textContent = btn.dataset.originalText || 'Submit';
+                        btn.disabled = false;
+                    }
+                }
+            };
+
+            // --- Application Logic ---
+            const App = {
+                token: '',
+                currentMode: 'sites', // 'sites' or 'changelog'
+                
+                init() {
+                    this.bindEvents();
+                    const savedToken = sessionStorage.getItem('oris_admin_token');
+                    if (savedToken) {
+                        this.token = savedToken;
+                        this.enterEditorMode();
+                    }
+                },
+
+                bindEvents() {
+                    // Login
+                    document.getElementById('loginBtn').addEventListener('click', () => this.login());
+                    UI.elements.token.addEventListener('keydown', e => {
+                        if (e.key === 'Enter') this.login();
+                    });
+
+                    // Logout
+                    document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+
+                    // Tab Switching
+                    UI.elements.tabs.forEach(tab => {
+                        tab.addEventListener('click', (e) => {
+                            const newMode = e.target.dataset.mode;
+                            if (newMode !== this.currentMode) {
+                                this.currentMode = newMode;
+                                UI.setActiveTab(newMode);
+                                this.loadContent();
+                            }
+                        });
+                    });
+
+                    // Actions
+                    document.getElementById('saveBtn').addEventListener('click', (e) => this.saveContent(e.target));
+                    document.getElementById('reloadContentBtn').addEventListener('click', (e) => this.loadContent(e.target));
+                    document.getElementById('clearCacheBtn').addEventListener('click', (e) => this.clearCache(e.target));
+
+                    // Keyboard Shortcut (Ctrl/Cmd + S)
+                    document.addEventListener('keydown', (e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 's' && UI.elements.editor.classList.contains('active')) {
+                            e.preventDefault();
+                            this.saveContent(document.getElementById('saveBtn'));
                         }
                     });
-                    if (!response.ok) {
-                        if (response.status === 403) {
-                            showMessage(editorStatus, 'Неверный токен. Вы вышли из системы.', 'error');
-                            switchToAuth();
-                            return;
+                },
+
+                login() {
+                    const val = UI.elements.token.value.trim();
+                    if (!val) {
+                        UI.showToast('Token required', 'error');
+                        return;
+                    }
+                    this.token = val;
+                    sessionStorage.setItem('oris_admin_token', val);
+                    this.enterEditorMode();
+                },
+
+                logout() {
+                    this.token = '';
+                    sessionStorage.removeItem('oris_admin_token');
+                    UI.elements.token.value = '';
+                    UI.elements.textarea.value = '';
+                    this.currentMode = 'sites';
+                    UI.setActiveTab('sites');
+                    UI.showSection('auth');
+                    UI.showToast('Signed out successfully', 'info');
+                },
+
+                async enterEditorMode() {
+                    UI.showSection('editor');
+                    UI.setActiveTab(this.currentMode);
+                    await this.loadContent();
+                },
+
+                getEndpoints() {
+                    if (this.currentMode === 'sites') {
+                        return {
+                            load: '/api/admin/content',
+                            save: '/api/admin/save'
+                        };
+                    }
+                    return {
+                        load: '/api/admin/changelog',
+                        save: '/api/admin/changelog/save'
+                    };
+                },
+
+                async apiCall(url, options = {}, btn = null) {
+                    if (btn) UI.setLoading(btn, true);
+                    
+                    try {
+                        const headers = {
+                            'Authorization': `Bearer ${this.token}`,
+                            ...options.headers
+                        };
+
+                        const response = await fetch(url, { ...options, headers });
+
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('AUTH_FAILED');
                         }
-                        throw new Error(`Ошибка ${response.status}`);
-                    }
-                    const data = await response.json();
-                    contentTextarea.value = data.content;
-                    showMessage(editorStatus, 'Содержимое загружено', 'success');
-                } catch (err) {
-                    showMessage(editorStatus, `Не удалось загрузить: ${err.message}`, 'error');
-                } finally {
-                    contentTextarea.disabled = false;
-                }
-            }
 
-            async function saveContent() {
-                const newContent = contentTextarea.value;
-                if (!newContent.trim()) {
-                    showMessage(editorStatus, 'Содержимое не может быть пустым', 'error');
-                    return;
-                }
-                try {
-                    saveBtn.disabled = true;
-                    showMessage(editorStatus, 'Сохранение...', 'info');
-                    const response = await fetch('/api/admin/save', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${authToken}`
-                        },
-                        body: JSON.stringify({ content: newContent })
-                    });
-                    if (!response.ok) {
-                        if (response.status === 403) {
-                            showMessage(editorStatus, 'Доступ запрещён. Проверьте токен.', 'error');
-                            return;
+                        if (!response.ok) {
+                            const err = await response.json().catch(() => ({}));
+                            throw new Error(err.message || `Server Error: ${response.status}`);
                         }
-                        const errData = await response.json().catch(() => ({}));
-                        throw new Error(errData.error || `Ошибка ${response.status}`);
+
+                        return await response.json();
+                    } catch (err) {
+                        if (err.message === 'AUTH_FAILED') {
+                            UI.showToast('Session expired. Please login again.', 'error');
+                            this.logout();
+                            return null;
+                        }
+                        throw err;
+                    } finally {
+                        if (btn) UI.setLoading(btn, false);
                     }
-                    showMessage(editorStatus, 'Изменения сохранены. Кэш сброшен.', 'success');
-                } catch (err) {
-                    showMessage(editorStatus, `Ошибка сохранения: ${err.message}`, 'error');
-                } finally {
-                    saveBtn.disabled = false;
-                }
-            }
+                },
 
-            async function clearCache() {
-                try {
-                    clearCacheBtn.disabled = true;
-                    await fetch('/api/sites/reload', { method: 'POST' });
-                    showMessage(editorStatus, 'Кэш сервера очищен', 'success');
-                } catch (err) {
-                    showMessage(editorStatus, `Ошибка сброса кэша: ${err.message}`, 'error');
-                } finally {
-                    clearCacheBtn.disabled = false;
-                }
-            }
+                async loadContent(btn = null) {
+                    const endpoints = this.getEndpoints();
+                    try {
+                        const data = await this.apiCall(endpoints.load, {}, btn);
+                        if (data) {
+                            Security.safeSetContent(UI.elements.textarea, data.content);
+                            UI.showToast(`${this.currentMode} content synchronized`, 'success');
+                        }
+                    } catch (err) {
+                        UI.showToast(err.message, 'error');
+                    }
+                },
 
-            saveBtn.addEventListener('click', saveContent);
-            reloadContentBtn.addEventListener('click', loadContent);
-            clearCacheBtn.addEventListener('click', clearCache);
+                async saveContent(btn) {
+                    const content = UI.elements.textarea.value;
+                    if (!content.trim()) {
+                        UI.showToast('Content cannot be empty', 'error');
+                        return;
+                    }
 
-            // Сочетание клавиш Ctrl+S для сохранения
-            document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                    e.preventDefault();
-                    if (editorSection.classList.contains('active')) {
-                        saveContent();
+                    const endpoints = this.getEndpoints();
+
+                    try {
+                        await this.apiCall(endpoints.save, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content })
+                        }, btn);
+                        
+                        UI.showToast(`${this.currentMode} saved & cache invalidated`, 'success');
+                    } catch (err) {
+                        UI.showToast(err.message, 'error');
+                    }
+                },
+
+                async clearCache(btn) {
+                    try {
+                        await this.apiCall('/api/sites/reload', { method: 'POST' }, btn);
+                        UI.showToast('Global cache flushed', 'success');
+                    } catch (err) {
+                        UI.showToast(err.message, 'error');
                     }
                 }
-            });
+            };
+
+            // Initialize
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => App.init());
+            } else {
+                App.init();
+            }
         })();
     </script>
 </body>
 </html>
+
