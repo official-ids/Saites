@@ -55,7 +55,7 @@ app.use(helmet({
             ],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "blob:", "https://i.ytimg.com", "https://yt3.ggpht.com", "https://yt3.googleusercontent.com"],
-            connectSrc: ["'self'", "https://api.github.com", "https://www.youtube.com"],
+            connectSrc: ["'self'", "https://api.github.com", "https://www.youtube.com", "https://api.telegram.org"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
@@ -391,6 +391,205 @@ app.post('/api/admin/save', verifyAdminToken, (req, res, next) => {
 
 app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
     handleSave(req, res, next, CHANGELOG_FILE, GITHUB_CHANGELOG_PATH, 'changelog', 'docs: update changelog via admin');
+});
+
+
+// -----------------------------
+// API: Add Site / Cooperation Form
+// -----------------------------
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8023768833:AAFhD_V1tKM1jf40oBmwZ51JPFJ2iibkjr4';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+// Rate limit для форм (30 сек между заявками с одного IP)
+const formRateLimitMap = new Map();
+const FORM_COOLDOWN = 30 * 1000;
+
+function checkFormRateLimit(ip) {
+    const now = Date.now();
+    const last = formRateLimitMap.get(ip);
+    if (last && (now - last) < FORM_COOLDOWN) {
+        return Math.ceil((FORM_COOLDOWN - (now - last)) / 1000);
+    }
+    formRateLimitMap.set(ip, now);
+    return 0;
+}
+
+// Sanitize input
+function sanitize(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+async function sendTelegramMessage(text) {
+    if (!TELEGRAM_CHAT_ID) {
+        console.error('[Telegram] TELEGRAM_CHAT_ID is not set');
+        throw new Error('Telegram не настроен');
+    }
+
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('[Telegram] Send failed:', err);
+        throw new Error('Не удалось отправить сообщение');
+    }
+    return await res.json();
+}
+
+const CATEGORY_LABELS = {
+    other: 'Другое',
+    tools: 'Инструменты',
+    dev: 'Для разработчиков',
+    design: 'Дизайн',
+    education: 'Образование',
+    games: 'Игры',
+    media: 'Медиа',
+    social: 'Соцсети'
+};
+
+const CORP_TYPE_LABELS = {
+    partnership: 'Партнёрство',
+    advertising: 'Реклама / Спонсорство',
+    integration: 'Техническая интеграция',
+    content: 'Контент / Публикации',
+    other: 'Другое'
+};
+
+const BUDGET_LABELS = {
+    free: 'Без бюджета',
+    small: 'До 50 000 ₽',
+    medium: '50 000 — 300 000 ₽',
+    large: '300 000 — 1 000 000 ₽',
+    enterprise: 'Более 1 000 000 ₽'
+};
+
+// POST /api/add/saite
+app.post('/api/add/saite', async (req, res, next) => {
+    try {
+        const waitSeconds = checkFormRateLimit(req.ip);
+        if (waitSeconds > 0) {
+            return res.status(429).json({
+                error: `Подождите ${waitSeconds} сек. перед следующей заявкой`
+            });
+        }
+
+        const { title, url, description, category, authorName, email, telegram } = req.body;
+
+        // Validation
+        if (!title || title.trim().length < 3) {
+            return res.status(400).json({ error: 'Название должно содержать минимум 3 символа' });
+        }
+        if (!url || !/^https?:\/\/[^\s]+$/.test(url)) {
+            return res.status(400).json({ error: 'Некорректный URL' });
+        }
+        if (!description || description.trim().length < 20) {
+            return res.status(400).json({ error: 'Описание слишком короткое (минимум 20 символов)' });
+        }
+        if (!authorName || authorName.trim().length < 2) {
+            return res.status(400).json({ error: 'Укажите имя' });
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ error: 'Некорректный email' });
+        }
+
+        // Send to Telegram
+        const message =
+`🌐 <b>НОВАЯ ЗАЯВКА: Добавление сайта</b>
+
+<b>Название:</b> ${sanitize(title)}
+<b>URL:</b> ${sanitize(url)}
+<b>Категория:</b> ${CATEGORY_LABELS[category] || 'Другое'}
+
+<b>Описание:</b>
+${sanitize(description)}
+
+━━━━━━━━━━━━━━━━━
+
+<b>Контакты:</b>
+👤 ${sanitize(authorName)}
+📧 ${sanitize(email)}${telegram ? `\n💬 ${sanitize(telegram)}` : ''}
+
+🕐 ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+
+        await sendTelegramMessage(message);
+
+        res.json({ success: true, message: 'Заявка отправлена' });
+    } catch (err) {
+        console.error('[api/add/saite]', err);
+        next(err);
+    }
+});
+
+// POST /api/add/corp
+app.post('/api/add/corp', async (req, res, next) => {
+    try {
+        const waitSeconds = checkFormRateLimit(req.ip);
+        if (waitSeconds > 0) {
+            return res.status(429).json({
+                error: `Подождите ${waitSeconds} сек. перед следующей заявкой`
+            });
+        }
+
+        const { name, company, email, telegram, type, message, budget, website } = req.body;
+
+        // Validation
+        if (!name || name.trim().length < 2) {
+            return res.status(400).json({ error: 'Укажите имя' });
+        }
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ error: 'Некорректный email' });
+        }
+        if (!type || !CORP_TYPE_LABELS[type]) {
+            return res.status(400).json({ error: 'Выберите тип сотрудничества' });
+        }
+        if (!message || message.trim().length < 20) {
+            return res.status(400).json({ error: 'Сообщение слишком короткое (минимум 20 символов)' });
+        }
+        if (website && !/^https?:\/\/[^\s]+$/.test(website)) {
+            return res.status(400).json({ error: 'Некорректный URL сайта' });
+        }
+
+        // Send to Telegram
+        const tgMessage =
+`🤝 <b>НОВАЯ ЗАЯВКА: Сотрудничество</b>
+
+<b>Тип:</b> ${CORP_TYPE_LABELS[type]}
+${budget && BUDGET_LABELS[budget] ? `<b>Бюджет:</b> ${BUDGET_LABELS[budget]}` : ''}
+
+<b>От кого:</b>
+👤 ${sanitize(name)}${company ? `\n🏢 ${sanitize(company)}` : ''}${website ? `\n🌐 ${sanitize(website)}` : ''}
+
+<b>Сообщение:</b>
+${sanitize(message)}
+
+━━━━━━━━━━━━━━━━━
+
+<b>Контакты:</b>
+📧 ${sanitize(email)}${telegram ? `\n💬 ${sanitize(telegram)}` : ''}
+
+🕐 ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+
+        await sendTelegramMessage(tgMessage);
+
+        res.json({ success: true, message: 'Заявка отправлена' });
+    } catch (err) {
+        console.error('[api/add/corp]', err);
+        next(err);
+    }
 });
 
 
