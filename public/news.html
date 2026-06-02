@@ -1702,6 +1702,27 @@
         .hidden {
             display: none !important;
         }
+
+/* ===========================
+Level Badges
+=========================== */
+.level-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 6px;
+    white-space: nowrap;
+}
+.level-active { background: rgba(0, 113, 227, 0.1); color: #0071E3; }
+.level-expert { background: rgba(52, 199, 89, 0.12); color: #34C759; }
+.level-plus { background: rgba(212, 175, 55, 0.15); color: #D4AF37; }
+.level-admin { background: rgba(212, 175, 55, 0.15); color: #D4AF37; }
+
     </style>
 </head>
 <body>
@@ -2480,7 +2501,8 @@
                         <img src="${avatarSrc}" alt="avatar">
                     </div>
                     <span class="user-name ${isAdmin ? 'admin' : ''}">${Security.safeText(displayName)}</span>
-                    ${verifiedBadge}
+${verifiedBadge}
+${!isAdmin && State.user.level ? `<span class="level-badge level-${State.user.level}">${({active:'Активный',expert:'Эксперт',plus:'Plus'})[State.user.level] || ''}</span>` : ''}
                 </div>
             `;
 
@@ -2824,9 +2846,10 @@
                             </div>
                             <div class="post-meta">
                                 <div class="post-author ${isAdmin ? 'admin' : ''}">
-                                    ${Security.safeText(authorName)}
-                                    ${verifiedBadge}
-                                </div>
+${Security.safeText(authorName)}
+${verifiedBadge}
+${levelBadge}
+</div>
                                 <div class="post-date">${UI.formatRelativeDate(post.createdAt)}</div>
                             </div>
                             ${menuHtml}
@@ -3311,6 +3334,12 @@
                     <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
                         <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>` : '';
+                    const levelBadge = !isAdmin && post.authorLevel ? (() => {
+    const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
+    const label = labels[post.authorLevel];
+    if (!label) return '';
+    return `<span class="level-badge level-${post.authorLevel}">${label}</span>`;
+})() : '';
 
                 const isOwner = State.user && State.user.id === comment.authorId;
                 const canManage = State.user && State.user.role === 'admin';
@@ -3390,6 +3419,7 @@
                             <div class="comment-header">
                                 <span class="comment-author ${isAdmin ? 'admin' : ''}">${Security.safeText(authorName)}</span>
                                 ${verifiedBadge}
+                                ${levelBadge}
                                 ${pinnedBadge}
                                 <span class="comment-date">${UI.formatRelativeDate(comment.createdAt)}</span>
                                 ${editedMark}

@@ -34,8 +34,63 @@ const K = {
     COMMENT_DISLIKES: (id) => `news:comment_dislikes:${id}`,
     POST_COMMENTS: (postId) => `news:post_comments:${postId}`,
     USER_COMMENTS: (userId) => `news:user_comments:${userId}`,
+    USER_STATS: (id) => `news:stats:${id}`,
+    USER_LEVEL: (id) => `news:level:${id}`,
     POSTS_INDEX: 'news:posts:index'  // ← ДОБАВИТЬ ЭТУ СТРОКУ
 };
+
+// -----------------------------
+// Система уровней
+// -----------------------------
+const LEVEL_THRESHOLDS = {
+    newbie: { comments: 0, likesReceived: 0 },
+    active: { comments: 10, likesReceived: 20 },
+    expert: { comments: 50, likesReceived: 100 },
+    plus: { comments: 200, likesReceived: 500 } // только вручную или по достижению
+};
+
+async function calculateUserLevel(userId) {
+    if (!userId || userId === 'admin') return 'admin';
+    
+    const currentLevel = await kv.get(K.USER_LEVEL(userId)) || 'newbie';
+    
+    // Admin-выданный Plus не понижается автоматически
+    if (currentLevel === 'plus') return 'plus';
+    
+    const stats = await kv.get(K.USER_STATS(userId)) || { comments: 0, likesReceived: 0 };
+    
+    let newLevel = 'newbie';
+    if (stats.comments >= LEVEL_THRESHOLDS.active.comments && stats.likesReceived >= LEVEL_THRESHOLDS.active.likesReceived) {
+        newLevel = 'active';
+    }
+    if (stats.comments >= LEVEL_THRESHOLDS.expert.comments && stats.likesReceived >= LEVEL_THRESHOLDS.expert.likesReceived) {
+        newLevel = 'expert';
+    }
+    if (stats.comments >= LEVEL_THRESHOLDS.plus.comments && stats.likesReceived >= LEVEL_THRESHOLDS.plus.likesReceived) {
+        newLevel = 'plus';
+    }
+    
+    if (newLevel !== currentLevel) {
+        await kv.set(K.USER_LEVEL(userId), newLevel);
+    }
+    
+    return newLevel;
+}
+
+async function getUserLevel(userId) {
+    if (!userId) return 'newbie';
+    if (userId === 'admin') return 'admin';
+    return await kv.get(K.USER_LEVEL(userId)) || 'newbie';
+}
+
+async function incrementUserStats(userId, field, delta = 1) {
+    if (!userId || userId === 'admin') return;
+    const stats = await kv.get(K.USER_STATS(userId)) || { comments: 0, likesReceived: 0 };
+    stats[field] = (stats[field] || 0) + delta;
+    await kv.set(K.USER_STATS(userId), stats);
+    await calculateUserLevel(userId);
+    return stats;
+}
 
 // -----------------------------
 // Middleware: Аутентификация (опциональная)
@@ -151,6 +206,7 @@ async function getCommentWithUserData(commentId, userId) {
     comment.dislikes = dislikesSet.length;
     comment.isLiked = userId ? likesSet.includes(userId) : false;
     comment.isDisliked = userId ? dislikesSet.includes(userId) : false;
+    comment.authorLevel = await getUserLevel(comment.authorId);
 
     return comment;
 }
@@ -217,14 +273,17 @@ router.post('/auth/register', async (req, res) => {
             // Генерируем уникальный ID
             const readerId = await generateReaderId();
 
-            const readerUser = {
+                        const readerUser = {
                 id: readerId,
                 role: 'reader',
                 nickname: cleanNickname,
+                level: 'newbie',
                 createdAt: new Date().toISOString()
             };
 
             await kv.set(K.USER(readerId), readerUser);
+            await kv.set(K.USER_LEVEL(readerId), 'newbie');
+            await kv.set(K.USER_STATS(readerId), { comments: 0, likesReceived: 0 });
 
             // Создаём сессию
             const token = generateToken();
@@ -272,6 +331,7 @@ router.get('/auth/me', requireAuth, async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
+        user.level = await getUserLevel(req.user.id);
         return res.json(user);
     } catch (err) {
         console.error('[news/auth/me]', err);
@@ -644,7 +704,11 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
         }
         await kv.sadd(K.USER_COMMENTS(req.user.id), commentId);
 
+        // Начисляем статистику за комментарий
+        await incrementUserStats(req.user.id, 'comments', 1);
+
         const enriched = await getCommentWithUserData(commentId, req.user.id);
+        enriched.authorLevel = await getUserLevel(req.user.id);
         return res.json({ comment: enriched });
     } catch (err) {
         console.error('[news/comments POST]', err);
@@ -751,9 +815,17 @@ router.post('/comments/:id/like', requireAuth, async (req, res) => {
 
         if (alreadyLiked) {
             await kv.srem(K.COMMENT_LIKES(id), userId);
+            // Убираем лайк у автора
+            if (comment.authorId && comment.authorId !== userId) {
+                await incrementUserStats(comment.authorId, 'likesReceived', -1);
+            }
         } else {
             await kv.sadd(K.COMMENT_LIKES(id), userId);
             await kv.srem(K.COMMENT_DISLIKES(id), userId);
+            // Добавляем лайк автору
+            if (comment.authorId && comment.authorId !== userId) {
+                await incrementUserStats(comment.authorId, 'likesReceived', 1);
+            }
         }
 
         const likes = await kv.smembers(K.COMMENT_LIKES(id));
