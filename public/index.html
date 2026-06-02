@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oris &middot; Projects</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --card-bg: #f5f5f7;
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --border: rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Header --- */
+        header {
+            text-align: center;
+            padding: 48px 24px 24px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .banner {
+            width: 100%;
+            max-width: 980px;
+            height: auto;
+            border-radius: 18px;
+            margin: 0 auto 40px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .banner-fallback {
+            display: none;
+            max-width: 980px;
+            margin: 0 auto 40px;
+            padding: 40px 24px;
+            background: var(--card-bg);
+            border-radius: 18px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        /* --- Toolbar --- */
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
+
+        .refresh-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .refresh-btn:hover {
+            background: #e8e8ed;
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.97);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- Cards Grid --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 80px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 30px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 200px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.3s ease;
+            will-change: transform;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .card-link {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .card:hover .card-link {
+            opacity: 0.8;
+        }
+
+        /* --- Loading & Empty States --- */
+        .status-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 64px 24px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 16px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            width: 90%;
+            max-width: 680px;
+            max-height: 85vh;
+            padding: 48px;
+            border-radius: 24px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.96);
+            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f5f5f7;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #86868b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e8e8ed;
+            color: #1d1d1f;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+        }
+
+        .modal-text {
+            color: #424245;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .modal-text h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin: 24px 0 12px;
+        }
+
+        .modal-text p {
+            margin-bottom: 16px;
+        }
+
+        .modal-text a {
+            color: #0071e3;
+            text-decoration: none;
+        }
+
+        /* --- Footer --- */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 64px 24px;
+            background: #fbfbfd;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 980px;
+            margin: 0 auto;
+            font-size: 0.85rem;
+        }
+
+        .footer-col h4 {
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .footer-col a,
+        .footer-col p {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--accent);
+        }
+
+        .copyright {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 60px;
+        }
+
+        /* --- Accessibility --- */
+        @media (prefers-reduced-motion: reduce) {
+            .card,
+            .modal-overlay,
+            .modal-content,
+            .banner {
+                transition: none;
+            }
+            .spinner {
+                animation: none;
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            .banner {
+                border-radius: 12px;
+            }
+            .modal-content {
+                padding: 32px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Oris</h1>
+        <img
+            src="banner.png"
+            alt="Oris Banner"
+            class="banner"
+            id="bannerImg"
+            onerror="this.style.display='none'; document.getElementById('bannerFallback').style.display='block';"
+        >
+        <div id="bannerFallback" class="banner-fallback" role="img" aria-label="Oris Banner placeholder">
+            Oris Projects
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="toolbar">
+            <button class="refresh-btn" id="refreshBtn" title="Обновить список проектов (сбросить кэш)">
+                Обновить
+            </button>
+        </div>
+        <div id="sitesGrid" class="grid">
+            <!-- динамические карточки -->
+        </div>
+    </main>
+
+    <!-- Модальные окна -->
+    <div class="modal-overlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Закрыть окно" data-close-modal>&times;</button>
+            <h2 class="modal-title" id="privacyModalTitle">Политика конфиденциальности</h2>
+            <div class="modal-text">
+                <p>Oris уважает вашу конфиденциальность. Мы не собираем персональные данные без вашего явного согласия.</p>
+                <h3>Сбор данных</h3>
+                <p>Наши инструменты работают локально или через защищённые API. Мы не храним файлы пользователей на своих серверах дольше времени, необходимого для передачи.</p>
+                <h3>Контакты</h3>
+                <p>По вопросам приватности пишите на <a href="mailto:di44avolod@yandex.ru">di44avolod@yandex.ru</a>.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Закрыть окно" data-close-modal>&times;</button>
+            <h2 class="modal-title" id="termsModalTitle">Условия использования</h2>
+            <div class="modal-text">
+                <p>Используя сервисы Oris, вы соглашаетесь с тем, что они предоставляются «как есть», без каких-либо гарантий.</p>
+                <h3>Ответственность</h3>
+                <p>Мы не несём ответственности за потерю данных или ущерб, возникший в результате использования наших инструментов. Пожалуйста, делайте резервные копии.</p>
+                <h3>Лицензия</h3>
+                <p>Код проектов распространяется под лицензией MIT, если иное не указано в репозитории.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="collabModal" role="dialog" aria-modal="true" aria-labelledby="collabModalTitle">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Закрыть окно" data-close-modal>&times;</button>
+            <h2 class="modal-title" id="collabModalTitle">Сотрудничество</h2>
+            <div class="modal-text">
+                <p>Oris открыт к партнёрству с разработчиками, дизайнерами и open-source проектами.</p>
+                <h3>Как связаться</h3>
+                <p>
+                    • Telegram: <a href="https://t.me/VoraxisBOT" target="_blank" rel="noopener">@VoraxisBOT</a><br>
+                    • Email: <a href="mailto:official-ids@hotmail.com">official-ids@hotmail.com</a><br>
+                    • GitHub: <a href="https://github.com/official-ids/Saites" target="_blank" rel="noopener">official-ids/Saites</a>
+                </p>
+                <p>Мы всегда рады новым идеям и совместным проектам. Напишите нам, и мы ответим в течение 24 часов.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Компания</h4>
+                <a href="#" data-modal="privacyModal">Политика конфиденциальности</a>
+                <a href="#" data-modal="termsModal">Условия использования</a>
+                <a href="#" data-modal="collabModal">Сотрудничество</a>
+            </div>
+            <div class="footer-col">
+                <h4>Контакты</h4>
+                <a href="mailto:di44avolod@yandex.ru">di44avolod@yandex.ru</a>
+                <a href="mailto:official-ids@hotmail.com">official-ids@hotmail.com</a>
+                <a href="https://t.me/VoraxisBOT" target="_blank" rel="noopener">Telegram: VoraxisBOT</a>
+            </div>
+            <div class="footer-col">
+                <h4>Ресурсы</h4>
+                <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener">GitHub Repository</a>
+                <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener">Тех. поддержка</a>
+            </div>
+        </div>
+        <p class="copyright">&copy; <span id="currentYear"></span> Oris. All rights reserved.</p>
+    </footer>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // --- Модальные окна ---
+            const modals = {
+                open(id) {
+                    const modal = document.getElementById(id);
+                    if (!modal) return;
+                    modal.style.display = 'flex';
+                    requestAnimationFrame(() => {
+                        modal.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    });
+                },
+                close(id) {
+                    const modal = document.getElementById(id);
+                    if (!modal) return;
+                    modal.classList.remove('active');
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }, 250);
+                }
+            };
+
+            // Делегирование событий
+            document.addEventListener('click', (e) => {
+                // Открытие по data-modal
+                const link = e.target.closest('[data-modal]');
+                if (link) {
+                    e.preventDefault();
+                    const modalId = link.getAttribute('data-modal');
+                    modals.open(modalId);
+                    return;
+                }
+
+                // Закрытие по кнопке с data-close-modal
+                if (e.target.closest('[data-close-modal]')) {
+                    const overlay = e.target.closest('.modal-overlay');
+                    if (overlay) modals.close(overlay.id);
+                    return;
+                }
+
+                // Закрытие по клику на оверлей
+                if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+                    modals.close(e.target.id);
+                }
+            });
+
+            // Закрытие по Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const activeModal = document.querySelector('.modal-overlay.active');
+                    if (activeModal) modals.close(activeModal.id);
+                }
+            });
+
+            // --- Загрузка карточек проектов ---
+            const grid = document.getElementById('sitesGrid');
+            const refreshBtn = document.getElementById('refreshBtn');
+
+            function normalizeUrl(url) {
+                if (!/^https?:\/\//i.test(url)) {
+                    return 'https://' + url;
+                }
+                return url;
+            }
+
+            // Экранирование HTML-сущностей (на всякий случай, хотя мы используем textContent)
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.appendChild(document.createTextNode(str));
+                return div.innerHTML;
+            }
+
+            function renderStatus(message, isError = false, includeSpinner = false) {
+                grid.innerHTML = '';
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'status-message' + (isError ? ' error-message' : '');
+                if (includeSpinner) {
+                    const spinner = document.createElement('div');
+                    spinner.className = 'spinner';
+                    statusDiv.appendChild(spinner);
+                }
+                const text = document.createElement('p');
+                text.textContent = message;
+                statusDiv.appendChild(text);
+                grid.appendChild(statusDiv);
+            }
+
+            function renderCards(sites) {
+                grid.innerHTML = '';
+                if (!sites.length) {
+                    renderStatus('Проекты пока не добавлены');
+                    return;
+                }
+
+                sites.forEach((site, index) => {
+                    const card = document.createElement('a');
+                    card.className = 'card';
+                    card.href = normalizeUrl(site.url);
+                    card.target = '_blank';
+                    card.rel = 'noopener noreferrer';
+                    card.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.04}s`;
+                    card.style.opacity = '0'; // анимация переопределит
+
+                    const title = document.createElement('div');
+                    title.className = 'card-title';
+                    title.textContent = site.title;
+
+                    const desc = document.createElement('div');
+                    desc.className = 'card-desc';
+                    desc.textContent = site.desc;
+
+                    const link = document.createElement('div');
+                    link.className = 'card-link';
+                    link.textContent = 'Перейти';
+
+                    card.appendChild(title);
+                    card.appendChild(desc);
+                    card.appendChild(link);
+                    grid.appendChild(card);
+                });
+            }
+
+            async function loadSites(forceReload = false) {
+                renderStatus('Загрузка проектов...', false, true);
+                refreshBtn.disabled = true;
+
+                try {
+                    // Если нужно принудительно сбросить кэш сервера
+                    if (forceReload) {
+                        await fetch('/api/sites/reload', { method: 'POST' });
+                    }
+                    const response = await fetch('/api/sites');
+                    if (!response.ok) throw new Error(`Ошибка сервера (${response.status})`);
+                    const sites = await response.json();
+                    renderCards(sites);
+                } catch (err) {
+                    console.error('Ошибка загрузки:', err);
+                    renderStatus('Не удалось загрузить проекты. Попробуйте позже.', true);
+                } finally {
+                    refreshBtn.disabled = false;
+                }
+            }
+
+            // Кнопка обновления (со сбросом кэша)
+            refreshBtn.addEventListener('click', () => loadSites(true));
+
+            // Автоматическая загрузка при старте
+            loadSites();
+
+            // Год в футере
+            const yearSpan = document.getElementById('currentYear');
+            if (yearSpan) yearSpan.textContent = new Date().getFullYear();
+        })();
+    </script>
+</body>
+</html>

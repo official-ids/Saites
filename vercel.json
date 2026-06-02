@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "git": {
+    "deploymentEnabled": {
+      "Oris": true,
+      "weriframe": false
+    }
+  },
+  "builds": [
+    {
+      "src": "proxy.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/proxy.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    }
+  ]
+}

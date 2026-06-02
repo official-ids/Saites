@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oris Admin</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #ffffff;
+            --card-bg: #f5f5f7;
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --accent: #0071e3;
+            --border: rgba(0,0,0,0.08);
+            --danger: #ff3b30;
+            --success: #34c759;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 720px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            transition: box-shadow 0.3s;
+        }
+
+        .auth-section, .editor-section {
+            display: none;
+        }
+
+        .auth-section.active, .editor-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.95rem;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #ffffff;
+            color: var(--text-main);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            resize: vertical;
+        }
+
+        input[type="password"]:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+        }
+
+        textarea {
+            min-height: 340px;
+            line-height: 1.7;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 28px;
+            border-radius: 14px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.2s, transform 0.1s, opacity 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            background: #0077ed;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: var(--text-main);
+            border-color: var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0f5;
+        }
+
+        .btn-danger {
+            background: #ffffff;
+            color: var(--danger);
+            border-color: var(--danger);
+            margin-left: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #fff0ef;
+        }
+
+        .button-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .status-message {
+            margin-top: 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 10px 18px;
+            border-radius: 12px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .status-message.success {
+            background: rgba(52,199,89,0.1);
+            color: var(--success);
+            display: block;
+        }
+
+        .status-message.error {
+            background: rgba(255,59,48,0.1);
+            color: var(--danger);
+            display: block;
+        }
+
+        .status-message.info {
+            background: rgba(0,113,227,0.1);
+            color: var(--accent);
+            display: block;
+        }
+
+        .logout-link {
+            text-align: right;
+            margin-bottom: 16px;
+        }
+
+        .logout-link button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 28px 20px;
+                border-radius: 18px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .auth-section.active, .editor-section.active, .status-message {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Oris Admin</h1>
+    </header>
+
+    <div class="container">
+        <!-- Секция авторизации -->
+        <div id="authSection" class="auth-section active">
+            <div class="form-group">
+                <label for="tokenInput">Токен доступа</label>
+                <input type="password" id="tokenInput" placeholder="Введите ADMIN_TOKEN" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" id="loginBtn">Войти</button>
+            <div id="authStatus" class="status-message"></div>
+        </div>
+
+        <!-- Секция редактора -->
+        <div id="editorSection" class="editor-section">
+            <div class="logout-link">
+                <button id="logoutBtn">Выйти</button>
+            </div>
+            <div class="form-group">
+                <label for="contentTextarea">Содержимое saites.txt</label>
+                <textarea id="contentTextarea" placeholder="Загрузка..."></textarea>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-primary" id="saveBtn">Сохранить</button>
+                <button class="btn btn-secondary" id="reloadContentBtn">Обновить содержимое</button>
+                <button class="btn btn-danger" id="clearCacheBtn">Сбросить кэш</button>
+            </div>
+            <div id="editorStatus" class="status-message"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const authSection = document.getElementById('authSection');
+            const editorSection = document.getElementById('editorSection');
+            const tokenInput = document.getElementById('tokenInput');
+            const loginBtn = document.getElementById('loginBtn');
+            const authStatus = document.getElementById('authStatus');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const contentTextarea = document.getElementById('contentTextarea');
+            const saveBtn = document.getElementById('saveBtn');
+            const reloadContentBtn = document.getElementById('reloadContentBtn');
+            const clearCacheBtn = document.getElementById('clearCacheBtn');
+            const editorStatus = document.getElementById('editorStatus');
+
+            let authToken = '';
+
+            function showMessage(element, message, type) {
+                element.textContent = message;
+                element.className = `status-message ${type}`;
+                setTimeout(() => {
+                    element.className = 'status-message';
+                    element.textContent = '';
+                }, 5000);
+            }
+
+            function switchToEditor() {
+                authSection.classList.remove('active');
+                editorSection.classList.add('active');
+                loadContent();
+            }
+
+            function switchToAuth() {
+                authToken = '';
+                editorSection.classList.remove('active');
+                authSection.classList.add('active');
+                tokenInput.value = '';
+                contentTextarea.value = '';
+                // опционально сохранять токен в sessionStorage
+                sessionStorage.removeItem('oris_admin_token');
+            }
+
+            // Проверка токена при загрузке
+            const savedToken = sessionStorage.getItem('oris_admin_token');
+            if (savedToken) {
+                authToken = savedToken;
+                switchToEditor();
+            }
+
+            loginBtn.addEventListener('click', () => {
+                const token = tokenInput.value.trim();
+                if (!token) {
+                    showMessage(authStatus, 'Введите токен', 'error');
+                    return;
+                }
+                authToken = token;
+                // Не проверяем токен заранее, просто переключаемся
+                sessionStorage.setItem('oris_admin_token', token);
+                switchToEditor();
+            });
+
+            tokenInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') loginBtn.click();
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                switchToAuth();
+            });
+
+            async function loadContent() {
+                try {
+                    contentTextarea.disabled = true;
+                    showMessage(editorStatus, 'Загрузка содержимого...', 'info');
+                    const response = await fetch('/api/admin/content', {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            showMessage(editorStatus, 'Неверный токен. Вы вышли из системы.', 'error');
+                            switchToAuth();
+                            return;
+                        }
+                        throw new Error(`Ошибка ${response.status}`);
+                    }
+                    const data = await response.json();
+                    contentTextarea.value = data.content;
+                    showMessage(editorStatus, 'Содержимое загружено', 'success');
+                } catch (err) {
+                    showMessage(editorStatus, `Не удалось загрузить: ${err.message}`, 'error');
+                } finally {
+                    contentTextarea.disabled = false;
+                }
+            }
+
+            async function saveContent() {
+                const newContent = contentTextarea.value;
+                if (!newContent.trim()) {
+                    showMessage(editorStatus, 'Содержимое не может быть пустым', 'error');
+                    return;
+                }
+                try {
+                    saveBtn.disabled = true;
+                    showMessage(editorStatus, 'Сохранение...', 'info');
+                    const response = await fetch('/api/admin/save', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
+                        },
+                        body: JSON.stringify({ content: newContent })
+                    });
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                            showMessage(editorStatus, 'Доступ запрещён. Проверьте токен.', 'error');
+                            return;
+                        }
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.error || `Ошибка ${response.status}`);
+                    }
+                    showMessage(editorStatus, 'Изменения сохранены. Кэш сброшен.', 'success');
+                } catch (err) {
+                    showMessage(editorStatus, `Ошибка сохранения: ${err.message}`, 'error');
+                } finally {
+                    saveBtn.disabled = false;
+                }
+            }
+
+            async function clearCache() {
+                try {
+                    clearCacheBtn.disabled = true;
+                    await fetch('/api/sites/reload', { method: 'POST' });
+                    showMessage(editorStatus, 'Кэш сервера очищен', 'success');
+                } catch (err) {
+                    showMessage(editorStatus, `Ошибка сброса кэша: ${err.message}`, 'error');
+                } finally {
+                    clearCacheBtn.disabled = false;
+                }
+            }
+
+            saveBtn.addEventListener('click', saveContent);
+            reloadContentBtn.addEventListener('click', loadContent);
+            clearCacheBtn.addEventListener('click', clearCache);
+
+            // Сочетание клавиш Ctrl+S для сохранения
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (editorSection.classList.contains('active')) {
+                        saveContent();
+                    }
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
