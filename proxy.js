@@ -40,9 +40,20 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://fonts.googleapis.com"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            scriptSrc: [
+                "'self'", 
+                "'unsafe-inline'", 
+                "https://cdn.tailwindcss.com", 
+                "https://fonts.googleapis.com",
+                "https://cdnjs.cloudflare.com"
+            ],
+            styleSrc: [
+                "'self'", 
+                "'unsafe-inline'", 
+                "https://fonts.googleapis.com",
+                "https://cdnjs.cloudflare.com"
+            ],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "blob:"],
             connectSrc: ["'self'", "https://api.github.com"],
             objectSrc: ["'none'"],
@@ -385,12 +396,6 @@ app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
 // -----------------------------
 // Статические страницы и ошибки
 // -----------------------------
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(PUBLIC_DIR, 'index.html'), (err) => {
-        if (err) res.status(404).send('Page not found');
-    });
-});
 
 app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });

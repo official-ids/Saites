@@ -1721,7 +1721,6 @@
                 <a href="/" class="nav-link">Projects</a>
                 <a href="/news" class="nav-link active">News</a>
                 <a href="/changelog.html" class="nav-link">Changelog</a>
-                <a href="/status.html" class="nav-link">Status</a>
                 <div id="authArea">
                     <!-- JS will inject login button or user chip here -->
                 </div>
@@ -1798,12 +1797,15 @@
 
                     <div class="admin-token-field" id="adminTokenField">
     <form id="adminTokenForm" action="#" method="POST" onsubmit="return false;">
-        <div class="form-group">
-            <label class="form-label" for="adminTokenInput">Admin Token</label>
-            <input type="password" class="form-input" id="adminTokenInput" name="password" placeholder="Введите токен администратора..." autocomplete="current-password">
-            <div class="form-help">Токен выдается администратором системы</div>
-        </div>
-    </form>
+    <!-- Скрытое поле username для accessibility -->
+    <input type="text" name="username" value="oris-admin" autocomplete="username" style="display:none;" tabindex="-1" aria-hidden="true">
+    
+    <div class="form-group">
+        <label class="form-label" for="adminTokenInput">Admin Token</label>
+        <input type="password" class="form-input" id="adminTokenInput" name="password" placeholder="Введите токен администратора..." autocomplete="current-password">
+        <div class="form-help">Токен выдается администратором системы</div>
+    </div>
+</form>
 </div>
 
                     <div class="form-group" id="nicknameField">

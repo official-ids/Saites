@@ -172,11 +172,11 @@ router.post('/auth/register', async (req, res) => {
             
             // Безопасное сравнение токенов (timing-safe)
             const isTokenValid = adminToken 
-                && adminToken.length === ADMIN_TOKEN.length
-                && crypto.timingSafeEqual(
-                    Buffer.from(adminToken), 
-                    Buffer.from(ADMIN_TOKEN)
-                );
+    && adminToken.length === ADMIN_TOKEN.length
+    && crypto.timingSafeEqual(
+        Buffer.from(adminToken), 
+        Buffer.from(ADMIN_TOKEN)
+    );
             
             if (!isTokenValid) {
                 return res.status(403).json({ error: 'Неверный admin token' });
