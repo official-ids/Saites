@@ -1,42 +1,76 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "cleanUrls": true,
+  "trailingSlash": false,
+  
   "git": {
     "deploymentEnabled": {
       "Oris": true,
       "weriframe": false
     }
   },
-  "builds": [
+
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "proxy.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
+
+  "regions": ["fra1"],
+
+  "headers": [
     {
-      "src": "proxy.js",
-      "use": "@vercel/node"
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+      ]
     },
     {
-      "src": "public/**",
-      "use": "@vercel/static"
+      "source": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|webp|woff2|woff|ttf|css|js))",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
     },
     {
-      "src": "658234/**",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "{favicon.ico,favicon.svg,*.png,*.webmanifest}",
-      "use": "@vercel/static"
+      "source": "/(.*\\.webmanifest)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/proxy.js"
-    },
-    {
-      "src": "/658234/(.*)",
-      "dest": "/658234/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
+
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/proxy.js" },
+
+    { "source": "/news", "destination": "/news.html" },
+    { "source": "/changelog", "destination": "/changelog.html" },
+
+    { "source": "/add", "destination": "/public/add.html" },
+    { "source": "/24781", "destination": "/public/24781.html" },
+
+    { "source": "/658234", "destination": "/658234/index.html" },
+    { "source": "/658234/", "destination": "/658234/index.html" },
+
+    { "source": "/(.*)", "destination": "/public/$1" }
+  ],
+
+  "redirects": [
+    { "source": "/news.html", "destination": "/news", "permanent": true },
+    { "source": "/changelog.html", "destination": "/changelog", "permanent": true },
+    { "source": "/add.html", "destination": "/add", "permanent": true },
+    { "source": "/24781.html", "destination": "/24781", "permanent": true },
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/658234.html", "destination": "/658234", "permanent": true },
+    { "source": "/658234/index.html", "destination": "/658234", "permanent": true }
   ]
 }
