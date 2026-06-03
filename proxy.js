@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const newsRouter = require('./news');
 
 // -----------------------------
-// Конфигурация и Безопасность
+// Константы и Конфигурация
 // -----------------------------
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -23,12 +23,30 @@ const GITHUB_CHANGELOG_PATH = process.env.GITHUB_CHANGELOG_PATH || 'changelog.tx
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 минут
+// Telegram Config (без fallback-значения)
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// Проверка критических переменных окружения при старте
-if (!ADMIN_TOKEN) {
-    console.warn('⚠️ WARNING: ADMIN_TOKEN is not set. Admin panel will be inaccessible.');
-}
+// YouTube Config
+const YOUTUBE_HANDLE = 'MRPakeleksis';
+
+// Timeouts & Retries
+const FETCH_TIMEOUT = 10000; // 10 секунд
+const FETCH_MAX_RETRIES = 3;
+const CACHE_TTL = 5 * 60 * 1000; // 5 минут
+const YT_CACHE_TTL = 5 * 60 * 1000;
+
+// Rate Limiting Config
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const RATE_LIMIT_MAX = 60;
+const FORM_COOLDOWN = 30 * 1000;
+
+// Validation Limits
+const MAX_CONTENT_LENGTH = 500000;
+const MAX_TITLE_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MIN_TITLE_LENGTH = 3;
+const MIN_DESCRIPTION_LENGTH = 20;
 
 // -----------------------------
 // Инициализация Express
@@ -67,10 +85,75 @@ app.use(helmet({
     referrerPolicy: { policy: "strict-origin-when-cross-origin" }
 }));
 
-// Rate Limiting (Simple implementation for single instance)
+// -----------------------------
+// Вспомогательные функции
+// -----------------------------
+
+/**
+ * Fetch с таймаутом и повторными попытками
+ */
+async function fetchWithRetry(url, options = {}, retries = FETCH_MAX_RETRIES) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+        return response;
+    } catch (error) {
+        clearTimeout(timeout);
+        if (retries > 0 && (error.name === 'AbortError' || error.name === 'FetchError')) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return fetchWithRetry(url, options, retries - 1);
+        }
+        throw error;
+    }
+}
+
+/**
+ * Безопасная очистка строки для HTML-контекста
+ * Примечание: экранирование должно выполняться на клиенте.
+ * Эта функция только удаляет опасные символы для предотвращения инъекций.
+ */
+function sanitize(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/[<>]/g, '') // Удаляем теги полностью
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .trim();
+}
+
+/**
+ * Валидация URL
+ */
+function isValidUrl(url) {
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Нормализация URL (добавление https:// если нет протокола)
+ */
+function normalizeUrl(url) {
+    if (!url) return url;
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+}
+
+// -----------------------------
+// Rate Limiting Middleware
+// -----------------------------
 const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX = 60; // requests per window
 
 app.use((req, res, next) => {
     const ip = req.ip;
@@ -96,7 +179,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// Cleanup rate limit map periodically
+// Очистка rate limit map
 setInterval(() => {
     const now = Date.now();
     for (const [ip, record] of rateLimitMap.entries()) {
@@ -104,8 +187,11 @@ setInterval(() => {
     }
 }, 60 * 1000);
 
+// -----------------------------
+// Middleware
+// -----------------------------
 app.use(morgan('tiny'));
-app.use(express.json({ limit: '1mb' })); // Limit body size
+app.use(express.json({ limit: '1mb' }));
 app.use('/api/news', newsRouter);
 app.use(express.static(PUBLIC_DIR, {
     maxAge: '1d', 
@@ -120,14 +206,30 @@ app.use(express.static(PUBLIC_DIR, {
 // -----------------------------
 let sitesCache = { data: [], timestamp: 0 };
 let changelogCache = { data: null, timestamp: 0 };
+let ytChannelCache = { data: null, timestamp: 0 };
+let ytVideosCache = { data: null, timestamp: 0 };
 
-/**
- * Безопасный парсинг saites.txt
- */
+// Rate limit для форм
+const formRateLimitMap = new Map();
+
+function checkFormRateLimit(ip) {
+    const now = Date.now();
+    const last = formRateLimitMap.get(ip);
+    if (last && (now - last) < FORM_COOLDOWN) {
+        return Math.ceil((FORM_COOLDOWN - (now - last)) / 1000);
+    }
+    formRateLimitMap.set(ip, now);
+    return 0;
+}
+
+// -----------------------------
+// Парсеры
+// -----------------------------
+
 function parseSaites(content) {
     if (typeof content !== 'string') return [];
     
-    const blocks = content.split('::').filter(b => b.trim());
+    const blocks = content.split('::').filter(b => b?.trim());
     const sites = [];
 
     for (const block of blocks) {
@@ -141,36 +243,35 @@ function parseSaites(content) {
 
         const clean = (str) => {
             let s = str.split('@:')[0].trim();
+            // Убираем кавычки по краям
             if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
                 s = s.slice(1, -1);
             }
-            return s.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return s.trim();
         };
 
         const title = clean(lines[0]);
         let url = clean(lines[1]);
         const desc = clean(lines[2]);
 
-        try {
-            if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-            new URL(url);
-        } catch (e) {
-            console.warn(`Invalid URL skipped: ${url}`);
+        // Нормализация и валидация URL
+        url = normalizeUrl(url);
+        if (!isValidUrl(url)) {
+            console.warn(`[parseSaites] Invalid URL skipped: ${url}`);
             continue;
         }
 
-        if (title && url && desc) sites.push({ title, url, desc });
+        if (title && url && desc) {
+            sites.push({ title, url, desc });
+        }
     }
     return sites;
 }
 
-/**
- * Парсинг changelog.txt
- * Формат: Версия | Дата \n - [тип] описание \n ::
- */
 function parseChangelog(content) {
-    if (!content) return [];
-    const blocks = content.split('::').filter(b => b.trim());
+    if (!content || typeof content !== 'string') return [];
+    
+    const blocks = content.split('::').filter(b => b?.trim());
     
     return blocks.map(block => {
         const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
@@ -183,18 +284,26 @@ function parseChangelog(content) {
 
         const changes = lines.slice(1).map(line => {
             const match = line.match(/^-\s*\[(\w+)\]\s*(.*)$/);
-            if (match) return { type: match[1].toLowerCase(), text: match[2] };
-            return { type: 'default', text: line.replace(/^-\s*/, '') };
+            if (match) {
+                return { type: match[1].toLowerCase(), text: match[2].trim() };
+            }
+            return { type: 'default', text: line.replace(/^-\s*/, '').trim() };
         });
 
-        return { version, date, changes };
+        return { 
+            version: version?.trim(), 
+            date: date?.trim() || '', 
+            changes: changes.filter(c => c.text)
+        };
     }).filter(Boolean);
 }
 
-/**
- * Универсальное получение содержимого файла (GitHub или локально)
- */
+// -----------------------------
+// GitHub Integration
+// -----------------------------
+
 async function fetchFileContent(filePath, gitPath) {
+    // Локальный режим
     if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
         try {
             const raw = await fs.readFile(filePath, 'utf8');
@@ -205,8 +314,10 @@ async function fetchFileContent(filePath, gitPath) {
         }
     }
 
+    // GitHub режим с повторными попытками
     const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${gitPath}?ref=${GITHUB_BRANCH}`;
-    const res = await fetch(url, {
+    
+    const res = await fetchWithRetry(url, {
         headers: {
             Authorization: `token ${GITHUB_TOKEN}`,
             Accept: 'application/vnd.github.v3+json',
@@ -215,8 +326,8 @@ async function fetchFileContent(filePath, gitPath) {
     });
 
     if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`GitHub fetch failed: ${res.status} ${res.statusText} - ${errText}`);
+        const errText = await res.text().catch(() => 'Unknown error');
+        throw new Error(`GitHub fetch failed: ${res.status} ${res.statusText} - ${errText.slice(0, 200)}`);
     }
 
     const data = await res.json();
@@ -224,25 +335,6 @@ async function fetchFileContent(filePath, gitPath) {
     return { content, sha: data.sha };
 }
 
-/**
- * Загрузка сайтов с кэшированием
- */
-async function loadSites() {
-    const now = Date.now();
-    if (sitesCache.data.length && (now - sitesCache.timestamp) < CACHE_TTL) {
-        return sitesCache.data;
-    }
-
-    const { content } = await fetchFileContent(SAITES_FILE, GITHUB_SAITES_PATH);
-    const data = parseSaites(content);
-    sitesCache = { data, timestamp: now };
-    console.log(`[Cache] Sites updated: ${data.length} loaded`);
-    return data;
-}
-
-/**
- * Обновление файла через GitHub API
- */
 async function updateFileViaGitHub(newContent, sha, gitPath, commitMsg) {
     const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${gitPath}`;
     const body = {
@@ -252,7 +344,7 @@ async function updateFileViaGitHub(newContent, sha, gitPath, commitMsg) {
         sha,
     };
 
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
         method: 'PUT',
         headers: {
             Authorization: `token ${GITHUB_TOKEN}`,
@@ -270,8 +362,32 @@ async function updateFileViaGitHub(newContent, sha, gitPath, commitMsg) {
     return await res.json();
 }
 
+async function loadSites() {
+    const now = Date.now();
+    // Возвращаем кэш если он актуален
+    if (sitesCache.data.length > 0 && (now - sitesCache.timestamp) < CACHE_TTL) {
+        return sitesCache.data;
+    }
+
+    try {
+        const { content } = await fetchFileContent(SAITES_FILE, GITHUB_SAITES_PATH);
+        const data = parseSaites(content);
+        sitesCache = { data, timestamp: now };
+        console.log(`[Cache] Sites updated: ${data.length} loaded`);
+        return data;
+    } catch (err) {
+        console.error('[loadSites] Failed to load sites:', err.message);
+        // Возвращаем старый кэш при ошибке, если он есть
+        if (sitesCache.data.length > 0) {
+            console.log('[loadSites] Using stale cache due to error');
+            return sitesCache.data;
+        }
+        throw err;
+    }
+}
+
 // -----------------------------
-// Middleware проверки токена
+// Admin Token Middleware
 // -----------------------------
 function verifyAdminToken(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -295,143 +411,22 @@ function verifyAdminToken(req, res, next) {
 }
 
 // -----------------------------
-// Маршруты API: Sites
+// Telegram Integration
 // -----------------------------
-
-app.get('/api/sites', async (req, res, next) => {
-    try {
-        const sites = await loadSites();
-        res.json(sites);
-    } catch (err) { next(err); }
-});
-
-app.post('/api/sites/reload', async (req, res, next) => {
-    try {
-        sitesCache.data = [];
-        sitesCache.timestamp = 0;
-        const sites = await loadSites();
-        res.json({ success: true, count: sites.length });
-    } catch (err) { next(err); }
-});
-
-// -----------------------------
-// Маршруты API: Changelog
-// -----------------------------
-
-app.get('/api/changelog', async (req, res, next) => {
-    try {
-        const now = Date.now();
-        if (changelogCache.data && (now - changelogCache.timestamp) < CACHE_TTL) {
-            return res.json(changelogCache.data);
-        }
-
-        const { content } = await fetchFileContent(CHANGELOG_FILE, GITHUB_CHANGELOG_PATH);
-        const data = parseChangelog(content);
-        
-        changelogCache = { data, timestamp: now };
-        res.json(data);
-    } catch (err) { next(err); }
-});
-
-// -----------------------------
-// Маршруты API: Admin
-// -----------------------------
-
-// Получение контента (sites или changelog)
-app.get('/api/admin/content', verifyAdminToken, async (req, res, next) => {
-    try {
-        const { content } = await fetchFileContent(SAITES_FILE, GITHUB_SAITES_PATH);
-        res.json({ content });
-    } catch (err) { next(err); }
-});
-
-app.get('/api/admin/changelog', verifyAdminToken, async (req, res, next) => {
-    try {
-        const { content } = await fetchFileContent(CHANGELOG_FILE, GITHUB_CHANGELOG_PATH);
-        res.json({ content });
-    } catch (err) { next(err); }
-});
-
-// Сохранение контента
-async function handleSave(req, res, next, filePath, gitPath, cacheRef, commitMsg) {
-    try {
-        const { content } = req.body;
-        
-        if (typeof content !== 'string') {
-            return res.status(400).json({ error: 'Content must be a string' });
-        }
-        
-        if (content.length > 500000) {
-            return res.status(413).json({ error: 'Content too large' });
-        }
-
-        if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
-            await fs.writeFile(filePath, content, 'utf8');
-        } else {
-            const { sha } = await fetchFileContent(filePath, gitPath);
-            await updateFileViaGitHub(content, sha, gitPath, commitMsg);
-        }
-
-        // Инвалидация соответствующего кэша
-        if (cacheRef === 'sites') {
-            sitesCache.data = [];
-            sitesCache.timestamp = 0;
-        } else if (cacheRef === 'changelog') {
-            changelogCache.data = null;
-            changelogCache.timestamp = 0;
-        }
-        
-        res.json({ success: true, message: `Saved (${GITHUB_TOKEN ? 'GitHub' : 'Local'})` });
-    } catch (err) { next(err); }
-}
-
-app.post('/api/admin/save', verifyAdminToken, (req, res, next) => {
-    handleSave(req, res, next, SAITES_FILE, GITHUB_SAITES_PATH, 'sites', 'chore: update saites.txt via admin');
-});
-
-app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
-    handleSave(req, res, next, CHANGELOG_FILE, GITHUB_CHANGELOG_PATH, 'changelog', 'docs: update changelog via admin');
-});
-
-
-// -----------------------------
-// API: Add Site / Cooperation Form
-// -----------------------------
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8023768833:AAFhD_V1tKM1jf40oBmwZ51JPFJ2iibkjr4';
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-// Rate limit для форм (30 сек между заявками с одного IP)
-const formRateLimitMap = new Map();
-const FORM_COOLDOWN = 30 * 1000;
-
-function checkFormRateLimit(ip) {
-    const now = Date.now();
-    const last = formRateLimitMap.get(ip);
-    if (last && (now - last) < FORM_COOLDOWN) {
-        return Math.ceil((FORM_COOLDOWN - (now - last)) / 1000);
-    }
-    formRateLimitMap.set(ip, now);
-    return 0;
-}
-
-// Sanitize input
-function sanitize(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
 
 async function sendTelegramMessage(text) {
     if (!TELEGRAM_CHAT_ID) {
         console.error('[Telegram] TELEGRAM_CHAT_ID is not set');
         throw new Error('Telegram не настроен');
     }
+    if (!TELEGRAM_BOT_TOKEN) {
+        console.error('[Telegram] TELEGRAM_BOT_TOKEN is not set');
+        throw new Error('Telegram токен не настроен');
+    }
 
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    const res = await fetch(url, {
+    
+    const res = await fetchWithRetry(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -450,6 +445,7 @@ async function sendTelegramMessage(text) {
     return await res.json();
 }
 
+// Labels для форм
 const CATEGORY_LABELS = {
     other: 'Другое',
     tools: 'Инструменты',
@@ -477,7 +473,120 @@ const BUDGET_LABELS = {
     enterprise: 'Более 1 000 000 ₽'
 };
 
-// POST /api/add/saite
+// -----------------------------
+// API Routes: Sites
+// -----------------------------
+
+app.get('/api/sites', async (req, res, next) => {
+    try {
+        const sites = await loadSites();
+        res.json(sites);
+    } catch (err) { 
+        console.error('[GET /api/sites]', err);
+        next(err); 
+    }
+});
+
+app.post('/api/sites/reload', async (req, res, next) => {
+    try {
+        // Принудительная инвалидация кэша
+        sitesCache.data = [];
+        sitesCache.timestamp = 0;
+        const sites = await loadSites();
+        res.json({ success: true, count: sites.length });
+    } catch (err) { 
+        console.error('[POST /api/sites/reload]', err);
+        next(err); 
+    }
+});
+
+// -----------------------------
+// API Routes: Changelog
+// -----------------------------
+
+app.get('/api/changelog', async (req, res, next) => {
+    try {
+        const now = Date.now();
+        if (changelogCache.data && (now - changelogCache.timestamp) < CACHE_TTL) {
+            return res.json(changelogCache.data);
+        }
+
+        const { content } = await fetchFileContent(CHANGELOG_FILE, GITHUB_CHANGELOG_PATH);
+        const data = parseChangelog(content);
+        
+        changelogCache = { data, timestamp: now };
+        res.json(data);
+    } catch (err) { 
+        console.error('[GET /api/changelog]', err);
+        next(err); 
+    }
+});
+
+// -----------------------------
+// API Routes: Admin
+// -----------------------------
+
+app.get('/api/admin/content', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = await fetchFileContent(SAITES_FILE, GITHUB_SAITES_PATH);
+        res.json({ content });
+    } catch (err) { next(err); }
+});
+
+app.get('/api/admin/changelog', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = await fetchFileContent(CHANGELOG_FILE, GITHUB_CHANGELOG_PATH);
+        res.json({ content });
+    } catch (err) { next(err); }
+});
+
+async function handleSave(req, res, next, filePath, gitPath, cacheRef, commitMsg) {
+    try {
+        const { content } = req.body;
+        
+        if (typeof content !== 'string') {
+            return res.status(400).json({ error: 'Content must be a string' });
+        }
+        
+        if (content.length > MAX_CONTENT_LENGTH) {
+            return res.status(413).json({ error: 'Content too large' });
+        }
+
+        if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+            await fs.writeFile(filePath, content, 'utf8');
+        } else {
+            const { sha } = await fetchFileContent(filePath, gitPath);
+            await updateFileViaGitHub(content, sha, gitPath, commitMsg);
+        }
+
+        // Инвалидация кэша
+        if (cacheRef === 'sites') {
+            sitesCache.data = [];
+            sitesCache.timestamp = 0;
+        } else if (cacheRef === 'changelog') {
+            changelogCache.data = null;
+            changelogCache.timestamp = 0;
+        }
+        
+        res.json({ success: true, message: `Saved (${GITHUB_TOKEN ? 'GitHub' : 'Local'})` });
+    } catch (err) { 
+        console.error('[handleSave]', err);
+        next(err); 
+    }
+}
+
+app.post('/api/admin/save', verifyAdminToken, (req, res, next) => {
+    handleSave(req, res, next, SAITES_FILE, GITHUB_SAITES_PATH, 'sites', 'chore: update saites.txt via admin');
+});
+
+app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
+    handleSave(req, res, next, CHANGELOG_FILE, GITHUB_CHANGELOG_PATH, 'changelog', 'docs: update changelog via admin');
+});
+
+// -----------------------------
+// API Routes: Forms
+// -----------------------------
+
 app.post('/api/add/saite', async (req, res, next) => {
     try {
         const waitSeconds = checkFormRateLimit(req.ip);
@@ -489,14 +598,14 @@ app.post('/api/add/saite', async (req, res, next) => {
 
         const { title, url, description, category, authorName, email, telegram } = req.body;
 
-        // Validation
-        if (!title || title.trim().length < 3) {
+        // Валидация
+        if (!title || title.trim().length < MIN_TITLE_LENGTH) {
             return res.status(400).json({ error: 'Название должно содержать минимум 3 символа' });
         }
-        if (!url || !/^https?:\/\/[^\s]+$/.test(url)) {
+        if (!url || !isValidUrl(normalizeUrl(url))) {
             return res.status(400).json({ error: 'Некорректный URL' });
         }
-        if (!description || description.trim().length < 20) {
+        if (!description || description.trim().length < MIN_DESCRIPTION_LENGTH) {
             return res.status(400).json({ error: 'Описание слишком короткое (минимум 20 символов)' });
         }
         if (!authorName || authorName.trim().length < 2) {
@@ -506,22 +615,22 @@ app.post('/api/add/saite', async (req, res, next) => {
             return res.status(400).json({ error: 'Некорректный email' });
         }
 
-        // Send to Telegram
+        // Формирование сообщения (данные не экранируются сервером, клиент должен делать это при отображении)
         const message =
 `🌐 <b>НОВАЯ ЗАЯВКА: Добавление сайта</b>
 
-<b>Название:</b> ${sanitize(title)}
-<b>URL:</b> ${sanitize(url)}
+<b>Название:</b> ${title}
+<b>URL:</b> ${normalizeUrl(url)}
 <b>Категория:</b> ${CATEGORY_LABELS[category] || 'Другое'}
 
 <b>Описание:</b>
-${sanitize(description)}
+${description}
 
 ━━━━━━━━━━━━━━━━━
 
 <b>Контакты:</b>
-👤 ${sanitize(authorName)}
-📧 ${sanitize(email)}${telegram ? `\n💬 ${sanitize(telegram)}` : ''}
+👤 ${authorName}
+📧 ${email}${telegram ? `\n💬 ${telegram}` : ''}
 
 🕐 ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
 
@@ -534,7 +643,6 @@ ${sanitize(description)}
     }
 });
 
-// POST /api/add/corp
 app.post('/api/add/corp', async (req, res, next) => {
     try {
         const waitSeconds = checkFormRateLimit(req.ip);
@@ -546,7 +654,7 @@ app.post('/api/add/corp', async (req, res, next) => {
 
         const { name, company, email, telegram, type, message, budget, website } = req.body;
 
-        // Validation
+        // Валидация
         if (!name || name.trim().length < 2) {
             return res.status(400).json({ error: 'Укажите имя' });
         }
@@ -556,14 +664,14 @@ app.post('/api/add/corp', async (req, res, next) => {
         if (!type || !CORP_TYPE_LABELS[type]) {
             return res.status(400).json({ error: 'Выберите тип сотрудничества' });
         }
-        if (!message || message.trim().length < 20) {
+        if (!message || message.trim().length < MIN_DESCRIPTION_LENGTH) {
             return res.status(400).json({ error: 'Сообщение слишком короткое (минимум 20 символов)' });
         }
-        if (website && !/^https?:\/\/[^\s]+$/.test(website)) {
+        if (website && !isValidUrl(normalizeUrl(website))) {
             return res.status(400).json({ error: 'Некорректный URL сайта' });
         }
 
-        // Send to Telegram
+        // Формирование сообщения
         const tgMessage =
 `🤝 <b>НОВАЯ ЗАЯВКА: Сотрудничество</b>
 
@@ -571,15 +679,15 @@ app.post('/api/add/corp', async (req, res, next) => {
 ${budget && BUDGET_LABELS[budget] ? `<b>Бюджет:</b> ${BUDGET_LABELS[budget]}` : ''}
 
 <b>От кого:</b>
-👤 ${sanitize(name)}${company ? `\n🏢 ${sanitize(company)}` : ''}${website ? `\n🌐 ${sanitize(website)}` : ''}
+👤 ${name}${company ? `\n🏢 ${company}` : ''}${website ? `\n🌐 ${normalizeUrl(website)}` : ''}
 
 <b>Сообщение:</b>
-${sanitize(message)}
+${message}
 
 ━━━━━━━━━━━━━━━━━
 
 <b>Контакты:</b>
-📧 ${sanitize(email)}${telegram ? `\n💬 ${sanitize(telegram)}` : ''}
+📧 ${email}${telegram ? `\n💬 ${telegram}` : ''}
 
 🕐 ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
 
@@ -592,19 +700,12 @@ ${sanitize(message)}
     }
 });
 
-
 // -----------------------------
-// YouTube: Channel Data API
+// YouTube Integration
 // -----------------------------
-const YOUTUBE_HANDLE = 'MRPakeleksis';
 
-let ytChannelCache = { data: null, timestamp: 0 };
-let ytVideosCache = { data: null, timestamp: 0 };
-const YT_CACHE_TTL = 5 * 60 * 1000;
-
-// Общая функция получения channel_id (используется и channel, и videos)
 async function getYouTubeChannelId() {
-    const response = await fetch(`https://www.youtube.com/@${YOUTUBE_HANDLE}`, {
+    const response = await fetchWithRetry(`https://www.youtube.com/@${YOUTUBE_HANDLE}`, {
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8',
@@ -639,10 +740,12 @@ async function getYouTubeChannelId() {
             const metadataStr = ytDataMatch[1];
             const subMatch = metadataStr.match(/"subscriberCountText":\{"simpleText":"([^"]+)"/);
             if (subMatch) subscribers = subMatch[1];
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[YouTube] Failed to parse subscribers:', e);
+        }
     }
 
-    const channelData = {
+    return {
         handle: `@${YOUTUBE_HANDLE}`,
         name: extractMeta('og:title') || YOUTUBE_HANDLE,
         description: extractMeta('og:description') || '',
@@ -651,8 +754,6 @@ async function getYouTubeChannelId() {
         subscribers: subscribers || '—',
         url: `https://www.youtube.com/@${YOUTUBE_HANDLE}`
     };
-
-    return channelData;
 }
 
 function decodeXmlEntities(str) {
@@ -666,7 +767,6 @@ function decodeXmlEntities(str) {
         .replace(/&apos;/g, "'");
 }
 
-// GET /api/youtube/channel
 app.get('/api/youtube/channel', async (req, res, next) => {
     try {
         const now = Date.now();
@@ -679,11 +779,14 @@ app.get('/api/youtube/channel', async (req, res, next) => {
         res.json(channelData);
     } catch (err) {
         console.error('[youtube/channel]', err.message);
+        // Возвращаем кэш при ошибке если есть
+        if (ytChannelCache.data) {
+            return res.json(ytChannelCache.data);
+        }
         res.status(500).json({ error: err.message });
     }
 });
 
-// GET /api/youtube/videos
 app.get('/api/youtube/videos', async (req, res, next) => {
     try {
         const now = Date.now();
@@ -691,7 +794,6 @@ app.get('/api/youtube/videos', async (req, res, next) => {
             return res.json(ytVideosCache.data);
         }
 
-        // Получаем channel_id (через общую функцию, без fetch к самому себе)
         let channelId = ytChannelCache.data?.channelId;
         
         if (!channelId) {
@@ -704,8 +806,7 @@ app.get('/api/youtube/videos', async (req, res, next) => {
             return res.status(404).json({ error: 'Channel ID not found. Проверьте YOUTUBE_HANDLE.' });
         }
 
-        // Получаем RSS feed
-        const rssRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
+        const rssRes = await fetchWithRetry(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
@@ -717,8 +818,6 @@ app.get('/api/youtube/videos', async (req, res, next) => {
         }
         
         const xml = await rssRes.text();
-        
-        // Парсинг XML
         const videos = [];
         const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
         let entryMatch;
@@ -758,12 +857,16 @@ app.get('/api/youtube/videos', async (req, res, next) => {
         res.json(videos);
     } catch (err) {
         console.error('[youtube/videos]', err.message);
+        // Возвращаем кэш при ошибке если есть
+        if (ytVideosCache.data) {
+            return res.json(ytVideosCache.data);
+        }
         res.status(500).json({ error: err.message });
     }
 });
 
 // -----------------------------
-// Статические страницы и ошибки
+// Error Handling & 404
 // -----------------------------
 
 app.use((req, res) => {
@@ -779,25 +882,51 @@ app.use((err, req, res, next) => {
 });
 
 // -----------------------------
-// Запуск сервера
+// Server Startup & Shutdown
 // -----------------------------
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Oris Server running on port ${PORT}`);
-    console.log(`🔒 Security: Helmet enabled, Rate limiting active`);
-    console.log(`💾 Storage: ${GITHUB_TOKEN ? 'GitHub API' : 'Local Filesystem'}`);
+
+// Проверка критических переменных при старте
+if (!ADMIN_TOKEN) {
+    console.warn('WARNING: ADMIN_TOKEN is not set. Admin panel will be inaccessible.');
+}
+
+// Разделение локальной и serverless-среды
+if (require.main === module) {
+    // Локальный запуск (node proxy.js)
+    const server = app.listen(PORT, () => {
+        console.log(`Oris Server running on port ${PORT}`);
+        console.log(`Security: Helmet enabled, Rate limiting active`);
+        console.log(`Storage: ${GITHUB_TOKEN ? 'GitHub API' : 'Local Filesystem'}`);
+    });
+
+    const shutdown = () => {
+        console.log('\nShutting down gracefully...');
+        server.close(() => {
+            console.log('Server closed');
+            process.exit(0);
+        });
+        setTimeout(() => {
+            console.error('Forced shutdown');
+            process.exit(1);
+        }, 10000);
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+}
+
+// Глобальные обработчики ошибок
+process.on('uncaughtException', (err) => {
+    console.error('[Uncaught Exception]', err);
+    process.exit(1);
 });
 
-const shutdown = () => {
-    console.log('\nShutting down gracefully...');
-    server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-    });
-    setTimeout(() => {
-        console.error('Forced shutdown');
-        process.exit(1);
-    }, 10000);
-};
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Unhandled Rejection]', reason);
+    process.exit(1);
+});
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+// -----------------------------
+// Экспорт приложения для Vercel Serverless
+// -----------------------------
+module.exports = app;

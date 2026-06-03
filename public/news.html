@@ -2444,21 +2444,25 @@ Level Badges
             }
 
             // ============================================
-            // Обработка URL параметров
-            // ============================================
-            function handleUrlParams() {
-                const params = new URLSearchParams(window.location.search);
-                const commentsId = params.get('comments');
-                const shareId = params.get('share');
+// Обработка URL параметров
+// ============================================
+function handleUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const commentsId = params.get('comments');
+    const shareId = params.get('share');
+    const sharedId = params.get('shared');
 
-                if (commentsId) {
-                    // Ждём загрузки постов, потом открываем модалку
-                    setTimeout(() => openCommentsModal(commentsId), 500);
-                }
-                if (shareId) {
-                    setTimeout(() => openShareModal(shareId), 500);
-                }
-            }
+    if (commentsId) {
+        setTimeout(() => openCommentsModal(commentsId), 500);
+    }
+    if (sharedId) {
+        // Открываем сам пост (модалку комментариев) при переходе по shared-ссылке
+        setTimeout(() => openCommentsModal(sharedId), 500);
+    }
+    if (shareId) {
+        setTimeout(() => openShareModal(shareId), 500);
+    }
+}
 
             // ============================================
             // Рендер области авторизации
@@ -3336,31 +3340,36 @@ ${levelBadge}
     const isAdmin = comment.authorRole === 'admin';
     const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(comment.authorId);
     const authorName = isAdmin ? 'Oris' : Security.safeText(comment.authorName || 'Аноним');
+    
+    // Явная нормализация булевых значений
+    const isLiked = comment.isLiked === true || comment.isLiked === 1 || comment.isLiked === 'true';
+    const isDisliked = comment.isDisliked === true || comment.isDisliked === 1 || comment.isDisliked === 'true';
+    
     const verifiedBadge = isAdmin ? `
         <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
             <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>` : '';
-    // ИСПРАВЛЕНО: было post.authorLevel, теперь comment.authorLevel
+    
     const levelBadge = !isAdmin && comment.authorLevel ? (() => {
         const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
         const label = labels[comment.authorLevel];
         if (!label) return '';
         return `<span class="level-badge level-${comment.authorLevel}">${label}</span>`;
     })() : '';
-
+    
     const isOwner = State.user && State.user.id === comment.authorId;
     const canManage = State.user && State.user.role === 'admin';
-
+    
     const pinnedBadge = comment.isPinned ? `
         <span class="comment-pinned-badge">
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
             Закреплён
         </span>
     ` : '';
-
+    
     const editedMark = comment.isEdited ? `<span class="comment-edited">(изменено)</span>` : '';
-
-    const replyToHtml = comment.parentId 
+    
+    const replyToHtml = comment.parentId
         ? (() => {
             const parent = State.comments.find(c => c.id === comment.parentId);
             if (parent) {
@@ -3370,18 +3379,18 @@ ${levelBadge}
             return '';
         })()
         : '';
-
+    
     const actions = [];
     if (State.user) {
         actions.push(`
-            <button class="comment-action-btn ${comment.isLiked ? 'liked' : ''}" data-comment-action="like" data-comment-id="${comment.id}">
-                <svg fill="${comment.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
+            <button class="comment-action-btn ${isLiked ? 'liked' : ''}" data-comment-action="like" data-comment-id="${comment.id}">
+                <svg fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
                 ${comment.likes || 0}
             </button>
         `);
         actions.push(`
-            <button class="comment-action-btn ${comment.isDisliked ? 'disliked' : ''}" data-comment-action="dislike" data-comment-id="${comment.id}">
-                <svg fill="${comment.isDisliked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
+            <button class="comment-action-btn ${isDisliked ? 'disliked' : ''}" data-comment-action="dislike" data-comment-id="${comment.id}">
+                <svg fill="${isDisliked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
                 ${comment.dislikes || 0}
             </button>
         `);
@@ -3416,7 +3425,7 @@ ${levelBadge}
             </button>
         `);
     }
-
+    
     const commentHtml = `
         <div class="comment ${comment.isPinned ? 'pinned' : ''}" data-comment-id="${comment.id}">
             <div class="comment-avatar">
@@ -3439,11 +3448,11 @@ ${levelBadge}
             </div>
         </div>
     `;
-
+    
     const repliesHtml = comment.replies && comment.replies.length > 0
         ? `<div class="comment-replies">${comment.replies.map(r => renderCommentNode(r, depth + 1)).join('')}</div>`
         : '';
-
+    
     return commentHtml + repliesHtml;
 }
 
@@ -3681,29 +3690,30 @@ ${levelBadge}
             // Share Modal
             // ============================================
             function openShareModal(postId) {
-                const post = State.posts.find(p => p.id === postId);
-                if (!post) return;
-
-                State.currentPostId = postId;
-                const shareUrl = `${window.location.origin}/news?share=${postId}`;
-                const commentsUrl = `${window.location.origin}/news?comments=${postId}`;
-
-                document.getElementById('sharePostTitle').textContent = post.title;
-                document.getElementById('shareLinkInput').value = shareUrl;
-
-                const encodedUrl = encodeURIComponent(shareUrl);
-                const encodedTitle = encodeURIComponent(post.title);
-
-                document.getElementById('shareTelegram').href = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
-                document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-                document.getElementById('shareVK').href = `https://vk.com/share.php?url=${encodedUrl}&title=${encodedTitle}`;
-                document.getElementById('shareEmail').href = `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
-
-                UI.openModal('shareModal');
-
-                // Update URL
-                window.history.replaceState({}, '', `?share=${postId}`);
-            }
+    const post = State.posts.find(p => p.id === postId);
+    if (!post) return;
+    
+    State.currentPostId = postId;
+    
+    // Ссылка для копирования и шаринга использует ?shared= (открывает пост)
+    const shareUrl = `${window.location.origin}/news?shared=${postId}`;
+    
+    document.getElementById('sharePostTitle').textContent = post.title;
+    document.getElementById('shareLinkInput').value = shareUrl;
+    
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedTitle = encodeURIComponent(post.title);
+    
+    document.getElementById('shareTelegram').href = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
+    document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+    document.getElementById('shareVK').href = `https://vk.com/share.php?url=${encodedUrl}&title=${encodedTitle}`;
+    document.getElementById('shareEmail').href = `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+    
+    UI.openModal('shareModal');
+    
+    // Обновляем URL текущей страницы (админ открыл шаринг)
+    window.history.replaceState({}, '', `?share=${postId}`);
+}
 
             function bindShareEvents() {
                 document.getElementById('copyLinkBtn').addEventListener('click', async () => {
@@ -3753,40 +3763,39 @@ ${levelBadge}
             }
 
             // ============================================
-            // Close modal handlers
-            // ============================================
-            function bindModalCloseEvents() {
-                document.addEventListener('click', (e) => {
-                    if (e.target.matches('[data-close-modal]')) {
-                        const overlay = e.target.closest('.modal-overlay');
-                        if (overlay) {
-                            UI.closeModal(overlay.id);
-                            // Очистка URL при закрытии comments/share
-                            if (overlay.id === 'commentsModal' || overlay.id === 'shareModal') {
-                                window.history.replaceState({}, '', '/news');
-                            }
-                        }
-                    }
-                    if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
-                        UI.closeModal(e.target.id);
-                        if (e.target.id === 'commentsModal' || e.target.id === 'shareModal') {
-                            window.history.replaceState({}, '', '/news');
-                        }
-                    }
-                });
-
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        const active = document.querySelector('.modal-overlay.active');
-                        if (active) {
-                            UI.closeModal(active.id);
-                            if (active.id === 'commentsModal' || active.id === 'shareModal') {
-                                window.history.replaceState({}, '', '/news');
-                            }
-                        }
-                    }
-                });
+// Close modal handlers
+// ============================================
+function bindModalCloseEvents() {
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('[data-close-modal]')) {
+            const overlay = e.target.closest('.modal-overlay');
+            if (overlay) {
+                UI.closeModal(overlay.id);
+                if (overlay.id === 'commentsModal' || overlay.id === 'shareModal') {
+                    window.history.replaceState({}, '', '/news');
+                }
             }
+        }
+        if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+            UI.closeModal(e.target.id);
+            if (e.target.id === 'commentsModal' || e.target.id === 'shareModal') {
+                window.history.replaceState({}, '', '/news');
+            }
+        }
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const active = document.querySelector('.modal-overlay.active');
+            if (active) {
+                UI.closeModal(active.id);
+                if (active.id === 'commentsModal' || active.id === 'shareModal') {
+                    window.history.replaceState({}, '', '/news');
+                }
+            }
+        }
+    });
+}
 
             // ============================================
             // Utilities

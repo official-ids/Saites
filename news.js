@@ -1,6 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const multer = require('multer');
+const path = require('path');
 const { put } = require('@vercel/blob');
 const { kv } = require('@vercel/kv');
 
@@ -17,6 +18,12 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const READER_ID_MIN = 1000;
 const READER_ID_MAX = 9999;
+
+// Разрешенные MIME-типы для загрузки
+const ALLOWED_MIMETYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+    'application/pdf', 'video/mp4'
+];
 
 // -----------------------------
 // Префиксы ключей KV
@@ -36,8 +43,27 @@ const K = {
     USER_COMMENTS: (userId) => `news:user_comments:${userId}`,
     USER_STATS: (id) => `news:stats:${id}`,
     USER_LEVEL: (id) => `news:level:${id}`,
-    POSTS_INDEX: 'news:posts:index'  // ← ДОБАВИТЬ ЭТУ СТРОКУ
+    POSTS_INDEX: 'news:posts:index'
 };
+
+// -----------------------------
+// Вспомогательные функции работы с KV
+// -----------------------------
+
+/**
+ * Пакетное получение ключей с учетом лимитов Vercel KV
+ */
+async function mgetChunked(keys, chunkSize = 100) {
+    const results = [];
+    for (let i = 0; i < keys.length; i += chunkSize) {
+        const chunk = keys.slice(i, i + chunkSize);
+        if (chunk.length > 0) {
+            const res = await kv.mget(...chunk);
+            results.push(...res);
+        }
+    }
+    return results;
+}
 
 // -----------------------------
 // Система уровней
@@ -46,29 +72,21 @@ const LEVEL_THRESHOLDS = {
     newbie: { comments: 0, likesReceived: 0 },
     active: { comments: 10, likesReceived: 20 },
     expert: { comments: 50, likesReceived: 100 },
-    plus: { comments: 200, likesReceived: 500 } // только вручную или по достижению
+    plus: { comments: 200, likesReceived: 500 }
 };
 
 async function calculateUserLevel(userId) {
     if (!userId || userId === 'admin') return 'admin';
     
     const currentLevel = await kv.get(K.USER_LEVEL(userId)) || 'newbie';
-    
-    // Admin-выданный Plus не понижается автоматически
     if (currentLevel === 'plus') return 'plus';
     
     const stats = await kv.get(K.USER_STATS(userId)) || { comments: 0, likesReceived: 0 };
     
     let newLevel = 'newbie';
-    if (stats.comments >= LEVEL_THRESHOLDS.active.comments && stats.likesReceived >= LEVEL_THRESHOLDS.active.likesReceived) {
-        newLevel = 'active';
-    }
-    if (stats.comments >= LEVEL_THRESHOLDS.expert.comments && stats.likesReceived >= LEVEL_THRESHOLDS.expert.likesReceived) {
-        newLevel = 'expert';
-    }
-    if (stats.comments >= LEVEL_THRESHOLDS.plus.comments && stats.likesReceived >= LEVEL_THRESHOLDS.plus.likesReceived) {
-        newLevel = 'plus';
-    }
+    if (stats.comments >= LEVEL_THRESHOLDS.active.comments && stats.likesReceived >= LEVEL_THRESHOLDS.active.likesReceived) newLevel = 'active';
+    if (stats.comments >= LEVEL_THRESHOLDS.expert.comments && stats.likesReceived >= LEVEL_THRESHOLDS.expert.likesReceived) newLevel = 'expert';
+    if (stats.comments >= LEVEL_THRESHOLDS.plus.comments && stats.likesReceived >= LEVEL_THRESHOLDS.plus.likesReceived) newLevel = 'plus';
     
     if (newLevel !== currentLevel) {
         await kv.set(K.USER_LEVEL(userId), newLevel);
@@ -93,7 +111,7 @@ async function incrementUserStats(userId, field, delta = 1) {
 }
 
 // -----------------------------
-// Middleware: Аутентификация (опциональная)
+// Middleware: Аутентификация
 // -----------------------------
 async function optionalAuth(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -101,19 +119,12 @@ async function optionalAuth(req, res, next) {
         const token = authHeader.split(' ')[1];
         try {
             const session = await kv.get(K.SESSION(token));
-            if (session) {
-                req.user = session;
-            }
-        } catch (e) {
-            // Игнорируем ошибки KV при опциональной авторизации
-        }
+            if (session) req.user = session;
+        } catch (e) { /* Игнорируем ошибки KV */ }
     }
     next();
 }
 
-// -----------------------------
-// Middleware: Обязательная аутентификация
-// -----------------------------
 async function requireAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -123,9 +134,7 @@ async function requireAuth(req, res, next) {
     const token = authHeader.split(' ')[1];
     try {
         const session = await kv.get(K.SESSION(token));
-        if (!session) {
-            return res.status(401).json({ error: 'Сессия истекла' });
-        }
+        if (!session) return res.status(401).json({ error: 'Сессия истекла' });
         req.user = session;
         next();
     } catch (e) {
@@ -133,9 +142,6 @@ async function requireAuth(req, res, next) {
     }
 }
 
-// -----------------------------
-// Middleware: Только администратор
-// -----------------------------
 function requireAdmin(req, res, next) {
     if (!req.user || req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Требуются права администратора' });
@@ -151,26 +157,23 @@ function generateToken() {
 }
 
 async function generateReaderId() {
-    // Атомарный инкремент счётчика читателей
     const counter = await kv.incr(K.COUNTER('readers'));
-    // Первый читатель получает 1000
     const id = READER_ID_MIN + counter - 1;
     
     if (id > READER_ID_MAX) {
-        throw new Error('Достигнут лимит пользователей. Обратитесь к администратору.');
+        throw new Error('Достигнут лимит пользователей.');
     }
     
     return String(id).padStart(4, '0');
 }
 
 // -----------------------------
-// Вспомогательные функции
+// Формирование объектов с данными пользователя
 // -----------------------------
 async function getPostWithUserData(postId, userId) {
     const post = await kv.get(K.POST(postId));
     if (!post) return null;
 
-    // Счётчики likes/dislikes/commentsCount уже есть в объекте поста
     if (post.likes === undefined) post.likes = 0;
     if (post.dislikes === undefined) post.dislikes = 0;
     if (post.commentsCount === undefined) post.commentsCount = 0;
@@ -215,30 +218,19 @@ async function getCommentWithUserData(commentId, userId) {
 // МАРШРУТЫ: Аутентификация
 // -----------------------------
 
-// Регистрация (читатель или администратор)
 router.post('/auth/register', async (req, res) => {
     try {
         const { nickname, role, adminToken } = req.body;
 
-                if (role === 'admin') {
-            // Проверка admin token
-            if (!ADMIN_TOKEN) {
-                return res.status(500).json({ error: 'Admin token не настроен на сервере' });
-            }
+        if (role === 'admin') {
+            if (!ADMIN_TOKEN) return res.status(500).json({ error: 'Admin token не настроен' });
             
-            // Безопасное сравнение токенов (timing-safe)
             const isTokenValid = adminToken 
-    && adminToken.length === ADMIN_TOKEN.length
-    && crypto.timingSafeEqual(
-        Buffer.from(adminToken), 
-        Buffer.from(ADMIN_TOKEN)
-    );
+                && adminToken.length === ADMIN_TOKEN.length
+                && crypto.timingSafeEqual(Buffer.from(adminToken), Buffer.from(ADMIN_TOKEN));
             
-            if (!isTokenValid) {
-                return res.status(403).json({ error: 'Неверный admin token' });
-            }
+            if (!isTokenValid) return res.status(403).json({ error: 'Неверный admin token' });
 
-            // Проверяем, существует ли уже админ
             const existingAdmin = await kv.get(K.USER('admin'));
             const adminId = 'admin';
             
@@ -250,13 +242,10 @@ router.post('/auth/register', async (req, res) => {
                 createdAt: new Date().toISOString()
             };
 
-            if (!existingAdmin) {
-                await kv.set(K.USER(adminId), adminUser);
-            }
+            if (!existingAdmin) await kv.set(K.USER(adminId), adminUser);
 
-            // Создаём сессию
             const token = generateToken();
-            await kv.set(K.SESSION(token), adminUser, { ex: 60 * 60 * 24 * 30 }); // 30 дней
+            await kv.set(K.SESSION(token), adminUser, { ex: 60 * 60 * 24 * 30 });
 
             return res.json({ user: { ...adminUser, token } });
         }
@@ -270,10 +259,9 @@ router.post('/auth/register', async (req, res) => {
                 return res.status(400).json({ error: 'Имя должно содержать минимум 2 символа' });
             }
 
-            // Генерируем уникальный ID
             const readerId = await generateReaderId();
 
-                        const readerUser = {
+            const readerUser = {
                 id: readerId,
                 role: 'reader',
                 nickname: cleanNickname,
@@ -285,9 +273,8 @@ router.post('/auth/register', async (req, res) => {
             await kv.set(K.USER_LEVEL(readerId), 'newbie');
             await kv.set(K.USER_STATS(readerId), { comments: 0, likesReceived: 0 });
 
-            // Создаём сессию
             const token = generateToken();
-            await kv.set(K.SESSION(token), readerUser, { ex: 60 * 60 * 24 * 365 }); // 1 год
+            await kv.set(K.SESSION(token), readerUser, { ex: 60 * 60 * 24 * 365 });
 
             return res.json({ user: { ...readerUser, token } });
         }
@@ -299,7 +286,6 @@ router.post('/auth/register', async (req, res) => {
     }
 });
 
-// Вход читателя по ID
 router.post('/auth/login', async (req, res) => {
     try {
         const { readerId } = req.body;
@@ -309,11 +295,8 @@ router.post('/auth/login', async (req, res) => {
         }
 
         const user = await kv.get(K.USER(readerId));
-        if (!user) {
-            return res.status(404).json({ error: 'Пользователь с таким ID не найден' });
-        }
+        if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
 
-        // Создаём новую сессию
         const token = generateToken();
         await kv.set(K.SESSION(token), user, { ex: 60 * 60 * 24 * 365 });
 
@@ -324,13 +307,10 @@ router.post('/auth/login', async (req, res) => {
     }
 });
 
-// Текущий пользователь
 router.get('/auth/me', requireAuth, async (req, res) => {
     try {
         const user = await kv.get(K.USER(req.user.id));
-        if (!user) {
-            return res.status(404).json({ error: 'Пользователь не найден' });
-        }
+        if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
         user.level = await getUserLevel(req.user.id);
         return res.json(user);
     } catch (err) {
@@ -343,54 +323,51 @@ router.get('/auth/me', requireAuth, async (req, res) => {
 // МАРШРУТЫ: Посты
 // -----------------------------
 
-// Получить все посты
 router.get('/posts', optionalAuth, async (req, res) => {
     try {
-        // Получаем все ID постов из индекса (быстро, 1 запрос)
+        const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+
         const postIds = await kv.smembers(K.POSTS_INDEX);
-        
         if (!postIds || postIds.length === 0) {
-            return res.json({ posts: [] });
+            return res.json({ posts: [], total: 0, page, limit });
         }
 
-        // Массовое получение всех постов одним запросом (вместо N запросов)
         const keys = postIds.map(id => K.POST(id));
-        const postsData = await kv.mget(...keys);
+        const postsData = await mgetChunked(keys);
+
+        // Фильтрация и сортировка по дате создания (новые сверху)
+        const validPosts = postsData
+            .filter(p => p && p.id)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const total = validPosts.length;
+        const startIndex = (page - 1) * limit;
+        const paginatedPosts = validPosts.slice(startIndex, startIndex + limit);
 
         const posts = [];
         const userId = req.user?.id;
 
-        for (const post of postsData) {
-            if (post) {
-                const enriched = await getPostWithUserData(post.id, userId);
-                if (enriched) posts.push(enriched);
-            }
+        for (const post of paginatedPosts) {
+            const enriched = await getPostWithUserData(post.id, userId);
+            if (enriched) posts.push(enriched);
         }
 
-        return res.json({ posts });
+        return res.json({ posts, total, page, limit });
     } catch (err) {
         console.error('[news/posts GET]', err);
         return res.status(500).json({ error: 'Ошибка загрузки постов' });
     }
 });
 
-// Создать пост (только админ)
 router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { title, content, files } = req.body;
 
-        if (!title || typeof title !== 'string' || !title.trim()) {
-            return res.status(400).json({ error: 'Укажите заголовок' });
-        }
-        if (!content || typeof content !== 'string' || !content.trim()) {
-            return res.status(400).json({ error: 'Укажите содержание' });
-        }
-        if (title.length > 200) {
-            return res.status(400).json({ error: 'Заголовок слишком длинный' });
-        }
-        if (content.length > 100000) {
-            return res.status(400).json({ error: 'Содержание слишком длинное' });
-        }
+        if (!title || typeof title !== 'string' || !title.trim()) return res.status(400).json({ error: 'Укажите заголовок' });
+        if (!content || typeof content !== 'string' || !content.trim()) return res.status(400).json({ error: 'Укажите содержание' });
+        if (title.length > 200) return res.status(400).json({ error: 'Заголовок слишком длинный' });
+        if (content.length > 100000) return res.status(400).json({ error: 'Содержание слишком длинное' });
 
         const postId = crypto.randomUUID();
         const now = new Date().toISOString();
@@ -406,9 +383,9 @@ router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
             createdAt: now,
             updatedAt: now,
             isPinned: false,
-            likes: 0,           // ← ДОБАВИТЬ
-            dislikes: 0,        // ← ДОБАВИТЬ
-            commentsCount: 0    // ← ДОБАВИТЬ
+            likes: 0,
+            dislikes: 0,
+            commentsCount: 0
         };
 
         await kv.set(K.POST(postId), post);
@@ -422,23 +399,16 @@ router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// Обновить пост (только админ)
 router.put('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { title, content, files } = req.body;
 
         const existing = await kv.get(K.POST(id));
-        if (!existing) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!existing) return res.status(404).json({ error: 'Пост не найден' });
 
-        if (!title || !title.trim()) {
-            return res.status(400).json({ error: 'Укажите заголовок' });
-        }
-        if (!content || !content.trim()) {
-            return res.status(400).json({ error: 'Укажите содержание' });
-        }
+        if (!title || !title.trim()) return res.status(400).json({ error: 'Укажите заголовок' });
+        if (!content || !content.trim()) return res.status(400).json({ error: 'Укажите содержание' });
 
         const updated = {
             ...existing,
@@ -449,7 +419,6 @@ router.put('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
         };
 
         await kv.set(K.POST(id), updated);
-
         const enriched = await getPostWithUserData(id, req.user.id);
         return res.json({ post: enriched });
     } catch (err) {
@@ -458,30 +427,29 @@ router.put('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// Удалить пост (только админ)
 router.delete('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
 
         const existing = await kv.get(K.POST(id));
-        if (!existing) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!existing) return res.status(404).json({ error: 'Пост не найден' });
 
-        // Удаляем все комментарии поста
         const commentIds = await kv.smembers(K.POST_COMMENTS(id));
+        const deletePromises = [];
+        
         for (const cid of commentIds) {
-            await kv.del(K.COMMENT(cid));
-            await kv.del(K.COMMENT_LIKES(cid));
-            await kv.del(K.COMMENT_DISLIKES(cid));
+            deletePromises.push(kv.del(K.COMMENT(cid)));
+            deletePromises.push(kv.del(K.COMMENT_LIKES(cid)));
+            deletePromises.push(kv.del(K.COMMENT_DISLIKES(cid)));
         }
 
-        // Удаляем сам пост и связанные данные
-        await kv.del(K.POST(id));
-        await kv.srem(K.POSTS_INDEX, id);
-        await kv.del(K.POST_LIKES(id));
-        await kv.del(K.POST_DISLIKES(id));
-        await kv.del(K.POST_COMMENTS(id));
+        deletePromises.push(kv.del(K.POST(id)));
+        deletePromises.push(kv.srem(K.POSTS_INDEX, id));
+        deletePromises.push(kv.del(K.POST_LIKES(id)));
+        deletePromises.push(kv.del(K.POST_DISLIKES(id)));
+        deletePromises.push(kv.del(K.POST_COMMENTS(id)));
+
+        await Promise.all(deletePromises);
 
         return res.json({ success: true });
     } catch (err) {
@@ -490,7 +458,6 @@ router.delete('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-// Лайк поста
 router.post('/posts/:id/like', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -499,7 +466,6 @@ router.post('/posts/:id/like', requireAuth, async (req, res) => {
         const post = await kv.get(K.POST(id));
         if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
-        // Используем транзакцию для атомарности
         const alreadyLiked = await kv.sismember(K.POST_LIKES(id), userId);
         const wasDisliked = await kv.sismember(K.POST_DISLIKES(id), userId);
         
@@ -518,17 +484,11 @@ router.post('/posts/:id/like', requireAuth, async (req, res) => {
             }
         }
 
-        // Обновляем пост
         post.likes = newLikes;
         post.dislikes = newDislikes;
         await kv.set(K.POST(id), post);
 
-        return res.json({
-            likes: newLikes,
-            dislikes: newDislikes,
-            isLiked: !alreadyLiked,
-            isDisliked: false
-        });
+        return res.json({ likes: newLikes, dislikes: newDislikes, isLiked: !alreadyLiked, isDisliked: false });
     } catch (err) {
         console.error('[news/posts/like]', err);
         return res.status(500).json({ error: 'Ошибка лайка' });
@@ -565,36 +525,25 @@ router.post('/posts/:id/dislike', requireAuth, async (req, res) => {
         post.dislikes = newDislikes;
         await kv.set(K.POST(id), post);
 
-        return res.json({
-            likes: newLikes,
-            dislikes: newDislikes,
-            isLiked: false,
-            isDisliked: !alreadyDisliked
-        });
+        return res.json({ likes: newLikes, dislikes: newDislikes, isLiked: false, isDisliked: !alreadyDisliked });
     } catch (err) {
         console.error('[news/posts/dislike]', err);
         return res.status(500).json({ error: 'Ошибка дизлайка' });
     }
 });
 
-// Избранное
 router.post('/posts/:id/favorite', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         const post = await kv.get(K.POST(id));
-        if (!post) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
         const isFav = await kv.sismember(K.POST_FAV(userId), id);
 
-        if (isFav) {
-            await kv.srem(K.POST_FAV(userId), id);
-        } else {
-            await kv.sadd(K.POST_FAV(userId), id);
-        }
+        if (isFav) await kv.srem(K.POST_FAV(userId), id);
+        else await kv.sadd(K.POST_FAV(userId), id);
 
         return res.json({ isFavorited: !isFav });
     } catch (err) {
@@ -603,15 +552,11 @@ router.post('/posts/:id/favorite', requireAuth, async (req, res) => {
     }
 });
 
-// Закрепить/открепить пост (только админ)
 router.post('/posts/:id/pin', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-
         const post = await kv.get(K.POST(id));
-        if (!post) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
         post.isPinned = !post.isPinned;
         await kv.set(K.POST(id), post);
@@ -627,22 +572,22 @@ router.post('/posts/:id/pin', requireAuth, requireAdmin, async (req, res) => {
 // МАРШРУТЫ: Комментарии
 // -----------------------------
 
-// Получить комментарии поста
 router.get('/posts/:postId/comments', optionalAuth, async (req, res) => {
     try {
         const { postId } = req.params;
-
         const post = await kv.get(K.POST(postId));
-        if (!post) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
         const commentIds = await kv.smembers(K.POST_COMMENTS(postId));
+        const keys = commentIds.map(cid => K.COMMENT(cid));
+        const commentsData = await mgetChunked(keys);
+        
         const comments = [];
-
-        for (const cid of commentIds) {
-            const comment = await getCommentWithUserData(cid, req.user?.id);
-            if (comment) comments.push(comment);
+        for (const comment of commentsData) {
+            if (comment && comment.id) {
+                const enriched = await getCommentWithUserData(comment.id, req.user?.id);
+                if (enriched) comments.push(enriched);
+            }
         }
 
         return res.json({ comments });
@@ -652,30 +597,20 @@ router.get('/posts/:postId/comments', optionalAuth, async (req, res) => {
     }
 });
 
-// Создать комментарий
 router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
     try {
         const { postId } = req.params;
         const { text, parentId } = req.body;
 
-        if (!text || typeof text !== 'string' || !text.trim()) {
-            return res.status(400).json({ error: 'Текст комментария не может быть пустым' });
-        }
-        if (text.length > 2000) {
-            return res.status(400).json({ error: 'Комментарий слишком длинный (макс. 2000 символов)' });
-        }
+        if (!text || typeof text !== 'string' || !text.trim()) return res.status(400).json({ error: 'Текст не может быть пустым' });
+        if (text.length > 2000) return res.status(400).json({ error: 'Комментарий слишком длинный' });
 
         const post = await kv.get(K.POST(postId));
-        if (!post) {
-            return res.status(404).json({ error: 'Пост не найден' });
-        }
+        if (!post) return res.status(404).json({ error: 'Пост не найден' });
 
-        // Если это ответ, проверяем что родительский комментарий существует
         if (parentId) {
             const parent = await kv.get(K.COMMENT(parentId));
-            if (!parent || parent.postId !== postId) {
-                return res.status(400).json({ error: 'Родительский комментарий не найден' });
-            }
+            if (!parent || parent.postId !== postId) return res.status(400).json({ error: 'Родительский комментарий не найден' });
         }
 
         const commentId = crypto.randomUUID();
@@ -696,19 +631,17 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
 
         await kv.set(K.COMMENT(commentId), comment);
         await kv.sadd(K.POST_COMMENTS(postId), commentId);
-                // Обновляем счётчик комментариев в посте
+        
         const postForCount = await kv.get(K.POST(postId));
         if (postForCount) {
             postForCount.commentsCount = (postForCount.commentsCount || 0) + 1;
             await kv.set(K.POST(postId), postForCount);
         }
+        
         await kv.sadd(K.USER_COMMENTS(req.user.id), commentId);
-
-        // Начисляем статистику за комментарий
         await incrementUserStats(req.user.id, 'comments', 1);
 
         const enriched = await getCommentWithUserData(commentId, req.user.id);
-        enriched.authorLevel = await getUserLevel(req.user.id);
         return res.json({ comment: enriched });
     } catch (err) {
         console.error('[news/comments POST]', err);
@@ -716,27 +649,17 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
     }
 });
 
-// Обновить комментарий (только автор)
 router.put('/comments/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { text } = req.body;
 
-        if (!text || !text.trim()) {
-            return res.status(400).json({ error: 'Текст не может быть пустым' });
-        }
-        if (text.length > 2000) {
-            return res.status(400).json({ error: 'Комментарий слишком длинный' });
-        }
+        if (!text || !text.trim()) return res.status(400).json({ error: 'Текст не может быть пустым' });
+        if (text.length > 2000) return res.status(400).json({ error: 'Комментарий слишком длинный' });
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) {
-            return res.status(404).json({ error: 'Комментарий не найден' });
-        }
-
-        if (comment.authorId !== req.user.id) {
-            return res.status(403).json({ error: 'Можно редактировать только свои комментарии' });
-        }
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
+        if (comment.authorId !== req.user.id) return res.status(403).json({ error: 'Можно редактировать только свои комментарии' });
 
         comment.text = text.trim();
         comment.isEdited = true;
@@ -750,79 +673,88 @@ router.put('/comments/:id', requireAuth, async (req, res) => {
     }
 });
 
-// Удалить комментарий (автор или админ)
 router.delete('/comments/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) {
-            return res.status(404).json({ error: 'Комментарий не найден' });
-        }
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
 
         const isOwner = comment.authorId === req.user.id;
         const isAdmin = req.user.role === 'admin';
 
-        if (!isOwner && !isAdmin) {
-            return res.status(403).json({ error: 'Недостаточно прав' });
+        if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Недостаточно прав' });
+
+        // Получаем все комментарии поста одним запросом для построения дерева в памяти
+        const allCommentIds = await kv.smembers(K.POST_COMMENTS(comment.postId));
+        const commentKeys = allCommentIds.map(cid => K.COMMENT(cid));
+        const allCommentsData = await mgetChunked(commentKeys);
+        
+        const commentsMap = {};
+        for (const c of allCommentsData) {
+            if (c && c.id) commentsMap[c.id] = c;
         }
 
-        // Рекурсивно удаляем ответы
-        async function deleteWithReplies(commentId) {
-            const allComments = await kv.smembers(K.POST_COMMENTS(comment.postId));
-            for (const cid of allComments) {
-                const c = await kv.get(K.COMMENT(cid));
-                if (c && c.parentId === commentId) {
-                    await deleteWithReplies(cid);
+        const idsToDelete = [];
+        
+        // Рекурсивный сбор ID в памяти (без запросов к БД)
+        function collectIds(currentId) {
+            idsToDelete.push(currentId);
+            for (const c of Object.values(commentsMap)) {
+                if (c.parentId === currentId) {
+                    collectIds(c.id);
                 }
             }
-            await kv.del(K.COMMENT(commentId));
-            await kv.del(K.COMMENT_LIKES(commentId));
-            await kv.del(K.COMMENT_DISLIKES(commentId));
-            await kv.srem(K.POST_COMMENTS(comment.postId), commentId);
-                        // Уменьшаем счётчик в посте
-            const pForCount = await kv.get(K.POST(comment.postId));
-            if (pForCount) {
-                pForCount.commentsCount = Math.max(0, (pForCount.commentsCount || 0) - 1);
-                await kv.set(K.POST(comment.postId), pForCount);
-            }
-            if (comment.authorId) {
-                await kv.srem(K.USER_COMMENTS(comment.authorId), commentId);
+        }
+        
+        collectIds(id);
+
+        // Пакетное удаление
+        const deletePromises = [];
+        for (const cid of idsToDelete) {
+            deletePromises.push(kv.del(K.COMMENT(cid)));
+            deletePromises.push(kv.del(K.COMMENT_LIKES(cid)));
+            deletePromises.push(kv.del(K.COMMENT_DISLIKES(cid)));
+            deletePromises.push(kv.srem(K.POST_COMMENTS(comment.postId), cid));
+            
+            if (commentsMap[cid]?.authorId) {
+                deletePromises.push(kv.srem(K.USER_COMMENTS(commentsMap[cid].authorId), cid));
             }
         }
+        await Promise.all(deletePromises);
 
-        await deleteWithReplies(id);
+        // Корректировка счетчика в посте
+        const postForCount = await kv.get(K.POST(comment.postId));
+        if (postForCount) {
+            postForCount.commentsCount = Math.max(0, (postForCount.commentsCount || 0) - idsToDelete.length);
+            await kv.set(K.POST(comment.postId), postForCount);
+        }
 
-        return res.json({ success: true });
+        return res.json({ success: true, deletedCount: idsToDelete.length });
     } catch (err) {
         console.error('[news/comments DELETE]', err);
         return res.status(500).json({ error: 'Ошибка удаления' });
     }
 });
 
-// Лайк комментария
 router.post('/comments/:id/like', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) {
-            return res.status(404).json({ error: 'Комментарий не найден' });
-        }
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
 
         const alreadyLiked = await kv.sismember(K.COMMENT_LIKES(id), userId);
 
         if (alreadyLiked) {
             await kv.srem(K.COMMENT_LIKES(id), userId);
-            // Убираем лайк у автора
             if (comment.authorId && comment.authorId !== userId) {
                 await incrementUserStats(comment.authorId, 'likesReceived', -1);
             }
         } else {
             await kv.sadd(K.COMMENT_LIKES(id), userId);
             await kv.srem(K.COMMENT_DISLIKES(id), userId);
-            // Добавляем лайк автору
             if (comment.authorId && comment.authorId !== userId) {
                 await incrementUserStats(comment.authorId, 'likesReceived', 1);
             }
@@ -831,28 +763,20 @@ router.post('/comments/:id/like', requireAuth, async (req, res) => {
         const likes = await kv.smembers(K.COMMENT_LIKES(id));
         const dislikes = await kv.smembers(K.COMMENT_DISLIKES(id));
 
-        return res.json({
-            likes: likes.length,
-            dislikes: dislikes.length,
-            isLiked: !alreadyLiked,
-            isDisliked: false
-        });
+        return res.json({ likes: likes.length, dislikes: dislikes.length, isLiked: !alreadyLiked, isDisliked: false });
     } catch (err) {
         console.error('[news/comments/like]', err);
         return res.status(500).json({ error: 'Ошибка лайка' });
     }
 });
 
-// Дизлайк комментария
 router.post('/comments/:id/dislike', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) {
-            return res.status(404).json({ error: 'Комментарий не найден' });
-        }
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
 
         const alreadyDisliked = await kv.sismember(K.COMMENT_DISLIKES(id), userId);
 
@@ -866,27 +790,18 @@ router.post('/comments/:id/dislike', requireAuth, async (req, res) => {
         const likes = await kv.smembers(K.COMMENT_LIKES(id));
         const dislikes = await kv.smembers(K.COMMENT_DISLIKES(id));
 
-        return res.json({
-            likes: likes.length,
-            dislikes: dislikes.length,
-            isLiked: false,
-            isDisliked: !alreadyDisliked
-        });
+        return res.json({ likes: likes.length, dislikes: dislikes.length, isLiked: false, isDisliked: !alreadyDisliked });
     } catch (err) {
         console.error('[news/comments/dislike]', err);
         return res.status(500).json({ error: 'Ошибка дизлайка' });
     }
 });
 
-// Закрепить/открепить комментарий (только админ)
 router.post('/comments/:id/pin', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) {
-            return res.status(404).json({ error: 'Комментарий не найден' });
-        }
+        if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
 
         comment.isPinned = !comment.isPinned;
         await kv.set(K.COMMENT(id), comment);
@@ -903,24 +818,22 @@ router.post('/comments/:id/pin', requireAuth, requireAdmin, async (req, res) => 
 // -----------------------------
 router.post('/upload', requireAuth, requireAdmin, upload.single('file'), async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'Файл не загружен' });
+        if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
+        if (req.file.size > MAX_FILE_SIZE) return res.status(413).json({ error: 'Файл превышает 50 МБ' });
+        
+        // Проверка MIME-типа
+        if (!ALLOWED_MIMETYPES.includes(req.file.mimetype)) {
+            return res.status(400).json({ error: 'Неподдерживаемый формат файла' });
         }
 
-        if (req.file.size > MAX_FILE_SIZE) {
-            return res.status(413).json({ error: 'Файл превышает 50 МБ' });
-        }
-
-        // Генерируем уникальное имя
-        const ext = req.file.originalname.split('.').pop() || 'bin';
-        const uniqueName = `${crypto.randomUUID()}.${ext}`;
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.bin';
+        const uniqueName = `${crypto.randomUUID()}${ext}`;
         const blobPath = `news-files/${uniqueName}`;
 
-        // Загружаем в Vercel Blob
         const blob = await put(blobPath, req.file.buffer, {
             access: 'public',
             addRandomSuffix: false,
-            contentType: req.file.mimetype || 'application/octet-stream'
+            contentType: req.file.mimetype
         });
 
         return res.json({
@@ -936,6 +849,6 @@ router.post('/upload', requireAuth, requireAdmin, upload.single('file'), async (
 });
 
 // -----------------------------
-// Экспорт
+// Экспорт маршрутизатора
 // -----------------------------
 module.exports = router;
