@@ -12,11 +12,7 @@
   },
 
   "functions": {
-    "api/**/*.js": {
-      "maxDuration": 30,
-      "memory": 1024
-    },
-    "proxy.js": {
+    "api/proxy.js": {
       "maxDuration": 30,
       "memory": 1024
     }
@@ -36,13 +32,13 @@
       ]
     },
     {
-      "source": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|webp|woff2|woff|ttf|css|js))",
+      "source": "/(.*)\\.(png|jpg|jpeg|gif|svg|ico|webp|woff2|woff|ttf|css|js)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "source": "/(.*\\.webmanifest)",
+      "source": "/(.*)\\.webmanifest",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
       ]
@@ -50,27 +46,18 @@
   ],
 
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/proxy.js" },
-
-    { "source": "/news", "destination": "/news.html" },
-    { "source": "/changelog", "destination": "/changelog.html" },
-
-    { "source": "/add", "destination": "/public/add.html" },
-    { "source": "/24781", "destination": "/public/24781.html" },
-
-    { "source": "/658234", "destination": "/658234/index.html" },
-    { "source": "/658234/", "destination": "/658234/index.html" },
-
+    { "source": "/api/(.*)", "destination": "/api/proxy" },
+    
+    { "source": "/24781", "destination": "/public/24781/index.html" },
+    { "source": "/658234", "destination": "/public/658234/index.html" },
+    { "source": "/658234/(.*)", "destination": "/public/658234/$1" },
+    
     { "source": "/(.*)", "destination": "/public/$1" }
   ],
 
   "redirects": [
-    { "source": "/news.html", "destination": "/news", "permanent": true },
-    { "source": "/changelog.html", "destination": "/changelog", "permanent": true },
-    { "source": "/add.html", "destination": "/add", "permanent": true },
-    { "source": "/24781.html", "destination": "/24781", "permanent": true },
-    { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/658234.html", "destination": "/658234", "permanent": true },
-    { "source": "/658234/index.html", "destination": "/658234", "permanent": true }
+    { "source": "/24781/", "destination": "/24781", "permanent": true },
+    { "source": "/658234/", "destination": "/658234", "permanent": true },
+    { "source": "/index.html", "destination": "/", "permanent": true }
   ]
 }

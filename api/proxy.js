@@ -4,15 +4,18 @@ const path = require('path');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const crypto = require('crypto');
-const newsRouter = require('./news');
+const newsRouter = require('../news');
 
 // -----------------------------
 // Константы и Конфигурация
 // -----------------------------
 const PORT = process.env.PORT || 3000;
-const PUBLIC_DIR = path.join(__dirname, 'public');
-const SAITES_FILE = process.env.SAITES_FILE || path.join(__dirname, 'saites.txt');
-const CHANGELOG_FILE = process.env.CHANGELOG_FILE || path.join(__dirname, 'changelog.txt');
+
+// Пути скорректированы для расположения в api/
+// __dirname теперь указывает на /api, поэтому добавляем ..
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const SAITES_FILE = process.env.SAITES_FILE || path.join(__dirname, '..', 'saites.txt');
+const CHANGELOG_FILE = process.env.CHANGELOG_FILE || path.join(__dirname, '..', 'changelog.txt');
 
 // GitHub API Config
 const GITHUB_OWNER = process.env.GITHUB_OWNER;
