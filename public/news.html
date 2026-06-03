@@ -3333,118 +3333,119 @@ ${levelBadge}
             }
 
             function renderCommentNode(comment, depth) {
-                const isAdmin = comment.authorRole === 'admin';
-                const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(comment.authorId);
-                const authorName = isAdmin ? 'Oris' : Security.safeText(comment.authorName || 'Аноним');
-                const verifiedBadge = isAdmin ? `
-                    <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>` : '';
-                    const levelBadge = !isAdmin && post.authorLevel ? (() => {
-    const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
-    const label = labels[post.authorLevel];
-    if (!label) return '';
-    return `<span class="level-badge level-${post.authorLevel}">${label}</span>`;
-})() : '';
+    const isAdmin = comment.authorRole === 'admin';
+    const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(comment.authorId);
+    const authorName = isAdmin ? 'Oris' : Security.safeText(comment.authorName || 'Аноним');
+    const verifiedBadge = isAdmin ? `
+        <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>` : '';
+    // ИСПРАВЛЕНО: было post.authorLevel, теперь comment.authorLevel
+    const levelBadge = !isAdmin && comment.authorLevel ? (() => {
+        const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
+        const label = labels[comment.authorLevel];
+        if (!label) return '';
+        return `<span class="level-badge level-${comment.authorLevel}">${label}</span>`;
+    })() : '';
 
-                const isOwner = State.user && State.user.id === comment.authorId;
-                const canManage = State.user && State.user.role === 'admin';
+    const isOwner = State.user && State.user.id === comment.authorId;
+    const canManage = State.user && State.user.role === 'admin';
 
-                const pinnedBadge = comment.isPinned ? `
-                    <span class="comment-pinned-badge">
-                        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
-                        Закреплён
-                    </span>
-                ` : '';
+    const pinnedBadge = comment.isPinned ? `
+        <span class="comment-pinned-badge">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+            Закреплён
+        </span>
+    ` : '';
 
-                const editedMark = comment.isEdited ? `<span class="comment-edited">(изменено)</span>` : '';
+    const editedMark = comment.isEdited ? `<span class="comment-edited">(изменено)</span>` : '';
 
-                const replyToHtml = comment.parentId 
-                    ? (() => {
-                        const parent = State.comments.find(c => c.id === comment.parentId);
-                        if (parent) {
-                            const parentName = parent.authorRole === 'admin' ? 'Oris' : (parent.authorName || 'Аноним');
-                            return `<div class="comment-reply-to">@${Security.safeText(parentName)}</div>`;
-                        }
-                        return '';
-                    })()
-                    : '';
-
-                const actions = [];
-                if (State.user) {
-                    actions.push(`
-                        <button class="comment-action-btn ${comment.isLiked ? 'liked' : ''}" data-comment-action="like" data-comment-id="${comment.id}">
-                            <svg fill="${comment.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
-                            ${comment.likes || 0}
-                        </button>
-                    `);
-                    actions.push(`
-                        <button class="comment-action-btn ${comment.isDisliked ? 'disliked' : ''}" data-comment-action="dislike" data-comment-id="${comment.id}">
-                            <svg fill="${comment.isDisliked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
-                            ${comment.dislikes || 0}
-                        </button>
-                    `);
-                    if (depth < 3) { // Максимум 3 уровня вложенности
-                        actions.push(`
-                            <button class="comment-action-btn" data-comment-action="reply" data-comment-id="${comment.id}" data-author-name="${Security.safeText(authorName)}">
-                                Ответить
-                            </button>
-                        `);
-                    }
-                }
-                if (isOwner) {
-                    actions.push(`
-                        <button class="comment-action-btn" data-comment-action="edit" data-comment-id="${comment.id}">
-                            Изменить
-                        </button>
-                    `);
-                    actions.push(`
-                        <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
-                            Удалить
-                        </button>
-                    `);
-                } else if (canManage) {
-                    actions.push(`
-                        <button class="comment-action-btn" data-comment-action="pin" data-comment-id="${comment.id}">
-                            ${comment.isPinned ? 'Открепить' : 'Закрепить'}
-                        </button>
-                    `);
-                    actions.push(`
-                        <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
-                            Удалить
-                        </button>
-                    `);
-                }
-
-                const commentHtml = `
-                    <div class="comment ${comment.isPinned ? 'pinned' : ''}" data-comment-id="${comment.id}">
-                        <div class="comment-avatar">
-                            <img src="${avatarSrc}" alt="${Security.safeText(authorName)}">
-                        </div>
-                        <div class="comment-body">
-                            <div class="comment-header">
-                                <span class="comment-author ${isAdmin ? 'admin' : ''}">${Security.safeText(authorName)}</span>
-                                ${verifiedBadge}
-                                ${levelBadge}
-                                ${pinnedBadge}
-                                <span class="comment-date">${UI.formatRelativeDate(comment.createdAt)}</span>
-                                ${editedMark}
-                            </div>
-                            ${replyToHtml}
-                            <div class="comment-text">${Security.safeText(comment.text).replace(/\n/g, '<br>')}</div>
-                            <div class="comment-actions">
-                                ${actions.join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                const repliesHtml = comment.replies && comment.replies.length > 0
-                    ? `<div class="comment-replies">${comment.replies.map(r => renderCommentNode(r, depth + 1)).join('')}</div>`
-                    : '';
-
-                return commentHtml + repliesHtml;
+    const replyToHtml = comment.parentId 
+        ? (() => {
+            const parent = State.comments.find(c => c.id === comment.parentId);
+            if (parent) {
+                const parentName = parent.authorRole === 'admin' ? 'Oris' : (parent.authorName || 'Аноним');
+                return `<div class="comment-reply-to">@${Security.safeText(parentName)}</div>`;
             }
+            return '';
+        })()
+        : '';
+
+    const actions = [];
+    if (State.user) {
+        actions.push(`
+            <button class="comment-action-btn ${comment.isLiked ? 'liked' : ''}" data-comment-action="like" data-comment-id="${comment.id}">
+                <svg fill="${comment.isLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
+                ${comment.likes || 0}
+            </button>
+        `);
+        actions.push(`
+            <button class="comment-action-btn ${comment.isDisliked ? 'disliked' : ''}" data-comment-action="dislike" data-comment-id="${comment.id}">
+                <svg fill="${comment.isDisliked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
+                ${comment.dislikes || 0}
+            </button>
+        `);
+        if (depth < 3) {
+            actions.push(`
+                <button class="comment-action-btn" data-comment-action="reply" data-comment-id="${comment.id}" data-author-name="${Security.safeText(authorName)}">
+                    Ответить
+                </button>
+            `);
+        }
+    }
+    if (isOwner) {
+        actions.push(`
+            <button class="comment-action-btn" data-comment-action="edit" data-comment-id="${comment.id}">
+                Изменить
+            </button>
+        `);
+        actions.push(`
+            <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
+                Удалить
+            </button>
+        `);
+    } else if (canManage) {
+        actions.push(`
+            <button class="comment-action-btn" data-comment-action="pin" data-comment-id="${comment.id}">
+                ${comment.isPinned ? 'Открепить' : 'Закрепить'}
+            </button>
+        `);
+        actions.push(`
+            <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
+                Удалить
+            </button>
+        `);
+    }
+
+    const commentHtml = `
+        <div class="comment ${comment.isPinned ? 'pinned' : ''}" data-comment-id="${comment.id}">
+            <div class="comment-avatar">
+                <img src="${avatarSrc}" alt="${Security.safeText(authorName)}">
+            </div>
+            <div class="comment-body">
+                <div class="comment-header">
+                    <span class="comment-author ${isAdmin ? 'admin' : ''}">${Security.safeText(authorName)}</span>
+                    ${verifiedBadge}
+                    ${levelBadge}
+                    ${pinnedBadge}
+                    <span class="comment-date">${UI.formatRelativeDate(comment.createdAt)}</span>
+                    ${editedMark}
+                </div>
+                ${replyToHtml}
+                <div class="comment-text">${Security.safeText(comment.text).replace(/\n/g, '<br>')}</div>
+                <div class="comment-actions">
+                    ${actions.join('')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    const repliesHtml = comment.replies && comment.replies.length > 0
+        ? `<div class="comment-replies">${comment.replies.map(r => renderCommentNode(r, depth + 1)).join('')}</div>`
+        : '';
+
+    return commentHtml + repliesHtml;
+}
 
             function attachCommentEvents() {
                 document.querySelectorAll('[data-comment-action]').forEach(btn => {
@@ -3519,52 +3520,73 @@ ${levelBadge}
             }
 
             function startEditComment(commentId) {
-                const comment = State.comments.find(c => c.id === commentId);
-                if (!comment) return;
+    const comment = State.comments.find(c => c.id === commentId);
+    if (!comment) return;
 
-                State.editingCommentId = commentId;
-                const commentEl = document.querySelector(`[data-comment-id="${commentId}"] .comment-text`);
-                if (!commentEl) return;
+    State.editingCommentId = commentId;
+    const commentEl = document.querySelector(`[data-comment-id="${commentId}"] .comment-text`);
+    if (!commentEl) return;
 
-                const originalText = comment.text;
-                commentEl.innerHTML = `
-                    <textarea class="comment-edit-input" id="editCommentInput">${Security.safeText(originalText)}</textarea>
-                    <div class="comment-edit-actions">
-                        <button class="btn btn-ghost" id="cancelEditComment" style="padding: 6px 12px; font-size: 0.82rem;">Отмена</button>
-                        <button class="btn btn-primary" id="saveEditComment" style="padding: 6px 14px; font-size: 0.82rem;">Сохранить</button>
-                    </div>
-                `;
+    const originalText = comment.text;
 
-                const input = document.getElementById('editCommentInput');
-                input.focus();
-                input.setSelectionRange(input.value.length, input.value.length);
+    // Создаём безопасную разметку через создание элементов, а не innerHTML
+    commentEl.innerHTML = ''; // очищаем
 
-                document.getElementById('cancelEditComment').addEventListener('click', () => {
-                    State.editingCommentId = null;
-                    renderComments();
-                });
+    const textarea = document.createElement('textarea');
+    textarea.className = 'comment-edit-input';
+    textarea.id = 'editCommentInput';
+    textarea.value = originalText; // безопасная установка текста
 
-                document.getElementById('saveEditComment').addEventListener('click', async () => {
-                    const newText = input.value.trim();
-                    if (!newText) {
-                        UI.toast('Комментарий не может быть пустым', 'error');
-                        return;
-                    }
-                    if (newText === originalText) {
-                        State.editingCommentId = null;
-                        renderComments();
-                        return;
-                    }
-                    try {
-                        await ApiClient.updateComment(commentId, newText);
-                        UI.toast('Комментарий обновлён', 'success');
-                        State.editingCommentId = null;
-                        await loadComments();
-                    } catch (err) {
-                        UI.toast(err.message, 'error');
-                    }
-                });
-            }
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'comment-edit-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-ghost';
+    cancelBtn.id = 'cancelEditComment';
+    cancelBtn.style.cssText = 'padding: 6px 12px; font-size: 0.82rem;';
+    cancelBtn.textContent = 'Отмена';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.id = 'saveEditComment';
+    saveBtn.style.cssText = 'padding: 6px 14px; font-size: 0.82rem;';
+    saveBtn.textContent = 'Сохранить';
+
+    actionsDiv.appendChild(cancelBtn);
+    actionsDiv.appendChild(saveBtn);
+
+    commentEl.appendChild(textarea);
+    commentEl.appendChild(actionsDiv);
+
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+    cancelBtn.addEventListener('click', () => {
+        State.editingCommentId = null;
+        renderComments();
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        const newText = textarea.value.trim();
+        if (!newText) {
+            UI.toast('Комментарий не может быть пустым', 'error');
+            return;
+        }
+        if (newText === originalText) {
+            State.editingCommentId = null;
+            renderComments();
+            return;
+        }
+        try {
+            await ApiClient.updateComment(commentId, newText);
+            UI.toast('Комментарий обновлён', 'success');
+            State.editingCommentId = null;
+            await loadComments();
+        } catch (err) {
+            UI.toast(err.message, 'error');
+        }
+    });
+}
 
             function bindCommentEvents() {
                 const input = document.getElementById('commentInput');
