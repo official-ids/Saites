@@ -200,15 +200,17 @@ async function getCommentWithUserData(commentId, userId) {
     const comment = await kv.get(K.COMMENT(commentId));
     if (!comment) return null;
 
-    const [likesSet, dislikesSet] = await Promise.all([
-        kv.smembers(K.COMMENT_LIKES(commentId)),
-        kv.smembers(K.COMMENT_DISLIKES(commentId))
+    const [likesCount, dislikesCount, isLiked, isDisliked] = await Promise.all([
+        kv.scard(K.COMMENT_LIKES(commentId)),
+        kv.scard(K.COMMENT_DISLIKES(commentId)),
+        userId ? kv.sismember(K.COMMENT_LIKES(commentId), userId) : Promise.resolve(0),
+        userId ? kv.sismember(K.COMMENT_DISLIKES(commentId), userId) : Promise.resolve(0)
     ]);
 
-    comment.likes = likesSet.length;
-    comment.dislikes = dislikesSet.length;
-    comment.isLiked = userId ? likesSet.includes(userId) : false;
-    comment.isDisliked = userId ? dislikesSet.includes(userId) : false;
+    comment.likes = likesCount;
+    comment.dislikes = dislikesCount;
+    comment.isLiked = isLiked === 1;
+    comment.isDisliked = isDisliked === 1;
     comment.authorLevel = await getUserLevel(comment.authorId);
 
     return comment;
@@ -746,6 +748,7 @@ router.post('/comments/:id/like', requireAuth, async (req, res) => {
         if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
 
         const alreadyLiked = await kv.sismember(K.COMMENT_LIKES(id), userId);
+        const wasDisliked = await kv.sismember(K.COMMENT_DISLIKES(id), userId);
 
         if (alreadyLiked) {
             await kv.srem(K.COMMENT_LIKES(id), userId);
@@ -754,16 +757,18 @@ router.post('/comments/:id/like', requireAuth, async (req, res) => {
             }
         } else {
             await kv.sadd(K.COMMENT_LIKES(id), userId);
-            await kv.srem(K.COMMENT_DISLIKES(id), userId);
+            if (wasDisliked) {
+                await kv.srem(K.COMMENT_DISLIKES(id), userId);
+            }
             if (comment.authorId && comment.authorId !== userId) {
                 await incrementUserStats(comment.authorId, 'likesReceived', 1);
             }
         }
 
-        const likes = await kv.smembers(K.COMMENT_LIKES(id));
-        const dislikes = await kv.smembers(K.COMMENT_DISLIKES(id));
+        const likesCount = await kv.scard(K.COMMENT_LIKES(id));
+        const dislikesCount = await kv.scard(K.COMMENT_DISLIKES(id));
 
-        return res.json({ likes: likes.length, dislikes: dislikes.length, isLiked: !alreadyLiked, isDisliked: false });
+        return res.json({ likes: likesCount, dislikes: dislikesCount, isLiked: !alreadyLiked, isDisliked: false });
     } catch (err) {
         console.error('[news/comments/like]', err);
         return res.status(500).json({ error: 'Ошибка лайка' });
@@ -779,18 +784,24 @@ router.post('/comments/:id/dislike', requireAuth, async (req, res) => {
         if (!comment) return res.status(404).json({ error: 'Комментарий не найден' });
 
         const alreadyDisliked = await kv.sismember(K.COMMENT_DISLIKES(id), userId);
+        const wasLiked = await kv.sismember(K.COMMENT_LIKES(id), userId);
 
         if (alreadyDisliked) {
             await kv.srem(K.COMMENT_DISLIKES(id), userId);
         } else {
             await kv.sadd(K.COMMENT_DISLIKES(id), userId);
-            await kv.srem(K.COMMENT_LIKES(id), userId);
+            if (wasLiked) {
+                await kv.srem(K.COMMENT_LIKES(id), userId);
+                if (comment.authorId && comment.authorId !== userId) {
+                    await incrementUserStats(comment.authorId, 'likesReceived', -1);
+                }
+            }
         }
 
-        const likes = await kv.smembers(K.COMMENT_LIKES(id));
-        const dislikes = await kv.smembers(K.COMMENT_DISLIKES(id));
+        const likesCount = await kv.scard(K.COMMENT_LIKES(id));
+        const dislikesCount = await kv.scard(K.COMMENT_DISLIKES(id));
 
-        return res.json({ likes: likes.length, dislikes: dislikes.length, isLiked: false, isDisliked: !alreadyDisliked });
+        return res.json({ likes: likesCount, dislikes: dislikesCount, isLiked: false, isDisliked: !alreadyDisliked });
     } catch (err) {
         console.error('[news/comments/dislike]', err);
         return res.status(500).json({ error: 'Ошибка дизлайка' });

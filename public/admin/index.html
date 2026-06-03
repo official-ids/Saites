@@ -286,6 +286,8 @@
             <div class="tabs">
                 <button class="tab-btn active" data-mode="sites">Sites Config</button>
                 <button class="tab-btn" data-mode="changelog">Changelog</button>
+                <button class="tab-btn" data-mode="status">Status Config</button>
+                <button class="tab-btn" data-mode="api">API Config</button>
             </div>
             
             <div class="form-group">
@@ -320,7 +322,7 @@
                 },
                 
                 safeSetContent(el, content) {
-                    el.value = content; // value property is inherently safe from XSS
+                    el.value = content;
                 }
             };
 
@@ -348,24 +350,21 @@
                     this.elements.tabs.forEach(tab => {
                         tab.classList.toggle('active', tab.dataset.mode === mode);
                     });
-                    this.elements.label.textContent = mode === 'sites' 
-                        ? 'saites.txt Configuration' 
-                        : 'changelog.txt Content';
+                    const labels = {
+                        sites: 'saites.txt Configuration',
+                        changelog: 'changelog.txt Content',
+                        status: 'Status Page Configuration (JSON)',
+                        api: 'API Documentation Configuration (JSON)'
+                    };
+                    this.elements.label.textContent = labels[mode] || 'Configuration';
                 },
 
                 showToast(message, type = 'info') {
-                    const icons = { 
-                        success: '✓', 
-                        error: '✕', 
-                        info: 'ℹ' 
-                    };
-                    
+                    const icons = { success: '✓', error: '✕', info: 'ℹ' };
                     this.elements.toast.className = `toast ${type}`;
                     this.elements.toastMsg.textContent = message;
                     this.elements.toastIcon.textContent = icons[type] || '';
-                    
                     this.elements.toast.classList.add('visible');
-                    
                     clearTimeout(this._toastTimer);
                     this._toastTimer = setTimeout(() => {
                         this.elements.toast.classList.remove('visible');
@@ -387,7 +386,7 @@
             // --- Application Logic ---
             const App = {
                 token: '',
-                currentMode: 'sites', // 'sites' or 'changelog'
+                currentMode: 'sites',
                 
                 init() {
                     this.bindEvents();
@@ -398,17 +397,14 @@
                     }
                 },
 
-                    bindEvents() {
-                    // Login Form Submit
+                bindEvents() {
                     document.getElementById('loginForm').addEventListener('submit', (e) => {
                         e.preventDefault();
                         this.login();
                     });
 
-                    // Logout
                     document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
 
-                    // Tab Switching
                     UI.elements.tabs.forEach(tab => {
                         tab.addEventListener('click', (e) => {
                             const newMode = e.target.dataset.mode;
@@ -420,12 +416,10 @@
                         });
                     });
 
-                    // Actions
                     document.getElementById('saveBtn').addEventListener('click', (e) => this.saveContent(e.target));
                     document.getElementById('reloadContentBtn').addEventListener('click', (e) => this.loadContent(e.target));
                     document.getElementById('clearCacheBtn').addEventListener('click', (e) => this.clearCache(e.target));
 
-                    // Keyboard Shortcut (Ctrl/Cmd + S)
                     document.addEventListener('keydown', (e) => {
                         if ((e.ctrlKey || e.metaKey) && e.key === 's' && UI.elements.editor.classList.contains('active')) {
                             e.preventDefault();
@@ -463,38 +457,30 @@
                 },
 
                 getEndpoints() {
-                    if (this.currentMode === 'sites') {
-                        return {
-                            load: '/api/admin/content',
-                            save: '/api/admin/save'
-                        };
-                    }
-                    return {
-                        load: '/api/admin/changelog',
-                        save: '/api/admin/changelog/save'
+                    const endpoints = {
+                        sites: { load: '/api/admin/content', save: '/api/admin/save' },
+                        changelog: { load: '/api/admin/changelog', save: '/api/admin/changelog/save' },
+                        status: { load: '/api/admin/status-config', save: '/api/admin/status-config/save' },
+                        api: { load: '/api/admin/api-config', save: '/api/admin/api-config/save' }
                     };
+                    return endpoints[this.currentMode];
                 },
 
                 async apiCall(url, options = {}, btn = null) {
                     if (btn) UI.setLoading(btn, true);
-                    
                     try {
                         const headers = {
                             'Authorization': `Bearer ${this.token}`,
                             ...options.headers
                         };
-
                         const response = await fetch(url, { ...options, headers });
-
                         if (response.status === 401 || response.status === 403) {
                             throw new Error('AUTH_FAILED');
                         }
-
                         if (!response.ok) {
                             const err = await response.json().catch(() => ({}));
                             throw new Error(err.message || `Server Error: ${response.status}`);
                         }
-
                         return await response.json();
                     } catch (err) {
                         if (err.message === 'AUTH_FAILED') {
@@ -513,7 +499,11 @@
                     try {
                         const data = await this.apiCall(endpoints.load, {}, btn);
                         if (data) {
-                            Security.safeSetContent(UI.elements.textarea, data.content);
+                            let contentToSet = data.content;
+                            if (this.currentMode === 'status' || this.currentMode === 'api') {
+                                contentToSet = JSON.stringify(data.content, null, 2);
+                            }
+                            Security.safeSetContent(UI.elements.textarea, contentToSet);
                             UI.showToast(`${this.currentMode} content synchronized`, 'success');
                         }
                     } catch (err) {
@@ -522,21 +512,30 @@
                 },
 
                 async saveContent(btn) {
-                    const content = UI.elements.textarea.value;
+                    let content = UI.elements.textarea.value;
                     if (!content.trim()) {
                         UI.showToast('Content cannot be empty', 'error');
                         return;
                     }
-
+                    if (this.currentMode === 'status' || this.currentMode === 'api') {
+                        try {
+                            JSON.parse(content);
+                        } catch (e) {
+                            UI.showToast('Invalid JSON syntax', 'error');
+                            return;
+                        }
+                    }
                     const endpoints = this.getEndpoints();
-
                     try {
+                        let payload = { content };
+                        if (this.currentMode === 'status' || this.currentMode === 'api') {
+                            payload = { content: JSON.parse(content) };
+                        }
                         await this.apiCall(endpoints.save, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content })
+                            body: JSON.stringify(payload)
                         }, btn);
-                        
                         UI.showToast(`${this.currentMode} saved & cache invalidated`, 'success');
                     } catch (err) {
                         UI.showToast(err.message, 'error');
@@ -553,7 +552,6 @@
                 }
             };
 
-            // Initialize
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => App.init());
             } else {
@@ -563,4 +561,3 @@
     </script>
 </body>
 </html>
-

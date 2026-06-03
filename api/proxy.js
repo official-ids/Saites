@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const crypto = require('crypto');
 const newsRouter = require('../news');
+const { kv } = require('@vercel/kv');
 
 // -----------------------------
 // Константы и Конфигурация
@@ -587,6 +588,655 @@ app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
 });
 
 // -----------------------------
+// API Routes: Dynamic Configs for Status & API (KV)
+// -----------------------------
+const STATUS_CONFIG_KEY = 'admin:status_config';
+const API_CONFIG_KEY = 'admin:api_config';
+
+// ⚠️ ВНИМАНИЕ: сюда скопируйте реальные массивы из ваших HTML-файлов!
+// 1. Из status.html возьмите массив SERVICES (от const SERVICES = [ ... ];)
+// 2. Из api.html возьмите массив API_SECTIONS (от const API_SECTIONS = [ ... ];)
+
+const DEFAULT_STATUS_CONFIG = [
+  {
+    "id": "website",
+    "name": "Website Frontend",
+    "category": "Core",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9\"/>",
+    "color": "#0071E3",
+    "check": { "method": "GET", "path": "/", "expectedStatuses": [200,304], "timeout": 3000 }
+  },
+  {
+    "id": "sites-api",
+    "name": "Sites API",
+    "category": "Content · proxy.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z\"/>",
+    "color": "#34C759",
+    "check": { "method": "GET", "path": "/api/sites", "expectedStatuses": [200], "timeout": 5000 }
+  },
+  {
+    "id": "changelog-api",
+    "name": "Changelog API",
+    "category": "Content · proxy.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z\"/>",
+    "color": "#AF52DE",
+    "check": { "method": "GET", "path": "/api/changelog", "expectedStatuses": [200], "timeout": 5000 }
+  },
+  {
+    "id": "form-saite",
+    "name": "Add Site Form",
+    "category": "Forms · proxy.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z\"/>",
+    "color": "#FF9F0A",
+    "check": { "method": "POST", "path": "/api/add/saite", "expectedStatuses": [400,429], "timeout": 3000, "body": "{}" }
+  },
+  {
+    "id": "form-corp",
+    "name": "Cooperation Form",
+    "category": "Forms · proxy.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z\"/>",
+    "color": "#FF9F0A",
+    "check": { "method": "POST", "path": "/api/add/corp", "expectedStatuses": [400,429], "timeout": 3000, "body": "{}" }
+  },
+  {
+    "id": "admin-api",
+    "name": "Admin Panel",
+    "category": "Protected · proxy.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z\"/>",
+    "color": "#FF3B30",
+    "check": { "method": "GET", "path": "/api/admin/content", "expectedStatuses": [401,403], "timeout": 3000 }
+  },
+  {
+    "id": "news-posts",
+    "name": "News Posts API",
+    "category": "News · news.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z\"/>",
+    "color": "#0071E3",
+    "check": { "method": "GET", "path": "/api/news/posts", "expectedStatuses": [200], "timeout": 5000 }
+  },
+  {
+    "id": "news-auth",
+    "name": "News Auth",
+    "category": "Auth · news.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z\"/>",
+    "color": "#34C759",
+    "check": { "method": "GET", "path": "/api/news/auth/me", "expectedStatuses": [401], "timeout": 3000 }
+  },
+  {
+    "id": "news-register",
+    "name": "Registration",
+    "category": "Auth · news.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z\"/>",
+    "color": "#AF52DE",
+    "check": { "method": "POST", "path": "/api/news/auth/register", "expectedStatuses": [400,500], "timeout": 3000, "body": "{}" }
+  },
+  {
+    "id": "news-login",
+    "name": "Reader Login",
+    "category": "Auth · news.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1\"/>",
+    "color": "#AF52DE",
+    "check": { "method": "POST", "path": "/api/news/auth/login", "expectedStatuses": [400,404], "timeout": 3000, "body": "{}" }
+  },
+  {
+    "id": "news-upload",
+    "name": "File Upload",
+    "category": "Storage · news.js",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12\"/>",
+    "color": "#FF3B30",
+    "check": { "method": "POST", "path": "/api/news/upload", "expectedStatuses": [400,401], "timeout": 3000 }
+  },
+  {
+    "id": "vercel-kv",
+    "name": "Vercel KV (Redis)",
+    "category": "Database · External",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4\"/>",
+    "color": "#FF3B30",
+    "check": { "type": "custom", "name": "checkKV" }
+  },
+  {
+    "id": "telegram",
+    "name": "Telegram Bot API",
+    "category": "External",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 19l9 2-9-18-9 18 9-2zm0 0v-8\"/>",
+    "color": "#0088CC",
+    "check": { "type": "external", "url": "https://api.telegram.org", "timeout": 5000 }
+  },
+  {
+    "id": "github",
+    "name": "GitHub API",
+    "category": "External",
+    "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4\"/>",
+    "color": "#1D1D1F",
+    "check": { "type": "external", "url": "https://api.github.com", "timeout": 5000 }
+  }
+];
+
+const DEFAULT_API_CONFIG = [
+    {
+        id: 'sites',
+        title: 'Проекты (Sites)',
+        source: 'proxy.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
+        iconColor: '#0071E3',
+        description: 'Управление каталогом проектов. Данные читаются из saites.txt (локально или через GitHub API) и кэшируются на 5 минут.',
+        endpoints: [
+            {
+                method: 'GET',
+                path: '/api/sites',
+                desc: 'Получить список всех проектов',
+                auth: null,
+                details: 'Возвращает массив проектов, распарсенных из saites.txt. Использует in-memory кэш с TTL 5 минут. При сбое источника возвращает устаревший кэш (stale-while-revalidate).',
+                response: `[
+  {
+    "title": "Example Project",
+    "url": "https://example.com",
+    "desc": "Описание проекта"
+  }
+]`
+            },
+            {
+                method: 'POST',
+                path: '/api/sites/reload',
+                desc: 'Принудительно перезагрузить кэш',
+                auth: null,
+                details: 'Инвалидирует кэш и заново загружает данные из источника (файл или GitHub).',
+                response: `{ "success": true, "count": 42 }`
+            }
+        ]
+    },
+    {
+        id: 'changelog',
+        title: 'История изменений',
+        source: 'proxy.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        iconColor: '#34C759',
+        description: 'Получение истории версий и изменений платформы из changelog.txt.',
+        endpoints: [
+            {
+                method: 'GET',
+                path: '/api/changelog',
+                desc: 'Получить историю версий',
+                auth: null,
+                details: 'Парсит changelog.txt в структурированный формат с группировкой по версиям. Кэшируется на 5 минут.',
+                response: `[
+  {
+    "version": "v2.4.1",
+    "date": "3 Июня 2026",
+    "changes": [
+      { "type": "fix", "text": "Исправлен баг с лайками" },
+      { "type": "feat", "text": "Добавлена новая функция" }
+    ]
+  }
+]`
+            }
+        ]
+    },
+    {
+        id: 'forms',
+        title: 'Формы обратной связи',
+        source: 'proxy.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>',
+        iconColor: '#AF52DE',
+        description: 'Эндпоинты для отправки заявок с форм сайта. Сообщения доставляются в Telegram администратору. Имеют rate limit 30 секунд между заявками с одного IP.',
+        endpoints: [
+            {
+                method: 'POST',
+                path: '/api/add/saite',
+                desc: 'Заявка на добавление сайта',
+                auth: null,
+                details: 'Отправляет заявку на добавление проекта в каталог. Минимальная длина описания — 20 символов.',
+                params: [
+                    { name: 'title', type: 'string', required: true, desc: 'Название проекта (мин. 3 символа)' },
+                    { name: 'url', type: 'string', required: true, desc: 'URL сайта (http/https)' },
+                    { name: 'description', type: 'string', required: true, desc: 'Описание (мин. 20 символов)' },
+                    { name: 'category', type: 'string', required: false, desc: 'Категория: tools|dev|design|education|games|media|social|other' },
+                    { name: 'authorName', type: 'string', required: true, desc: 'Имя отправителя' },
+                    { name: 'email', type: 'string', required: true, desc: 'Email для связи' },
+                    { name: 'telegram', type: 'string', required: false, desc: 'Telegram username' }
+                ],
+                response: `{ "success": true, "message": "Заявка отправлена" }`
+            },
+            {
+                method: 'POST',
+                path: '/api/add/corp',
+                desc: 'Заявка на сотрудничество',
+                auth: null,
+                details: 'Отправляет коммерческое предложение. Поддерживает выбор типа сотрудничества и бюджета.',
+                params: [
+                    { name: 'name', type: 'string', required: true, desc: 'Имя контактного лица' },
+                    { name: 'company', type: 'string', required: false, desc: 'Название компании' },
+                    { name: 'email', type: 'string', required: true, desc: 'Email' },
+                    { name: 'telegram', type: 'string', required: false, desc: 'Telegram' },
+                    { name: 'type', type: 'string', required: true, desc: 'Тип: partnership|advertising|integration|content|other' },
+                    { name: 'message', type: 'string', required: true, desc: 'Сообщение (мин. 20 символов)' },
+                    { name: 'budget', type: 'string', required: false, desc: 'Бюджет: free|small|medium|large|enterprise' },
+                    { name: 'website', type: 'string', required: false, desc: 'URL сайта компании' }
+                ],
+                response: `{ "success": true, "message": "Заявка отправлена" }`
+            }
+        ]
+    },
+    {
+        id: 'admin',
+        title: 'Административная панель',
+        source: 'proxy.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+        iconColor: '#FF9F0A',
+        description: 'Управление контентом saites.txt и changelog.txt через админ-панель. Все эндпоинты требуют Bearer-токен в заголовке Authorization.',
+        endpoints: [
+            {
+                method: 'GET',
+                path: '/api/admin/content',
+                desc: 'Получить saites.txt',
+                auth: 'admin',
+                details: 'Возвращает сырое содержимое файла saites.txt для редактирования.',
+                response: `{ "content": "Title\\nURL\\nDescription\\n::\\n..." }`
+            },
+            {
+                method: 'GET',
+                path: '/api/admin/changelog',
+                desc: 'Получить changelog.txt',
+                auth: 'admin',
+                details: 'Возвращает сырое содержимое changelog.txt.',
+                response: `{ "content": "v2.4.1 | 3 Июня 2026\\n- [fix] ...\\n::\\n..." }`
+            },
+            {
+                method: 'POST',
+                path: '/api/admin/save',
+                desc: 'Сохранить saites.txt',
+                auth: 'admin',
+                details: 'Сохраняет изменения в saites.txt (через GitHub API или локально). Инвалидирует кэш сайтов.',
+                params: [
+                    { name: 'content', type: 'string', required: true, desc: 'Новое содержимое файла (макс. 500 KB)' }
+                ],
+                response: `{ "success": true, "message": "Saved (GitHub)" }`
+            },
+            {
+                method: 'POST',
+                path: '/api/admin/changelog/save',
+                desc: 'Сохранить changelog.txt',
+                auth: 'admin',
+                details: 'Сохраняет изменения в changelog.txt. Инвалидирует кэш истории версий.',
+                params: [
+                    { name: 'content', type: 'string', required: true, desc: 'Новое содержимое файла (макс. 500 KB)' }
+                ],
+                response: `{ "success": true, "message": "Saved (GitHub)" }`
+            }
+        ]
+    },
+    {
+        id: 'news-auth',
+        title: 'Новости · Аутентификация',
+        source: 'news.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>',
+        iconColor: '#0071E3',
+        description: 'Система аутентификации: читатели и администраторы. Уровни читателей: newbie, active, expert, plus — зависят от количества комментариев и лайков и влияют на бейдж.',
+        endpoints: [
+            {
+                method: 'POST',
+                path: '/api/news/auth/register',
+                desc: 'Регистрация пользователя',
+                auth: null,
+                details: 'Создаёт нового читателя или администратора. Для админа требуется ADMIN_TOKEN. Сессия действует 1 год (reader) или 30 дней (admin).',
+                params: [
+                    { name: 'nickname', type: 'string', required: false, desc: 'Имя (только для reader, 2-30 символов)' },
+                    { name: 'role', type: 'string', required: true, desc: 'Роль: reader или admin' },
+                    { name: 'adminToken', type: 'string', required: false, desc: 'Admin token (только для role=admin)' }
+                ],
+                response: `{
+  "user": {
+    "id": "1001",
+    "role": "reader",
+    "nickname": "Alex",
+    "level": "newbie",
+    "createdAt": "2026-06-03T12:00:00.000Z",
+    "token": "abc123..."
+  }
+}`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/auth/login',
+                desc: 'Вход читателя по ID',
+                auth: null,
+                details: 'Аутентифицирует существующего читателя по 4-значному ID и выдаёт новую сессию. Уровень берётся из сохранённых данных.',
+                params: [
+                    { name: 'readerId', type: 'string', required: true, desc: 'ID читателя (4 цифры, например "1001")' }
+                ],
+                response: `{
+  "user": {
+    "id": "1001",
+    "role": "reader",
+    "nickname": "Alex",
+    "level": "active",
+    "token": "xyz789..."
+  }
+}`
+            },
+            {
+                method: 'GET',
+                path: '/api/news/auth/me',
+                desc: 'Текущий пользователь',
+                auth: 'user',
+                details: 'Возвращает данные текущего аутентифицированного пользователя. Уровень вычисляется на основе статистики (комментарии и полученные лайки) и может измениться со временем.',
+                response: `{
+  "id": "1001",
+  "role": "reader",
+  "nickname": "Alex",
+  "level": "expert",
+  "createdAt": "2026-06-01T10:00:00.000Z"
+}`
+            }
+        ]
+    },
+    {
+        id: 'news-posts',
+        title: 'Новости · Посты',
+        source: 'news.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>',
+        iconColor: '#34C759',
+        description: 'CRUD-операции для новостных постов с поддержкой Markdown (GitHub Flavored). Посты могут содержать прикреплённые файлы.',
+        endpoints: [
+            {
+                method: 'GET',
+                path: '/api/news/posts',
+                desc: 'Список постов',
+                auth: 'optional',
+                details: 'Возвращает посты, отсортированные по дате (новые сверху). Поддерживает пагинацию. Для аутентифицированных пользователей добавляются флаги isLiked/isFavorited.',
+                params: [
+                    { name: 'page', type: 'number', required: false, desc: 'Номер страницы (по умолчанию 1)' },
+                    { name: 'limit', type: 'number', required: false, desc: 'Постов на странице (макс. 100, по умолчанию 20)' }
+                ],
+                response: `{
+  "posts": [
+    {
+      "id": "uuid",
+      "title": "Заголовок",
+      "content": "**Markdown** content",
+      "files": [],
+      "authorId": "admin",
+      "authorRole": "admin",
+      "authorName": "Oris",
+      "createdAt": "2026-06-03T...",
+      "updatedAt": "2026-06-03T...",
+      "isPinned": false,
+      "likes": 5,
+      "dislikes": 0,
+      "commentsCount": 12,
+      "isLiked": false,
+      "isDisliked": false,
+      "isFavorited": false
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "limit": 20
+}`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/posts',
+                desc: 'Создать пост',
+                auth: 'admin',
+                details: 'Создаёт новый пост. Контент поддерживает Markdown. Файлы должны быть предварительно загружены через /upload.',
+                params: [
+                    { name: 'title', type: 'string', required: true, desc: 'Заголовок (макс. 200 символов)' },
+                    { name: 'content', type: 'string', required: true, desc: 'Содержимое в Markdown (макс. 100 KB)' },
+                    { name: 'files', type: 'array', required: false, desc: 'Массив объектов {name, size, url}' }
+                ],
+                response: `{ "post": { "id": "uuid", "title": "...", ... } }`
+            },
+            {
+                method: 'PUT',
+                path: '/api/news/posts/:id',
+                desc: 'Обновить пост',
+                auth: 'admin',
+                details: 'Обновляет заголовок и содержимое существующего поста. Обновляет поле updatedAt.',
+                params: [
+                    { name: 'title', type: 'string', required: true, desc: 'Новый заголовок' },
+                    { name: 'content', type: 'string', required: true, desc: 'Новое содержимое' },
+                    { name: 'files', type: 'array', required: false, desc: 'Обновлённый список файлов' }
+                ],
+                response: `{ "post": { "id": "...", "updatedAt": "..." } }`
+            },
+            {
+                method: 'DELETE',
+                path: '/api/news/posts/:id',
+                desc: 'Удалить пост',
+                auth: 'admin',
+                details: 'Удаляет пост вместе со всеми комментариями, лайками и дизлайками.',
+                response: `{ "success": true }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/posts/:id/like',
+                desc: 'Лайк поста',
+                auth: 'user',
+                details: 'Переключает лайк. Если был дизлайк — он автоматически убирается. Возвращает обновлённые счётчики.',
+                response: `{ "likes": 6, "dislikes": 0, "isLiked": true, "isDisliked": false }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/posts/:id/dislike',
+                desc: 'Дизлайк поста',
+                auth: 'user',
+                details: 'Переключает дизлайк. Если был лайк — он автоматически убирается.',
+                response: `{ "likes": 5, "dislikes": 1, "isLiked": false, "isDisliked": true }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/posts/:id/favorite',
+                desc: 'Избранное',
+                auth: 'user',
+                details: 'Добавляет или убирает пост из избранного текущего пользователя.',
+                response: `{ "isFavorited": true }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/posts/:id/pin',
+                desc: 'Закрепить/открепить',
+                auth: 'admin',
+                details: 'Переключает статус закрепления. Закреплённые посты отображаются вверху ленты.',
+                response: `{ "isPinned": true }`
+            }
+        ]
+    },
+    {
+        id: 'news-comments',
+        title: 'Новости · Комментарии',
+        source: 'news.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+        iconColor: '#AF52DE',
+        description: 'Система древовидных комментариев с поддержкой ответов (до 3 уровней вложенности), лайков и модерации.',
+        endpoints: [
+            {
+                method: 'GET',
+                path: '/api/news/posts/:postId/comments',
+                desc: 'Комментарии поста',
+                auth: 'optional',
+                details: 'Возвращает все комментарии поста. Клиент строит дерево на основе поля parentId.',
+                response: `{
+  "comments": [
+    {
+      "id": "uuid",
+      "postId": "...",
+      "parentId": null,
+      "text": "Текст комментария",
+      "authorId": "1001",
+      "authorRole": "reader",
+      "authorName": "Alex",
+      "authorLevel": "expert",
+      "createdAt": "2026-06-03T...",
+      "isEdited": false,
+      "isPinned": false,
+      "likes": 3,
+      "dislikes": 0,
+      "isLiked": false,
+      "isDisliked": false
+    }
+  ]
+}`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/posts/:postId/comments',
+                desc: 'Создать комментарий',
+                auth: 'user',
+                details: 'Создаёт новый комментарий. При указании parentId создаёт ответ на другой комментарий. Начисляет статистику автору.',
+                params: [
+                    { name: 'text', type: 'string', required: true, desc: 'Текст (макс. 2000 символов)' },
+                    { name: 'parentId', type: 'string', required: false, desc: 'ID родительского комментария' }
+                ],
+                response: `{ "comment": { "id": "...", "authorLevel": "active", ... } }`
+            },
+            {
+                method: 'PUT',
+                path: '/api/news/comments/:id',
+                desc: 'Редактировать комментарий',
+                auth: 'user',
+                details: 'Редактирование доступно только автору комментария. Устанавливает флаг isEdited.',
+                params: [
+                    { name: 'text', type: 'string', required: true, desc: 'Новый текст (макс. 2000 символов)' }
+                ],
+                response: `{ "comment": { "id": "...", "isEdited": true, ... } }`
+            },
+            {
+                method: 'DELETE',
+                path: '/api/news/comments/:id',
+                desc: 'Удалить комментарий',
+                auth: 'user',
+                details: 'Удалить может автор или администратор. Рекурсивно удаляет все ответы.',
+                response: `{ "success": true, "deletedCount": 3 }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/comments/:id/like',
+                desc: 'Лайк комментария',
+                auth: 'user',
+                details: 'Переключает лайк. Начисляет/списывает likesReceived автору комментария (влияет на уровень пользователя). Обратите внимание: дизлайк автоматически снимается при повторном лайке.',
+                response: `{ "likes": 4, "dislikes": 0, "isLiked": true, "isDisliked": false }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/comments/:id/dislike',
+                desc: 'Дизлайк комментария',
+                auth: 'user',
+                details: 'Переключает дизлайк. Не влияет на статистику автора.',
+                response: `{ "likes": 3, "dislikes": 1, "isLiked": false, "isDisliked": true }`
+            },
+            {
+                method: 'POST',
+                path: '/api/news/comments/:id/pin',
+                desc: 'Закрепить комментарий',
+                auth: 'admin',
+                details: 'Переключает статус закрепления. Закреплённые комментарии отображаются вверху списка.',
+                response: `{ "isPinned": true }`
+            }
+        ]
+    },
+
+
+    {
+        id: 'status-page',
+        title: 'Статус систем',
+        source: 'status.html',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>',
+        iconColor: '#FF9F0A',
+        description: 'Страница реального мониторинга (<code>/status</code>) проверяет все API-эндпоинты платформы каждые 30 секунд, отображает задержки, коды ответов и автоматически регистрирует инциденты. Это клиентский инструмент для визуального контроля состояния.',
+        endpoints: [
+            {
+                method: 'GET',
+                path: '/status',
+                desc: 'HTML-страница мониторинга',
+                auth: null,
+                details: 'Возвращает страницу с индикаторами доступности, графиком uptime, списком сервисов и активными инцидентами. Данные собираются через вызовы API из этой документации.',
+                response: 'text/html — интерфейс наблюдения'
+            }
+        ]
+    },
+
+    {
+        id: 'news-upload',
+        title: 'Новости · Загрузка файлов',
+        source: 'news.js',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>',
+        iconColor: '#FF3B30',
+        description: 'Загрузка файлов в Vercel Blob для прикрепления к постам.',
+        endpoints: [
+            {
+                method: 'POST',
+                path: '/api/news/upload',
+                desc: 'Загрузить файл',
+                auth: 'admin',
+                details: 'Принимает multipart/form-data с одним файлом (поле "file"). Максимальный размер — 50 МБ. Разрешены: JPEG, PNG, GIF, WebP, PDF, MP4.',
+                params: [
+                    { name: 'file', type: 'file', required: true, desc: 'Загружаемый файл (multipart/form-data)' }
+                ],
+                response: `{
+  "url": "https://...blob.vercel-storage.com/...",
+  "name": "document.pdf",
+  "size": 123456,
+  "contentType": "application/pdf"
+}`
+            }
+        ]
+    }
+];
+
+// ---- Админские эндпоинты (требуют токен) ----
+app.get('/api/admin/status-config', verifyAdminToken, async (req, res, next) => {
+    try {
+        let config = await kv.get(STATUS_CONFIG_KEY);
+        if (!config) config = DEFAULT_STATUS_CONFIG;
+        res.json({ content: config });
+    } catch (err) { next(err); }
+});
+
+app.post('/api/admin/status-config/save', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = req.body;
+        if (!Array.isArray(content)) return res.status(400).json({ error: 'Must be an array of services' });
+        await kv.set(STATUS_CONFIG_KEY, content);
+        res.json({ success: true });
+    } catch (err) { next(err); }
+});
+
+app.get('/api/admin/api-config', verifyAdminToken, async (req, res, next) => {
+    try {
+        let config = await kv.get(API_CONFIG_KEY);
+        if (!config) config = DEFAULT_API_CONFIG;
+        res.json({ content: config });
+    } catch (err) { next(err); }
+});
+
+app.post('/api/admin/api-config/save', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = req.body;
+        if (!Array.isArray(content)) return res.status(400).json({ error: 'Must be an array of API sections' });
+        await kv.set(API_CONFIG_KEY, content);
+        res.json({ success: true });
+    } catch (err) { next(err); }
+});
+
+// ---- Публичные эндпоинты (для страниц status.html и api.html) ----
+app.get('/api/status-config', async (req, res, next) => {
+    try {
+        let config = await kv.get(STATUS_CONFIG_KEY);
+        if (!config) config = DEFAULT_STATUS_CONFIG;
+        res.json(config);
+    } catch (err) { next(err); }
+});
+
+app.get('/api/api-config', async (req, res, next) => {
+    try {
+        let config = await kv.get(API_CONFIG_KEY);
+        if (!config) config = DEFAULT_API_CONFIG;
+        res.json(config);
+    } catch (err) { next(err); }
+});
+
+// -----------------------------
 // API Routes: Forms
 // -----------------------------
 
@@ -700,171 +1350,6 @@ ${message}
     } catch (err) {
         console.error('[api/add/corp]', err);
         next(err);
-    }
-});
-
-// -----------------------------
-// YouTube Integration
-// -----------------------------
-
-async function getYouTubeChannelId() {
-    const response = await fetchWithRetry(`https://www.youtube.com/@${YOUTUBE_HANDLE}`, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error(`YouTube page responded ${response.status}`);
-    }
-
-    const html = await response.text();
-
-    const extractMeta = (property) => {
-        const match = html.match(new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, 'i'))
-                   || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${property}["']`, 'i'));
-        return match ? match[1] : null;
-    };
-
-    const canonical = (() => {
-        const m = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
-        return m ? m[1] : null;
-    })();
-
-    const channelIdMatch = canonical ? canonical.match(/\/channel\/(UC[\w-]+)/) : null;
-    const channelId = channelIdMatch ? channelIdMatch[1] : null;
-
-    let subscribers = null;
-    const ytDataMatch = html.match(/var ytInitialData = ({.+?});<\/script>/s);
-    if (ytDataMatch) {
-        try {
-            const metadataStr = ytDataMatch[1];
-            const subMatch = metadataStr.match(/"subscriberCountText":\{"simpleText":"([^"]+)"/);
-            if (subMatch) subscribers = subMatch[1];
-        } catch (e) {
-            console.warn('[YouTube] Failed to parse subscribers:', e);
-        }
-    }
-
-    return {
-        handle: `@${YOUTUBE_HANDLE}`,
-        name: extractMeta('og:title') || YOUTUBE_HANDLE,
-        description: extractMeta('og:description') || '',
-        avatar: extractMeta('og:image') || '',
-        channelId: channelId,
-        subscribers: subscribers || '—',
-        url: `https://www.youtube.com/@${YOUTUBE_HANDLE}`
-    };
-}
-
-function decodeXmlEntities(str) {
-    if (!str) return '';
-    return str
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&apos;/g, "'");
-}
-
-app.get('/api/youtube/channel', async (req, res, next) => {
-    try {
-        const now = Date.now();
-        if (ytChannelCache.data && (now - ytChannelCache.timestamp) < YT_CACHE_TTL) {
-            return res.json(ytChannelCache.data);
-        }
-
-        const channelData = await getYouTubeChannelId();
-        ytChannelCache = { data: channelData, timestamp: now };
-        res.json(channelData);
-    } catch (err) {
-        console.error('[youtube/channel]', err.message);
-        // Возвращаем кэш при ошибке если есть
-        if (ytChannelCache.data) {
-            return res.json(ytChannelCache.data);
-        }
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.get('/api/youtube/videos', async (req, res, next) => {
-    try {
-        const now = Date.now();
-        if (ytVideosCache.data && (now - ytVideosCache.timestamp) < YT_CACHE_TTL) {
-            return res.json(ytVideosCache.data);
-        }
-
-        let channelId = ytChannelCache.data?.channelId;
-        
-        if (!channelId) {
-            const channelData = await getYouTubeChannelId();
-            ytChannelCache = { data: channelData, timestamp: now };
-            channelId = channelData.channelId;
-        }
-
-        if (!channelId) {
-            return res.status(404).json({ error: 'Channel ID not found. Проверьте YOUTUBE_HANDLE.' });
-        }
-
-        const rssRes = await fetchWithRetry(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        });
-
-        if (!rssRes.ok) {
-            const errText = await rssRes.text().catch(() => '');
-            throw new Error(`RSS feed failed: ${rssRes.status} — ${errText.slice(0, 200)}`);
-        }
-        
-        const xml = await rssRes.text();
-        const videos = [];
-        const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-        let entryMatch;
-        
-        while ((entryMatch = entryRegex.exec(xml)) !== null) {
-            const entry = entryMatch[1];
-            
-            const getTag = (tag) => {
-                const m = entry.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
-                return m ? m[1].trim() : null;
-            };
-
-            const videoId = getTag('yt:videoId');
-            const title = getTag('title');
-            const published = getTag('published');
-            const authorName = getTag('name');
-            
-            const viewsMatch = entry.match(/<media:statistics[^>]+views=["'](\d+)["']/i);
-            const views = viewsMatch ? parseInt(viewsMatch[1]) : 0;
-
-            if (videoId && title) {
-                videos.push({
-                    id: videoId,
-                    title: decodeXmlEntities(title),
-                    published: published,
-                    author: decodeXmlEntities(authorName || ''),
-                    views: views,
-                    thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
-                    thumbnailMaxRes: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-                    url: `https://www.youtube.com/watch?v=${videoId}`
-                });
-            }
-        }
-
-        console.log(`[youtube/videos] Loaded ${videos.length} videos for channel ${channelId}`);
-        ytVideosCache = { data: videos, timestamp: now };
-        res.json(videos);
-    } catch (err) {
-        console.error('[youtube/videos]', err.message);
-        // Возвращаем кэш при ошибке если есть
-        if (ytVideosCache.data) {
-            return res.json(ytVideosCache.data);
-        }
-        res.status(500).json({ error: err.message });
     }
 });
 

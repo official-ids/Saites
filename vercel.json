@@ -3,7 +3,7 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
-  
+
   "git": {
     "deploymentEnabled": {
       "Oris": true,
@@ -46,13 +46,7 @@
   ],
 
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/proxy" },
-    
-    { "source": "/24781", "destination": "/public/24781/index.html" },
-    { "source": "/658234", "destination": "/public/658234/index.html" },
-    { "source": "/658234/(.*)", "destination": "/public/658234/$1" },
-    
-    { "source": "/(.*)", "destination": "/public/$1" }
+    { "source": "/api/(.*)", "destination": "/api/proxy" }
   ],
 
   "redirects": [

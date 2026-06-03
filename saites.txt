@@ -1,8 +1,8 @@
 :: Тхэквондо
-oris-sand.vercel.app/658234@:Тхэквондо
+oris-flax.vercel.app/658234@:Тхэквондо
 "Правила лагеря по тхэквондо."@:Тхэквондо
 ::
 :: MRPakeleksis
-oris-sand.vercel.app/24781@:MRPakeleksis
+oris-flax.vercel.app/24781@:MRPakeleksis
 "Ютуб страница блогера @MRPakeleksis"@:MRPakeleksis
 ::
