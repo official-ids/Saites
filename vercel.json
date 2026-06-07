@@ -28,7 +28,7 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(), autoplay=(self), fullscreen=(self), display-capture=(self)" }
       ]
     },
     {
@@ -50,7 +50,6 @@
   ],
 
   "redirects": [
-    { "source": "/24781/", "destination": "/24781", "permanent": true },
     { "source": "/658234/", "destination": "/658234", "permanent": true },
     { "source": "/index.html", "destination": "/", "permanent": true }
   ]

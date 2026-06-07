@@ -6,6 +6,7 @@
 <meta name="description" content="Защищённые видеозвонки Oris через WebRTC">
 <meta name="theme-color" content="#000000">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv="Permissions-Policy" content="camera=*, microphone=*, geolocation=*, autoplay=*, fullscreen=*, display-capture=*">
 <title>Call · Oris</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -1197,45 +1198,46 @@ body {
     // ============================================
 const PEER_SERVERS = [
     { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
-    { host: '1.peerjs.com', port: 443, secure: true, path: '/' }
+    { host: '1.peerjs.com', port: 443, secure: true, path: '/' },
+    { host: 'peerjs.com', port: 443, secure: true, path: '/peerjs' },
+    { host: 'west.peerjs.com', port: 443, secure: true, path: '/' },
+    { host: 'east.peerjs.com', port: 443, secure: true, path: '/' }
 ];
-
-const ICE_SERVERS = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' }
-    ],
-    iceCandidatePoolSize: 10
-};
 
 function createPeer(id = null, serverIndex = 0) {
     return new Promise((resolve, reject) => {
-            if (serverIndex >= PEER_SERVERS.length) {
-                reject(new Error('Все серверы PeerJS недоступны. Попробуйте позже.'));
-                return;
-            }
+        if (serverIndex >= PEER_SERVERS.length) {
+            reject(new Error('Все серверы PeerJS недоступны. Попробуйте позже или используйте другой браузер/сеть.'));
+            return;
+        }
 
-            const server = PEER_SERVERS[serverIndex];
-            const peerOptions = {
+        const server = PEER_SERVERS[serverIndex];
+        const peerOptions = {
             host: server.host,
             port: server.port,
             secure: server.secure,
             path: server.path,
             debug: 0,
-            config: ICE_SERVERS
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
+                ],
+                iceCandidatePoolSize: 10
+            }
         };
 
-            const peerId = id ? `oris-${id}` : null;
-            const peer = peerId ? new Peer(peerId, peerOptions) : new Peer(peerOptions);
+        const peerId = id ? `oris-${id}` : null;
+        const peer = peerId ? new Peer(peerId, peerOptions) : new Peer(peerOptions);
 
-            let connectionTimeout = setTimeout(() => {
-                console.warn(`[Peer] Timeout on ${server.host}, trying next server...`);
-                try { peer.destroy(); } catch (e) {}
-                createPeer(id, serverIndex + 1).then(resolve).catch(reject);
-            }, 8000);
+        let connectionTimeout = setTimeout(() => {
+            console.warn(`[Peer] Timeout on ${server.host}, trying next server...`);
+            try { peer.destroy(); } catch (e) {}
+            createPeer(id, serverIndex + 1).then(resolve).catch(reject);
+        }, 12000); // Увеличили до 12 секунд
 
             peer.on('open', (openedId) => {
                 clearTimeout(connectionTimeout);
