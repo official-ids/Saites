@@ -77,7 +77,22 @@ app.use(helmet({
             ],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "blob:", "https://i.ytimg.com", "https://yt3.ggpht.com", "https://yt3.googleusercontent.com"],
-            connectSrc: ["'self'", "https://api.github.com", "https://www.youtube.com", "https://api.telegram.org", "wss://0.peerjs.com", "wss://*.peerjs.com", "https://*.peerjs.com"],
+            connectSrc: [
+    "'self'", 
+    "https://api.github.com", 
+    "https://www.youtube.com", 
+    "https://api.telegram.org", 
+    "wss://0.peerjs.com", 
+    "wss://1.peerjs.com", 
+    "wss://*.peerjs.com", 
+    "https://*.peerjs.com",
+    "https://*.railway.app",
+    "wss://*.railway.app",
+    "https://*.onrender.com",
+    "wss://*.onrender.com",
+    "https://*.glitch.me",
+    "wss://*.glitch.me"
+],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
@@ -1415,6 +1430,144 @@ ${message}
         console.error('[api/add/corp]', err);
         next(err);
     }
+});
+
+
+// -----------------------------
+// API Routes: Call (WebRTC)
+// -----------------------------
+
+// Хранилище активных комнат (in-memory, сбрасывается при холодном старте)
+const activeRooms = new Map();
+const ROOM_TTL = 4 * 60 * 60 * 1000; // 4 часа
+
+// Очистка устаревших комнат каждые 10 минут
+setInterval(() => {
+    const now = Date.now();
+    for (const [id, room] of activeRooms.entries()) {
+        if (now - room.createdAt > ROOM_TTL) {
+            activeRooms.delete(id);
+        }
+    }
+}, 10 * 60 * 1000);
+
+/**
+ * Генерация читаемого ID комнаты (без I, O, 0, 1)
+ */
+function generateCallRoomId() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+/**
+ * GET /call — отдаём HTML-страницу звонка
+ * (дублирует express.static, но явно и с нужными заголовками)
+ */
+app.get('/call', (req, res) => {
+    const filePath = path.join(PUBLIC_DIR, 'call', 'index.html');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), autoplay=(self), display-capture=(self)');
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            res.status(404).json({ error: 'Call page not found' });
+        }
+    });
+});
+
+/**
+ * GET /call/:id — вход в комнату по ID (для share-ссылок)
+ */
+app.get('/call/:id', (req, res) => {
+    const roomId = req.params.id.toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(roomId)) {
+        return res.status(400).json({ error: 'Invalid room ID' });
+    }
+    const filePath = path.join(PUBLIC_DIR, 'call', 'index.html');
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), autoplay=(self), display-capture=(self)');
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(filePath);
+});
+
+/**
+ * POST /api/call/room — создать новую комнату
+ * Возвращает уникальный ID, который гарантированно не занят
+ */
+app.post('/api/call/room', (req, res) => {
+    try {
+        let roomId;
+        let attempts = 0;
+        do {
+            roomId = generateCallRoomId();
+            attempts++;
+            if (attempts > 10) {
+                return res.status(500).json({ error: 'Could not generate unique room ID' });
+            }
+        } while (activeRooms.has(roomId));
+
+        activeRooms.set(roomId, {
+            createdAt: Date.now(),
+            participants: 0
+        });
+
+        res.json({ roomId, expiresAt: Date.now() + ROOM_TTL });
+    } catch (err) {
+        console.error('[POST /api/call/room]', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * GET /api/call/check/:id — проверить, существует ли комната
+ * Используется клиентом перед попыткой подключения
+ */
+app.get('/api/call/check/:id', (req, res) => {
+    const roomId = req.params.id.toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(roomId)) {
+        return res.status(400).json({ error: 'Invalid room ID' });
+    }
+    const room = activeRooms.get(roomId);
+    res.json({
+        exists: !!room,
+        roomId,
+        createdAt: room?.createdAt || null
+    });
+});
+
+/**
+ * POST /api/call/join — отметить, что пользователь вошёл в комнату
+ */
+app.post('/api/call/join', (req, res) => {
+    const { roomId } = req.body;
+    if (!roomId || !/^[A-Z0-9]{6}$/.test(roomId)) {
+        return res.status(400).json({ error: 'Invalid room ID' });
+    }
+    const room = activeRooms.get(roomId);
+    if (!room) {
+        return res.status(404).json({ error: 'Room not found or expired' });
+    }
+    room.participants = Math.min((room.participants || 0) + 1, 2);
+    res.json({ success: true, participants: room.participants });
+});
+
+/**
+ * POST /api/call/leave — отметить выход из комнаты
+ */
+app.post('/api/call/leave', (req, res) => {
+    const { roomId } = req.body;
+    if (!roomId) return res.status(400).json({ error: 'roomId required' });
+    const room = activeRooms.get(roomId);
+    if (room) {
+        room.participants = Math.max((room.participants || 0) - 1, 0);
+        if (room.participants === 0) {
+            activeRooms.delete(roomId);
+        }
+    }
+    res.json({ success: true });
 });
 
 // -----------------------------
