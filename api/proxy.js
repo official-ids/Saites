@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const crypto = require('crypto');
 const newsRouter = require('../news');
+const supportRouter = require('../support');
 const { kv } = require('@vercel/kv');
 
 // -----------------------------
@@ -31,8 +32,6 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// YouTube Config
-const YOUTUBE_HANDLE = 'MRPakeleksis';
 
 // Timeouts & Retries
 const FETCH_TIMEOUT = 10000; // 10 секунд
@@ -67,6 +66,7 @@ app.use(helmet({
                 "'unsafe-inline'", 
                 "https://cdn.tailwindcss.com", 
                 "https://fonts.googleapis.com",
+                "https://unpkg.com",
                 "https://cdnjs.cloudflare.com"
             ],
             styleSrc: [
@@ -77,7 +77,7 @@ app.use(helmet({
             ],
             fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "blob:", "https://i.ytimg.com", "https://yt3.ggpht.com", "https://yt3.googleusercontent.com"],
-            connectSrc: ["'self'", "https://api.github.com", "https://www.youtube.com", "https://api.telegram.org"],
+            connectSrc: ["'self'", "https://api.github.com", "https://www.youtube.com", "https://api.telegram.org", "wss://0.peerjs.com", "wss://*.peerjs.com", "https://*.peerjs.com"],
             objectSrc: ["'none'"],
             baseUri: ["'self'"],
             formAction: ["'self'"]
@@ -197,6 +197,7 @@ setInterval(() => {
 app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use('/api/news', newsRouter);
+app.use('/api/support', supportRouter);
 app.use(express.static(PUBLIC_DIR, {
     maxAge: '1d', 
     etag: true,
@@ -1233,6 +1234,69 @@ app.get('/api/api-config', async (req, res, next) => {
         let config = await kv.get(API_CONFIG_KEY);
         if (!config) config = DEFAULT_API_CONFIG;
         res.json(config);
+    } catch (err) { next(err); }
+});
+
+// -----------------------------
+// API Routes: FAQ (Help Center)
+// -----------------------------
+const FAQ_CONFIG_KEY = 'admin:faq_config';
+
+const DEFAULT_FAQ_CONFIG = [
+    {
+        id: 'general',
+        category: 'general',
+        items: [
+            { q: 'Что такое платформа Oris?', a: 'Oris — это каталог избранных веб-проектов с новостным разделом, системой комментариев и технической поддержкой.' },
+            { q: 'Как добавить свой сайт в каталог?', a: 'Перейдите на страницу <a href="/add">/add</a>, заполните форму. Заявка отправляется администратору через Telegram для ручной модерации.' },
+            { q: 'Где посмотреть историю изменений?', a: 'Вся история версий доступна на странице <a href="/changelog">/changelog</a>.' }
+        ]
+    },
+    {
+        id: 'account',
+        category: 'account',
+        items: [
+            { q: 'Как зарегистрироваться в новостях?', a: 'Нажмите «Войти» на <a href="/news">/news</a>, выберите «Читатель» и введите имя. Сохраните 4-значный ID — он нужен для повторного входа.' },
+            { q: 'Что делать, если я потерял ID?', a: 'К сожалению, восстановить ID невозможно — он не привязан к email. Создайте новый аккаунт.' }
+        ]
+    },
+    {
+        id: 'support',
+        category: 'support',
+        items: [
+            { q: 'Как создать тикет в поддержку?', a: 'Перейдите на <a href="/support">/support</a>, введите имя и создайте тикет. Команда поддержки ответит в чате.' },
+            { q: 'Сколько времени занимает ответ?', a: 'Стандартное время ответа — до 24 часов в рабочие дни.' }
+        ]
+    }
+];
+
+// Публичный эндпоинт — для страницы /help
+app.get('/api/faq', async (req, res, next) => {
+    try {
+        let config = await kv.get(FAQ_CONFIG_KEY);
+        if (!config) config = DEFAULT_FAQ_CONFIG;
+        res.json(config);
+    } catch (err) { next(err); }
+});
+
+// Админский GET
+app.get('/api/admin/faq-config', verifyAdminToken, async (req, res, next) => {
+    try {
+        let config = await kv.get(FAQ_CONFIG_KEY);
+        if (!config) config = DEFAULT_FAQ_CONFIG;
+        res.json({ content: config });
+    } catch (err) { next(err); }
+});
+
+// Админский POST
+app.post('/api/admin/faq-config/save', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = req.body;
+        if (!Array.isArray(content)) {
+            return res.status(400).json({ error: 'Must be an array of FAQ sections' });
+        }
+        await kv.set(FAQ_CONFIG_KEY, content);
+        res.json({ success: true });
     } catch (err) { next(err); }
 });
 

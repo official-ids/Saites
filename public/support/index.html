@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Техническая поддержка Oris — чат с командой">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Поддержка · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F0F0F2;
+    --bg-sidebar: #F9F9FB;
+    --bg-bubble-user: #0071E3;
+    --bg-bubble-other: #FFFFFF;
+    --text-primary: #1D1D1F;
+    --text-secondary: #86868B;
+    --text-tertiary: #AEAEB2;
+    --text-on-accent: #FFFFFF;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --danger: #FF3B30;
+    --success: #34C759;
+    --warning: #FF9F0A;
+    --gold: #D4AF37;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono-stack: 'SF Mono', 'Menlo', monospace;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-body: #000000;
+        --bg-card: #1C1C1E;
+        --bg-elevated: #2C2C2E;
+        --bg-sidebar: #0A0A0A;
+        --bg-bubble-other: #2C2C2E;
+        --text-primary: #F5F5F7;
+        --text-secondary: #86868B;
+        --text-tertiary: #636366;
+        --border: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.18);
+    }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Кнопки с иконками (общий стиль) */
+.btn-icon {
+    background: transparent;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--text-secondary);
+}
+.btn-icon:hover {
+    background: var(--bg-elevated);
+    transform: scale(1.05);
+    color: var(--text-primary);
+}
+.btn-icon svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+/* ============= КАРТОЧКИ ФАЙЛОВ ============= */
+.file-card {
+    display: block;
+    margin: 6px 0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--bg-elevated);
+    max-width: 280px;
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.file-card:first-child { margin-top: 0; }
+.file-card:last-child { margin-bottom: 0; }
+.file-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+.message.user .file-card {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+.message.user .file-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Карточка с изображением */
+.image-card a {
+    display: block;
+    line-height: 0;
+}
+.image-card img {
+    display: block;
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+    cursor: zoom-in;
+    transition: transform 0.2s ease;
+}
+.image-card img:hover {
+    transform: scale(1.02);
+}
+.image-card .file-name {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    word-break: break-all;
+    line-height: 1.3;
+    border-top: 1px solid var(--border);
+}
+.message.user .image-card .file-name {
+    color: rgba(255, 255, 255, 0.85);
+    border-top-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Карточка с документом */
+.doc-card .file-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+}
+.doc-card .file-link:hover {
+    background: var(--border);
+}
+.message.user .doc-card .file-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.doc-card .file-link svg {
+    flex-shrink: 0;
+    color: var(--accent);
+    width: 32px;
+    height: 32px;
+}
+.message.user .doc-card .file-link svg {
+    color: var(--text-on-accent);
+}
+.doc-card .file-info {
+    min-width: 0;
+    flex: 1;
+}
+.doc-card .file-name {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+    letter-spacing: -0.01em;
+}
+.message.user .doc-card .file-name {
+    color: var(--text-on-accent);
+}
+.doc-card .file-size {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+.message.user .doc-card .file-size {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+/* Текст в bubble должен правильно оборачивать карточки */
+.message-bubble .msg-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Панель эмодзи */
+.emoji-panel {
+    position: absolute;
+    bottom: 70px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+    width: 280px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+}
+.emoji-panel button {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background 0.1s;
+}
+.emoji-panel button:hover {
+    background: var(--bg-elevated);
+}
+
+/* Превью файла */
+.file-preview {
+    position: absolute;
+    bottom: 70px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+    max-width: 260px;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+}
+.file-preview img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+.file-preview .file-name {
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    word-break: break-all;
+}
+.file-preview button {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+/* App layout */
+.app {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 340px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+.sidebar-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+.sidebar-logo svg { width: 24px; height: 24px; color: var(--accent); }
+.sidebar-logo span { font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; }
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+.sidebar-user-admin {
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+.sidebar-actions {
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.btn {
+    padding: 8px 14px;
+    border-radius: 99px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn svg { width: 14px; height: 14px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+.btn-ghost { background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.tickets-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+.ticket-item {
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+}
+.ticket-item:hover { background: var(--bg-elevated); }
+.ticket-item.active {
+    background: var(--bg-card);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm);
+}
+.ticket-subject {
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ticket-subject-text {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ticket-status {
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+.ticket-status.open { background: rgba(52, 199, 89, 0.12); color: var(--success); }
+.ticket-status.closed { background: var(--bg-elevated); color: var(--text-tertiary); }
+.ticket-preview {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+.ticket-meta {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Chat panel */
+.chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--bg-body);
+}
+.chat-header {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.chat-header-info { flex: 1; min-width: 0; }
+.chat-header-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.chat-header-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.chat-back-btn {
+    display: none;
+    background: transparent;
+    border: none;
+    padding: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+.chat-back-btn:hover { color: var(--text-primary); }
+.chat-back-btn svg { width: 20px; height: 20px; }
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.message {
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+}
+.message.user { align-self: flex-end; align-items: flex-end; }
+.message.admin { align-self: flex-start; align-items: flex-start; }
+.message.system {
+    align-self: center;
+    max-width: 90%;
+    text-align: center;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin: 8px 0;
+}
+.message-bubble {
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+.message.user .message-bubble {
+    background: var(--bg-bubble-user);
+    color: var(--text-on-accent);
+    border-bottom-right-radius: 6px;
+}
+.message.admin .message-bubble {
+    background: var(--bg-bubble-other);
+    color: var(--text-primary);
+    border-bottom-left-radius: 6px;
+    border: 1px solid var(--border);
+}
+.message-sender {
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    padding: 0 6px;
+}
+.message.admin .message-sender { color: var(--accent); }
+.message.user .message-sender { color: var(--text-secondary); }
+.message-time {
+    font-size: 0.68rem;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+    padding: 0 6px;
+}
+
+.chat-compose {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-card);
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+    position: relative;
+}
+.chat-compose textarea {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.92rem;
+    resize: none;
+    min-height: 40px;
+    max-height: 120px;
+    line-height: 1.4;
+    transition: border-color 0.15s ease;
+}
+.chat-compose textarea:focus {
+    border-color: var(--accent);
+    background: var(--bg-card);
+}
+.chat-compose button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+.chat-compose button:hover:not(:disabled) { background: var(--accent-hover); transform: scale(1.05); }
+.chat-compose button:disabled { opacity: 0.4; cursor: not-allowed; }
+.chat-compose button svg { width: 18px; height: 18px; }
+
+.empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+.empty-state svg { width: 64px; height: 64px; color: var(--text-tertiary); margin-bottom: 16px; }
+.empty-state-title { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.empty-state-text { font-size: 0.9rem; max-width: 320px; margin-bottom: 20px; line-height: 1.5; }
+
+/* Login screen */
+.login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+.login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: var(--shadow-md);
+}
+.login-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+.login-logo svg { width: 32px; height: 32px; color: var(--accent); }
+.login-logo span { font-size: 1.3rem; font-weight: 700; }
+.login-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 6px; }
+.login-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem; }
+.login-tabs {
+    display: flex;
+    background: var(--bg-elevated);
+    padding: 4px;
+    border-radius: 99px;
+    margin-bottom: 20px;
+}
+.login-tab {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.login-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+.form-group { margin-bottom: 16px; }
+.form-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15); }
+.form-hint { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 4px; }
+.form-error { font-size: 0.78rem; color: var(--danger); margin-top: 4px; }
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: white;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.login-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* New ticket modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: var(--shadow-lg);
+}
+.modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; }
+.modal-subtitle { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* Footer links */
+.sidebar-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem;
+    text-align: center;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+.sidebar-footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.sidebar-footer a:hover {
+    color: var(--accent);
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    padding: 10px 18px;
+    border-radius: 99px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border);
+    font-size: 0.88rem;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 600;
+    max-width: 90%;
+}
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { color: var(--success); }
+.toast.error { color: var(--danger); }
+
+/* Typing indicator */
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border-radius: 18px;
+    width: fit-content;
+    margin-top: 4px;
+}
+.typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--text-tertiary);
+    border-radius: 50%;
+    animation: typing 1.2s infinite ease-in-out;
+}
+.typing-indicator span:nth-child(1) { animation-delay: 0s; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* Mobile */
+@media (max-width: 768px) {
+    .sidebar { width: 100%; position: absolute; inset: 0; z-index: 10; }
+    .chat { position: absolute; inset: 0; z-index: 5; }
+    .app.chat-open .sidebar { display: none; }
+    .app:not(.chat-open) .chat { display: none; }
+    .chat-back-btn { display: flex; }
+    .message { max-width: 85%; }
+    .file-card { max-width: 100%; }
+}
+
+.spinner {
+    width: 24px; height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 20px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-screen" id="loginScreen" style="display: none;">
+    <div class="login-card">
+        <div class="login-logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span>Oris Support</span>
+        </div>
+        <h1 class="login-title">Техническая поддержка</h1>
+        <p class="login-subtitle">Чат с командой Oris в реальном времени</p>
+
+        <div class="login-tabs">
+            <button class="login-tab active" data-login-tab="user">Пользователь</button>
+            <button class="login-tab" data-login-tab="admin">Команда</button>
+        </div>
+
+        <form id="loginForm" onsubmit="return false;">
+            <div class="form-group" id="nameField">
+                <label class="form-label" for="loginName">Ваше имя</label>
+                <input type="text" class="form-input" id="loginName" placeholder="Например, Алексей" maxlength="40" autocomplete="name">
+                <div class="form-hint">Как к вам обращаться в чате</div>
+            </div>
+
+            <div class="form-group" id="tokenField" style="display: none;">
+                <label class="form-label" for="loginToken">Токен доступа</label>
+                <input type="password" class="form-input" id="loginToken" placeholder="Введите admin token..." autocomplete="current-password">
+                <div class="form-hint">Выдаётся администратором системы</div>
+            </div>
+
+            <div class="form-error" id="loginError" style="display: none;"></div>
+
+            <button type="submit" class="login-btn" id="loginBtn">Войти</button>
+        </form>
+    </div>
+</div>
+
+<!-- Main App -->
+<div class="app" id="app" style="display: none;">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Support</span>
+            </a>
+            <div class="sidebar-user">
+                <span id="currentUserName">—</span>
+                <span class="sidebar-user-admin" id="adminBadge" style="display: none;">ADMIN</span>
+                <button class="btn btn-ghost" id="logoutBtn" title="Выйти" style="padding: 4px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="sidebar-actions" id="userActions">
+            <button class="btn btn-primary" id="newTicketBtn" style="flex: 1;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Новый тикет
+            </button>
+        </div>
+
+        <div class="tickets-list" id="ticketsList">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="/support?p=privacy" target="_blank">Политика конфиденциальности</a>
+            <a href="/support?p=rules" target="_blank">Правила чата</a>
+        </div>
+    </aside>
+
+    <main class="chat" id="chatPanel">
+        <div class="chat-header" id="chatHeader" style="display: none;">
+            <button class="chat-back-btn" id="backBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="chat-header-info">
+                <div class="chat-header-title" id="chatTitle">—</div>
+                <div class="chat-header-subtitle" id="chatSubtitle">—</div>
+            </div>
+            <button class="btn btn-secondary" id="toggleStatusBtn" style="display: none;">
+                Закрыть тикет
+            </button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="empty-state" id="chatEmpty">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                <div class="empty-state-title">Выберите тикет</div>
+                <div class="empty-state-text">Или создайте новый, чтобы начать диалог с командой поддержки</div>
+            </div>
+        </div>
+
+        <div class="chat-compose" id="chatCompose" style="display: none;">
+            <textarea id="messageInput" placeholder="Напишите сообщение..." rows="1"></textarea>
+            <button type="button" id="emojiPickerBtn" class="btn-icon" title="Смайлы">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                </svg>
+            </button>
+
+            <button type="button" id="attachFileBtn" class="btn-icon" title="Прикрепить файл">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13.5 3H12H8C6.9 3 6 3.9 6 5v14c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V8.5L13.5 3z"></path>
+                    <path d="M13 3v5h5"></path>
+                </svg>
+            </button>
+
+            <input type="file" id="fileInput" style="display: none;" accept="image/*,application/pdf,text/plain,.jpg,.png,.gif,.webp">
+
+            <div id="emojiPanel" class="emoji-panel" style="display: none;"></div>
+            <div id="filePreview" class="file-preview" style="display: none;"></div>
+
+            <button id="sendBtn" disabled>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+            </button>
+        </div>
+    </main>
+</div>
+
+<!-- New Ticket Modal -->
+<div class="modal-overlay" id="newTicketModal">
+    <div class="modal-content">
+        <h2 class="modal-title">Новый тикет</h2>
+        <p class="modal-subtitle">Опишите вашу проблему — команда поддержки ответит в чате</p>
+        <form id="newTicketForm" onsubmit="return false;">
+            <div class="form-group">
+                <label class="form-label" for="ticketSubject">Тема</label>
+                <input type="text" class="form-input" id="ticketSubject" placeholder="Кратко опишите проблему" maxlength="120" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="ticketMessage">Сообщение</label>
+                <textarea class="form-input" id="ticketMessage" rows="4" placeholder="Подробно опишите, что произошло..." maxlength="2000" required style="resize: vertical; min-height: 100px;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="cancelNewTicket">Отмена</button>
+                <button type="submit" class="btn btn-primary" id="submitNewTicket">Создать тикет</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+    'use strict';
+
+    const API = {
+        USER_AUTH: '/api/support/auth/user',
+        ADMIN_AUTH: '/api/support/auth/admin',
+        LOGOUT: '/api/support/auth/logout',
+        TICKETS: '/api/support/tickets',
+        TICKET: (id) => `/api/support/tickets/${id}`,
+        MESSAGES: (id) => `/api/support/tickets/${id}/messages`,
+        STATUS: (id) => `/api/support/tickets/${id}/status`
+    };
+
+    const State = {
+        session: null,
+        token: null,
+        tickets: [],
+        currentTicketId: null,
+        currentTicket: null,
+        pollingTimer: null,
+        loginMode: 'user',
+        unreadCount: 0,
+        lastKnownMessagesCount: new Map(),
+        originalTitle: document.title
+    };
+
+    const ApiClient = {
+        headers() {
+            const h = { 'Content-Type': 'application/json' };
+            if (State.token) h['Authorization'] = `Bearer ${State.token}`;
+            return h;
+        },
+        async request(url, options = {}) {
+            try {
+                const res = await fetch(url, { ...options, headers: { ...this.headers(), ...(options.headers || {}) } });
+                if (res.status === 401) {
+                    State.session = null;
+                    State.token = null;
+                    localStorage.removeItem('oris_support_token');
+                    showLoginScreen();
+                    throw new Error('Сессия истекла');
+                }
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || `Ошибка ${res.status}`);
+                return data;
+            } catch (err) {
+                if (err.name === 'TypeError') throw new Error('Нет соединения');
+                throw err;
+            }
+        },
+        userAuth(name, token) {
+            return this.request(API.USER_AUTH, { method: 'POST', body: JSON.stringify({ name, token }) });
+        },
+        adminAuth(token) {
+            return this.request(API.ADMIN_AUTH, { method: 'POST', body: JSON.stringify({ token }) });
+        },
+        logout() { return this.request(API.LOGOUT, { method: 'POST' }); },
+        getTickets() { return this.request(API.TICKETS); },
+        getTicket(id) { return this.request(API.TICKET(id)); },
+        createTicket(subject, firstMessage) {
+            return this.request(API.TICKETS, { method: 'POST', body: JSON.stringify({ subject, firstMessage }) });
+        },
+        sendMessage(id, text) {
+            return this.request(API.MESSAGES(id), { method: 'POST', body: JSON.stringify({ text }) });
+        },
+        setStatus(id, status) {
+            return this.request(API.STATUS(id), { method: 'POST', body: JSON.stringify({ status }) });
+        }
+    };
+
+    function toast(message, type = 'info') {
+        const t = document.getElementById('toast');
+        t.textContent = message;
+        t.className = `toast ${type} visible`;
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => t.classList.remove('visible'), 3000);
+    }
+
+    function escapeHtml(str) {
+        if (str == null) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function formatTime(iso) {
+        const d = new Date(iso);
+        const now = new Date();
+        const diff = now - d;
+        if (diff < 60000) return 'только что';
+        if (diff < 3600000) return Math.floor(diff / 60000) + ' мин';
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (d.toDateString() === yesterday.toDateString()) return 'вчера';
+        if (d.toDateString() === now.toDateString()) {
+            return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+        if (diff < 604800000) return Math.floor(diff / 86400000) + ' дн';
+        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+
+    function formatFullTime(iso) {
+        return new Date(iso).toLocaleString('ru-RU', {
+            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function renderFileCard(fileMeta) {
+        const isImage = fileMeta.mime && fileMeta.mime.startsWith('image/');
+        const sizeKB = (fileMeta.size / 1024);
+        const sizeStr = sizeKB < 1024
+            ? `${sizeKB.toFixed(1)} KB`
+            : `${(fileMeta.size / 1048576).toFixed(1)} MB`;
+
+        if (isImage) {
+            return `
+                <div class="file-card image-card">
+                    <a href="${escapeHtml(fileMeta.url)}" target="_blank" rel="noopener noreferrer">
+                        <img src="${escapeHtml(fileMeta.url)}" alt="${escapeHtml(fileMeta.name)}" loading="lazy">
+                    </a>
+                    <div class="file-name">${escapeHtml(fileMeta.name)}</div>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="file-card doc-card">
+                    <a href="${escapeHtml(fileMeta.url)}" target="_blank" rel="noopener noreferrer" class="file-link">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8l-5-5z"/>
+                            <path d="M13 3v5h5"/>
+                        </svg>
+                        <div class="file-info">
+                            <div class="file-name">${escapeHtml(fileMeta.name)}</div>
+                            <div class="file-size">${sizeStr}</div>
+                        </div>
+                    </a>
+                </div>
+            `;
+        }
+    }
+
+    function updateTitleNotification() {
+        if (State.unreadCount > 0) {
+            document.title = `(${State.unreadCount}) ${State.originalTitle}`;
+        } else {
+            document.title = State.originalTitle;
+        }
+    }
+
+    function showLoginScreen() {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
+    }
+
+    function showApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        const isAdmin = State.session.role === 'admin';
+        document.getElementById('currentUserName').textContent = State.session.name;
+        document.getElementById('adminBadge').style.display = isAdmin ? 'inline' : 'none';
+        document.getElementById('userActions').style.display = isAdmin ? 'none' : 'block';
+        loadTickets();
+        startPolling();
+    }
+
+    function initLogin() {
+        const tabs = document.querySelectorAll('[data-login-tab]');
+        const nameField = document.getElementById('nameField');
+        const tokenField = document.getElementById('tokenField');
+        const loginBtn = document.getElementById('loginBtn');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                State.loginMode = tab.dataset.loginTab;
+                if (State.loginMode === 'admin') {
+                    nameField.style.display = 'none';
+                    tokenField.style.display = 'block';
+                    loginBtn.textContent = 'Войти как команда';
+                } else {
+                    nameField.style.display = 'block';
+                    tokenField.style.display = 'none';
+                    loginBtn.textContent = 'Войти';
+                }
+                document.getElementById('loginError').style.display = 'none';
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async () => {
+            const errEl = document.getElementById('loginError');
+            errEl.style.display = 'none';
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Вход...';
+
+            try {
+                let data;
+                if (State.loginMode === 'admin') {
+                    const token = document.getElementById('loginToken').value.trim();
+                    if (!token) throw new Error('Введите токен');
+                    data = await ApiClient.adminAuth(token);
+                } else {
+                    const name = document.getElementById('loginName').value.trim();
+                    if (!name) throw new Error('Введите имя');
+                    const existingToken = localStorage.getItem('oris_support_token');
+                    data = await ApiClient.userAuth(name, existingToken);
+                }
+                State.session = data.session;
+                State.token = data.token;
+                localStorage.setItem('oris_support_token', data.token);
+                showApp();
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.style.display = 'block';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = State.loginMode === 'admin' ? 'Войти как команда' : 'Войти';
+            }
+        });
+    }
+
+    async function loadTickets() {
+        const list = document.getElementById('ticketsList');
+        try {
+            const data = await ApiClient.getTickets();
+            State.tickets = data.tickets || [];
+
+            if (State.session && State.session.role === 'user') {
+                let newUnread = 0;
+                for (const ticket of State.tickets) {
+                    const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
+                    if (ticket.messagesCount > lastCount && ticket.status === 'open') {
+                        const lastMsg = ticket.lastMessage;
+                        if (lastMsg && lastMsg.from !== 'user') {
+                            newUnread += ticket.messagesCount - lastCount;
+                        }
+                    }
+                    State.lastKnownMessagesCount.set(ticket.id, ticket.messagesCount);
+                }
+                State.unreadCount = newUnread;
+                updateTitleNotification();
+            }
+
+            renderTickets();
+        } catch (err) {
+            list.innerHTML = `<div class="empty-state"><div class="empty-state-text">${escapeHtml(err.message)}</div></div>`;
+        }
+    }
+
+            function renderTickets() {
+        const list = document.getElementById('ticketsList');
+        if (State.tickets.length === 0) {
+            const isAdmin = State.session.role === 'admin';
+            list.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <div class="empty-state-title">${isAdmin ? 'Нет тикетов' : 'У вас пока нет тикетов'}</div>
+                    <div class="empty-state-text">${isAdmin ? 'Пользователи ещё не обращались в поддержку' : 'Создайте первый тикет, чтобы задать вопрос команде'}</div>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = State.tickets.map(t => {
+            const lastMsg = t.lastMessage;
+            const fileMarkerRegex = new RegExp('\\[\\[file:[A-Za-z0-9+/=]+\\]\\]', 'g');
+            let preview = lastMsg
+                ? (lastMsg.from === 'admin' ? '🛡 ' : '') + lastMsg.text.replace(fileMarkerRegex, '📎 Файл')
+                : 'Нет сообщений';
+            if (preview.length > 80) preview = preview.slice(0, 80) + '…';
+            return `
+                <div class="ticket-item ${t.id === State.currentTicketId ? 'active' : ''}" data-ticket-id="${t.id}">
+                    <div class="ticket-subject">
+                        <span class="ticket-subject-text">${escapeHtml(t.subject)}</span>
+                        <span class="ticket-status ${t.status}">${t.status === 'open' ? 'Открыт' : 'Закрыт'}</span>
+                    </div>
+                    <div class="ticket-preview">${escapeHtml(preview)}</div>
+                    <div class="ticket-meta">
+                        <span>${escapeHtml(t.userName)}</span>
+                        <span>${formatTime(t.updatedAt)} · ${t.messagesCount} сообщ.</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        list.querySelectorAll('[data-ticket-id]').forEach(el => {
+            el.addEventListener('click', () => openTicket(el.dataset.ticketId));
+        });
+    }
+
+    async function openTicket(id) {
+        if (State.session && State.session.role === 'user') {
+            const ticket = State.tickets.find(t => t.id === id);
+            if (ticket) {
+                const lastCount = State.lastKnownMessagesCount.get(id) || 0;
+                const newMsgs = ticket.messagesCount - lastCount;
+                if (newMsgs > 0) {
+                    State.unreadCount = Math.max(0, State.unreadCount - newMsgs);
+                    updateTitleNotification();
+                }
+                State.lastKnownMessagesCount.set(id, ticket.messagesCount);
+            }
+        }
+
+        State.currentTicketId = id;
+        document.getElementById('app').classList.add('chat-open');
+        renderTickets();
+
+        const header = document.getElementById('chatHeader');
+        const messages = document.getElementById('chatMessages');
+        const compose = document.getElementById('chatCompose');
+        header.style.display = 'flex';
+        compose.style.display = 'flex';
+
+        try {
+            const data = await ApiClient.getTicket(id);
+            State.currentTicket = data.ticket;
+            renderChat();
+            if (State.currentTicket.status === 'open') {
+                document.getElementById('messageInput').focus();
+            }
+        } catch (err) {
+            messages.innerHTML = `<div class="empty-state"><div class="empty-state-text">${escapeHtml(err.message)}</div></div>`;
+        }
+    }
+
+        function renderChat() {
+        const t = State.currentTicket;
+        if (!t) return;
+
+        document.getElementById('chatTitle').textContent = t.subject;
+        const subtitleParts = [
+            `Создан ${formatFullTime(t.createdAt)}`,
+            `Статус: ${t.status === 'open' ? 'открыт' : 'закрыт'}`
+        ];
+        document.getElementById('chatSubtitle').textContent = subtitleParts.join(' · ');
+
+        const toggleBtn = document.getElementById('toggleStatusBtn');
+        if (State.session.role === 'admin') {
+            toggleBtn.style.display = 'inline-flex';
+            toggleBtn.textContent = t.status === 'open' ? 'Закрыть тикет' : 'Переоткрыть';
+            toggleBtn.onclick = async () => {
+                const newStatus = t.status === 'open' ? 'closed' : 'open';
+                try {
+                    await ApiClient.setStatus(t.id, newStatus);
+                    toast(newStatus === 'closed' ? 'Тикет закрыт' : 'Тикет переоткрыт', 'success');
+                    await loadTickets();
+                    await openTicket(t.id);
+                } catch (err) {
+                    toast(err.message, 'error');
+                }
+            };
+        } else {
+            toggleBtn.style.display = 'none';
+        }
+
+        const messagesEl = document.getElementById('chatMessages');
+        const isAdmin = State.session.role === 'admin';
+
+        let lastSender = null;
+        messagesEl.innerHTML = t.messages.map((m, idx) => {
+            const processedText = m.text;
+            const fileRegex = new RegExp('\\[\\[file:([A-Za-z0-9+/=]+)\\]\\]', 'g');
+            let lastIndex = 0;
+            const parts = [];
+            let match;
+            while ((match = fileRegex.exec(processedText)) !== null) {
+                const before = processedText.substring(lastIndex, match.index);
+                if (before) parts.push('<span class="msg-text">' + escapeHtml(before) + '</span>');
+                try {
+                    const base64 = match[1];
+                    const jsonStr = decodeURIComponent(escape(atob(base64)));
+                    const fileMeta = JSON.parse(jsonStr);
+                    parts.push(renderFileCard(fileMeta));
+                } catch(e) {
+                    parts.push('<span class="msg-text">' + escapeHtml(match[0]) + '</span>');
+                }
+                lastIndex = fileRegex.lastIndex;
+            }
+            const tail = processedText.substring(lastIndex);
+            if (tail) parts.push('<span class="msg-text">' + escapeHtml(tail) + '</span>');
+            const finalText = parts.join('');
+
+            const isOwnMessage = (isAdmin && m.from === 'admin') || (!isAdmin && m.from === 'user');
+            const side = isOwnMessage ? 'user' : 'admin';
+            const senderName = isOwnMessage
+                ? 'Вы'
+                : (m.from === 'admin' ? 'Support Team' : escapeHtml(t.userName));
+
+            const showSender = !lastSender || lastSender !== m.from;
+            lastSender = m.from;
+
+            return `
+                ${showSender ? `<div class="message-sender" style="align-self: ${side === 'user' ? 'flex-end' : 'flex-start'}; padding: ${idx === 0 ? '0 6px' : '8px 6px 2px'};">${senderName}</div>` : ''}
+                <div class="message ${side}">
+                    <div class="message-bubble">${finalText}</div>
+                    <div class="message-time">${formatTime(m.createdAt)}</div>
+                </div>
+            `;
+        }).join('');
+
+        setTimeout(() => {
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }, 50);
+
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        if (t.status === 'closed' && !isAdmin) {
+            input.disabled = true;
+            input.placeholder = 'Тикет закрыт. Только команда поддержки может его переоткрыть.';
+            sendBtn.disabled = true;
+        } else {
+            input.disabled = false;
+            input.placeholder = 'Напишите сообщение...';
+            sendBtn.disabled = !input.value.trim();
+        }
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+        if (!text || !State.currentTicketId) return;
+
+        const btn = document.getElementById('sendBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>';
+        input.value = '';
+        input.style.height = 'auto';
+
+        try {
+            await ApiClient.sendMessage(State.currentTicketId, text);
+            await openTicket(State.currentTicketId);
+            await loadTickets();
+        } catch (err) {
+            toast(err.message, 'error');
+            input.value = text;
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = !input.value.trim();
+        }
+    }
+
+    function initChatInput() {
+        const input = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        input.addEventListener('input', () => {
+            sendBtn.disabled = !input.value.trim();
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+    }
+
+    function initNewTicket() {
+        const modal = document.getElementById('newTicketModal');
+        const open = () => modal.classList.add('active');
+        const close = () => {
+            modal.classList.remove('active');
+            document.getElementById('ticketSubject').value = '';
+            document.getElementById('ticketMessage').value = '';
+        };
+
+        document.getElementById('newTicketBtn').addEventListener('click', open);
+        document.getElementById('cancelNewTicket').addEventListener('click', close);
+        modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('active')) close();
+        });
+
+        document.getElementById('newTicketForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const subject = document.getElementById('ticketSubject').value.trim();
+            const message = document.getElementById('ticketMessage').value.trim();
+            const btn = document.getElementById('submitNewTicket');
+
+            if (!subject) return toast('Укажите тему', 'error');
+            if (!message) return toast('Напишите сообщение', 'error');
+
+            btn.disabled = true;
+            btn.textContent = 'Создание...';
+            try {
+                const data = await ApiClient.createTicket(subject, message);
+                toast('Тикет создан', 'success');
+                close();
+                await loadTickets();
+                await openTicket(data.ticket.id);
+            } catch (err) {
+                toast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Создать тикет';
+            }
+        });
+    }
+
+    function startPolling() {
+        if (State.pollingTimer) clearInterval(State.pollingTimer);
+        State.pollingTimer = setInterval(async () => {
+            try {
+                const data = await ApiClient.getTickets();
+                const oldTickets = State.tickets;
+                State.tickets = data.tickets || [];
+
+                if (State.session && State.session.role === 'user') {
+                    let newUnread = 0;
+                    for (const ticket of State.tickets) {
+                        const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
+                        if (ticket.messagesCount > lastCount && ticket.status === 'open') {
+                            const lastMsg = ticket.lastMessage;
+                            if (lastMsg && lastMsg.from !== 'user') {
+                                newUnread += ticket.messagesCount - lastCount;
+                            }
+                        }
+                        State.lastKnownMessagesCount.set(ticket.id, ticket.messagesCount);
+                    }
+                    State.unreadCount = newUnread;
+                    updateTitleNotification();
+                }
+
+                if (State.currentTicketId) {
+                    const cur = State.tickets.find(t => t.id === State.currentTicketId);
+                    const oldCur = oldTickets.find(t => t.id === State.currentTicketId);
+                    if (cur && oldCur && cur.messagesCount > oldCur.messagesCount) {
+                        const fresh = await ApiClient.getTicket(State.currentTicketId);
+                        State.currentTicket = fresh.ticket;
+                        renderChat();
+                    }
+                }
+                renderTickets();
+            } catch (e) {}
+        }, 4000);
+    }
+
+    document.getElementById('backBtn').addEventListener('click', () => {
+        document.getElementById('app').classList.remove('chat-open');
+        State.currentTicketId = null;
+        State.currentTicket = null;
+        renderTickets();
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        if (!confirm('Выйти из аккаунта?')) return;
+        try {
+            await ApiClient.logout();
+        } catch (e) {}
+        State.session = null;
+        State.token = null;
+        localStorage.removeItem('oris_support_token');
+        if (State.pollingTimer) clearInterval(State.pollingTimer);
+        showLoginScreen();
+    });
+
+    window.addEventListener('focus', () => {
+        if (State.session) {
+            loadTickets();
+            if (State.currentTicketId) openTicket(State.currentTicketId);
+        }
+    });
+
+    const emojiBtn = document.getElementById('emojiPickerBtn');
+    const emojiPanel = document.getElementById('emojiPanel');
+    const messageInput = document.getElementById('messageInput');
+
+    const commonEmojis = [
+        '😊', '😂', '❤️', '👍', '🎉', '😢', '😡', '🤔',
+        '👋', '🙏', '🔥', '✨', '💡', '📎', '🔒', '✅',
+        '⭐', '🍕', '🚀', '💬', '🕒', '⚠️', '🔧', '📌'
+    ];
+
+    function buildEmojiPanel() {
+        emojiPanel.innerHTML = commonEmojis.map(emoji => `<button type="button">${emoji}</button>`).join('');
+        emojiPanel.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const emoji = e.currentTarget.textContent;
+                const cursorPos = messageInput.selectionStart;
+                const text = messageInput.value;
+                messageInput.value = text.slice(0, cursorPos) + emoji + text.slice(cursorPos);
+                messageInput.focus();
+                messageInput.dispatchEvent(new Event('input'));
+                emojiPanel.style.display = 'none';
+            });
+        });
+    }
+
+    emojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = emojiPanel.style.display === 'grid';
+        emojiPanel.style.display = isVisible ? 'none' : 'grid';
+        if (!isVisible && emojiPanel.children.length === 0) buildEmojiPanel();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!emojiPanel.contains(e.target) && e.target !== emojiBtn) {
+            emojiPanel.style.display = 'none';
+        }
+    });
+
+    const attachBtn = document.getElementById('attachFileBtn');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+
+    attachBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+            let previewHtml = `<div class="file-name">${escapeHtml(file.name)} (${(file.size/1024).toFixed(1)} KB)</div>`;
+            if (file.type.startsWith('image/')) {
+                previewHtml += `<img src="${ev.target.result}" alt="preview">`;
+            }
+            previewHtml += `<button id="cancelUpload">Отмена</button>`;
+            filePreview.innerHTML = previewHtml;
+            filePreview.style.display = 'block';
+
+            document.getElementById('cancelUpload').addEventListener('click', () => {
+                filePreview.style.display = 'none';
+                fileInput.value = '';
+            });
+
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const res = await fetch('/api/support/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${State.token}` },
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Ошибка загрузки');
+
+                    const fileMeta = {
+                    name: file.name,
+                    url: data.url,
+                    size: file.size,
+                    mime: file.type
+                };
+                const jsonStr = JSON.stringify(fileMeta);
+                const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+                const fileBlock = `[[file:${base64}]]`;
+
+                const cursorPos = messageInput.selectionStart;
+                const text = messageInput.value;
+                const needSpace = text.length > 0 && text[cursorPos - 1] && text[cursorPos - 1] !== '\n' && text[cursorPos - 1] !== ' ';
+                const insert = (needSpace ? '\n' : '') + fileBlock + '\n';
+                messageInput.value = text.slice(0, cursorPos) + insert + text.slice(cursorPos);
+                messageInput.dispatchEvent(new Event('input'));
+                toast('Файл загружен', 'success');
+            } catch (err) {
+                toast(err.message, 'error');
+            } finally {
+                filePreview.style.display = 'none';
+                fileInput.value = '';
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!filePreview.contains(e.target) && e.target !== attachBtn && e.target !== fileInput) {
+            filePreview.style.display = 'none';
+        }
+    });
+
+    async function init() {
+        initLogin();
+        initChatInput();
+        initNewTicket();
+
+        const saved = localStorage.getItem('oris_support_token');
+        if (saved) {
+            try {
+                const data = await ApiClient.userAuth('', saved);
+                State.session = data.session;
+                State.token = data.token;
+                showApp();
+                return;
+            } catch (e) {
+                localStorage.removeItem('oris_support_token');
+            }
+        }
+        showLoginScreen();
+    }
+    init();
+
+    // -----------------------------
+    // Legal Pages Modal Handler
+    // -----------------------------
+    const legalPages = {
+        privacy: {
+            title: 'Политика конфиденциальности',
+            content: `
+                <p>Oris уважает вашу конфиденциальность и обязуется защищать ваши персональные данные.</p>
+                <h3>Сбор информации</h3>
+                <p>Мы собираем только ту информацию, которую вы предоставляете добровольно при создании тикетов поддержки: ваше имя и содержимое обращений.</p>
+                <h3>Использование информации</h3>
+                <p>Собранная информация используется исключительно для оказания технической поддержки и улучшения качества сервиса.</p>
+                <h3>Хранение данных</h3>
+                <p>Все данные хранятся в зашифрованном виде и доступны только авторизованным членам команды поддержки.</p>
+                <h3>Передача третьим лицам</h3>
+                <p>Мы не передаём ваши персональные данные третьим лицам без вашего явного согласия, за исключением случаев, предусмотренных законодательством.</p>
+                <h3>Удаление данных</h3>
+                <p>Вы можете запросить удаление всех ваших данных, обратившись в службу поддержки.</p>
+            `
+        },
+        rules: {
+            title: 'Правила чата',
+            content: `
+                <p>Для поддержания качественного обслуживания просим соблюдать следующие правила:</p>
+                <h3>1. Уважительное общение</h3>
+                <p>Общайтесь вежливо и уважительно с командой поддержки и другими пользователями.</p>
+                <h3>2. Конкретные вопросы</h3>
+                <p>Формулируйте вопросы чётко и по существу. Предоставляйте максимум информации о проблеме.</p>
+                <h3>3. Один тикет — одна проблема</h3>
+                <p>Создавайте отдельный тикет для каждой новой проблемы. Это помогает быстрее решать вопросы.</p>
+                <h3>4. Запрещённый контент</h3>
+                <p>Запрещается отправлять спам, рекламу, оскорбления, угрозы и любой незаконный контент.</p>
+                <h3>5. Терпение</h3>
+                <p>Команда поддержки отвечает в рабочее время. Пожалуйста, проявляйте терпение при ожидании ответа.</p>
+                <h3>6. Конфиденциальность</h3>
+                <p>Не публикуйте личную информацию других пользователей и конфиденциальные данные компании.</p>
+            `
+        }
+    };
+
+    function showLegalPage(pageKey) {
+        const page = legalPages[pageKey];
+        if (!page) return;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.innerHTML = `
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                <h2 class="modal-title">${page.title}</h2>
+                <div class="legal-content" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin-top: 16px;">
+                    ${page.content}
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-primary" id="closeLegalModal">Закрыть</button>
+                </div>
+            </div>
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .legal-content h3 {
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-top: 16px;
+                margin-bottom: 8px;
+            }
+            .legal-content p {
+                margin-bottom: 12px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(overlay);
+
+        const closeModal = () => {
+            overlay.remove();
+            style.remove();
+        };
+
+        document.getElementById('closeLegalModal').addEventListener('click', closeModal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal();
+        });
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        });
+    }
+
+    document.querySelectorAll('.sidebar-footer a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const url = new URL(link.href);
+            const pageKey = url.searchParams.get('p');
+            if (pageKey) {
+                showLegalPage(pageKey);
+            }
+        });
+    });
+
+})();
+</script>
+
+</body>
+</html>

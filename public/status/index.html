@@ -17,246 +17,125 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-    --bg-body: #F5F5F7;
-    --bg-card: #FFFFFF;
-    --bg-elevated: #F0F0F2;
-    --bg-subtle: #FAFAFA;
-    --text-primary: #1D1D1F;
-    --text-secondary: #86868B;
-    --text-tertiary: #AEAEB2;
-    --accent: #0071E3;
-    --accent-hover: #0077ED;
-    --danger: #FF3B30;
-    --success: #34C759;
-    --warning: #FF9F0A;
-    --purple: #AF52DE;
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.15);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
-    --radius-lg: 18px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
+    --bg-body: #F5F5F7; --bg-card: #FFFFFF; --bg-elevated: #F0F0F2; --bg-subtle: #FAFAFA;
+    --text-primary: #1D1D1F; --text-secondary: #86868B; --text-tertiary: #AEAEB2;
+    --accent: #0071E3; --accent-hover: #0077ED;
+    --danger: #FF3B30; --success: #34C759; --warning: #FF9F0A; --purple: #AF52DE;
+    --border: rgba(0,0,0,0.08); --border-strong: rgba(0,0,0,0.15);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
+    --radius-lg: 18px; --radius-md: 12px; --radius-sm: 8px;
     --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
     --header-h: 64px;
 }
 @media (prefers-color-scheme: dark) {
     :root {
-        --bg-body: #000000;
-        --bg-card: #1C1C1E;
-        --bg-elevated: #2C2C2E;
-        --bg-subtle: #0A0A0A;
-        --text-primary: #F5F5F7;
-        --text-secondary: #86868B;
-        --text-tertiary: #636366;
-        --border: rgba(255, 255, 255, 0.1);
-        --border-strong: rgba(255, 255, 255, 0.18);
+        --bg-body: #000; --bg-card: #1C1C1E; --bg-elevated: #2C2C2E; --bg-subtle: #0A0A0A;
+        --text-primary: #F5F5F7; --text-secondary: #86868B; --text-tertiary: #636366;
+        --border: rgba(255,255,255,0.1); --border-strong: rgba(255,255,255,0.18);
     }
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
-    background: var(--bg-body);
-    color: var(--text-primary);
-    font-family: var(--font-stack);
-    line-height: 1.5;
+    background: var(--bg-body); color: var(--text-primary);
+    font-family: var(--font-stack); line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
-
 .header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(245, 245, 247, 0.72);
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(245,245,247,0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid var(--border);
-    height: var(--header-h);
+    border-bottom: 1px solid var(--border); height: var(--header-h);
 }
-@media (prefers-color-scheme: dark) {
-    .header { background: rgba(0, 0, 0, 0.72); }
-}
+@media (prefers-color-scheme: dark) { .header { background: rgba(0,0,0,0.72); } }
 .header-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    height: 100%;
+    max-width: 1200px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; height: 100%;
 }
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: var(--text-primary);
-}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
 .logo-icon { width: 28px; height: 28px; color: var(--accent); }
 .logo-text { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
 .nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .nav-link {
-    padding: 8px 14px;
-    border-radius: 99px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s ease;
+    padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease;
 }
-.nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
+.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
-
-.layout {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-}
-
-.hero {
-    text-align: center;
-    padding: 40px 0 48px;
-}
+.layout { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
+.hero { text-align: center; padding: 40px 0 48px; }
 .hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-tertiary);
-    margin-bottom: 16px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;
 }
 .hero-title {
-    font-size: 3rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    font-size: 3rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
     margin-bottom: 16px;
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .hero-subtitle {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    max-width: 640px;
-    margin: 0 auto 24px;
-    line-height: 1.6;
+    font-size: 1.1rem; color: var(--text-secondary);
+    max-width: 640px; margin: 0 auto 24px; line-height: 1.6;
 }
-.last-updated {
-    font-size: 0.82rem;
-    color: var(--text-tertiary);
-    font-family: var(--mono-stack);
-}
-
+.last-updated { font-size: 0.82rem; color: var(--text-tertiary); font-family: var(--mono-stack); }
 .overall-status {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    margin-bottom: 32px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    box-shadow: var(--shadow-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 32px; margin-bottom: 32px;
+    display: flex; align-items: center; gap: 24px; box-shadow: var(--shadow-sm);
 }
 .status-indicator {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
+    width: 72px; height: 72px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; position: relative;
 }
 .status-indicator::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    border: 2px solid currentColor;
-    opacity: 0.2;
+    content: ''; position: absolute; inset: -4px;
+    border-radius: 50%; border: 2px solid currentColor; opacity: 0.2;
 }
 .status-indicator svg { width: 36px; height: 36px; }
-.status-indicator.operational { background: rgba(52, 199, 89, 0.12); color: var(--success); }
-.status-indicator.degraded { background: rgba(255, 159, 10, 0.12); color: var(--warning); }
-.status-indicator.outage { background: rgba(255, 59, 48, 0.12); color: var(--danger); }
-.status-indicator.checking { background: rgba(142, 142, 147, 0.12); color: var(--text-secondary); }
+.status-indicator.operational { background: rgba(52,199,89,0.12); color: var(--success); }
+.status-indicator.degraded { background: rgba(255,159,10,0.12); color: var(--warning); }
+.status-indicator.outage { background: rgba(255,59,48,0.12); color: var(--danger); }
+.status-indicator.checking { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
 .status-indicator.checking svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .status-info { flex: 1; }
-.status-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
-}
-.status-description {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
-.status-meta {
-    display: flex;
-    gap: 16px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-}
+.status-title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.status-description { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; }
+.status-meta { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
 .meta-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    font-weight: 500;
-    padding: 4px 10px;
-    border-radius: 6px;
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; font-weight: 500; padding: 4px 10px;
+    border-radius: 6px; background: var(--bg-elevated); color: var(--text-secondary);
 }
 .meta-chip svg { width: 12px; height: 12px; }
-.meta-chip.success { background: rgba(52, 199, 89, 0.12); color: var(--success); }
-.meta-chip.warning { background: rgba(255, 159, 10, 0.12); color: var(--warning); }
-.meta-chip.danger { background: rgba(255, 59, 48, 0.12); color: var(--danger); }
-
+.meta-chip.success { background: rgba(52,199,89,0.12); color: var(--success); }
+.meta-chip.warning { background: rgba(255,159,10,0.12); color: var(--warning); }
+.meta-chip.danger { background: rgba(255,59,48,0.12); color: var(--danger); }
 .uptime-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    margin-bottom: 32px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px;
 }
 .uptime-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    display: flex; justify-content: space-between;
+    align-items: center; margin-bottom: 16px;
 }
 .uptime-title { font-size: 1rem; font-weight: 600; }
 .uptime-percentage {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--success);
-    font-family: var(--mono-stack);
+    font-size: 0.92rem; font-weight: 600;
+    color: var(--success); font-family: var(--mono-stack);
 }
-.uptime-bar {
-    display: flex;
-    gap: 2px;
-    height: 32px;
-    margin-bottom: 12px;
-}
+.uptime-bar { display: flex; gap: 2px; height: 32px; margin-bottom: 12px; }
 .uptime-day {
-    flex: 1;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-    position: relative;
+    flex: 1; border-radius: 2px; cursor: pointer;
+    transition: transform 0.15s ease; position: relative;
 }
 .uptime-day:hover { transform: scaleY(1.3); z-index: 2; }
 .uptime-day.operational { background: var(--success); }
@@ -264,294 +143,148 @@ body {
 .uptime-day.outage { background: var(--danger); }
 .uptime-day.unknown { background: var(--bg-elevated); opacity: 0.4; }
 .uptime-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    font-family: var(--mono-stack);
+    display: flex; justify-content: space-between;
+    font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--mono-stack);
 }
 .day-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
+    position: absolute; bottom: calc(100% + 8px); left: 50%;
     transform: translateX(-50%);
-    background: var(--text-primary);
-    color: var(--bg-body);
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-    z-index: 10;
-    font-family: var(--mono-stack);
+    background: var(--text-primary); color: var(--bg-body);
+    padding: 6px 10px; border-radius: 6px; font-size: 0.72rem;
+    white-space: nowrap; pointer-events: none; opacity: 0;
+    transition: opacity 0.15s ease; z-index: 10; font-family: var(--mono-stack);
 }
 .day-tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
+    content: ''; position: absolute; top: 100%; left: 50%;
     transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: var(--text-primary);
+    border: 4px solid transparent; border-top-color: var(--text-primary);
 }
 .uptime-day:hover .day-tooltip { opacity: 1; }
-
 .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
 }
-.section-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-}
+.section-title { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.02em; }
 .section-count {
-    font-size: 0.78rem;
-    font-weight: 500;
-    padding: 3px 10px;
-    border-radius: 99px;
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
+    font-size: 0.78rem; font-weight: 500; padding: 3px 10px;
+    border-radius: 99px; background: var(--bg-elevated); color: var(--text-secondary);
 }
 .services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
-    margin-bottom: 48px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px; margin-bottom: 48px;
 }
 .service-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    transition: all 0.2s ease;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 20px; transition: all 0.2s ease;
 }
 .service-card:hover {
     border-color: var(--border-strong);
-    box-shadow: var(--shadow-sm);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm); transform: translateY(-2px);
 }
-.service-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-}
+.service-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .service-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .service-icon svg { width: 20px; height: 20px; }
 .service-info { flex: 1; min-width: 0; }
-.service-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin-bottom: 2px;
-}
+.service-name { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 2px; }
 .service-category {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 0.75rem; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.04em;
 }
 .service-status-badge {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 99px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
+    font-size: 0.72rem; font-weight: 600; padding: 4px 10px;
+    border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em;
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
 }
-.service-status-badge.operational { background: rgba(52, 199, 89, 0.12); color: var(--success); }
-.service-status-badge.degraded { background: rgba(255, 159, 10, 0.12); color: var(--warning); }
-.service-status-badge.outage { background: rgba(255, 59, 48, 0.12); color: var(--danger); }
-.service-status-badge.checking { background: rgba(142, 142, 147, 0.12); color: var(--text-secondary); }
+.service-status-badge.operational { background: rgba(52,199,89,0.12); color: var(--success); }
+.service-status-badge.degraded { background: rgba(255,159,10,0.12); color: var(--warning); }
+.service-status-badge.outage { background: rgba(255,59,48,0.12); color: var(--danger); }
+.service-status-badge.checking { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
 .service-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; padding-top: 14px; border-top: 1px solid var(--border);
 }
 .metric { text-align: left; }
 .metric-label {
-    font-size: 0.68rem;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 2px;
+    font-size: 0.68rem; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;
 }
 .metric-value {
-    font-size: 0.9rem;
-    font-weight: 600;
-    font-family: var(--mono-stack);
-    color: var(--text-primary);
-    word-break: break-all;
+    font-size: 0.9rem; font-weight: 600; font-family: var(--mono-stack);
+    color: var(--text-primary); word-break: break-all;
 }
 .metric-value.fast { color: var(--success); }
 .metric-value.medium { color: var(--warning); }
 .metric-value.slow { color: var(--danger); }
 .service-error {
-    margin-top: 12px;
-    padding: 10px 12px;
-    background: rgba(255, 59, 48, 0.08);
-    border: 1px solid rgba(255, 59, 48, 0.2);
-    border-radius: var(--radius-sm);
-    font-size: 0.78rem;
-    color: var(--danger);
-    font-family: var(--mono-stack);
-    word-break: break-word;
-    line-height: 1.5;
+    margin-top: 12px; padding: 10px 12px;
+    background: rgba(255,59,48,0.08); border: 1px solid rgba(255,59,48,0.2);
+    border-radius: var(--radius-sm); font-size: 0.78rem;
+    color: var(--danger); font-family: var(--mono-stack);
+    word-break: break-word; line-height: 1.5;
 }
-
 .incidents-section { margin-bottom: 48px; }
 .incident-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 20px;
-    margin-bottom: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 20px; margin-bottom: 12px;
     border-left: 3px solid var(--text-tertiary);
 }
 .incident-card.active { border-left-color: var(--danger); }
 .incident-card.degraded { border-left-color: var(--warning); }
 .incident-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
+    display: flex; justify-content: space-between;
+    align-items: flex-start; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
 }
-.incident-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    flex: 1;
-}
+.incident-title { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; flex: 1; }
 .incident-status {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 10px;
-    border-radius: 99px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    flex-shrink: 0;
+    font-size: 0.72rem; font-weight: 600; padding: 3px 10px;
+    border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
 }
-.incident-status.active { background: rgba(255, 59, 48, 0.12); color: var(--danger); }
-.incident-status.degraded { background: rgba(255, 159, 10, 0.12); color: var(--warning); }
-.incident-description {
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 8px;
-}
+.incident-status.active { background: rgba(255,59,48,0.12); color: var(--danger); }
+.incident-status.degraded { background: rgba(255,159,10,0.12); color: var(--warning); }
+.incident-description { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; }
 .incident-details {
-    font-family: var(--mono-stack);
-    font-size: 0.78rem;
-    background: var(--bg-elevated);
-    padding: 10px 12px;
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    word-break: break-word;
-    line-height: 1.6;
-    margin-top: 10px;
+    font-family: var(--mono-stack); font-size: 0.78rem;
+    background: var(--bg-elevated); padding: 10px 12px;
+    border-radius: var(--radius-sm); color: var(--text-secondary);
+    word-break: break-word; line-height: 1.6; margin-top: 10px;
 }
 .incident-meta {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    font-size: 0.78rem;
-    color: var(--text-tertiary);
-    margin-top: 10px;
-    font-family: var(--mono-stack);
+    display: flex; gap: 12px; flex-wrap: wrap;
+    font-size: 0.78rem; color: var(--text-tertiary);
+    margin-top: 10px; font-family: var(--mono-stack);
 }
 .no-incidents {
-    text-align: center;
-    padding: 48px 24px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    text-align: center; padding: 48px 24px;
+    background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius-md);
 }
-.no-incidents-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 12px;
-    color: var(--success);
-}
-.no-incidents-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-.no-incidents-text {
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-}
-
+.no-incidents-icon { width: 48px; height: 48px; margin: 0 auto 12px; color: var(--success); }
+.no-incidents-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.no-incidents-text { font-size: 0.88rem; color: var(--text-secondary); }
 .footer {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 24px;
+    max-width: 1200px; margin: 0 auto; padding: 32px 24px;
     border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    color: var(--text-tertiary);
-    font-size: 0.82rem;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap; color: var(--text-tertiary); font-size: 0.82rem;
 }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
-.footer-meta {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-family: var(--mono-stack);
-}
+.footer-meta { display: flex; align-items: center; gap: 16px; font-family: var(--mono-stack); }
 .auto-refresh-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 99px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    font-size: 0.78rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 99px;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    color: var(--text-secondary); font-size: 0.78rem;
+    font-family: inherit; cursor: pointer; transition: all 0.2s ease;
 }
-.auto-refresh-toggle:hover {
-    background: var(--bg-card);
-    color: var(--text-primary);
-}
+.auto-refresh-toggle:hover { background: var(--bg-card); color: var(--text-primary); }
 .auto-refresh-toggle.active {
-    background: rgba(0, 113, 227, 0.1);
-    border-color: var(--accent);
-    color: var(--accent);
+    background: rgba(0,113,227,0.1); border-color: var(--accent); color: var(--accent);
 }
 .auto-refresh-toggle svg { width: 12px; height: 12px; }
-
 @media (max-width: 768px) {
     .hero-title { font-size: 2rem; }
     .overall-status { flex-direction: column; text-align: center; padding: 24px; }
@@ -560,11 +293,9 @@ body {
     .nav-link { padding: 6px 10px; font-size: 0.82rem; }
     .layout { padding: 24px 16px 60px; }
 }
-
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 </style>
 </head>
 <body>
@@ -581,7 +312,7 @@ body {
             <a href="/" class="nav-link">Projects</a>
             <a href="/news" class="nav-link">News</a>
             <a href="/changelog" class="nav-link">Changelog</a>
-            <a href="/rest" class="nav-link">API</a>
+            <a href="/api" class="nav-link">API</a>
             <a href="/status" class="nav-link active">Status</a>
         </nav>
     </div>
@@ -668,56 +399,488 @@ body {
 (function() {
     'use strict';
 
+    // ============================================================
+    // State
+    // ============================================================
+    const State = {
+        services: {},
+        autoRefresh: true,
+        refreshInterval: null,
+        checkHistory: []
+    };
     let SERVICES = [];
 
     // ============================================================
-    // Загрузка конфигурации с сервера
+    // Проверки
+    // ============================================================
+    async function pingEndpoint(path, method, expectedStatuses, timeout, body) {
+        timeout = timeout || 3000;
+        const start = performance.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const options = {
+                method: method || 'GET',
+                signal: controller.signal,
+                cache: 'no-store',
+                headers: { 'X-Status-Check': '1' }
+            };
+            if (body) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = body;
+            }
+            const response = await fetch(path, options);
+            clearTimeout(timeoutId);
+            const latency = Math.round(performance.now() - start);
+            const isSuccess = (expectedStatuses || [200]).includes(response.status);
+
+            return {
+                status: isSuccess ? 'operational' : 'outage',
+                latency,
+                statusCode: response.status,
+                checkedAt: new Date().toISOString(),
+                error: isSuccess ? null : `Unexpected status ${response.status} (expected ${expectedStatuses.join('|')})`
+            };
+        } catch (error) {
+            clearTimeout(timeoutId);
+            const latency = Math.round(performance.now() - start);
+            if (error.name === 'AbortError') {
+                return {
+                    status: 'degraded', latency,
+                    error: `Timeout after ${timeout}ms`,
+                    checkedAt: new Date().toISOString()
+                };
+            }
+            return {
+                status: 'outage', latency,
+                error: error.message || 'Connection failed',
+                checkedAt: new Date().toISOString()
+            };
+        }
+    }
+
+    async function pingExternal(url, timeout) {
+        timeout = timeout || 5000;
+        const start = performance.now();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            await fetch(url, {
+                method: 'HEAD', mode: 'no-cors',
+                cache: 'no-store', signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return {
+                status: 'operational',
+                latency: Math.round(performance.now() - start),
+                statusCode: '—',
+                checkedAt: new Date().toISOString()
+            };
+        } catch (error) {
+            clearTimeout(timeoutId);
+            return {
+                status: 'degraded',
+                latency: Math.round(performance.now() - start),
+                error: 'Connection failed',
+                checkedAt: new Date().toISOString()
+            };
+        }
+    }
+
+    // Косвенная проверка Vercel KV через news endpoint
+    async function checkKV() {
+        const result = await pingEndpoint('/api/news/posts', 'GET', [200], 5000);
+        if (result.status === 'operational') {
+            return { ...result, statusCode: '200 (KV OK)' };
+        }
+        return { ...result, error: 'KV недоступен: ' + (result.error || 'posts endpoint failed') };
+    }
+
+    // ============================================================
+    // Рендеринг
+    // ============================================================
+    function escapeHtml(str) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str || '').replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function formatLatency(ms) {
+        if (!ms && ms !== 0) return { value: '—', cls: '' };
+        if (ms < 300) return { value: `${ms}ms`, cls: 'fast' };
+        if (ms < 1500) return { value: `${ms}ms`, cls: 'medium' };
+        return { value: `${ms}ms`, cls: 'slow' };
+    }
+
+    function getStatusLabel(status) {
+        return {
+            operational: 'Operational',
+            degraded: 'Degraded',
+            outage: 'Outage',
+            checking: 'Checking'
+        }[status] || status;
+    }
+
+    function getStatusIcon(status) {
+        return {
+            operational: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>',
+            degraded: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/>',
+            outage: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>',
+            checking: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>'
+        }[status];
+    }
+
+    function renderServices() {
+        const grid = document.getElementById('servicesGrid');
+        if (SERVICES.length === 0) {
+            grid.innerHTML = '<div class="no-incidents"><div class="no-incidents-text">Загрузка сервисов...</div></div>';
+            return;
+        }
+        grid.innerHTML = SERVICES.map(service => {
+            const result = State.services[service.id];
+            const status = result?.status || 'checking';
+            const latency = formatLatency(result?.latency);
+            const statusCode = result?.statusCode ?? '—';
+
+            const errorHtml = result?.error ? `
+                <div class="service-error">
+                    <strong>Error:</strong> ${escapeHtml(result.error)}
+                </div>
+            ` : '';
+
+            return `
+                <div class="service-card" data-service="${service.id}">
+                    <div class="service-header">
+                        <div class="service-icon" style="background: ${service.color}20; color: ${service.color};">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${service.icon}</svg>
+                        </div>
+                        <div class="service-info">
+                            <div class="service-name">${escapeHtml(service.name)}</div>
+                            <div class="service-category">${escapeHtml(service.category)}</div>
+                        </div>
+                        <div class="service-status-badge ${status}">
+                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(status)}</svg>
+                            ${getStatusLabel(status)}
+                        </div>
+                    </div>
+                    <div class="service-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Latency</div>
+                            <div class="metric-value ${latency.cls}">${latency.value}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Status</div>
+                            <div class="metric-value">${escapeHtml(String(statusCode))}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Checked</div>
+                            <div class="metric-value">${result ? new Date(result.checkedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}</div>
+                        </div>
+                    </div>
+                    ${errorHtml}
+                </div>
+            `;
+        }).join('');
+
+        document.getElementById('servicesCount').textContent = `${SERVICES.length} сервисов`;
+    }
+
+    function renderOverallStatus() {
+        const results = Object.values(State.services).filter(r => r && r.status);
+        const indicator = document.querySelector('.status-indicator');
+        const title = document.getElementById('overallTitle');
+        const description = document.getElementById('overallDescription');
+        const meta = document.getElementById('overallMeta');
+
+        if (results.length === 0) {
+            indicator.className = 'status-indicator checking';
+            indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon('checking')}</svg>`;
+            title.textContent = 'Проверка систем...';
+            description.textContent = 'Выполняем диагностику всех компонентов платформы';
+            meta.innerHTML = '';
+            return;
+        }
+
+        const outageCount = results.filter(r => r.status === 'outage').length;
+        const degradedCount = results.filter(r => r.status === 'degraded').length;
+        const operationalCount = results.filter(r => r.status === 'operational').length;
+        const avgLatency = Math.round(results.reduce((s, r) => s + (r.latency || 0), 0) / results.length);
+
+        let finalStatus = 'operational';
+        if (outageCount > 0) finalStatus = 'outage';
+        else if (degradedCount > 0) finalStatus = 'degraded';
+
+        indicator.className = `status-indicator ${finalStatus}`;
+        indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(finalStatus)}</svg>`;
+
+        if (outageCount > 0) {
+            title.textContent = 'Обнаружены сбои';
+            description.textContent = `${outageCount} ${pluralize(outageCount, ['сервис недоступен', 'сервиса недоступны', 'сервисов недоступно'])}. Детали ниже в секции инцидентов.`;
+        } else if (degradedCount > 0) {
+            title.textContent = 'Частичные проблемы';
+            description.textContent = `${degradedCount} ${pluralize(degradedCount, ['сервис работает с задержками', 'сервиса работают с задержками', 'сервисов работают с задержками'])}.`;
+        } else {
+            title.textContent = 'Все системы работают';
+            description.textContent = 'Все API-эндпоинты отвечают корректно. Последние проверки выполнены успешно.';
+        }
+
+        meta.innerHTML = `
+            <span class="meta-chip success">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                ${operationalCount} ok
+            </span>
+            ${degradedCount > 0 ? `<span class="meta-chip warning">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/></svg>
+                ${degradedCount} slow
+            </span>` : ''}
+            ${outageCount > 0 ? `<span class="meta-chip danger">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                ${outageCount} down
+            </span>` : ''}
+            <span class="meta-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                avg ${avgLatency}ms
+            </span>
+        `;
+    }
+
+    function renderIncidents() {
+        const list = document.getElementById('incidentsList');
+        const incidents = SERVICES
+            .map(s => ({ service: s, result: State.services[s.id] }))
+            .filter(x => x.result && (x.result.status === 'outage' || x.result.status === 'degraded'));
+
+        if (incidents.length === 0) {
+            list.innerHTML = `
+                <div class="no-incidents">
+                    <svg class="no-incidents-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <div class="no-incidents-title">Активных инцидентов нет</div>
+                    <div class="no-incidents-text">Все сервисы работают корректно по результатам последней проверки</div>
+                </div>
+            `;
+            document.getElementById('incidentsCount').textContent = '0 инцидентов';
+            return;
+        }
+
+        list.innerHTML = incidents.map(({ service, result }) => `
+            <div class="incident-card ${result.status}">
+                <div class="incident-header">
+                    <div class="incident-title">${escapeHtml(service.name)}</div>
+                    <div class="incident-status ${result.status}">${getStatusLabel(result.status)}</div>
+                </div>
+                <div class="incident-description">
+                    Сервис в категории <strong>${escapeHtml(service.category)}</strong> не отвечает корректно.
+                </div>
+                ${result.error ? `<div class="incident-details">${escapeHtml(result.error)}</div>` : ''}
+                <div class="incident-meta">
+                    <span>Latency: ${result.latency}ms</span>
+                    <span>HTTP: ${result.statusCode || '—'}</span>
+                    <span>Detected: ${new Date(result.checkedAt).toLocaleTimeString('ru-RU')}</span>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('incidentsCount').textContent = `${incidents.length} ${pluralize(incidents.length, ['инцидент', 'инцидента', 'инцидентов'])}`;
+    }
+
+    function renderUptimeBar() {
+        const bar = document.getElementById('uptimeBar');
+        const percentage = document.getElementById('uptimePercentage');
+        const startLabel = document.getElementById('uptimeStart');
+
+        if (State.checkHistory.length === 0) {
+            bar.innerHTML = '<div class="uptime-day unknown" style="flex: 1;"></div>';
+            percentage.textContent = '—';
+            return;
+        }
+
+        const successful = State.checkHistory.filter(h => h.status === 'operational').length;
+        const total = State.checkHistory.length;
+        const uptimePercent = ((successful / total) * 100).toFixed(1);
+        percentage.textContent = `${uptimePercent}%`;
+
+        const firstCheck = new Date(State.checkHistory[0].timestamp);
+        startLabel.textContent = firstCheck.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+        const visible = State.checkHistory.slice(-90);
+        bar.innerHTML = visible.map((check, idx) => {
+            const time = new Date(check.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return `
+                <div class="uptime-day ${check.status}">
+                    <div class="day-tooltip">
+                        <div>Check #${State.checkHistory.length - visible.length + idx + 1}</div>
+                        <div>${time}</div>
+                        <div>${check.operational}/${check.total} ok · ${check.avgLatency}ms</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateLastUpdated() {
+        document.getElementById('lastUpdated').textContent =
+            'Последняя проверка: ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function pluralize(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const n1 = abs % 10;
+        if (abs > 10 && abs < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
+    }
+
+    // ============================================================
+    // Главный цикл
+    // ============================================================
+    async function runAllChecks() {
+        SERVICES.forEach(s => {
+            if (!State.services[s.id]) State.services[s.id] = { status: 'checking' };
+        });
+        renderServices();
+        renderOverallStatus();
+
+        await Promise.all(SERVICES.map(async service => {
+            try {
+                const result = await service.check();
+                State.services[service.id] = result;
+            } catch (error) {
+                State.services[service.id] = {
+                    status: 'outage', latency: 0,
+                    error: error.message,
+                    checkedAt: new Date().toISOString()
+                };
+            }
+            renderServices();
+            renderOverallStatus();
+            renderIncidents();
+        }));
+
+        const results = Object.values(State.services);
+        const operational = results.filter(r => r.status === 'operational').length;
+        const avgLatency = Math.round(results.reduce((s, r) => s + (r.latency || 0), 0) / results.length);
+        const allOperational = results.every(r => r.status === 'operational');
+
+        State.checkHistory.push({
+            timestamp: Date.now(),
+            status: allOperational ? 'operational' : (results.some(r => r.status === 'outage') ? 'outage' : 'degraded'),
+            operational,
+            total: results.length,
+            avgLatency
+        });
+
+        if (State.checkHistory.length > 90) {
+            State.checkHistory = State.checkHistory.slice(-90);
+        }
+
+        renderUptimeBar();
+        renderIncidents();
+        updateLastUpdated();
+    }
+
+    // ============================================================
+    // Auto-refresh
+    // ============================================================
+    function startAutoRefresh() {
+        if (State.refreshInterval) clearInterval(State.refreshInterval);
+        State.refreshInterval = setInterval(runAllChecks, 30000);
+    }
+
+    function stopAutoRefresh() {
+        if (State.refreshInterval) {
+            clearInterval(State.refreshInterval);
+            State.refreshInterval = null;
+        }
+    }
+
+    // ============================================================
+    // Преобразование серверного check-объекта в функцию
+    // ============================================================
+    function buildCheckFunction(service, check) {
+        if (!check) return () => Promise.resolve({ status: 'outage', latency: 0, error: 'No check configured', checkedAt: new Date().toISOString() });
+
+        if (check.type === 'external') {
+            return () => pingExternal(check.url, check.timeout || 5000);
+        }
+        if (check.type === 'custom') {
+            if (check.name === 'checkKV') return checkKV;
+            return () => Promise.resolve({ status: 'outage', latency: 0, error: 'Unknown custom check: ' + check.name, checkedAt: new Date().toISOString() });
+        }
+        // Обычный endpoint check
+        return () => pingEndpoint(
+            check.path,
+            check.method || 'GET',
+            check.expectedStatuses || [200],
+            check.timeout || 3000,
+            check.body || null
+        );
+    }
+
+    function transformServices(rawServices) {
+        return rawServices.map(s => ({
+            ...s,
+            check: buildCheckFunction(s, s.check)
+        }));
+    }
+
+    // ============================================================
+    // Загрузка конфигурации
     // ============================================================
     async function loadServices() {
         try {
             const res = await fetch('/api/status-config');
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            SERVICES = await res.json();
-            if (!Array.isArray(SERVICES)) throw new Error('Invalid config');
-            // После загрузки запускаем приложение
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const raw = await res.json();
+            if (!Array.isArray(raw)) throw new Error('Invalid config');
+            SERVICES = transformServices(raw);
             init();
         } catch (err) {
             console.error('Failed to load status config:', err);
             document.getElementById('servicesGrid').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-title">Ошибка загрузки конфигурации</div>
-                    <div class="empty-state-text">Пожалуйста, обновите страницу позже.</div>
+                <div class="no-incidents" style="grid-column: 1/-1;">
+                    <div class="no-incidents-title">Ошибка загрузки конфигурации</div>
+                    <div class="no-incidents-text">${escapeHtml(err.message)}. Обновите страницу.</div>
                 </div>
             `;
         }
     }
 
     // ============================================================
-    // Все остальные функции (pingEndpoint, pingExternal, checkKV,
-    // renderServices, renderOverallStatus, renderIncidents,
-    // renderUptimeBar, updateLastUpdated, pluralize, runAllChecks,
-    // startAutoRefresh, stopAutoRefresh) – ОСТАЮТСЯ ТЕМИ ЖЕ,
-    // только теперь они используют глобальный массив SERVICES.
+    // Init
     // ============================================================
-
-    // Вставьте сюда ВСЕ функции из вашего исходного status.html
-    // (начиная с async function pingEndpoint и до function init).
-    // Убедитесь, что они не содержат объявления SERVICES внутри,
-    // а используют внешнюю переменную SERVICES.
-
-    // ... (весь остальной код без изменений) ...
-
     function init() {
         renderServices();
         renderUptimeBar();
         renderIncidents();
         renderOverallStatus();
+
         runAllChecks();
         startAutoRefresh();
-        // ... навешивание обработчиков ...
+
+        // Auto-refresh button
+        document.getElementById('autoRefreshBtn').addEventListener('click', () => {
+            State.autoRefresh = !State.autoRefresh;
+            const btn = document.getElementById('autoRefreshBtn');
+            btn.classList.toggle('active', State.autoRefresh);
+            btn.querySelector('span').textContent = State.autoRefresh ? 'Auto-refresh 30s' : 'Auto-refresh OFF';
+            if (State.autoRefresh) startAutoRefresh();
+            else stopAutoRefresh();
+        });
+
+        // Pause on tab hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stopAutoRefresh();
+            else if (State.autoRefresh) {
+                runAllChecks();
+                startAutoRefresh();
+            }
+        });
     }
 
-    // Запускаем загрузку
     loadServices();
 })();
 </script>

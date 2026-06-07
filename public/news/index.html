@@ -668,70 +668,52 @@
             margin-right: 6px;
         }
 
-        /* File Cards */
-        .post-files {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .file-card {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .file-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .file-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-sm);
-            background: rgba(0, 113, 227, 0.1);
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .file-icon svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .file-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .file-name {
-            font-size: 0.88rem;
-            font-weight: 500;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 2px;
-        }
-
-        .file-size {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
+        /* Карточки файлов */
+.file-card {
+    margin: 8px 0;
+    border-radius: 12px;
+    background: var(--bg-elevated);
+    overflow: hidden;
+    max-width: 280px;
+}
+.image-card img {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+}
+.file-card .file-name {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    word-break: break-word;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+}
+.doc-card .file-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+.doc-card svg {
+    flex-shrink: 0;
+    color: var(--accent);
+}
+.file-info {
+    overflow: hidden;
+}
+.file-size {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+}
+.message.user .file-card {
+    background: rgba(255,255,255,0.1);
+}
+.message.user .file-card .file-name {
+    background: transparent;
+}
 
         /* Post Actions */
         .post-actions {

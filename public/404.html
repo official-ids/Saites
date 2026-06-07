@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Страница не найдена">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="robots" content="noindex">
+<title>404 · Страница не найдена · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F0F0F2;
+    --text-primary: #1D1D1F;
+    --text-secondary: #86868B;
+    --text-tertiary: #AEAEB2;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --danger: #FF3B30;
+    --success: #34C759;
+    --warning: #FF9F0A;
+    --gold: #D4AF37;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-body: #000000;
+        --bg-card: #1C1C1E;
+        --bg-elevated: #2C2C2E;
+        --text-primary: #F5F5F7;
+        --text-secondary: #86868B;
+        --text-tertiary: #636366;
+        --border: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.18);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+}
+@media (prefers-color-scheme: dark) {
+    .header { background: rgba(0, 0, 0, 0.72); }
+}
+.header-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+.logo-icon { width: 28px; height: 28px; color: var(--accent); }
+.logo-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+.nav-links { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.nav-link {
+    padding: 8px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.nav-link:hover {
+    background: rgba(142, 142, 147, 0.12);
+    color: var(--text-primary);
+}
+
+/* Main */
+.main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    position: relative;
+}
+
+.container {
+    max-width: 720px;
+    width: 100%;
+    text-align: center;
+    animation: fadeInUp 0.8s var(--transition);
+}
+
+/* Illustration */
+.illustration {
+    width: 240px;
+    height: 240px;
+    margin: 0 auto 32px;
+    position: relative;
+}
+@media (max-width: 640px) {
+    .illustration { width: 180px; height: 180px; }
+}
+
+.clock {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.clock-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-strong);
+    box-shadow: var(--shadow-lg), inset 0 0 0 1px var(--border);
+    overflow: hidden;
+}
+.clock-face::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+}
+
+/* Tick marks */
+.tick {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 8px;
+    background: var(--text-tertiary);
+    transform-origin: 50% calc(50% + var(--r));
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--r) + 4px));
+    border-radius: 1px;
+}
+.tick.major {
+    height: 12px;
+    width: 3px;
+    background: var(--text-primary);
+}
+
+/* Hour numbers — добавлены недостающие 3,6,9,12 */
+.hour-num {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--r) + 24px)) rotate(calc(-1 * var(--angle)));
+}
+
+/* Hands — плавные анимации */
+.hand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: 50% 100%;
+    border-radius: 4px;
+    background: var(--text-primary);
+}
+.hand-hour {
+    width: 4px;
+    height: 26%;
+    transform: translate(-50%, -100%) rotate(137deg);
+    animation: brokenHour 6s ease-in-out infinite;
+}
+.hand-minute {
+    width: 3px;
+    height: 36%;
+    transform: translate(-50%, -100%) rotate(274deg);
+    animation: brokenMinute 8s ease-in-out infinite;
+}
+.hand-second {
+    width: 1.5px;
+    height: 42%;
+    background: var(--danger);
+    transform: translate(-50%, -100%) rotate(0deg);
+    animation: brokenSecond 4s linear infinite;
+}
+.hand-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-primary);
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    box-shadow: 0 0 0 2px var(--bg-card);
+}
+.hand-center::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%, -50%);
+}
+
+/* Плавные покачивания стрелок */
+@keyframes brokenHour {
+    0%, 100% { transform: translate(-50%, -100%) rotate(137deg); }
+    50% { transform: translate(-50%, -100%) rotate(143deg); }
+}
+@keyframes brokenMinute {
+    0%, 100% { transform: translate(-50%, -100%) rotate(274deg); }
+    50% { transform: translate(-50%, -100%) rotate(282deg); }
+}
+@keyframes brokenSecond {
+    0% { transform: translate(-50%, -100%) rotate(0deg); }
+    20% { transform: translate(-50%, -100%) rotate(72deg); }
+    40% { transform: translate(-50%, -100%) rotate(140deg); }
+    60% { transform: translate(-50%, -100%) rotate(220deg); }
+    80% { transform: translate(-50%, -100%) rotate(300deg); }
+    100% { transform: translate(-50%, -100%) rotate(360deg); }
+}
+
+/* Error badge floating */
+.error-badge {
+    position: absolute;
+    top: 8%;
+    right: 2%;
+    background: var(--danger);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
+    animation: floatBadge 3s ease-in-out infinite;
+    z-index: 20;
+}
+@keyframes floatBadge {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-8px) rotate(-5deg); }
+}
+
+/* Content */
+.error-code {
+    font-size: 5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+    .error-code { font-size: 4rem; }
+}
+
+.error-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.error-description {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin: 0 auto 8px;
+    line-height: 1.6;
+}
+
+.path-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-family: var(--mono-stack);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    max-width: 100%;
+    overflow: hidden;
+}
+.path-display-label {
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+.path-display-value {
+    color: var(--danger);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+.btn:active { transform: scale(0.96); }
+.btn svg { width: 16px; height: 16px; }
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
+}
+.btn-primary:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 6px 16px rgba(0, 113, 227, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: rgba(142, 142, 147, 0.12);
+    color: var(--text-primary);
+}
+.btn-secondary:hover {
+    background: rgba(142, 142, 147, 0.2);
+}
+
+/* Suggestions */
+.suggestions {
+    max-width: 480px;
+    margin: 0 auto;
+    text-align: left;
+}
+.suggestions-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+    text-align: center;
+}
+.suggestions-list {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+}
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+.suggestion-item:hover {
+    border-color: var(--accent);
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
+}
+.suggestion-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.suggestion-icon svg { width: 16px; height: 16px; }
+.suggestion-info { flex: 1; min-width: 0; }
+.suggestion-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1px;
+}
+.suggestion-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.suggestion-arrow {
+    color: var(--text-tertiary);
+    transition: transform 0.2s ease;
+}
+.suggestion-item:hover .suggestion-arrow {
+    color: var(--accent);
+    transform: translateX(3px);
+}
+.suggestion-arrow svg { width: 14px; height: 14px; }
+
+/* Redirect notice */
+.redirect-notice {
+    margin-top: 32px;
+    padding: 12px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.redirect-notice-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+    animation: spin 1.5s linear infinite;
+}
+.redirect-notice a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+.redirect-notice a:hover { text-decoration: underline; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
+.footer {
+    padding: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin: 0 8px;
+    transition: color 0.2s ease;
+}
+.footer a:hover { color: var(--accent); }
+
+/* Animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+@media (max-width: 640px) {
+    .header-inner { padding: 12px 16px; }
+    .nav-links { gap: 2px; }
+    .nav-link { padding: 6px 10px; font-size: 0.82rem; }
+    .main { padding: 24px 16px; }
+    .error-title { font-size: 1.4rem; }
+    .error-description { font-size: 0.92rem; }
+    .btn { padding: 11px 20px; font-size: 0.88rem; }
+    .suggestion-item { padding: 9px 12px; }
+    .redirect-notice { flex-wrap: wrap; justify-content: center; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="logo-text">Oris</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="/news" class="nav-link">News</a>
+            <a href="/changelog" class="nav-link">Changelog</a>
+            <a href="/rest" class="nav-link">API</a>
+            <a href="/status" class="nav-link">Status</a>
+        </nav>
+    </div>
+</header>
+
+<main class="main">
+    <div class="container">
+
+        <div class="illustration" aria-hidden="true">
+            <div class="clock">
+                <div class="clock-face">
+                    <!-- Tick marks -->
+                    <div class="tick major" style="--angle: 0deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 30deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 60deg; --r: 44%;"></div>
+                    <div class="tick major" style="--angle: 90deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 120deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 150deg; --r: 44%;"></div>
+                    <div class="tick major" style="--angle: 180deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 210deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 240deg; --r: 44%;"></div>
+                    <div class="tick major" style="--angle: 270deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 300deg; --r: 44%;"></div>
+                    <div class="tick" style="--angle: 330deg; --r: 44%;"></div>
+
+                    <!-- Hour numbers — полный набор 1–12 -->
+                    <div class="hour-num" style="--angle: 30deg; --r: 44%;">1</div>
+                    <div class="hour-num" style="--angle: 60deg; --r: 44%;">2</div>
+                    <div class="hour-num" style="--angle: 90deg; --r: 44%;">3</div>
+                    <div class="hour-num" style="--angle: 120deg; --r: 44%;">4</div>
+                    <div class="hour-num" style="--angle: 150deg; --r: 44%;">5</div>
+                    <div class="hour-num" style="--angle: 180deg; --r: 44%;">6</div>
+                    <div class="hour-num" style="--angle: 210deg; --r: 44%;">7</div>
+                    <div class="hour-num" style="--angle: 240deg; --r: 44%;">8</div>
+                    <div class="hour-num" style="--angle: 270deg; --r: 44%;">9</div>
+                    <div class="hour-num" style="--angle: 300deg; --r: 44%;">10</div>
+                    <div class="hour-num" style="--angle: 330deg; --r: 44%;">11</div>
+                    <div class="hour-num" style="--angle: 0deg; --r: 44%;">12</div>
+                </div>
+
+                <div class="hand hand-hour"></div>
+                <div class="hand hand-minute"></div>
+                <div class="hand hand-second"></div>
+                <div class="hand-center"></div>
+
+                <div class="error-badge">404</div>
+            </div>
+        </div>
+
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">Страница потерялась во времени</h2>
+        <p class="error-description">
+            Запрошенный путь не существует или был перемещён.
+            Возможно, вы перешли по устаревшей ссылке.
+        </p>
+
+        <div class="path-display">
+            <span class="path-display-label">Path:</span>
+            <span class="path-display-value" id="currentPath">—</span>
+        </div>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                На главную
+            </a>
+            <button class="btn btn-secondary" id="backBtn" aria-label="Вернуться на предыдущую страницу">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Назад
+            </button>
+        </div>
+
+        <div class="suggestions">
+            <div class="suggestions-title">Популярные разделы</div>
+            <ul class="suggestions-list">
+                <li>
+                    <a href="/" class="suggestion-item">
+                        <div class="suggestion-icon" style="background: rgba(0, 113, 227, 0.12); color: var(--accent);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="suggestion-info">
+                            <div class="suggestion-name">Projects</div>
+                            <div class="suggestion-desc">Каталог проектов платформы</div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="/news" class="suggestion-item">
+                        <div class="suggestion-icon" style="background: rgba(52, 199, 89, 0.12); color: var(--success);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                            </svg>
+                        </div>
+                        <div class="suggestion-info">
+                            <div class="suggestion-name">News</div>
+                            <div class="suggestion-desc">Новости и обновления платформы</div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="/changelog" class="suggestion-item">
+                        <div class="suggestion-icon" style="background: rgba(175, 82, 222, 0.12); color: var(--purple);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="suggestion-info">
+                            <div class="suggestion-name">Changelog</div>
+                            <div class="suggestion-desc">История версий и изменений</div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="/rest" class="suggestion-item">
+                        <div class="suggestion-icon" style="background: rgba(255, 159, 10, 0.12); color: var(--warning);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                            </svg>
+                        </div>
+                        <div class="suggestion-info">
+                            <div class="suggestion-name">API Reference</div>
+                            <div class="suggestion-desc">Документация внутреннего API</div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a href="/status" class="suggestion-item">
+                        <div class="suggestion-icon" style="background: rgba(255, 59, 48, 0.12); color: var(--danger);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div class="suggestion-info">
+                            <div class="suggestion-name">System Status</div>
+                            <div class="suggestion-desc">Мониторинг доступности сервисов</div>
+                        </div>
+                        <div class="suggestion-arrow">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="redirect-notice">
+            <svg class="redirect-notice-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>
+                Перенаправление на главную через <strong id="countdown">10</strong> сек.
+                · <a href="#" id="cancelRedirect">Отменить</a>
+            </span>
+        </div>
+
+    </div>
+</main>
+
+<footer class="footer">
+    <div>
+        <a href="/">Projects</a>
+        <a href="/news">News</a>
+        <a href="/changelog">Changelog</a>
+        <a href="/rest">API</a>
+        <a href="/status">Status</a>
+    </div>
+    <div style="margin-top: 12px;">
+        Oris Platform · ©
+    </div>
+</footer>
+
+<script>
+(function() {
+    'use strict';
+
+    const pathEl = document.getElementById('currentPath');
+    if (pathEl) {
+        const path = window.location.pathname + window.location.search;
+        pathEl.textContent = path || '/';
+        pathEl.title = path;
+    }
+
+    // Кнопка "Назад" — скрываем, если некуда возвращаться
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) {
+        if (window.history.length > 1) {
+            backBtn.style.display = 'inline-flex';
+            backBtn.onclick = () => history.back();
+        } else {
+            backBtn.style.display = 'none';
+        }
+    }
+
+    // Автоперенаправление с отменой
+    let countdown = 10;
+    let cancelled = false;
+    const countdownEl = document.getElementById('countdown');
+    const cancelLink = document.getElementById('cancelRedirect');
+
+    const timer = setInterval(() => {
+        if (cancelled) return;
+        if (countdownEl) countdownEl.textContent = countdown;
+        if (countdown <= 0) {
+            clearInterval(timer);
+            window.location.href = '/';
+        }
+        countdown--;
+    }, 1000);
+
+    if (cancelLink) {
+        cancelLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            cancelled = true;
+            clearInterval(timer);
+            const notice = document.querySelector('.redirect-notice');
+            if (notice) {
+                notice.innerHTML = `
+                    <svg style="width:14px;height:14px;color:var(--text-tertiary);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span style="color:var(--text-secondary);">Автоперенаправление отменено. Выберите раздел выше.</span>
+                `;
+            }
+        });
+    }
+})();
+</script>
+
+</body>
+</html>

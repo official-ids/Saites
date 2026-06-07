@@ -284,11 +284,12 @@
 
             <!-- Navigation Tabs -->
             <div class="tabs">
-                <button class="tab-btn active" data-mode="sites">Sites Config</button>
-                <button class="tab-btn" data-mode="changelog">Changelog</button>
-                <button class="tab-btn" data-mode="status">Status Config</button>
-                <button class="tab-btn" data-mode="api">API Config</button>
-            </div>
+    <button class="tab-btn active" data-mode="sites">Sites Config</button>
+    <button class="tab-btn" data-mode="changelog">Changelog</button>
+    <button class="tab-btn" data-mode="status">Status Config</button>
+    <button class="tab-btn" data-mode="api">API Config</button>
+    <button class="tab-btn" data-mode="faq">FAQ Config</button>
+</div>
             
             <div class="form-group">
                 <label id="editorLabel" for="contentTextarea">saites.txt Configuration</label>
@@ -347,17 +348,18 @@
                 },
 
                 setActiveTab(mode) {
-                    this.elements.tabs.forEach(tab => {
-                        tab.classList.toggle('active', tab.dataset.mode === mode);
-                    });
-                    const labels = {
-                        sites: 'saites.txt Configuration',
-                        changelog: 'changelog.txt Content',
-                        status: 'Status Page Configuration (JSON)',
-                        api: 'API Documentation Configuration (JSON)'
-                    };
-                    this.elements.label.textContent = labels[mode] || 'Configuration';
-                },
+    this.elements.tabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.mode === mode);
+    });
+    const labels = {
+        sites: 'saites.txt Configuration',
+        changelog: 'changelog.txt Content',
+        status: 'Status Page Configuration (JSON)',
+        api: 'API Documentation Configuration (JSON)',
+        faq: 'FAQ Configuration (JSON)'
+    };
+    this.elements.label.textContent = labels[mode] || 'Configuration';
+},
 
                 showToast(message, type = 'info') {
                     const icons = { success: '✓', error: '✕', info: 'ℹ' };
@@ -457,14 +459,15 @@
                 },
 
                 getEndpoints() {
-                    const endpoints = {
-                        sites: { load: '/api/admin/content', save: '/api/admin/save' },
-                        changelog: { load: '/api/admin/changelog', save: '/api/admin/changelog/save' },
-                        status: { load: '/api/admin/status-config', save: '/api/admin/status-config/save' },
-                        api: { load: '/api/admin/api-config', save: '/api/admin/api-config/save' }
-                    };
-                    return endpoints[this.currentMode];
-                },
+    const endpoints = {
+        sites: { load: '/api/admin/content', save: '/api/admin/save' },
+        changelog: { load: '/api/admin/changelog', save: '/api/admin/changelog/save' },
+        status: { load: '/api/admin/status-config', save: '/api/admin/status-config/save' },
+        api: { load: '/api/admin/api-config', save: '/api/admin/api-config/save' },
+        faq: { load: '/api/admin/faq-config', save: '/api/admin/faq-config/save' }
+    };
+    return endpoints[this.currentMode];
+},
 
                 async apiCall(url, options = {}, btn = null) {
                     if (btn) UI.setLoading(btn, true);
@@ -499,13 +502,13 @@
                     try {
                         const data = await this.apiCall(endpoints.load, {}, btn);
                         if (data) {
-                            let contentToSet = data.content;
-                            if (this.currentMode === 'status' || this.currentMode === 'api') {
-                                contentToSet = JSON.stringify(data.content, null, 2);
-                            }
-                            Security.safeSetContent(UI.elements.textarea, contentToSet);
-                            UI.showToast(`${this.currentMode} content synchronized`, 'success');
-                        }
+    let contentToSet = data.content;
+    if (this.currentMode === 'status' || this.currentMode === 'api' || this.currentMode === 'faq') {
+        contentToSet = JSON.stringify(data.content, null, 2);
+    }
+    Security.safeSetContent(UI.elements.textarea, contentToSet);
+    UI.showToast(`${this.currentMode} content synchronized`, 'success');
+}
                     } catch (err) {
                         UI.showToast(err.message, 'error');
                     }
@@ -517,20 +520,20 @@
                         UI.showToast('Content cannot be empty', 'error');
                         return;
                     }
-                    if (this.currentMode === 'status' || this.currentMode === 'api') {
-                        try {
-                            JSON.parse(content);
-                        } catch (e) {
-                            UI.showToast('Invalid JSON syntax', 'error');
-                            return;
-                        }
-                    }
+                    if (this.currentMode === 'status' || this.currentMode === 'api' || this.currentMode === 'faq') {
+    try {
+        JSON.parse(content);
+    } catch (e) {
+        UI.showToast('Invalid JSON syntax', 'error');
+        return;
+    }
+}
                     const endpoints = this.getEndpoints();
                     try {
                         let payload = { content };
-                        if (this.currentMode === 'status' || this.currentMode === 'api') {
-                            payload = { content: JSON.parse(content) };
-                        }
+if (this.currentMode === 'status' || this.currentMode === 'api' || this.currentMode === 'faq') {
+    payload = { content: JSON.parse(content) };
+}
                         await this.apiCall(endpoints.save, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },

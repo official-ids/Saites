@@ -66,470 +66,225 @@ body {
     font-family: var(--font-stack);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
 }
-
 .header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: sticky; top: 0; z-index: 100;
     background: rgba(245, 245, 247, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid var(--border);
     height: var(--header-h);
 }
-@media (prefers-color-scheme: dark) {
-    .header { background: rgba(0, 0, 0, 0.72); }
-}
+@media (prefers-color-scheme: dark) { .header { background: rgba(0, 0, 0, 0.72); } }
 .header-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    height: 100%;
+    max-width: 1200px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 100%;
 }
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: var(--text-primary);
-}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
 .logo-icon { width: 28px; height: 28px; color: var(--accent); }
 .logo-text { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
 .nav-links { display: flex; align-items: center; gap: 8px; }
 .nav-link {
-    padding: 8px 14px;
-    border-radius: 99px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s ease;
+    padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease;
 }
 .nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
 .version-badge {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 6px;
-    background: rgba(0, 113, 227, 0.12);
-    color: var(--accent);
-    margin-left: 4px;
+    font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+    background: rgba(0, 113, 227, 0.12); color: var(--accent); margin-left: 4px;
 }
-
 .layout {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-    display: grid;
-    grid-template-columns: 240px 1fr;
-    gap: 48px;
+    max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px;
+    display: grid; grid-template-columns: 240px 1fr; gap: 48px;
 }
 @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; gap: 24px; padding: 24px 16px 60px; }
 }
-
 .toc {
-    position: sticky;
-    top: calc(var(--header-h) + 24px);
-    align-self: start;
-    max-height: calc(100vh - var(--header-h) - 48px);
-    overflow-y: auto;
+    position: sticky; top: calc(var(--header-h) + 24px); align-self: start;
+    max-height: calc(100vh - var(--header-h) - 48px); overflow-y: auto;
 }
-@media (max-width: 900px) {
-    .toc { position: static; max-height: none; }
-}
+@media (max-width: 900px) { .toc { position: static; max-height: none; } }
 .toc-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-tertiary);
-    margin-bottom: 12px;
-    padding: 0 12px;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 12px; padding: 0 12px;
 }
 .toc-list { list-style: none; }
 .toc-item {
-    display: block;
-    padding: 8px 12px;
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    text-decoration: none;
-    border-radius: var(--radius-sm);
-    border-left: 2px solid transparent;
-    margin-bottom: 2px;
-    transition: all 0.15s ease;
+    display: block; padding: 8px 12px; font-size: 0.88rem; color: var(--text-secondary);
+    text-decoration: none; border-radius: var(--radius-sm);
+    border-left: 2px solid transparent; margin-bottom: 2px; transition: all 0.15s ease;
 }
 .toc-item:hover { color: var(--text-primary); background: var(--bg-elevated); }
 .toc-item.active {
-    color: var(--accent);
-    border-left-color: var(--accent);
-    background: rgba(0, 113, 227, 0.06);
-    font-weight: 500;
+    color: var(--accent); border-left-color: var(--accent);
+    background: rgba(0, 113, 227, 0.06); font-weight: 500;
 }
-.toc-count {
-    font-size: 0.72rem;
-    color: var(--text-tertiary);
-    margin-left: 4px;
-}
-
+.toc-count { font-size: 0.72rem; color: var(--text-tertiary); margin-left: 4px; }
 .content { min-width: 0; }
 .hero {
-    padding: 32px 0 48px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 40px;
+    padding: 32px 0 48px; border-bottom: 1px solid var(--border); margin-bottom: 40px;
 }
 .hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--accent);
-    margin-bottom: 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent); margin-bottom: 12px;
 }
 .hero-title {
-    font-size: 2.75rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    font-size: 2.75rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
     margin-bottom: 16px;
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
 .hero-subtitle {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    max-width: 640px;
-    line-height: 1.6;
+    font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; line-height: 1.6;
 }
-
 .warning-banner {
-    display: flex;
-    gap: 14px;
-    padding: 16px 20px;
-    background: rgba(255, 159, 10, 0.08);
-    border: 1px solid rgba(255, 159, 10, 0.25);
-    border-radius: var(--radius-md);
-    margin-bottom: 32px;
+    display: flex; gap: 14px; padding: 16px 20px;
+    background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.25);
+    border-radius: var(--radius-md); margin-bottom: 32px;
 }
-.warning-icon {
-    width: 22px;
-    height: 22px;
-    color: var(--warning);
-    flex-shrink: 0;
-    margin-top: 1px;
-}
+.warning-icon { width: 22px; height: 22px; color: var(--warning); flex-shrink: 0; margin-top: 1px; }
 .warning-content { flex: 1; }
-.warning-title {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-.warning-text {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    line-height: 1.55;
-}
-
+.warning-title { font-size: 0.92rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.warning-text { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55; }
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 40px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin-bottom: 40px;
 }
 .stat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    padding: 16px 20px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 16px 20px;
 }
 .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-    margin-bottom: 2px;
+    font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em;
+    color: var(--text-primary); margin-bottom: 2px;
 }
 .stat-label {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 0.78rem; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.04em;
 }
-
-.api-section {
-    margin-bottom: 48px;
-    scroll-margin-top: calc(var(--header-h) + 24px);
-}
+.api-section { margin-bottom: 48px; scroll-margin-top: calc(var(--header-h) + 24px); }
 .section-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
 }
 .section-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .section-icon svg { width: 20px; height: 20px; }
-.section-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    flex: 1;
-}
+.section-title { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; flex: 1; }
 .section-count {
-    font-size: 0.78rem;
-    font-weight: 500;
-    padding: 3px 10px;
-    border-radius: 99px;
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
+    font-size: 0.78rem; font-weight: 500; padding: 3px 10px; border-radius: 99px;
+    background: var(--bg-elevated); color: var(--text-secondary);
 }
-.section-description {
-    font-size: 0.92rem;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-    line-height: 1.6;
-}
+.section-description { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }
 .section-source {
-    display: inline-block;
-    font-size: 0.72rem;
-    font-family: var(--mono-stack);
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
-    margin-left: 10px;
+    display: inline-block; font-size: 0.72rem; font-family: var(--mono-stack);
+    padding: 2px 8px; border-radius: 4px; background: var(--bg-elevated);
+    color: var(--text-secondary); margin-left: 10px;
 }
-
 .endpoint {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    margin-bottom: 12px;
-    overflow: hidden;
-    transition: all 0.2s ease;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-md); margin-bottom: 12px;
+    overflow: hidden; transition: all 0.2s ease;
 }
-.endpoint:hover {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-sm);
-}
+.endpoint:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
 .endpoint-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    cursor: pointer;
-    user-select: none;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; cursor: pointer; user-select: none;
 }
 .endpoint-header:hover { background: rgba(142, 142, 147, 0.04); }
 .method-badge {
-    font-family: var(--mono-stack);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 4px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.04em;
-    min-width: 56px;
-    text-align: center;
-    flex-shrink: 0;
+    font-family: var(--mono-stack); font-size: 0.72rem; font-weight: 700;
+    padding: 4px 8px; border-radius: 6px; letter-spacing: 0.04em;
+    min-width: 56px; text-align: center; flex-shrink: 0;
 }
 .method-get { background: rgba(52, 199, 89, 0.14); color: var(--success); }
 .method-post { background: rgba(0, 113, 227, 0.14); color: var(--accent); }
 .method-put { background: rgba(175, 82, 222, 0.14); color: var(--purple); }
 .method-delete { background: rgba(255, 59, 48, 0.14); color: var(--danger); }
 .endpoint-path {
-    font-family: var(--mono-stack);
-    font-size: 0.88rem;
-    color: var(--text-primary);
-    font-weight: 500;
-    flex: 1;
-    word-break: break-all;
+    font-family: var(--mono-stack); font-size: 0.88rem; color: var(--text-primary);
+    font-weight: 500; flex: 1; word-break: break-all;
 }
 .endpoint-path .param { color: var(--accent); }
 .endpoint-desc {
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    margin-left: auto;
-    text-align: right;
-    max-width: 30%;
+    font-size: 0.82rem; color: var(--text-secondary);
+    margin-left: auto; text-align: right; max-width: 30%;
 }
-@media (max-width: 700px) {
-    .endpoint-desc { display: none; }
-}
+@media (max-width: 700px) { .endpoint-desc { display: none; } }
 .endpoint-auth {
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 4px;
-    background: rgba(255, 159, 10, 0.14);
-    color: var(--warning);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 4px;
+    background: rgba(255, 159, 10, 0.14); color: var(--warning);
+    text-transform: uppercase; letter-spacing: 0.04em;
 }
 .endpoint-auth.admin { background: rgba(255, 59, 48, 0.14); color: var(--danger); }
 .endpoint-auth.user { background: rgba(0, 113, 227, 0.14); color: var(--accent); }
 .endpoint-toggle {
-    width: 20px;
-    height: 20px;
-    color: var(--text-tertiary);
-    transition: transform 0.2s ease;
-    flex-shrink: 0;
+    width: 20px; height: 20px; color: var(--text-tertiary);
+    transition: transform 0.2s ease; flex-shrink: 0;
 }
 .endpoint.open .endpoint-toggle { transform: rotate(180deg); }
 .endpoint-body {
-    display: none;
-    padding: 0 18px 18px;
-    border-top: 1px solid var(--border);
+    display: none; padding: 0 18px 18px; border-top: 1px solid var(--border);
 }
 .endpoint.open .endpoint-body { display: block; }
-
 .endpoint-subsection { margin-top: 16px; }
 .endpoint-subtitle {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-tertiary);
-    margin-bottom: 8px;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px;
 }
-.endpoint-text {
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
-
-.params-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-    margin-top: 8px;
-}
+.endpoint-text { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
+.params-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 8px; }
 .params-table th {
-    text-align: left;
-    font-size: 0.72rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-tertiary);
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
+    text-align: left; font-size: 0.72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-tertiary); padding: 8px 10px; border-bottom: 1px solid var(--border);
 }
-.params-table td {
-    padding: 10px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-}
+.params-table td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .params-table tr:last-child td { border-bottom: none; }
-.param-name {
-    font-family: var(--mono-stack);
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-.param-type {
-    font-family: var(--mono-stack);
-    font-size: 0.75rem;
-    color: var(--purple);
-    margin-left: 6px;
-}
-.param-required {
-    font-size: 0.68rem;
-    font-weight: 600;
-    color: var(--danger);
-    text-transform: uppercase;
-    margin-left: 6px;
-}
-.param-optional {
-    font-size: 0.68rem;
-    font-weight: 500;
-    color: var(--text-tertiary);
-    margin-left: 6px;
-}
+.param-name { font-family: var(--mono-stack); font-size: 0.82rem; font-weight: 500; color: var(--text-primary); }
+.param-type { font-family: var(--mono-stack); font-size: 0.75rem; color: var(--purple); margin-left: 6px; }
+.param-required { font-size: 0.68rem; font-weight: 600; color: var(--danger); text-transform: uppercase; margin-left: 6px; }
+.param-optional { font-size: 0.68rem; font-weight: 500; color: var(--text-tertiary); margin-left: 6px; }
 .param-desc { color: var(--text-secondary); font-size: 0.82rem; }
-
 .code-block {
-    position: relative;
-    background: var(--bg-code);
-    border-radius: var(--radius-sm);
-    margin-top: 8px;
-    overflow: hidden;
+    position: relative; background: var(--bg-code);
+    border-radius: var(--radius-sm); margin-top: 8px; overflow: hidden;
 }
 .code-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.04);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: rgba(255, 255, 255, 0.04);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    font-family: var(--mono-stack);
-    font-size: 0.75rem;
-    color: #8b949e;
+    font-family: var(--mono-stack); font-size: 0.75rem; color: #8b949e;
 }
 .code-lang { font-weight: 500; }
 .copy-btn {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #8b949e;
-    padding: 3px 10px;
-    border-radius: 5px;
-    font-size: 0.72rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    background: transparent; border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #8b949e; padding: 3px 10px; border-radius: 5px; font-size: 0.72rem;
+    font-family: inherit; cursor: pointer; transition: all 0.15s ease;
+    display: flex; align-items: center; gap: 4px;
 }
 .copy-btn:hover { background: rgba(255, 255, 255, 0.06); color: #c9d1d9; }
 .copy-btn.copied { color: var(--success); border-color: var(--success); }
 .code-block pre {
-    margin: 0;
-    padding: 14px 16px;
-    overflow-x: auto;
-    font-family: var(--mono-stack);
-    font-size: 0.82rem;
-    line-height: 1.55;
+    margin: 0; padding: 14px 16px; overflow-x: auto;
+    font-family: var(--mono-stack); font-size: 0.82rem; line-height: 1.55;
 }
 .code-block code { font-family: inherit; }
-
 .footer {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 24px;
-    border-top: 1px solid var(--border);
-    text-align: center;
-    color: var(--text-tertiary);
-    font-size: 0.82rem;
+    max-width: 1200px; margin: 0 auto; padding: 32px 24px;
+    border-top: 1px solid var(--border); text-align: center;
+    color: var(--text-tertiary); font-size: 0.82rem;
 }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
-
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
-
 @media (max-width: 640px) {
     .hero-title { font-size: 2rem; }
     .hero-subtitle { font-size: 0.98rem; }
@@ -598,23 +353,23 @@ body {
         </div>
 
         <div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-value" id="statEndpoints">0</div>
-        <div class="stat-label">Эндпоинтов</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value" id="statModules">0</div>
-        <div class="stat-label">Модулей</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">REST</div>
-        <div class="stat-label">Архитектура</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value">JSON</div>
-        <div class="stat-label">Формат</div>
-    </div>
-</div>
+            <div class="stat-card">
+                <div class="stat-value" id="statEndpoints">0</div>
+                <div class="stat-label">Эндпоинтов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statModules">0</div>
+                <div class="stat-label">Модулей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">REST</div>
+                <div class="stat-label">Архитектура</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">JSON</div>
+                <div class="stat-label">Формат</div>
+            </div>
+        </div>
 
         <div id="sectionsContainer"></div>
     </main>
@@ -627,52 +382,218 @@ body {
 </footer>
 
 <script>
-(async function() {
+(function() {
     'use strict';
 
     let API_SECTIONS = [];
 
-    // Загружаем конфигурацию
-    try {
-        const res = await fetch('/api/api-config');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        API_SECTIONS = await res.json();
-        if (!Array.isArray(API_SECTIONS)) throw new Error('Invalid config');
-    } catch (err) {
-        console.error('Failed to load API config:', err);
-        document.getElementById('sectionsContainer').innerHTML = `
-            <div class="warning-banner" style="margin-top: 20px;">
-                <svg class="warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
-                <div class="warning-content">
-                    <div class="warning-title">Ошибка загрузки конфигурации</div>
-                    <div class="warning-text">Не удалось загрузить данные API. Попробуйте обновить страницу позже.</div>
+    async function loadAPIConfig() {
+        try {
+            const res = await fetch('/api/api-config');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            API_SECTIONS = await res.json();
+            if (!Array.isArray(API_SECTIONS)) throw new Error('Invalid config');
+            updateStats();
+            renderTOC();
+            renderSections();
+            initToggle();
+            initCopy();
+            initScrollSpy();
+            initHighlight();
+            const first = document.querySelector('[data-endpoint]');
+            if (first) first.classList.add('open');
+        } catch (err) {
+            console.error('API config error:', err);
+            document.getElementById('sectionsContainer').innerHTML =
+                '<div class="warning-banner">Ошибка загрузки конфигурации API: ' + escapeHtml(err.message) + '</div>';
+        }
+    }
+
+    function updateStats() {
+        const totalEndpoints = API_SECTIONS.reduce((sum, s) => sum + (s.endpoints ? s.endpoints.length : 0), 0);
+        const endpointsEl = document.getElementById('statEndpoints');
+        const modulesEl = document.getElementById('statModules');
+        if (endpointsEl) endpointsEl.textContent = totalEndpoints;
+        if (modulesEl) modulesEl.textContent = API_SECTIONS.length;
+    }
+
+    function escapeHtml(str) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str || '').replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function renderPath(path) {
+        return path.replace(/:(\w+)/g, '<span class="param">:$1</span>');
+    }
+
+    function renderAuthBadge(auth) {
+        if (!auth) return '';
+        if (auth === 'admin') return '<span class="endpoint-auth admin">Admin</span>';
+        if (auth === 'user') return '<span class="endpoint-auth user">Auth</span>';
+        if (auth === 'optional') return '<span class="endpoint-auth">Optional</span>';
+        return '';
+    }
+
+    function renderEndpoint(ep) {
+        const paramsHtml = ep.params ? `
+            <div class="endpoint-subsection">
+                <div class="endpoint-subtitle">Параметры</div>
+                <table class="params-table">
+                    <thead>
+                        <tr><th>Имя</th><th>Описание</th></tr>
+                    </thead>
+                    <tbody>
+                        ${ep.params.map(p => `
+                            <tr>
+                                <td>
+                                    <span class="param-name">${escapeHtml(p.name)}</span>
+                                    <span class="param-type">${escapeHtml(p.type)}</span>
+                                    ${p.required
+                                        ? '<span class="param-required">required</span>'
+                                        : '<span class="param-optional">optional</span>'}
+                                </td>
+                                <td class="param-desc">${escapeHtml(p.desc)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        ` : '';
+
+        const responseHtml = ep.response ? `
+            <div class="endpoint-subsection">
+                <div class="endpoint-subtitle">Пример ответа</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span class="code-lang">JSON · 200 OK</span>
+                        <button class="copy-btn" data-copy="${escapeHtml(ep.response)}">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <pre><code class="language-json">${escapeHtml(ep.response)}</code></pre>
+                </div>
+            </div>
+        ` : '';
+
+        return `
+            <div class="endpoint" data-endpoint>
+                <div class="endpoint-header" data-toggle>
+                    <span class="method-badge method-${(ep.method || 'get').toLowerCase()}">${escapeHtml(ep.method)}</span>
+                    <span class="endpoint-path">${renderPath(escapeHtml(ep.path))}</span>
+                    <span class="endpoint-desc">${escapeHtml(ep.desc)}</span>
+                    ${renderAuthBadge(ep.auth)}
+                    <svg class="endpoint-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <div class="endpoint-body">
+                    <div class="endpoint-subsection">
+                        <div class="endpoint-subtitle">Описание</div>
+                        <div class="endpoint-text">${escapeHtml(ep.details)}</div>
+                    </div>
+                    ${paramsHtml}
+                    ${responseHtml}
                 </div>
             </div>
         `;
-        return;
     }
 
-    // Все функции рендеринга (updateStats, escapeHtml, renderPath, 
-    // renderAuthBadge, renderEndpoint, renderSection, renderTOC,
-    // renderSections, initToggle, initCopy, initScrollSpy, initHighlight)
-    // остаются без изменений, но используют переменную API_SECTIONS.
+    function renderSection(section) {
+        const totalEndpoints = (section.endpoints || []).length;
+        const sourceLabel = section.source ? `<span class="section-source">${escapeHtml(section.source)}</span>` : '';
+        return `
+            <section class="api-section" id="${section.id}">
+                <div class="section-header">
+                    <div class="section-icon" style="background: ${section.iconColor}20; color: ${section.iconColor};">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${section.icon}</svg>
+                    </div>
+                    <h2 class="section-title">${escapeHtml(section.title)}${sourceLabel}</h2>
+                    <span class="section-count">${totalEndpoints} ${totalEndpoints === 1 ? 'эндпоинт' : totalEndpoints < 5 ? 'эндпоинта' : 'эндпоинтов'}</span>
+                </div>
+                <p class="section-description">${escapeHtml(section.description)}</p>
+                ${(section.endpoints || []).map(ep => renderEndpoint(ep)).join('')}
+            </section>
+        `;
+    }
 
-    // Скопируйте сюда ВСЕ функции из вашего исходного api.html
-    // (начиная с function updateStats() и заканчивая инициализацией).
+    function renderTOC() {
+        const list = document.getElementById('tocList');
+        list.innerHTML = API_SECTIONS.map(s => `
+            <li>
+                <a href="#${s.id}" class="toc-item" data-toc="${s.id}">
+                    ${escapeHtml(s.title)}
+                    <span class="toc-count">${(s.endpoints || []).length}</span>
+                </a>
+            </li>
+        `).join('');
+    }
 
-    // Затем запустите рендеринг:
-    updateStats();
-    renderTOC();
-    renderSections();
-    initToggle();
-    initCopy();
-    initScrollSpy();
-    initHighlight();
+    function renderSections() {
+        const container = document.getElementById('sectionsContainer');
+        container.innerHTML = API_SECTIONS.map(s => renderSection(s)).join('');
+    }
 
-    const first = document.querySelector('[data-endpoint]');
-    if (first) first.classList.add('open');
+    function initToggle() {
+        document.querySelectorAll('[data-toggle]').forEach(header => {
+            header.addEventListener('click', () => {
+                header.closest('[data-endpoint]').classList.toggle('open');
+            });
+        });
+    }
+
+    function initCopy() {
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const text = btn.dataset.copy;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    const original = btn.innerHTML;
+                    btn.innerHTML = `
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Copied
+                    `;
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.innerHTML = original;
+                        btn.classList.remove('copied');
+                    }, 1500);
+                } catch (err) { console.error('Copy failed:', err); }
+            });
+        });
+    }
+
+    function initScrollSpy() {
+        const tocLinks = document.querySelectorAll('[data-toc]');
+        const sections = API_SECTIONS.map(s => document.getElementById(s.id)).filter(Boolean);
+        const observer = new IntersectionObserver((entries) => {
+            let activeId = null;
+            entries.forEach(entry => {
+                if (entry.isIntersecting) activeId = entry.target.id;
+            });
+            if (activeId) {
+                tocLinks.forEach(link => link.classList.remove('active'));
+                const activeLink = document.querySelector(`[data-toc="${activeId}"]`);
+                if (activeLink) activeLink.classList.add('active');
+            }
+        }, { rootMargin: '0px 0px -30% 0px', threshold: 0.2 });
+        sections.forEach(section => observer.observe(section));
+    }
+
+    function initHighlight() {
+        if (window.hljs) {
+            document.querySelectorAll('pre code').forEach(block => {
+                hljs.highlightElement(block);
+            });
+        }
+    }
+
+    loadAPIConfig();
 })();
 </script>
 </body>
