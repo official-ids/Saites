@@ -1385,56 +1385,59 @@ function renderRedirects() {
     `;
     grid.appendChild(createCard);
 
-    // Обработчик создания
-    document.getElementById('saveNewRedirectBtn').addEventListener('click', async () => {
-    console.log('Кнопка нажата');
+    // Делегирование событий на весь grid
+grid.addEventListener('click', (e) => {
+    const actionBtn = e.target.closest('[data-action]');
+    if (!actionBtn) return;
 
-    const slugInput = createCard.querySelector('.new-slug-input');
-    const urlInput = createCard.querySelector('.new-url-input');
-    const descInput = createCard.querySelector('.new-desc-input');
-    const slug = slugInput.value.trim().toLowerCase();
-    const url = urlInput.value.trim();
-    const description = descInput.value.trim();
+    const action = actionBtn.dataset.action;
 
-    console.log('Данные:', { slug, url, description });
+    if (action === 'create-redirect') {
+        // Создание редиректа
+        const slugInput = document.querySelector('.new-slug-input');
+        const urlInput = document.querySelector('.new-url-input');
+        const descInput = document.querySelector('.new-desc-input');
+        const slug = slugInput.value.trim().toLowerCase();
+        const url = urlInput.value.trim();
+        const description = descInput.value.trim();
 
-    if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
-        showToast('Slug: 2-32 символов (a-z, 0-9, -, _)', 'error');
-        return;
-    }
-    if (!isValidUrl(url)) {
-        showToast('Некорректный URL', 'error');
-        return;
-    }
-
-    console.log('Валидация пройдена, отправляю запрос...');
-
-    try {
-        const response = await fetch('/api/redirects/admin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${State.token}`
-            },
-            body: JSON.stringify({ slug, url, description })
-        });
-
-        console.log('Статус ответа:', response.status);
-        const data = await response.json();
-        console.log('Ответ сервера:', data);
-
-        if (!response.ok) {
-            throw new Error(data.error || `Ошибка ${response.status}`);
+        if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
+            showToast('Slug: 2-32 символов (a-z, 0-9, -, _)', 'error');
+            return;
+        }
+        if (!isValidUrl(url)) {
+            showToast('Некорректный URL', 'error');
+            return;
         }
 
-        showToast('Редирект создан!', 'success');
-        slugInput.value = '';
-        urlInput.value = '';
-        descInput.value = '';
-        loadRedirects();
-    } catch (err) {
-        console.error('Ошибка при создании:', err);
-        showToast(err.message || 'Неизвестная ошибка', 'error');
+        createRedirect(slug, url, description).then(() => {
+            slugInput.value = '';
+            urlInput.value = '';
+            descInput.value = '';
+            loadRedirects();
+        }).catch(err => showToast(err.message, 'error'));
+    }
+
+    if (action === 'delete-redirect') {
+        const slug = actionBtn.dataset.slug;
+        showModal('Удалить редирект?', `Редирект "/${slug}" будет удалён безвозвратно.`, () => {
+            deleteRedirect(slug).then(() => {
+                showToast('Редирект удалён', 'success');
+                loadRedirects();
+            }).catch(err => showToast(err.message, 'error'));
+        });
+    }
+
+    if (action === 'copy-short-url') {
+        const url = actionBtn.dataset.url;
+        copyToClipboard(url);
+        showToast('Короткая ссылка скопирована', 'info', 1500);
+    }
+
+    if (action === 'copy-url') {
+        const url = actionBtn.dataset.url;
+        copyToClipboard(url);
+        showToast('URL скопирован', 'info', 1500);
     }
 });
 
