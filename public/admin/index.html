@@ -1266,6 +1266,7 @@ async function deleteFile(hash) {
     await apiRequest(`/api/downloader/${hash}`, { method: 'DELETE' });
 }
 
+
 // ---------- REDIRECTS ----------
 let redirectsList = [];
 let redirectsSearch = '';
@@ -1322,7 +1323,10 @@ function renderRedirects() {
         </div>
     `;
 
-    document.getElementById('addRedirectBtn').addEventListener('click', showCreateRedirectForm);
+    document.getElementById('addRedirectBtn').addEventListener('click', () => {
+        const slugInput = document.querySelector('.new-slug-input');
+        if (slugInput) slugInput.focus();
+    });
     document.getElementById('refreshRedirectsBtn').addEventListener('click', loadRedirects);
 
     const searchInput = document.getElementById('redirectSearchInput');
@@ -1353,7 +1357,7 @@ function renderRedirects() {
 
     const grid = document.getElementById('redirectsGrid');
 
-    // Секция быстрого создания (в начале)
+    // Карточка быстрого создания
     const createCard = document.createElement('div');
     createCard.className = 'site-card';
     createCard.style.opacity = '0.85';
@@ -1375,7 +1379,7 @@ function renderRedirects() {
         </div>
         <div class="card-footer">
             <span style="font-size:0.8rem; color:var(--text-tertiary);">Новый редирект</span>
-            <button class="btn btn-primary" id="saveNewRedirectBtn" style="padding:8px 16px; font-size:0.85rem;">
+            <button class="btn btn-primary" data-action="create-redirect" style="padding:8px 16px; font-size:0.85rem;">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -1385,61 +1389,53 @@ function renderRedirects() {
     `;
     grid.appendChild(createCard);
 
-    // Делегирование событий на весь grid
-grid.addEventListener('click', (e) => {
-    const actionBtn = e.target.closest('[data-action]');
-    if (!actionBtn) return;
+    // Единый делегированный обработчик на весь grid
+    grid.addEventListener('click', (e) => {
+        const actionBtn = e.target.closest('[data-action]');
+        if (!actionBtn) return;
+        const action = actionBtn.dataset.action;
 
-    const action = actionBtn.dataset.action;
+        if (action === 'create-redirect') {
+            const slugInput = document.querySelector('.new-slug-input');
+            const urlInput = document.querySelector('.new-url-input');
+            const descInput = document.querySelector('.new-desc-input');
+            const slug = slugInput.value.trim().toLowerCase();
+            const url = urlInput.value.trim();
+            const description = descInput.value.trim();
 
-    if (action === 'create-redirect') {
-        // Создание редиректа
-        const slugInput = document.querySelector('.new-slug-input');
-        const urlInput = document.querySelector('.new-url-input');
-        const descInput = document.querySelector('.new-desc-input');
-        const slug = slugInput.value.trim().toLowerCase();
-        const url = urlInput.value.trim();
-        const description = descInput.value.trim();
+            if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
+                showToast('Slug: 2-32 символов (a-z, 0-9, -, _)', 'error');
+                return;
+            }
+            if (!isValidUrl(url)) {
+                showToast('Некорректный URL', 'error');
+                return;
+            }
 
-        if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
-            showToast('Slug: 2-32 символов (a-z, 0-9, -, _)', 'error');
-            return;
-        }
-        if (!isValidUrl(url)) {
-            showToast('Некорректный URL', 'error');
-            return;
-        }
-
-        createRedirect(slug, url, description).then(() => {
-            slugInput.value = '';
-            urlInput.value = '';
-            descInput.value = '';
-            loadRedirects();
-        }).catch(err => showToast(err.message, 'error'));
-    }
-
-    if (action === 'delete-redirect') {
-        const slug = actionBtn.dataset.slug;
-        showModal('Удалить редирект?', `Редирект "/${slug}" будет удалён безвозвратно.`, () => {
-            deleteRedirect(slug).then(() => {
-                showToast('Редирект удалён', 'success');
+            createRedirect(slug, url, description).then(() => {
+                slugInput.value = '';
+                urlInput.value = '';
+                descInput.value = '';
                 loadRedirects();
             }).catch(err => showToast(err.message, 'error'));
-        });
-    }
+        }
 
-    if (action === 'copy-short-url') {
-        const url = actionBtn.dataset.url;
-        copyToClipboard(url);
-        showToast('Короткая ссылка скопирована', 'info', 1500);
-    }
+        if (action === 'delete-redirect') {
+            const slug = actionBtn.dataset.slug;
+            showModal('Удалить редирект?', `Редирект "/${slug}" будет удалён безвозвратно.`, () => {
+                deleteRedirect(slug).then(() => {
+                    showToast('Редирект удалён', 'success');
+                    loadRedirects();
+                }).catch(err => showToast(err.message, 'error'));
+            });
+        }
 
-    if (action === 'copy-url') {
-        const url = actionBtn.dataset.url;
-        copyToClipboard(url);
-        showToast('URL скопирован', 'info', 1500);
-    }
-});
+        if (action === 'copy-short-url' || action === 'copy-url') {
+            const url = actionBtn.dataset.url;
+            copyToClipboard(url);
+            showToast('Ссылка скопирована', 'info', 1500);
+        }
+    });
 
     // Список редиректов
     if (filtered.length === 0) {
@@ -1454,7 +1450,7 @@ grid.addEventListener('click', (e) => {
     filtered.forEach(redirect => {
         const card = document.createElement('div');
         card.className = 'site-card';
-        const shortUrl = `${window.location.origin}/r/${redirect.slug}`; // предположим, что короткие ссылки будут на /r/:slug
+        const shortUrl = `${window.location.origin}/r/${redirect.slug}`;
         card.innerHTML = `
             <div class="site-card-header">
                 <div class="site-card-title" style="flex:1;">
@@ -1469,10 +1465,10 @@ grid.addEventListener('click', (e) => {
                     </div>
                 </div>
                 <div class="site-card-actions">
-                    <button class="btn btn-ghost btn-icon copy-short-url-btn" title="Копировать короткую ссылку" data-url="${shortUrl}">
+                    <button class="btn btn-ghost btn-icon" data-action="copy-short-url" data-url="${shortUrl}" title="Копировать короткую ссылку">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     </button>
-                    <button class="btn btn-ghost btn-icon delete-redirect-btn" title="Удалить" data-slug="${redirect.slug}" data-desc="${escapeHtml(redirect.slug)}">
+                    <button class="btn btn-ghost btn-icon" data-action="delete-redirect" data-slug="${redirect.slug}" title="Удалить">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </div>
@@ -1482,7 +1478,7 @@ grid.addEventListener('click', (e) => {
                     <label>URL назначения</label>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="word-break:break-all; flex:1;">${escapeHtml(redirect.url)}</span>
-                        <button class="btn btn-ghost btn-icon copy-url-btn" title="Копировать URL" data-url="${escapeHtml(redirect.url)}">
+                        <button class="btn btn-ghost btn-icon" data-action="copy-url" data-url="${escapeHtml(redirect.url)}" title="Копировать URL">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         </button>
                     </div>
@@ -1500,37 +1496,12 @@ grid.addEventListener('click', (e) => {
                 </div>
             </div>
         `;
-
-        // Копирование короткой ссылки
-        card.querySelector('.copy-short-url-btn').addEventListener('click', () => {
-            copyToClipboard(shortUrl);
-            showToast('Короткая ссылка скопирована', 'info', 1500);
-        });
-
-        // Копирование целевого URL
-        card.querySelector('.copy-url-btn').addEventListener('click', () => {
-            copyToClipboard(redirect.url);
-            showToast('URL скопирован', 'info', 1500);
-        });
-
-        // Удаление
-        card.querySelector('.delete-redirect-btn').addEventListener('click', () => {
-            showModal('Удалить редирект?', `Редирект "/${redirect.slug}" будет удалён безвозвратно.`, () => {
-                deleteRedirect(redirect.slug).then(() => {
-                    showToast('Редирект удалён', 'success');
-                    loadRedirects();
-                }).catch(err => showToast(err.message, 'error'));
-            });
-        });
-
         grid.appendChild(card);
     });
 }
 
 // Вспомогательные функции
-
 function showCreateRedirectForm() {
-    // Просто фокус на поле slug формы создания (она уже вверху)
     const slugInput = document.querySelector('.new-slug-input');
     if (slugInput) slugInput.focus();
 }
@@ -1546,7 +1517,6 @@ async function deleteRedirect(slug) {
     await apiRequest(`/api/redirects/admin/${slug}`, { method: 'DELETE' });
 }
 
-// Для валидации URL на клиенте
 function isValidUrl(string) {
     try {
         const url = new URL(string);
@@ -1555,6 +1525,8 @@ function isValidUrl(string) {
         return false;
     }
 }
+
+
 
     // ---------- Toast ----------
     function showToast(message, type = 'info', duration = 3000) {
