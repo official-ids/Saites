@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const crypto = require('crypto');
 const newsRouter = require('../news');
 const supportRouter = require('../support');
+const downloaderRouter = require('../downloader');
 const { kv } = require('@vercel/kv');
 
 // -----------------------------
@@ -224,6 +225,7 @@ app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use('/api/news', newsRouter);
 app.use('/api/support', supportRouter);
+app.use('/api/download', downloaderRouter);
 app.use(express.static(PUBLIC_DIR, {
     maxAge: '1d', 
     etag: true,

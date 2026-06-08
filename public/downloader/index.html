@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Безопасная загрузка файлов с верификацией SHA-256">
+<meta name="theme-color" content="#000000">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="robots" content="noindex">
+<title>Загрузка файла · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --header-h: 56px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { min-height: 100vh; }
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+.header-inner {
+    max-width: 980px; margin: 0 auto; padding: 0 24px;
+    height: 100%; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
+}
+.logo {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--text-primary);
+}
+.logo svg { width: 22px; height: 22px; color: var(--accent); }
+.logo-text { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
+
+.layout {
+    max-width: 640px; margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    margin-bottom: 32px;
+}
+.file-icon {
+    width: 88px; height: 88px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, var(--accent) 0%, #5E5CE6 100%);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    box-shadow: 0 12px 32px rgba(10, 132, 255, 0.3);
+    animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+.file-icon svg { width: 44px; height: 44px; }
+
+h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Card */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.meta-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+.meta-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+.meta-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.meta-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    text-align: right;
+    word-break: break-all;
+    font-weight: 500;
+}
+.meta-value.mono {
+    font-family: var(--mono-stack);
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 380px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+.meta-value.mono:hover {
+    background: var(--bg-elevated);
+}
+
+/* Buttons */
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.btn {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 99px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    user-select: none;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-primary {
+    background: var(--accent);
+    color: white;
+}
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(10, 132, 255, 0.35);
+}
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.btn-secondary:hover:not(:disabled) {
+    background: #3A3A3C;
+    border-color: var(--border-strong);
+}
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Progress */
+.progress-container {
+    display: none;
+    margin-bottom: 16px;
+}
+.progress-container.visible { display: block; }
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-family: var(--mono-stack);
+}
+.progress-bar {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, #5E5CE6 100%);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.2s;
+}
+
+/* Verification */
+.verification {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+    align-items: center;
+    gap: 10px;
+}
+.verification.visible { display: flex; }
+.verification svg { width: 20px; height: 20px; flex-shrink: 0; }
+.verification.success {
+    background: rgba(48, 209, 88, 0.1);
+    border: 1px solid rgba(48, 209, 88, 0.3);
+    color: var(--success);
+}
+.verification.error {
+    background: rgba(255, 69, 58, 0.1);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+    color: var(--danger);
+}
+.verification.checking {
+    background: rgba(10, 132, 255, 0.1);
+    border: 1px solid rgba(10, 132, 255, 0.3);
+    color: var(--accent);
+}
+
+/* Verify instructions */
+.verify-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-top: 24px;
+}
+.verify-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 14px;
+}
+.verify-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-subtle);
+    padding: 4px;
+    border-radius: 99px;
+    margin-bottom: 14px;
+}
+.verify-tab {
+    flex: 1;
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 99px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.verify-tab.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.verify-code {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font-family: var(--mono-stack);
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    overflow-x: auto;
+    white-space: pre;
+    position: relative;
+}
+.verify-code .copy-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.verify-code .copy-btn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
+/* Error state */
+.error-state {
+    display: none;
+    text-align: center;
+    padding: 48px 24px;
+}
+.error-state.visible { display: block; }
+.error-icon {
+    width: 72px; height: 72px;
+    margin: 0 auto 20px;
+    background: rgba(255, 69, 58, 0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--danger);
+}
+.error-icon svg { width: 36px; height: 36px; }
+.error-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.error-text {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+/* Loading spinner */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    gap: 16px;
+    color: var(--text-secondary);
+}
+.spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
+.footer {
+    max-width: 980px; margin: 0 auto;
+    padding: 24px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+}
+.footer a { color: var(--accent); text-decoration: none; }
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 10px 18px;
+    border-radius: 99px;
+    box-shadow: var(--shadow-md);
+    font-size: 0.88rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 200;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.toast svg { width: 16px; height: 16px; }
+.toast.success { color: var(--success); }
+.toast.error { color: var(--danger); }
+
+.hidden { display: none !important; }
+
+@media (max-width: 640px) {
+    .layout { padding: 32px 16px 60px; }
+    h1 { font-size: 1.4rem; }
+    .file-icon { width: 72px; height: 72px; }
+    .file-icon svg { width: 36px; height: 36px; }
+    .actions { flex-direction: column; }
+    .meta-item { flex-direction: column; gap: 4px; align-items: flex-start; }
+    .meta-value { text-align: left; }
+    .meta-value.mono { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="logo-text">Oris Download</span>
+        </a>
+    </div>
+</header>
+
+<main class="layout">
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Загрузка метаданных...</div>
+    </div>
+
+    <!-- Error state -->
+    <div class="error-state" id="errorState">
+        <div class="error-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h2 class="error-title" id="errorTitle">Файл не найден</h2>
+        <p class="error-text" id="errorText">Проверьте правильность ссылки или обратитесь к отправителю.</p>
+        <a href="/" class="btn btn-primary" style="display: inline-flex; flex: 0;">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            На главную
+        </a>
+    </div>
+
+    <!-- Main content -->
+    <div id="mainContent" class="hidden">
+
+        <section class="hero">
+            <div class="file-icon" id="fileIcon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            </div>
+            <h1 id="fileName">—</h1>
+            <p class="subtitle" id="fileSubtitle">Готов к загрузке</p>
+        </section>
+
+        <div class="card">
+            <ul class="meta-list">
+                <li class="meta-item">
+                    <span class="meta-label">Размер</span>
+                    <span class="meta-value" id="fileSize">—</span>
+                </li>
+                <li class="meta-item">
+                    <span class="meta-label">Тип</span>
+                    <span class="meta-value" id="fileType">—</span>
+                </li>
+                <li class="meta-item">
+                    <span class="meta-label">Загружен</span>
+                    <span class="meta-value" id="fileUploaded">—</span>
+                </li>
+                <li class="meta-item">
+                    <span class="meta-label">Скачиваний</span>
+                    <span class="meta-value" id="fileDownloads">—</span>
+                </li>
+                <li class="meta-item">
+                    <span class="meta-label">SHA-256</span>
+                    <span class="meta-value mono" id="fileHash" title="Нажмите, чтобы скопировать">—</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" id="downloadBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span id="downloadBtnText">Скачать файл</span>
+            </button>
+            <button class="btn btn-secondary" id="shareBtn" title="Скопировать ссылку">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-info">
+                <span id="progressText">0%</span>
+                <span id="progressBytes">0 / 0</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="verification" id="verification">
+            <span id="verificationIcon"></span>
+            <span id="verificationText"></span>
+        </div>
+
+        <section class="verify-section">
+            <div class="verify-title">Проверка целостности</div>
+            <div class="verify-tabs">
+                <button class="verify-tab active" data-os="mac">macOS / Linux</button>
+                <button class="verify-tab" data-os="win">Windows</button>
+            </div>
+            <div class="verify-code" id="verifyCode">
+                <button class="copy-btn" id="copyVerifyBtn">Copy</button>
+                <code id="verifyCodeText"></code>
+            </div>
+        </section>
+
+    </div>
+
+</main>
+
+<footer class="footer">
+    Oris Platform · Secure file delivery · SHA-256 verified
+</footer>
+
+<div class="toast" id="toast">
+    <span id="toastIcon"></span>
+    <span id="toastText"></span>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const ICONS = {
+        success: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
+        error: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>',
+        spinner: '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>'
+    };
+
+    const State = {
+        hash: null,
+        meta: null,
+        downloading: false,
+        currentOS: 'mac'
+    };
+
+    // -----------------------------
+    // Утилиты
+    // -----------------------------
+    const $ = (id) => document.getElementById(id);
+
+    function formatBytes(bytes) {
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+        return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+    }
+
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return d.toLocaleString('ru-RU', {
+            day: 'numeric', month: 'long', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function isValidSha256(hash) {
+        return typeof hash === 'string' && /^[a-f0-9]{64}$/i.test(hash);
+    }
+
+    function toast(message, type = 'info') {
+        const t = $('toast');
+        $('toastIcon').innerHTML = type === 'success' ? ICONS.success : type === 'error' ? ICONS.error : '';
+        $('toastText').textContent = message;
+        t.className = `toast ${type} visible`;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => t.classList.remove('visible'), 2500);
+    }
+
+    async function copyText(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch {}
+            document.body.removeChild(ta);
+            return ok;
+        }
+    }
+
+    function showError(title, text) {
+        $('loading').style.display = 'none';
+        $('mainContent').classList.add('hidden');
+        $('errorTitle').textContent = title;
+        $('errorText').textContent = text;
+        $('errorState').classList.add('visible');
+    }
+
+    function getVerifyCommand(os, name, hash) {
+        if (os === 'mac') {
+            return `shasum -a 256 "${name}"\n# Ожидаемый: ${hash}`;
+        }
+        return `Get-FileHash -Algorithm SHA256 "${name}"\n# Ожидаемый: ${hash.toUpperCase()}`;
+    }
+
+    function updateVerifyCode() {
+        if (!State.meta) return;
+        const cmd = getVerifyCommand(State.currentOS, State.meta.name, State.meta.hash);
+        $('verifyCodeText').textContent = cmd;
+    }
+
+    // -----------------------------
+    // SHA-256 проверка
+    // -----------------------------
+    async function computeSha256(buffer) {
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        return Array.from(new Uint8Array(hashBuffer))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+    }
+
+    function setVerification(state, text) {
+        const v = $('verification');
+        v.className = `verification ${state} visible`;
+        $('verificationIcon').innerHTML = state === 'checking' ? ICONS.spinner : (state === 'success' ? ICONS.success : ICONS.error);
+        $('verificationText').textContent = text;
+    }
+
+    // -----------------------------
+    // Загрузка файла
+    // -----------------------------
+    async function downloadFile() {
+        if (State.downloading || !State.meta) return;
+        State.downloading = true;
+
+        const btn = $('downloadBtn');
+        const btnText = $('downloadBtnText');
+        btn.disabled = true;
+        btnText.textContent = 'Загрузка...';
+
+        const progressContainer = $('progressContainer');
+        const progressFill = $('progressFill');
+        const progressText = $('progressText');
+        const progressBytes = $('progressBytes');
+        progressContainer.classList.add('visible');
+
+        try {
+            const response = await fetch(`/api/download/${State.hash}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const contentLength = response.headers.get('content-length');
+            const total = contentLength ? parseInt(contentLength, 10) : State.meta.size;
+
+            const reader = response.body.getReader();
+            const chunks = [];
+            let received = 0;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                received += value.length;
+
+                const percent = total ? Math.round((received / total) * 100) : 0;
+                progressFill.style.width = percent + '%';
+                progressText.textContent = percent + '%';
+                progressBytes.textContent = `${formatBytes(received)}${total ? ' / ' + formatBytes(total) : ''}`;
+            }
+
+            const buffer = new Uint8Array(received);
+            let offset = 0;
+            for (const chunk of chunks) {
+                buffer.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            // Проверка SHA-256
+            setVerification('checking', 'Проверка целостности файла...');
+
+            const computedHash = await computeSha256(buffer.buffer);
+            if (computedHash.toLowerCase() === State.hash.toLowerCase()) {
+                setVerification('success', 'SHA-256 совпадает — файл подлинный');
+            } else {
+                setVerification('error', 'Хеш не совпадает! Файл может быть повреждён.');
+                State.downloading = false;
+                btn.disabled = false;
+                btnText.textContent = 'Попробовать снова';
+                return;
+            }
+
+            // Создаём blob и инициируем сохранение
+            const blob = new Blob([buffer], { type: State.meta.contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = State.meta.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+            btnText.textContent = 'Скачано';
+            toast('Файл сохранён', 'success');
+
+        } catch (err) {
+            console.error('Download error:', err);
+            setVerification('error', 'Ошибка загрузки: ' + err.message);
+            btn.disabled = false;
+            btnText.textContent = 'Попробовать снова';
+            toast('Ошибка загрузки', 'error');
+        } finally {
+            State.downloading = false;
+        }
+    }
+
+    // -----------------------------
+    // Загрузка метаданных
+    // -----------------------------
+    async function loadMeta() {
+        // Берём хеш из query: ?{hash} или ?hash={hash}
+        const params = new URLSearchParams(window.location.search);
+        let hash = params.get('hash') || params.get('file');
+
+        // Fallback: если параметров нет, берём весь query string как хеш
+        if (!hash) {
+            const raw = window.location.search.replace(/^\?/, '');
+            if (raw && !raw.includes('=')) {
+                hash = raw;
+            }
+        }
+
+        if (!hash) {
+            showError('Не указан хеш файла', 'Откройте ссылку вида /downloader?{SHA-256 хеш файла}');
+            return;
+        }
+
+        hash = hash.toLowerCase().trim();
+        if (!isValidSha256(hash)) {
+            showError('Некорректный формат хеша', 'SHA-256 должен состоять из 64 шестнадцатеричных символов.');
+            return;
+        }
+
+        State.hash = hash;
+
+        try {
+            const res = await fetch(`/api/download/${hash}/info`);
+            if (res.status === 404) {
+                showError('Файл не найден', 'Файла с таким SHA-256 хешем нет в системе. Возможно, он был удалён или ссылка устарела.');
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            const meta = await res.json();
+            State.meta = meta;
+
+            // Render
+            $('loading').style.display = 'none';
+            $('mainContent').classList.remove('hidden');
+
+            $('fileName').textContent = meta.name;
+            $('fileSubtitle').textContent = `${meta.sizeFormatted} · ${meta.contentType}`;
+            $('fileSize').textContent = meta.sizeFormatted;
+            $('fileType').textContent = meta.contentType;
+            $('fileUploaded').textContent = formatDate(meta.uploadedAt);
+            $('fileDownloads').textContent = meta.downloads || 0;
+            $('fileHash').textContent = meta.hash;
+
+            updateVerifyCode();
+
+        } catch (err) {
+            showError('Ошибка загрузки', 'Не удалось получить данные файла. Попробуйте обновить страницу.');
+            console.error(err);
+        }
+    }
+
+    // -----------------------------
+    // Инициализация
+    // -----------------------------
+    function init() {
+        $('downloadBtn').addEventListener('click', downloadFile);
+
+        $('shareBtn').addEventListener('click', async () => {
+            const ok = await copyText(window.location.href);
+            toast(ok ? 'Ссылка скопирована' : 'Не удалось скопировать', ok ? 'success' : 'error');
+        });
+
+        $('fileHash').addEventListener('click', async () => {
+            if (!State.meta) return;
+            const ok = await copyText(State.meta.hash);
+            toast(ok ? 'SHA-256 скопирован' : 'Не удалось скопировать', ok ? 'success' : 'error');
+        });
+
+        $('copyVerifyBtn').addEventListener('click', async () => {
+            const text = $('verifyCodeText').textContent;
+            const ok = await copyText(text);
+            toast(ok ? 'Команда скопирована' : 'Не удалось скопировать', ok ? 'success' : 'error');
+        });
+
+        document.querySelectorAll('.verify-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.verify-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                State.currentOS = tab.dataset.os;
+                updateVerifyCode();
+            });
+        });
+
+        loadMeta();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+
+</body>
+</html>
