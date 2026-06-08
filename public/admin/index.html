@@ -989,7 +989,7 @@ function loadFiles(page = 1) {
     $('pageTitle').textContent = 'Файлы';
     $('topbarActions').innerHTML = '';
 
-    apiRequest(`/downloader/list?page=${page}&limit=20`)
+    apiRequest('/api/downloader/list?page=${page}&limit=20')
         .then(data => {
             State._files = data.files;
             State._filesTotal = data.total;
@@ -1221,7 +1221,7 @@ async function uploadFile(file) {
 
     try {
         showToast('Загрузка файла...', 'info', 0);
-        const res = await fetch('/downloader/', {
+        const res = await fetch('/api/downloader/', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${State.token}`
@@ -1247,7 +1247,7 @@ async function uploadFile(file) {
 
 // Переименование файла (PATCH)
 async function renameFile(hash, newName) {
-    await apiRequest(`/downloader/${hash}`, {
+    await apiRequest(`/api/downloader/${hash}`, {
         method: 'PATCH',
         body: JSON.stringify({ name: newName })
     });
@@ -1255,7 +1255,7 @@ async function renameFile(hash, newName) {
 
 // Удаление файла
 async function deleteFile(hash) {
-    await apiRequest(`/downloader/${hash}`, { method: 'DELETE' });
+    await apiRequest(`/api/downloader/${hash}`, { method: 'DELETE' });
 }
 
     // ---------- Toast ----------
