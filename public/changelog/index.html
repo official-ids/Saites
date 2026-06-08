@@ -7,7 +7,6 @@
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     
-    <!-- Security Headers -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -62,7 +61,6 @@
         h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 12px; }
         .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
 
-        /* Timeline Styles */
         .timeline { position: relative; padding-left: 32px; margin-top: 40px; min-height: 200px; }
         
         .timeline::before {
@@ -130,38 +128,39 @@
         }
 
         .type-badge {
-    display: inline-block;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    padding: 2px 8px;
-    border-radius: 6px;
-    margin-right: 8px;
-    vertical-align: middle;
-    line-height: 1.4;
-}
-.type-feat     { color: #248A3D; background: rgba(52, 199, 89, 0.15); }
-.type-fix      { color: #C60000; background: rgba(255, 59, 48, 0.15); }
-.type-breaking { color: #C27800; background: rgba(255, 159, 10, 0.18); }
-.type-perf     { color: #0051A8; background: rgba(10, 132, 255, 0.15); }
-.type-docs     { color: #7D3AB0; background: rgba(175, 82, 222, 0.15); }
-.type-refactor { color: #3E3DB0; background: rgba(94, 92, 230, 0.15); }
-.type-chore    { color: #6E6E73; background: rgba(152, 152, 157, 0.15); }
-.type-security { color: #C60000; background: rgba(255, 59, 48, 0.2); }
-.type-default  { color: #6E6E73; background: rgba(152, 152, 157, 0.12); }
+            display: inline-block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-right: 8px;
+            vertical-align: middle;
+            line-height: 1.4;
+        }
+        .type-feat     { color: #248A3D; background: rgba(52, 199, 89, 0.15); }
+        .type-fix      { color: #C60000; background: rgba(255, 59, 48, 0.15); }
+        .type-breaking { color: #C27800; background: rgba(255, 159, 10, 0.18); }
+        .type-perf     { color: #0051A8; background: rgba(10, 132, 255, 0.15); }
+        .type-docs     { color: #7D3AB0; background: rgba(175, 82, 222, 0.15); }
+        .type-refactor { color: #3E3DB0; background: rgba(94, 92, 230, 0.15); }
+        .type-chore    { color: #6E6E73; background: rgba(152, 152, 157, 0.15); }
+        .type-security { color: #C60000; background: rgba(255, 59, 48, 0.2); }
+        .type-default  { color: #6E6E73; background: rgba(152, 152, 157, 0.12); }
 
-@media (prefers-color-scheme: dark) {
-    .type-feat     { color: #30D158; }
-    .type-fix      { color: #FF453A; }
-    .type-breaking { color: #FF9F0A; }
-    .type-perf     { color: #0A84FF; }
-    .type-docs     { color: #BF5AF2; }
-    .type-refactor { color: #5E5CE6; }
-    .type-chore    { color: #98989D; }
-    .type-security { color: #FF453A; }
-    .type-default  { color: #98989D; }
-}
+        @media (prefers-color-scheme: dark) {
+            .type-feat     { color: #30D158; }
+            .type-fix      { color: #FF453A; }
+            .type-breaking { color: #FF9F0A; }
+            .type-perf     { color: #0A84FF; }
+            .type-docs     { color: #BF5AF2; }
+            .type-refactor { color: #5E5CE6; }
+            .type-chore    { color: #98989D; }
+            .type-security { color: #FF453A; }
+            .type-default  { color: #98989D; }
+        }
+
         .back-link {
             display: inline-block;
             margin-top: 60px;
@@ -174,7 +173,6 @@
 
         footer { text-align: center; margin-top: 80px; font-size: 0.8rem; color: var(--text-secondary); }
 
-        /* Loading & Error States */
         .status-message {
             text-align: center;
             padding: 40px 0;
@@ -237,22 +235,22 @@
             };
 
             function getTypeBadge(type) {
-    const t = (type || 'default').toLowerCase();
-    const map = {
-        feat:     { label: 'Feature',  cls: 'type-feat' },
-        feature:  { label: 'Feature',  cls: 'type-feat' },
-        fix:      { label: 'Fix',      cls: 'type-fix' },
-        breaking: { label: 'Breaking', cls: 'type-breaking' },
-        perf:     { label: 'Perf',     cls: 'type-perf' },
-        docs:     { label: 'Docs',     cls: 'type-docs' },
-        refactor: { label: 'Refactor', cls: 'type-refactor' },
-        chore:    { label: 'Chore',    cls: 'type-chore' },
-        security: { label: 'Security', cls: 'type-security' },
-        sec:      { label: 'Security', cls: 'type-security' }
-    };
-    const meta = map[t] || { label: 'Update', cls: 'type-default' };
-    return `<span class="type-badge ${meta.cls}">${meta.label}</span>`;
-}
+                const t = (type || 'default').toLowerCase();
+                const map = {
+                    feat:     { label: 'Feature',  cls: 'type-feat' },
+                    feature:  { label: 'Feature',  cls: 'type-feat' },
+                    fix:      { label: 'Fix',      cls: 'type-fix' },
+                    breaking: { label: 'Breaking', cls: 'type-breaking' },
+                    perf:     { label: 'Perf',     cls: 'type-perf' },
+                    docs:     { label: 'Docs',     cls: 'type-docs' },
+                    refactor: { label: 'Refactor', cls: 'type-refactor' },
+                    chore:    { label: 'Chore',    cls: 'type-chore' },
+                    security: { label: 'Security', cls: 'type-security' },
+                    sec:      { label: 'Security', cls: 'type-security' }
+                };
+                const meta = map[t] || { label: 'Update', cls: 'type-default' };
+                return `<span class="type-badge ${meta.cls}">${meta.label}</span>`;
+            }
 
             async function loadChangelog() {
                 const container = document.getElementById('timeline');
@@ -313,4 +311,3 @@
     </script>
 </body>
 </html>
-
