@@ -51,6 +51,7 @@
 
   "redirects": [
     { "source": "/658234/", "destination": "/658234", "permanent": true },
+    { "source": "/downloader/:hash", "destination": "/api/downloader/:hash", "permanent": false },
     { "source": "/index.html", "destination": "/", "permanent": true }
   ]
 }
