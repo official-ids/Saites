@@ -1365,12 +1365,14 @@
         function bindEvents() {
             // Tab clicks - SPA behavior
             document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const mode = tab.dataset.mode;
-                    setModeFromUrl(true);
-                });
-            });
+    tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const mode = tab.dataset.mode;
+        const newUrl = `/add?p=${mode}`;
+        window.history.pushState({ mode }, '', newUrl);
+        setModeFromUrl(false);
+    });
+});
 
             // Saite form
             document.getElementById('form-saite').addEventListener('submit', async (e) => {
