@@ -1655,6 +1655,11 @@ app.get('/api/categories', (req, res) => {
     res.json(CATEGORY_META);
 });
 
+// Публичный короткий путь для скачивания (редирект на API)
+app.get('/downloader/:hash', (req, res) => {
+    res.redirect(302, `/api/downloader/${req.params.hash}`);
+});
+
 // -----------------------------
 // Экспорт приложения для Vercel Serverless
 // -----------------------------
