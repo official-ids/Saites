@@ -1038,7 +1038,7 @@ html, body {
                 renderSites();
             } else if (section === 'changelog') {
                 const data = await apiRequest('/api/admin/changelog');
-                State.changelog = data.content || '';
+                State.changelog = data.content || '';   // ← сырая строка
                 renderChangelog();
             } else if (section === 'status') {
                 const data = await apiRequest('/api/admin/status-config');
@@ -1393,26 +1393,31 @@ html, body {
     }
 
     async function saveSites() {
-        const invalid = State.sites.filter(s => !s.title.trim() || !s.url.trim() || !s.desc.trim());
-        if (invalid.length > 0) {
-            showToast(`Заполните все поля в ${invalid.length} проект(ах)`, 'error');
-            return;
-        }
+    const invalid = State.sites.filter(s => !s.title.trim() || !s.url.trim() || !s.desc.trim());
+    if (invalid.length > 0) {
+        showToast(`Заполните все поля в ${invalid.length} проект(ах)`, 'error');
+        return;
+    }
 
-        const content = serializeSaites(State.sites);
-        try {
-            await apiRequest('/api/admin/save', {
-                method: 'POST',
-                body: JSON.stringify({ content })
-            });
-            State.dirty = false;
-            State.rawContent = content;
-            renderSites();
-            showToast(`Сохранено ${State.sites.length} проектов`, 'success');
-        } catch (err) {
+    const content = serializeSaites(State.sites);
+    try {
+        await apiRequest('/api/admin/save', {
+            method: 'POST',
+            body: JSON.stringify({ content })  // ← передаём именно строку
+        });
+        State.dirty = false;
+        State.rawContent = content;
+        renderSites();
+        showToast(`Сохранено ${State.sites.length} проектов`, 'success');
+    } catch (err) {
+        if (err.message === 'UNAUTHORIZED') {
+            showToast('Ошибка доступа. Проверьте токен.', 'error');
+            promptToken();
+        } else {
             showToast(err.message, 'error');
         }
     }
+}
 
     // ---------- Drag & Drop ----------
     function bindDragAndDrop() {
@@ -1617,17 +1622,23 @@ html, body {
     }
 
     async function saveChangelog() {
-        try {
-            await apiRequest('/api/admin/changelog/save', {
-                method: 'POST',
-                body: JSON.stringify({ content: State.changelog })
-            });
-            State.dirty = false;
-            showToast('Changelog сохранён', 'success');
-        } catch (err) {
+    try {
+        await apiRequest('/api/admin/changelog/save', {
+            method: 'POST',
+            body: JSON.stringify({ content: State.changelog })  // ← строка
+        });
+        State.dirty = false;
+        renderChangelog();
+        showToast('Changelog сохранён', 'success');
+    } catch (err) {
+        if (err.message === 'UNAUTHORIZED') {
+            showToast('Ошибка доступа. Проверьте токен.', 'error');
+            promptToken();
+        } else {
             showToast(err.message, 'error');
         }
     }
+}
 
     // ---------- Render: JSON Editor ----------
     function renderJsonEditor(section, data) {
