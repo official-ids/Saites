@@ -1107,11 +1107,12 @@ html, body {
     }
 
     function serializeSaites(sites) {
-        return sites.map(s => {
-            const url = s.url.replace(/^https?:\/\//i, '');
-            return `${s.title}\n${url}\n${s.desc}`;
-        }).join('\n::\n');
-    }
+    return sites.map(s => {
+        const url = s.url.replace(/^https?:\/\//i, '');
+        const category = s.category || 'other';
+        return `${s.title}\n${url}\n${s.desc}\n${category}`;
+    }).join('\n::\n');
+}
 
     // ---------- Render: Sites ----------
     function renderSites() {
@@ -1609,7 +1610,7 @@ html, body {
                 if (match) return { type: match[1].toLowerCase(), text: match[2].trim() };
                 return { type: 'default', text: line.replace(/^-\s*/, '').trim() };
             });
-            return { version, date: date || '', changes: changes.filter(c => c.text) };
+            return { version, date: date || '', changes: changes };
         }).filter(Boolean);
     }
 
