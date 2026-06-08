@@ -1386,30 +1386,57 @@ function renderRedirects() {
     grid.appendChild(createCard);
 
     // Обработчик создания
-    document.getElementById('saveNewRedirectBtn').addEventListener('click', () => {
-        const slugInput = createCard.querySelector('.new-slug-input');
-        const urlInput = createCard.querySelector('.new-url-input');
-        const descInput = createCard.querySelector('.new-desc-input');
-        const slug = slugInput.value.trim().toLowerCase();
-        const url = urlInput.value.trim();
-        const description = descInput.value.trim();
+    document.getElementById('saveNewRedirectBtn').addEventListener('click', async () => {
+    console.log('Кнопка нажата');
 
-        if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
-            showToast('Slug: 2-32 символов (a-z, 0-9, -, _)', 'error');
-            return;
-        }
-        if (!isValidUrl(url)) {
-            showToast('Некорректный URL', 'error');
-            return;
+    const slugInput = createCard.querySelector('.new-slug-input');
+    const urlInput = createCard.querySelector('.new-url-input');
+    const descInput = createCard.querySelector('.new-desc-input');
+    const slug = slugInput.value.trim().toLowerCase();
+    const url = urlInput.value.trim();
+    const description = descInput.value.trim();
+
+    console.log('Данные:', { slug, url, description });
+
+    if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
+        showToast('Slug: 2-32 символов (a-z, 0-9, -, _)', 'error');
+        return;
+    }
+    if (!isValidUrl(url)) {
+        showToast('Некорректный URL', 'error');
+        return;
+    }
+
+    console.log('Валидация пройдена, отправляю запрос...');
+
+    try {
+        const response = await fetch('/api/redirects/admin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${State.token}`
+            },
+            body: JSON.stringify({ slug, url, description })
+        });
+
+        console.log('Статус ответа:', response.status);
+        const data = await response.json();
+        console.log('Ответ сервера:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || `Ошибка ${response.status}`);
         }
 
-        createRedirect(slug, url, description).then(() => {
-            slugInput.value = '';
-            urlInput.value = '';
-            descInput.value = '';
-            loadRedirects();
-        }).catch(err => showToast(err.message, 'error'));
-    });
+        showToast('Редирект создан!', 'success');
+        slugInput.value = '';
+        urlInput.value = '';
+        descInput.value = '';
+        loadRedirects();
+    } catch (err) {
+        console.error('Ошибка при создании:', err);
+        showToast(err.message || 'Неизвестная ошибка', 'error');
+    }
+});
 
     // Список редиректов
     if (filtered.length === 0) {
