@@ -3,58 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="Oris Projects - Портфолио и список проектов команды Oris.">
+    <meta name="description" content="Oris Projects - Каталог проектов команды Oris.">
     <meta name="theme-color" content="#ffffff">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>Oris &middot; Projects</title>
+    <title>Oris · Projects</title>
     
-    <!-- SVG для современных браузеров (Chrome, Firefox, Safari, Edge) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-
-    <!-- Fallback ICO для очень старых браузеров (IE, старые Android) -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-    <!-- Apple Touch Icon для iOS, iPadOS (используется при добавлении на экран "Домой") -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* Apple System Colors */
             --bg-body: #F5F5F7;
             --bg-card: #FFFFFF;
+            --bg-elevated: #FFFFFF;
             --text-primary: #1D1D1F;
-            --text-secondary: #86868B;
-            --text-tertiary: #AEAEB2;          /* ← ДОБАВИТЬ */
-            --accent-blue: #0071E3;
-            --accent: #0071E3;                  /* ← ДОБАВИТЬ (алиас) */
-            --accent-blue-hover: #0077ED;
-            --border-light: rgba(0, 0, 0, 0.05);
-            --border: rgba(0, 0, 0, 0.1);       /* ← ДОБАВИТЬ */
+            --text-secondary: #6E6E73;
+            --text-tertiary: #AEAEB2;
+            --accent: #0071E3;
+            --accent-hover: #0077ED;
+            --border-light: rgba(0, 0, 0, 0.06);
+            --border: rgba(0, 0, 0, 0.1);
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
             --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
             --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
             --radius-lg: 20px;
             --radius-md: 14px;
-            --transition-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+            --radius-sm: 10px;
+            --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-body: #000000;
                 --bg-card: #1C1C1E;
+                --bg-elevated: #2C2C2E;
                 --text-primary: #F5F5F7;
                 --text-secondary: #86868B;
-                --text-tertiary: #636366;        /* ← ДОБАВИТЬ */
-                --accent: #0A84FF;               /* ← ДОБАВИТЬ (светлее для dark) */
-                --border-light: rgba(255, 255, 255, 0.1);
-                --border: rgba(255, 255, 255, 0.15);  /* ← ДОБАВИТЬ */
-                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-                --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+                --text-tertiary: #636366;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --border-light: rgba(255, 255, 255, 0.08);
+                --border: rgba(255, 255, 255, 0.12);
+                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+                --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
                 --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
             }
         }
@@ -69,7 +66,7 @@
         body {
             background-color: var(--bg-body);
             color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -77,25 +74,25 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* --- Layout & Typography --- */
         .container {
-            max-width: 980px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
         }
 
+        /* --- Header --- */
         header {
             text-align: center;
             padding: 80px 24px 40px;
             opacity: 0;
-            animation: fadeIn 0.8s var(--transition-standard) forwards;
+            animation: fadeIn 0.8s var(--transition) forwards;
         }
 
         h1 {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            margin-bottom: 12px;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.035em;
+            margin-bottom: 16px;
             background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
             background-clip: text;
             -webkit-background-clip: text;
@@ -104,17 +101,18 @@
 
         p.subtitle {
             color: var(--text-secondary);
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 400;
             max-width: 600px;
             margin: 0 auto;
+            line-height: 1.6;
         }
 
         /* --- Banner --- */
         .banner-wrapper {
             width: 100%;
-            max-width: 980px;
-            margin: 0 auto 60px;
+            max-width: 1200px;
+            margin: 0 auto 48px;
             perspective: 1000px;
         }
 
@@ -126,7 +124,7 @@
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
             display: block;
-            transition: transform 0.5s var(--transition-standard), box-shadow 0.5s var(--transition-standard);
+            transition: transform 0.6s var(--transition), box-shadow 0.6s var(--transition);
             background: var(--bg-card);
         }
 
@@ -139,44 +137,122 @@
             display: none;
             width: 100%;
             aspect-ratio: 21/9;
-            background: var(--bg-card);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: var(--radius-lg);
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-            font-weight: 500;
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
             align-items: center;
             justify-content: center;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-md);
+            letter-spacing: -0.02em;
         }
+
+        /* --- Stats Bar --- */
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.2s var(--transition) forwards;
+        }
+
+        .stats-bar::-webkit-scrollbar { display: none; }
+
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 99px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-chip strong {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .stat-chip svg { width: 16px; height: 16px; }
 
         /* --- Toolbar --- */
         .toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
+            gap: 16px;
+            flex-wrap: wrap;
             opacity: 0;
-            animation: fadeIn 0.8s 0.2s var(--transition-standard) forwards;
+            animation: fadeIn 0.8s 0.2s var(--transition) forwards;
         }
 
         .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: -0.02em;
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            padding: 10px 14px 10px 38px;
+            border-radius: 99px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            width: 220px;
+            transition: all 0.25s var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent);
+            width: 280px;
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--text-tertiary);
+            pointer-events: none;
         }
 
         .refresh-btn {
             background: var(--bg-card);
             border: 1px solid var(--border-light);
-            padding: 10px 24px;
+            padding: 10px 18px;
             border-radius: 99px;
             font-family: inherit;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 500;
             color: var(--text-primary);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             box-shadow: var(--shadow-sm);
             display: flex;
             align-items: center;
@@ -184,112 +260,185 @@
         }
 
         .refresh-btn:hover {
-            background: var(--accent-blue);
+            background: var(--accent);
             color: white;
-            border-color: var(--accent-blue);
+            border-color: var(--accent);
             transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
 
-        .refresh-btn:active {
-            transform: scale(0.96);
+        .refresh-btn:active { transform: scale(0.96); }
+        .refresh-btn:disabled { opacity: 0.6; cursor: wait; pointer-events: none; }
+
+        .refresh-icon { width: 16px; height: 16px; transition: transform 0.5s ease; }
+        .refresh-btn.spinning .refresh-icon { transform: rotate(360deg); }
+
+        /* --- Category Filters --- */
+        .category-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.3s var(--transition) forwards;
         }
 
-        .refresh-btn:disabled {
-            opacity: 0.6;
-            cursor: wait;
-            pointer-events: none;
+        .category-filters::-webkit-scrollbar { display: none; }
+
+        .filter-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 99px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s var(--transition);
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
         }
 
-        .refresh-icon {
-            width: 16px;
-            height: 16px;
-            transition: transform 0.5s ease;
+        .filter-chip:hover {
+            border-color: var(--border);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
 
-        .refresh-btn.spinning .refresh-icon {
-            transform: rotate(360deg);
+        .filter-chip.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
         }
 
-        /* --- Grid System --- */
+        .filter-chip svg { width: 14px; height: 14px; }
+
+        .filter-count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 7px;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .filter-chip.active .filter-count {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* --- Grid --- */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
             margin-bottom: 100px;
-            min-height: 200px; /* Prevent layout shift */
+            min-height: 200px;
         }
 
         .card {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
-            padding: 32px;
+            padding: 28px;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            min-height: 240px;
+            min-height: 220px;
             position: relative;
             overflow: hidden;
             border: 1px solid var(--border-light);
             box-shadow: var(--shadow-sm);
-            transition: transform 0.4s var(--transition-standard), box-shadow 0.4s var(--transition-standard), border-color 0.3s ease;
+            transition: transform 0.4s var(--transition), box-shadow 0.4s var(--transition), border-color 0.3s ease;
             opacity: 0;
-            animation: cardEntrance 0.6s var(--transition-standard) forwards;
+            animation: cardEntrance 0.5s var(--transition) forwards;
         }
 
         .card:hover {
-            transform: translateY(-8px) scale(1.01);
+            transform: translateY(-6px) scale(1.01);
             box-shadow: var(--shadow-lg);
-            border-color: rgba(0, 113, 227, 0.3);
+            border-color: var(--border);
             z-index: 2;
         }
 
-        .card::after {
+        .card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at top right, rgba(0,113,227,0.05), transparent 40%);
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--category-color, var(--accent));
             opacity: 0;
-            transition: opacity 0.4s ease;
-            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
 
-        .card:hover::after {
-            opacity: 1;
-        }
+        .card:hover::before { opacity: 1; }
 
         .card-header {
-            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
         }
 
         .card-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--bg-body);
+            width: 44px;
+            height: 44px;
+            background: var(--category-bg, rgba(0, 113, 227, 0.1));
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
-            color: var(--accent-blue);
+            color: var(--category-color, var(--accent));
+            flex-shrink: 0;
+            transition: transform 0.3s var(--transition);
         }
 
+        .card:hover .card-icon { transform: scale(1.08) rotate(-3deg); }
+
+        .card-icon svg { width: 22px; height: 22px; }
+
+        .card-title-wrap { flex: 1; min-width: 0; }
+
         .card-title {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            margin-bottom: 4px;
+            line-height: 1.25;
+            color: var(--text-primary);
+        }
+
+        .card-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
             font-weight: 600;
-            letter-spacing: -0.01em;
-            margin-bottom: 8px;
-            line-height: 1.2;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--category-color, var(--accent));
+            padding: 3px 8px;
+            background: var(--category-bg, rgba(0, 113, 227, 0.1));
+            border-radius: 99px;
         }
 
         .card-desc {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             line-height: 1.6;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             flex-grow: 1;
+            display: -webkit-box;
+            line-clamp: 3;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .card-footer {
@@ -297,11 +446,13 @@
             align-items: center;
             justify-content: space-between;
             margin-top: auto;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-light);
         }
 
         .card-link {
-            color: var(--accent-blue);
-            font-size: 0.9rem;
+            color: var(--accent);
+            font-size: 0.88rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -310,13 +461,19 @@
 
         .card-link svg {
             transition: transform 0.3s ease;
+            width: 14px;
+            height: 14px;
         }
 
-        .card:hover .card-link svg {
-            transform: translateX(4px);
+        .card:hover .card-link svg { transform: translateX(4px); }
+
+        .card-domain {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
         }
 
-        /* --- Status & Loading --- */
+        /* --- Status --- */
         .status-container {
             grid-column: 1 / -1;
             display: flex;
@@ -328,10 +485,10 @@
         }
 
         .spinner {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border: 3px solid var(--border-light);
-            border-top-color: var(--accent-blue);
+            border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 20px;
@@ -342,11 +499,36 @@
             font-size: 1rem;
         }
 
-        .error-state {
-            color: #FF3B30;
+        .error-state { color: #FF3B30; }
+
+        /* --- Empty State --- */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
         }
 
-        /* --- Modals (Apple Style) --- */
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* --- Modals --- */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -378,7 +560,7 @@
             overflow-y: auto;
             position: relative;
             transform: scale(0.95) translateY(10px);
-            transition: transform 0.3s var(--transition-standard);
+            transition: transform 0.3s var(--transition);
             border: 1px solid var(--border-light);
         }
 
@@ -390,8 +572,8 @@
             position: absolute;
             top: 20px;
             right: 20px;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: var(--bg-body);
             border: none;
@@ -405,7 +587,7 @@
         }
 
         .modal-close:hover {
-            background: #e8e8ed;
+            background: var(--border-light);
             color: var(--text-primary);
         }
 
@@ -431,36 +613,37 @@
         }
 
         .modal-text a {
-            color: var(--accent-blue);
+            color: var(--accent);
             text-decoration: none;
             border-bottom: 1px solid transparent;
             transition: border-color 0.2s;
         }
 
-        .modal-text a:hover {
-            border-bottom-color: var(--accent-blue);
-        }
+        .modal-text a:hover { border-bottom-color: var(--accent); }
 
         /* --- Footer --- */
         footer {
             background: var(--bg-card);
-            border-top: 1px solid var(--border-light);
-            padding: 60px 24px;
-            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            padding: 60px 24px 40px;
+            margin-top: 80px;
         }
 
         .footer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 40px;
-            max-width: 980px;
-            margin: 0 auto;
+            max-width: 1200px;
+            margin: 0 auto 40px;
         }
 
         .footer-col h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
             color: var(--text-primary);
             margin-bottom: 16px;
-            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .footer-col a, .footer-col p {
@@ -468,19 +651,37 @@
             color: var(--text-secondary);
             text-decoration: none;
             margin-bottom: 12px;
+            font-size: 0.9rem;
             transition: color 0.2s;
         }
 
-        .footer-col a:hover {
-            color: var(--accent-blue);
+        .footer-col a:hover { color: var(--accent); }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
-        .copyright {
-            text-align: center;
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
             color: var(--text-secondary);
-            font-size: 0.75rem;
-            margin-top: 60px;
-            opacity: 0.8;
+        }
+
+        .footer-brand svg { width: 20px; height: 20px; color: var(--accent); }
+
+        .footer-made {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
         }
 
         /* --- Animations --- */
@@ -502,8 +703,18 @@
         @media (max-width: 768px) {
             header { padding: 60px 20px 30px; }
             .banner { aspect-ratio: 16/9; }
-            .grid { grid-template-columns: 1fr; }
+            .grid { grid-template-columns: 1fr; gap: 16px; }
             .modal-content { padding: 30px 24px; }
+            .search-box input { width: 160px; }
+            .search-box input:focus { width: 200px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .toolbar-actions { justify-content: space-between; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 2.2rem; }
+            .section-title { font-size: 1.4rem; }
+            .card { padding: 22px; }
         }
     </style>
 </head>
@@ -528,19 +739,38 @@
             </div>
         </div>
 
-        <div class="toolbar">
-            <div class="section-title">Проекты</div>
-            <button class="refresh-btn" id="refreshBtn" title="Обновить данные">
-                <svg class="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                <span>Обновить</span>
-            </button>
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                <span>Всего проектов: <strong id="totalCount">0</strong></span>
+            </div>
+            <div class="stat-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                <span>Категорий: <strong id="categoryCount">0</strong></span>
+            </div>
         </div>
 
-        <div id="sitesGrid" class="grid">
-            <!-- Dynamic Content -->
+        <div class="toolbar">
+            <div class="section-title">Проекты</div>
+            <div class="toolbar-actions">
+                <div class="search-box">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Поиск..." autocomplete="off">
+                </div>
+                <button class="refresh-btn" id="refreshBtn" title="Обновить данные">
+                    <svg class="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Обновить</span>
+                </button>
+            </div>
         </div>
+
+        <div class="category-filters" id="categoryFilters"></div>
+
+        <div id="sitesGrid" class="grid"></div>
     </main>
 
     <!-- Privacy Modal -->
@@ -593,79 +823,69 @@
         </div>
     </div>
 
-<footer style="background: var(--bg-card); border-top: 1px solid var(--border); padding: 60px 24px 40px; margin-top: 80px;">
-    <div style="max-width: 980px; margin: 0 auto;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px;">
-            
-            <!-- Oris -->
-            <div>
-                <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Oris</h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <a href="#" data-modal="privacyModal" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Конфиденциальность</a>
-                    <a href="#" data-modal="termsModal" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Условия использования</a>
-                    <a href="#" data-modal="collabModal" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Сотрудничество</a>
-                </div>
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Oris</h4>
+                <a href="#" data-modal="privacyModal">Конфиденциальность</a>
+                <a href="#" data-modal="termsModal">Условия использования</a>
+                <a href="#" data-modal="collabModal">Сотрудничество</a>
             </div>
-
-
-            <!-- Проекты -->
-            <div>
-                <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Проекты</h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <a href="/news" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Новости</a>
-<a href="/changelog" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">История изменений</a>
-<a href="/rest" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">API Reference</a>
-<a href="/status" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">Статус</a>
-<a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">
-    Исходный код
-    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-    </svg>
-</a>
-                </div>
+            <div class="footer-col">
+                <h4>Проекты</h4>
+                <a href="/news">Новости</a>
+                <a href="/changelog">История изменений</a>
+                <a href="/rest">API Reference</a>
+                <a href="/status">Статус</a>
+                <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer">
+                    Исходный код
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                </a>
             </div>
-
-            <!-- Поддержка -->
-            <div>
-                <h4 style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Поддержка</h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">
-                        Telegram-бот
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                    </a>
-                    <a href="mailto:di44avolod@ya.ru" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)'">
-                        Email
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                    </a>
-                </div>
+            <div class="footer-col">
+                <h4>Поддержка</h4>
+                <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer">
+                    Telegram-бот
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                </a>
+                <a href="mailto:di44avolod@ya.ru">
+                    Email
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </a>
             </div>
-
         </div>
-
-        <!-- Нижняя часть футера -->
-        <div style="border-top: 1px solid var(--border); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <svg width="20" height="20" fill="none" stroke="var(--accent)" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        <div class="footer-bottom">
+            <div class="footer-brand">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
-                <span style="font-size: 0.85rem; color: var(--text-secondary);">
-                    &copy; <span id="currentYear"></span> Oris Inc. Все права защищены.
-                </span>
+                <span>© <span id="currentYear"></span> Oris Inc. Все права защищены.</span>
             </div>
-            <div style="font-size: 0.8rem; color: var(--text-tertiary);">
-                Сделано с ‪‪❤︎‬ в России
-            </div>
+            <div class="footer-made">Сделано с ❤︎ в России</div>
         </div>
-    </div>
-</footer>
+    </footer>
 
     <script>
         (function() {
             'use strict';
+
+            // --- Category Metadata ---
+            const CATEGORY_META = {
+                tools:     { label: 'Инструменты',       icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', color: '#FF9F0A' },
+                dev:       { label: 'Для разработчиков', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: '#0071E3' },
+                design:    { label: 'Дизайн',            icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01', color: '#AF52DE' },
+                education: { label: 'Образование',       icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z', color: '#34C759' },
+                games:     { label: 'Игры',              icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: '#FF3B30' },
+                media:     { label: 'Медиа',             icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', color: '#FF9F0A' },
+                social:    { label: 'Соцсети',           icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: '#5E5CE6' },
+                other:     { label: 'Другое',            icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z', color: '#8E8E93' }
+            };
 
             // --- Security Utilities ---
             const Security = {
@@ -673,7 +893,6 @@
                     if (!url) return '#';
                     try {
                         const parsed = new URL(url, window.location.origin);
-                        // Разрешаем только безопасные протоколы
                         if (!['http:', 'https:'].includes(parsed.protocol)) {
                             console.warn(`Blocked unsafe protocol: ${parsed.protocol}`);
                             return '#';
@@ -686,14 +905,16 @@
                 
                 escapeHtml(str) {
                     if (!str) return '';
-                    const map = {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#039;'
-                    };
+                    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
                     return String(str).replace(/[&<>"']/g, m => map[m]);
+                },
+
+                getDomain(url) {
+                    try {
+                        return new URL(url).hostname.replace('www.', '');
+                    } catch {
+                        return '';
+                    }
                 }
             };
 
@@ -707,14 +928,12 @@
                             this.open(trigger.dataset.modal);
                             return;
                         }
-
                         const closer = e.target.closest('[data-close-modal]');
                         if (closer) {
                             const overlay = closer.closest('.modal-overlay');
                             if (overlay) this.close(overlay.id);
                             return;
                         }
-
                         if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
                             this.close(e.target.id);
                         }
@@ -731,14 +950,10 @@
                 open(id) {
                     const el = document.getElementById(id);
                     if (!el) return;
-                    
                     el.style.display = 'flex';
-                    // Force reflow for transition
-                    void el.offsetWidth; 
+                    void el.offsetWidth;
                     el.classList.add('active');
                     document.body.style.overflow = 'hidden';
-                    
-                    // Focus trap setup could go here
                     const firstFocusable = el.querySelector('button, [href], input, select, textarea');
                     if (firstFocusable) firstFocusable.focus();
                 },
@@ -746,7 +961,6 @@
                 close(id) {
                     const el = document.getElementById(id);
                     if (!el) return;
-                    
                     el.classList.remove('active');
                     setTimeout(() => {
                         el.style.display = 'none';
@@ -755,116 +969,230 @@
                 }
             };
 
-            // --- Project Loader ---
+            // --- App ---
             const App = {
                 elements: {
                     grid: document.getElementById('sitesGrid'),
                     refreshBtn: document.getElementById('refreshBtn'),
+                    searchInput: document.getElementById('searchInput'),
+                    categoryFilters: document.getElementById('categoryFilters'),
+                    totalCount: document.getElementById('totalCount'),
+                    categoryCount: document.getElementById('categoryCount'),
                     yearSpan: document.getElementById('currentYear')
+                },
+
+                state: {
+                    sites: [],
+                    categories: {},
+                    activeCategory: 'all',
+                    searchQuery: ''
                 },
 
                 init() {
                     ModalManager.init();
                     this.elements.yearSpan.textContent = new Date().getFullYear();
                     this.elements.refreshBtn.addEventListener('click', () => this.loadProjects(true));
+                    this.elements.searchInput.addEventListener('input', (e) => {
+                        this.state.searchQuery = e.target.value.toLowerCase().trim();
+                        this.renderGrid();
+                    });
                     this.loadProjects();
                 },
 
                 renderStatus(message, type = 'loading') {
                     const isError = type === 'error';
                     const isLoading = type === 'loading';
-                    
-                    let html = `
+                    this.elements.grid.innerHTML = `
                         <div class="status-container">
                             ${isLoading ? '<div class="spinner"></div>' : ''}
                             <div class="status-text ${isError ? 'error-state' : ''}">${Security.escapeHtml(message)}</div>
                         </div>
                     `;
-                    this.elements.grid.innerHTML = html;
                 },
 
-                createCard(site, index) {
-                    const safeUrl = Security.sanitizeUrl(site.url);
-                    const safeTitle = Security.escapeHtml(site.title || 'Без названия');
-                    const safeDesc = Security.escapeHtml(site.desc || 'Описание отсутствует');
-                    
-                    const card = document.createElement('a');
-                    card.className = 'card';
-                    card.href = safeUrl;
-                    card.target = '_blank';
-                    card.rel = 'noopener noreferrer';
-                    card.style.animationDelay = `${index * 0.05}s`;
-                    
-                    // SVG Icons based on simple logic or default
-                    const iconSvg = `<svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>`;
-
-                    card.innerHTML = `
-                        <div class="card-header">
-                            <div class="card-icon">${iconSvg}</div>
-                            <div class="card-title">${safeTitle}</div>
-                        </div>
-                        <div class="card-desc">${safeDesc}</div>
-                        <div class="card-footer">
-                            <span class="card-link">
-                                Открыть проект 
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                            </span>
+                renderEmpty() {
+                    this.elements.grid.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h3>Ничего не найдено</h3>
+                            <p>Попробуйте изменить запрос или выбрать другую категорию</p>
                         </div>
                     `;
-                    return card;
                 },
 
-                async loadProjects(forceReload = false) {
-                    this.renderStatus('Загрузка экосистемы...', 'loading');
-                    this.elements.refreshBtn.disabled = true;
-                    this.elements.refreshBtn.classList.add('spinning');
+                buildCategoryFilters() {
+                    const counts = {};
+                    this.state.sites.forEach(s => {
+                        const cat = s.category || 'other';
+                        counts[cat] = (counts[cat] || 0) + 1;
+                    });
 
-                    try {
-                        if (forceReload) {
-                            // Имитация сброса кэша или реальный вызов
-                            await fetch('/api/sites/reload', { method: 'POST' }).catch(() => {});
-                        }
+                    const allCount = this.state.sites.length;
+                    const uniqueCategories = Object.keys(counts).filter(c => CATEGORY_META[c]);
 
-                        // Имитация задержки сети для плавности UX
-                        await new Promise(r => setTimeout(r, 600));
+                    let html = `
+                        <button class="filter-chip ${this.state.activeCategory === 'all' ? 'active' : ''}" data-category="all">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                            <span>Все</span>
+                            <span class="filter-count">${allCount}</span>
+                        </button>
+                    `;
 
-                        const response = await fetch('/api/sites');
-                        
-                        if (!response.ok) throw new Error('Server error');
-                        
-                        const sites = await response.json();
-                        
-                        this.elements.grid.innerHTML = '';
-                        
-                        if (!sites || sites.length === 0) {
-                            this.renderStatus('Проекты временно недоступны', 'empty');
-                            return;
-                        }
+                    uniqueCategories.forEach(cat => {
+                        const meta = CATEGORY_META[cat] || CATEGORY_META.other;
+                        const isActive = this.state.activeCategory === cat;
+                        html += `
+                            <button class="filter-chip ${isActive ? 'active' : ''}" data-category="${cat}" style="${isActive ? `background:${meta.color};border-color:${meta.color};` : ''}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/></svg>
+                                <span>${meta.label}</span>
+                                <span class="filter-count">${counts[cat]}</span>
+                            </button>
+                        `;
+                    });
 
-                        const fragment = document.createDocumentFragment();
-                        sites.forEach((site, i) => {
-                            fragment.appendChild(this.createCard(site, i));
+                    this.elements.categoryFilters.innerHTML = html;
+                    this.elements.categoryCount.textContent = uniqueCategories.length;
+
+                    this.elements.categoryFilters.querySelectorAll('.filter-chip').forEach(chip => {
+                        chip.addEventListener('click', () => {
+                            this.state.activeCategory = chip.dataset.category;
+                            this.buildCategoryFilters();
+                            this.renderGrid();
                         });
-                        
-                        this.elements.grid.appendChild(fragment);
+                    });
+                },
 
-                    } catch (err) {
-                        console.error('Load failed:', err);
-                        this.renderStatus('Ошибка соединения. Проверьте сеть.', 'error');
-                    } finally {
-                        this.elements.refreshBtn.disabled = false;
-                        this.elements.refreshBtn.classList.remove('spinning');
-                    }
-                }
-            };
+                getFilteredSites() {
+            let filtered = this.state.sites;
 
-            // Initialize when DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => App.init());
-            } else {
-                App.init();
+            if (this.state.activeCategory !== 'all') {
+                filtered = filtered.filter(s => (s.category || 'other') === this.state.activeCategory);
             }
-        })();
+
+            if (this.state.searchQuery) {
+                const q = this.state.searchQuery;
+                filtered = filtered.filter(s =>
+                    (s.title || '').toLowerCase().includes(q) ||
+                    (s.desc || '').toLowerCase().includes(q) ||
+                    (s.url || '').toLowerCase().includes(q)
+                );
+            }
+
+            return filtered;
+        },
+
+        renderGrid() {
+            const filtered = this.getFilteredSites();
+
+            if (filtered.length === 0) {
+                this.renderEmpty();
+                return;
+            }
+
+            this.elements.grid.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+
+            filtered.forEach((site, i) => {
+                fragment.appendChild(this.createCard(site, i));
+            });
+
+            this.elements.grid.appendChild(fragment);
+        },
+
+        createCard(site, index) {
+            const safeUrl = Security.sanitizeUrl(site.url);
+            const safeTitle = Security.escapeHtml(site.title || 'Без названия');
+            const safeDesc = Security.escapeHtml(site.desc || 'Описание отсутствует');
+            const category = site.category || 'other';
+            const meta = CATEGORY_META[category] || CATEGORY_META.other;
+            const domain = Security.getDomain(site.url);
+
+            const card = document.createElement('a');
+            card.className = 'card';
+            card.href = safeUrl;
+            card.target = '_blank';
+            card.rel = 'noopener noreferrer';
+            card.style.animationDelay = `${index * 0.04}s`;
+            card.style.setProperty('--category-color', meta.color);
+            card.style.setProperty('--category-bg', meta.color + '18');
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/>
+                        </svg>
+                    </div>
+                    <div class="card-title-wrap">
+                        <div class="card-title">${safeTitle}</div>
+                        <div class="card-category">
+                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${meta.icon}"/>
+                            </svg>
+                            ${meta.label}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-desc">${safeDesc}</div>
+                <div class="card-footer">
+                    <span class="card-link">
+                        Открыть
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </span>
+                    ${domain ? `<span class="card-domain">${Security.escapeHtml(domain)}</span>` : ''}
+                </div>
+            `;
+            return card;
+        },
+
+        async loadProjects(forceReload = false) {
+            this.renderStatus('Загрузка экосистемы...', 'loading');
+            this.elements.refreshBtn.disabled = true;
+            this.elements.refreshBtn.classList.add('spinning');
+
+            try {
+                if (forceReload) {
+                    await fetch('/api/sites/reload', { method: 'POST' }).catch(() => {});
+                }
+
+                await new Promise(r => setTimeout(r, 500));
+
+                const response = await fetch('/api/sites');
+                if (!response.ok) throw new Error('Server error');
+
+                const sites = await response.json();
+
+                if (!sites || sites.length === 0) {
+                    this.renderStatus('Проекты временно недоступны', 'empty');
+                    return;
+                }
+
+                this.state.sites = sites;
+                this.elements.totalCount.textContent = sites.length;
+
+                this.buildCategoryFilters();
+                this.renderGrid();
+
+            } catch (err) {
+                console.error('Load failed:', err);
+                this.renderStatus('Ошибка соединения. Проверьте сеть.', 'error');
+            } finally {
+                this.elements.refreshBtn.disabled = false;
+                this.elements.refreshBtn.classList.remove('spinning');
+            }
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    } else {
+        App.init();
+    }
+})();
     </script>
 </body>
 </html>

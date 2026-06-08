@@ -51,6 +51,17 @@ const MAX_DESCRIPTION_LENGTH = 1000;
 const MIN_TITLE_LENGTH = 3;
 const MIN_DESCRIPTION_LENGTH = 20;
 
+const CATEGORY_META = {
+    tools:      { label: 'Инструменты',    icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', color: '#FF9F0A' },
+    dev:        { label: 'Для разработчиков', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: '#0071E3' },
+    design:     { label: 'Дизайн',          icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01', color: '#AF52DE' },
+    education:  { label: 'Образование',     icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z', color: '#34C759' },
+    games:      { label: 'Игры',            icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: '#FF3B30' },
+    media:      { label: 'Медиа',           icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', color: '#FF9F0A' },
+    social:     { label: 'Соцсети',         icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: '#5E5CE6' },
+    other:      { label: 'Другое',          icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z', color: '#8E8E93' }
+};
+
 // -----------------------------
 // Инициализация Express
 // -----------------------------
@@ -248,9 +259,9 @@ function checkFormRateLimit(ip) {
 
 function parseSaites(content) {
     if (typeof content !== 'string') return [];
-    
     const blocks = content.split('::').filter(b => b?.trim());
     const sites = [];
+    const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
 
     for (const block of blocks) {
         const lines = block
@@ -263,7 +274,6 @@ function parseSaites(content) {
 
         const clean = (str) => {
             let s = str.split('@:')[0].trim();
-            // Убираем кавычки по краям
             if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
                 s = s.slice(1, -1);
             }
@@ -273,8 +283,16 @@ function parseSaites(content) {
         const title = clean(lines[0]);
         let url = clean(lines[1]);
         const desc = clean(lines[2]);
+        
+        // Опциональная 4-я строка — категория
+        let category = 'other';
+        if (lines.length >= 4) {
+            const rawCat = clean(lines[3]).toLowerCase();
+            if (VALID_CATEGORIES.includes(rawCat)) {
+                category = rawCat;
+            }
+        }
 
-        // Нормализация и валидация URL
         url = normalizeUrl(url);
         if (!isValidUrl(url)) {
             console.warn(`[parseSaites] Invalid URL skipped: ${url}`);
@@ -282,7 +300,7 @@ function parseSaites(content) {
         }
 
         if (title && url && desc) {
-            sites.push({ title, url, desc });
+            sites.push({ title, url, desc, category });
         }
     }
     return sites;
@@ -1629,6 +1647,10 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
     console.error('[Unhandled Rejection]', reason);
     process.exit(1);
+});
+
+app.get('/api/categories', (req, res) => {
+    res.json(CATEGORY_META);
 });
 
 // -----------------------------
