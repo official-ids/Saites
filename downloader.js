@@ -4,7 +4,10 @@ const { put, del } = require('@vercel/blob');
 const { kv } = require('@vercel/kv');
 const multer = require('multer');
 
-const router = express.Router();
+// Serverless‑приложение
+const app = express();
+
+// Настройка multer
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 100 * 1024 * 1024 } // 100 MB
@@ -132,9 +135,11 @@ async function timed(operation, fn) {
 }
 
 // -----------------------------
-// Health check
+// Маршруты (порядок важен: статические раньше динамических)
 // -----------------------------
-router.get('/health', async (req, res) => {
+
+// 1. Health check
+app.get('/api/downloader/health', async (req, res) => {
     try {
         await kv.exists(K.STATS);
         res.json({
@@ -151,67 +156,62 @@ router.get('/health', async (req, res) => {
     }
 });
 
-// -----------------------------
-// Публичный: метаданные по хешу
-// -----------------------------
-router.get('/info/:hash', async (req, res) => {
+// 2. Список файлов (админский, с пагинацией)
+app.get('/api/downloader/list', verifyAdminToken, async (req, res) => {
     try {
-        const hash = req.params.hash.toLowerCase();
-        if (!isValidSha256(hash)) {
-            return res.status(400).json({ error: 'Invalid SHA-256 hash format' });
-        }
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
+        const offset = (page - 1) * limit;
 
-        const meta = await timed('kv.get.info', () => kv.get(K.FILE(hash)));
-        if (!meta) {
-            return res.status(404).json({ error: 'File not found' });
-        }
+        const keys = await kv.keys('download:sha256:*');
+        const paginatedKeys = keys.slice(offset, offset + limit);
+
+        const files = await Promise.all(
+            paginatedKeys.map(async (key) => {
+                const meta = await kv.get(key);
+                if (!meta) return null;
+                return {
+                    hash: meta.hash,
+                    name: meta.name,
+                    size: meta.size,
+                    sizeFormatted: formatSize(meta.size),
+                    contentType: meta.contentType,
+                    uploadedAt: meta.uploadedAt,
+                    downloads: meta.downloads || 0
+                };
+            })
+        );
 
         res.json({
-            hash: meta.hash,
-            name: meta.name,
-            size: meta.size,
-            sizeFormatted: formatSize(meta.size),
-            contentType: meta.contentType,
-            uploadedAt: meta.uploadedAt,
-            downloads: meta.downloads || 0
+            total: keys.length,
+            page,
+            limit,
+            totalPages: Math.ceil(keys.length / limit),
+            files: files.filter(Boolean)
         });
     } catch (err) {
-        logError('download/info', 'Failed to get metadata', err, { hash: req.params.hash });
+        logError('download/list', 'Failed to list files', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// -----------------------------
-// Публичный: скачивание (редирект на Blob)
-// -----------------------------
-router.get('/:hash', async (req, res) => {
+// 3. Статистика (публичный)
+app.get('/api/downloader/', async (req, res) => {
     try {
-        const hash = req.params.hash.toLowerCase();
-        if (!isValidSha256(hash)) {
-            return res.status(400).json({ error: 'Invalid SHA-256 hash format' });
-        }
-
-        const meta = await timed('kv.get.redirect', () => kv.get(K.FILE(hash)));
-        if (!meta) {
-            return res.status(404).json({ error: 'File not found' });
-        }
-
-        // Инкремент счётчиков (fire-and-forget)
-        kv.incr(K.STATS).catch(() => {});
-        kv.hincrby(K.STATS_HASH, hash, 1).catch(() => {});
-        kv.hincrby(K.FILE(hash), 'downloads', 1).catch(() => {});
-
-        res.redirect(302, meta.url);
+        const keys = await kv.keys('download:sha256:*');
+        const totalDownloads = await kv.get(K.STATS).catch(() => 0);
+        res.json({
+            count: keys.length,
+            totalDownloads: totalDownloads || 0
+        });
     } catch (err) {
-        logError('download/redirect', 'Failed to redirect', err, { hash: req.params.hash });
+        logError('download/stats', 'Failed to get stats', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// -----------------------------
-// Админский: загрузка файла
-// -----------------------------
-router.post('/', verifyAdminToken, upload.single('file'), validateMimeType, async (req, res) => {
+// 4. Загрузка файла (админский)
+app.post('/api/downloader/', verifyAdminToken, upload.single('file'), validateMimeType, async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file provided' });
@@ -282,10 +282,61 @@ router.post('/', verifyAdminToken, upload.single('file'), validateMimeType, asyn
     }
 });
 
-// -----------------------------
-// Админский: удаление файла
-// -----------------------------
-router.delete('/:hash', verifyAdminToken, async (req, res) => {
+// 5. Метаданные по хешу (публичный)
+app.get('/api/downloader/info/:hash', async (req, res) => {
+    try {
+        const hash = req.params.hash.toLowerCase();
+        if (!isValidSha256(hash)) {
+            return res.status(400).json({ error: 'Invalid SHA-256 hash format' });
+        }
+
+        const meta = await timed('kv.get.info', () => kv.get(K.FILE(hash)));
+        if (!meta) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        res.json({
+            hash: meta.hash,
+            name: meta.name,
+            size: meta.size,
+            sizeFormatted: formatSize(meta.size),
+            contentType: meta.contentType,
+            uploadedAt: meta.uploadedAt,
+            downloads: meta.downloads || 0
+        });
+    } catch (err) {
+        logError('download/info', 'Failed to get metadata', err, { hash: req.params.hash });
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 6. Скачивание (публичный редирект) – динамический сегмент
+app.get('/api/downloader/:hash', async (req, res) => {
+    try {
+        const hash = req.params.hash.toLowerCase();
+        if (!isValidSha256(hash)) {
+            return res.status(400).json({ error: 'Invalid SHA-256 hash format' });
+        }
+
+        const meta = await timed('kv.get.redirect', () => kv.get(K.FILE(hash)));
+        if (!meta) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        // Инкремент счётчиков (fire-and-forget)
+        kv.incr(K.STATS).catch(() => {});
+        kv.hincrby(K.STATS_HASH, hash, 1).catch(() => {});
+        kv.hincrby(K.FILE(hash), 'downloads', 1).catch(() => {});
+
+        res.redirect(302, meta.url);
+    } catch (err) {
+        logError('download/redirect', 'Failed to redirect', err, { hash: req.params.hash });
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 7. Удаление файла (админский) – динамический сегмент
+app.delete('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
     try {
         const hash = req.params.hash.toLowerCase();
         if (!isValidSha256(hash)) {
@@ -315,10 +366,8 @@ router.delete('/:hash', verifyAdminToken, async (req, res) => {
     }
 });
 
-// -----------------------------
-// Админский: обновление метаданных (переименование)
-// -----------------------------
-router.patch('/:hash', verifyAdminToken, async (req, res) => {
+// 8. Переименование (админский) – динамический сегмент
+app.patch('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
     try {
         const hash = req.params.hash.toLowerCase();
         if (!isValidSha256(hash)) {
@@ -345,63 +394,5 @@ router.patch('/:hash', verifyAdminToken, async (req, res) => {
     }
 });
 
-// -----------------------------
-// Админский: список файлов с пагинацией
-// -----------------------------
-router.get('/list', verifyAdminToken, async (req, res) => {
-    try {
-        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
-        const offset = (page - 1) * limit;
-
-        const keys = await kv.keys('download:sha256:*');
-        const paginatedKeys = keys.slice(offset, offset + limit);
-
-        const files = await Promise.all(
-            paginatedKeys.map(async (key) => {
-                const meta = await kv.get(key);
-                if (!meta) return null;
-                return {
-                    hash: meta.hash,
-                    name: meta.name,
-                    size: meta.size,
-                    sizeFormatted: formatSize(meta.size),
-                    contentType: meta.contentType,
-                    uploadedAt: meta.uploadedAt,
-                    downloads: meta.downloads || 0
-                };
-            })
-        );
-
-        res.json({
-            total: keys.length,
-            page,
-            limit,
-            totalPages: Math.ceil(keys.length / limit),
-            files: files.filter(Boolean)
-        });
-    } catch (err) {
-        logError('download/list', 'Failed to list files', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// -----------------------------
-// Публичный: общая статистика
-// -----------------------------
-router.get('/', async (req, res) => {
-    try {
-        const keys = await kv.keys('download:sha256:*');
-        const totalDownloads = await kv.get(K.STATS).catch(() => 0);
-
-        res.json({
-            count: keys.length,
-            totalDownloads: totalDownloads || 0
-        });
-    } catch (err) {
-        logError('download/stats', 'Failed to get stats', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-module.exports = router;
+// Экспорт для Vercel serverless
+module.exports = app;
