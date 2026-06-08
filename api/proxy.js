@@ -225,7 +225,7 @@ app.use(morgan('tiny'));
 app.use(express.json({ limit: '1mb' }));
 app.use('/api/news', newsRouter);
 app.use('/api/support', supportRouter);
-app.use('/api/download', downloaderRouter);
+app.use('/api/downloader', downloaderRouter);
 app.use(express.static(PUBLIC_DIR, {
     maxAge: '1d', 
     etag: true,

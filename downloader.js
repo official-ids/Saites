@@ -4,10 +4,7 @@ const { put, del } = require('@vercel/blob');
 const { kv } = require('@vercel/kv');
 const multer = require('multer');
 
-// Serverless‑приложение
-const app = express();
-
-// Настройка multer
+const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 100 * 1024 * 1024 } // 100 MB
@@ -134,12 +131,12 @@ async function timed(operation, fn) {
     }
 }
 
-// -----------------------------
-// Маршруты (порядок важен: статические раньше динамических)
-// -----------------------------
+// =========================
+// Маршруты (относительные!)
+// =========================
 
-// 1. Health check
-app.get('/api/downloader/health', async (req, res) => {
+// Health
+router.get('/health', async (req, res) => {
     try {
         await kv.exists(K.STATS);
         res.json({
@@ -156,8 +153,8 @@ app.get('/api/downloader/health', async (req, res) => {
     }
 });
 
-// 2. Список файлов (админский, с пагинацией)
-app.get('/api/downloader/list', verifyAdminToken, async (req, res) => {
+// Админский список (пагинация)
+router.get('/list', verifyAdminToken, async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page, 10) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 50));
@@ -195,11 +192,12 @@ app.get('/api/downloader/list', verifyAdminToken, async (req, res) => {
     }
 });
 
-// 3. Статистика (публичный)
-app.get('/api/downloader/', async (req, res) => {
+// Публичная статистика (GET /)
+router.get('/', async (req, res) => {
     try {
         const keys = await kv.keys('download:sha256:*');
         const totalDownloads = await kv.get(K.STATS).catch(() => 0);
+
         res.json({
             count: keys.length,
             totalDownloads: totalDownloads || 0
@@ -210,8 +208,8 @@ app.get('/api/downloader/', async (req, res) => {
     }
 });
 
-// 4. Загрузка файла (админский)
-app.post('/api/downloader/', verifyAdminToken, upload.single('file'), validateMimeType, async (req, res) => {
+// Загрузка (POST /)
+router.post('/', verifyAdminToken, upload.single('file'), validateMimeType, async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file provided' });
@@ -220,7 +218,6 @@ app.post('/api/downloader/', verifyAdminToken, upload.single('file'), validateMi
         const buffer = req.file.buffer;
         const hash = sha256(buffer);
 
-        // Проверка существования
         const existing = await timed('kv.get.check', () => kv.get(K.FILE(hash)));
         if (existing) {
             return res.json({
@@ -233,7 +230,6 @@ app.post('/api/downloader/', verifyAdminToken, upload.single('file'), validateMi
             });
         }
 
-        // Загрузка в Vercel Blob
         const ext = (req.file.originalname.match(/\.[a-z0-9]+$/i) || ['.bin'])[0];
         const blobPath = `downloads/${hash}${ext}`;
         const blob = await timed('blob.put', () => put(blobPath, buffer, {
@@ -252,10 +248,8 @@ app.post('/api/downloader/', verifyAdminToken, upload.single('file'), validateMi
             downloads: 0
         };
 
-        // Атомарная запись (NX) для защиты от race condition
         const setResult = await timed('kv.set.nx', () => kv.set(K.FILE(hash), meta, { nx: true }));
         if (!setResult) {
-            // Параллельная загрузка — удаляем дубликат из Blob
             await del(blob.url).catch(() => {});
             const existingMeta = await kv.get(K.FILE(hash));
             return res.json({
@@ -282,8 +276,8 @@ app.post('/api/downloader/', verifyAdminToken, upload.single('file'), validateMi
     }
 });
 
-// 5. Метаданные по хешу (публичный)
-app.get('/api/downloader/info/:hash', async (req, res) => {
+// Метаданные по хешу (GET /info/:hash)
+router.get('/info/:hash', async (req, res) => {
     try {
         const hash = req.params.hash.toLowerCase();
         if (!isValidSha256(hash)) {
@@ -310,8 +304,8 @@ app.get('/api/downloader/info/:hash', async (req, res) => {
     }
 });
 
-// 6. Скачивание (публичный редирект) – динамический сегмент
-app.get('/api/downloader/:hash', async (req, res) => {
+// Скачивание (GET /:hash)
+router.get('/:hash', async (req, res) => {
     try {
         const hash = req.params.hash.toLowerCase();
         if (!isValidSha256(hash)) {
@@ -323,7 +317,6 @@ app.get('/api/downloader/:hash', async (req, res) => {
             return res.status(404).json({ error: 'File not found' });
         }
 
-        // Инкремент счётчиков (fire-and-forget)
         kv.incr(K.STATS).catch(() => {});
         kv.hincrby(K.STATS_HASH, hash, 1).catch(() => {});
         kv.hincrby(K.FILE(hash), 'downloads', 1).catch(() => {});
@@ -335,8 +328,8 @@ app.get('/api/downloader/:hash', async (req, res) => {
     }
 });
 
-// 7. Удаление файла (админский) – динамический сегмент
-app.delete('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
+// Удаление (DELETE /:hash)
+router.delete('/:hash', verifyAdminToken, async (req, res) => {
     try {
         const hash = req.params.hash.toLowerCase();
         if (!isValidSha256(hash)) {
@@ -348,14 +341,12 @@ app.delete('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
             return res.status(404).json({ error: 'File not found' });
         }
 
-        // Удаляем физический файл из Blob
         if (meta.url) {
             await timed('blob.del', () => del(meta.url)).catch((err) => {
                 logWarn('blob.del', 'Failed to delete blob, continuing with KV cleanup', { url: meta.url, error: err.message });
             });
         }
 
-        // Удаляем метаданные из KV
         await timed('kv.del', () => kv.del(K.FILE(hash)));
 
         logInfo('download/delete', 'File deleted', { hash, name: meta.name });
@@ -366,8 +357,8 @@ app.delete('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
     }
 });
 
-// 8. Переименование (админский) – динамический сегмент
-app.patch('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
+// Переименование (PATCH /:hash)
+router.patch('/:hash', verifyAdminToken, async (req, res) => {
     try {
         const hash = req.params.hash.toLowerCase();
         if (!isValidSha256(hash)) {
@@ -394,5 +385,4 @@ app.patch('/api/downloader/:hash', verifyAdminToken, async (req, res) => {
     }
 });
 
-// Экспорт для Vercel serverless
-module.exports = app;
+module.exports = router;
