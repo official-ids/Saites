@@ -1093,29 +1093,41 @@ html, body {
 
     // ---------- Parser ----------
     function parseSaites(content) {
-        if (!content || typeof content !== 'string') return [];
-        const blocks = content.split('::').filter(b => b && b.trim());
-        const sites = [];
-        for (const block of blocks) {
-            const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
-            if (lines.length < 3) continue;
-            const clean = (str) => {
-                let s = str.split('@:')[0].trim();
-                if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-                    s = s.slice(1, -1);
-                }
-                return s.trim();
-            };
-            const title = clean(lines[0]);
-            let url = clean(lines[1]);
-            const desc = clean(lines[2]);
-            if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-            if (title && url && desc) {
-                sites.push({ title, url, desc, category: 'other' });
+    if (!content || typeof content !== 'string') return [];
+    const blocks = content.split('::').filter(b => b && b.trim());
+    const sites = [];
+    const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
+
+    for (const block of blocks) {
+        const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 3) continue;
+        const clean = (str) => {
+            let s = str.split('@:')[0].trim();
+            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+                s = s.slice(1, -1);
+            }
+            return s.trim();
+        };
+        const title = clean(lines[0]);
+        let url = clean(lines[1]);
+        const desc = clean(lines[2]);
+
+        // Читаем категорию из 4-й строки
+        let category = 'other';
+        if (lines.length >= 4) {
+            const rawCat = clean(lines[3]).toLowerCase();
+            if (VALID_CATEGORIES.includes(rawCat)) {
+                category = rawCat;
             }
         }
-        return sites;
+
+        if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+        if (title && url && desc) {
+            sites.push({ title, url, desc, category });
+        }
     }
+    return sites;
+}
 
     function serializeSaites(sites) {
     return sites.map(s => {
