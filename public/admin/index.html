@@ -989,7 +989,7 @@ function loadFiles(page = 1) {
     $('pageTitle').textContent = 'Файлы';
     $('topbarActions').innerHTML = '';
 
-    apiRequest('/api/downloader/list?page=${page}&limit=20')
+    apiRequest(`/api/downloader/list?page=${page}&limit=20`)
         .then(data => {
             State._files = data.files;
             State._filesTotal = data.total;
@@ -1134,7 +1134,7 @@ function renderFiles() {
                 </div>
             `;
 
-            // Переименование (сохраняется по Enter или потере фокуса)
+            // Переименование
             const nameInput = card.querySelector('.file-name-input');
             nameInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
@@ -1153,7 +1153,7 @@ function renderFiles() {
                 }
             });
 
-            // Копирование ссылки скачивания
+            // Копирование публичной ссылки
             card.querySelector('.copy-link-btn').addEventListener('click', () => {
                 copyToClipboard(`${window.location.origin}/downloader/${file.hash}`);
                 showToast('Ссылка скопирована', 'info', 1500);
@@ -1187,10 +1187,9 @@ function renderFiles() {
     });
 }
 
-// Функция копирования в буфер обмена
+// Копирование в буфер обмена
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).catch(() => {
-        // Fallback для небезопасного контекста (если используется HTTP)
         const textarea = document.createElement('textarea');
         textarea.value = text;
         textarea.style.position = 'fixed';
@@ -1214,7 +1213,7 @@ function triggerFileUpload() {
     input.click();
 }
 
-// Загрузка файла на сервер
+// Загрузка файла (БЕЗ Content-Type!)
 async function uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
@@ -1225,6 +1224,7 @@ async function uploadFile(file) {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${State.token}`
+                // ← НЕ указываем Content-Type, браузер сам поставит multipart/form-data
             },
             body: formData
         });
@@ -1235,7 +1235,7 @@ async function uploadFile(file) {
         }
         const data = await res.json();
         showToast(data.existed ? 'Файл уже существует' : 'Файл загружен', 'success');
-        loadFiles(filesPage); // обновляем список
+        loadFiles(filesPage);
     } catch (err) {
         if (err.message === 'UNAUTHORIZED') {
             showToast('Ошибка доступа. Проверьте токен.', 'error');
@@ -1245,7 +1245,7 @@ async function uploadFile(file) {
     }
 }
 
-// Переименование файла (PATCH)
+// Переименование файла
 async function renameFile(hash, newName) {
     await apiRequest(`/api/downloader/${hash}`, {
         method: 'PATCH',
