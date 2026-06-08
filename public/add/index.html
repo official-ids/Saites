@@ -4,59 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Добавьте свой сайт в каталог Oris или предложите сотрудничество">
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0D0D0F" media="(prefers-color-scheme: dark)">
 
     <title>Добавить сайт · Oris</title>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --bg-body: #F5F5F7;
-            --bg-card: #FFFFFF;
+            --bg-card: rgba(255, 255, 255, 0.72);
             --bg-elevated: #FFFFFF;
+            --bg-input: rgba(0, 0, 0, 0.04);
             --text-primary: #1D1D1F;
-            --text-secondary: #86868B;
-            --text-tertiary: #AEAEB2;
+            --text-secondary: #6E6E73;
+            --text-tertiary: #86868B;
             --accent: #0071E3;
             --accent-hover: #0077ED;
+            --accent-glow: rgba(0, 113, 227, 0.25);
             --danger: #FF3B30;
+            --danger-glow: rgba(255, 59, 48, 0.2);
             --success: #34C759;
+            --success-glow: rgba(52, 199, 89, 0.2);
             --warning: #FF9F0A;
-            --border: rgba(0, 0, 0, 0.08);
-            --border-strong: rgba(0, 0, 0, 0.15);
+            --border: rgba(0, 0, 0, 0.06);
+            --border-strong: rgba(0, 0, 0, 0.12);
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-            --radius-lg: 18px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
+            --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.12);
+            --radius-lg: 22px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
             --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+            --transition: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg-body: #000000;
-                --bg-card: #1C1C1E;
-                --bg-elevated: #2C2C2E;
+                --bg-body: #0D0D0F;
+                --bg-card: rgba(28, 28, 30, 0.65);
+                --bg-elevated: #1C1C1E;
+                --bg-input: rgba(255, 255, 255, 0.06);
                 --text-primary: #F5F5F7;
-                --text-secondary: #86868B;
+                --text-secondary: #98989D;
                 --text-tertiary: #636366;
-                --border: rgba(255, 255, 255, 0.1);
-                --border-strong: rgba(255, 255, 255, 0.18);
-                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-                --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+                --border: rgba(255, 255, 255, 0.08);
+                --border-strong: rgba(255, 255, 255, 0.15);
+                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+                --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+                --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.5);
+                --accent-glow: rgba(0, 113, 227, 0.4);
+                --danger-glow: rgba(255, 59, 48, 0.3);
+                --success-glow: rgba(52, 199, 89, 0.3);
             }
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
 
         body {
             background: var(--bg-body);
@@ -64,8 +75,38 @@
             font-family: var(--font-stack);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             min-height: 100vh;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Decorative background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 113, 227, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -300px;
+            left: -200px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(175, 82, 222, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Header */
@@ -73,20 +114,21 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(245, 245, 247, 0.72);
-            backdrop-filter: saturate(180%) blur(20px);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            background: rgba(245, 245, 247, 0.65);
+            backdrop-filter: saturate(180%) blur(24px);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
             border-bottom: 1px solid var(--border);
+            transition: background-color 0.4s ease;
         }
 
         @media (prefers-color-scheme: dark) {
-            .header { background: rgba(0, 0, 0, 0.72); }
+            .header { background: rgba(13, 13, 15, 0.65); }
         }
 
         .header-inner {
-            max-width: 760px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 14px 24px;
+            padding: 16px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -99,182 +141,312 @@
             gap: 10px;
             text-decoration: none;
             color: var(--text-primary);
+            transition: opacity 0.2s ease;
         }
 
-        .logo-icon { width: 28px; height: 28px; color: var(--accent); }
-        .logo-text { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+        .logo:hover { opacity: 0.8; }
 
-        .nav-links { display: flex; align-items: center; gap: 8px; }
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            color: var(--accent);
+            filter: drop-shadow(0 2px 4px var(--accent-glow));
+        }
+
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        .nav-links { display: flex; align-items: center; gap: 4px; }
 
         .nav-link {
-            padding: 8px 14px;
+            padding: 8px 16px;
             border-radius: 99px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 500;
             color: var(--text-secondary);
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.25s var(--transition);
+            position: relative;
         }
 
-        .nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
+        .nav-link:hover {
+            background: rgba(142, 142, 147, 0.1);
+            color: var(--text-primary);
+        }
 
         /* Main */
         .container {
-            max-width: 760px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 48px 24px 80px;
+            padding: 56px 24px 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero decoration */
+        .hero-decoration {
+            position: absolute;
+            top: -40px;
+            right: -60px;
+            width: 280px;
+            height: 280px;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: -1;
+            animation: floatHero 8s ease-in-out infinite;
+        }
+
+        @keyframes floatHero {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(3deg); }
         }
 
         .page-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 48px;
             opacity: 0;
-            animation: fadeInDown 0.6s var(--transition) forwards;
+            animation: fadeInDown 0.7s var(--transition) forwards;
         }
 
         .page-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            margin-bottom: 8px;
+            font-size: 2.75rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 12px;
             background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            line-height: 1.1;
         }
 
         .page-subtitle {
             color: var(--text-secondary);
-            font-size: 1.05rem;
+            font-size: 1.08rem;
+            font-weight: 400;
+            max-width: 480px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
 
         /* Tabs */
         .tabs {
             display: flex;
             gap: 4px;
-            background: var(--bg-card);
-            padding: 4px;
+            background: var(--bg-input);
+            padding: 5px;
             border-radius: 99px;
             border: 1px solid var(--border);
-            margin-bottom: 32px;
+            margin-bottom: 36px;
             opacity: 0;
-            animation: fadeIn 0.6s 0.1s var(--transition) forwards;
+            animation: fadeIn 0.6s 0.15s var(--transition) forwards;
         }
 
         .tab {
             flex: 1;
-            padding: 10px 20px;
+            padding: 11px 20px;
             border-radius: 99px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 500;
             color: var(--text-secondary);
             background: transparent;
             border: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.35s var(--transition);
             font-family: inherit;
             text-decoration: none;
             text-align: center;
             display: block;
+            position: relative;
+            z-index: 1;
         }
 
-        .tab.active { background: var(--accent); color: white; }
+        .tab.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .tab.active {
+                background: rgba(255, 255, 255, 0.1);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }
+        }
+
         .tab:not(.active):hover { color: var(--text-primary); }
 
         /* Form Card */
         .form-card {
             background: var(--bg-card);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            padding: 32px;
-            box-shadow: var(--shadow-sm);
+            padding: 40px;
+            box-shadow: var(--shadow-md);
             opacity: 0;
-            animation: fadeInUp 0.6s 0.15s var(--transition) forwards;
+            animation: fadeInUp 0.7s 0.2s var(--transition) forwards;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
         }
 
         .form-section { display: none; }
         .form-section.active { display: block; }
 
         .form-section-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            margin-bottom: 6px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
         }
 
         .form-section-desc {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 28px;
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+            line-height: 1.6;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 22px;
         }
 
         .form-grid .full { grid-column: 1 / -1; }
 
         @media (max-width: 640px) {
             .form-grid { grid-template-columns: 1fr; }
-            .form-card { padding: 24px 20px; }
-            .page-title { font-size: 2rem; }
-            .container { padding: 32px 16px 60px; }
+            .form-card { padding: 28px 22px; }
+            .page-title { font-size: 2.1rem; }
+            .container { padding: 40px 16px 80px; }
+            .hero-decoration { display: none; }
         }
 
-        .form-group { display: flex; flex-direction: column; }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            animation: fadeInUp 0.5s var(--transition) forwards;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.05s; }
+        .form-group:nth-child(2) { animation-delay: 0.1s; }
+        .form-group:nth-child(3) { animation-delay: 0.15s; }
+        .form-group:nth-child(4) { animation-delay: 0.2s; }
+        .form-group:nth-child(5) { animation-delay: 0.25s; }
+        .form-group:nth-child(6) { animation-delay: 0.3s; }
+        .form-group:nth-child(7) { animation-delay: 0.35s; }
+        .form-group:nth-child(8) { animation-delay: 0.4s; }
 
         .form-label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 600;
             color: var(--text-secondary);
             margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.06em;
         }
 
         .form-label .required { color: var(--danger); margin-left: 2px; }
 
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+            transition: color 0.25s ease;
+        }
+
+        .input-wrapper.textarea-wrapper .input-icon {
+            top: 16px;
+            transform: none;
+        }
+
         .form-input, .form-textarea, .form-select {
             width: 100%;
-            padding: 12px 14px;
+            padding: 13px 16px;
             font-family: inherit;
             font-size: 0.95rem;
-            background: var(--bg-body);
+            background: var(--bg-input);
             color: var(--text-primary);
-            border: 1px solid var(--border);
+            border: 1.5px solid var(--border);
             border-radius: var(--radius-md);
-            transition: all 0.2s ease;
+            transition: all 0.25s var(--transition);
             resize: vertical;
         }
 
-        .form-textarea { min-height: 120px; line-height: 1.6; }
+        .form-input.has-icon, .form-select.has-icon {
+            padding-left: 42px;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            line-height: 1.6;
+            padding-left: 16px;
+        }
+
+        .form-input:hover, .form-textarea:hover, .form-select:hover {
+            border-color: var(--border-strong);
+            background: var(--bg-elevated);
+        }
 
         .form-input:focus, .form-textarea:focus, .form-select:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
-            background: var(--bg-card);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background: var(--bg-elevated);
             outline: none;
+        }
+
+        .form-input:focus ~ .input-icon,
+        .form-select:focus ~ .input-icon {
+            color: var(--accent);
         }
 
         .form-input.error, .form-textarea.error, .form-select.error {
             border-color: var(--danger);
-            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+            box-shadow: 0 0 0 4px var(--danger-glow);
+            animation: shake 0.4s var(--transition);
+        }
+
+        .form-input.error ~ .input-icon {
+            color: var(--danger);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
         }
 
         .form-help {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: var(--text-tertiary);
-            margin-top: 6px;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .form-error {
             font-size: 0.8rem;
             color: var(--danger);
-            margin-top: 6px;
+            margin-top: 8px;
             display: none;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
         }
 
         .form-error.visible { display: block; }
@@ -283,36 +455,41 @@
         .checkbox-group {
             display: flex;
             align-items: flex-start;
-            gap: 10px;
-            padding: 12px;
-            background: var(--bg-body);
-            border: 1px solid var(--border);
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s var(--transition);
         }
 
-        .checkbox-group:hover { border-color: var(--border-strong); }
+        .checkbox-group:hover {
+            border-color: var(--border-strong);
+            background: var(--bg-elevated);
+        }
 
         .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin-top: 2px;
+            width: 20px;
+            height: 20px;
+            margin-top: 1px;
             accent-color: var(--accent);
             flex-shrink: 0;
             cursor: pointer;
+            border-radius: 6px;
         }
 
         .checkbox-label {
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             color: var(--text-primary);
-            line-height: 1.4;
+            line-height: 1.5;
             cursor: pointer;
         }
 
         .checkbox-label a {
             color: var(--accent);
             text-decoration: none;
+            font-weight: 500;
         }
 
         .checkbox-label a:hover { text-decoration: underline; }
@@ -320,40 +497,58 @@
         /* Submit Button */
         .submit-btn {
             width: 100%;
-            padding: 14px 24px;
+            padding: 16px 24px;
             border-radius: var(--radius-md);
             font-family: inherit;
             font-size: 1rem;
             font-weight: 600;
             color: white;
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent) 0%, #005BB5 100%);
             border: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s var(--transition);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 10px;
+            margin-top: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .submit-btn:hover:not(:disabled)::after {
+            left: 100%;
         }
 
         .submit-btn:hover:not(:disabled) {
-            background: var(--accent-hover);
-            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.3);
-            transform: translateY(-1px);
+            box-shadow: 0 8px 24px var(--accent-glow);
+            transform: translateY(-2px);
         }
 
-        .submit-btn:active:not(:disabled) { transform: scale(0.98); }
+        .submit-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
 
         .submit-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
         .submit-btn .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -361,57 +556,68 @@
 
         /* Info box */
         .info-box {
-            background: rgba(0, 113, 227, 0.08);
-            border: 1px solid rgba(0, 113, 227, 0.2);
+            background: rgba(0, 113, 227, 0.06);
+            border: 1.5px solid rgba(0, 113, 227, 0.15);
             border-radius: var(--radius-md);
-            padding: 16px;
-            margin-bottom: 24px;
+            padding: 18px 20px;
+            margin-bottom: 28px;
             display: flex;
-            gap: 12px;
+            gap: 14px;
             align-items: flex-start;
+            transition: all 0.3s ease;
+        }
+
+        .info-box:hover {
+            background: rgba(0, 113, 227, 0.08);
+            border-color: rgba(0, 113, 227, 0.25);
         }
 
         .info-box svg {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             color: var(--accent);
             flex-shrink: 0;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         .info-box-text {
-            font-size: 0.88rem;
+            font-size: 0.9rem;
             color: var(--text-primary);
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         .info-box-text strong { font-weight: 600; }
+        .info-box-text a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .info-box-text a:hover { text-decoration: underline; }
 
         /* Rules section */
         .rules-card {
             background: var(--bg-card);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            padding: 32px;
-            box-shadow: var(--shadow-sm);
+            padding: 36px;
+            box-shadow: var(--shadow-md);
             margin-top: 24px;
             opacity: 0;
-            animation: fadeInUp 0.6s 0.25s var(--transition) forwards;
+            animation: fadeInUp 0.7s 0.3s var(--transition) forwards;
+            transition: all 0.4s ease;
         }
 
         .rules-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-            letter-spacing: -0.01em;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .rules-title svg {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             color: var(--accent);
         }
 
@@ -423,37 +629,41 @@
         .rules-list li {
             counter-increment: rule-counter;
             position: relative;
-            padding: 14px 14px 14px 52px;
-            margin-bottom: 8px;
-            background: var(--bg-body);
-            border: 1px solid var(--border);
+            padding: 18px 18px 18px 60px;
+            margin-bottom: 12px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
             border-radius: var(--radius-md);
             font-size: 0.92rem;
-            line-height: 1.5;
-            transition: all 0.2s ease;
+            line-height: 1.6;
+            transition: all 0.35s var(--transition);
+            cursor: default;
         }
 
         .rules-list li::before {
             content: counter(rule-counter);
             position: absolute;
-            left: 14px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            width: 28px;
-            height: 28px;
-            background: var(--accent);
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, var(--accent) 0%, #005BB5 100%);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             font-weight: 700;
+            box-shadow: 0 2px 8px var(--accent-glow);
         }
 
         .rules-list li:hover {
-            border-color: var(--border-strong);
-            transform: translateX(2px);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            background: var(--bg-elevated);
         }
 
         .rules-list li strong { font-weight: 600; color: var(--text-primary); }
@@ -461,26 +671,32 @@
         /* Toast */
         .toast {
             position: fixed;
-            bottom: 32px;
+            bottom: 40px;
             left: 50%;
-            transform: translateX(-50%) translateY(20px);
-            background: var(--bg-card);
-            padding: 14px 24px;
+            transform: translateX(-50%) translateY(30px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            padding: 16px 28px;
             border-radius: 99px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-            border: 1px solid var(--border);
-            font-size: 0.9rem;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.2) inset;
+            font-size: 0.92rem;
             font-weight: 500;
             opacity: 0;
             pointer-events: none;
-            transition: all 0.3s var(--transition);
+            transition: all 0.4s var(--transition);
             z-index: 300;
             display: flex;
             align-items: center;
-            gap: 10px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            gap: 12px;
             max-width: 90%;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .toast {
+                background: rgba(30, 30, 32, 0.85);
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.08) inset;
+            }
         }
 
         .toast.visible {
@@ -488,13 +704,13 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        .toast.success { color: var(--success); border-color: rgba(52, 199, 89, 0.3); }
-        .toast.error { color: var(--danger); border-color: rgba(255, 59, 48, 0.3); }
-        .toast.warning { color: var(--warning); border-color: rgba(255, 159, 10, 0.3); }
+        .toast.success { color: var(--success); }
+        .toast.error { color: var(--danger); }
+        .toast.warning { color: var(--warning); }
 
         .toast-icon {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             flex-shrink: 0;
         }
 
@@ -502,37 +718,55 @@
         .success-screen {
             display: none;
             text-align: center;
-            padding: 48px 24px;
+            padding: 56px 32px;
         }
 
-        .success-screen.active { display: block; animation: fadeInUp 0.5s ease; }
+        .success-screen.active { display: block; animation: fadeInUp 0.6s var(--transition); }
 
         .success-icon {
-            width: 72px;
-            height: 72px;
-            margin: 0 auto 24px;
-            background: rgba(52, 199, 89, 0.15);
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 28px;
+            background: var(--success-glow);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--success);
-            animation: scaleIn 0.5s ease;
+            position: relative;
+            animation: scaleIn 0.6s var(--transition);
+        }
+
+        .success-icon::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            border: 2px solid var(--success);
+            opacity: 0;
+            animation: pulseRing 2s ease-out infinite;
+        }
+
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.4); opacity: 0; }
         }
 
         .success-title {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: -0.01em;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
         }
 
         .success-text {
             color: var(--text-secondary);
-            margin-bottom: 32px;
-            max-width: 420px;
+            margin-bottom: 36px;
+            max-width: 440px;
             margin-left: auto;
             margin-right: auto;
+            font-size: 1rem;
+            line-height: 1.6;
         }
 
         .success-actions {
@@ -543,31 +777,56 @@
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 99px;
             font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-size: 0.92rem;
+            font-weight: 600;
             cursor: pointer;
             border: none;
-            transition: all 0.2s ease;
+            transition: all 0.3s var(--transition);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-secondary { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
-        .btn-secondary:hover { background: rgba(142, 142, 147, 0.2); }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            box-shadow: 0 6px 18px var(--accent-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(142, 142, 147, 0.12);
+            color: var(--text-primary);
+        }
+        .btn-secondary:hover {
+            background: rgba(142, 142, 147, 0.2);
+            transform: translateY(-1px);
+        }
 
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(142, 142, 147, 0.3);
+            border-radius: 10px;
+            border: 2px solid var(--bg-body);
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(142, 142, 147, 0.5); }
     </style>
 </head>
 <body>
@@ -576,7 +835,7 @@
         <div class="header-inner">
             <a href="/" class="logo">
                 <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
                 <span class="logo-text">Oris</span>
             </a>
@@ -589,6 +848,9 @@
     </header>
 
     <main class="container">
+        <!-- Decorative hero image -->
+        <img class="hero-decoration" src="https://oris-flax.vercel.app/add/effects.png" alt="" aria-hidden="true">
+
         <div class="page-header">
             <h1 class="page-title">Добавить проект</h1>
             <p class="page-subtitle">Разместите свой сайт в каталоге Oris или предложите сотрудничество</p>
@@ -596,13 +858,13 @@
 
         <!-- Tabs -->
         <div class="tabs" role="tablist">
-            <a href="/add?p=saite" class="tab active" id="tab-saite" role="tab">Добавить сайт</a>
-            <a href="/add?p=corp" class="tab" id="tab-corp" role="tab">Сотрудничество</a>
-            <a href="/add?p=rules" class="tab" id="tab-rules" role="tab">Правила</a>
+            <a href="/add?p=saite" class="tab active" id="tab-saite" role="tab" data-mode="saite">Добавить сайт</a>
+            <a href="/add?p=corp" class="tab" id="tab-corp" role="tab" data-mode="corp">Сотрудничество</a>
+            <a href="/add?p=rules" class="tab" id="tab-rules" role="tab" data-mode="rules">Правила</a>
         </div>
 
         <!-- SAITE FORM -->
-        <div class="form-card form-section" id="section-saite" data-mode="saite">
+        <div class="form-card form-section active" id="section-saite" data-mode="saite">
             <h2 class="form-section-title">Добавление сайта в каталог</h2>
             <p class="form-section-desc">Поделитесь своим проектом с сообществом Oris. Модерация занимает до 24 часов.</p>
 
@@ -619,58 +881,82 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label" for="saite-title">Название сайта<span class="required">*</span></label>
-                        <input type="text" class="form-input" id="saite-title" name="title" maxlength="80" required placeholder="Мой крутой проект">
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input has-icon" id="saite-title" name="title" maxlength="80" required placeholder="Мой крутой проект" autocomplete="off">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="saite-title">Введите название (минимум 3 символа)</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="saite-url">URL сайта<span class="required">*</span></label>
-                        <input type="url" class="form-input" id="saite-url" name="url" required placeholder="https://example.com">
+                        <div class="input-wrapper">
+                            <input type="url" class="form-input has-icon" id="saite-url" name="url" required placeholder="https://example.com" autocomplete="off">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="saite-url">Введите корректный URL</div>
                     </div>
 
                     <div class="form-group full">
                         <label class="form-label" for="saite-desc">Описание<span class="required">*</span></label>
-                        <textarea class="form-textarea" id="saite-desc" name="description" maxlength="500" required placeholder="Кратко опишите, что делает ваш сайт и для кого он предназначен"></textarea>
-                        <div class="form-help">До 500 символов. <span id="saite-desc-counter">0</span>/500</div>
+                        <div class="input-wrapper textarea-wrapper">
+                            <textarea class="form-textarea" id="saite-desc" name="description" maxlength="500" required placeholder="Кратко опишите, что делает ваш сайт и для кого он предназначен"></textarea>
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                        </div>
+                        <div class="form-help">
+                            <span>До 500 символов</span>
+                            <span id="saite-desc-counter">0</span>/500
+                        </div>
                         <div class="form-error" data-error-for="saite-desc">Описание должно содержать минимум 20 символов</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="saite-category">Категория</label>
-                        <select class="form-select" id="saite-category" name="category">
-                            <option value="other">Другое</option>
-                            <option value="tools">Инструменты</option>
-                            <option value="dev">Для разработчиков</option>
-                            <option value="design">Дизайн</option>
-                            <option value="education">Образование</option>
-                            <option value="games">Игры</option>
-                            <option value="media">Медиа</option>
-                            <option value="social">Соцсети</option>
-                        </select>
+                        <div class="input-wrapper">
+                            <select class="form-select has-icon" id="saite-category" name="category">
+                                <option value="other">Другое</option>
+                                <option value="tools">Инструменты</option>
+                                <option value="dev">Для разработчиков</option>
+                                <option value="design">Дизайн</option>
+                                <option value="education">Образование</option>
+                                <option value="games">Игры</option>
+                                <option value="media">Медиа</option>
+                                <option value="social">Соцсети</option>
+                            </select>
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="saite-name">Ваше имя<span class="required">*</span></label>
-                        <input type="text" class="form-input" id="saite-name" name="authorName" maxlength="50" required placeholder="Как к вам обращаться">
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input has-icon" id="saite-name" name="authorName" maxlength="50" required placeholder="Как к вам обращаться" autocomplete="name">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="saite-name">Введите ваше имя</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="saite-email">Email<span class="required">*</span></label>
-                        <input type="email" class="form-input" id="saite-email" name="email" required placeholder="you@example.com">
+                        <div class="input-wrapper">
+                            <input type="email" class="form-input has-icon" id="saite-email" name="email" required placeholder="you@example.com" autocomplete="email">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="saite-email">Введите корректный email</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="saite-telegram">Telegram</label>
-                        <input type="text" class="form-input" id="saite-telegram" name="telegram" maxlength="50" placeholder="@username">
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input has-icon" id="saite-telegram" name="telegram" maxlength="50" placeholder="@username" autocomplete="off">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        </div>
                         <div class="form-help">Для быстрой связи</div>
                     </div>
 
                     <div class="form-group full">
                         <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="checkbox" id="saite-rules" required style="margin-right: 8px;">
+                            <input type="checkbox" id="saite-rules" required>
                             Я ознакомился с <a href="/add?p=rules" target="_blank">правилами размещения</a> и согласен с ними
                         </label>
                         <div class="form-error" data-error-for="saite-rules">Необходимо принять правила</div>
@@ -701,66 +987,93 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label" for="corp-name">Имя<span class="required">*</span></label>
-                        <input type="text" class="form-input" id="corp-name" name="name" maxlength="80" required placeholder="Иван Иванов">
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input has-icon" id="corp-name" name="name" maxlength="80" required placeholder="Иван Иванов" autocomplete="name">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="corp-name">Введите ваше имя</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="corp-company">Компания</label>
-                        <input type="text" class="form-input" id="corp-company" name="company" maxlength="100" placeholder="Название компании">
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input has-icon" id="corp-company" name="company" maxlength="100" placeholder="Название компании" autocomplete="organization">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="corp-email">Email<span class="required">*</span></label>
-                        <input type="email" class="form-input" id="corp-email" name="email" required placeholder="you@company.com">
+                        <div class="input-wrapper">
+                            <input type="email" class="form-input has-icon" id="corp-email" name="email" required placeholder="you@company.com" autocomplete="email">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="corp-email">Введите корректный email</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="corp-telegram">Telegram</label>
-                        <input type="text" class="form-input" id="corp-telegram" name="telegram" maxlength="50" placeholder="@username">
+                        <div class="input-wrapper">
+                            <input type="text" class="form-input has-icon" id="corp-telegram" name="telegram" maxlength="50" placeholder="@username" autocomplete="off">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                        </div>
                     </div>
 
                     <div class="form-group full">
                         <label class="form-label" for="corp-type">Тип сотрудничества<span class="required">*</span></label>
-                        <select class="form-select" id="corp-type" name="type" required>
-                            <option value="">Выберите тип</option>
-                            <option value="partnership">Партнёрство</option>
-                            <option value="advertising">Реклама / Спонсорство</option>
-                            <option value="integration">Техническая интеграция</option>
-                            <option value="content">Контент / Публикации</option>
-                            <option value="other">Другое</option>
-                        </select>
+                        <div class="input-wrapper">
+                            <select class="form-select has-icon" id="corp-type" name="type" required>
+                                <option value="">Выберите тип</option>
+                                <option value="partnership">Партнёрство</option>
+                                <option value="advertising">Реклама / Спонсорство</option>
+                                <option value="integration">Техническая интеграция</option>
+                                <option value="content">Контент / Публикации</option>
+                                <option value="other">Другое</option>
+                            </select>
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                        </div>
                         <div class="form-error" data-error-for="corp-type">Выберите тип сотрудничества</div>
                     </div>
 
                     <div class="form-group full">
                         <label class="form-label" for="corp-message">Сообщение<span class="required">*</span></label>
-                        <textarea class="form-textarea" id="corp-message" name="message" maxlength="2000" required placeholder="Расскажите о вашем предложении, целях и ожидаемых результатах"></textarea>
-                        <div class="form-help">До 2000 символов. <span id="corp-message-counter">0</span>/2000</div>
+                        <div class="input-wrapper textarea-wrapper">
+                            <textarea class="form-textarea" id="corp-message" name="message" maxlength="2000" required placeholder="Расскажите о вашем предложении, целях и ожидаемых результатах"></textarea>
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                        </div>
+                        <div class="form-help">
+                            <span>До 2000 символов</span>
+                            <span id="corp-message-counter">0</span>/2000
+                        </div>
                         <div class="form-error" data-error-for="corp-message">Сообщение должно содержать минимум 20 символов</div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="corp-budget">Примерный бюджет</label>
-                        <select class="form-select" id="corp-budget" name="budget">
-                            <option value="">Не указан</option>
-                            <option value="free">Без бюджета / barter</option>
-                            <option value="small">До 50 000 ₽</option>
-                            <option value="medium">50 000 — 300 000 ₽</option>
-                            <option value="large">300 000 — 1 000 000 ₽</option>
-                            <option value="enterprise">Более 1 000 000 ₽</option>
-                        </select>
+                        <div class="input-wrapper">
+                            <select class="form-select has-icon" id="corp-budget" name="budget">
+                                <option value="">Не указан</option>
+                                <option value="free">Без бюджета / barter</option>
+                                <option value="small">До 50 000 ₽</option>
+                                <option value="medium">50 000 — 300 000 ₽</option>
+                                <option value="large">300 000 — 1 000 000 ₽</option>
+                                <option value="enterprise">Более 1 000 000 ₽</option>
+                            </select>
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="corp-website">Сайт компании</label>
-                        <input type="url" class="form-input" id="corp-website" name="website" placeholder="https://company.com">
+                        <div class="input-wrapper">
+                            <input type="url" class="form-input has-icon" id="corp-website" name="website" placeholder="https://company.com" autocomplete="url">
+                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                        </div>
                     </div>
 
                     <div class="form-group full">
                         <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="checkbox" id="corp-agree" required style="margin-right: 8px;">
+                            <input type="checkbox" id="corp-agree" required>
                             Я согласен на обработку персональных данных в соответствии с <a href="#" data-modal="privacyModal">политикой конфиденциальности</a>
                         </label>
                         <div class="form-error" data-error-for="corp-agree">Необходимо согласие</div>
@@ -816,7 +1129,7 @@
         <!-- Success Screen -->
         <div class="form-card success-screen" id="success-screen">
             <div class="success-icon">
-                <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
                 </svg>
             </div>
@@ -841,19 +1154,13 @@
     (function() {
         'use strict';
 
-        // ==============================
-        // State
-        // ==============================
         const State = {
-            mode: 'saite' // saite | corp | rules
+            mode: 'saite'
         };
 
-        // ==============================
-        // Utils
-        // ==============================
         const UI = {
             toastTimer: null,
-            toast(message, type = 'info', duration = 4000) {
+            toast(message, type = 'info', duration = 4500) {
                 const toast = document.getElementById('toast');
                 const msg = document.getElementById('toast-message');
                 const icon = document.getElementById('toast-icon');
@@ -903,29 +1210,30 @@
             }
         };
 
-        // ==============================
-        // URL Params & Tabs
-        // ==============================
-        function setModeFromUrl() {
+        function setModeFromUrl(pushState = false) {
             const params = new URLSearchParams(window.location.search);
             const mode = params.get('p') || 'saite';
             const validModes = ['saite', 'corp', 'rules'];
-            State.mode = validModes.includes(mode) ? mode : 'saite';
+            const newMode = validModes.includes(mode) ? mode : 'saite';
 
-            // Update tabs
+            if (pushState && newMode !== State.mode) {
+                const newUrl = `/add?p=${newMode}`;
+                window.history.pushState({ mode: newMode }, '', newUrl);
+            }
+
+            State.mode = newMode;
+
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             const activeTab = document.getElementById(`tab-${State.mode}`);
             if (activeTab) activeTab.classList.add('active');
 
-            // Update sections
             document.querySelectorAll('.form-section').forEach(s => {
                 s.classList.toggle('active', s.dataset.mode === State.mode);
             });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ==============================
-        // Validation
-        // ==============================
         const Validators = {
             required(value) {
                 return value && value.trim().length > 0;
@@ -1028,9 +1336,6 @@
             return valid;
         }
 
-        // ==============================
-        // API
-        // ==============================
         async function submitSaite(data) {
             const res = await fetch('/api/add/saite', {
                 method: 'POST',
@@ -1057,10 +1362,16 @@
             return await res.json();
         }
 
-        // ==============================
-        // Event handlers
-        // ==============================
         function bindEvents() {
+            // Tab clicks - SPA behavior
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const mode = tab.dataset.mode;
+                    setModeFromUrl(true);
+                });
+            });
+
             // Saite form
             document.getElementById('form-saite').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1142,6 +1453,16 @@
                 });
             });
 
+            // Telegram auto-formatting
+            document.querySelectorAll('input[name="telegram"]').forEach(input => {
+                input.addEventListener('blur', (e) => {
+                    let val = e.target.value.trim();
+                    if (val && !val.startsWith('@')) {
+                        e.target.value = '@' + val;
+                    }
+                });
+            });
+
             // New submission button
             document.getElementById('new-submission').addEventListener('click', () => {
                 document.getElementById('success-screen').classList.remove('active');
@@ -1150,6 +1471,11 @@
                 document.getElementById('form-corp').reset();
                 document.getElementById('saite-desc-counter').textContent = '0';
                 document.getElementById('corp-message-counter').textContent = '0';
+            });
+
+            // Popstate for browser back/forward
+            window.addEventListener('popstate', () => {
+                setModeFromUrl(false);
             });
         }
 
@@ -1172,15 +1498,9 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // ==============================
-        // Init
-        // ==============================
         function init() {
-            setModeFromUrl();
+            setModeFromUrl(false);
             bindEvents();
-
-            // Update mode when URL changes (for SPA-like behavior)
-            window.addEventListener('popstate', setModeFromUrl);
         }
 
         if (document.readyState === 'loading') {
