@@ -130,17 +130,38 @@
         }
 
         .type-badge {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            margin-right: 6px;
-            opacity: 0.8;
-        }
-        .type-feat { color: var(--success); }
-        .type-fix { color: var(--warning); }
-        .type-sec { color: var(--danger); }
-        .type-default { color: var(--text-secondary); }
+    display: inline-block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-right: 8px;
+    vertical-align: middle;
+    line-height: 1.4;
+}
+.type-feat     { color: #248A3D; background: rgba(52, 199, 89, 0.15); }
+.type-fix      { color: #C60000; background: rgba(255, 59, 48, 0.15); }
+.type-breaking { color: #C27800; background: rgba(255, 159, 10, 0.18); }
+.type-perf     { color: #0051A8; background: rgba(10, 132, 255, 0.15); }
+.type-docs     { color: #7D3AB0; background: rgba(175, 82, 222, 0.15); }
+.type-refactor { color: #3E3DB0; background: rgba(94, 92, 230, 0.15); }
+.type-chore    { color: #6E6E73; background: rgba(152, 152, 157, 0.15); }
+.type-security { color: #C60000; background: rgba(255, 59, 48, 0.2); }
+.type-default  { color: #6E6E73; background: rgba(152, 152, 157, 0.12); }
 
+@media (prefers-color-scheme: dark) {
+    .type-feat     { color: #30D158; }
+    .type-fix      { color: #FF453A; }
+    .type-breaking { color: #FF9F0A; }
+    .type-perf     { color: #0A84FF; }
+    .type-docs     { color: #BF5AF2; }
+    .type-refactor { color: #5E5CE6; }
+    .type-chore    { color: #98989D; }
+    .type-security { color: #FF453A; }
+    .type-default  { color: #98989D; }
+}
         .back-link {
             display: inline-block;
             margin-top: 60px;
@@ -216,17 +237,22 @@
             };
 
             function getTypeBadge(type) {
-                const t = (type || '').toLowerCase();
-                const map = {
-                    feat: '<span class="type-badge type-feat">Feature</span>',
-                    feature: '<span class="type-badge type-feat">Feature</span>',
-                    fix: '<span class="type-badge type-fix">Fix</span>',
-                    sec: '<span class="type-badge type-sec">Security</span>',
-                    security: '<span class="type-badge type-sec">Security</span>',
-                    major: '<span class="type-badge type-feat">Major</span>'
-                };
-                return map[t] || '<span class="type-badge type-default">Update</span>';
-            }
+    const t = (type || 'default').toLowerCase();
+    const map = {
+        feat:     { label: 'Feature',  cls: 'type-feat' },
+        feature:  { label: 'Feature',  cls: 'type-feat' },
+        fix:      { label: 'Fix',      cls: 'type-fix' },
+        breaking: { label: 'Breaking', cls: 'type-breaking' },
+        perf:     { label: 'Perf',     cls: 'type-perf' },
+        docs:     { label: 'Docs',     cls: 'type-docs' },
+        refactor: { label: 'Refactor', cls: 'type-refactor' },
+        chore:    { label: 'Chore',    cls: 'type-chore' },
+        security: { label: 'Security', cls: 'type-security' },
+        sec:      { label: 'Security', cls: 'type-security' }
+    };
+    const meta = map[t] || { label: 'Update', cls: 'type-default' };
+    return `<span class="type-badge ${meta.cls}">${meta.label}</span>`;
+}
 
             async function loadChangelog() {
                 const container = document.getElementById('timeline');

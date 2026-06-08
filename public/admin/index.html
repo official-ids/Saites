@@ -831,6 +831,22 @@ html, body {
 }
 
 .hidden { display: none !important; }
+
+.changelog-card.collapsed .changelog-items,
+.changelog-card.collapsed [data-action="add-item"] {
+    display: none;
+}
+
+.changelog-card.collapsed .changelog-header [data-action="collapse"] svg {
+    transform: rotate(180deg);
+    transition: transform 0.2s var(--transition);
+}
+
+.changelog-card.collapsed .changelog-version,
+.changelog-card.collapsed .changelog-date {
+    pointer-events: none;
+}
+
 </style>
 </head>
 <body>
@@ -1485,7 +1501,22 @@ html, body {
         });
     }
 
-    // ---------- Render: Changelog ----------
+        // ---------- Render: Changelog ----------
+    const CHANGE_TYPES = {
+        feat:      { label: 'FEAT',      color: '#30D158', bg: 'rgba(48, 209, 88, 0.15)' },
+        fix:       { label: 'FIX',       color: '#FF453A', bg: 'rgba(255, 69, 58, 0.15)' },
+        breaking:  { label: 'BREAKING',  color: '#FF9F0A', bg: 'rgba(255, 159, 10, 0.15)' },
+        perf:      { label: 'PERF',      color: '#0A84FF', bg: 'rgba(10, 132, 255, 0.15)' },
+        docs:      { label: 'DOCS',      color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.15)' },
+        refactor:  { label: 'REFACTOR',  color: '#5E5CE6', bg: 'rgba(94, 92, 230, 0.15)' },
+        chore:     { label: 'CHORE',     color: '#98989D', bg: 'rgba(152, 152, 157, 0.15)' },
+        security:  { label: 'SECURITY',  color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.2)' },
+        default:   { label: 'NOTE',      color: '#98989D', bg: 'rgba(152, 152, 157, 0.12)' }
+    };
+
+    let _changelogVersionDragIdx = null;
+    let _changelogChangeDragData = null;
+
     function renderChangelog() {
         $('pageTitle').textContent = 'Changelog';
         $('topbarActions').innerHTML = `
@@ -1495,7 +1526,7 @@ html, body {
                 </svg>
                 Обновить
             </button>
-            <button class="btn btn-primary" id="saveBtn">
+            <button class="btn btn-primary" id="saveBtn" ${State.dirty ? '' : 'disabled'}>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -1507,25 +1538,73 @@ html, body {
         $('saveBtn').addEventListener('click', saveChangelog);
 
         const parsed = parseChangelog(State.changelog);
+        State._changelogParsed = parsed;
 
         $('content').innerHTML = `
-            <button class="btn btn-secondary" id="addVersionBtn" style="margin-bottom:20px;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Добавить версию
-            </button>
+            <div class="toolbar" style="margin-bottom: 20px;">
+                <button class="btn btn-primary" id="addVersionBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Новая версия
+                </button>
+                <button class="btn btn-secondary" id="expandAllBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                    </svg>
+                    Развернуть все
+                </button>
+                <button class="btn btn-secondary" id="collapseAllBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
+                    </svg>
+                    Свернуть все
+                </button>
+                <span style="margin-left:auto; font-size:0.88rem; color:var(--text-secondary);">
+                    ${parsed.length} ${declension(parsed.length, ['версия', 'версии', 'версий'])}
+                </span>
+            </div>
             <div class="changelog-list" id="changelogList"></div>
         `;
 
         $('addVersionBtn').addEventListener('click', () => {
-            parsed.push({ version: 'v', date: '', changes: [{ type: 'feat', text: '' }] });
-            markChangelogDirty(parsed);
-            renderChangelogFromParsed(parsed);
+            const today = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+            parsed.unshift({
+                version: 'v1.0.0',
+                date: today,
+                changes: [{ type: 'feat', text: '' }]
+            });
+            persistChangelog();
+            renderChangelog();
+            setTimeout(() => {
+                const firstVersionInput = $('changelogList').querySelector('.changelog-version');
+                if (firstVersionInput) {
+                    firstVersionInput.focus();
+                    firstVersionInput.select();
+                }
+            }, 50);
+            showToast('Создана новая версия', 'success');
+        });
+
+        $('expandAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.changelog-card').forEach(c => c.classList.remove('collapsed'));
+        });
+        $('collapseAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.changelog-card').forEach(c => c.classList.add('collapsed'));
         });
 
         if (parsed.length === 0) {
-            $('changelogList').innerHTML = '<div class="empty-state"><p>Нет записей</p></div>';
+            $('changelogList').innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h3>История пуста</h3>
+                    <p>Добавьте первую версию, чтобы начать вести changelog</p>
+                    <button class="btn btn-primary" id="addVersionEmpty">Создать первую версию</button>
+                </div>
+            `;
+            $('addVersionEmpty').addEventListener('click', () => $('addVersionBtn').click());
             return;
         }
 
@@ -1533,108 +1612,291 @@ html, body {
         parsed.forEach((version, vIdx) => {
             const card = document.createElement('div');
             card.className = 'changelog-card';
-            card.innerHTML = `
-                <div class="changelog-header">
-                    <input type="text" class="changelog-version" value="${escapeHtml(version.version || '')}" placeholder="Версия">
-                    <input type="text" class="changelog-date" value="${escapeHtml(version.date || '')}" placeholder="Дата" style="background:transparent;border:none;color:var(--text-tertiary);font-size:0.84rem;text-align:right;font-family:inherit;">
-                    <button class="btn btn-ghost btn-icon" data-action="delete-version" title="Удалить версию">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="changelog-items"></div>
-                <button class="btn btn-ghost" style="margin-top:14px;font-size:0.84rem;" data-action="add-item">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Добавить изменение
-                </button>
-            `;
-
-            const itemsContainer = card.querySelector('.changelog-items');
-            version.changes.forEach((change, cIdx) => {
-                const item = document.createElement('div');
-                item.className = 'changelog-item';
-                item.innerHTML = `
-                    <span class="type-badge ${change.type}">${change.type}</span>
-                    <div class="changelog-text">
-                        <input type="text" value="${escapeHtml(change.text)}" placeholder="Описание изменения">
-                    </div>
-                    <button class="btn btn-ghost btn-icon" data-action="delete-item" title="Удалить">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                `;
-                itemsContainer.appendChild(item);
-
-                item.querySelector('input').addEventListener('input', (e) => {
-                    parsed[vIdx].changes[cIdx].text = e.target.value;
-                    markChangelogDirty(parsed);
-                });
-                item.querySelector('[data-action="delete-item"]').addEventListener('click', () => {
-                    parsed[vIdx].changes.splice(cIdx, 1);
-                    markChangelogDirty(parsed);
-                    renderChangelogFromParsed(parsed);
-                });
-            });
-
-            card.querySelector('.changelog-version').addEventListener('input', (e) => {
-                parsed[vIdx].version = e.target.value;
-                markChangelogDirty(parsed);
-            });
-            card.querySelector('.changelog-date').addEventListener('input', (e) => {
-                parsed[vIdx].date = e.target.value;
-                markChangelogDirty(parsed);
-            });
-            card.querySelector('[data-action="delete-version"]').addEventListener('click', () => {
-                showModal('Удалить версию?', `Версия "${parsed[vIdx].version}" будет удалена.`, () => {
-                    parsed.splice(vIdx, 1);
-                    markChangelogDirty(parsed);
-                    renderChangelogFromParsed(parsed);
-                });
-            });
-            card.querySelector('[data-action="add-item"]').addEventListener('click', () => {
-                parsed[vIdx].changes.push({ type: 'feat', text: '' });
-                markChangelogDirty(parsed);
-                renderChangelogFromParsed(parsed);
-            });
-
+            card.dataset.vIdx = vIdx;
+            card.draggable = true;
+            renderVersionCard(card, version, vIdx);
             list.appendChild(card);
         });
 
-        State._changelogParsed = parsed;
+        attachChangelogDelegation();
     }
 
-    function renderChangelogFromParsed(parsed) {
-        State._changelogParsed = parsed;
-        State.changelog = serializeChangelog(parsed);
-        renderChangelog();
+    function renderVersionCard(card, version, vIdx) {
+        const typeOptions = Object.entries(CHANGE_TYPES)
+            .map(([k, v]) => `<option value="${k}">${v.label}</option>`)
+            .join('');
+
+        card.innerHTML = `
+            <div class="changelog-header">
+                <div class="drag-handle" data-role="version-drag" title="Перетащите версию">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                    </svg>
+                </div>
+                <input type="text" class="changelog-version" data-role="version" value="${escapeHtml(version.version || '')}" placeholder="Версия (напр. v2.4.1)">
+                <input type="text" class="changelog-date" data-role="date" value="${escapeHtml(version.date || '')}" placeholder="Дата">
+                <span style="font-size:0.78rem; color:var(--text-tertiary); padding: 4px 10px; background: rgba(255,255,255,0.05); border-radius: 99px;">
+                    ${version.changes.length} ${declension(version.changes.length, ['изменение', 'изменения', 'изменений'])}
+                </span>
+                <button class="btn btn-ghost btn-icon" data-action="collapse" title="Свернуть">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <button class="btn btn-ghost btn-icon" data-action="delete-version" title="Удалить версию">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="changelog-items" data-role="items">
+                ${version.changes.map((c, cIdx) => renderChangeItem(c, cIdx, typeOptions)).join('')}
+            </div>
+            <button class="btn btn-ghost" data-action="add-item" style="margin-top:14px; font-size:0.84rem;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Добавить изменение
+            </button>
+        `;
     }
 
-    function markChangelogDirty(parsed) {
-        State.changelog = serializeChangelog(parsed);
+    function renderChangeItem(change, cIdx, typeOptions) {
+        const meta = CHANGE_TYPES[change.type] || CHANGE_TYPES.default;
+        const options = Object.entries(CHANGE_TYPES)
+            .map(([k, v]) => `<option value="${k}" ${change.type === k ? 'selected' : ''}>${v.label}</option>`)
+            .join('');
+
+        return `
+            <div class="changelog-item" data-c-idx="${cIdx}" draggable="true">
+                <div class="drag-handle" data-role="change-drag" style="margin-top:6px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                    </svg>
+                </div>
+                <select data-role="type" style="background:${meta.bg}; color:${meta.color}; border:1px solid rgba(255,255,255,0.08); padding:4px 28px 4px 10px; border-radius:99px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; appearance:none; cursor:pointer; background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2398989D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;); background-repeat:no-repeat; background-position:right 8px center;">
+                    ${options}
+                </select>
+                <div class="changelog-text">
+                    <input type="text" data-role="text" value="${escapeHtml(change.text)}" placeholder="Описание изменения...">
+                </div>
+                <button class="btn btn-ghost btn-icon" data-action="delete-item" title="Удалить">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }
+
+    function attachChangelogDelegation() {
+        const list = $('changelogList');
+
+        // Event delegation: инпуты не теряют фокус при перерисовке
+        list.addEventListener('input', (e) => {
+            const card = e.target.closest('.changelog-card');
+            if (!card) return;
+            const vIdx = parseInt(card.dataset.vIdx);
+            const parsed = State._changelogParsed;
+
+            if (e.target.dataset.role === 'version') {
+                parsed[vIdx].version = e.target.value;
+                persistChangelog();
+            } else if (e.target.dataset.role === 'date') {
+                parsed[vIdx].date = e.target.value;
+                persistChangelog();
+            } else if (e.target.dataset.role === 'text') {
+                const item = e.target.closest('.changelog-item');
+                if (item) {
+                    const cIdx = parseInt(item.dataset.cIdx);
+                    parsed[vIdx].changes[cIdx].text = e.target.value;
+                    persistChangelog();
+                }
+            }
+        });
+
+        list.addEventListener('change', (e) => {
+            const card = e.target.closest('.changelog-card');
+            if (!card) return;
+            const vIdx = parseInt(card.dataset.vIdx);
+            const parsed = State._changelogParsed;
+
+            if (e.target.dataset.role === 'type') {
+                const item = e.target.closest('.changelog-item');
+                if (item) {
+                    const cIdx = parseInt(item.dataset.cIdx);
+                    parsed[vIdx].changes[cIdx].type = e.target.value;
+                    persistChangelog();
+                    // Обновляем визуал селекта без перерисовки
+                    const meta = CHANGE_TYPES[e.target.value] || CHANGE_TYPES.default;
+                    e.target.style.background = `${meta.bg}`;
+                    e.target.style.color = meta.color;
+                }
+            }
+        });
+
+        list.addEventListener('click', (e) => {
+            const action = e.target.closest('[data-action]');
+            if (!action) return;
+            const card = action.closest('.changelog-card');
+            if (!card) return;
+            const vIdx = parseInt(card.dataset.vIdx);
+            const parsed = State._changelogParsed;
+
+            switch (action.dataset.action) {
+                case 'collapse':
+                    card.classList.toggle('collapsed');
+                    break;
+
+                case 'delete-version':
+                    showModal(
+                        'Удалить версию?',
+                        `Версия "${parsed[vIdx].version}" будет удалена вместе с ${parsed[vIdx].changes.length} изменениями. Это действие нельзя отменить.`,
+                        () => {
+                            parsed.splice(vIdx, 1);
+                            persistChangelog();
+                            renderChangelog();
+                            showToast('Версия удалена', 'success');
+                        }
+                    );
+                    break;
+
+                case 'delete-item': {
+                    const item = action.closest('.changelog-item');
+                    if (item) {
+                        const cIdx = parseInt(item.dataset.cIdx);
+                        parsed[vIdx].changes.splice(cIdx, 1);
+                        persistChangelog();
+                        // Удаляем элемент из DOM без полной перерисовки
+                        item.style.animation = 'toastOut 0.2s forwards';
+                        setTimeout(() => {
+                            item.remove();
+                            // Обновляем счётчик изменений
+                            const counter = card.querySelector('.changelog-header span');
+                            if (counter) {
+                                const count = parsed[vIdx].changes.length;
+                                counter.textContent = `${count} ${declension(count, ['изменение', 'изменения', 'изменений'])}`;
+                            }
+                            // Переиндексируем data-c-idx
+                            card.querySelectorAll('.changelog-item').forEach((el, i) => {
+                                el.dataset.cIdx = i;
+                            });
+                        }, 200);
+                    }
+                    break;
+                }
+
+                case 'add-item': {
+                    parsed[vIdx].changes.push({ type: 'feat', text: '' });
+                    persistChangelog();
+                    const itemsContainer = card.querySelector('[data-role="items"]');
+                    const temp = document.createElement('div');
+                    temp.innerHTML = renderChangeItem(parsed[vIdx].changes[parsed[vIdx].changes.length - 1], parsed[vIdx].changes.length - 1, '');
+                    const newItem = temp.firstElementChild;
+                    itemsContainer.appendChild(newItem);
+                    // Обновляем счётчик
+                    const counter = card.querySelector('.changelog-header span');
+                    if (counter) {
+                        const count = parsed[vIdx].changes.length;
+                        counter.textContent = `${count} ${declension(count, ['изменение', 'изменения', 'изменений'])}`;
+                    }
+                    newItem.querySelector('[data-role="text"]').focus();
+                    break;
+                }
+            }
+        });
+
+        // Drag-and-drop версий
+        const cards = list.querySelectorAll('.changelog-card');
+        cards.forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                if (!e.target.dataset || e.target.dataset.role !== 'version-drag') {
+                    // Разрешаем drag только с хэндла версии
+                }
+                _changelogVersionDragIdx = parseInt(card.dataset.vIdx);
+                card.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+                cards.forEach(c => c.classList.remove('drag-over'));
+                _changelogVersionDragIdx = null;
+            });
+
+            card.addEventListener('dragover', (e) => {
+                if (_changelogVersionDragIdx === null) return;
+                e.preventDefault();
+                card.classList.add('drag-over');
+            });
+
+            card.addEventListener('dragleave', () => {
+                card.classList.remove('drag-over');
+            });
+
+            card.addEventListener('drop', (e) => {
+                if (_changelogVersionDragIdx === null) return;
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                const dropIdx = parseInt(card.dataset.vIdx);
+                if (_changelogVersionDragIdx === dropIdx) return;
+
+                const parsed = State._changelogParsed;
+                const [moved] = parsed.splice(_changelogVersionDragIdx, 1);
+                parsed.splice(dropIdx, 0, moved);
+                persistChangelog();
+                renderChangelog();
+                showToast('Порядок версий изменён', 'info', 1500);
+            });
+        });
+    }
+
+    function persistChangelog() {
+        State.changelog = serializeChangelog(State._changelogParsed);
         State.dirty = true;
         const saveBtn = $('saveBtn');
         if (saveBtn) saveBtn.disabled = false;
     }
 
+    function declension(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const last = abs % 10;
+        if (abs > 10 && abs < 20) return forms[2];
+        if (last > 1 && last < 5) return forms[1];
+        if (last === 1) return forms[0];
+        return forms[2];
+    }
+
     function parseChangelog(content) {
-        if (!content) return [];
+        if (!content || typeof content !== 'string') return [];
         const blocks = content.split('::').filter(b => b?.trim());
         return blocks.map(block => {
             const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
             if (lines.length === 0) return null;
+
             const headerLine = lines[0];
-            const [version, date] = headerLine.includes('|') ? headerLine.split('|').map(s => s.trim()) : [headerLine, ''];
+            const [version, date] = headerLine.includes('|')
+                ? headerLine.split('|').map(s => s.trim())
+                : [headerLine, ''];
+
             const changes = lines.slice(1).map(line => {
                 const match = line.match(/^-\s*\[(\w+)\]\s*(.*)$/);
-                if (match) return { type: match[1].toLowerCase(), text: match[2].trim() };
+                if (match) {
+                    const type = match[1].toLowerCase();
+                    return {
+                        type: CHANGE_TYPES[type] ? type : 'default',
+                        text: match[2].trim()
+                    };
+                }
                 return { type: 'default', text: line.replace(/^-\s*/, '').trim() };
-            });
-            return { version, date: date || '', changes: changes };
-        }).filter(Boolean);
+            }).filter(c => c.text);
+
+            return {
+                version: version?.trim() || '',
+                date: date?.trim() || '',
+                changes
+            };
+        }).filter(v => v && (v.version || v.changes.length > 0));
     }
 
     function serializeChangelog(parsed) {
@@ -1646,23 +1908,43 @@ html, body {
     }
 
     async function saveChangelog() {
-    try {
-        await apiRequest('/api/admin/changelog/save', {
-            method: 'POST',
-            body: JSON.stringify({ content: State.changelog })  // ← строка
-        });
-        State.dirty = false;
-        renderChangelog();
-        showToast('Changelog сохранён', 'success');
-    } catch (err) {
-        if (err.message === 'UNAUTHORIZED') {
-            showToast('Ошибка доступа. Проверьте токен.', 'error');
-            promptToken();
-        } else {
-            showToast(err.message, 'error');
+        const parsed = State._changelogParsed || [];
+        // Валидация: проверяем пустые версии без изменений
+        const empty = parsed.filter(v => !v.version.trim() && v.changes.length === 0);
+        if (empty.length > 0) {
+            showModal(
+                'Обнаружены пустые версии',
+                `${empty.length} ${declension(empty.length, ['версия', 'версии', 'версий'])} без названия и изменений будут удалены перед сохранением. Продолжить?`,
+                async () => {
+                    State._changelogParsed = parsed.filter(v => v.version.trim() || v.changes.length > 0);
+                    await doSaveChangelog();
+                }
+            );
+            return;
+        }
+        await doSaveChangelog();
+    }
+
+    async function doSaveChangelog() {
+        try {
+            State.changelog = serializeChangelog(State._changelogParsed);
+            await apiRequest('/api/admin/changelog/save', {
+                method: 'POST',
+                body: JSON.stringify({ content: State.changelog })
+            });
+            State.dirty = false;
+            const saveBtn = $('saveBtn');
+            if (saveBtn) saveBtn.disabled = true;
+            showToast('Changelog сохранён', 'success');
+        } catch (err) {
+            if (err.message === 'UNAUTHORIZED') {
+                showToast('Ошибка доступа. Проверьте токен.', 'error');
+                promptToken();
+            } else {
+                showToast(err.message, 'error');
+            }
         }
     }
-}
 
     // ---------- Render: JSON Editor ----------
     function renderJsonEditor(section, data) {
