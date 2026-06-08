@@ -10,7 +10,7 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 // -----------------------------
 const K = {
     REDIRECT: (slug) => `redirect:${slug.toLowerCase()}`,
-    REDIRECTS_INDEX: 'redirects:index' // Set всех slug для быстрого списка
+    REDIRECTS_INDEX: 'redirects:index'
 };
 
 // -----------------------------
@@ -39,37 +39,28 @@ function isValidUrl(string) {
     }
 }
 
-// -----------------------------
-// Публичный эндпоинт: Редирект
-// -----------------------------
-router.get('/:slug', async (req, res) => {
+// ====================================
+// Админские эндпоинты (СТАТИЧЕСКИЕ — ДО ДИНАМИЧЕСКОГО!)
+// ====================================
+
+// Получить список всех редиректов
+router.get('/admin', verifyAdminToken, async (req, res) => {
     try {
-        const slug = req.params.slug.toLowerCase().trim();
+        const slugs = await kv.smembers(K.REDIRECTS_INDEX);
+        const redirects = [];
         
-        // Валидация slug: только буквы, цифры, дефис и подчеркивание (2-32 символа)
-        if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
-            return res.status(400).send('Invalid redirect slug');
+        for (const slug of slugs) {
+            const data = await kv.get(K.REDIRECT(slug));
+            if (data) redirects.push(data);
         }
 
-        const redirectData = await kv.get(K.REDIRECT(slug));
-        if (!redirectData) {
-            return res.status(404).send('Redirect not found');
-        }
-
-        // Асинхронный инкремент счетчика кликов (fire-and-forget, не блокирует ответ)
-        kv.hincrby(K.REDIRECT(slug), 'clicks', 1).catch(() => {});
-
-        // 302 Temporary Redirect (можно изменить на 301, если нужно постоянное перенаправление)
-        res.redirect(302, redirectData.url);
+        redirects.sort((a, b) => b.clicks - a.clicks);
+        res.json({ redirects });
     } catch (err) {
-        console.error('[redirects GET]', err);
-        res.status(500).send('Internal server error');
+        console.error('[redirects GET admin]', err);
+        res.status(500).json({ error: 'Ошибка получения списка' });
     }
 });
-
-// -----------------------------
-// Админские эндпоинты
-// -----------------------------
 
 // Создать редирект
 router.post('/admin', verifyAdminToken, async (req, res) => {
@@ -77,7 +68,7 @@ router.post('/admin', verifyAdminToken, async (req, res) => {
         const { slug, url, description } = req.body;
         
         if (!slug || !/^[a-z0-9_-]{2,32}$/.test(slug)) {
-            return res.status(400).json({ error: 'Slug: 2-32 символов (a-z, 0-9, -, _) ' });
+            return res.status(400).json({ error: 'Slug: 2-32 символов (a-z, 0-9, -, _)' });
         }
         if (!url || !isValidUrl(url)) {
             return res.status(400).json({ error: 'Требуется корректный HTTP/HTTPS URL' });
@@ -106,27 +97,6 @@ router.post('/admin', verifyAdminToken, async (req, res) => {
     }
 });
 
-// Получить список всех редиректов
-router.get('/admin', verifyAdminToken, async (req, res) => {
-    try {
-        const slugs = await kv.smembers(K.REDIRECTS_INDEX);
-        const redirects = [];
-        
-        for (const slug of slugs) {
-            const data = await kv.get(K.REDIRECT(slug));
-            if (data) redirects.push(data);
-        }
-
-        // Сортировка по количеству кликов (по убыванию)
-        redirects.sort((a, b) => b.clicks - a.clicks);
-        
-        res.json({ redirects });
-    } catch (err) {
-        console.error('[redirects GET admin]', err);
-        res.status(500).json({ error: 'Ошибка получения списка' });
-    }
-});
-
 // Удалить редирект
 router.delete('/admin/:slug', verifyAdminToken, async (req, res) => {
     try {
@@ -137,6 +107,32 @@ router.delete('/admin/:slug', verifyAdminToken, async (req, res) => {
     } catch (err) {
         console.error('[redirects DELETE admin]', err);
         res.status(500).json({ error: 'Ошибка удаления' });
+    }
+});
+
+// ====================================
+// Публичный эндпоинт (ДИНАМИЧЕСКИЙ — ПОСЛЕ АДМИНСКИХ)
+// ====================================
+router.get('/:slug', async (req, res) => {
+    try {
+        const slug = req.params.slug.toLowerCase().trim();
+        
+        if (!/^[a-z0-9_-]{2,32}$/.test(slug)) {
+            return res.status(400).send('Invalid redirect slug');
+        }
+
+        const redirectData = await kv.get(K.REDIRECT(slug));
+        if (!redirectData) {
+            return res.status(404).send('Redirect not found');
+        }
+
+        // Асинхронный инкремент счётчика кликов
+        kv.hincrby(K.REDIRECT(slug), 'clicks', 1).catch(() => {});
+
+        res.redirect(302, redirectData.url);
+    } catch (err) {
+        console.error('[redirects GET]', err);
+        res.status(500).send('Internal server error');
     }
 });
 
