@@ -229,6 +229,37 @@ app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
+
+// -----------------------------
+// Dynamic Page: Downloader
+// -----------------------------
+
+app.get('/downloader/:hash', async (req, res) => {
+    try {
+        const hash = req.params.hash.toLowerCase();
+        
+        if (!/^[a-f0-9]{64}$/i.test(hash)) {
+            return res.status(400).send('Invalid hash format');
+        }
+
+        const htmlPath = path.join(PUBLIC_DIR, 'downloader', 'index.html');
+        let html = await fs.readFile(htmlPath, 'utf8');
+
+        // Внедряем хеш в страницу
+        html = html.replace(
+            '</head>',
+            `<script>window.__FILE_HASH__ = "${hash}";</script></head>`
+        );
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
+        res.status(200).send(html);
+    } catch (err) {
+        console.error('[downloader/page]', err);
+        res.status(500).send('Internal server error');
+    }
+});
+
 app.use(express.static(PUBLIC_DIR, {
     maxAge: '1d', 
     etag: true,

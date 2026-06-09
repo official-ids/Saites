@@ -818,61 +818,66 @@ h1 {
         }
     }
 
-    async function loadMeta() {
-        // Извлекаем хеш из URL: /downloader/{hash}
+   async function loadMeta() {
+    // Приоритет 1: глобальная переменная (внедрена сервером)
+    let hash = window.__FILE_HASH__;
+
+    // Приоритет 2: извлекаем из URL path
+    if (!hash) {
         const pathParts = window.location.pathname.split('/');
-        let hash = pathParts[pathParts.length - 1];
-
-        // Fallback: query parameter
-        if (!hash || !isValidSha256(hash)) {
-            const params = new URLSearchParams(window.location.search);
-            hash = params.get('hash') || params.get('file');
-        }
-
-        if (!hash) {
-            showError('Не указан хеш файла', 'Откройте ссылку вида /downloader/{SHA-256 хеш файла}');
-            return;
-        }
-
-        hash = hash.toLowerCase().trim();
-        if (!isValidSha256(hash)) {
-            showError('Некорректный формат хеша', 'SHA-256 должен состоять из 64 шестнадцатеричных символов.');
-            return;
-        }
-
-        State.hash = hash;
-
-        try {
-            const res = await fetch(`/api/downloader/info/${hash}`);
-            if (res.status === 404) {
-                showError('Файл не найден', 'Файла с таким SHA-256 хешем нет в системе. Возможно, он был удалён или ссылка устарела.');
-                return;
-            }
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}`);
-            }
-
-            const meta = await res.json();
-            State.meta = meta;
-
-            $('loading').style.display = 'none';
-            $('mainContent').classList.remove('hidden');
-
-            $('fileName').textContent = meta.name;
-            $('fileSubtitle').textContent = `${meta.sizeFormatted} · ${meta.contentType}`;
-            $('fileSize').textContent = meta.sizeFormatted;
-            $('fileType').textContent = meta.contentType;
-            $('fileUploaded').textContent = formatDate(meta.uploadedAt);
-            $('fileDownloads').textContent = meta.downloads || 0;
-            $('fileHash').textContent = meta.hash;
-
-            updateVerifyCode();
-
-        } catch (err) {
-            showError('Ошибка загрузки', 'Не удалось получить данные файла. Попробуйте обновить страницу.');
-            console.error(err);
-        }
+        hash = pathParts[pathParts.length - 1];
     }
+
+    // Приоритет 3: query parameter
+    if (!hash || !isValidSha256(hash)) {
+        const params = new URLSearchParams(window.location.search);
+        hash = params.get('hash') || params.get('file');
+    }
+
+    if (!hash) {
+        showError('Не указан хеш файла', 'Откройте ссылку вида /downloader/{SHA-256}');
+        return;
+    }
+
+    hash = hash.toLowerCase().trim();
+    if (!isValidSha256(hash)) {
+        showError('Некорректный формат хеша', 'SHA-256 должен состоять из 64 символов.');
+        return;
+    }
+
+    State.hash = hash;
+
+    try {
+        const res = await fetch(`/api/downloader/info/${hash}`);
+        if (res.status === 404) {
+            showError('Файл не найден', 'Файл был удалён или ссылка устарела.');
+            return;
+        }
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
+        const meta = await res.json();
+        State.meta = meta;
+
+        $('loading').style.display = 'none';
+        $('mainContent').classList.remove('hidden');
+
+        $('fileName').textContent = meta.name;
+        $('fileSubtitle').textContent = `${meta.sizeFormatted} · ${meta.contentType}`;
+        $('fileSize').textContent = meta.sizeFormatted;
+        $('fileType').textContent = meta.contentType;
+        $('fileUploaded').textContent = formatDate(meta.uploadedAt);
+        $('fileDownloads').textContent = meta.downloads || 0;
+        $('fileHash').textContent = meta.hash;
+
+        updateVerifyCode();
+
+    } catch (err) {
+        showError('Ошибка загрузки', 'Не удалось получить данные файла.');
+        console.error(err);
+    }
+}
 
     function init() {
         $('downloadBtn').addEventListener('click', downloadFile);
