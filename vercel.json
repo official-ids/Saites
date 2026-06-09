@@ -38,20 +38,22 @@
       ]
     },
     {
-      "source": "/(.*)\\.webmanifest",
+      "source": "/downloader/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
+        { "key": "Cache-Control", "value": "public, max-age=60, s-maxage=300" }
       ]
     }
   ],
 
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/proxy" }
+    { "source": "/api/(.*)", "destination": "/api/proxy" },
+    { "source": "/downloader/:hash", "destination": "/api/proxy" }
   ],
 
   "redirects": [
     { "source": "/658234/", "destination": "/658234", "permanent": true },
     { "source": "/r/:slug", "destination": "/api/redirects/:slug", "permanent": false },
+    { "source": "/downloader", "destination": "/admin", "permanent": false },
     { "source": "/index.html", "destination": "/", "permanent": true }
   ]
 }
