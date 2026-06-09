@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Политика конфиденциальности сервиса Oris Optimizer">
+    <meta name="theme-color" content="#000000">
+    <meta name="robots" content="noindex">
+    <title>Политика конфиденциальности · Oris Optimizer</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #000000;
+            --bg-card: rgba(28, 28, 30, 0.6);
+            --bg-elevated: rgba(44, 44, 46, 0.8);
+            --bg-subtle: rgba(10, 10, 10, 0.6);
+            --text-primary: #F5F5F7;
+            --text-secondary: #A1A1A6;
+            --text-tertiary: #6E6E73;
+            --accent: #0A84FF;
+            --accent-hover: #409CFF;
+            --success: #30D158;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.15);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100vh; overflow-x: hidden; }
+        body {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+            height: 60px;
+            flex-shrink: 0;
+        }
+        .header-inner {
+            max-width: 980px; margin: 0 auto; padding: 0 24px;
+            height: 100%; display: flex; align-items: center; justify-content: space-between;
+        }
+        .logo {
+            display: flex; align-items: center; gap: 12px;
+            text-decoration: none; color: var(--text-primary);
+            transition: opacity 0.2s var(--ease-out);
+        }
+        .logo:hover { opacity: 0.8; }
+        .logo svg { width: 24px; height: 24px; color: var(--accent); }
+        .logo-text { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+        .layout {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 56px 24px 80px;
+            width: 100%;
+            flex: 1;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 32px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .privacy-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .last-updated {
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .privacy-content h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 36px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .privacy-content p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        .privacy-content ul {
+            margin: 8px 0 16px 20px;
+            color: var(--text-secondary);
+            list-style-type: disc;
+        }
+        .privacy-content li {
+            margin-bottom: 8px;
+        }
+        .privacy-content a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .privacy-content a:hover {
+            border-bottom-color: var(--accent);
+        }
+
+        .footer-note {
+            margin-top: 32px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 640px) {
+            .layout { padding: 40px 20px 64px; }
+            .card { padding: 24px 20px; }
+            .privacy-content h1 { font-size: 1.6rem; }
+            .privacy-content h2 { font-size: 1.15rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo" aria-label="На главную">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="logo-text">Oris Optimizer</span>
+            </a>
+            <a href="/" class="nav-link">← Назад к инструменту</a>
+        </div>
+    </header>
+
+    <main class="layout">
+        <div class="card privacy-content">
+            <h1>Политика конфиденциальности</h1>
+            <p class="last-updated">Дата последнего обновления: 9 июня 2026 г.</p>
+
+            <h2>1. Общие положения</h2>
+            <p>
+                Настоящая Политика конфиденциальности описывает, как сервис Oris Optimizer 
+                (далее — «Сервис») обращается с информацией, которую вы предоставляете 
+                при его использовании. Мы уделяем особое внимание защите ваших данных 
+                и стремимся быть максимально прозрачными.
+            </p>
+
+            <h2>2. Сбор информации</h2>
+            <p>
+                Oris Optimizer <strong>не собирает</strong> персональные данные пользователей. 
+                Мы не требуем регистрации, не запрашиваем имена, адреса электронной почты 
+                или иную идентифицирующую информацию. Сервис не использует файлы cookie 
+                для отслеживания поведения, профилирования или рекламных целей.
+            </p>
+            <p>
+                Технические данные, автоматически передаваемые браузером (IP-адрес, 
+                заголовки HTTP), не сохраняются и не анализируются, поскольку вся 
+                обработка происходит локально на вашем устройстве.
+            </p>
+
+            <h2>3. Обработка файлов</h2>
+            <p>
+                Файлы, которые вы загружаете для оптимизации, обрабатываются исключительно 
+                внутри вашего браузера с использованием стандартных Web API (Canvas, 
+                JSON, текстовые парсеры). Ни один файл не передаётся на удалённый сервер, 
+                не загружается в облако и не доступен третьим лицам.
+            </p>
+            <p>
+                После завершения сеанса оптимизированный файл остаётся только у вас; 
+                Сервис не хранит ни исходные, ни обработанные копии.
+            </p>
+
+            <h2>4. Использование файлов cookie</h2>
+            <p>
+                Сервис может использовать минимально необходимые технические cookie 
+                (например, для сохранения состояния интерфейса или сеанса), 
+                однако они не применяются для сбора статистики, идентификации 
+                пользователя или маркетинговых целей. Вы можете отключить cookie 
+                в настройках браузера без ущерба для основной функциональности.
+            </p>
+
+            <h2>5. Безопасность</h2>
+            <p>
+                Мы принимаем разумные технические меры для обеспечения безопасности 
+                кода Сервиса и предотвращения вредоносных модификаций. Тем не менее, 
+                мы рекомендуем вам всегда использовать актуальные версии браузеров 
+                и операционных систем, а также сохранять оригиналы важных файлов 
+                перед оптимизацией.
+            </p>
+
+            <h2>6. Сторонние сервисы</h2>
+            <p>
+                Oris Optimizer не интегрирует сторонние сервисы аналитики, рекламные 
+                сети или виджеты социальных сетей. Единственное внешнее подключение — 
+                шрифты Google Fonts, которые загружаются для обеспечения единого 
+                визуального стиля. Google может собирать агрегированную статистику 
+                запросов согласно своей политике конфиденциальности, но эти данные 
+                не связываются с вашим использованием Сервиса.
+            </p>
+
+            <h2>7. Изменения политики</h2>
+            <p>
+                Мы можем периодически обновлять настоящую Политику конфиденциальности. 
+                Новая редакция вступает в силу с момента публикации на этой странице. 
+                Мы рекомендуем регулярно проверять этот документ. Продолжение 
+                использования Сервиса после изменений означает ваше согласие 
+                с обновлённой редакцией.
+            </p>
+
+            <h2>8. Контактная информация</h2>
+            <p>
+                Если у вас есть вопросы, замечания или предложения относительно 
+                конфиденциальности, пожалуйста, свяжитесь с нами по адресу 
+                <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a>. 
+                Мы постараемся ответить в течение разумного срока.
+            </p>
+            <p>
+                Также ознакомьтесь с нашими 
+                <a href="/terms">Условиями использования</a>.
+            </p>
+        </div>
+        <div class="footer-note">
+            © Oris Optimizer. Все права защищены.
+        </div>
+    </main>
+</body>
+</html>

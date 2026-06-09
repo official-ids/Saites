@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Разработчик Oris Optimizer — контакты и информация">
+    <meta name="theme-color" content="#000000">
+    <meta name="robots" content="noindex">
+    <title>Разработчик · Oris Optimizer</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #000000;
+            --bg-card: rgba(28, 28, 30, 0.6);
+            --bg-elevated: rgba(44, 44, 46, 0.8);
+            --bg-subtle: rgba(10, 10, 10, 0.6);
+            --text-primary: #F5F5F7;
+            --text-secondary: #A1A1A6;
+            --text-tertiary: #6E6E73;
+            --accent: #0A84FF;
+            --accent-hover: #409CFF;
+            --success: #30D158;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.15);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { min-height: 100vh; overflow-x: hidden; }
+        body {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+            height: 60px;
+            flex-shrink: 0;
+        }
+        .header-inner {
+            max-width: 980px; margin: 0 auto; padding: 0 24px;
+            height: 100%; display: flex; align-items: center; justify-content: space-between;
+        }
+        .logo {
+            display: flex; align-items: center; gap: 12px;
+            text-decoration: none; color: var(--text-primary);
+            transition: opacity 0.2s var(--ease-out);
+        }
+        .logo:hover { opacity: 0.8; }
+        .logo svg { width: 24px; height: 24px; color: var(--accent); }
+        .logo-text { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .nav-link:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+        .layout {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 56px 24px 80px;
+            width: 100%;
+            flex: 1;
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 32px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .dev-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .dev-content h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 36px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .dev-content p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+        .dev-content a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .dev-content a:hover {
+            border-bottom-color: var(--accent);
+        }
+
+        .contact-block {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+        .contact-block svg {
+            width: 28px;
+            height: 28px;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        .contact-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .contact-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
+        }
+        .contact-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .contact-value a {
+            color: var(--accent);
+            border-bottom: none;
+        }
+        .contact-value a:hover {
+            color: var(--accent-hover);
+        }
+
+        .footer-note {
+            margin-top: 32px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 640px) {
+            .layout { padding: 40px 20px 64px; }
+            .card { padding: 24px 20px; }
+            .dev-content h1 { font-size: 1.6rem; }
+            .dev-content h2 { font-size: 1.15rem; }
+            .contact-block { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo" aria-label="На главную">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span class="logo-text">Oris Optimizer</span>
+            </a>
+            <a href="/" class="nav-link">← Назад к инструменту</a>
+        </div>
+    </header>
+
+    <main class="layout">
+        <div class="card dev-content">
+            <h1>Разработчик</h1>
+            <p>
+                Сервис Oris Optimizer разработан компанией <strong>Oris</strong>. 
+                Мы создаём простые и эффективные веб-инструменты, которые уважают 
+                конфиденциальность пользователей и работают полностью на стороне клиента.
+            </p>
+            <p>
+                Основной разработчик и автор кода — <strong>weriframe</strong>. 
+                Если у вас есть технические вопросы, предложения по улучшению 
+                или вы хотите сообщить об ошибке, самый быстрый способ связаться — 
+                через Telegram.
+            </p>
+
+            <div class="contact-block">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 110-16 8 8 0 010 16z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6m-3-3v3"/>
+                </svg>
+                <div class="contact-text">
+                    <span class="contact-label">Telegram</span>
+                    <span class="contact-value">
+                        <a href="https://t.me/weriframe" target="_blank" rel="noopener noreferrer">@weriframe</a>
+                    </span>
+                </div>
+            </div>
+
+            <h2>Другие контакты</h2>
+            <p>
+                Для официальных запросов и партнёрства: 
+                <a href="mailto:dev@oris-optimizer.example.com">dev@oris-optimizer.example.com</a>
+            </p>
+            <p>
+                Правовая информация доступна на страницах 
+                <a href="/terms">Условий использования</a> и 
+                <a href="/privacy">Политики конфиденциальности</a>.
+            </p>
+        </div>
+        <div class="footer-note">
+            © Oris. Создано с вниманием к деталям.
+        </div>
+    </main>
+</body>
+</html>
