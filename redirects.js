@@ -173,36 +173,109 @@ function isValidUrl(string) {
 router.get('/admin', verifyAdminToken, async (req, res) => {
     try {
         const slugs = await kv.smembers(K.REDIRECTS_INDEX);
+        if (!slugs || !Array.isArray(slugs)) {
+            return res.json({ redirects: [], total: 0, totalClicks: 0 });
+        }
+        
         const redirects = [];
+        let migrationCount = 0;
         
         for (const slug of slugs) {
-            const data = await kv.hgetall(K.REDIRECT(slug));
-            if (data && data.slug) {
-                redirects.push({
-                    slug: data.slug,
-                    url: data.url,
-                    description: data.description || '',
-                    clicks: parseInt(data.clicks, 10) || 0,
-                    createdAt: data.createdAt || new Date().toISOString(),
-                    lastClickedAt: data.lastClickedAt || null
-                });
+            try {
+                const normalizedSlug = String(slug).toLowerCase().trim();
+                if (!normalizedSlug) continue;
+                
+                let data = null;
+                
+                // Попытка 1: читаем как Hash (новый формат)
+                try {
+                    const hashData = await kv.hgetall(K.REDIRECT(normalizedSlug));
+                    if (hashData && typeof hashData === 'object' && hashData.url) {
+                        data = {
+                            slug: hashData.slug || normalizedSlug,
+                            url: hashData.url,
+                            description: hashData.description || '',
+                            clicks: parseInt(hashData.clicks, 10) || 0,
+                            createdAt: hashData.createdAt || new Date().toISOString(),
+                            lastClickedAt: hashData.lastClickedAt || null
+                        };
+                    }
+                } catch (hashErr) {
+                    // Hash не удался — возможно, старый формат
+                }
+                
+                // Попытка 2: читаем как JSON (старый формат) и мигрируем
+                if (!data) {
+                    try {
+                        const oldData = await kv.get(K.REDIRECT(normalizedSlug));
+                        if (oldData && typeof oldData === 'object' && oldData.url) {
+                            data = {
+                                slug: oldData.slug || normalizedSlug,
+                                url: oldData.url,
+                                description: oldData.description || '',
+                                clicks: parseInt(oldData.clicks, 10) || 0,
+                                createdAt: oldData.createdAt || new Date().toISOString(),
+                                lastClickedAt: oldData.lastClickedAt || null
+                            };
+                            
+                            // Миграция: перезаписываем в Hash-формат
+                            try {
+                                await kv.del(K.REDIRECT(normalizedSlug));
+                                await kv.hset(K.REDIRECT(normalizedSlug), {
+                                    slug: data.slug,
+                                    url: data.url,
+                                    description: data.description,
+                                    clicks: String(data.clicks),
+                                    createdAt: data.createdAt,
+                                    lastClickedAt: data.lastClickedAt || ''
+                                });
+                                migrationCount++;
+                                console.log(`[migrate] ${normalizedSlug}: JSON → Hash`);
+                            } catch (migErr) {
+                                console.warn(`[migrate] Failed to migrate ${normalizedSlug}:`, migErr.message);
+                            }
+                        }
+                    } catch (jsonErr) {
+                        console.warn(`[redirects] Cannot read ${normalizedSlug}:`, jsonErr.message);
+                    }
+                }
+                
+                if (data) {
+                    redirects.push(data);
+                } else {
+                    // Битая запись — удаляем из индекса
+                    console.warn(`[redirects] Orphan slug removed: ${normalizedSlug}`);
+                    await kv.srem(K.REDIRECTS_INDEX, normalizedSlug).catch(() => {});
+                }
+                
+            } catch (itemErr) {
+                console.error(`[redirects] Error processing slug "${slug}":`, itemErr.message);
+                // Продолжаем обработку остальных
             }
         }
         
-        // Сортировка: сначала по кликам (убыв.), затем по дате создания (нов. сверху)
+        // Сортировка: по кликам (убыв.), затем по дате (нов. сверху)
         redirects.sort((a, b) => {
             if (b.clicks !== a.clicks) return b.clicks - a.clicks;
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
         
+        if (migrationCount > 0) {
+            console.log(`[redirects] Migrated ${migrationCount} records from JSON to Hash`);
+        }
+        
         res.json({ 
             redirects,
             total: redirects.length,
-            totalClicks: redirects.reduce((sum, r) => sum + r.clicks, 0)
+            totalClicks: redirects.reduce((sum, r) => sum + r.clicks, 0),
+            migrated: migrationCount
         });
     } catch (err) {
         console.error('[redirects GET admin]', err);
-        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Ошибка получения списка' });
+        res.status(500).json({ 
+            error: 'Ошибка получения списка',
+            details: process.env.NODE_ENV !== 'production' ? err.message : undefined
+        });
     }
 });
 
