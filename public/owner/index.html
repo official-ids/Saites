@@ -1,0 +1,354 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Платформа Oris ищет нового владельца для дальнейшего развития и масштабирования.">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Владелец проекта · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F0F0F2;
+    --text-primary: #1D1D1F;
+    --text-secondary: #86868B;
+    --text-tertiary: #AEAEB2;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    --header-h: 64px;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-body: #000000;
+        --bg-card: #1C1C1E;
+        --bg-elevated: #2C2C2E;
+        --text-primary: #F5F5F7;
+        --text-secondary: #86868B;
+        --text-tertiary: #636366;
+        --border: rgba(255, 255, 255, 0.1);
+        --border-strong: rgba(255, 255, 255, 0.18);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+@media (prefers-color-scheme: dark) { .header { background: rgba(0, 0, 0, 0.72); } }
+
+.header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 100%;
+}
+.logo {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--text-primary);
+}
+.logo-icon { width: 28px; height: 28px; color: var(--accent); }
+.logo-text { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+.nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nav-link {
+    padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500;
+    color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease;
+}
+.nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
+.nav-link.active { background: var(--accent); color: white; }
+
+.layout {
+    max-width: 980px; margin: 0 auto; padding: 60px 24px 80px;
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 48px;
+}
+.hero-icon {
+    width: 80px; height: 80px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, #5E5CE6 100%);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    box-shadow: 0 12px 32px rgba(10, 132, 255, 0.25);
+}
+.hero-icon svg { width: 40px; height: 40px; }
+
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
+}
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    transition: all 0.2s ease;
+}
+.feature-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+.feature-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+.feature-icon svg { width: 18px; height: 18px; }
+.feature-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+.feature-desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.contact-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px 32px;
+    text-align: center;
+}
+.contact-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+.contact-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.contact-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-primary {
+    background: var(--accent);
+    color: white;
+}
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+}
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+    background: var(--border-strong);
+    transform: translateY(-1px);
+}
+
+.footer {
+    max-width: 1200px; margin: 0 auto; padding: 32px 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+    .hero-title { font-size: 2rem; }
+    .hero-subtitle { font-size: 1rem; }
+    .layout { padding: 40px 16px 60px; }
+    .contact-section { padding: 32px 20px; }
+    .contact-buttons { flex-direction: column; }
+    .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="logo-text">Oris</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="/news" class="nav-link">News</a>
+            <a href="/changelog" class="nav-link">Changelog</a>
+            <a href="/api" class="nav-link">API</a>
+            <a href="/status" class="nav-link">Status</a>
+            <a href="/owner" class="nav-link active">Owner</a>
+        </nav>
+    </div>
+</header>
+
+<main class="layout">
+    <section class="hero">
+        <div class="hero-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+        </div>
+        <h1 class="hero-title">Проект ищет нового владельца</h1>
+        <p class="hero-subtitle">
+            Платформа Oris активно развивается, имеет стабильную архитектуру и готовую инфраструктуру. 
+            Мы ищем ответственного владельца для передачи проекта и его дальнейшего масштабирования.
+        </p>
+    </section>
+
+    <section class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+            </div>
+            <div class="feature-title">Полный исходный код</div>
+            <div class="feature-desc">Модульная архитектура на Express.js с чистым разделением ответственности между сервером и клиентом.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+            </div>
+            <div class="feature-title">Готовая инфраструктура</div>
+            <div class="feature-desc">Настроенный деплой на Vercel, интеграция с Vercel KV (Redis) и Vercel Blob для хранения данных и файлов.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <div class="feature-title">Административная панель</div>
+            <div class="feature-desc">Полный контроль над контентом: управление проектами, новостями, комментариями и конфигурацией системы.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+            </div>
+            <div class="feature-title">Система поддержки</div>
+            <div class="feature-desc">Встроенный чат для общения с пользователями в реальном времени с сохранением истории в базе данных.</div>
+        </div>
+    </section>
+
+    <section class="contact-section">
+        <h2 class="contact-title">Связаться для обсуждения</h2>
+        <p class="contact-subtitle">
+            Если вы заинтересованы в приобретении проекта, напишите нам. Мы предоставим полную техническую документацию, доступ к демонстрационной среде и обсудим условия передачи.
+        </p>
+        <div class="contact-buttons">
+            <a href="mailto:di44avolod@ya.ru" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                di44avolod@ya.ru
+            </a>
+            <a href="https://t.me/weriframe" target="_blank" rel="noopener" class="btn btn-secondary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                </svg>
+                @weriframe
+            </a>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    Oris Platform · Ищем владельца · 
+    <a href="/changelog">Changelog</a> · 
+    <a href="/status">Status</a>
+</footer>
+
+</body>
+</html>
+```
