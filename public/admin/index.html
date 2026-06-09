@@ -1729,12 +1729,31 @@ function createRedirectCard(redirect) {
             <div class="field-row">
                 <div class="field">
                     <label>Переходов</label>
-                    <div style="color:var(--text-primary); font-weight:600;">${redirect.clicks ?? 0}</div>
+                    <div style="color:var(--text-primary); font-weight:600;" class="redirect-clicks">
+                        ${redirect.clicks ?? 0}
+                    </div>
                 </div>
+                <div class="field">
+                    <label>Последний переход</label>
+                    <div style="font-size:0.85rem;">
+                        ${redirect.lastClickedAt
+                            ? new Date(redirect.lastClickedAt).toLocaleString('ru-RU')
+                            : '—'}
+                    </div>
+                </div>
+            </div>
+            <div class="field-row">
                 <div class="field">
                     <label>Создан</label>
                     <div style="font-size:0.85rem;">
                         ${new Date(redirect.createdAt).toLocaleString('ru-RU')}
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Статус</label>
+                    <div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+                        <span style="width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 6px var(--success);"></span>
+                        Активен
                     </div>
                 </div>
             </div>
