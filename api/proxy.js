@@ -240,8 +240,8 @@ setInterval(() => {
 // Middleware
 // -----------------------------
 app.use(morgan('tiny'));
-app.use(express.json({ limit: '4mb' }));
-app.use(express.raw({ type: 'application/octet-stream', limit: '4mb' }));
+app.use(express.json({ limit: '4.4mb' }));
+app.use(express.raw({ type: 'application/octet-stream', limit: '4.4mb' }));
 app.use('/api/news', newsRouter);
 app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);

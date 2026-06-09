@@ -7,7 +7,7 @@ const multer = require('multer');
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 4 * 1024 * 1024 } 
+    limits: { fileSize: 4.4 * 1024 * 1024 } // 4.4 МБ — максимум для Vercel Hobby
 });
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;

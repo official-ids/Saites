@@ -15,6 +15,10 @@
     "api/proxy.js": {
       "maxDuration": 60,
       "memory": 1024
+    },
+    "api/downloader-upload.js": {
+      "maxDuration": 120,
+      "memory": 1024
     }
   },
 
