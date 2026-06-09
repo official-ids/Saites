@@ -7,7 +7,7 @@ const multer = require('multer');
 const router = express.Router();
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 100 * 1024 * 1024 }
+    limits: { fileSize: 4 * 1024 * 1024 } 
 });
 
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
@@ -122,32 +122,46 @@ function validateMimeType(req, res, next) {
 
 async function checkRateLimit(key, windowMs, max) {
     try {
-        const current = await kv.get(key);
+        // Используем только hset/hincrby (hash) — без смешивания с kv.set
+        const data = await kv.hgetall(key);
         const now = Date.now();
         
-        if (!current) {
-            await kv.set(key, { count: 1, resetAt: now + windowMs }, { ex: Math.ceil(windowMs / 1000) });
+        if (!data || !data.count) {
+            await kv.hset(key, { count: '1', resetAt: String(now + windowMs) });
+            await kv.expire(key, Math.ceil(windowMs / 1000));
             return { allowed: true, remaining: max - 1 };
         }
         
-        if (now > current.resetAt) {
-            await kv.set(key, { count: 1, resetAt: now + windowMs }, { ex: Math.ceil(windowMs / 1000) });
+        const resetAt = parseInt(data.resetAt, 10);
+        if (now > resetAt) {
+            // Окно истекло — сбрасываем
+            await kv.del(key);
+            await kv.hset(key, { count: '1', resetAt: String(now + windowMs) });
+            await kv.expire(key, Math.ceil(windowMs / 1000));
             return { allowed: true, remaining: max - 1 };
         }
         
-        if (current.count >= max) {
+        const count = parseInt(data.count, 10);
+        if (count >= max) {
             return { 
                 allowed: false, 
-                retryAfter: Math.ceil((current.resetAt - now) / 1000),
+                retryAfter: Math.ceil((resetAt - now) / 1000),
                 remaining: 0
             };
         }
         
         await kv.hincrby(key, 'count', 1);
-        return { allowed: true, remaining: max - current.count - 1 };
+        return { allowed: true, remaining: max - count - 1 };
     } catch (err) {
+        // Если ключ имеет неправильный тип — удаляем и начинаем заново
+        if (err.message && err.message.includes('WRONGTYPE')) {
+            try {
+                await kv.del(key);
+            } catch (_) {}
+            return { allowed: true, remaining: max };
+        }
         console.error('[Rate Limit] KV error:', err.message);
-        return { allowed: true, remaining: max };
+        return { allowed: true, remaining: max }; // fail-open
     }
 }
 
