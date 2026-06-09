@@ -1832,7 +1832,7 @@ function isValidUrl(string) {
     }
 }
 
-    // Обработчик ошибок с восстановлением токена
+        // Обработчик ошибок с восстановлением токена
     async function loadSection(section) {
         $('content').innerHTML = '<div class="loading"><div class="spinner"></div><div>Загрузка...</div></div>';
         try {
@@ -1843,18 +1843,17 @@ function isValidUrl(string) {
                 renderSites();
             } else if (section === 'changelog') {
                 const data = await apiRequest('/api/admin/changelog');
-                State.changelog = data.content || '';   // ← сырая строка
+                State.changelog = data.content || '';
                 renderChangelog();
-
             } else if (section === 'downloader') {
-                filesSearch = '';
+                // Сбрасываем поиск и загружаем первую страницу
+                DownloaderState.search = '';
+                DownloaderState.page = 1;
                 loadFiles(1);
-            }
-              else if (section === 'redirects') {
+            } else if (section === 'redirects') {
                 redirectsSearch = '';
                 loadRedirects();
-            }
-             else if (section === 'status') {
+            } else if (section === 'status') {
                 const data = await apiRequest('/api/admin/status-config');
                 State.statusConfig = data.content || [];
                 renderJsonEditor('status', State.statusConfig);
