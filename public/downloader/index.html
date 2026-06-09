@@ -71,7 +71,6 @@ body {
     padding: 48px 24px 80px;
 }
 
-/* Hero */
 .hero {
     text-align: center;
     margin-bottom: 32px;
@@ -104,7 +103,6 @@ h1 {
     font-size: 0.95rem;
 }
 
-/* Card */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -161,7 +159,6 @@ h1 {
     background: var(--bg-elevated);
 }
 
-/* Buttons */
 .actions {
     display: flex;
     gap: 10px;
@@ -208,7 +205,6 @@ h1 {
     cursor: not-allowed;
 }
 
-/* Progress */
 .progress-container {
     display: none;
     margin-bottom: 16px;
@@ -236,7 +232,6 @@ h1 {
     transition: width 0.2s;
 }
 
-/* Verification */
 .verification {
     display: none;
     margin-top: 16px;
@@ -264,7 +259,6 @@ h1 {
     color: var(--accent);
 }
 
-/* Verify instructions */
 .verify-section {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -336,7 +330,52 @@ h1 {
     color: var(--text-primary);
 }
 
-/* Error state */
+/* Security info */
+.security-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-top: 16px;
+}
+.security-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.security-title svg {
+    width: 16px;
+    height: 16px;
+    color: var(--success);
+}
+.security-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.security-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.security-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--success);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
 .error-state {
     display: none;
     text-align: center;
@@ -362,7 +401,6 @@ h1 {
     margin-bottom: 20px;
 }
 
-/* Loading spinner */
 .loading {
     display: flex;
     flex-direction: column;
@@ -381,7 +419,6 @@ h1 {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Footer */
 .footer {
     max-width: 980px; margin: 0 auto;
     padding: 24px;
@@ -392,7 +429,6 @@ h1 {
 }
 .footer a { color: var(--accent); text-decoration: none; }
 
-/* Toast */
 .toast {
     position: fixed;
     bottom: 24px;
@@ -450,13 +486,11 @@ h1 {
 
 <main class="layout">
 
-    <!-- Loading -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
         <div>Загрузка метаданных...</div>
     </div>
 
-    <!-- Error state -->
     <div class="error-state" id="errorState">
         <div class="error-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -473,7 +507,6 @@ h1 {
         </a>
     </div>
 
-    <!-- Main content -->
     <div id="mainContent" class="hidden">
 
         <section class="hero">
@@ -552,6 +585,41 @@ h1 {
             </div>
         </section>
 
+        <section class="security-section">
+            <div class="security-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Безопасность загрузки
+            </div>
+            <ul class="security-list">
+                <li class="security-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Файл проверен на вирусы при загрузке</span>
+                </li>
+                <li class="security-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Целостность подтверждена хешем SHA-256</span>
+                </li>
+                <li class="security-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Защищённое соединение HTTPS</span>
+                </li>
+                <li class="security-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Хранение в защищённом облачном хранилище</span>
+                </li>
+            </ul>
+        </section>
+
     </div>
 
 </main>
@@ -582,9 +650,6 @@ h1 {
         currentOS: 'mac'
     };
 
-    // -----------------------------
-    // Утилиты
-    // -----------------------------
     const $ = (id) => document.getElementById(id);
 
     function formatBytes(bytes) {
@@ -654,9 +719,6 @@ h1 {
         $('verifyCodeText').textContent = cmd;
     }
 
-    // -----------------------------
-    // SHA-256 проверка
-    // -----------------------------
     async function computeSha256(buffer) {
         const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
         return Array.from(new Uint8Array(hashBuffer))
@@ -671,9 +733,6 @@ h1 {
         $('verificationText').textContent = text;
     }
 
-    // -----------------------------
-    // Загрузка файла
-    // -----------------------------
     async function downloadFile() {
         if (State.downloading || !State.meta) return;
         State.downloading = true;
@@ -690,7 +749,7 @@ h1 {
         progressContainer.classList.add('visible');
 
         try {
-            const response = await fetch(`/api/download/${State.hash}`);
+            const response = await fetch(`/api/downloader/${State.hash}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
@@ -722,7 +781,6 @@ h1 {
                 offset += chunk.length;
             }
 
-            // Проверка SHA-256
             setVerification('checking', 'Проверка целостности файла...');
 
             const computedHash = await computeSha256(buffer.buffer);
@@ -736,7 +794,6 @@ h1 {
                 return;
             }
 
-            // Создаём blob и инициируем сохранение
             const blob = new Blob([buffer], { type: State.meta.contentType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -761,24 +818,19 @@ h1 {
         }
     }
 
-    // -----------------------------
-    // Загрузка метаданных
-    // -----------------------------
     async function loadMeta() {
-        // Берём хеш из query: ?{hash} или ?hash={hash}
-        const params = new URLSearchParams(window.location.search);
-        let hash = params.get('hash') || params.get('file');
+        // Извлекаем хеш из URL: /downloader/{hash}
+        const pathParts = window.location.pathname.split('/');
+        let hash = pathParts[pathParts.length - 1];
 
-        // Fallback: если параметров нет, берём весь query string как хеш
-        if (!hash) {
-            const raw = window.location.search.replace(/^\?/, '');
-            if (raw && !raw.includes('=')) {
-                hash = raw;
-            }
+        // Fallback: query parameter
+        if (!hash || !isValidSha256(hash)) {
+            const params = new URLSearchParams(window.location.search);
+            hash = params.get('hash') || params.get('file');
         }
 
         if (!hash) {
-            showError('Не указан хеш файла', 'Откройте ссылку вида /downloader?{SHA-256 хеш файла}');
+            showError('Не указан хеш файла', 'Откройте ссылку вида /downloader/{SHA-256 хеш файла}');
             return;
         }
 
@@ -791,7 +843,7 @@ h1 {
         State.hash = hash;
 
         try {
-            const res = await fetch(`/api/download/${hash}/info`);
+            const res = await fetch(`/api/downloader/info/${hash}`);
             if (res.status === 404) {
                 showError('Файл не найден', 'Файла с таким SHA-256 хешем нет в системе. Возможно, он был удалён или ссылка устарела.');
                 return;
@@ -803,7 +855,6 @@ h1 {
             const meta = await res.json();
             State.meta = meta;
 
-            // Render
             $('loading').style.display = 'none';
             $('mainContent').classList.remove('hidden');
 
@@ -823,9 +874,6 @@ h1 {
         }
     }
 
-    // -----------------------------
-    // Инициализация
-    // -----------------------------
     function init() {
         $('downloadBtn').addEventListener('click', downloadFile);
 
