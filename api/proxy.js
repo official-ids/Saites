@@ -1208,7 +1208,7 @@ app.use('/api/downloader', downloaderRouter);
 const DOWNLOADER_DIR = 'downloader';
 const DOWNLOADER_HTML_FILE = 'index.html';
 const HASH_INJECTION_POINT = '</head>';
-const HASH_SCRIPT_TEMPLATE = `<script>window.__FILE_HASH__ = "${hash}";</script>`;
+const HASH_SCRIPT_TEMPLATE = '<script>window.__FILE_HASH__ = "${hash}";</script>';
 
 const HASH_REGEX = /^[a-f0-9]{64}$/i;
 const HASH_LENGTH = 64;
