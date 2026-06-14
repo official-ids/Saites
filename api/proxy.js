@@ -1568,44 +1568,8 @@ const rateLimitService = new RateLimitService();
 /**
  * Кэш сайтов (обратная совместимость)
  */
-let sitesCache = {
-    get data() {
-        return cacheService.getData(CACHE_KEYS.SITES);
-    },
-    set data(value) {
-        cacheService.updateCache(CACHE_KEYS.SITES, value);
-    },
-    get timestamp() {
-        return cacheService.getTimestamp(CACHE_KEYS.SITES);
-    },
-    set timestamp(value) {
-        const cache = cacheService.caches.get(CACHE_KEYS.SITES);
-        if (cache) {
-            cache.timestamp = value;
-        }
-    }
-};
-
-/**
- * Кэш changelog (обратная совместимость)
- */
-let changelogCache = {
-    get data() {
-        return cacheService.getData(CACHE_KEYS.CHANGELOG);
-    },
-    set data(value) {
-        cacheService.updateCache(CACHE_KEYS.CHANGELOG, value);
-    },
-    get timestamp() {
-        return cacheService.getTimestamp(CACHE_KEYS.CHANGELOG);
-    },
-    set timestamp(value) {
-        const cache = cacheService.caches.get(CACHE_KEYS.CHANGELOG);
-        if (cache) {
-            cache.timestamp = value;
-        }
-    }
-};
+let sitesCache = { data: [], timestamp: 0 };
+let changelogCache = { data: null, timestamp: 0 };
 
 /**
  * Map для rate limiting форм (обратная совместимость)
