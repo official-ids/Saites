@@ -1811,25 +1811,26 @@ Level Badges
                 </div>
 
                 <!-- Поля регистрации читателя -->
-                <div class="form-group" id="loginField">
-                    <label class="form-label" for="loginInput">Логин</label>
-                    <input type="text" class="form-input" id="loginInput" placeholder="Например, alex_123" maxlength="30" autocomplete="username" spellcheck="false">
-                    <div class="form-help">Латинские буквы, цифры, _ и -. Минимум 3 символа</div>
-                </div>
-                <div class="form-group" id="passwordField">
-                    <label class="form-label" for="passwordInput">Пароль</label>
-                    <input type="password" class="form-input" id="passwordInput" placeholder="Минимум 6 символов" maxlength="100" autocomplete="new-password">
-                    <div class="form-help">Используется для входа в аккаунт</div>
-                </div>
-                <div class="form-group" id="nicknameField">
-                    <label class="form-label" for="nicknameInput">Отображаемое имя</label>
-                    <input type="text" class="form-input" id="nicknameInput" placeholder="Например, Alex" maxlength="30" autocomplete="nickname">
-                    <div class="form-help">Публичный ник в комментариях (необязательно, совпадёт с логином)</div>
-                </div>
-
-                <button class="btn btn-primary" id="authSubmitBtn" style="width: 100%; margin-top: 12px;">
-                    <span id="authSubmitText">Создать аккаунт</span>
-                </button>
+<form id="readerRegisterForm" action="#" method="POST" onsubmit="return false;">
+    <div class="form-group" id="loginField">
+        <label class="form-label" for="loginInput">Логин</label>
+        <input type="text" class="form-input" id="loginInput" placeholder="Например, alex_123" maxlength="30" autocomplete="username" spellcheck="false">
+        <div class="form-help">Латинские буквы, цифры, _ и -. Минимум 3 символа</div>
+    </div>
+    <div class="form-group" id="passwordField">
+        <label class="form-label" for="passwordInput">Пароль</label>
+        <input type="password" class="form-input" id="passwordInput" placeholder="Минимум 6 символов" maxlength="100" autocomplete="new-password">
+        <div class="form-help">Используется для входа в аккаунт</div>
+    </div>
+    <div class="form-group" id="nicknameField">
+        <label class="form-label" for="nicknameInput">Отображаемое имя</label>
+        <input type="text" class="form-input" id="nicknameInput" placeholder="Например, Alex" maxlength="30" autocomplete="nickname">
+        <div class="form-help">Публичный ник в комментариях (необязательно, совпадёт с логином)</div>
+    </div>
+</form>
+<button class="btn btn-primary" id="authSubmitBtn" style="width: 100%; margin-top: 12px;">
+    <span id="authSubmitText">Создать аккаунт</span>
+</button>
 
                 <p class="form-help" style="text-align: center; margin-top: 16px;">
                     <span id="authSwitchText">Уже есть аккаунт?</span>
@@ -1838,25 +1839,25 @@ Level Badges
             </div>
 
             <!-- Шаг 2: Вход по логину и паролю -->
-            <div id="authStep2" class="hidden">
-                <div class="form-group">
-                    <label class="form-label" for="loginInput2">Логин</label>
-                    <input type="text" class="form-input" id="loginInput2" placeholder="Ваш логин" maxlength="30" autocomplete="username" spellcheck="false">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="passwordInput2">Пароль</label>
-                    <input type="password" class="form-input" id="passwordInput2" placeholder="Ваш пароль" maxlength="100" autocomplete="current-password">
-                </div>
-
-                <button class="btn btn-primary" id="readerLoginBtn" style="width: 100%; margin-top: 12px;">
-                    Войти
-                </button>
-
-                <p class="form-help" style="text-align: center; margin-top: 16px;">
-                    Нет аккаунта?
-                    <a href="#" id="backToRegister" style="color: var(--accent); text-decoration: none; font-weight: 500;">Зарегистрироваться</a>
-                </p>
-            </div>
+<div id="authStep2" class="hidden">
+    <form id="readerLoginForm" action="#" method="POST" onsubmit="return false;">
+        <div class="form-group">
+            <label class="form-label" for="loginInput2">Логин</label>
+            <input type="text" class="form-input" id="loginInput2" placeholder="Ваш логин" maxlength="30" autocomplete="username" spellcheck="false">
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="passwordInput2">Пароль</label>
+            <input type="password" class="form-input" id="passwordInput2" placeholder="Ваш пароль" maxlength="100" autocomplete="current-password">
+        </div>
+    </form>
+    <button class="btn btn-primary" id="readerLoginBtn" style="width: 100%; margin-top: 12px;">
+        Войти
+    </button>
+    <p class="form-help" style="text-align: center; margin-top: 16px;">
+        Нет аккаунта?
+        <a href="#" id="backToRegister" style="color: var(--accent); text-decoration: none; font-weight: 500;">Зарегистрироваться</a>
+    </p>
+</div>
         </div>
     </div>
 </div>
@@ -2763,44 +2764,51 @@ async function handleReaderLogin() {
                 }
             }
 
-            function renderPosts() {
-                const feed = document.getElementById('postsFeed');
-                let posts = [...State.posts];
+            let renderPostsRafId = null;
+function renderPosts() {
+    const feed = document.getElementById('postsFeed');
+    let posts = [...State.posts];
 
-                // Фильтрация
-                if (State.currentFilter === 'favorites' && State.user) {
-                    posts = posts.filter(p => p.isFavorited);
-                } else if (State.currentFilter === 'mine' && State.user) {
-                    if (State.user.role === 'admin') {
-                        posts = posts.filter(p => p.authorRole === 'admin');
-                    } else {
-                        posts = []; // У читателей нет "своих" постов
-                    }
-                }
+    // Фильтрация
+    if (State.currentFilter === 'favorites' && State.user) {
+        posts = posts.filter(p => p.isFavorited);
+    } else if (State.currentFilter === 'mine' && State.user) {
+        if (State.user.role === 'admin') {
+            posts = posts.filter(p => p.authorRole === 'admin');
+        } else {
+            posts = [];
+        }
+    }
 
-                // Сортировка: закреплённые сверху, потом по дате
-                posts.sort((a, b) => {
-                    if (a.isPinned && !b.isPinned) return -1;
-                    if (!a.isPinned && b.isPinned) return 1;
-                    return new Date(b.createdAt) - new Date(a.createdAt);
-                });
+    // Сортировка: закреплённые сверху, потом по дате
+    posts.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
-                if (posts.length === 0) {
-                    feed.innerHTML = `
-                        <div class="empty-state">
-                            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-                            </svg>
-                            <div class="empty-state-title">${State.currentFilter === 'favorites' ? 'Нет избранных постов' : 'Пока нет постов'}</div>
-                            <div class="empty-state-text">${State.currentFilter === 'favorites' ? 'Добавляйте посты в избранное, чтобы они появились здесь' : 'Новые публикации появятся здесь'}</div>
-                        </div>
-                    `;
-                    return;
-                }
+    if (posts.length === 0) {
+        feed.innerHTML = `
+        <div class="empty-state">
+            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+            </svg>
+            <div class="empty-state-title">${State.currentFilter === 'favorites' ? 'Нет избранных постов' : 'Пока нет постов'}</div>
+            <div class="empty-state-text">${State.currentFilter === 'favorites' ? 'Добавляйте посты в избранное, чтобы они появились здесь' : 'Новые публикации появятся здесь'}</div>
+        </div>
+        `;
+        return;
+    }
 
-                feed.innerHTML = posts.map((post, idx) => renderPostCard(post, idx)).join('');
-                attachPostEvents();
-            }
+    const postsHtml = posts.map((post, idx) => renderPostCard(post, idx)).join('');
+    
+    if (renderPostsRafId) cancelAnimationFrame(renderPostsRafId);
+    renderPostsRafId = requestAnimationFrame(() => {
+        feed.innerHTML = postsHtml;
+        attachPostEvents();
+        renderPostsRafId = null;
+    });
+}
 
             function renderPostCard(post, index) {
                 const isAdmin = post.authorRole === 'admin';
@@ -3326,43 +3334,50 @@ ${levelBadge}
                 }
             }
 
-            function renderComments() {
-                const list = document.getElementById('commentList');
-                const countEl = document.getElementById('commentsCount');
+            let renderCommentsRafId = null;
+function renderComments() {
+    const list = document.getElementById('commentList');
+    const countEl = document.getElementById('commentsCount');
 
-                // Построение дерева
-                const tree = buildCommentTree(State.comments);
+    // Построение дерева
+    const tree = buildCommentTree(State.comments);
 
-                // Сортировка
-                const sortFn = State.commentSort === 'top'
-                    ? (a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes)
-                    : (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
+    // Сортировка
+    const sortFn = State.commentSort === 'top'
+        ? (a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes)
+        : (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
 
-                // Закрепленные всегда сверху
-                tree.sort((a, b) => {
-                    if (a.isPinned && !b.isPinned) return -1;
-                    if (!a.isPinned && b.isPinned) return 1;
-                    return sortFn(a, b);
-                });
+    // Закрепленные всегда сверху
+    tree.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return sortFn(a, b);
+    });
 
-                countEl.textContent = `${State.comments.length} ${pluralize(State.comments.length, ['комментарий', 'комментария', 'комментариев'])}`;
+    countEl.textContent = `${State.comments.length} ${pluralize(State.comments.length, ['комментарий', 'комментария', 'комментариев'])}`;
 
-                if (tree.length === 0) {
-                    list.innerHTML = `
-                        <div class="empty-state" style="padding: 40px 0;">
-                            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
-                            <div class="empty-state-title">Пока нет комментариев</div>
-                            <div class="empty-state-text">Будьте первым!</div>
-                        </div>
-                    `;
-                    return;
-                }
+    if (tree.length === 0) {
+        list.innerHTML = `
+        <div class="empty-state" style="padding: 40px 0;">
+            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            </svg>
+            <div class="empty-state-title">Пока нет комментариев</div>
+            <div class="empty-state-text">Будьте первым!</div>
+        </div>
+        `;
+        return;
+    }
 
-                list.innerHTML = tree.map(c => renderCommentNode(c, 0)).join('');
-                attachCommentEvents();
-            }
+    const commentsHtml = tree.map(c => renderCommentNode(c, 0)).join('');
+
+    if (renderCommentsRafId) cancelAnimationFrame(renderCommentsRafId);
+    renderCommentsRafId = requestAnimationFrame(() => {
+        list.innerHTML = commentsHtml;
+        attachCommentEvents();
+        renderCommentsRafId = null;
+    });
+}
 
             function buildCommentTree(comments) {
                 const map = {};
