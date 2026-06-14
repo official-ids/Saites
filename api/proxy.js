@@ -1,247 +1,1196 @@
-const express = require('express');
+// -----------------------------
+// Модули и Зависимости
+// -----------------------------
+
+// -----------------------------
+// Node.js Core Modules
+// -----------------------------
+
+/**
+ * Работа с файловой системой (асинхронный API)
+ */
 const fs = require('fs').promises;
+
+/**
+ * Утилиты для работы с путями файлов и директорий
+ */
 const path = require('path');
-const helmet = require('helmet');
-const morgan = require('morgan');
+
+/**
+ * Криптографические функции (используется для безопасного сравнения токенов)
+ */
 const crypto = require('crypto');
-const newsRouter = require('../news');
-const supportRouter = require('../support');
-const downloaderRouter = require('../downloader');
-const redirectsRouter = require('../redirects');
+
+// -----------------------------
+// Third-Party Dependencies
+// -----------------------------
+
+/**
+ * Веб-фреймворк для создания HTTP-сервера и маршрутизации
+ */
+const express = require('express');
+
+/**
+ * Middleware для установки HTTP-заголовков безопасности
+ */
+const helmet = require('helmet');
+
+/**
+ * Middleware для логирования HTTP-запросов
+ */
+const morgan = require('morgan');
+
+/**
+ * Redis-совместимое key-value хранилище от Vercel
+ */
 const { kv } = require('@vercel/kv');
+
+// -----------------------------
+// Internal Application Modules
+// -----------------------------
+
+/**
+ * Пути к внутренним модулям приложения
+ */
+const MODULE_PATHS = {
+    NEWS: '../news',
+    SUPPORT: '../support',
+    DOWNLOADER: '../downloader',
+    REDIRECTS: '../redirects'
+};
+
+/**
+ * Роутер для работы с новостями
+ */
+const newsRouter = require(MODULE_PATHS.NEWS);
+
+/**
+ * Роутер для технической поддержки
+ */
+const supportRouter = require(MODULE_PATHS.SUPPORT);
+
+/**
+ * Роутер для загрузчика файлов
+ */
+const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
+
+/**
+ * Роутер для управления редиректами
+ */
+const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
 
 // -----------------------------
 // Константы и Конфигурация
 // -----------------------------
-const PORT = process.env.PORT || 3000;
 
-// Пути скорректированы для расположения в api/
-// __dirname теперь указывает на /api, поэтому добавляем ..
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
-const SAITES_FILE = process.env.SAITES_FILE || path.join(__dirname, '..', 'saites.txt');
-const CHANGELOG_FILE = process.env.CHANGELOG_FILE || path.join(__dirname, '..', 'changelog.txt');
+// -----------------------------
+// Server Configuration
+// -----------------------------
 
-// GitHub API Config
-const GITHUB_OWNER = process.env.GITHUB_OWNER;
-const GITHUB_REPO = process.env.GITHUB_REPO;
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'Oris';
-const GITHUB_SAITES_PATH = process.env.GITHUB_SAITES_PATH || 'saites.txt';
-const GITHUB_CHANGELOG_PATH = process.env.GITHUB_CHANGELOG_PATH || 'changelog.txt';
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
-
-// Telegram Config (без fallback-значения)
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
-
-// Timeouts & Retries
-const FETCH_TIMEOUT = 10000; // 10 секунд
-const FETCH_MAX_RETRIES = 3;
-const CACHE_TTL = 5 * 60 * 1000; // 5 минут
-const YT_CACHE_TTL = 5 * 60 * 1000;
-
-// Rate Limiting Config
-const RATE_LIMIT_WINDOW = 60 * 1000;
-const RATE_LIMIT_MAX = 60;
-const FORM_COOLDOWN = 30 * 1000;
-
-// Validation Limits
-const MAX_CONTENT_LENGTH = 500000;
-const MAX_TITLE_LENGTH = 200;
-const MAX_DESCRIPTION_LENGTH = 1000;
-const MIN_TITLE_LENGTH = 3;
-const MIN_DESCRIPTION_LENGTH = 20;
-
-const CATEGORY_META = {
-    tools:      { label: 'Инструменты',    icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', color: '#FF9F0A' },
-    dev:        { label: 'Для разработчиков', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: '#0071E3' },
-    design:     { label: 'Дизайн',          icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01', color: '#AF52DE' },
-    education:  { label: 'Образование',     icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z', color: '#34C759' },
-    games:      { label: 'Игры',            icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: '#FF3B30' },
-    media:      { label: 'Медиа',           icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', color: '#FF9F0A' },
-    social:     { label: 'Соцсети',         icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: '#5E5CE6' },
-    other:      { label: 'Другое',          icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z', color: '#8E8E93' }
+/**
+ * Базовая конфигурация сервера
+ */
+const SERVER_CONFIG = {
+    PORT: process.env.PORT || 3000
 };
+
+// -----------------------------
+// Path Configuration
+// -----------------------------
+
+/**
+ * Конфигурация путей к файлам и директориям
+ * Пути скорректированы для расположения в api/
+ * __dirname указывает на /api, поэтому добавляем ..
+ */
+class PathConfig {
+    /**
+     * Путь к директории public
+     * @returns {string}
+     */
+    static get PUBLIC_DIR() {
+        return path.join(__dirname, '..', 'public');
+    }
+
+    /**
+     * Путь к файлу saites.txt
+     * @returns {string}
+     */
+    static get SAITES_FILE() {
+        return process.env.SAITES_FILE || path.join(__dirname, '..', 'saites.txt');
+    }
+
+    /**
+     * Путь к файлу changelog.txt
+     * @returns {string}
+     */
+    static get CHANGELOG_FILE() {
+        return process.env.CHANGELOG_FILE || path.join(__dirname, '..', 'changelog.txt');
+    }
+}
+
+// -----------------------------
+// GitHub API Configuration
+// -----------------------------
+
+/**
+ * Конфигурация GitHub API для работы с репозиторием
+ */
+class GitHubConfig {
+    /**
+     * Владелец репозитория
+     * @returns {string|undefined}
+     */
+    static get OWNER() {
+        return process.env.GITHUB_OWNER;
+    }
+
+    /**
+     * Имя репозитория
+     * @returns {string|undefined}
+     */
+    static get REPO() {
+        return process.env.GITHUB_REPO;
+    }
+
+    /**
+     * Ветка репозитория
+     * @returns {string}
+     */
+    static get BRANCH() {
+        return process.env.GITHUB_BRANCH || 'Oris';
+    }
+
+    /**
+     * Путь к файлу saites.txt в репозитории
+     * @returns {string}
+     */
+    static get SAITES_PATH() {
+        return process.env.GITHUB_SAITES_PATH || 'saites.txt';
+    }
+
+    /**
+     * Путь к файлу changelog.txt в репозитории
+     * @returns {string}
+     */
+    static get CHANGELOG_PATH() {
+        return process.env.GITHUB_CHANGELOG_PATH || 'changelog.txt';
+    }
+
+    /**
+     * Токен для аутентификации в GitHub API
+     * @returns {string|undefined}
+     */
+    static get TOKEN() {
+        return process.env.GITHUB_TOKEN;
+    }
+
+    /**
+     * Проверка, настроен ли GitHub
+     * @returns {boolean}
+     */
+    static isConfigured() {
+        return !!(this.OWNER && this.REPO && this.TOKEN);
+    }
+}
+
+// -----------------------------
+// Telegram Configuration
+// -----------------------------
+
+/**
+ * Конфигурация Telegram Bot API
+ */
+class TelegramConfig {
+    /**
+     * Токен бота
+     * @returns {string|undefined}
+     */
+    static get BOT_TOKEN() {
+        return process.env.TELEGRAM_BOT_TOKEN;
+    }
+
+    /**
+     * ID чата для отправки сообщений
+     * @returns {string|undefined}
+     */
+    static get CHAT_ID() {
+        return process.env.TELEGRAM_CHAT_ID;
+    }
+
+    /**
+     * Проверка, настроен ли Telegram
+     * @returns {boolean}
+     */
+    static isConfigured() {
+        return !!(this.BOT_TOKEN && this.CHAT_ID);
+    }
+}
+
+// -----------------------------
+// Admin Configuration
+// -----------------------------
+
+/**
+ * Конфигурация административного доступа
+ */
+class AdminConfig {
+    /**
+     * Токен для аутентификации администратора
+     * @returns {string|undefined}
+     */
+    static get TOKEN() {
+        return process.env.ADMIN_TOKEN;
+    }
+
+    /**
+     * Проверка, настроен ли административный токен
+     * @returns {boolean}
+     */
+    static isConfigured() {
+        return !!this.TOKEN;
+    }
+}
+
+// -----------------------------
+// Timeout and Retry Configuration
+// -----------------------------
+
+/**
+ * Конфигурация таймаутов и повторных попыток
+ */
+class TimeoutConfig {
+    /**
+     * Таймаут HTTP запросов (10 секунд)
+     * @returns {number}
+     */
+    static get FETCH_TIMEOUT() {
+        return 10000;
+    }
+
+    /**
+     * Максимальное количество повторных попыток
+     * @returns {number}
+     */
+    static get FETCH_MAX_RETRIES() {
+        return 3;
+    }
+
+    /**
+     * Время жизни кэша (5 минут)
+     * @returns {number}
+     */
+    static get CACHE_TTL() {
+        return 5 * 60 * 1000;
+    }
+
+    /**
+     * Время жизни кэша YouTube (5 минут)
+     * @returns {number}
+     */
+    static get YT_CACHE_TTL() {
+        return 5 * 60 * 1000;
+    }
+}
+
+// -----------------------------
+// Rate Limiting Configuration
+// -----------------------------
+
+/**
+ * Конфигурация ограничения запросов
+ */
+class RateLimitConfig {
+    /**
+     * Окно времени для rate limiting (1 минута)
+     * @returns {number}
+     */
+    static get WINDOW() {
+        return 60 * 1000;
+    }
+
+    /**
+     * Максимальное количество запросов в окне
+     * @returns {number}
+     */
+    static get MAX() {
+        return 60;
+    }
+
+    /**
+     * Кулдаун между отправками форм (30 секунд)
+     * @returns {number}
+     */
+    static get FORM_COOLDOWN() {
+        return 30 * 1000;
+    }
+}
+
+// -----------------------------
+// Validation Configuration
+// -----------------------------
+
+/**
+ * Конфигурация ограничений валидации
+ */
+class ValidationConfig {
+    /**
+     * Максимальная длина контента
+     * @returns {number}
+     */
+    static get MAX_CONTENT_LENGTH() {
+        return 500000;
+    }
+
+    /**
+     * Максимальная длина заголовка
+     * @returns {number}
+     */
+    static get MAX_TITLE_LENGTH() {
+        return 200;
+    }
+
+    /**
+     * Максимальная длина описания
+     * @returns {number}
+     */
+    static get MAX_DESCRIPTION_LENGTH() {
+        return 1000;
+    }
+
+    /**
+     * Минимальная длина заголовка
+     * @returns {number}
+     */
+    static get MIN_TITLE_LENGTH() {
+        return 3;
+    }
+
+    /**
+     * Минимальная длина описания
+     * @returns {number}
+     */
+    static get MIN_DESCRIPTION_LENGTH() {
+        return 20;
+    }
+}
+
+// -----------------------------
+// Category Metadata
+// -----------------------------
+
+/**
+ * Метаданные категорий с SVG иконками и цветами
+ */
+class CategoryMetadata {
+    /**
+     * Данные категорий
+     * @returns {Object}
+     */
+    static get DATA() {
+        return {
+            tools: {
+                label: 'Инструменты',
+                icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+                color: '#FF9F0A'
+            },
+            dev: {
+                label: 'Для разработчиков',
+                icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
+                color: '#0071E3'
+            },
+            design: {
+                label: 'Дизайн',
+                icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
+                color: '#AF52DE'
+            },
+            education: {
+                label: 'Образование',
+                icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z',
+                color: '#34C759'
+            },
+            games: {
+                label: 'Игры',
+                icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                color: '#FF3B30'
+            },
+            media: {
+                label: 'Медиа',
+                icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+                color: '#FF9F0A'
+            },
+            social: {
+                label: 'Соцсети',
+                icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+                color: '#5E5CE6'
+            },
+            other: {
+                label: 'Другое',
+                icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z',
+                color: '#8E8E93'
+            }
+        };
+    }
+
+    /**
+     * Получение метаданных категории
+     * @param {string} category - Идентификатор категории
+     * @returns {Object|null} - Метаданные категории или null
+     */
+    static get(category) {
+        return this.DATA[category] || null;
+    }
+
+    /**
+     * Получение метки категории
+     * @param {string} category - Идентификатор категории
+     * @returns {string} - Метка категории
+     */
+    static getLabel(category) {
+        const metadata = this.get(category);
+        return metadata ? metadata.label : 'Другое';
+    }
+
+    /**
+     * Получение иконки категории
+     * @param {string} category - Идентификатор категории
+     * @returns {string} - SVG path иконки
+     */
+    static getIcon(category) {
+        const metadata = this.get(category);
+        return metadata ? metadata.icon : '';
+    }
+
+    /**
+     * Получение цвета категории
+     * @param {string} category - Идентификатор категории
+     * @returns {string} - HEX цвет
+     */
+    static getColor(category) {
+        const metadata = this.get(category);
+        return metadata ? metadata.color : '#8E8E93';
+    }
+
+    /**
+     * Получение списка всех категорий
+     * @returns {Array<string>} - Массив идентификаторов категорий
+     */
+    static getAllCategories() {
+        return Object.keys(this.DATA);
+    }
+
+    /**
+     * Проверка валидности категории
+     * @param {string} category - Идентификатор категории
+     * @returns {boolean} - true если категория валидна
+     */
+    static isValid(category) {
+        return category in this.DATA;
+    }
+}
+
+// -----------------------------
+// Legacy Variables (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Порт сервера (обратная совместимость)
+ */
+const PORT = SERVER_CONFIG.PORT;
+
+/**
+ * Путь к директории public (обратная совместимость)
+ */
+const PUBLIC_DIR = PathConfig.PUBLIC_DIR;
+
+/**
+ * Путь к файлу saites.txt (обратная совместимость)
+ */
+const SAITES_FILE = PathConfig.SAITES_FILE;
+
+/**
+ * Путь к файлу changelog.txt (обратная совместимость)
+ */
+const CHANGELOG_FILE = PathConfig.CHANGELOG_FILE;
+
+/**
+ * GitHub конфигурация (обратная совместимость)
+ */
+const GITHUB_OWNER = GitHubConfig.OWNER;
+const GITHUB_REPO = GitHubConfig.REPO;
+const GITHUB_BRANCH = GitHubConfig.BRANCH;
+const GITHUB_SAITES_PATH = GitHubConfig.SAITES_PATH;
+const GITHUB_CHANGELOG_PATH = GitHubConfig.CHANGELOG_PATH;
+const GITHUB_TOKEN = GitHubConfig.TOKEN;
+
+/**
+ * Telegram конфигурация (обратная совместимость)
+ */
+const TELEGRAM_BOT_TOKEN = TelegramConfig.BOT_TOKEN;
+const TELEGRAM_CHAT_ID = TelegramConfig.CHAT_ID;
+
+/**
+ * Admin конфигурация (обратная совместимость)
+ */
+const ADMIN_TOKEN = AdminConfig.TOKEN;
+
+/**
+ * Timeout конфигурация (обратная совместимость)
+ */
+const FETCH_TIMEOUT = TimeoutConfig.FETCH_TIMEOUT;
+const FETCH_MAX_RETRIES = TimeoutConfig.FETCH_MAX_RETRIES;
+const CACHE_TTL = TimeoutConfig.CACHE_TTL;
+const YT_CACHE_TTL = TimeoutConfig.YT_CACHE_TTL;
+
+/**
+ * Rate Limit конфигурация (обратная совместимость)
+ */
+const RATE_LIMIT_WINDOW = RateLimitConfig.WINDOW;
+const RATE_LIMIT_MAX = RateLimitConfig.MAX;
+const FORM_COOLDOWN = RateLimitConfig.FORM_COOLDOWN;
+
+/**
+ * Validation конфигурация (обратная совместимость)
+ */
+const MAX_CONTENT_LENGTH = ValidationConfig.MAX_CONTENT_LENGTH;
+const MAX_TITLE_LENGTH = ValidationConfig.MAX_TITLE_LENGTH;
+const MAX_DESCRIPTION_LENGTH = ValidationConfig.MAX_DESCRIPTION_LENGTH;
+const MIN_TITLE_LENGTH = ValidationConfig.MIN_TITLE_LENGTH;
+const MIN_DESCRIPTION_LENGTH = ValidationConfig.MIN_DESCRIPTION_LENGTH;
+
+/**
+ * Метаданные категорий (обратная совместимость)
+ */
+const CATEGORY_META = CategoryMetadata.DATA;
 
 // -----------------------------
 // Инициализация Express
 // -----------------------------
+
 const app = express();
 
-// Security Headers (Helmet)
-app.use(helmet({
+// -----------------------------
+// CSP Domain Constants
+// -----------------------------
+
+// Self and inline resources
+const CSP_SELF = "'self'";
+const CSP_UNSAFE_INLINE = "'unsafe-inline'";
+const CSP_NONE = "'none'";
+
+// CDN and external resources
+const CSP_TAILWIND_CDN = "https://cdn.tailwindcss.com";
+const CSP_UNPKG = "https://unpkg.com";
+const CSP_CLOUDFLARE = "https://cdnjs.cloudflare.com";
+
+// Google Fonts
+const CSP_GOOGLE_FONTS = "https://fonts.googleapis.com";
+const CSP_GOOGLE_FONTS_STATIC = "https://fonts.gstatic.com";
+
+// YouTube resources
+const CSP_YOUTUBE_THUMBNAILS = "https://i.ytimg.com";
+const CSP_YOUTUBE_CHANNEL = "https://yt3.ggpht.com";
+const CSP_YOUTUBE_USER_CONTENT = "https://yt3.googleusercontent.com";
+const CSP_YOUTUBE_API = "https://www.youtube.com";
+
+// Vercel Blob Storage
+const CSP_VERCEL_BLOB = "https://*.blob.vercel-storage.com";
+const CSP_VERCEL_PUBLIC_BLOB = "https://*.public.blob.vercel-storage.com";
+
+// PeerJS WebRTC
+const CSP_PEERJS_WS = "wss://0.peerjs.com";
+const CSP_PEERJS_WS_1 = "wss://1.peerjs.com";
+const CSP_PEERJS_WS_WILDCARD = "wss://*.peerjs.com";
+const CSP_PEERJS_HTTPS = "https://*.peerjs.com";
+
+// Hosting platforms (Railway, Render, Glitch)
+const CSP_RAILWAY_HTTPS = "https://*.railway.app";
+const CSP_RAILWAY_WSS = "wss://*.railway.app";
+const CSP_RENDER_HTTPS = "https://*.onrender.com";
+const CSP_RENDER_WSS = "wss://*.onrender.com";
+const CSP_GLITCH_HTTPS = "https://*.glitch.me";
+const CSP_GLITCH_WSS = "wss://*.glitch.me";
+
+// External APIs
+const CSP_GITHUB_API = "https://api.github.com";
+const CSP_TELEGRAM_API = "https://api.telegram.org";
+
+// Data and blob URLs
+const CSP_DATA = "data:";
+const CSP_BLOB = "blob:";
+
+// -----------------------------
+// CSP Configuration
+// -----------------------------
+
+const CSP_DIRECTIVES = {
+    defaultSrc: [CSP_SELF],
+    
+    scriptSrc: [
+        CSP_SELF,
+        CSP_UNSAFE_INLINE,
+        CSP_TAILWIND_CDN,
+        CSP_GOOGLE_FONTS,
+        CSP_UNPKG,
+        CSP_CLOUDFLARE
+    ],
+    
+    styleSrc: [
+        CSP_SELF,
+        CSP_UNSAFE_INLINE,
+        CSP_GOOGLE_FONTS,
+        CSP_CLOUDFLARE
+    ],
+    
+    fontSrc: [
+        CSP_SELF,
+        CSP_GOOGLE_FONTS_STATIC,
+        CSP_DATA,
+        CSP_CLOUDFLARE
+    ],
+    
+    imgSrc: [
+        CSP_SELF,
+        CSP_DATA,
+        CSP_BLOB,
+        CSP_YOUTUBE_THUMBNAILS,
+        CSP_YOUTUBE_CHANNEL,
+        CSP_YOUTUBE_USER_CONTENT,
+        CSP_VERCEL_BLOB,
+        CSP_VERCEL_PUBLIC_BLOB
+    ],
+    
+    mediaSrc: [
+        CSP_SELF,
+        CSP_BLOB,
+        CSP_VERCEL_BLOB,
+        CSP_VERCEL_PUBLIC_BLOB
+    ],
+    
+    connectSrc: [
+        CSP_SELF,
+        CSP_GITHUB_API,
+        CSP_YOUTUBE_API,
+        CSP_TELEGRAM_API,
+        CSP_PEERJS_WS,
+        CSP_PEERJS_WS_1,
+        CSP_PEERJS_WS_WILDCARD,
+        CSP_PEERJS_HTTPS,
+        CSP_RAILWAY_HTTPS,
+        CSP_RAILWAY_WSS,
+        CSP_RENDER_HTTPS,
+        CSP_RENDER_WSS,
+        CSP_GLITCH_HTTPS,
+        CSP_GLITCH_WSS,
+        CSP_VERCEL_BLOB,
+        CSP_VERCEL_PUBLIC_BLOB
+    ],
+    
+    objectSrc: [CSP_NONE],
+    baseUri: [CSP_SELF],
+    formAction: [CSP_SELF]
+};
+
+// -----------------------------
+// Helmet Configuration
+// -----------------------------
+
+const HELMET_CONFIG = {
     contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: [
-                "'self'", 
-                "'unsafe-inline'", 
-                "https://cdn.tailwindcss.com", 
-                "https://fonts.googleapis.com",
-                "https://unpkg.com",
-                "https://cdnjs.cloudflare.com"
-            ],
-            styleSrc: [
-                "'self'", 
-                "'unsafe-inline'", 
-                "https://fonts.googleapis.com",
-                "https://cdnjs.cloudflare.com"
-            ],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:", "https://cdnjs.cloudflare.com"],
-            imgSrc: [
-                "'self'", 
-                "data:", 
-                "blob:", 
-                "https://i.ytimg.com", 
-                "https://yt3.ggpht.com", 
-                "https://yt3.googleusercontent.com",
-                "https://*.blob.vercel-storage.com",
-                "https://*.public.blob.vercel-storage.com"
-            ],
-            mediaSrc: [
-                "'self'",
-                "blob:",
-                "https://*.blob.vercel-storage.com",
-                "https://*.public.blob.vercel-storage.com"
-            ],
-            connectSrc: [
-                "'self'", 
-                "https://api.github.com", 
-                "https://www.youtube.com", 
-                "https://api.telegram.org", 
-                "wss://0.peerjs.com", 
-                "wss://1.peerjs.com", 
-                "wss://*.peerjs.com", 
-                "https://*.peerjs.com",
-                "https://*.railway.app",
-                "wss://*.railway.app",
-                "https://*.onrender.com",
-                "wss://*.onrender.com",
-                "https://*.glitch.me",
-                "wss://*.glitch.me",
-                "https://*.blob.vercel-storage.com",
-                "https://*.public.blob.vercel-storage.com"
-            ],
-            objectSrc: ["'none'"],
-            baseUri: ["'self'"],
-            formAction: ["'self'"]
-        }
+        directives: CSP_DIRECTIVES
     },
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: false,
-    crossOriginResourcePolicy: { policy: "same-origin" },
-    referrerPolicy: { policy: "strict-origin-when-cross-origin" }
-}));
+    crossOriginResourcePolicy: { 
+        policy: "same-origin" 
+    },
+    referrerPolicy: { 
+        policy: "strict-origin-when-cross-origin" 
+    }
+};
+
+// -----------------------------
+// Security Middleware
+// -----------------------------
+
+app.use(helmet(HELMET_CONFIG));
 
 // -----------------------------
 // Вспомогательные функции
 // -----------------------------
 
+// -----------------------------
+// Constants
+// -----------------------------
+
+const HTTP_RETRY_DELAY = 1000; // 1 секунда между попытками
+const HTTP_RETRYABLE_ERRORS = ['AbortError', 'FetchError'];
+
+const SANITIZE_PATTERNS = {
+    TAGS: /[<>]/g,
+    AMPERSAND: /&/g,
+    DOUBLE_QUOTE: /"/g,
+    SINGLE_QUOTE: /'/g
+};
+
+const URL_PROTOCOL_REGEX = /^https?:\/\//i;
+const VALID_URL_PROTOCOLS = ['http:', 'https:'];
+
+// -----------------------------
+// HTTP Service
+// -----------------------------
+
 /**
- * Fetch с таймаутом и повторными попытками
+ * Сервис для выполнения HTTP запросов с повторными попытками
+ */
+class HttpService {
+    /**
+     * Выполнение fetch запроса с таймаутом
+     * @param {string} url - URL для запроса
+     * @param {Object} options - Опции fetch
+     * @param {number} timeout - Таймаут в миллисекундах
+     * @returns {Promise<Response>} - Response объект
+     */
+    async fetchWithTimeout(url, options, timeout) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+        }
+    }
+
+    /**
+     * Проверка, является ли ошибка повторной
+     * @param {Error} error - Объект ошибки
+     * @returns {boolean} - true если можно повторить запрос
+     */
+    isRetryableError(error) {
+        return HTTP_RETRYABLE_ERRORS.includes(error.name);
+    }
+
+    /**
+     * Задержка перед повторной попыткой
+     * @param {number} delay - Задержка в миллисекундах
+     * @returns {Promise<void>}
+     */
+    async delay(delay) {
+        return new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    /**
+     * Fetch с таймаутом и повторными попытками
+     * @param {string} url - URL для запроса
+     * @param {Object} options - Опции fetch
+     * @param {number} retries - Количество оставшихся попыток
+     * @returns {Promise<Response>} - Response объект
+     * @throws {Error} - Если все попытки исчерпаны
+     */
+    async fetchWithRetry(url, options = {}, retries = FETCH_MAX_RETRIES) {
+        try {
+            const response = await this.fetchWithTimeout(url, options, FETCH_TIMEOUT);
+            return response;
+        } catch (error) {
+            // Проверка возможности повтора
+            if (retries > 0 && this.isRetryableError(error)) {
+                await this.delay(HTTP_RETRY_DELAY);
+                return this.fetchWithRetry(url, options, retries - 1);
+            }
+            throw error;
+        }
+    }
+}
+
+// Инициализация сервиса
+const httpService = new HttpService();
+
+// -----------------------------
+// Sanitize Service
+// -----------------------------
+
+/**
+ * Сервис для безопасной очистки строк
+ */
+class SanitizeService {
+    /**
+     * Проверка наличия значения
+     * @param {any} value - Значение для проверки
+     * @returns {boolean} - true если значение существует
+     */
+    hasValue(value) {
+        return value !== null && value !== undefined && value !== '';
+    }
+
+    /**
+     * Преобразование в строку
+     * @param {any} value - Значение для преобразования
+     * @returns {string} - Строковое представление
+     */
+    toString(value) {
+        return String(value);
+    }
+
+    /**
+     * Удаление HTML тегов
+     * @param {string} str - Исходная строка
+     * @returns {string} - Строка без тегов
+     */
+    removeTags(str) {
+        return str.replace(SANITIZE_PATTERNS.TAGS, '');
+    }
+
+    /**
+     * Экранирование специальных символов
+     * @param {string} str - Исходная строка
+     * @returns {string} - Экранированная строка
+     */
+    escapeSpecialChars(str) {
+        return str
+            .replace(SANITIZE_PATTERNS.AMPERSAND, '&amp;')
+            .replace(SANITIZE_PATTERNS.DOUBLE_QUOTE, '&quot;')
+            .replace(SANITIZE_PATTERNS.SINGLE_QUOTE, '&#x27;');
+    }
+
+    /**
+     * Безопасная очистка строки для HTML-контекста
+     * Примечание: экранирование должно выполняться на клиенте.
+     * Эта функция только удаляет опасные символы для предотвращения инъекций.
+     * @param {any} str - Строка для очистки
+     * @returns {string} - Очищенная строка
+     */
+    sanitize(str) {
+        if (!this.hasValue(str)) {
+            return '';
+        }
+
+        let cleaned = this.toString(str);
+        cleaned = this.removeTags(cleaned);
+        cleaned = this.escapeSpecialChars(cleaned);
+        
+        return cleaned.trim();
+    }
+}
+
+// Инициализация сервиса
+const sanitizeService = new SanitizeService();
+
+// -----------------------------
+// URL Service
+// -----------------------------
+
+/**
+ * Сервис для работы с URL
+ */
+class UrlService {
+    /**
+     * Проверка наличия значения
+     * @param {any} url - URL для проверки
+     * @returns {boolean} - true если URL существует
+     */
+    hasValue(url) {
+        return url !== null && url !== undefined && url !== '';
+    }
+
+    /**
+     * Обрезка пробелов
+     * @param {string} url - URL для обрезки
+     * @returns {string} - Обрезанный URL
+     */
+    trim(url) {
+        return url.trim();
+    }
+
+    /**
+     * Проверка наличия протокола
+     * @param {string} url - URL для проверки
+     * @returns {boolean} - true если протокол присутствует
+     */
+    hasProtocol(url) {
+        return URL_PROTOCOL_REGEX.test(url);
+    }
+
+    /**
+     * Добавление протокола https://
+     * @param {string} url - URL без протокола
+     * @returns {string} - URL с протоколом
+     */
+    addHttpsProtocol(url) {
+        return `https://${url}`;
+    }
+
+    /**
+     * Парсинг URL
+     * @param {string} url - URL для парсинга
+     * @returns {URL|null} - URL объект или null при ошибке
+     */
+    parseUrl(url) {
+        try {
+            return new URL(url);
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Проверка валидности протокола
+     * @param {string} protocol - Протокол для проверки
+     * @returns {boolean} - true если протокол валиден
+     */
+    isValidProtocol(protocol) {
+        return VALID_URL_PROTOCOLS.includes(protocol);
+    }
+
+    /**
+     * Валидация URL
+     * @param {string} url - URL для проверки
+     * @returns {boolean} - true если URL валиден
+     */
+    isValidUrl(url) {
+        const parsed = this.parseUrl(url);
+        if (!parsed) {
+            return false;
+        }
+        return this.isValidProtocol(parsed.protocol);
+    }
+
+    /**
+     * Нормализация URL (добавление https:// если нет протокола)
+     * @param {string} url - URL для нормализации
+     * @returns {string} - Нормализованный URL
+     */
+    normalizeUrl(url) {
+        if (!this.hasValue(url)) {
+            return url;
+        }
+
+        const trimmed = this.trim(url);
+        
+        if (this.hasProtocol(trimmed)) {
+            return trimmed;
+        }
+
+        return this.addHttpsProtocol(trimmed);
+    }
+}
+
+// Инициализация сервиса
+const urlService = new UrlService();
+
+// -----------------------------
+// Legacy Functions (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Fetch с таймаутом и повторными попытками (обратная совместимость)
+ * @param {string} url - URL для запроса
+ * @param {Object} options - Опции fetch
+ * @param {number} retries - Количество оставшихся попыток
+ * @returns {Promise<Response>} - Response объект
  */
 async function fetchWithRetry(url, options = {}, retries = FETCH_MAX_RETRIES) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(timeout);
-        return response;
-    } catch (error) {
-        clearTimeout(timeout);
-        if (retries > 0 && (error.name === 'AbortError' || error.name === 'FetchError')) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return fetchWithRetry(url, options, retries - 1);
-        }
-        throw error;
-    }
+    return httpService.fetchWithRetry(url, options, retries);
 }
 
 /**
- * Безопасная очистка строки для HTML-контекста
- * Примечание: экранирование должно выполняться на клиенте.
- * Эта функция только удаляет опасные символы для предотвращения инъекций.
+ * Безопасная очистка строки для HTML-контекста (обратная совместимость)
+ * @param {any} str - Строка для очистки
+ * @returns {string} - Очищенная строка
  */
 function sanitize(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/[<>]/g, '') // Удаляем теги полностью
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;')
-        .trim();
+    return sanitizeService.sanitize(str);
 }
 
 /**
- * Валидация URL
+ * Валидация URL (обратная совместимость)
+ * @param {string} url - URL для проверки
+ * @returns {boolean} - true если URL валиден
  */
 function isValidUrl(url) {
-    try {
-        const parsed = new URL(url);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-    } catch {
-        return false;
-    }
+    return urlService.isValidUrl(url);
 }
 
 /**
- * Нормализация URL (добавление https:// если нет протокола)
+ * Нормализация URL (обратная совместимость)
+ * @param {string} url - URL для нормализации
+ * @returns {string} - Нормализованный URL
  */
 function normalizeUrl(url) {
-    if (!url) return url;
-    const trimmed = url.trim();
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
-    return `https://${trimmed}`;
+    return urlService.normalizeUrl(url);
 }
 
 // -----------------------------
 // Rate Limiting Middleware
 // -----------------------------
-const rateLimitMap = new Map();
 
+// -----------------------------
+// Constants
+// -----------------------------
+
+const RATE_LIMIT_CLEANUP_INTERVAL = 60 * 1000; // 1 минута
+const RATE_LIMIT_ERROR_MESSAGE = 'Too many requests, please try again later.';
+
+// -----------------------------
+// Global Rate Limit Service
+// -----------------------------
+
+/**
+ * Сервис для управления глобальным rate limiting запросов
+ */
+class GlobalRateLimitService {
+    constructor() {
+        this.rateLimitMap = new Map();
+        this.startCleanupInterval();
+    }
+
+    /**
+     * Получение или создание записи для IP
+     * @param {string} ip - IP адрес клиента
+     * @param {number} now - Текущее время в миллисекундах
+     * @returns {Object} - Запись rate limit { count, resetTime }
+     */
+    getOrCreateRecord(ip, now) {
+        if (!this.rateLimitMap.has(ip)) {
+            const record = {
+                count: 1,
+                resetTime: now + RATE_LIMIT_WINDOW
+            };
+            this.rateLimitMap.set(ip, record);
+            return record;
+        }
+        return this.rateLimitMap.get(ip);
+    }
+
+    /**
+     * Сброс счетчика при истечении окна
+     * @param {Object} record - Запись rate limit
+     * @param {number} now - Текущее время в миллисекундах
+     */
+    resetIfExpired(record, now) {
+        if (now > record.resetTime) {
+            record.count = 1;
+            record.resetTime = now + RATE_LIMIT_WINDOW;
+        }
+    }
+
+    /**
+     * Проверка превышения лимита
+     * @param {Object} record - Запись rate limit
+     * @returns {boolean} - true если лимит превышен
+     */
+    isLimitExceeded(record) {
+        return record.count >= RATE_LIMIT_MAX;
+    }
+
+    /**
+     * Инкремент счетчика запросов
+     * @param {Object} record - Запись rate limit
+     */
+    incrementCount(record) {
+        record.count++;
+    }
+
+    /**
+     * Очистка устаревших записей
+     */
+    cleanupExpiredRecords() {
+        const now = Date.now();
+        for (const [ip, record] of this.rateLimitMap.entries()) {
+            if (now > record.resetTime) {
+                this.rateLimitMap.delete(ip);
+            }
+        }
+    }
+
+    /**
+     * Запуск периодической очистки устаревших записей
+     */
+    startCleanupInterval() {
+        setInterval(() => {
+            this.cleanupExpiredRecords();
+        }, RATE_LIMIT_CLEANUP_INTERVAL);
+    }
+
+    /**
+     * Middleware для rate limiting
+     * @param {Request} req - Express request объект
+     * @param {Response} res - Express response объект
+     * @param {Function} next - Express next функция
+     */
+    middleware(req, res, next) {
+        const ip = req.ip;
+        const now = Date.now();
+
+        const record = this.getOrCreateRecord(ip, now);
+        this.resetIfExpired(record, now);
+
+        if (this.isLimitExceeded(record)) {
+            return res.status(429).json({ 
+                error: RATE_LIMIT_ERROR_MESSAGE 
+            });
+        }
+
+        this.incrementCount(record);
+        next();
+    }
+}
+
+// Инициализация сервиса
+const globalRateLimitService = new GlobalRateLimitService();
+
+// -----------------------------
+// Legacy Variables (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Map для глобального rate limiting (обратная совместимость)
+ */
+const rateLimitMap = globalRateLimitService.rateLimitMap;
+
+// -----------------------------
+// Middleware Application
+// -----------------------------
+
+/**
+ * Глобальный middleware для rate limiting всех запросов
+ */
 app.use((req, res, next) => {
-    const ip = req.ip;
-    const now = Date.now();
-    
-    if (!rateLimitMap.has(ip)) {
-        rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-        return next();
-    }
-
-    const record = rateLimitMap.get(ip);
-    if (now > record.resetTime) {
-        record.count = 1;
-        record.resetTime = now + RATE_LIMIT_WINDOW;
-        return next();
-    }
-
-    if (record.count >= RATE_LIMIT_MAX) {
-        return res.status(429).json({ error: 'Too many requests, please try again later.' });
-    }
-
-    record.count++;
-    next();
+    globalRateLimitService.middleware(req, res, next);
 });
 
-// Очистка rate limit map
-setInterval(() => {
-    const now = Date.now();
-    for (const [ip, record] of rateLimitMap.entries()) {
-        if (now > record.resetTime) rateLimitMap.delete(ip);
-    }
-}, 60 * 1000);
+// -----------------------------
+// Core Middleware
+// -----------------------------
+
+/**
+ * Логирование запросов
+ */
+app.use(morgan('tiny'));
+
+/**
+ * Парсинг JSON body с ограничением размера
+ */
+app.use(express.json({ limit: '4.4mb' }));
+
+/**
+ * Парсинг binary data с ограничением размера
+ */
+app.use(express.raw({ type: 'application/octet-stream', limit: '4.4mb' }));
 
 // -----------------------------
-// Middleware
+// Router Mounting
 // -----------------------------
-app.use(morgan('tiny'));
-app.use(express.json({ limit: '4.4mb' }));
-app.use(express.raw({ type: 'application/octet-stream', limit: '4.4mb' }));
+
+/**
+ * Подключение роутеров API
+ */
 app.use('/api/news', newsRouter);
 app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);
@@ -252,34 +1201,160 @@ app.use('/api/downloader', downloaderRouter);
 // Dynamic Page: Downloader
 // -----------------------------
 
-app.get('/downloader/:hash', async (req, res) => {
-    try {
-        const hash = req.params.hash.toLowerCase();
+// -----------------------------
+// Constants
+// -----------------------------
+
+const DOWNLOADER_DIR = 'downloader';
+const DOWNLOADER_HTML_FILE = 'index.html';
+const HASH_INJECTION_POINT = '</head>';
+const HASH_SCRIPT_TEMPLATE = `<script>window.__FILE_HASH__ = "${hash}";</script>`;
+
+const HASH_REGEX = /^[a-f0-9]{64}$/i;
+const HASH_LENGTH = 64;
+
+const DOWNLOADER_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
+const STATIC_CACHE_CONTROL = '1d';
+
+const ERROR_MESSAGES = {
+    INVALID_HASH: 'Invalid hash format',
+    FILE_NOT_FOUND: 'Downloader page not found',
+    INTERNAL_ERROR: 'Internal server error'
+};
+
+// -----------------------------
+// Dynamic Page Service
+// -----------------------------
+
+/**
+ * Сервис для управления динамическими HTML-страницами
+ */
+class DynamicPageService {
+    /**
+     * Валидация SHA-256 хеша
+     * @param {string} hash - Хеш для проверки
+     * @returns {boolean} - true если хеш валиден
+     */
+    isValidHash(hash) {
+        return hash && HASH_REGEX.test(hash);
+    }
+
+    /**
+     * Нормализация хеша к нижнему регистру
+     * @param {string} hash - Хеш для нормализации
+     * @returns {string} - Хеш в нижнем регистре
+     */
+    normalizeHash(hash) {
+        return hash ? hash.toLowerCase() : '';
+    }
+
+    /**
+     * Формирование пути к HTML-файлу
+     * @param {string} pageDir - Директория страницы
+     * @param {string} fileName - Имя файла
+     * @returns {string} - Полный путь к файлу
+     */
+    buildHtmlPath(pageDir, fileName) {
+        return path.join(PUBLIC_DIR, pageDir, fileName);
+    }
+
+    /**
+     * Чтение HTML-файла
+     * @param {string} filePath - Путь к файлу
+     * @returns {Promise<string>} - Содержимое файла
+     * @throws {Error} - Если файл не найден
+     */
+    async readHtmlFile(filePath) {
+        try {
+            return await fs.readFile(filePath, 'utf8');
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                throw new Error(ERROR_MESSAGES.FILE_NOT_FOUND);
+            }
+            throw err;
+        }
+    }
+
+    /**
+     * Внедрение хеша в HTML-страницу
+     * @param {string} html - Исходный HTML
+     * @param {string} hash - Хеш для внедрения
+     * @returns {string} - Модифицированный HTML
+     */
+    injectHashIntoHtml(html, hash) {
+        const scriptTag = HASH_SCRIPT_TEMPLATE.replace('${hash}', hash);
+        return html.replace(HASH_INJECTION_POINT, `${scriptTag}${HASH_INJECTION_POINT}`);
+    }
+
+    /**
+     * Установка заголовков кэширования для динамических страниц
+     * @param {Response} res - Express response объект
+     */
+    setDynamicPageHeaders(res) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', DOWNLOADER_CACHE_CONTROL);
+    }
+
+    /**
+     * Обработка запроса динамической страницы
+     * @param {string} hash - Хеш файла
+     * @param {string} pageDir - Директория страницы
+     * @param {string} fileName - Имя файла
+     * @returns {Promise<string>} - Готовый HTML
+     */
+    async processDynamicPage(hash, pageDir, fileName) {
+        const normalizedHash = this.normalizeHash(hash);
         
-        if (!/^[a-f0-9]{64}$/i.test(hash)) {
-            return res.status(400).send('Invalid hash format');
+        if (!this.isValidHash(normalizedHash)) {
+            throw new Error(ERROR_MESSAGES.INVALID_HASH);
         }
 
-        const htmlPath = path.join(PUBLIC_DIR, 'downloader', 'index.html');
-        let html = await fs.readFile(htmlPath, 'utf8');
+        const htmlPath = this.buildHtmlPath(pageDir, fileName);
+        const html = await this.readHtmlFile(htmlPath);
+        
+        return this.injectHashIntoHtml(html, normalizedHash);
+    }
+}
 
-        // Внедряем хеш в страницу
-        html = html.replace(
-            '</head>',
-            `<script>window.__FILE_HASH__ = "${hash}";</script></head>`
+// Инициализация сервиса
+const dynamicPageService = new DynamicPageService();
+
+// -----------------------------
+// Route Handlers: Downloader
+// -----------------------------
+
+/**
+ * GET /downloader/:hash — динамическая страница загрузчика
+ */
+app.get('/downloader/:hash', async (req, res) => {
+    try {
+        const hash = req.params.hash;
+        
+        // Обработка динамической страницы
+        const html = await dynamicPageService.processDynamicPage(
+            hash,
+            DOWNLOADER_DIR,
+            DOWNLOADER_HTML_FILE
         );
 
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
+        // Установка заголовков и отправка
+        dynamicPageService.setDynamicPageHeaders(res);
         res.status(200).send(html);
+        
     } catch (err) {
-        console.error('[downloader/page]', err);
-        res.status(500).send('Internal server error');
+        handleDownloaderError(err, res);
     }
 });
 
+// -----------------------------
+// Static Files Middleware
+// -----------------------------
+
+/**
+ * Middleware для раздачи статических файлов
+ */
 app.use(express.static(PUBLIC_DIR, {
-    maxAge: '1d', 
+    maxAge: STATIC_CACHE_CONTROL,
     etag: true,
     setHeaders: (res) => {
         res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -287,193 +1362,824 @@ app.use(express.static(PUBLIC_DIR, {
 }));
 
 // -----------------------------
+// Helper Functions
+// -----------------------------
+
+/**
+ * Обработчик ошибок для Downloader routes
+ * @param {Error} err - Объект ошибки
+ * @param {Response} res - Express response объект
+ */
+const handleDownloaderError = (err, res) => {
+    console.error('[downloader/page]', err);
+    
+    // Определение статуса на основе типа ошибки
+    if (err.message === ERROR_MESSAGES.INVALID_HASH) {
+        return res.status(400).send(ERROR_MESSAGES.INVALID_HASH);
+    }
+    
+    if (err.message === ERROR_MESSAGES.FILE_NOT_FOUND) {
+        return res.status(404).send(ERROR_MESSAGES.FILE_NOT_FOUND);
+    }
+    
+    res.status(500).send(ERROR_MESSAGES.INTERNAL_ERROR);
+};
+
+// -----------------------------
 // Кэш и Данные
 // -----------------------------
-let sitesCache = { data: [], timestamp: 0 };
-let changelogCache = { data: null, timestamp: 0 };
-let ytChannelCache = { data: null, timestamp: 0 };
-let ytVideosCache = { data: null, timestamp: 0 };
 
-// Rate limit для форм
-const formRateLimitMap = new Map();
+// -----------------------------
+// Constants
+// -----------------------------
 
-function checkFormRateLimit(ip) {
-    const now = Date.now();
-    const last = formRateLimitMap.get(ip);
-    if (last && (now - last) < FORM_COOLDOWN) {
-        return Math.ceil((FORM_COOLDOWN - (now - last)) / 1000);
+const CACHE_KEYS = {
+    SITES: 'sites',
+    CHANGELOG: 'changelog'
+};
+
+// -----------------------------
+// Cache Service
+// -----------------------------
+
+/**
+ * Универсальный сервис для управления кэшем
+ */
+class CacheService {
+    constructor() {
+        this.caches = new Map();
     }
-    formRateLimitMap.set(ip, now);
-    return 0;
+
+    /**
+     * Инициализация кэша
+     * @param {string} key - Ключ кэша
+     * @param {any} initialValue - Начальное значение
+     */
+    initCache(key, initialValue = null) {
+        if (!this.caches.has(key)) {
+            this.caches.set(key, {
+                data: initialValue,
+                timestamp: 0
+            });
+        }
+    }
+
+    /**
+     * Получение данных из кэша
+     * @param {string} key - Ключ кэша
+     * @returns {any} - Данные из кэша
+     */
+    getData(key) {
+        const cache = this.caches.get(key);
+        return cache ? cache.data : null;
+    }
+
+    /**
+     * Получение timestamp кэша
+     * @param {string} key - Ключ кэша
+     * @returns {number} - Timestamp последнего обновления
+     */
+    getTimestamp(key) {
+        const cache = this.caches.get(key);
+        return cache ? cache.timestamp : 0;
+    }
+
+    /**
+     * Обновление кэша
+     * @param {string} key - Ключ кэша
+     * @param {any} data - Новые данные
+     */
+    updateCache(key, data) {
+        this.caches.set(key, {
+            data: data,
+            timestamp: Date.now()
+        });
+    }
+
+    /**
+     * Инвалидация кэша
+     * @param {string} key - Ключ кэша
+     * @param {any} emptyValue - Пустое значение для кэша
+     */
+    invalidateCache(key, emptyValue = null) {
+        this.caches.set(key, {
+            data: emptyValue,
+            timestamp: 0
+        });
+    }
+
+    /**
+     * Проверка актуальности кэша
+     * @param {string} key - Ключ кэша
+     * @param {number} ttl - Время жизни кэша в миллисекундах
+     * @returns {boolean} - true если кэш актуален
+     */
+    isCacheValid(key, ttl) {
+        const cache = this.caches.get(key);
+        if (!cache || !cache.data) {
+            return false;
+        }
+        
+        const now = Date.now();
+        return (now - cache.timestamp) < ttl;
+    }
+
+    /**
+     * Проверка наличия данных в кэше
+     * @param {string} key - Ключ кэша
+     * @returns {boolean} - true если данные есть
+     */
+    hasData(key) {
+        const cache = this.caches.get(key);
+        if (!cache || !cache.data) {
+            return false;
+        }
+        
+        // Для массивов проверяем длину
+        if (Array.isArray(cache.data)) {
+            return cache.data.length > 0;
+        }
+        
+        return true;
+    }
+}
+
+// Инициализация сервиса кэша
+const cacheService = new CacheService();
+
+// Инициализация всех кэшей
+cacheService.initCache(CACHE_KEYS.SITES, []);
+cacheService.initCache(CACHE_KEYS.CHANGELOG, null);
+
+// -----------------------------
+// Rate Limit Service
+// -----------------------------
+
+/**
+ * Сервис для управления rate limiting
+ */
+class RateLimitService {
+    constructor() {
+        this.rateLimitMap = new Map();
+    }
+
+    /**
+     * Проверка rate limit для IP адреса
+     * @param {string} ip - IP адрес клиента
+     * @param {number} cooldown - Время кулдауна в миллисекундах
+     * @returns {number} - Время ожидания в секундах (0 если лимит не превышен)
+     */
+    checkLimit(ip, cooldown) {
+        const now = Date.now();
+        const lastRequest = this.rateLimitMap.get(ip);
+        
+        if (lastRequest && (now - lastRequest) < cooldown) {
+            const waitTime = cooldown - (now - lastRequest);
+            return Math.ceil(waitTime / 1000);
+        }
+        
+        this.rateLimitMap.set(ip, now);
+        return 0;
+    }
+
+    /**
+     * Сброс rate limit для IP адреса
+     * @param {string} ip - IP адрес клиента
+     */
+    resetLimit(ip) {
+        this.rateLimitMap.delete(ip);
+    }
+
+    /**
+     * Очистка всех записей rate limit
+     */
+    clearAll() {
+        this.rateLimitMap.clear();
+    }
+}
+
+// Инициализация сервиса rate limiting
+const rateLimitService = new RateLimitService();
+
+// -----------------------------
+// Legacy Variables (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Кэш сайтов (обратная совместимость)
+ */
+let sitesCache = {
+    get data() {
+        return cacheService.getData(CACHE_KEYS.SITES);
+    },
+    set data(value) {
+        cacheService.updateCache(CACHE_KEYS.SITES, value);
+    },
+    get timestamp() {
+        return cacheService.getTimestamp(CACHE_KEYS.SITES);
+    },
+    set timestamp(value) {
+        const cache = cacheService.caches.get(CACHE_KEYS.SITES);
+        if (cache) {
+            cache.timestamp = value;
+        }
+    }
+};
+
+/**
+ * Кэш changelog (обратная совместимость)
+ */
+let changelogCache = {
+    get data() {
+        return cacheService.getData(CACHE_KEYS.CHANGELOG);
+    },
+    set data(value) {
+        cacheService.updateCache(CACHE_KEYS.CHANGELOG, value);
+    },
+    get timestamp() {
+        return cacheService.getTimestamp(CACHE_KEYS.CHANGELOG);
+    },
+    set timestamp(value) {
+        const cache = cacheService.caches.get(CACHE_KEYS.CHANGELOG);
+        if (cache) {
+            cache.timestamp = value;
+        }
+    }
+};
+
+/**
+ * Map для rate limiting форм (обратная совместимость)
+ */
+const formRateLimitMap = rateLimitService.rateLimitMap;
+
+// -----------------------------
+// Legacy Functions (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Проверка rate limit для форм (обратная совместимость)
+ * @param {string} ip - IP адрес клиента
+ * @returns {number} - Время ожидания в секундах
+ */
+function checkFormRateLimit(ip) {
+    return rateLimitService.checkLimit(ip, FORM_COOLDOWN);
 }
 
 // -----------------------------
 // Парсеры
 // -----------------------------
 
-function parseSaites(content) {
-    if (typeof content !== 'string') return [];
-    const blocks = content.split('::').filter(b => b?.trim());
-    const sites = [];
-    const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
+// -----------------------------
+// Constants
+// -----------------------------
 
-    for (const block of blocks) {
+const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
+const BLOCK_SEPARATOR = '::';
+const METADATA_SEPARATOR = '@:';
+const MIN_SITE_LINES = 3;
+
+const CHANGELOG_CHANGE_REGEX = /^-\s*\[(\w+)\]\s*(.*)$/;
+const CHANGELOG_VERSION_SEPARATOR = '|';
+
+// -----------------------------
+// Saite Parser Service
+// -----------------------------
+
+/**
+ * Сервис для парсинга данных сайтов
+ */
+class SaiteParserService {
+    /**
+     * Очистка строки от метаданных и кавычек
+     * @param {string} str - Строка для очистки
+     * @returns {string} - Очищенная строка
+     */
+    cleanString(str) {
+        // Удаление метаданных после @:
+        let cleaned = str.split(METADATA_SEPARATOR)[0].trim();
+        
+        // Удаление кавычек
+        if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
+            (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+            cleaned = cleaned.slice(1, -1);
+        }
+        
+        return cleaned.trim();
+    }
+
+    /**
+     * Парсинг одного блока сайта
+     * @param {string} block - Блок текста с данными сайта
+     * @returns {Object|null} - Объект сайта или null при ошибке
+     */
+    parseSiteBlock(block) {
         const lines = block
             .trim()
             .split('\n')
-            .map(l => l.trim())
-            .filter(l => l);
+            .map(line => line.trim())
+            .filter(line => line);
 
-        if (lines.length < 3) continue;
+        // Проверка минимального количества строк
+        if (lines.length < MIN_SITE_LINES) {
+            return null;
+        }
 
-        const clean = (str) => {
-            let s = str.split('@:')[0].trim();
-            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-                s = s.slice(1, -1);
-            }
-            return s.trim();
-        };
-
-        const title = clean(lines[0]);
-        let url = clean(lines[1]);
-        const desc = clean(lines[2]);
+        // Извлечение основных полей
+        const title = this.cleanString(lines[0]);
+        let url = this.cleanString(lines[1]);
+        const desc = this.cleanString(lines[2]);
         
-        // Опциональная 4-я строка — категория
+        // Извлечение опциональной категории
         let category = 'other';
         if (lines.length >= 4) {
-            const rawCat = clean(lines[3]).toLowerCase();
-            if (VALID_CATEGORIES.includes(rawCat)) {
-                category = rawCat;
+            const rawCategory = this.cleanString(lines[3]).toLowerCase();
+            if (VALID_CATEGORIES.includes(rawCategory)) {
+                category = rawCategory;
             }
         }
 
+        // Нормализация и валидация URL
         url = normalizeUrl(url);
         if (!isValidUrl(url)) {
-            console.warn(`[parseSaites] Invalid URL skipped: ${url}`);
-            continue;
+            console.warn(`[SaiteParser] Invalid URL skipped: ${url}`);
+            return null;
         }
 
-        if (title && url && desc) {
-            sites.push({ title, url, desc, category });
+        // Проверка наличия всех обязательных полей
+        if (!title || !url || !desc) {
+            return null;
         }
+
+        return { title, url, desc, category };
     }
-    return sites;
+
+    /**
+     * Парсинг всего контента с сайтами
+     * @param {string} content - Контент файла
+     * @returns {Array} - Массив объектов сайтов
+     */
+    parse(content) {
+        if (typeof content !== 'string') {
+            return [];
+        }
+
+        const blocks = content
+            .split(BLOCK_SEPARATOR)
+            .filter(block => block?.trim());
+
+        const sites = [];
+        
+        for (const block of blocks) {
+            const site = this.parseSiteBlock(block);
+            if (site) {
+                sites.push(site);
+            }
+        }
+
+        return sites;
+    }
 }
 
-function parseChangelog(content) {
-    if (!content || typeof content !== 'string') return [];
-    
-    const blocks = content.split('::').filter(b => b?.trim());
-    
-    return blocks.map(block => {
-        const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
-        if (lines.length === 0) return null;
+// Инициализация сервиса
+const saiteParserService = new SaiteParserService();
 
-        const headerLine = lines[0];
-        const [version, date] = headerLine.includes('|') 
-            ? headerLine.split('|').map(s => s.trim()) 
-            : [headerLine, ''];
+// -----------------------------
+// Changelog Parser Service
+// -----------------------------
 
-        const changes = lines.slice(1).map(line => {
-            const match = line.match(/^-\s*\[(\w+)\]\s*(.*)$/);
-            if (match) {
-                return { type: match[1].toLowerCase(), text: match[2].trim() };
-            }
-            return { type: 'default', text: line.replace(/^-\s*/, '').trim() };
-        });
+/**
+ * Сервис для парсинга changelog
+ */
+class ChangelogParserService {
+    /**
+     * Парсинг заголовка версии
+     * @param {string} headerLine - Строка заголовка
+     * @returns {Object} - Объект { version, date }
+     */
+    parseVersionHeader(headerLine) {
+        if (headerLine.includes(CHANGELOG_VERSION_SEPARATOR)) {
+            const parts = headerLine
+                .split(CHANGELOG_VERSION_SEPARATOR)
+                .map(part => part.trim());
+            
+            return {
+                version: parts[0] || '',
+                date: parts[1] || ''
+            };
+        }
 
-        return { 
-            version: version?.trim(), 
-            date: date?.trim() || '', 
-            changes: changes.filter(c => c.text)
+        return {
+            version: headerLine.trim(),
+            date: ''
         };
-    }).filter(Boolean);
+    }
+
+    /**
+     * Парсинг одного изменения
+     * @param {string} line - Строка с изменением
+     * @returns {Object|null} - Объект изменения или null
+     */
+    parseChangeLine(line) {
+        const match = line.match(CHANGELOG_CHANGE_REGEX);
+        
+        if (match) {
+            return {
+                type: match[1].toLowerCase(),
+                text: match[2].trim()
+            };
+        }
+
+        // Изменение без типа
+        const text = line.replace(/^-\s*/, '').trim();
+        if (!text) {
+            return null;
+        }
+
+        return {
+            type: 'default',
+            text: text
+        };
+    }
+
+    /**
+     * Парсинг одного блока changelog
+     * @param {string} block - Блок текста с версией
+     * @returns {Object|null} - Объект версии или null
+     */
+    parseChangelogBlock(block) {
+        const lines = block
+            .trim()
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line);
+
+        if (lines.length === 0) {
+            return null;
+        }
+
+        // Парсинг заголовка
+        const { version, date } = this.parseVersionHeader(lines[0]);
+
+        // Парсинг изменений
+        const changes = lines
+            .slice(1)
+            .map(line => this.parseChangeLine(line))
+            .filter(change => change && change.text);
+
+        return {
+            version: version?.trim() || '',
+            date: date?.trim() || '',
+            changes: changes
+        };
+    }
+
+    /**
+     * Парсинг всего контента changelog
+     * @param {string} content - Контент файла
+     * @returns {Array} - Массив объектов версий
+     */
+    parse(content) {
+        if (!content || typeof content !== 'string') {
+            return [];
+        }
+
+        const blocks = content
+            .split(BLOCK_SEPARATOR)
+            .filter(block => block?.trim());
+
+        return blocks
+            .map(block => this.parseChangelogBlock(block))
+            .filter(Boolean);
+    }
+}
+
+// Инициализация сервиса
+const changelogParserService = new ChangelogParserService();
+
+// -----------------------------
+// Legacy Functions (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Парсинг данных сайтов (обратная совместимость)
+ * @param {string} content - Контент файла
+ * @returns {Array} - Массив объектов сайтов
+ */
+function parseSaites(content) {
+    return saiteParserService.parse(content);
+}
+
+/**
+ * Парсинг changelog (обратная совместимость)
+ * @param {string} content - Контент файла
+ * @returns {Array} - Массив объектов версий
+ */
+function parseChangelog(content) {
+    return changelogParserService.parse(content);
 }
 
 // -----------------------------
 // GitHub Integration
 // -----------------------------
 
-async function fetchFileContent(filePath, gitPath) {
-    // Локальный режим
-    if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+// -----------------------------
+// Constants
+// -----------------------------
+
+const GITHUB_API_BASE_URL = 'https://api.github.com';
+const GITHUB_USER_AGENT = 'Oris-Server/1.0';
+const GITHUB_ACCEPT_HEADER = 'application/vnd.github.v3+json';
+
+const GITHUB_ERROR_MESSAGES = {
+    FETCH_FAILED: 'GitHub fetch failed',
+    UPDATE_FAILED: 'GitHub update failed',
+    FILE_NOT_FOUND: 'File not found'
+};
+
+// -----------------------------
+// GitHub Service
+// -----------------------------
+
+/**
+ * Сервис для работы с GitHub API
+ */
+class GitHubService {
+    /**
+     * Проверка, настроен ли GitHub
+     * @returns {boolean} - true если GitHub настроен
+     */
+    isConfigured() {
+        return !!(GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO);
+    }
+
+    /**
+     * Формирование URL для GitHub API
+     * @param {string} gitPath - Путь к файлу в репозитории
+     * @param {boolean} includeRef - Включить ли параметр ref
+     * @returns {string} - Полный URL
+     */
+    buildApiUrl(gitPath, includeRef = true) {
+        let url = `${GITHUB_API_BASE_URL}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${gitPath}`;
+        if (includeRef && GITHUB_BRANCH) {
+            url += `?ref=${GITHUB_BRANCH}`;
+        }
+        return url;
+    }
+
+    /**
+     * Формирование заголовков для GitHub API
+     * @param {boolean} includeContentType - Включить ли Content-Type
+     * @returns {Object} - Заголовки запроса
+     */
+    buildHeaders(includeContentType = false) {
+        const headers = {
+            Authorization: `token ${GITHUB_TOKEN}`,
+            Accept: GITHUB_ACCEPT_HEADER,
+            'User-Agent': GITHUB_USER_AGENT
+        };
+        
+        if (includeContentType) {
+            headers['Content-Type'] = 'application/json';
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Получение контента файла из GitHub
+     * @param {string} gitPath - Путь к файлу в репозитории
+     * @returns {Promise<Object>} - Объект { content, sha }
+     * @throws {Error} - Если запрос не удался
+     */
+    async fetchFile(gitPath) {
+        const url = this.buildApiUrl(gitPath);
+        
+        const response = await fetchWithRetry(url, {
+            headers: this.buildHeaders()
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => 'Unknown error');
+            const errorMessage = `${GITHUB_ERROR_MESSAGES.FETCH_FAILED}: ${response.status} ${response.statusText} - ${errorText.slice(0, 200)}`;
+            throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        const content = Buffer.from(data.content, 'base64').toString('utf8');
+        
+        return { 
+            content, 
+            sha: data.sha 
+        };
+    }
+
+    /**
+     * Обновление файла в GitHub
+     * @param {string} newContent - Новый контент файла
+     * @param {string} sha - SHA текущего файла
+     * @param {string} gitPath - Путь к файлу в репозитории
+     * @param {string} commitMessage - Сообщение коммита
+     * @returns {Promise<Object>} - Ответ от GitHub API
+     * @throws {Error} - Если обновление не удалось
+     */
+    async updateFile(newContent, sha, gitPath, commitMessage) {
+        const url = this.buildApiUrl(gitPath, false);
+        
+        const body = {
+            message: commitMessage,
+            content: Buffer.from(newContent, 'utf8').toString('base64'),
+            branch: GITHUB_BRANCH,
+            sha
+        };
+
+        const response = await fetchWithRetry(url, {
+            method: 'PUT',
+            headers: this.buildHeaders(true),
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const errorMessage = `${GITHUB_ERROR_MESSAGES.UPDATE_FAILED}: ${response.status} - ${errorData.message || 'Unknown error'}`;
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
+    }
+}
+
+// Инициализация сервиса
+const gitHubService = new GitHubService();
+
+// -----------------------------
+// File Service
+// -----------------------------
+
+/**
+ * Сервис для работы с файлами (локально и через GitHub)
+ */
+class FileService {
+    /**
+     * Получение контента файла
+     * @param {string} localPath - Локальный путь к файлу
+     * @param {string} gitPath - Путь к файлу в GitHub
+     * @returns {Promise<Object>} - Объект { content, sha }
+     */
+    async getContent(localPath, gitPath) {
+        // Локальный режим
+        if (!gitHubService.isConfigured()) {
+            return await this.getLocalFileContent(localPath);
+        }
+
+        // GitHub режим
+        return await gitHubService.fetchFile(gitPath);
+    }
+
+    /**
+     * Получение контента локального файла
+     * @param {string} filePath - Путь к файлу
+     * @returns {Promise<Object>} - Объект { content, sha: null }
+     */
+    async getLocalFileContent(filePath) {
         try {
-            const raw = await fs.readFile(filePath, 'utf8');
-            return { content: raw, sha: null };
+            const content = await fs.readFile(filePath, 'utf8');
+            return { content, sha: null };
         } catch (err) {
-            if (err.code === 'ENOENT') return { content: '', sha: null };
+            if (err.code === 'ENOENT') {
+                return { content: '', sha: null };
+            }
             throw err;
         }
     }
 
-    // GitHub режим с повторными попытками
-    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${gitPath}?ref=${GITHUB_BRANCH}`;
-    
-    const res = await fetchWithRetry(url, {
-        headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            Accept: 'application/vnd.github.v3+json',
-            'User-Agent': 'Oris-Server/1.0'
-        },
-    });
+    /**
+     * Обновление файла
+     * @param {string} newContent - Новый контент
+     * @param {string} sha - SHA файла (для GitHub)
+     * @param {string} localPath - Локальный путь
+     * @param {string} gitPath - Путь в GitHub
+     * @param {string} commitMessage - Сообщение коммита
+     * @returns {Promise<Object>} - Результат обновления
+     */
+    async updateContent(newContent, sha, localPath, gitPath, commitMessage) {
+        // Локальный режим
+        if (!gitHubService.isConfigured()) {
+            await fs.writeFile(localPath, newContent, 'utf8');
+            return { success: true, method: 'Local' };
+        }
 
-    if (!res.ok) {
-        const errText = await res.text().catch(() => 'Unknown error');
-        throw new Error(`GitHub fetch failed: ${res.status} ${res.statusText} - ${errText.slice(0, 200)}`);
+        // GitHub режим
+        const result = await gitHubService.updateFile(newContent, sha, gitPath, commitMessage);
+        return { ...result, method: 'GitHub' };
     }
-
-    const data = await res.json();
-    const content = Buffer.from(data.content, 'base64').toString('utf8');
-    return { content, sha: data.sha };
 }
 
-async function updateFileViaGitHub(newContent, sha, gitPath, commitMsg) {
-    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${gitPath}`;
-    const body = {
-        message: commitMsg,
-        content: Buffer.from(newContent, 'utf8').toString('base64'),
-        branch: GITHUB_BRANCH,
-        sha,
-    };
+// Инициализация сервиса
+const fileService = new FileService();
 
-    const res = await fetchWithRetry(url, {
-        method: 'PUT',
-        headers: {
-            Authorization: `token ${GITHUB_TOKEN}`,
-            Accept: 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Oris-Server/1.0'
-        },
-        body: JSON.stringify(body),
-    });
+// -----------------------------
+// Sites Cache Service
+// -----------------------------
 
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(`GitHub update failed: ${res.status} - ${err.message || 'Unknown error'}`);
+/**
+ * Сервис для управления кэшем сайтов
+ */
+class SitesCacheService {
+    /**
+     * Проверка актуальности кэша
+     * @returns {boolean} - true если кэш актуален
+     */
+    isCacheValid() {
+        const now = Date.now();
+        return sitesCache.data.length > 0 && 
+               (now - sitesCache.timestamp) < CACHE_TTL;
     }
-    return await res.json();
-}
 
-async function loadSites() {
-    const now = Date.now();
-    // Возвращаем кэш если он актуален
-    if (sitesCache.data.length > 0 && (now - sitesCache.timestamp) < CACHE_TTL) {
+    /**
+     * Обновление кэша
+     * @param {Array} data - Новые данные
+     */
+    updateCache(data) {
+        sitesCache = { 
+            data, 
+            timestamp: Date.now() 
+        };
+    }
+
+    /**
+     * Инвалидация кэша
+     */
+    invalidateCache() {
+        sitesCache.data = [];
+        sitesCache.timestamp = 0;
+    }
+
+    /**
+     * Получение данных из кэша (возможно устаревших)
+     * @returns {Array} - Данные из кэша
+     */
+    getStaleCache() {
         return sitesCache.data;
+    }
+}
+
+// Инициализация сервиса
+const sitesCacheService = new SitesCacheService();
+
+// -----------------------------
+// Legacy Functions (Backward Compatibility)
+// -----------------------------
+
+/**
+ * Получение контента файла (обратная совместимость)
+ * @param {string} filePath - Локальный путь к файлу
+ * @param {string} gitPath - Путь к файлу в GitHub
+ * @returns {Promise<Object>} - Объект { content, sha }
+ */
+async function fetchFileContent(filePath, gitPath) {
+    return await fileService.getContent(filePath, gitPath);
+}
+
+/**
+ * Обновление файла через GitHub (обратная совместимость)
+ * @param {string} newContent - Новый контент
+ * @param {string} sha - SHA файла
+ * @param {string} gitPath - Путь в GitHub
+ * @param {string} commitMsg - Сообщение коммита
+ * @returns {Promise<Object>} - Ответ от GitHub API
+ */
+async function updateFileViaGitHub(newContent, sha, gitPath, commitMsg) {
+    return await gitHubService.updateFile(newContent, sha, gitPath, commitMsg);
+}
+
+/**
+ * Загрузка списка сайтов с кэшированием
+ * @returns {Promise<Array>} - Массив сайтов
+ */
+async function loadSites() {
+    // Проверка кэша
+    if (sitesCacheService.isCacheValid()) {
+        return sitesCacheService.getStaleCache();
     }
 
     try {
         const { content } = await fetchFileContent(SAITES_FILE, GITHUB_SAITES_PATH);
         const data = parseSaites(content);
-        sitesCache = { data, timestamp: now };
+        
+        sitesCacheService.updateCache(data);
         console.log(`[Cache] Sites updated: ${data.length} loaded`);
+        
         return data;
     } catch (err) {
         console.error('[loadSites] Failed to load sites:', err.message);
+        
         // Возвращаем старый кэш при ошибке, если он есть
-        if (sitesCache.data.length > 0) {
+        const staleCache = sitesCacheService.getStaleCache();
+        if (staleCache.length > 0) {
             console.log('[loadSites] Using stale cache due to error');
-            return sitesCache.data;
+            return staleCache;
         }
+        
         throw err;
     }
 }
@@ -481,63 +2187,180 @@ async function loadSites() {
 // -----------------------------
 // Admin Token Middleware
 // -----------------------------
-function verifyAdminToken(req, res, next) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized: Missing token' });
+
+// -----------------------------
+// Constants
+// -----------------------------
+
+const AUTH_ERROR_MESSAGES = {
+    MISSING_HEADER: 'Unauthorized: Missing token',
+    INVALID_FORMAT: 'Unauthorized: Invalid token format',
+    INVALID_TOKEN: 'Forbidden: Invalid token'
+};
+
+const BEARER_PREFIX = 'Bearer ';
+
+// -----------------------------
+// Admin Auth Service
+// -----------------------------
+
+/**
+ * Сервис для проверки админских токенов
+ */
+class AdminAuthService {
+    /**
+     * Извлечение токена из заголовка Authorization
+     * @param {string} authHeader - Значение заголовка Authorization
+     * @returns {string|null} - Извлеченный токен или null
+     */
+    extractToken(authHeader) {
+        if (!authHeader || !authHeader.startsWith(BEARER_PREFIX)) {
+            return null;
+        }
+        return authHeader.split(' ')[1];
     }
 
-    const token = authHeader.split(' ')[1];
-    
-    // Безопасное сравнение с проверкой длины
-    const isValid = ADMIN_TOKEN 
-        && token 
-        && token.length === ADMIN_TOKEN.length
-        && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(ADMIN_TOKEN));
-    
-    if (!isValid) {
-        return res.status(403).json({ error: 'Forbidden: Invalid token' });
+    /**
+     * Проверка валидности токена с использованием timing-safe сравнения
+     * @param {string} token - Токен для проверки
+     * @returns {boolean} - true если токен валиден
+     */
+    isValidToken(token) {
+        // Проверка наличия админского токена в конфигурации
+        if (!ADMIN_TOKEN || !token) {
+            return false;
+        }
+
+        // Проверка длины для предотвращения timing attacks
+        if (token.length !== ADMIN_TOKEN.length) {
+            return false;
+        }
+
+        // Безопасное сравнение с защитой от timing attacks
+        try {
+            return crypto.timingSafeEqual(
+                Buffer.from(token), 
+                Buffer.from(ADMIN_TOKEN)
+            );
+        } catch (err) {
+            console.error('[AdminAuth] Token comparison error:', err);
+            return false;
+        }
     }
 
-    next();
+    /**
+     * Middleware для проверки админского токена
+     * @param {Request} req - Express request объект
+     * @param {Response} res - Express response объект
+     * @param {Function} next - Express next функция
+     */
+    verify(req, res, next) {
+        const authHeader = req.headers.authorization;
+
+        // Проверка наличия заголовка и формата Bearer
+        const token = this.extractToken(authHeader);
+        if (!token) {
+            return res.status(401).json({ 
+                error: AUTH_ERROR_MESSAGES.MISSING_HEADER 
+            });
+        }
+
+        // Проверка валидности токена
+        if (!this.isValidToken(token)) {
+            return res.status(403).json({ 
+                error: AUTH_ERROR_MESSAGES.INVALID_TOKEN 
+            });
+        }
+
+        // Токен валиден — продолжаем обработку
+        next();
+    }
 }
+
+// Инициализация сервиса
+const adminAuthService = new AdminAuthService();
+
+// -----------------------------
+// Middleware Export
+// -----------------------------
+
+/**
+ * Middleware для проверки админского токена
+ * Используется в Express маршрутах: app.get('/admin', verifyAdminToken, ...)
+ */
+const verifyAdminToken = (req, res, next) => {
+    adminAuthService.verify(req, res, next);
+};
 
 // -----------------------------
 // Telegram Integration
 // -----------------------------
 
-async function sendTelegramMessage(text) {
-    if (!TELEGRAM_CHAT_ID) {
-        console.error('[Telegram] TELEGRAM_CHAT_ID is not set');
-        throw new Error('Telegram не настроен');
-    }
-    if (!TELEGRAM_BOT_TOKEN) {
-        console.error('[Telegram] TELEGRAM_BOT_TOKEN is not set');
-        throw new Error('Telegram токен не настроен');
+// -----------------------------
+// Telegram Service
+// -----------------------------
+
+/**
+ * Сервис для работы с Telegram Bot API
+ */
+class TelegramService {
+    /**
+     * Валидация конфигурации Telegram
+     * @throws {Error} - Если конфигурация не настроена
+     */
+    validateConfig() {
+        if (!TELEGRAM_CHAT_ID) {
+            console.error('[Telegram] TELEGRAM_CHAT_ID is not set');
+            throw new Error('Telegram не настроен');
+        }
+        if (!TELEGRAM_BOT_TOKEN) {
+            console.error('[Telegram] TELEGRAM_BOT_TOKEN is not set');
+            throw new Error('Telegram токен не настроен');
+        }
     }
 
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
-    const res = await fetchWithRetry(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: text,
-            parse_mode: 'HTML',
-            disable_web_page_preview: true
-        })
-    });
+    /**
+     * Отправка сообщения в Telegram
+     * @param {string} text - Текст сообщения (HTML)
+     * @returns {Promise<Object>} - Ответ от Telegram API
+     * @throws {Error} - Если отправка не удалась
+     */
+    async sendMessage(text) {
+        this.validateConfig();
 
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error('[Telegram] Send failed:', err);
-        throw new Error('Не удалось отправить сообщение');
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        
+        const response = await fetchWithRetry(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: TELEGRAM_CHAT_ID,
+                text: text,
+                parse_mode: 'HTML',
+                disable_web_page_preview: true
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('[Telegram] Send failed:', errorData);
+            throw new Error('Не удалось отправить сообщение');
+        }
+
+        return await response.json();
     }
-    return await res.json();
 }
 
-// Labels для форм
+// Инициализация сервиса
+const telegramService = new TelegramService();
+
+// -----------------------------
+// Form Labels Constants
+// -----------------------------
+
+/**
+ * Метки категорий для формы добавления сайта
+ */
 const CATEGORY_LABELS = {
     other: 'Другое',
     tools: 'Инструменты',
@@ -549,6 +2372,9 @@ const CATEGORY_LABELS = {
     social: 'Соцсети'
 };
 
+/**
+ * Метки типов сотрудничества
+ */
 const CORP_TYPE_LABELS = {
     partnership: 'Партнёрство',
     advertising: 'Реклама / Спонсорство',
@@ -557,6 +2383,9 @@ const CORP_TYPE_LABELS = {
     other: 'Другое'
 };
 
+/**
+ * Метки бюджетов
+ */
 const BUDGET_LABELS = {
     free: 'Без бюджета',
     small: 'До 50 000 ₽',
@@ -566,114 +2395,334 @@ const BUDGET_LABELS = {
 };
 
 // -----------------------------
-// API Routes: Sites
+// Sites Service
 // -----------------------------
 
+/**
+ * Сервис для работы с каталогом сайтов
+ */
+class SitesService {
+    /**
+     * Получение списка сайтов
+     * @returns {Promise<Array>} - Массив сайтов
+     */
+    async getSites() {
+        return await loadSites();
+    }
+
+    /**
+     * Принудительная перезагрузка списка сайтов
+     * @returns {Promise<Array>} - Обновленный массив сайтов
+     */
+    async reloadSites() {
+        // Инвалидация кэша
+        sitesCache.data = [];
+        sitesCache.timestamp = 0;
+        
+        return await loadSites();
+    }
+}
+
+// Инициализация сервиса
+const sitesService = new SitesService();
+
+// -----------------------------
+// Route Handlers: Sites
+// -----------------------------
+
+/**
+ * GET /api/sites — получение списка всех сайтов
+ */
 app.get('/api/sites', async (req, res, next) => {
     try {
-        const sites = await loadSites();
+        const sites = await sitesService.getSites();
         res.json(sites);
-    } catch (err) { 
-        console.error('[GET /api/sites]', err);
-        next(err); 
+    } catch (err) {
+        handleSitesApiError('GET /api/sites', err, next);
     }
 });
 
+/**
+ * POST /api/sites/reload — принудительная перезагрузка кэша сайтов
+ */
 app.post('/api/sites/reload', async (req, res, next) => {
     try {
-        // Принудительная инвалидация кэша
-        sitesCache.data = [];
-        sitesCache.timestamp = 0;
-        const sites = await loadSites();
-        res.json({ success: true, count: sites.length });
-    } catch (err) { 
-        console.error('[POST /api/sites/reload]', err);
-        next(err); 
+        const sites = await sitesService.reloadSites();
+        res.json({ 
+            success: true, 
+            count: sites.length 
+        });
+    } catch (err) {
+        handleSitesApiError('POST /api/sites/reload', err, next);
     }
 });
+
+// -----------------------------
+// Helper Functions
+// -----------------------------
+
+/**
+ * Обработчик ошибок API для Sites routes
+ * @param {string} endpoint - Название endpoint
+ * @param {Error} err - Объект ошибки
+ * @param {Function} next - Express next функция
+ */
+const handleSitesApiError = (endpoint, err, next) => {
+    console.error(`[${endpoint}]`, err);
+    next(err);
+};
 
 // -----------------------------
 // API Routes: Changelog
 // -----------------------------
 
-app.get('/api/changelog', async (req, res, next) => {
-    try {
+// -----------------------------
+// Changelog Service
+// -----------------------------
+
+/**
+ * Сервис для работы с changelog
+ */
+class ChangelogService {
+    /**
+     * Получение changelog с учетом кэширования
+     * @returns {Promise<Object>} - Распарсенные данные changelog
+     */
+    async getChangelog() {
         const now = Date.now();
+        
+        // Проверка кэша
         if (changelogCache.data && (now - changelogCache.timestamp) < CACHE_TTL) {
-            return res.json(changelogCache.data);
+            return changelogCache.data;
         }
 
+        // Получение свежего контента
         const { content } = await fetchFileContent(CHANGELOG_FILE, GITHUB_CHANGELOG_PATH);
         const data = parseChangelog(content);
         
+        // Обновление кэша
         changelogCache = { data, timestamp: now };
-        res.json(data);
-    } catch (err) { 
-        console.error('[GET /api/changelog]', err);
-        next(err); 
+        
+        return data;
     }
-});
 
-// -----------------------------
-// API Routes: Admin
-// -----------------------------
-
-app.get('/api/admin/content', verifyAdminToken, async (req, res, next) => {
-    try {
-        const { content } = await fetchFileContent(SAITES_FILE, GITHUB_SAITES_PATH);
-        res.json({ content });
-    } catch (err) { next(err); }
-});
-
-app.get('/api/admin/changelog', verifyAdminToken, async (req, res, next) => {
-    try {
+    /**
+     * Получение сырого контента changelog
+     * @returns {Promise<string>} - Сырой контент файла
+     */
+    async getRawContent() {
         const { content } = await fetchFileContent(CHANGELOG_FILE, GITHUB_CHANGELOG_PATH);
-        res.json({ content });
-    } catch (err) { next(err); }
-});
-
-async function handleSave(req, res, next, filePath, gitPath, cacheRef, commitMsg) {
-    try {
-        const { content } = req.body;
-        
-        if (typeof content !== 'string') {
-            return res.status(400).json({ error: 'Content must be a string' });
-        }
-        
-        if (content.length > MAX_CONTENT_LENGTH) {
-            return res.status(413).json({ error: 'Content too large' });
-        }
-
-        if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
-            await fs.writeFile(filePath, content, 'utf8');
-        } else {
-            const { sha } = await fetchFileContent(filePath, gitPath);
-            await updateFileViaGitHub(content, sha, gitPath, commitMsg);
-        }
-
-        // Инвалидация кэша
-        if (cacheRef === 'sites') {
-            sitesCache.data = [];
-            sitesCache.timestamp = 0;
-        } else if (cacheRef === 'changelog') {
-            changelogCache.data = null;
-            changelogCache.timestamp = 0;
-        }
-        
-        res.json({ success: true, message: `Saved (${GITHUB_TOKEN ? 'GitHub' : 'Local'})` });
-    } catch (err) { 
-        console.error('[handleSave]', err);
-        next(err); 
+        return content;
     }
 }
 
-app.post('/api/admin/save', verifyAdminToken, (req, res, next) => {
-    handleSave(req, res, next, SAITES_FILE, GITHUB_SAITES_PATH, 'sites', 'chore: update saites.txt via admin');
+// Инициализация сервиса
+const changelogService = new ChangelogService();
+
+// -----------------------------
+// Content Service
+// -----------------------------
+
+/**
+ * Сервис для работы с контентом (получение и сохранение)
+ */
+class ContentService {
+    /**
+     * Получение контента файла
+     * @param {string} localPath - Локальный путь к файлу
+     * @param {string} gitPath - Путь в GitHub
+     * @returns {Promise<string>} - Контент файла
+     */
+    async getContent(localPath, gitPath) {
+        const { content } = await fetchFileContent(localPath, gitPath);
+        return content;
+    }
+
+    /**
+     * Валидация контента перед сохранением
+     * @param {any} content - Контент для проверки
+     * @returns {Object} - Результат валидации { valid: boolean, error?: string }
+     */
+    validateContent(content) {
+        if (typeof content !== 'string') {
+            return { valid: false, error: 'Content must be a string' };
+        }
+        
+        if (content.length > MAX_CONTENT_LENGTH) {
+            return { valid: false, error: 'Content too large' };
+        }
+        
+        return { valid: true };
+    }
+
+    /**
+     * Сохранение контента (GitHub или локально)
+     * @param {string} content - Контент для сохранения
+     * @param {string} localPath - Локальный путь к файлу
+     * @param {string} gitPath - Путь в GitHub
+     * @param {string} commitMessage - Сообщение коммита
+     * @returns {Promise<Object>} - Результат сохранения { method: string }
+     */
+    async saveContent(content, localPath, gitPath, commitMessage) {
+        // Локальное сохранение если нет GitHub токена
+        if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+            await fs.writeFile(localPath, content, 'utf8');
+            return { method: 'Local' };
+        }
+
+        // Сохранение через GitHub API
+        const { sha } = await fetchFileContent(localPath, gitPath);
+        await updateFileViaGitHub(content, sha, gitPath, commitMessage);
+        return { method: 'GitHub' };
+    }
+
+    /**
+     * Инвалидация кэша
+     * @param {string} cacheType - Тип кэша для инвалидации ('sites' или 'changelog')
+     */
+    invalidateCache(cacheType) {
+        if (cacheType === 'sites') {
+            sitesCache.data = [];
+            sitesCache.timestamp = 0;
+        } else if (cacheType === 'changelog') {
+            changelogCache.data = null;
+            changelogCache.timestamp = 0;
+        }
+    }
+}
+
+// Инициализация сервиса
+const contentService = new ContentService();
+
+// -----------------------------
+// Route Handlers: Changelog
+// -----------------------------
+
+/**
+ * GET /api/changelog — публичный эндпоинт для получения changelog
+ */
+app.get('/api/changelog', async (req, res, next) => {
+    try {
+        const data = await changelogService.getChangelog();
+        res.json(data);
+    } catch (err) {
+        handleChangelogApiError('GET /api/changelog', err, next);
+    }
 });
 
-app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
-    handleSave(req, res, next, CHANGELOG_FILE, GITHUB_CHANGELOG_PATH, 'changelog', 'docs: update changelog via admin');
+// -----------------------------
+// Route Handlers: Admin Content
+// -----------------------------
+
+/**
+ * GET /api/admin/content — получение контента saites.txt
+ */
+app.get('/api/admin/content', verifyAdminToken, async (req, res, next) => {
+    try {
+        const content = await contentService.getContent(SAITES_FILE, GITHUB_SAITES_PATH);
+        res.json({ content });
+    } catch (err) {
+        handleChangelogApiError('GET /api/admin/content', err, next);
+    }
 });
+
+/**
+ * GET /api/admin/changelog — получение контента changelog
+ */
+app.get('/api/admin/changelog', verifyAdminToken, async (req, res, next) => {
+    try {
+        const content = await changelogService.getRawContent();
+        res.json({ content });
+    } catch (err) {
+        handleChangelogApiError('GET /api/admin/changelog', err, next);
+    }
+});
+
+// -----------------------------
+// Route Handlers: Admin Save
+// -----------------------------
+
+/**
+ * POST /api/admin/save — сохранение контента saites.txt
+ */
+app.post('/api/admin/save', verifyAdminToken, async (req, res, next) => {
+    await handleContentSave(
+        req, 
+        res, 
+        next, 
+        SAITES_FILE, 
+        GITHUB_SAITES_PATH, 
+        'sites', 
+        'chore: update saites.txt via admin'
+    );
+});
+
+/**
+ * POST /api/admin/changelog/save — сохранение контента changelog
+ */
+app.post('/api/admin/changelog/save', verifyAdminToken, async (req, res, next) => {
+    await handleContentSave(
+        req, 
+        res, 
+        next, 
+        CHANGELOG_FILE, 
+        GITHUB_CHANGELOG_PATH, 
+        'changelog', 
+        'docs: update changelog via admin'
+    );
+});
+
+// -----------------------------
+// Helper Functions
+// -----------------------------
+
+/**
+ * Обработка сохранения контента
+ * @param {Request} req - Express request объект
+ * @param {Response} res - Express response объект
+ * @param {Function} next - Express next функция
+ * @param {string} filePath - Локальный путь к файлу
+ * @param {string} gitPath - Путь в GitHub
+ * @param {string} cacheType - Тип кэша для инвалидации
+ * @param {string} commitMessage - Сообщение коммита
+ */
+const handleContentSave = async (req, res, next, filePath, gitPath, cacheType, commitMessage) => {
+    try {
+        const { content } = req.body;
+        
+        // Валидация контента
+        const validation = contentService.validateContent(content);
+        if (!validation.valid) {
+            const statusCode = validation.error === 'Content too large' ? 413 : 400;
+            return res.status(statusCode).json({ error: validation.error });
+        }
+
+        // Сохранение контента
+        const result = await contentService.saveContent(content, filePath, gitPath, commitMessage);
+
+        // Инвалидация кэша
+        contentService.invalidateCache(cacheType);
+        
+        // Успешный ответ
+        res.json({ 
+            success: true, 
+            message: `Saved (${result.method})` 
+        });
+    } catch (err) {
+        handleChangelogApiError('handleContentSave', err, next);
+    }
+};
+
+/**
+ * Обработчик ошибок API для Changelog routes
+ * @param {string} endpoint - Название endpoint
+ * @param {Error} err - Объект ошибки
+ * @param {Function} next - Express next функция
+ */
+const handleChangelogApiError = (endpoint, err, next) => {
+    console.error(`[${endpoint}]`, err);
+    next(err);
+};
 
 // -----------------------------
 // API Routes: Dynamic Configs for Status & API (KV)
@@ -681,9 +2730,6 @@ app.post('/api/admin/changelog/save', verifyAdminToken, (req, res, next) => {
 const STATUS_CONFIG_KEY = 'admin:status_config';
 const API_CONFIG_KEY = 'admin:api_config';
 
-// ⚠️ ВНИМАНИЕ: сюда скопируйте реальные массивы из ваших HTML-файлов!
-// 1. Из status.html возьмите массив SERVICES (от const SERVICES = [ ... ];)
-// 2. Из api.html возьмите массив API_SECTIONS (от const API_SECTIONS = [ ... ];)
 
 const DEFAULT_STATUS_CONFIG = [
   {
@@ -1391,41 +3437,135 @@ app.post('/api/admin/faq-config/save', verifyAdminToken, async (req, res, next) 
 // API Routes: Forms
 // -----------------------------
 
+/**
+ * Обработчик rate limiting для форм
+ * @param {Request} req - Express request объект
+ * @param {Response} res - Express response объект
+ * @returns {number|null} - Время ожидания в секундах или null, если лимит не превышен
+ */
+const handleRateLimit = (req, res) => {
+    const waitSeconds = checkFormRateLimit(req.ip);
+    if (waitSeconds > 0) {
+        res.status(429).json({
+            error: `Подождите ${waitSeconds} сек. перед следующей заявкой`
+        });
+        return waitSeconds;
+    }
+    return null;
+};
+
+/**
+ * Валидатор email адреса
+ * @param {string} email - Email для проверки
+ * @returns {boolean} - true если email корректен
+ */
+const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return email && emailRegex.test(email);
+};
+
+/**
+ * Форматирование даты для сообщений
+ * @returns {string} - Отформатированная дата и время
+ */
+const formatDateTime = () => {
+    return new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+};
+
+/**
+ * Обработчик ошибок API
+ * @param {string} endpoint - Название endpoint
+ * @param {Error} err - Объект ошибки
+ * @param {Function} next - Express next функция
+ */
+const handleApiError = (endpoint, err, next) => {
+    console.error(`[${endpoint}]`, err);
+    next(err);
+};
+
+// -----------------------------
+// Route: Добавление сайта
+// -----------------------------
+
 app.post('/api/add/saite', async (req, res, next) => {
     try {
-        const waitSeconds = checkFormRateLimit(req.ip);
-        if (waitSeconds > 0) {
-            return res.status(429).json({
-                error: `Подождите ${waitSeconds} сек. перед следующей заявкой`
-            });
-        }
+        // Проверка rate limit
+        if (handleRateLimit(req, res)) return;
 
         const { title, url, description, category, authorName, email, telegram } = req.body;
 
-        // Валидация
+        // Валидация обязательных полей
         if (!title || title.trim().length < MIN_TITLE_LENGTH) {
-            return res.status(400).json({ error: 'Название должно содержать минимум 3 символа' });
+            return res.status(400).json({ 
+                error: 'Название должно содержать минимум 3 символа' 
+            });
         }
+        
         if (!url || !isValidUrl(normalizeUrl(url))) {
-            return res.status(400).json({ error: 'Некорректный URL' });
+            return res.status(400).json({ 
+                error: 'Некорректный URL' 
+            });
         }
+        
         if (!description || description.trim().length < MIN_DESCRIPTION_LENGTH) {
-            return res.status(400).json({ error: 'Описание слишком короткое (минимум 20 символов)' });
+            return res.status(400).json({ 
+                error: 'Описание слишком короткое (минимум 20 символов)' 
+            });
         }
+        
         if (!authorName || authorName.trim().length < 2) {
-            return res.status(400).json({ error: 'Укажите имя' });
+            return res.status(400).json({ 
+                error: 'Укажите имя' 
+            });
         }
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return res.status(400).json({ error: 'Некорректный email' });
+        
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ 
+                error: 'Некорректный email' 
+            });
         }
 
-        // Формирование сообщения (данные не экранируются сервером, клиент должен делать это при отображении)
-        const message =
-`🌐 <b>НОВАЯ ЗАЯВКА: Добавление сайта</b>
+        // Формирование сообщения для Telegram
+        const message = buildSiteSubmissionMessage({
+            title,
+            url,
+            description,
+            category,
+            authorName,
+            email,
+            telegram
+        });
+
+        // Отправка сообщения
+        await sendTelegramMessage(message);
+
+        // Успешный ответ
+        res.json({ 
+            success: true, 
+            message: 'Заявка отправлена' 
+        });
+        
+    } catch (err) {
+        handleApiError('api/add/saite', err, next);
+    }
+});
+
+/**
+ * Построение сообщения для заявки на добавление сайта
+ * @param {Object} data - Данные формы
+ * @returns {string} - Отформатированное HTML сообщение
+ */
+const buildSiteSubmissionMessage = ({ title, url, description, category, authorName, email, telegram }) => {
+    const normalizedUrl = normalizeUrl(url);
+    const categoryLabel = CATEGORY_LABELS[category] || 'Другое';
+    const telegramLine = telegram ? `\n💬 ${telegram}` : '';
+    const dateTime = formatDateTime();
+
+    return `🌐 <b>НОВАЯ ЗАЯВКА: Добавление сайта</b>
 
 <b>Название:</b> ${title}
-<b>URL:</b> ${normalizeUrl(url)}
-<b>Категория:</b> ${CATEGORY_LABELS[category] || 'Другое'}
+<b>URL:</b> ${normalizedUrl}
+<b>Категория:</b> ${categoryLabel}
 
 <b>Описание:</b>
 ${description}
@@ -1434,56 +3574,100 @@ ${description}
 
 <b>Контакты:</b>
 👤 ${authorName}
-📧 ${email}${telegram ? `\n💬 ${telegram}` : ''}
+📧 ${email}${telegramLine}
 
-🕐 ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+🕐 ${dateTime}`;
+};
 
-        await sendTelegramMessage(message);
-
-        res.json({ success: true, message: 'Заявка отправлена' });
-    } catch (err) {
-        console.error('[api/add/saite]', err);
-        next(err);
-    }
-});
+// -----------------------------
+// Route: Сотрудничество
+// -----------------------------
 
 app.post('/api/add/corp', async (req, res, next) => {
     try {
-        const waitSeconds = checkFormRateLimit(req.ip);
-        if (waitSeconds > 0) {
-            return res.status(429).json({
-                error: `Подождите ${waitSeconds} сек. перед следующей заявкой`
-            });
-        }
+        // Проверка rate limit
+        if (handleRateLimit(req, res)) return;
 
         const { name, company, email, telegram, type, message, budget, website } = req.body;
 
-        // Валидация
+        // Валидация обязательных полей
         if (!name || name.trim().length < 2) {
-            return res.status(400).json({ error: 'Укажите имя' });
+            return res.status(400).json({ 
+                error: 'Укажите имя' 
+            });
         }
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return res.status(400).json({ error: 'Некорректный email' });
+        
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ 
+                error: 'Некорректный email' 
+            });
         }
+        
         if (!type || !CORP_TYPE_LABELS[type]) {
-            return res.status(400).json({ error: 'Выберите тип сотрудничества' });
+            return res.status(400).json({ 
+                error: 'Выберите тип сотрудничества' 
+            });
         }
+        
         if (!message || message.trim().length < MIN_DESCRIPTION_LENGTH) {
-            return res.status(400).json({ error: 'Сообщение слишком короткое (минимум 20 символов)' });
+            return res.status(400).json({ 
+                error: 'Сообщение слишком короткое (минимум 20 символов)' 
+            });
         }
+        
         if (website && !isValidUrl(normalizeUrl(website))) {
-            return res.status(400).json({ error: 'Некорректный URL сайта' });
+            return res.status(400).json({ 
+                error: 'Некорректный URL сайта' 
+            });
         }
 
-        // Формирование сообщения
-        const tgMessage =
-`🤝 <b>НОВАЯ ЗАЯВКА: Сотрудничество</b>
+        // Формирование сообщения для Telegram
+        const tgMessage = buildCorpCollaborationMessage({
+            name,
+            company,
+            email,
+            telegram,
+            type,
+            message,
+            budget,
+            website
+        });
 
-<b>Тип:</b> ${CORP_TYPE_LABELS[type]}
-${budget && BUDGET_LABELS[budget] ? `<b>Бюджет:</b> ${BUDGET_LABELS[budget]}` : ''}
+        // Отправка сообщения
+        await sendTelegramMessage(tgMessage);
+
+        // Успешный ответ
+        res.json({ 
+            success: true, 
+            message: 'Заявка отправлена' 
+        });
+        
+    } catch (err) {
+        handleApiError('api/add/corp', err, next);
+    }
+});
+
+/**
+ * Построение сообщения для заявки на сотрудничество
+ * @param {Object} data - Данные формы
+ * @returns {string} - Отформатированное HTML сообщение
+ */
+const buildCorpCollaborationMessage = ({ name, company, email, telegram, type, message, budget, website }) => {
+    const typeLabel = CORP_TYPE_LABELS[type];
+    const budgetLine = budget && BUDGET_LABELS[budget] ? `<b>Бюджет:</b> ${BUDGET_LABELS[budget]}` : '';
+    const normalizedWebsite = website ? normalizeUrl(website) : null;
+    const companyLine = company ? `\n🏢 ${company}` : '';
+    const websiteLine = normalizedWebsite ? `\n🌐 ${normalizedWebsite}` : '';
+    const telegramLine = telegram ? `\n💬 ${telegram}` : '';
+    const dateTime = formatDateTime();
+
+    return `🤝 <b>НОВАЯ ЗАЯВКА: Сотрудничество</b>
+
+<b>Тип:</b> ${typeLabel}
+${budgetLine}
 
 <b>От кого:</b>
-👤 ${name}${company ? `\n🏢 ${company}` : ''}${website ? `\n🌐 ${normalizeUrl(website)}` : ''}
+👤 ${name}${companyLine}${websiteLine}
 
 <b>Сообщение:</b>
 ${message}
@@ -1491,118 +3675,228 @@ ${message}
 ━━━━━━━━━━━━━━━━━
 
 <b>Контакты:</b>
-📧 ${email}${telegram ? `\n💬 ${telegram}` : ''}
+📧 ${email}${telegramLine}
 
-🕐 ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-
-        await sendTelegramMessage(tgMessage);
-
-        res.json({ success: true, message: 'Заявка отправлена' });
-    } catch (err) {
-        console.error('[api/add/corp]', err);
-        next(err);
-    }
-});
+🕐 ${dateTime}`;
+};
 
 
 // -----------------------------
 // API Routes: Call (WebRTC)
 // -----------------------------
 
+// -----------------------------
+// Constants
+// -----------------------------
+
+const ROOM_TTL = 4 * 60 * 60 * 1000; // 4 часа
+const ROOM_CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 минут
+const ROOM_ID_LENGTH = 6;
+const MAX_PARTICIPANTS = 2;
+const MAX_ROOM_GENERATION_ATTEMPTS = 10;
+
 // Хранилище активных комнат (in-memory, сбрасывается при холодном старте)
 const activeRooms = new Map();
-const ROOM_TTL = 4 * 60 * 60 * 1000; // 4 часа
 
-// Очистка устаревших комнат каждые 10 минут
-setInterval(() => {
-    const now = Date.now();
-    for (const [id, room] of activeRooms.entries()) {
-        if (now - room.createdAt > ROOM_TTL) {
-            activeRooms.delete(id);
-        }
-    }
-}, 10 * 60 * 1000);
+// -----------------------------
+// Room Management
+// -----------------------------
 
 /**
- * Генерация читаемого ID комнаты (без I, O, 0, 1)
+ * Класс для управления комнатами звонков
  */
-function generateCallRoomId() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let result = '';
-    for (let i = 0; i < 6; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
+class RoomManager {
+    constructor() {
+        this.rooms = new Map();
+        this.startCleanupInterval();
     }
-    return result;
+
+    /**
+     * Генерация читаемого ID комнаты (без I, O, 0, 1)
+     * @returns {string} - Сгенерированный ID комнаты
+     */
+    generateRoomId() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let result = '';
+        for (let i = 0; i < ROOM_ID_LENGTH; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    /**
+     * Создание новой комнаты с уникальным ID
+     * @returns {Object|null} - Объект комнаты или null при ошибке
+     */
+    createRoom() {
+        let roomId;
+        let attempts = 0;
+
+        do {
+            roomId = this.generateRoomId();
+            attempts++;
+            if (attempts > MAX_ROOM_GENERATION_ATTEMPTS) {
+                return null;
+            }
+        } while (this.rooms.has(roomId));
+
+        const room = {
+            id: roomId,
+            createdAt: Date.now(),
+            expiresAt: Date.now() + ROOM_TTL,
+            participants: 0
+        };
+
+        this.rooms.set(roomId, room);
+        return room;
+    }
+
+    /**
+     * Проверка существования комнаты
+     * @param {string} roomId - ID комнаты
+     * @returns {Object|null} - Объект комнаты или null
+     */
+    getRoom(roomId) {
+        return this.rooms.get(roomId) || null;
+    }
+
+    /**
+     * Добавление участника в комнату
+     * @param {string} roomId - ID комнаты
+     * @returns {Object|null} - Обновленный объект комнаты или null
+     */
+    addParticipant(roomId) {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+
+        room.participants = Math.min(room.participants + 1, MAX_PARTICIPANTS);
+        return room;
+    }
+
+    /**
+     * Удаление участника из комнаты
+     * @param {string} roomId - ID комнаты
+     * @returns {boolean} - true если комната существует
+     */
+    removeParticipant(roomId) {
+        const room = this.rooms.get(roomId);
+        if (!room) return false;
+
+        room.participants = Math.max(room.participants - 1, 0);
+        
+        // Удаляем комнату, если участников не осталось
+        if (room.participants === 0) {
+            this.rooms.delete(roomId);
+        }
+        
+        return true;
+    }
+
+    /**
+     * Очистка устаревших комнат
+     */
+    cleanupExpiredRooms() {
+        const now = Date.now();
+        for (const [id, room] of this.rooms.entries()) {
+            if (now - room.createdAt > ROOM_TTL) {
+                this.rooms.delete(id);
+            }
+        }
+    }
+
+    /**
+     * Запуск периодической очистки устаревших комнат
+     */
+    startCleanupInterval() {
+        setInterval(() => {
+            this.cleanupExpiredRooms();
+        }, ROOM_CLEANUP_INTERVAL);
+    }
 }
+
+// Инициализация менеджера комнат
+const roomManager = new RoomManager();
+
+// -----------------------------
+// Validation Helpers
+// -----------------------------
+
+/**
+ * Валидация формата ID комнаты
+ * @param {string} roomId - ID комнаты для проверки
+ * @returns {boolean} - true если формат корректен
+ */
+const isValidRoomId = (roomId) => {
+    return roomId && /^[A-Z0-9]{6}$/.test(roomId.toUpperCase());
+};
+
+/**
+ * Нормализация ID комнаты к верхнему регистру
+ * @param {string} roomId - ID комнаты
+ * @returns {string} - ID в верхнем регистре
+ */
+const normalizeRoomId = (roomId) => {
+    return roomId ? roomId.toUpperCase() : '';
+};
+
+// -----------------------------
+// Route Handlers
+// -----------------------------
 
 /**
  * GET /call — отдаём HTML-страницу звонка
- * (дублирует express.static, но явно и с нужными заголовками)
  */
 app.get('/call', (req, res) => {
-    const filePath = path.join(PUBLIC_DIR, 'call', 'index.html');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), autoplay=(self), display-capture=(self)');
-    res.setHeader('Cache-Control', 'no-store');
-    res.sendFile(filePath, (err) => {
-        if (err) {
-            res.status(404).json({ error: 'Call page not found' });
-        }
-    });
+    serveCallPage(res);
 });
 
 /**
  * GET /call/:id — вход в комнату по ID (для share-ссылок)
  */
 app.get('/call/:id', (req, res) => {
-    const roomId = req.params.id.toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(roomId)) {
+    const roomId = normalizeRoomId(req.params.id);
+    
+    if (!isValidRoomId(roomId)) {
         return res.status(400).json({ error: 'Invalid room ID' });
     }
-    const filePath = path.join(PUBLIC_DIR, 'call', 'index.html');
-    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), autoplay=(self), display-capture=(self)');
-    res.setHeader('Cache-Control', 'no-store');
-    res.sendFile(filePath);
+    
+    serveCallPage(res);
 });
 
 /**
  * POST /api/call/room — создать новую комнату
- * Возвращает уникальный ID, который гарантированно не занят
  */
 app.post('/api/call/room', (req, res) => {
     try {
-        let roomId;
-        let attempts = 0;
-        do {
-            roomId = generateCallRoomId();
-            attempts++;
-            if (attempts > 10) {
-                return res.status(500).json({ error: 'Could not generate unique room ID' });
-            }
-        } while (activeRooms.has(roomId));
+        const room = roomManager.createRoom();
+        
+        if (!room) {
+            return res.status(500).json({ 
+                error: 'Could not generate unique room ID' 
+            });
+        }
 
-        activeRooms.set(roomId, {
-            createdAt: Date.now(),
-            participants: 0
+        res.json({ 
+            roomId: room.id, 
+            expiresAt: room.expiresAt 
         });
-
-        res.json({ roomId, expiresAt: Date.now() + ROOM_TTL });
     } catch (err) {
-        console.error('[POST /api/call/room]', err);
-        res.status(500).json({ error: 'Internal server error' });
+        handleCallApiError('POST /api/call/room', err, res);
     }
 });
 
 /**
  * GET /api/call/check/:id — проверить, существует ли комната
- * Используется клиентом перед попыткой подключения
  */
 app.get('/api/call/check/:id', (req, res) => {
-    const roomId = req.params.id.toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(roomId)) {
+    const roomId = normalizeRoomId(req.params.id);
+    
+    if (!isValidRoomId(roomId)) {
         return res.status(400).json({ error: 'Invalid room ID' });
     }
-    const room = activeRooms.get(roomId);
+    
+    const room = roomManager.getRoom(roomId);
+    
     res.json({
         exists: !!room,
         roomId,
@@ -1615,15 +3909,24 @@ app.get('/api/call/check/:id', (req, res) => {
  */
 app.post('/api/call/join', (req, res) => {
     const { roomId } = req.body;
-    if (!roomId || !/^[A-Z0-9]{6}$/.test(roomId)) {
+    const normalizedRoomId = normalizeRoomId(roomId);
+    
+    if (!isValidRoomId(normalizedRoomId)) {
         return res.status(400).json({ error: 'Invalid room ID' });
     }
-    const room = activeRooms.get(roomId);
+    
+    const room = roomManager.addParticipant(normalizedRoomId);
+    
     if (!room) {
-        return res.status(404).json({ error: 'Room not found or expired' });
+        return res.status(404).json({ 
+            error: 'Room not found or expired' 
+        });
     }
-    room.participants = Math.min((room.participants || 0) + 1, 2);
-    res.json({ success: true, participants: room.participants });
+    
+    res.json({ 
+        success: true, 
+        participants: room.participants 
+    });
 });
 
 /**
@@ -1631,84 +3934,401 @@ app.post('/api/call/join', (req, res) => {
  */
 app.post('/api/call/leave', (req, res) => {
     const { roomId } = req.body;
-    if (!roomId) return res.status(400).json({ error: 'roomId required' });
-    const room = activeRooms.get(roomId);
-    if (room) {
-        room.participants = Math.max((room.participants || 0) - 1, 0);
-        if (room.participants === 0) {
-            activeRooms.delete(roomId);
+    
+    if (!roomId) {
+        return res.status(400).json({ error: 'roomId required' });
+    }
+    
+    const normalizedRoomId = normalizeRoomId(roomId);
+    const success = roomManager.removeParticipant(normalizedRoomId);
+    
+    res.json({ success });
+});
+
+// -----------------------------
+// Helper Functions
+// -----------------------------
+
+/**
+ * Отдача HTML-страницы звонка с нужными заголовками
+ * @param {Response} res - Express response объект
+ */
+const serveCallPage = (res) => {
+    const filePath = path.join(PUBLIC_DIR, 'call', 'index.html');
+    
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), autoplay=(self), display-capture=(self)');
+    res.setHeader('Cache-Control', 'no-store');
+    
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            res.status(404).json({ error: 'Call page not found' });
+        }
+    });
+};
+
+/**
+ * Обработчик ошибок API для Call routes
+ * @param {string} endpoint - Название endpoint
+ * @param {Error} err - Объект ошибки
+ * @param {Response} res - Express response объект
+ */
+const handleCallApiError = (endpoint, err, res) => {
+    console.error(`[${endpoint}]`, err);
+    res.status(500).json({ error: 'Internal server error' });
+};
+
+// -----------------------------
+// Error Handling & Server Lifecycle
+// -----------------------------
+
+// -----------------------------
+// Constants
+// -----------------------------
+
+const HTTP_ERROR_MESSAGES = {
+    NOT_FOUND: 'Not found',
+    INTERNAL_ERROR: 'Internal server error'
+};
+
+const HTTP_STATUS = {
+    NOT_FOUND: 404,
+    INTERNAL_ERROR: 500
+};
+
+const ENVIRONMENT = {
+    PRODUCTION: 'production'
+};
+
+const SHUTDOWN_TIMEOUT = 10000; // 10 секунд на graceful shutdown
+
+const STARTUP_MESSAGES = {
+    SERVER_RUNNING: (port) => `Oris Server running on port ${port}`,
+    SECURITY_INFO: 'Security: Helmet enabled, Rate limiting active',
+    STORAGE_INFO: (useGitHub) => `Storage: ${useGitHub ? 'GitHub API' : 'Local Filesystem'}`,
+    SHUTDOWN_START: '\nShutting down gracefully...',
+    SHUTDOWN_COMPLETE: 'Server closed',
+    SHUTDOWN_FORCED: 'Forced shutdown',
+    WARNING_NO_ADMIN_TOKEN: 'WARNING: ADMIN_TOKEN is not set. Admin panel will be inaccessible.',
+    WARNING_NO_TELEGRAM: 'WARNING: Telegram is not fully configured. Notifications will be disabled.',
+    WARNING_NO_GITHUB: 'WARNING: GitHub is not configured. Using local filesystem for storage.'
+};
+
+const LOG_PREFIXES = {
+    ERROR: '[Error]',
+    UNCAUGHT_EXCEPTION: '[Uncaught Exception]',
+    UNHANDLED_REJECTION: '[Unhandled Rejection]'
+};
+
+// -----------------------------
+// Error Handler Service
+// -----------------------------
+
+/**
+ * Сервис для обработки HTTP ошибок
+ */
+class ErrorHandlerService {
+    /**
+     * Проверка, является ли окружение разработческим
+     * @returns {boolean} - true если NODE_ENV !== 'production'
+     */
+    isDevelopment() {
+        return process.env.NODE_ENV !== ENVIRONMENT.PRODUCTION;
+    }
+
+    /**
+     * Получение сообщения об ошибке для ответа клиенту
+     * В dev-режиме возвращается оригинальное сообщение, в production — общее
+     * @param {Error} err - Объект ошибки
+     * @returns {string} - Сообщение для отправки клиенту
+     */
+    getClientErrorMessage(err) {
+        if (this.isDevelopment()) {
+            return err.message || HTTP_ERROR_MESSAGES.INTERNAL_ERROR;
+        }
+        return HTTP_ERROR_MESSAGES.INTERNAL_ERROR;
+    }
+
+    /**
+     * Получение HTTP статуса ошибки
+     * @param {Error} err - Объект ошибки
+     * @returns {number} - HTTP статус код
+     */
+    getErrorStatus(err) {
+        return err.status || HTTP_STATUS.INTERNAL_ERROR;
+    }
+
+    /**
+     * Логирование ошибки
+     * @param {Error} err - Объект ошибки
+     */
+    logError(err) {
+        console.error(LOG_PREFIXES.ERROR, err.stack || err);
+    }
+
+    /**
+     * Middleware для обработки 404 ошибок
+     * @param {Request} req - Express request объект
+     * @param {Response} res - Express response объект
+     */
+    handleNotFound(req, res) {
+        res.status(HTTP_STATUS.NOT_FOUND).json({ 
+            error: HTTP_ERROR_MESSAGES.NOT_FOUND 
+        });
+    }
+
+    /**
+     * Middleware для обработки общих ошибок
+     * @param {Error} err - Объект ошибки
+     * @param {Request} req - Express request объект
+     * @param {Response} res - Express response объект
+     * @param {Function} next - Express next функция
+     */
+    handleError(err, req, res, next) {
+        this.logError(err);
+
+        const statusCode = this.getErrorStatus(err);
+        const message = this.getClientErrorMessage(err);
+
+        res.status(statusCode).json({ 
+            error: message 
+        });
+    }
+}
+
+// Инициализация сервиса
+const errorHandlerService = new ErrorHandlerService();
+
+// -----------------------------
+// Startup Validator Service
+// -----------------------------
+
+/**
+ * Сервис для проверки критических переменных окружения при старте
+ */
+class StartupValidatorService {
+    /**
+     * Проверка наличия критических переменных окружения
+     * Выводит предупреждения в консоль при их отсутствии
+     */
+    validateEnvironment() {
+        this.checkAdminToken();
+        this.checkTelegramConfig();
+        this.checkGitHubConfig();
+    }
+
+    /**
+     * Проверка наличия ADMIN_TOKEN
+     */
+    checkAdminToken() {
+        if (!ADMIN_TOKEN) {
+            console.warn(STARTUP_MESSAGES.WARNING_NO_ADMIN_TOKEN);
         }
     }
-    res.json({ success: true });
-});
 
-// -----------------------------
-// Error Handling & 404
-// -----------------------------
+    /**
+     * Проверка конфигурации Telegram
+     */
+    checkTelegramConfig() {
+        if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+            console.warn(STARTUP_MESSAGES.WARNING_NO_TELEGRAM);
+        }
+    }
 
-app.use((req, res) => {
-    res.status(404).json({ error: 'Not found' });
-});
-
-app.use((err, req, res, next) => {
-    console.error('[Error]', err.stack || err);
-    const isDev = process.env.NODE_ENV !== 'production';
-    res.status(err.status || 500).json({ 
-        error: isDev ? err.message : 'Internal server error' 
-    });
-});
-
-// -----------------------------
-// Server Startup & Shutdown
-// -----------------------------
-
-// Проверка критических переменных при старте
-if (!ADMIN_TOKEN) {
-    console.warn('WARNING: ADMIN_TOKEN is not set. Admin panel will be inaccessible.');
+    /**
+     * Проверка конфигурации GitHub
+     */
+    checkGitHubConfig() {
+        if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+            console.warn(STARTUP_MESSAGES.WARNING_NO_GITHUB);
+        }
+    }
 }
 
-// Разделение локальной и serverless-среды
-if (require.main === module) {
-    // Локальный запуск (node proxy.js)
-    const server = app.listen(PORT, () => {
-        console.log(`Oris Server running on port ${PORT}`);
-        console.log(`Security: Helmet enabled, Rate limiting active`);
-        console.log(`Storage: ${GITHUB_TOKEN ? 'GitHub API' : 'Local Filesystem'}`);
-    });
+// Инициализация сервиса
+const startupValidatorService = new StartupValidatorService();
 
-    const shutdown = () => {
-        console.log('\nShutting down gracefully...');
-        server.close(() => {
-            console.log('Server closed');
-            process.exit(0);
+// -----------------------------
+// Server Lifecycle Service
+// -----------------------------
+
+/**
+ * Сервис для управления жизненным циклом сервера
+ */
+class ServerLifecycleService {
+    constructor() {
+        this.server = null;
+        this.isShuttingDown = false;
+    }
+
+    /**
+     * Запуск сервера
+     * @param {Object} app - Express приложение
+     * @param {number} port - Порт для прослушивания
+     */
+    start(app, port) {
+        this.server = app.listen(port, () => {
+            this.logStartupInfo(port);
         });
-        setTimeout(() => {
-            console.error('Forced shutdown');
-            process.exit(1);
-        }, 10000);
-    };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+        this.registerShutdownHandlers();
+    }
+
+    /**
+     * Логирование информации о запуске
+     * @param {number} port - Порт сервера
+     */
+    logStartupInfo(port) {
+        console.log(STARTUP_MESSAGES.SERVER_RUNNING(port));
+        console.log(STARTUP_MESSAGES.SECURITY_INFO);
+        console.log(STARTUP_MESSAGES.STORAGE_INFO(!!GITHUB_TOKEN));
+    }
+
+    /**
+     * Регистрация обработчиков завершения работы
+     */
+    registerShutdownHandlers() {
+        process.on('SIGTERM', () => this.shutdown());
+        process.on('SIGINT', () => this.shutdown());
+    }
+
+    /**
+     * Graceful shutdown сервера
+     */
+    shutdown() {
+        if (this.isShuttingDown) return;
+        this.isShuttingDown = true;
+
+        console.log(STARTUP_MESSAGES.SHUTDOWN_START);
+
+        // Закрытие HTTP-сервера
+        if (this.server) {
+            this.server.close(() => {
+                console.log(STARTUP_MESSAGES.SHUTDOWN_COMPLETE);
+                process.exit(0);
+            });
+        }
+
+        // Принудительное завершение по таймауту
+        setTimeout(() => {
+            console.error(STARTUP_MESSAGES.SHUTDOWN_FORCED);
+            process.exit(1);
+        }, SHUTDOWN_TIMEOUT);
+    }
+
+    /**
+     * Проверка, запущен ли файл напрямую (не через require)
+     * @returns {boolean} - true если файл запущен напрямую
+     */
+    isMainModule() {
+        return require.main === module;
+    }
 }
 
-// Глобальные обработчики ошибок
-process.on('uncaughtException', (err) => {
-    console.error('[Uncaught Exception]', err);
-    process.exit(1);
+// Инициализация сервиса
+const serverLifecycleService = new ServerLifecycleService();
+
+// -----------------------------
+// Global Error Handler Service
+// -----------------------------
+
+/**
+ * Сервис для обработки глобальных необработанных ошибок
+ */
+class GlobalErrorHandlerService {
+    /**
+     * Регистрация глобальных обработчиков ошибок
+     */
+    registerHandlers() {
+        this.handleUncaughtException();
+        this.handleUnhandledRejection();
+    }
+
+    /**
+     * Обработка неперехваченных исключений
+     */
+    handleUncaughtException() {
+        process.on('uncaughtException', (err) => {
+            console.error(LOG_PREFIXES.UNCAUGHT_EXCEPTION, err);
+            process.exit(1);
+        });
+    }
+
+    /**
+     * Обработка необработанных отклонений промисов
+     */
+    handleUnhandledRejection() {
+        process.on('unhandledRejection', (reason, promise) => {
+            console.error(LOG_PREFIXES.UNHANDLED_REJECTION, reason);
+            process.exit(1);
+        });
+    }
+}
+
+// Инициализация сервиса
+const globalErrorHandlerService = new GlobalErrorHandlerService();
+
+// -----------------------------
+// Error Handling Middleware
+// -----------------------------
+
+/**
+ * Middleware для обработки 404 (Not Found) ошибок
+ * Срабатывает, когда ни один маршрут не совпал
+ */
+app.use((req, res) => {
+    errorHandlerService.handleNotFound(req, res);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('[Unhandled Rejection]', reason);
-    process.exit(1);
+/**
+ * Middleware для обработки общих ошибок сервера
+ * Срабатывает при вызове next(err) в любом маршруте
+ */
+app.use((err, req, res, next) => {
+    errorHandlerService.handleError(err, req, res, next);
 });
 
+// -----------------------------
+// Route: Categories
+// -----------------------------
+
+/**
+ * GET /api/categories — получение метаданных всех категорий
+ */
 app.get('/api/categories', (req, res) => {
-    res.json(CATEGORY_META);
+    res.json(CategoryMetadata.DATA);
 });
 
+// -----------------------------
+// Application Initialization
+// -----------------------------
+
+/**
+ * Инициализация приложения
+ * Выполняется при загрузке модуля
+ */
+const initializeApplication = () => {
+    // Проверка критических переменных окружения
+    startupValidatorService.validateEnvironment();
+
+    // Регистрация глобальных обработчиков ошибок
+    globalErrorHandlerService.registerHandlers();
+
+    // Запуск сервера только при прямом запуске (не в serverless)
+    if (serverLifecycleService.isMainModule()) {
+        serverLifecycleService.start(app, PORT);
+    }
+};
+
+// Запуск инициализации
+initializeApplication();
 
 // -----------------------------
 // Экспорт приложения для Vercel Serverless
 // -----------------------------
+
+/**
+ * Экспорт Express-приложения для использования в Vercel Serverless
+ * В serverless-окружении сервер не запускается, обрабатываются только запросы
+ */
 module.exports = app;
