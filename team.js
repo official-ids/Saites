@@ -87,7 +87,7 @@ const CONFIG = {
     MAX_CONTACT_LENGTH: 100,
 
     /** @type {number} Таймаут для Telegram API (мс) */
-    TELEGRAM_API_TIMEOUT: 30000,
+    TELEGRAM_API_TIMEOUT: 10000,
 
     /** @type {number} Rate limit: запросов в минуту */
     RATE_LIMIT_MAX: 60,
@@ -442,81 +442,49 @@ async function getAuditLog(limit = 50) {
 const TELEGRAM_API_BASE = 'https://api.telegram.org/bot';
 
 /**
- * Выполнение запроса к Telegram Bot API с retry
+ * Выполнение запроса к Telegram Bot API (без retry для скорости)
  * @param {string} method - Метод API
  * @param {Object} body - Тело запроса
- * @param {number} maxRetries - Максимальное количество попыток
  * @returns {Promise<Object|null>}
  */
-async function callTelegramApi(method, body, maxRetries = 2) {
+async function callTelegramApi(method, body) {
     if (!TELEGRAM_BOT_TOKEN) {
         console.warn('[Telegram] Bot token not configured');
         return null;
     }
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), CONFIG.TELEGRAM_API_TIMEOUT);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.TELEGRAM_API_TIMEOUT);
 
-        try {
-            console.log(`[Telegram] ${method} attempt ${attempt}/${maxRetries}`);
-            
-            const response = await fetch(
-                `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
-                    signal: controller.signal
-                }
-            );
-
-            clearTimeout(timeoutId);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error(`[Telegram] ${method} failed:`, errorData);
-                
-                // Если ошибка 400 (Bad Request) — не повторяем
-                if (response.status === 400) {
-                    return null;
-                }
-                
-                // Для других ошибок — повторяем
-                if (attempt < maxRetries) {
-                    console.log(`[Telegram] Retrying in 2 seconds...`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    continue;
-                }
-                
-                return null;
+    try {
+        const response = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+                signal: controller.signal
             }
+        );
 
-            const data = await response.json();
-            console.log(`[Telegram] ${method} success`);
-            return data;
-            
-        } catch (err) {
-            clearTimeout(timeoutId);
-            
-            if (err.name === 'AbortError') {
-                console.error(`[Telegram] ${method} timeout after ${CONFIG.TELEGRAM_API_TIMEOUT}ms (attempt ${attempt}/${maxRetries})`);
-            } else {
-                console.error(`[Telegram] ${method} error:`, err.message);
-            }
-            
-            // Если это последняя попытка — выходим
-            if (attempt >= maxRetries) {
-                return null;
-            }
-            
-            // Ждём перед повторной попыткой
-            console.log(`[Telegram] Retrying in 2 seconds...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error(`[Telegram] ${method} failed:`, errorData);
+            return null;
         }
+
+        return await response.json();
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            console.error(`[Telegram] ${method} timeout after ${CONFIG.TELEGRAM_API_TIMEOUT}ms`);
+        } else {
+            console.error(`[Telegram] ${method} error:`, err.message);
+        }
+        return null;
     }
-    
-    return null;
 }
 
 /**
@@ -580,11 +548,10 @@ async function editTelegramMessage(chatId, messageId, text, replyMarkup = {}) {
  * @returns {Promise<void>}
  */
 async function editTelegramMessageSafe(chatId, messageId, text) {
-    // Пытаемся отредактировать (reply_markup: {} убирает кнопки)
+    // Пытаемся отредактировать
     const result = await editTelegramMessage(chatId, messageId, text, {});
     
     if (!result) {
-        console.warn(`[Bot] Edit failed for message ${messageId}, sending new message`);
         // Fallback: отправляем новое сообщение
         await sendTelegramMessage(text, null, chatId);
     }
@@ -1068,7 +1035,7 @@ async function handleListCommand(chatId) {
 // ============================================
 
 /**
- * Обработка callback от inline-кнопки
+ * Обработка callback от inline-кнопки (оптимизированная)
  * @param {Object} callbackQuery - Callback query объект
  */
 async function handleCallbackQuery(callbackQuery) {
@@ -1078,18 +1045,14 @@ async function handleCallbackQuery(callbackQuery) {
 
     console.log(`[Bot] Callback: ${data} from chat ${chatId}`);
 
-    // СНАЧАЛА отвечаем на callback_query (убирает "часики" в Telegram)
-    // Telegram ждёт ответ максимум 30 секунд
-    try {
-        await answerCallbackQuery(callbackQuery.id, '⏳ Обрабатываю...');
-    } catch (err) {
-        console.error('[Bot] answerCallbackQuery failed:', err.message);
-    }
-
     // Парсинг действия
     const separatorIndex = data.indexOf('_');
     if (separatorIndex === -1) {
-        await editTelegramMessageSafe(chatId, messageId, '❌ Неизвестное действие');
+        // Параллельно отвечаем на callback и редактируем сообщение
+        await Promise.all([
+            answerCallbackQuery(callbackQuery.id, '❌ Неизвестное действие'),
+            editTelegramMessageSafe(chatId, messageId, '❌ Неизвестное действие')
+        ]);
         return;
     }
 
@@ -1098,34 +1061,46 @@ async function handleCallbackQuery(callbackQuery) {
 
     console.log(`[Bot] Action: ${action}, code: ${code}`);
 
-    // Выполняем действие с обработкой ошибок
+    // СНАЧАЛА быстро отвечаем на callback (убирает "часики")
+    answerCallbackQuery(callbackQuery.id, '⏳ Обрабатываю...').catch(err => {
+        console.warn('[Bot] answerCallbackQuery failed:', err.message);
+    });
+
+    // Выполняем действие
     try {
+        let result;
+        let successText;
+        let errorText;
+
         if (action === 'approve') {
-            const result = await approveApplication(code);
+            result = await approveApplication(code);
             if (result.success) {
-                const text =
+                successText =
                     `✅ <b>Заявка одобрена!</b>\n\n` +
                     `🔑 <b>Код:</b> <code>${code}</code>\n` +
                     `👤 <b>Логин:</b> <code>${result.login}</code>\n` +
                     `🔐 <b>Пароль:</b> <code>${result.password}</code>\n\n` +
                     `⚠️ Передайте эти данные пользователю.`;
-                await editTelegramMessageSafe(chatId, messageId, text);
             } else {
-                await editTelegramMessageSafe(chatId, messageId,
-                    `❌ <b>Ошибка одобрения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`);
+                errorText = `❌ <b>Ошибка одобрения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`;
             }
         } else if (action === 'reject') {
-            const result = await rejectApplication(code);
+            result = await rejectApplication(code);
             if (result.success) {
-                await editTelegramMessageSafe(chatId, messageId,
-                    `🚫 <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`);
+                successText = `🚫 <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`;
             } else {
-                await editTelegramMessageSafe(chatId, messageId,
-                    `❌ <b>Ошибка отклонения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`);
+                errorText = `❌ <b>Ошибка отклонения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`;
             }
         } else {
             await editTelegramMessageSafe(chatId, messageId, '❌ Неизвестное действие');
+            return;
         }
+
+        // Редактируем сообщение
+        const finalText = successText || errorText;
+        await editTelegramMessageSafe(chatId, messageId, finalText);
+
+        console.log(`[Bot] Action completed: ${action} for ${code}`);
     } catch (err) {
         console.error('[Bot] Action failed:', err);
         await editTelegramMessageSafe(chatId, messageId,
