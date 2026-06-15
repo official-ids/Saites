@@ -5,55 +5,125 @@ const path = require('path');
 const { put } = require('@vercel/blob');
 const { kv } = require('@vercel/kv');
 
-// -----------------------------
-// Configuration
-// -----------------------------
+// ============================================
+// Инициализация роутера
+// ============================================
 
+/**
+ * Express роутер для новостной системы
+ * @type {express.Router}
+ */
 const router = express.Router();
 
+/**
+ * Multer middleware для обработки загрузки файлов
+ * Хранит файлы в памяти для последующей обработки
+ * @type {multer.Instance}
+ */
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 50 * 1024 * 1024 }
 });
 
-// -----------------------------
-// Constants
-// -----------------------------
+// ============================================
+// Переменные окружения
+// ============================================
 
+/**
+ * Токен администратора для защиты приватных endpoints
+ * @constant {string}
+ */
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
+// ============================================
+// Конфигурация приложения
+// ============================================
+
+/**
+ * Конфигурация загрузки файлов
+ * @namespace
+ */
 const FILE_CONFIG = {
+    /** @type {number} Максимальный размер файла (50 МБ) */
     MAX_SIZE: 50 * 1024 * 1024,
+    
+    /** @type {Array<string>} Разрешённые MIME-типы */
     ALLOWED_MIMETYPES: [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf', 'video/mp4'
     ],
+    
+    /** @type {string} Директория для загрузки в Blob Storage */
     UPLOAD_DIR: 'news-files'
 };
 
+/**
+ * Конфигурация аутентификации
+ * @namespace
+ */
 const AUTH_CONFIG = {
+    /** @type {number} TTL сессии администратора (30 дней в секундах) */
     SESSION_TTL_ADMIN: 60 * 60 * 24 * 30,
+    
+    /** @type {number} TTL сессии читателя (1 год в секундах) */
     SESSION_TTL_READER: 60 * 60 * 24 * 365,
+    
+    /** @type {number} Длина токена сессии в байтах */
     TOKEN_LENGTH: 32,
+    
+    /** @type {number} Длина соли для пароля в байтах */
     PASSWORD_SALT_LENGTH: 16,
+    
+    /** @type {number} Длина производного ключа в байтах */
     PASSWORD_KEY_LENGTH: 64,
+    
+    /** @type {number} Количество итераций PBKDF2 */
     PASSWORD_ITERATIONS: 100000,
+    
+    /** @type {string} Алгоритм хеширования для PBKDF2 */
     PASSWORD_DIGEST: 'sha512',
+    
+    /** @type {number} Минимальная длина логина */
     LOGIN_MIN_LENGTH: 3,
+    
+    /** @type {number} Максимальная длина логина */
     LOGIN_MAX_LENGTH: 30,
+    
+    /** @type {number} Минимальная длина пароля */
     PASSWORD_MIN_LENGTH: 6,
+    
+    /** @type {number} Минимальная длина никнейма */
     NICKNAME_MIN_LENGTH: 2,
+    
+    /** @type {number} Максимальная длина никнейма */
     NICKNAME_MAX_LENGTH: 30
 };
 
+/**
+ * Лимиты контента
+ * @namespace
+ */
 const CONTENT_LIMITS = {
+    /** @type {number} Максимальная длина заголовка поста */
     TITLE_MAX: 200,
+    
+    /** @type {number} Максимальная длина содержания поста */
     CONTENT_MAX: 100000,
+    
+    /** @type {number} Максимальная длина комментария */
     COMMENT_MAX: 2000,
+    
+    /** @type {number} Максимальное количество постов на странице */
     POSTS_PAGE_MAX: 100,
+    
+    /** @type {number} Количество постов по умолчанию на странице */
     POSTS_PAGE_DEFAULT: 20
 };
 
+/**
+ * Пороги уровней пользователей
+ * @constant {Object<string, {comments: number, likesReceived: number}>}
+ */
 const LEVEL_THRESHOLDS = {
     newbie: { comments: 0, likesReceived: 0 },
     active: { comments: 10, likesReceived: 20 },
@@ -61,6 +131,26 @@ const LEVEL_THRESHOLDS = {
     plus: { comments: 200, likesReceived: 500 }
 };
 
+/**
+ * HTTP статус коды
+ * @constant {Object<string, number>}
+ */
+const HTTP_STATUS = {
+    OK: 200,
+    CREATED: 201,
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
+    FORBIDDEN: 403,
+    NOT_FOUND: 404,
+    CONFLICT: 409,
+    PAYLOAD_TOO_LARGE: 413,
+    SERVER_ERROR: 500
+};
+
+/**
+ * Сообщения об ошибках
+ * @constant {Object<string, string>}
+ */
 const ERROR_MESSAGES = {
     // Auth
     ADMIN_TOKEN_NOT_CONFIGURED: 'Admin token не настроен',
@@ -121,39 +211,129 @@ const ERROR_MESSAGES = {
     LOGIN_ERROR: 'Ошибка входа'
 };
 
-// -----------------------------
+// ============================================
 // KV Key Prefixes
-// -----------------------------
+// ============================================
 
+/**
+ * Фабрика ключей для Vercel KV
+ * @namespace
+ */
 const K = {
+    /**
+     * Ключ для данных пользователя
+     * @param {string} id - ID пользователя
+     * @returns {string} Ключ KV
+     */
     USER: (id) => `news:user:${id}`,
+    
+    /**
+     * Ключ для поиска пользователя по логину
+     * @param {string} login - Логин пользователя
+     * @returns {string} Ключ KV
+     */
     USER_BY_LOGIN: (login) => `news:login:${login.toLowerCase()}`,
+    
+    /**
+     * Ключ для сессии
+     * @param {string} token - Токен сессии
+     * @returns {string} Ключ KV
+     */
     SESSION: (token) => `news:session:${token}`,
+    
+    /**
+     * Ключ для данных поста
+     * @param {string} id - ID поста
+     * @returns {string} Ключ KV
+     */
     POST: (id) => `news:post:${id}`,
+    
+    /**
+     * Ключ для данных комментария
+     * @param {string} id - ID комментария
+     * @returns {string} Ключ KV
+     */
     COMMENT: (id) => `news:comment:${id}`,
+    
+    /**
+     * Set лайков поста
+     * @param {string} id - ID поста
+     * @returns {string} Ключ KV
+     */
     POST_LIKES: (id) => `news:post_likes:${id}`,
+    
+    /**
+     * Set дизлайков поста
+     * @param {string} id - ID поста
+     * @returns {string} Ключ KV
+     */
     POST_DISLIKES: (id) => `news:post_dislikes:${id}`,
+    
+    /**
+     * Set избранных постов пользователя
+     * @param {string} userId - ID пользователя
+     * @returns {string} Ключ KV
+     */
     POST_FAV: (userId) => `news:favorites:${userId}`,
+    
+    /**
+     * Set лайков комментария
+     * @param {string} id - ID комментария
+     * @returns {string} Ключ KV
+     */
     COMMENT_LIKES: (id) => `news:comment_likes:${id}`,
+    
+    /**
+     * Set дизлайков комментария
+     * @param {string} id - ID комментария
+     * @returns {string} Ключ KV
+     */
     COMMENT_DISLIKES: (id) => `news:comment_dislikes:${id}`,
+    
+    /**
+     * Set комментариев поста
+     * @param {string} postId - ID поста
+     * @returns {string} Ключ KV
+     */
     POST_COMMENTS: (postId) => `news:post_comments:${postId}`,
+    
+    /**
+     * Set комментариев пользователя
+     * @param {string} userId - ID пользователя
+     * @returns {string} Ключ KV
+     */
     USER_COMMENTS: (userId) => `news:user_comments:${userId}`,
+    
+    /**
+     * Ключ для статистики пользователя
+     * @param {string} id - ID пользователя
+     * @returns {string} Ключ KV
+     */
     USER_STATS: (id) => `news:stats:${id}`,
+    
+    /**
+     * Ключ для уровня пользователя
+     * @param {string} id - ID пользователя
+     * @returns {string} Ключ KV
+     */
     USER_LEVEL: (id) => `news:level:${id}`,
+    
+    /** @type {string} Индекс всех постов (Set) */
     POSTS_INDEX: 'news:posts:index'
 };
 
-// -----------------------------
+// ============================================
 // Password Service
-// -----------------------------
+// ============================================
 
 /**
  * Сервис для работы с паролями (хеширование и верификация)
+ * @namespace
  */
 class PasswordService {
     /**
      * Генерация случайной соли
-     * @returns {string} - Соль в hex формате
+     * @returns {string} Соль в hex формате
      */
     generateSalt() {
         return crypto.randomBytes(AUTH_CONFIG.PASSWORD_SALT_LENGTH).toString('hex');
@@ -161,9 +341,10 @@ class PasswordService {
 
     /**
      * Хеширование пароля с использованием PBKDF2
+     * 
      * @param {string} password - Пароль
      * @param {string} salt - Соль
-     * @returns {Promise<string>} - Хеш в hex формате
+     * @returns {Promise<string>} Хеш в hex формате
      */
     hashPassword(password, salt) {
         return new Promise((resolve, reject) => {
@@ -183,8 +364,9 @@ class PasswordService {
 
     /**
      * Создание полного хеша пароля (соль + хеш)
+     * 
      * @param {string} password - Пароль
-     * @returns {Promise<string>} - Формат: salt:hash
+     * @returns {Promise<string>} Формат: salt:hash
      */
     async createPasswordHash(password) {
         const salt = this.generateSalt();
@@ -194,9 +376,10 @@ class PasswordService {
 
     /**
      * Проверка пароля
+     * 
      * @param {string} password - Пароль для проверки
      * @param {string} storedHash - Сохраненный хеш (salt:hash)
-     * @returns {Promise<boolean>} - true если пароль верный
+     * @returns {Promise<boolean>} true если пароль верный
      */
     async verifyPassword(password, storedHash) {
         const [salt, originalHash] = storedHash.split(':');
@@ -204,7 +387,7 @@ class PasswordService {
 
         const hash = await this.hashPassword(password, salt);
         
-        // Timing-safe сравнение
+        // Timing-safe сравнение для защиты от timing-атак
         try {
             return crypto.timingSafeEqual(
                 Buffer.from(hash, 'hex'),
@@ -216,20 +399,26 @@ class PasswordService {
     }
 }
 
+/**
+ * Экземпляр сервиса паролей
+ * @type {PasswordService}
+ */
 const passwordService = new PasswordService();
 
-// -----------------------------
+// ============================================
 // Validation Service
-// -----------------------------
+// ============================================
 
 /**
  * Сервис для валидации входных данных
+ * @namespace
  */
 class ValidationService {
     /**
      * Валидация логина
+     * 
      * @param {string} login - Логин
-     * @returns {{ valid: boolean, error?: string }}
+     * @returns {{ valid: boolean, error?: string, value?: string }}
      */
     validateLogin(login) {
         if (!login || typeof login !== 'string') {
@@ -255,6 +444,7 @@ class ValidationService {
 
     /**
      * Валидация пароля
+     * 
      * @param {string} password - Пароль
      * @returns {{ valid: boolean, error?: string }}
      */
@@ -272,6 +462,7 @@ class ValidationService {
 
     /**
      * Валидация никнейма
+     * 
      * @param {string} nickname - Никнейм
      * @returns {{ valid: boolean, error?: string, value?: string }}
      */
@@ -291,21 +482,27 @@ class ValidationService {
     }
 }
 
+/**
+ * Экземпляр сервиса валидации
+ * @type {ValidationService}
+ */
 const validationService = new ValidationService();
 
-// -----------------------------
+// ============================================
 // KV Helper Service
-// -----------------------------
+// ============================================
 
 /**
  * Сервис для работы с Vercel KV
+ * @namespace
  */
 class KVService {
     /**
      * Пакетное получение ключей с учетом лимитов Vercel KV
+     * 
      * @param {Array<string>} keys - Массив ключей
      * @param {number} chunkSize - Размер чанка
-     * @returns {Promise<Array>} - Массив значений
+     * @returns {Promise<Array>} Массив значений
      */
     async mgetChunked(keys, chunkSize = 100) {
         const results = [];
@@ -320,20 +517,26 @@ class KVService {
     }
 }
 
+/**
+ * Экземпляр сервиса KV
+ * @type {KVService}
+ */
 const kvService = new KVService();
 
-// -----------------------------
+// ============================================
 // User Level Service
-// -----------------------------
+// ============================================
 
 /**
  * Сервис для управления уровнями пользователей
+ * @namespace
  */
 class UserLevelService {
     /**
      * Вычисление уровня пользователя на основе статистики
+     * 
      * @param {string} userId - ID пользователя
-     * @returns {Promise<string>} - Уровень пользователя
+     * @returns {Promise<string>} Уровень пользователя
      */
     async calculate(userId) {
         if (!userId || userId === 'admin') return 'admin';
@@ -366,8 +569,9 @@ class UserLevelService {
 
     /**
      * Получение текущего уровня пользователя
+     * 
      * @param {string} userId - ID пользователя
-     * @returns {Promise<string>} - Уровень
+     * @returns {Promise<string>} Уровень
      */
     async get(userId) {
         if (!userId) return 'newbie';
@@ -377,10 +581,11 @@ class UserLevelService {
 
     /**
      * Инкремент статистики пользователя
+     * 
      * @param {string} userId - ID пользователя
-     * @param {string} field - Поле статистики
+     * @param {string} field - Поле статистики ('comments' | 'likesReceived')
      * @param {number} delta - Изменение
-     * @returns {Promise<Object>} - Обновленная статистика
+     * @returns {Promise<Object>} Обновленная статистика
      */
     async incrementStats(userId, field, delta = 1) {
         if (!userId || userId === 'admin') return null;
@@ -394,26 +599,36 @@ class UserLevelService {
     }
 }
 
+/**
+ * Экземпляр сервиса уровней
+ * @type {UserLevelService}
+ */
 const userLevelService = new UserLevelService();
 
-// -----------------------------
+// ============================================
 // Token Generator
-// -----------------------------
+// ============================================
 
 /**
  * Генерация криптографически безопасного токена сессии
- * @returns {string} - Токен в hex формате
+ * 
+ * @returns {string} Токен в hex формате
  */
 function generateSessionToken() {
     return crypto.randomBytes(AUTH_CONFIG.TOKEN_LENGTH).toString('hex');
 }
 
-// -----------------------------
+// ============================================
 // Auth Middleware
-// -----------------------------
+// ============================================
 
 /**
- * Опциональная аутентификация — устанавливает req.user если токен валиден
+ * Опциональная аутентификация
+ * Устанавливает req.user если токен валиден, но не блокирует запрос
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
+ * @param {express.NextFunction} next - Следующий middleware
  */
 async function optionalAuth(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -429,49 +644,61 @@ async function optionalAuth(req, res, next) {
 
 /**
  * Обязательная аутентификация
+ * Блокирует запрос если токен невалиден
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
+ * @param {express.NextFunction} next - Следующий middleware
  */
 async function requireAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: ERROR_MESSAGES.AUTH_REQUIRED });
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.AUTH_REQUIRED });
     }
 
     const token = authHeader.split(' ')[1];
     try {
         const session = await kv.get(K.SESSION(token));
         if (!session) {
-            return res.status(401).json({ error: ERROR_MESSAGES.SESSION_EXPIRED });
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.SESSION_EXPIRED });
         }
         req.user = session;
         next();
     } catch {
-        return res.status(500).json({ error: ERROR_MESSAGES.SESSION_CHECK_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.SESSION_CHECK_ERROR });
     }
 }
 
 /**
  * Проверка прав администратора
+ * Должен использоваться после requireAuth
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
+ * @param {express.NextFunction} next - Следующий middleware
  */
 function requireAdmin(req, res, next) {
     if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ error: ERROR_MESSAGES.ADMIN_REQUIRED });
+        return res.status(HTTP_STATUS.FORBIDDEN).json({ error: ERROR_MESSAGES.ADMIN_REQUIRED });
     }
     next();
 }
 
-// -----------------------------
+// ============================================
 // Data Enrichment Service
-// -----------------------------
+// ============================================
 
 /**
  * Сервис для обогащения данных поста/комментария пользовательскими флагами
+ * @namespace
  */
 class DataEnrichmentService {
     /**
      * Обогащение поста данными о лайках и избранном
+     * 
      * @param {string} postId - ID поста
      * @param {string|null} userId - ID текущего пользователя
-     * @returns {Promise<Object|null>} - Обогащенный пост
+     * @returns {Promise<Object|null>} Обогащенный пост
      */
     async enrichPost(postId, userId) {
         const post = await kv.get(K.POST(postId));
@@ -501,9 +728,10 @@ class DataEnrichmentService {
 
     /**
      * Обогащение комментария данными о лайках и уровне автора
+     * 
      * @param {string} commentId - ID комментария
      * @param {string|null} userId - ID текущего пользователя
-     * @returns {Promise<Object|null>} - Обогащенный комментарий
+     * @returns {Promise<Object|null>} Обогащенный комментарий
      */
     async enrichComment(commentId, userId) {
         const comment = await kv.get(K.COMMENT(commentId));
@@ -526,14 +754,68 @@ class DataEnrichmentService {
     }
 }
 
+/**
+ * Экземпляр сервиса обогащения данных
+ * @type {DataEnrichmentService}
+ */
 const dataEnrichmentService = new DataEnrichmentService();
 
-// -----------------------------
+// ============================================
+// Утилиты для работы с пользователем
+// ============================================
+
+/**
+ * Удаление passwordHash из объекта пользователя перед отправкой
+ * 
+ * @param {Object} user - Объект пользователя
+ * @returns {Object} Безопасный объект пользователя без passwordHash
+ */
+function sanitizeUser(user) {
+    const { passwordHash: _, ...safeUser } = user;
+    return safeUser;
+}
+
+/**
+ * Валидация заголовка поста
+ * 
+ * @param {string} title - Заголовок
+ * @returns {{ valid: boolean, error?: string, value?: string }}
+ */
+function validateTitle(title) {
+    if (!title || typeof title !== 'string' || !title.trim()) {
+        return { valid: false, error: ERROR_MESSAGES.TITLE_REQUIRED };
+    }
+    if (title.length > CONTENT_LIMITS.TITLE_MAX) {
+        return { valid: false, error: ERROR_MESSAGES.TITLE_TOO_LONG };
+    }
+    return { valid: true, value: title.trim() };
+}
+
+/**
+ * Валидация содержания поста
+ * 
+ * @param {string} content - Содержание
+ * @returns {{ valid: boolean, error?: string, value?: string }}
+ */
+function validateContent(content) {
+    if (!content || typeof content !== 'string' || !content.trim()) {
+        return { valid: false, error: ERROR_MESSAGES.CONTENT_REQUIRED };
+    }
+    if (content.length > CONTENT_LIMITS.CONTENT_MAX) {
+        return { valid: false, error: ERROR_MESSAGES.CONTENT_TOO_LONG };
+    }
+    return { valid: true, value: content };
+}
+
+// ============================================
 // Routes: Authentication
-// -----------------------------
+// ============================================
 
 /**
  * POST /auth/register — регистрация нового пользователя
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/auth/register', async (req, res) => {
     try {
@@ -542,7 +824,9 @@ router.post('/auth/register', async (req, res) => {
         // --- Регистрация администратора ---
         if (role === 'admin') {
             if (!ADMIN_TOKEN) {
-                return res.status(500).json({ error: ERROR_MESSAGES.ADMIN_TOKEN_NOT_CONFIGURED });
+                return res.status(HTTP_STATUS.SERVER_ERROR).json({ 
+                    error: ERROR_MESSAGES.ADMIN_TOKEN_NOT_CONFIGURED 
+                });
             }
 
             const isTokenValid = adminToken
@@ -550,7 +834,9 @@ router.post('/auth/register', async (req, res) => {
                 && crypto.timingSafeEqual(Buffer.from(adminToken), Buffer.from(ADMIN_TOKEN));
 
             if (!isTokenValid) {
-                return res.status(403).json({ error: ERROR_MESSAGES.INVALID_ADMIN_TOKEN });
+                return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+                    error: ERROR_MESSAGES.INVALID_ADMIN_TOKEN 
+                });
             }
 
             const existingAdmin = await kv.get(K.USER('admin'));
@@ -577,27 +863,27 @@ router.post('/auth/register', async (req, res) => {
             // Валидация логина
             const loginValidation = validationService.validateLogin(login);
             if (!loginValidation.valid) {
-                return res.status(400).json({ error: loginValidation.error });
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: loginValidation.error });
             }
             const cleanLogin = loginValidation.value;
 
             // Валидация пароля
             const passwordValidation = validationService.validatePassword(password);
             if (!passwordValidation.valid) {
-                return res.status(400).json({ error: passwordValidation.error });
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: passwordValidation.error });
             }
 
             // Валидация никнейма
             const nicknameValidation = validationService.validateNickname(nickname);
             if (!nicknameValidation.valid) {
-                return res.status(400).json({ error: nicknameValidation.error });
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: nicknameValidation.error });
             }
             const cleanNickname = nicknameValidation.value;
 
             // Проверка уникальности логина
             const existingLogin = await kv.get(K.USER_BY_LOGIN(cleanLogin));
             if (existingLogin) {
-                return res.status(409).json({ error: ERROR_MESSAGES.LOGIN_ALREADY_TAKEN });
+                return res.status(HTTP_STATUS.CONFLICT).json({ error: ERROR_MESSAGES.LOGIN_ALREADY_TAKEN });
             }
 
             // Хеширование пароля
@@ -624,21 +910,23 @@ router.post('/auth/register', async (req, res) => {
             const token = generateSessionToken();
             await kv.set(K.SESSION(token), readerUser, { ex: AUTH_CONFIG.SESSION_TTL_READER });
 
-            // Убираем passwordHash из ответа
-            const { passwordHash: _, ...safeUser } = readerUser;
-
-            return res.json({ user: { ...safeUser, token } });
+            return res.json({ user: { ...sanitizeUser(readerUser), token } });
         }
 
-        return res.status(400).json({ error: ERROR_MESSAGES.INVALID_ROLE });
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.INVALID_ROLE });
     } catch (err) {
         console.error('[news/auth/register]', err);
-        return res.status(500).json({ error: err.message || ERROR_MESSAGES.REGISTRATION_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ 
+            error: err.message || ERROR_MESSAGES.REGISTRATION_ERROR 
+        });
     }
 });
 
 /**
  * POST /auth/login — вход по логину и паролю
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/auth/login', async (req, res) => {
     try {
@@ -646,24 +934,24 @@ router.post('/auth/login', async (req, res) => {
 
         // Валидация входных данных
         if (!login || !password) {
-            return res.status(400).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
         }
 
         // Поиск пользователя по логину
         const userId = await kv.get(K.USER_BY_LOGIN(login.trim().toLowerCase()));
         if (!userId) {
-            return res.status(401).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
         }
 
         const user = await kv.get(K.USER(userId));
         if (!user || !user.passwordHash) {
-            return res.status(401).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
         }
 
         // Проверка пароля
         const isPasswordValid = await passwordService.verifyPassword(password, user.passwordHash);
         if (!isPasswordValid) {
-            return res.status(401).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
+            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
         }
 
         // Обновление уровня
@@ -673,47 +961,50 @@ router.post('/auth/login', async (req, res) => {
         const token = generateSessionToken();
         await kv.set(K.SESSION(token), user, { ex: AUTH_CONFIG.SESSION_TTL_READER });
 
-        // Убираем passwordHash из ответа
-        const { passwordHash: _, ...safeUser } = user;
-
-        return res.json({ user: { ...safeUser, token } });
+        return res.json({ user: { ...sanitizeUser(user), token } });
     } catch (err) {
         console.error('[news/auth/login]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.LOGIN_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.LOGIN_ERROR });
     }
 });
 
 /**
  * GET /auth/me — текущий пользователь
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.get('/auth/me', requireAuth, async (req, res) => {
     try {
         const user = await kv.get(K.USER(req.user.id));
         if (!user) {
-            return res.status(404).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.USER_NOT_FOUND });
         }
         user.level = await userLevelService.get(req.user.id);
 
-        // Убираем passwordHash из ответа
-        const { passwordHash: _, ...safeUser } = user;
-
-        return res.json(safeUser);
+        return res.json(sanitizeUser(user));
     } catch (err) {
         console.error('[news/auth/me]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.PROFILE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.PROFILE_ERROR });
     }
 });
 
-// -----------------------------
+// ============================================
 // Routes: Posts
-// -----------------------------
+// ============================================
 
 /**
  * GET /posts — список постов с пагинацией
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.get('/posts', optionalAuth, async (req, res) => {
     try {
-        const limit = Math.min(parseInt(req.query.limit) || CONTENT_LIMITS.POSTS_PAGE_DEFAULT, CONTENT_LIMITS.POSTS_PAGE_MAX);
+        const limit = Math.min(
+            parseInt(req.query.limit) || CONTENT_LIMITS.POSTS_PAGE_DEFAULT, 
+            CONTENT_LIMITS.POSTS_PAGE_MAX
+        );
         const page = Math.max(parseInt(req.query.page) || 1, 1);
 
         const postIds = await kv.smembers(K.POSTS_INDEX);
@@ -743,28 +1034,30 @@ router.get('/posts', optionalAuth, async (req, res) => {
         return res.json({ posts, total, page, limit });
     } catch (err) {
         console.error('[news/posts GET]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.POSTS_LOAD_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.POSTS_LOAD_ERROR });
     }
 });
 
 /**
  * POST /posts — создание поста (только админ)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { title, content, files } = req.body;
 
-        if (!title || typeof title !== 'string' || !title.trim()) {
-            return res.status(400).json({ error: ERROR_MESSAGES.TITLE_REQUIRED });
+        // Валидация заголовка
+        const titleValidation = validateTitle(title);
+        if (!titleValidation.valid) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: titleValidation.error });
         }
-        if (!content || typeof content !== 'string' || !content.trim()) {
-            return res.status(400).json({ error: ERROR_MESSAGES.CONTENT_REQUIRED });
-        }
-        if (title.length > CONTENT_LIMITS.TITLE_MAX) {
-            return res.status(400).json({ error: ERROR_MESSAGES.TITLE_TOO_LONG });
-        }
-        if (content.length > CONTENT_LIMITS.CONTENT_MAX) {
-            return res.status(400).json({ error: ERROR_MESSAGES.CONTENT_TOO_LONG });
+
+        // Валидация содержания
+        const contentValidation = validateContent(content);
+        if (!contentValidation.valid) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: contentValidation.error });
         }
 
         const postId = crypto.randomUUID();
@@ -772,8 +1065,8 @@ router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
 
         const post = {
             id: postId,
-            title: title.trim(),
-            content: content,
+            title: titleValidation.value,
+            content: contentValidation.value,
             files: Array.isArray(files) ? files : [],
             authorId: req.user.id,
             authorRole: req.user.role,
@@ -793,12 +1086,15 @@ router.post('/posts', requireAuth, requireAdmin, async (req, res) => {
         return res.json({ post: enriched });
     } catch (err) {
         console.error('[news/posts POST]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.POST_CREATE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.POST_CREATE_ERROR });
     }
 });
 
 /**
  * PUT /posts/:id — обновление поста (только админ)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.put('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
@@ -806,15 +1102,26 @@ router.put('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
         const { title, content, files } = req.body;
 
         const existing = await kv.get(K.POST(id));
-        if (!existing) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!existing) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
-        if (!title || !title.trim()) return res.status(400).json({ error: ERROR_MESSAGES.TITLE_REQUIRED });
-        if (!content || !content.trim()) return res.status(400).json({ error: ERROR_MESSAGES.CONTENT_REQUIRED });
+        // Валидация заголовка
+        const titleValidation = validateTitle(title);
+        if (!titleValidation.valid) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: titleValidation.error });
+        }
+
+        // Валидация содержания
+        const contentValidation = validateContent(content);
+        if (!contentValidation.valid) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: contentValidation.error });
+        }
 
         const updated = {
             ...existing,
-            title: title.trim(),
-            content: content,
+            title: titleValidation.value,
+            content: contentValidation.value,
             files: Array.isArray(files) ? files : existing.files,
             updatedAt: new Date().toISOString()
         };
@@ -824,29 +1131,36 @@ router.put('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
         return res.json({ post: enriched });
     } catch (err) {
         console.error('[news/posts PUT]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.POST_UPDATE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.POST_UPDATE_ERROR });
     }
 });
 
 /**
  * DELETE /posts/:id — удаление поста со всеми комментариями (только админ)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.delete('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
 
         const existing = await kv.get(K.POST(id));
-        if (!existing) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!existing) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
         const commentIds = await kv.smembers(K.POST_COMMENTS(id));
         const deletePromises = [];
 
+        // Удаление всех комментариев и их лайков
         for (const cid of commentIds) {
             deletePromises.push(kv.del(K.COMMENT(cid)));
             deletePromises.push(kv.del(K.COMMENT_LIKES(cid)));
             deletePromises.push(kv.del(K.COMMENT_DISLIKES(cid)));
         }
 
+        // Удаление поста и связанных данных
         deletePromises.push(kv.del(K.POST(id)));
         deletePromises.push(kv.srem(K.POSTS_INDEX, id));
         deletePromises.push(kv.del(K.POST_LIKES(id)));
@@ -858,12 +1172,15 @@ router.delete('/posts/:id', requireAuth, requireAdmin, async (req, res) => {
         return res.json({ success: true });
     } catch (err) {
         console.error('[news/posts DELETE]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.POST_DELETE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.POST_DELETE_ERROR });
     }
 });
 
 /**
  * POST /posts/:id/like — лайк/анлайк поста
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/posts/:id/like', requireAuth, async (req, res) => {
     try {
@@ -871,7 +1188,9 @@ router.post('/posts/:id/like', requireAuth, async (req, res) => {
         const userId = req.user.id;
 
         const post = await kv.get(K.POST(id));
-        if (!post) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!post) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
         const alreadyLiked = await kv.sismember(K.POST_LIKES(id), userId);
         const wasDisliked = await kv.sismember(K.POST_DISLIKES(id), userId);
@@ -895,15 +1214,23 @@ router.post('/posts/:id/like', requireAuth, async (req, res) => {
         post.dislikes = newDislikes;
         await kv.set(K.POST(id), post);
 
-        return res.json({ likes: newLikes, dislikes: newDislikes, isLiked: !alreadyLiked, isDisliked: false });
+        return res.json({ 
+            likes: newLikes, 
+            dislikes: newDislikes, 
+            isLiked: !alreadyLiked, 
+            isDisliked: false 
+        });
     } catch (err) {
         console.error('[news/posts/like]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.LIKE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.LIKE_ERROR });
     }
 });
 
 /**
  * POST /posts/:id/dislike — дизлайк/андизлайк поста
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/posts/:id/dislike', requireAuth, async (req, res) => {
     try {
@@ -911,7 +1238,9 @@ router.post('/posts/:id/dislike', requireAuth, async (req, res) => {
         const userId = req.user.id;
 
         const post = await kv.get(K.POST(id));
-        if (!post) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!post) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
         const alreadyDisliked = await kv.sismember(K.POST_DISLIKES(id), userId);
         const wasLiked = await kv.sismember(K.POST_LIKES(id), userId);
@@ -935,15 +1264,23 @@ router.post('/posts/:id/dislike', requireAuth, async (req, res) => {
         post.dislikes = newDislikes;
         await kv.set(K.POST(id), post);
 
-        return res.json({ likes: newLikes, dislikes: newDislikes, isLiked: false, isDisliked: !alreadyDisliked });
+        return res.json({ 
+            likes: newLikes, 
+            dislikes: newDislikes, 
+            isLiked: false, 
+            isDisliked: !alreadyDisliked 
+        });
     } catch (err) {
         console.error('[news/posts/dislike]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.DISLIKE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.DISLIKE_ERROR });
     }
 });
 
 /**
  * POST /posts/:id/favorite — добавить/убрать из избранного
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/posts/:id/favorite', requireAuth, async (req, res) => {
     try {
@@ -951,28 +1288,38 @@ router.post('/posts/:id/favorite', requireAuth, async (req, res) => {
         const userId = req.user.id;
 
         const post = await kv.get(K.POST(id));
-        if (!post) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!post) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
         const isFav = await kv.sismember(K.POST_FAV(userId), id);
 
-        if (isFav) await kv.srem(K.POST_FAV(userId), id);
-        else await kv.sadd(K.POST_FAV(userId), id);
+        if (isFav) {
+            await kv.srem(K.POST_FAV(userId), id);
+        } else {
+            await kv.sadd(K.POST_FAV(userId), id);
+        }
 
         return res.json({ isFavorited: !isFav });
     } catch (err) {
         console.error('[news/posts/favorite]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.FAVORITE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.FAVORITE_ERROR });
     }
 });
 
 /**
  * POST /posts/:id/pin — закрепить/открепить пост (только админ)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/posts/:id/pin', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const post = await kv.get(K.POST(id));
-        if (!post) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!post) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
         post.isPinned = !post.isPinned;
         await kv.set(K.POST(id), post);
@@ -980,22 +1327,27 @@ router.post('/posts/:id/pin', requireAuth, requireAdmin, async (req, res) => {
         return res.json({ isPinned: post.isPinned });
     } catch (err) {
         console.error('[news/posts/pin]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.PIN_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.PIN_ERROR });
     }
 });
 
-// -----------------------------
+// ============================================
 // Routes: Comments
-// -----------------------------
+// ============================================
 
 /**
  * GET /posts/:postId/comments — комментарии поста
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.get('/posts/:postId/comments', optionalAuth, async (req, res) => {
     try {
         const { postId } = req.params;
         const post = await kv.get(K.POST(postId));
-        if (!post) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!post) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
         const commentIds = await kv.smembers(K.POST_COMMENTS(postId));
         const keys = commentIds.map(cid => K.COMMENT(cid));
@@ -1012,32 +1364,41 @@ router.get('/posts/:postId/comments', optionalAuth, async (req, res) => {
         return res.json({ comments });
     } catch (err) {
         console.error('[news/comments GET]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.COMMENTS_LOAD_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.COMMENTS_LOAD_ERROR });
     }
 });
 
 /**
  * POST /posts/:postId/comments — создать комментарий
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
     try {
         const { postId } = req.params;
         const { text, parentId } = req.body;
 
+        // Валидация текста
         if (!text || typeof text !== 'string' || !text.trim()) {
-            return res.status(400).json({ error: ERROR_MESSAGES.COMMENT_TEXT_REQUIRED });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.COMMENT_TEXT_REQUIRED });
         }
         if (text.length > CONTENT_LIMITS.COMMENT_MAX) {
-            return res.status(400).json({ error: ERROR_MESSAGES.COMMENT_TOO_LONG });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.COMMENT_TOO_LONG });
         }
 
         const post = await kv.get(K.POST(postId));
-        if (!post) return res.status(404).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        if (!post) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.POST_NOT_FOUND });
+        }
 
+        // Проверка родительского комментария
         if (parentId) {
             const parent = await kv.get(K.COMMENT(parentId));
             if (!parent || parent.postId !== postId) {
-                return res.status(400).json({ error: ERROR_MESSAGES.PARENT_COMMENT_NOT_FOUND });
+                return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+                    error: ERROR_MESSAGES.PARENT_COMMENT_NOT_FOUND 
+                });
             }
         }
 
@@ -1060,12 +1421,14 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
         await kv.set(K.COMMENT(commentId), comment);
         await kv.sadd(K.POST_COMMENTS(postId), commentId);
 
+        // Обновление счётчика комментариев поста
         const postForCount = await kv.get(K.POST(postId));
         if (postForCount) {
             postForCount.commentsCount = (postForCount.commentsCount || 0) + 1;
             await kv.set(K.POST(postId), postForCount);
         }
 
+        // Обновление статистики пользователя
         await kv.sadd(K.USER_COMMENTS(req.user.id), commentId);
         await userLevelService.incrementStats(req.user.id, 'comments', 1);
 
@@ -1073,24 +1436,36 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
         return res.json({ comment: enriched });
     } catch (err) {
         console.error('[news/comments POST]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.COMMENT_CREATE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.COMMENT_CREATE_ERROR });
     }
 });
 
 /**
  * PUT /comments/:id — редактировать комментарий
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.put('/comments/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { text } = req.body;
 
-        if (!text || !text.trim()) return res.status(400).json({ error: ERROR_MESSAGES.COMMENT_TEXT_REQUIRED });
-        if (text.length > CONTENT_LIMITS.COMMENT_MAX) return res.status(400).json({ error: ERROR_MESSAGES.COMMENT_TOO_LONG });
+        // Валидация текста
+        if (!text || !text.trim()) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.COMMENT_TEXT_REQUIRED });
+        }
+        if (text.length > CONTENT_LIMITS.COMMENT_MAX) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.COMMENT_TOO_LONG });
+        }
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) return res.status(404).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
-        if (comment.authorId !== req.user.id) return res.status(403).json({ error: ERROR_MESSAGES.COMMENT_OWN_ONLY });
+        if (!comment) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        }
+        if (comment.authorId !== req.user.id) {
+            return res.status(HTTP_STATUS.FORBIDDEN).json({ error: ERROR_MESSAGES.COMMENT_OWN_ONLY });
+        }
 
         comment.text = text.trim();
         comment.isEdited = true;
@@ -1100,27 +1475,33 @@ router.put('/comments/:id', requireAuth, async (req, res) => {
         return res.json({ comment: enriched });
     } catch (err) {
         console.error('[news/comments PUT]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.COMMENT_UPDATE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.COMMENT_UPDATE_ERROR });
     }
 });
 
 /**
  * DELETE /comments/:id — удалить комментарий (рекурсивно)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.delete('/comments/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) return res.status(404).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        if (!comment) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        }
 
         const isOwner = comment.authorId === req.user.id;
         const isAdmin = req.user.role === 'admin';
 
         if (!isOwner && !isAdmin) {
-            return res.status(403).json({ error: ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS });
+            return res.status(HTTP_STATUS.FORBIDDEN).json({ error: ERROR_MESSAGES.INSUFFICIENT_PERMISSIONS });
         }
 
+        // Сбор всех ID для удаления (рекурсивно)
         const allCommentIds = await kv.smembers(K.POST_COMMENTS(comment.postId));
         const commentKeys = allCommentIds.map(cid => K.COMMENT(cid));
         const allCommentsData = await kvService.mgetChunked(commentKeys);
@@ -1132,6 +1513,10 @@ router.delete('/comments/:id', requireAuth, async (req, res) => {
 
         const idsToDelete = [];
 
+        /**
+         * Рекурсивный сбор ID для удаления
+         * @param {string} currentId - ID текущего комментария
+         */
         function collectIds(currentId) {
             idsToDelete.push(currentId);
             for (const c of Object.values(commentsMap)) {
@@ -1143,6 +1528,7 @@ router.delete('/comments/:id', requireAuth, async (req, res) => {
 
         collectIds(id);
 
+        // Удаление всех найденных комментариев
         const deletePromises = [];
         for (const cid of idsToDelete) {
             deletePromises.push(kv.del(K.COMMENT(cid)));
@@ -1156,6 +1542,7 @@ router.delete('/comments/:id', requireAuth, async (req, res) => {
         }
         await Promise.all(deletePromises);
 
+        // Обновление счётчика комментариев поста
         const postForCount = await kv.get(K.POST(comment.postId));
         if (postForCount) {
             postForCount.commentsCount = Math.max(0, (postForCount.commentsCount || 0) - idsToDelete.length);
@@ -1165,12 +1552,15 @@ router.delete('/comments/:id', requireAuth, async (req, res) => {
         return res.json({ success: true, deletedCount: idsToDelete.length });
     } catch (err) {
         console.error('[news/comments DELETE]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.COMMENT_DELETE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.COMMENT_DELETE_ERROR });
     }
 });
 
 /**
  * POST /comments/:id/like — лайк комментария
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/comments/:id/like', requireAuth, async (req, res) => {
     try {
@@ -1178,7 +1568,9 @@ router.post('/comments/:id/like', requireAuth, async (req, res) => {
         const userId = req.user.id;
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) return res.status(404).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        if (!comment) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        }
 
         const alreadyLiked = await kv.sismember(K.COMMENT_LIKES(id), userId);
         const wasDisliked = await kv.sismember(K.COMMENT_DISLIKES(id), userId);
@@ -1201,15 +1593,23 @@ router.post('/comments/:id/like', requireAuth, async (req, res) => {
         const likesCount = await kv.scard(K.COMMENT_LIKES(id));
         const dislikesCount = await kv.scard(K.COMMENT_DISLIKES(id));
 
-        return res.json({ likes: likesCount, dislikes: dislikesCount, isLiked: !alreadyLiked, isDisliked: false });
+        return res.json({ 
+            likes: likesCount, 
+            dislikes: dislikesCount, 
+            isLiked: !alreadyLiked, 
+            isDisliked: false 
+        });
     } catch (err) {
         console.error('[news/comments/like]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.LIKE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.LIKE_ERROR });
     }
 });
 
 /**
  * POST /comments/:id/dislike — дизлайк комментария
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/comments/:id/dislike', requireAuth, async (req, res) => {
     try {
@@ -1217,7 +1617,9 @@ router.post('/comments/:id/dislike', requireAuth, async (req, res) => {
         const userId = req.user.id;
 
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) return res.status(404).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        if (!comment) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        }
 
         const alreadyDisliked = await kv.sismember(K.COMMENT_DISLIKES(id), userId);
         const wasLiked = await kv.sismember(K.COMMENT_LIKES(id), userId);
@@ -1237,21 +1639,31 @@ router.post('/comments/:id/dislike', requireAuth, async (req, res) => {
         const likesCount = await kv.scard(K.COMMENT_LIKES(id));
         const dislikesCount = await kv.scard(K.COMMENT_DISLIKES(id));
 
-        return res.json({ likes: likesCount, dislikes: dislikesCount, isLiked: false, isDisliked: !alreadyDisliked });
+        return res.json({ 
+            likes: likesCount, 
+            dislikes: dislikesCount, 
+            isLiked: false, 
+            isDisliked: !alreadyDisliked 
+        });
     } catch (err) {
         console.error('[news/comments/dislike]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.DISLIKE_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.DISLIKE_ERROR });
     }
 });
 
 /**
  * POST /comments/:id/pin — закрепить комментарий (только админ)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/comments/:id/pin', requireAuth, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const comment = await kv.get(K.COMMENT(id));
-        if (!comment) return res.status(404).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        if (!comment) {
+            return res.status(HTTP_STATUS.NOT_FOUND).json({ error: ERROR_MESSAGES.COMMENT_NOT_FOUND });
+        }
 
         comment.isPinned = !comment.isPinned;
         await kv.set(K.COMMENT(id), comment);
@@ -1259,24 +1671,31 @@ router.post('/comments/:id/pin', requireAuth, requireAdmin, async (req, res) => 
         return res.json({ isPinned: comment.isPinned });
     } catch (err) {
         console.error('[news/comments/pin]', err);
-        return res.status(500).json({ error: ERROR_MESSAGES.PIN_ERROR });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.PIN_ERROR });
     }
 });
 
-// -----------------------------
+// ============================================
 // Route: File Upload
-// -----------------------------
+// ============================================
 
 /**
  * POST /upload — загрузка файла в Vercel Blob (только админ)
+ * 
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
  */
 router.post('/upload', requireAuth, requireAdmin, upload.single('file'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ error: ERROR_MESSAGES.FILE_NOT_UPLOADED });
-        if (req.file.size > FILE_CONFIG.MAX_SIZE) return res.status(413).json({ error: ERROR_MESSAGES.FILE_TOO_LARGE });
+        if (!req.file) {
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.FILE_NOT_UPLOADED });
+        }
+        if (req.file.size > FILE_CONFIG.MAX_SIZE) {
+            return res.status(HTTP_STATUS.PAYLOAD_TOO_LARGE).json({ error: ERROR_MESSAGES.FILE_TOO_LARGE });
+        }
 
         if (!FILE_CONFIG.ALLOWED_MIMETYPES.includes(req.file.mimetype)) {
-            return res.status(400).json({ error: ERROR_MESSAGES.FILE_UNSUPPORTED });
+            return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: ERROR_MESSAGES.FILE_UNSUPPORTED });
         }
 
         const ext = path.extname(req.file.originalname).toLowerCase() || '.bin';
@@ -1297,12 +1716,14 @@ router.post('/upload', requireAuth, requireAdmin, upload.single('file'), async (
         });
     } catch (err) {
         console.error('[news/upload]', err);
-        return res.status(500).json({ error: `${ERROR_MESSAGES.UPLOAD_ERROR}: ${err.message}` });
+        return res.status(HTTP_STATUS.SERVER_ERROR).json({ 
+            error: `${ERROR_MESSAGES.UPLOAD_ERROR}: ${err.message}` 
+        });
     }
 });
 
-// -----------------------------
-// Export
-// -----------------------------
+// ============================================
+// Экспорт роутера
+// ============================================
 
 module.exports = router;
