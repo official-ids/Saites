@@ -385,14 +385,151 @@ body {
 (function() {
     'use strict';
 
-    let API_SECTIONS = [];
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {string} API endpoint для загрузки конфигурации */
+        API_CONFIG_ENDPOINT: '/api/api-config',
+        
+        /** @type {number} Длительность показа "Copied" (мс) */
+        COPY_FEEDBACK_DURATION: 1500,
+        
+        /** @type {string} ID контейнера секций */
+        SECTIONS_CONTAINER_ID: 'sectionsContainer',
+        
+        /** @type {string} ID списка таблицы содержимого */
+        TOC_LIST_ID: 'tocList',
+        
+        /** @type {string} ID элемента статистики эндпоинтов */
+        STAT_ENDPOINTS_ID: 'statEndpoints',
+        
+        /** @type {string} ID элемента статистики модулей */
+        STAT_MODULES_ID: 'statModules',
+        
+        /** @type {string} CSS класс для открытых эндпоинтов */
+        OPEN_CLASS: 'open',
+        
+        /** @type {string} CSS класс для скопированных кнопок */
+        COPIED_CLASS: 'copied',
+        
+        /** @type {string} CSS класс для активных TOC элементов */
+        ACTIVE_CLASS: 'active'
+    };
 
+    /**
+     * Сообщения для UI
+     * @constant {Object<string, string>}
+     */
+    const MESSAGES = {
+        loadError: 'Ошибка загрузки конфигурации API',
+        invalidConfig: 'Invalid config',
+        copySuccess: 'Copied',
+        copyFailed: 'Copy failed'
+    };
+
+    /**
+     * SVG иконки для UI
+     * @namespace
+     */
+    const ICONS = {
+        /** @type {string} Иконка копирования */
+        copy: `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>`,
+        
+        /** @type {string} Иконка успеха */
+        success: `<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>`,
+        
+        /** @type {string} Иконка раскрытия */
+        toggle: `<svg class="endpoint-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>`
+    };
+
+    // ============================================
+    // Состояние приложения
+    // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
+    const State = {
+        /** @type {Array<Object>} Секции API конфигурации */
+        apiSections: []
+    };
+
+    // ============================================
+    // Утилиты безопасности
+    // ============================================
+    
+    /**
+     * Утилиты безопасности для защиты от XSS-атак
+     * @namespace
+     */
+    const Security = {
+        /**
+         * Карта соответствия символов HTML-сущностям
+         * @type {Object<string, string>}
+         */
+        HTML_ESCAPE_MAP: {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        },
+
+        /**
+         * Экранирование HTML-сущностей в строке
+         * 
+         * @param {string|number|null|undefined} str - Исходная строка
+         * @returns {string} - Строка с экранированными HTML-сущностями
+         */
+        escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, (match) => {
+                return this.HTML_ESCAPE_MAP[match];
+            });
+        }
+    };
+
+    // ============================================
+    // Загрузка данных
+    // ============================================
+    
+    /**
+     * Загрузка конфигурации API с сервера
+     * Инициализирует все компоненты после успешной загрузки
+     * 
+     * @returns {Promise<void>}
+     */
     async function loadAPIConfig() {
         try {
-            const res = await fetch('/api/api-config');
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            API_SECTIONS = await res.json();
-            if (!Array.isArray(API_SECTIONS)) throw new Error('Invalid config');
+            const response = await fetch(CONFIG.API_CONFIG_ENDPOINT);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Валидация данных
+            if (!Array.isArray(data)) {
+                throw new Error(MESSAGES.invalidConfig);
+            }
+            
+            State.apiSections = data;
+            
+            // Инициализация всех компонентов
             updateStats();
             renderTOC();
             renderSections();
@@ -400,99 +537,187 @@ body {
             initCopy();
             initScrollSpy();
             initHighlight();
-            const first = document.querySelector('[data-endpoint]');
-            if (first) first.classList.add('open');
+            
+            // Раскрытие первого эндпоинта по умолчанию
+            const firstEndpoint = document.querySelector('[data-endpoint]');
+            if (firstEndpoint) {
+                firstEndpoint.classList.add(CONFIG.OPEN_CLASS);
+            }
+            
         } catch (err) {
-            console.error('API config error:', err);
-            document.getElementById('sectionsContainer').innerHTML =
-                '<div class="warning-banner">Ошибка загрузки конфигурации API: ' + escapeHtml(err.message) + '</div>';
+            console.error('[API Config] Error:', err);
+            showError(err.message);
         }
     }
 
+    /**
+     * Отображение ошибки загрузки
+     * 
+     * @param {string} message - Текст ошибки
+     */
+    function showError(message) {
+        const container = document.getElementById(CONFIG.SECTIONS_CONTAINER_ID);
+        if (container) {
+            container.innerHTML = `
+                <div class="warning-banner">
+                    ${Security.escapeHtml(MESSAGES.loadError)}: ${Security.escapeHtml(message)}
+                </div>
+            `;
+        }
+    }
+
+    // ============================================
+    // Статистика
+    // ============================================
+    
+    /**
+     * Обновление статистики на странице
+     * Подсчитывает общее количество эндпоинтов и модулей
+     */
     function updateStats() {
-        const totalEndpoints = API_SECTIONS.reduce((sum, s) => sum + (s.endpoints ? s.endpoints.length : 0), 0);
-        const endpointsEl = document.getElementById('statEndpoints');
-        const modulesEl = document.getElementById('statModules');
-        if (endpointsEl) endpointsEl.textContent = totalEndpoints;
-        if (modulesEl) modulesEl.textContent = API_SECTIONS.length;
+        const totalEndpoints = State.apiSections.reduce((sum, section) => {
+            return sum + (section.endpoints ? section.endpoints.length : 0);
+        }, 0);
+        
+        const endpointsEl = document.getElementById(CONFIG.STAT_ENDPOINTS_ID);
+        const modulesEl = document.getElementById(CONFIG.STAT_MODULES_ID);
+        
+        if (endpointsEl) {
+            endpointsEl.textContent = totalEndpoints;
+        }
+        
+        if (modulesEl) {
+            modulesEl.textContent = State.apiSections.length;
+        }
     }
 
-    function escapeHtml(str) {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return String(str || '').replace(/[&<>"']/g, m => map[m]);
-    }
-
+    // ============================================
+    // Рендеринг эндпоинтов
+    // ============================================
+    
+    /**
+     * Рендеринг пути с подсветкой параметров
+     * Заменяет :param на <span class="param">:param</span>
+     * 
+     * @param {string} path - Путь эндпоинта
+     * @returns {string} - HTML с подсвеченными параметрами
+     */
     function renderPath(path) {
         return path.replace(/:(\w+)/g, '<span class="param">:$1</span>');
     }
 
+    /**
+     * Рендеринг бейджа авторизации
+     * 
+     * @param {string} auth - Тип авторизации: 'admin' | 'user' | 'optional'
+     * @returns {string} - HTML бейджа или пустая строка
+     */
     function renderAuthBadge(auth) {
         if (!auth) return '';
-        if (auth === 'admin') return '<span class="endpoint-auth admin">Admin</span>';
-        if (auth === 'user') return '<span class="endpoint-auth user">Auth</span>';
-        if (auth === 'optional') return '<span class="endpoint-auth">Optional</span>';
-        return '';
+        
+        const badges = {
+            admin: '<span class="endpoint-auth admin">Admin</span>',
+            user: '<span class="endpoint-auth user">Auth</span>',
+            optional: '<span class="endpoint-auth">Optional</span>'
+        };
+        
+        return badges[auth] || '';
     }
 
-    function renderEndpoint(ep) {
-        const paramsHtml = ep.params ? `
+    /**
+     * Рендеринг таблицы параметров
+     * 
+     * @param {Array<Object>} params - Массив параметров
+     * @returns {string} - HTML таблицы параметров
+     */
+    function renderParamsTable(params) {
+        if (!params || params.length === 0) return '';
+        
+        const rows = params.map(param => {
+            const requiredBadge = param.required
+                ? '<span class="param-required">required</span>'
+                : '<span class="param-optional">optional</span>';
+            
+            return `
+                <tr>
+                    <td>
+                        <span class="param-name">${Security.escapeHtml(param.name)}</span>
+                        <span class="param-type">${Security.escapeHtml(param.type)}</span>
+                        ${requiredBadge}
+                    </td>
+                    <td class="param-desc">${Security.escapeHtml(param.desc)}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        return `
             <div class="endpoint-subsection">
                 <div class="endpoint-subtitle">Параметры</div>
                 <table class="params-table">
                     <thead>
-                        <tr><th>Имя</th><th>Описание</th></tr>
+                        <tr>
+                            <th>Имя</th>
+                            <th>Описание</th>
+                        </tr>
                     </thead>
                     <tbody>
-                        ${ep.params.map(p => `
-                            <tr>
-                                <td>
-                                    <span class="param-name">${escapeHtml(p.name)}</span>
-                                    <span class="param-type">${escapeHtml(p.type)}</span>
-                                    ${p.required
-                                        ? '<span class="param-required">required</span>'
-                                        : '<span class="param-optional">optional</span>'}
-                                </td>
-                                <td class="param-desc">${escapeHtml(p.desc)}</td>
-                            </tr>
-                        `).join('')}
+                        ${rows}
                     </tbody>
                 </table>
             </div>
-        ` : '';
+        `;
+    }
 
-        const responseHtml = ep.response ? `
+    /**
+     * Рендеринг блока с примером ответа
+     * 
+     * @param {string} response - JSON строка ответа
+     * @returns {string} - HTML блок с кодом
+     */
+    function renderResponseBlock(response) {
+        if (!response) return '';
+        
+        return `
             <div class="endpoint-subsection">
                 <div class="endpoint-subtitle">Пример ответа</div>
                 <div class="code-block">
                     <div class="code-header">
                         <span class="code-lang">JSON · 200 OK</span>
-                        <button class="copy-btn" data-copy="${escapeHtml(ep.response)}">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
+                        <button class="copy-btn" data-copy="${Security.escapeHtml(response)}">
+                            ${ICONS.copy}
                             Copy
                         </button>
                     </div>
-                    <pre><code class="language-json">${escapeHtml(ep.response)}</code></pre>
+                    <pre><code class="language-json">${Security.escapeHtml(response)}</code></pre>
                 </div>
             </div>
-        ` : '';
+        `;
+    }
 
+    /**
+     * Рендеринг одного эндпоинта
+     * 
+     * @param {Object} endpoint - Данные эндпоинта
+     * @returns {string} - HTML эндпоинта
+     */
+    function renderEndpoint(endpoint) {
+        const method = (endpoint.method || 'get').toLowerCase();
+        const paramsHtml = renderParamsTable(endpoint.params);
+        const responseHtml = renderResponseBlock(endpoint.response);
+        
         return `
             <div class="endpoint" data-endpoint>
                 <div class="endpoint-header" data-toggle>
-                    <span class="method-badge method-${(ep.method || 'get').toLowerCase()}">${escapeHtml(ep.method)}</span>
-                    <span class="endpoint-path">${renderPath(escapeHtml(ep.path))}</span>
-                    <span class="endpoint-desc">${escapeHtml(ep.desc)}</span>
-                    ${renderAuthBadge(ep.auth)}
-                    <svg class="endpoint-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
+                    <span class="method-badge method-${method}">${Security.escapeHtml(endpoint.method)}</span>
+                    <span class="endpoint-path">${renderPath(Security.escapeHtml(endpoint.path))}</span>
+                    <span class="endpoint-desc">${Security.escapeHtml(endpoint.desc)}</span>
+                    ${renderAuthBadge(endpoint.auth)}
+                    ${ICONS.toggle}
                 </div>
                 <div class="endpoint-body">
                     <div class="endpoint-subsection">
                         <div class="endpoint-subtitle">Описание</div>
-                        <div class="endpoint-text">${escapeHtml(ep.details)}</div>
+                        <div class="endpoint-text">${Security.escapeHtml(endpoint.details)}</div>
                     </div>
                     ${paramsHtml}
                     ${responseHtml}
@@ -501,99 +726,210 @@ body {
         `;
     }
 
+    // ============================================
+    // Рендеринг секций
+    // ============================================
+    
+    /**
+     * Склонение слова "эндпоинт"
+     * 
+     * @param {number} count - Количество
+     * @returns {string} - Правильная форма слова
+     */
+    function pluralizeEndpoint(count) {
+        const abs = Math.abs(count) % 100;
+        const lastDigit = abs % 10;
+        
+        if (abs > 10 && abs < 20) return 'эндпоинтов';
+        if (lastDigit > 1 && lastDigit < 5) return 'эндпоинта';
+        if (lastDigit === 1) return 'эндпоинт';
+        return 'эндпоинтов';
+    }
+
+    /**
+     * Рендеринг одной секции API
+     * 
+     * @param {Object} section - Данные секции
+     * @returns {string} - HTML секции
+     */
     function renderSection(section) {
-        const totalEndpoints = (section.endpoints || []).length;
-        const sourceLabel = section.source ? `<span class="section-source">${escapeHtml(section.source)}</span>` : '';
+        const endpoints = section.endpoints || [];
+        const totalEndpoints = endpoints.length;
+        
+        const sourceLabel = section.source 
+            ? `<span class="section-source">${Security.escapeHtml(section.source)}</span>` 
+            : '';
+        
+        const countText = `${totalEndpoints} ${pluralizeEndpoint(totalEndpoints)}`;
+        
+        const endpointsHtml = endpoints.map(ep => renderEndpoint(ep)).join('');
+        
         return `
             <section class="api-section" id="${section.id}">
                 <div class="section-header">
                     <div class="section-icon" style="background: ${section.iconColor}20; color: ${section.iconColor};">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${section.icon}</svg>
                     </div>
-                    <h2 class="section-title">${escapeHtml(section.title)}${sourceLabel}</h2>
-                    <span class="section-count">${totalEndpoints} ${totalEndpoints === 1 ? 'эндпоинт' : totalEndpoints < 5 ? 'эндпоинта' : 'эндпоинтов'}</span>
+                    <h2 class="section-title">${Security.escapeHtml(section.title)}${sourceLabel}</h2>
+                    <span class="section-count">${countText}</span>
                 </div>
-                <p class="section-description">${escapeHtml(section.description)}</p>
-                ${(section.endpoints || []).map(ep => renderEndpoint(ep)).join('')}
+                <p class="section-description">${Security.escapeHtml(section.description)}</p>
+                ${endpointsHtml}
             </section>
         `;
     }
 
+    /**
+     * Рендеринг таблицы содержимого (TOC)
+     */
     function renderTOC() {
-        const list = document.getElementById('tocList');
-        list.innerHTML = API_SECTIONS.map(s => `
-            <li>
-                <a href="#${s.id}" class="toc-item" data-toc="${s.id}">
-                    ${escapeHtml(s.title)}
-                    <span class="toc-count">${(s.endpoints || []).length}</span>
-                </a>
-            </li>
-        `).join('');
+        const list = document.getElementById(CONFIG.TOC_LIST_ID);
+        
+        const items = State.apiSections.map(section => {
+            const endpointsCount = (section.endpoints || []).length;
+            
+            return `
+                <li>
+                    <a href="#${section.id}" class="toc-item" data-toc="${section.id}">
+                        ${Security.escapeHtml(section.title)}
+                        <span class="toc-count">${endpointsCount}</span>
+                    </a>
+                </li>
+            `;
+        }).join('');
+        
+        list.innerHTML = items;
     }
 
+    /**
+     * Рендеринг всех секций в контейнер
+     */
     function renderSections() {
-        const container = document.getElementById('sectionsContainer');
-        container.innerHTML = API_SECTIONS.map(s => renderSection(s)).join('');
+        const container = document.getElementById(CONFIG.SECTIONS_CONTAINER_ID);
+        const sectionsHtml = State.apiSections.map(section => renderSection(section)).join('');
+        container.innerHTML = sectionsHtml;
     }
 
+    // ============================================
+    // Интерактивные компоненты
+    // ============================================
+    
+    /**
+     * Инициализация toggle для эндпоинтов
+     * Добавляет обработчики клика для раскрытия/скрытия деталей
+     */
     function initToggle() {
-        document.querySelectorAll('[data-toggle]').forEach(header => {
+        const headers = document.querySelectorAll('[data-toggle]');
+        
+        headers.forEach(header => {
             header.addEventListener('click', () => {
-                header.closest('[data-endpoint]').classList.toggle('open');
+                const endpoint = header.closest('[data-endpoint]');
+                endpoint.classList.toggle(CONFIG.OPEN_CLASS);
             });
         });
     }
 
+    /**
+     * Инициализация кнопок копирования
+     * Добавляет обработчики для копирования JSON ответов
+     */
     function initCopy() {
-        document.querySelectorAll('.copy-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const text = btn.dataset.copy;
+        const copyButtons = document.querySelectorAll('.copy-btn');
+        
+        copyButtons.forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                
+                const textToCopy = button.dataset.copy;
+                const originalContent = button.innerHTML;
+                
                 try {
-                    await navigator.clipboard.writeText(text);
-                    const original = btn.innerHTML;
-                    btn.innerHTML = `
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        Copied
-                    `;
-                    btn.classList.add('copied');
+                    await navigator.clipboard.writeText(textToCopy);
+                    
+                    // Показ feedback
+                    button.innerHTML = `${ICONS.success} ${MESSAGES.copySuccess}`;
+                    button.classList.add(CONFIG.COPIED_CLASS);
+                    
+                    // Возврат к исходному состоянию
                     setTimeout(() => {
-                        btn.innerHTML = original;
-                        btn.classList.remove('copied');
-                    }, 1500);
-                } catch (err) { console.error('Copy failed:', err); }
+                        button.innerHTML = originalContent;
+                        button.classList.remove(CONFIG.COPIED_CLASS);
+                    }, CONFIG.COPY_FEEDBACK_DURATION);
+                    
+                } catch (err) {
+                    console.error(`[Copy] ${MESSAGES.copyFailed}:`, err);
+                }
             });
         });
     }
 
+    /**
+     * Инициализация Scroll Spy для TOC
+     * Отслеживает видимые секции и подсвечивает активную в TOC
+     */
     function initScrollSpy() {
         const tocLinks = document.querySelectorAll('[data-toc]');
-        const sections = API_SECTIONS.map(s => document.getElementById(s.id)).filter(Boolean);
+        const sections = State.apiSections
+            .map(section => document.getElementById(section.id))
+            .filter(Boolean);
+        
         const observer = new IntersectionObserver((entries) => {
             let activeId = null;
+            
             entries.forEach(entry => {
-                if (entry.isIntersecting) activeId = entry.target.id;
+                if (entry.isIntersecting) {
+                    activeId = entry.target.id;
+                }
             });
+            
             if (activeId) {
-                tocLinks.forEach(link => link.classList.remove('active'));
+                // Удаление active со всех ссылок
+                tocLinks.forEach(link => link.classList.remove(CONFIG.ACTIVE_CLASS));
+                
+                // Добавление active к текущей ссылке
                 const activeLink = document.querySelector(`[data-toc="${activeId}"]`);
-                if (activeLink) activeLink.classList.add('active');
+                if (activeLink) {
+                    activeLink.classList.add(CONFIG.ACTIVE_CLASS);
+                }
             }
-        }, { rootMargin: '0px 0px -30% 0px', threshold: 0.2 });
+        }, {
+            rootMargin: '0px 0px -30% 0px',
+            threshold: 0.2
+        });
+        
         sections.forEach(section => observer.observe(section));
     }
 
+    /**
+     * Инициализация подсветки синтаксиса для блоков кода
+     * Использует highlight.js если доступен
+     */
     function initHighlight() {
         if (window.hljs) {
-            document.querySelectorAll('pre code').forEach(block => {
+            const codeBlocks = document.querySelectorAll('pre code');
+            codeBlocks.forEach(block => {
                 hljs.highlightElement(block);
             });
         }
     }
 
-    loadAPIConfig();
+    // ============================================
+    // Инициализация
+    // ============================================
+    
+    /**
+     * Точка входа приложения
+     */
+    function init() {
+        loadAPIConfig();
+    }
+
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
 </script>
 </body>

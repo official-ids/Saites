@@ -754,55 +754,249 @@ body {
 (function() {
     'use strict';
 
-    const pathEl = document.getElementById('currentPath');
-    if (pathEl) {
-        const path = window.location.pathname + window.location.search;
-        pathEl.textContent = path || '/';
-        pathEl.title = path;
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация страницы ошибки
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {number} Длительность обратного отсчёта перед перенаправлением (сек) */
+        REDIRECT_COUNTDOWN: 10,
+        
+        /** @type {number} Интервал обновления таймера (мс) */
+        COUNTDOWN_INTERVAL: 1000,
+        
+        /** @type {string} URL для перенаправления */
+        REDIRECT_URL: '/',
+        
+        /** @type {string} ID элемента для отображения пути */
+        PATH_ELEMENT_ID: 'currentPath',
+        
+        /** @type {string} ID кнопки "Назад" */
+        BACK_BUTTON_ID: 'backBtn',
+        
+        /** @type {string} ID элемента обратного отсчёта */
+        COUNTDOWN_ELEMENT_ID: 'countdown',
+        
+        /** @type {string} ID ссылки отмены перенаправления */
+        CANCEL_LINK_ID: 'cancelRedirect',
+        
+        /** @type {string} CSS селектор уведомления о перенаправлении */
+        REDIRECT_NOTICE_SELECTOR: '.redirect-notice'
+    };
+
+    /**
+     * SVG иконка успеха
+     * @constant {string}
+     */
+    const SUCCESS_ICON = `
+        <svg style="width:14px;height:14px;color:var(--text-tertiary);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+    `;
+
+    /**
+     * Сообщение об отмене перенаправления
+     * @constant {string}
+     */
+    const CANCEL_MESSAGE = 'Автоперенаправление отменено. Выберите раздел выше.';
+
+    // ============================================
+    // Состояние
+    // ============================================
+    
+    /**
+     * Состояние страницы
+     * @namespace
+     */
+    const State = {
+        /** @type {number} Текущее значение обратного отсчёта */
+        countdown: CONFIG.REDIRECT_COUNTDOWN,
+        
+        /** @type {boolean} Флаг отмены перенаправления */
+        cancelled: false,
+        
+        /** @type {number|null} ID интервала таймера */
+        timerId: null
+    };
+
+    // ============================================
+    // DOM элементы
+    // ============================================
+    
+    /**
+     * Кэш DOM элементов
+     * @namespace
+     */
+    const DOM = {
+        /** @type {HTMLElement|null} Элемент пути */
+        pathElement: document.getElementById(CONFIG.PATH_ELEMENT_ID),
+        
+        /** @type {HTMLElement|null} Кнопка назад */
+        backButton: document.getElementById(CONFIG.BACK_BUTTON_ID),
+        
+        /** @type {HTMLElement|null} Элемент обратного отсчёта */
+        countdownElement: document.getElementById(CONFIG.COUNTDOWN_ELEMENT_ID),
+        
+        /** @type {HTMLElement|null} Ссылка отмены */
+        cancelLink: document.getElementById(CONFIG.CANCEL_LINK_ID),
+        
+        /** @type {HTMLElement|null} Уведомление о перенаправлении */
+        redirectNotice: document.querySelector(CONFIG.REDIRECT_NOTICE_SELECTOR)
+    };
+
+    // ============================================
+    // Отображение пути
+    // ============================================
+    
+    /**
+     * Отображение текущего пути страницы
+     */
+    function displayCurrentPath() {
+        if (!DOM.pathElement) return;
+        
+        const currentPath = window.location.pathname + window.location.search;
+        const displayPath = currentPath || '/';
+        
+        DOM.pathElement.textContent = displayPath;
+        DOM.pathElement.title = currentPath;
     }
 
-    // Кнопка "Назад" — скрываем, если некуда возвращаться
-    const backBtn = document.getElementById('backBtn');
-    if (backBtn) {
-        if (window.history.length > 1) {
-            backBtn.style.display = 'inline-flex';
-            backBtn.onclick = () => history.back();
+    // ============================================
+    // Кнопка "Назад"
+    // ============================================
+    
+    /**
+     * Инициализация кнопки "Назад"
+     * Скрывает кнопку, если история пуста
+     */
+    function initBackButton() {
+        if (!DOM.backButton) return;
+        
+        const hasHistory = window.history.length > 1;
+        
+        if (hasHistory) {
+            DOM.backButton.style.display = 'inline-flex';
+            DOM.backButton.onclick = () => history.back();
         } else {
-            backBtn.style.display = 'none';
+            DOM.backButton.style.display = 'none';
         }
     }
 
-    // Автоперенаправление с отменой
-    let countdown = 10;
-    let cancelled = false;
-    const countdownEl = document.getElementById('countdown');
-    const cancelLink = document.getElementById('cancelRedirect');
-
-    const timer = setInterval(() => {
-        if (cancelled) return;
-        if (countdownEl) countdownEl.textContent = countdown;
-        if (countdown <= 0) {
-            clearInterval(timer);
-            window.location.href = '/';
+    // ============================================
+    // Таймер обратного отсчёта
+    // ============================================
+    
+    /**
+     * Обновление отображения обратного отсчёта
+     */
+    function updateCountdownDisplay() {
+        if (DOM.countdownElement) {
+            DOM.countdownElement.textContent = State.countdown;
         }
-        countdown--;
-    }, 1000);
+    }
 
-    if (cancelLink) {
-        cancelLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            cancelled = true;
-            clearInterval(timer);
-            const notice = document.querySelector('.redirect-notice');
-            if (notice) {
-                notice.innerHTML = `
-                    <svg style="width:14px;height:14px;color:var(--text-tertiary);flex-shrink:0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <span style="color:var(--text-secondary);">Автоперенаправление отменено. Выберите раздел выше.</span>
-                `;
-            }
-        });
+    /**
+     * Выполнение перенаправления
+     */
+    function performRedirect() {
+        window.location.href = CONFIG.REDIRECT_URL;
+    }
+
+    /**
+     * Обработка тика таймера
+     */
+    function handleTimerTick() {
+        if (State.cancelled) return;
+        
+        updateCountdownDisplay();
+        
+        if (State.countdown <= 0) {
+            stopTimer();
+            performRedirect();
+            return;
+        }
+        
+        State.countdown--;
+    }
+
+    /**
+     * Запуск таймера обратного отсчёта
+     */
+    function startTimer() {
+        State.timerId = setInterval(handleTimerTick, CONFIG.COUNTDOWN_INTERVAL);
+    }
+
+    /**
+     * Остановка таймера
+     */
+    function stopTimer() {
+        if (State.timerId) {
+            clearInterval(State.timerId);
+            State.timerId = null;
+        }
+    }
+
+    // ============================================
+    // Отмена перенаправления
+    // ============================================
+    
+    /**
+     * Отображение сообщения об отмене
+     */
+    function showCancelMessage() {
+        if (!DOM.redirectNotice) return;
+        
+        DOM.redirectNotice.innerHTML = `
+            ${SUCCESS_ICON}
+            <span style="color:var(--text-secondary);">${CANCEL_MESSAGE}</span>
+        `;
+    }
+
+    /**
+     * Обработчик отмены перенаправления
+     * 
+     * @param {Event} event - Событие клика
+     */
+    function handleCancelRedirect(event) {
+        event.preventDefault();
+        
+        State.cancelled = true;
+        stopTimer();
+        showCancelMessage();
+    }
+
+    /**
+     * Инициализация ссылки отмены перенаправления
+     */
+    function initCancelLink() {
+        if (!DOM.cancelLink) return;
+        
+        DOM.cancelLink.addEventListener('click', handleCancelRedirect);
+    }
+
+    // ============================================
+    // Инициализация
+    // ============================================
+    
+    /**
+     * Инициализация всех компонентов страницы
+     */
+    function init() {
+        displayCurrentPath();
+        initBackButton();
+        startTimer();
+        initCancelLink();
+    }
+
+    // Запуск после построения DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();
 </script>

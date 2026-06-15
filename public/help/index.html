@@ -551,8 +551,59 @@ body {
     'use strict';
 
     // ============================================
-    // Категории (иконки и цвета)
+    // Константы конфигурации
     // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {string} API endpoint для загрузки FAQ */
+        API_ENDPOINT: '/api/faq',
+        
+        /** @type {number} Задержка поиска в мс */
+        SEARCH_DEBOUNCE_MS: 200,
+        
+        /** @type {string} CSS класс для видимых элементов */
+        VISIBLE_CLASS: 'visible',
+        
+        /** @type {string} CSS класс для открытых FAQ элементов */
+        OPEN_CLASS: 'open',
+        
+        /** @type {string} Атрибут для скролла к секции */
+        SCROLL_ATTR: 'data-scroll-to',
+        
+        /** @type {string} Атрибут для toggle элемента */
+        TOGGLE_ATTR: 'data-toggle',
+        
+        /** @type {string} Атрибут для ID элемента */
+        ITEM_ID_ATTR: 'data-item-id',
+        
+        /** @type {string} ID контейнера FAQ */
+        FAQ_CONTAINER_ID: 'faqContainer',
+        
+        /** @type {string} ID сетки категорий */
+        CATEGORIES_GRID_ID: 'categoriesGrid',
+        
+        /** @type {string} ID поля поиска */
+        SEARCH_INPUT_ID: 'searchInput',
+        
+        /** @type {string} ID кнопки очистки поиска */
+        SEARCH_CLEAR_ID: 'searchClear',
+        
+        /** @type {string} ID статистики поиска */
+        SEARCH_STATS_ID: 'searchStats'
+    };
+
+    // ============================================
+    // Метаданные категорий
+    // ============================================
+    
+    /**
+     * Метаданные категорий FAQ (иконки и цвета)
+     * @constant {Object<string, {name: string, desc: string, color: string, icon: string}>}
+     */
     const CATEGORY_META = {
         general: {
             name: 'Общие вопросы',
@@ -592,9 +643,20 @@ body {
         }
     };
 
+    /**
+     * Категория по умолчанию
+     * @constant {string}
+     */
+    const DEFAULT_CATEGORY = 'general';
+
     // ============================================
-    // Дефолтные FAQ (используются если API недоступен)
+    // Дефолтные FAQ
     // ============================================
+    
+    /**
+     * Дефолтные FAQ (используются если API недоступен)
+     * @constant {Array<Object>}
+     */
     const DEFAULT_FAQ = [
         {
             id: 'general',
@@ -743,31 +805,118 @@ body {
     ];
 
     // ============================================
-    // State
+    // Состояние приложения
     // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
     const State = {
+        /** @type {Array<Object>} Список FAQ секций */
         faq: [],
+        
+        /** @type {string} Поисковый запрос */
         searchQuery: '',
+        
+        /** @type {Set<string>} Набор ID открытых элементов */
         openItems: new Set()
     };
 
     // ============================================
-    // Утилиты
+    // Утилиты безопасности
     // ============================================
-    function escapeHtml(str) {
-        if (!str) return '';
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return String(str).replace(/[&<>"']/g, m => map[m]);
+    
+    /**
+     * Утилиты безопасности для защиты от XSS-атак
+     * @namespace
+     */
+    const Security = {
+        /**
+         * Карта соответствия символов HTML-сущностям
+         * @type {Object<string, string>}
+         */
+        HTML_ESCAPE_MAP: {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        },
+
+        /**
+         * Экранирование HTML-сущностей в строке
+         * 
+         * @param {string|number|null|undefined} str - Исходная строка
+         * @returns {string} - Строка с экранированными HTML-сущностями
+         */
+        escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, (match) => {
+                return this.HTML_ESCAPE_MAP[match];
+            });
+        }
+    };
+
+    // ============================================
+    // Утилиты форматирования
+    // ============================================
+    
+    /**
+     * Склонение слов
+     * 
+     * @param {number} n - Число
+     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
+     * @returns {string} - Правильная форма
+     * 
+     * @example
+     * pluralize(5, ['вопрос', 'вопроса', 'вопросов']); // 'вопросов'
+     */
+    function pluralize(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const n1 = abs % 10;
+        
+        if (abs > 10 && abs < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
     }
 
-    // Для отображения текста с поисковой подсветкой (HTML внутри ответа рендерится как есть)
+    /**
+     * Удаление HTML-тегов из строки
+     * 
+     * @param {string} html - HTML строка
+     * @returns {string} - Текст без HTML тегов
+     * 
+     * @example
+     * stripHtml('<p>Hello</p>'); // 'Hello'
+     */
+    function stripHtml(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    }
+
+    /**
+     * Подсветка поискового запроса в тексте
+     * 
+     * @param {string} text - Исходный текст
+     * @param {string} query - Поисковый запрос
+     * @returns {string} - Текст с подсветкой <mark>
+     * 
+     * @example
+     * highlightText('Hello world', 'world'); // 'Hello <mark>world</mark>'
+     */
     function highlightText(text, query) {
         if (!query) return text;
+        
         try {
+            // Экранирование спецсимволов регулярного выражения
             const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const re = new RegExp(`(${safeQuery})`, 'gi');
-            return text.replace(re, '<mark>$1</mark>');
-        } catch (e) {
+            const regex = new RegExp(`(${safeQuery})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        } catch (error) {
+            console.warn('[FAQ] Highlight error:', error);
             return text;
         }
     }
@@ -775,74 +924,112 @@ body {
     // ============================================
     // Загрузка данных
     // ============================================
+    
+    /**
+     * Загрузка FAQ с API (с fallback на дефолтные данные)
+     * 
+     * @returns {Promise<void>}
+     */
     async function loadFAQ() {
-        const container = document.getElementById('faqContainer');
         try {
-            const res = await fetch('/api/faq');
-            if (res.ok) {
-                const data = await res.json();
+            const response = await fetch(CONFIG.API_ENDPOINT);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Валидация данных
                 if (Array.isArray(data) && data.length > 0) {
                     State.faq = data;
+                    console.log(`[FAQ] Loaded ${data.length} sections from API`);
                 } else {
                     State.faq = DEFAULT_FAQ;
+                    console.warn('[FAQ] Empty API response, using defaults');
                 }
             } else {
                 State.faq = DEFAULT_FAQ;
+                console.warn(`[FAQ] API error ${response.status}, using defaults`);
             }
-        } catch (e) {
+        } catch (error) {
             State.faq = DEFAULT_FAQ;
+            console.error('[FAQ] Failed to load:', error);
         }
+        
         renderAll();
     }
 
     // ============================================
-    // Рендер
+    // Рендеринг категорий
     // ============================================
+    
+    /**
+     * Рендеринг сетки категорий
+     */
     function renderCategories() {
-        const grid = document.getElementById('categoriesGrid');
+        const grid = document.getElementById(CONFIG.CATEGORIES_GRID_ID);
+        
+        // Подсчет количества вопросов в каждой секции
         const counts = {};
         State.faq.forEach(section => {
             counts[section.id] = (section.items || []).length;
         });
 
+        // Генерация HTML карточек категорий
         grid.innerHTML = State.faq.map(section => {
-            const meta = CATEGORY_META[section.category] || CATEGORY_META.general;
+            const meta = CATEGORY_META[section.category] || CATEGORY_META[DEFAULT_CATEGORY];
+            const count = counts[section.id] || 0;
+            const countText = `${count} ${pluralize(count, ['вопрос', 'вопроса', 'вопросов'])}`;
+            
             return `
-                <a href="#${section.id}" class="category-card" data-scroll-to="${section.id}">
+                <a href="#${section.id}" class="category-card" ${CONFIG.SCROLL_ATTR}="${section.id}">
                     <div class="category-icon" style="background: ${meta.color}20; color: ${meta.color};">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${meta.icon}</svg>
                     </div>
-                    <div class="category-name">${escapeHtml(meta.name)}</div>
-                    <div class="category-desc">${escapeHtml(meta.desc)}</div>
-                    <span class="category-count">${counts[section.id] || 0} ${pluralize(counts[section.id] || 0, ['вопрос', 'вопроса', 'вопросов'])}</span>
+                    <div class="category-name">${Security.escapeHtml(meta.name)}</div>
+                    <div class="category-desc">${Security.escapeHtml(meta.desc)}</div>
+                    <span class="category-count">${countText}</span>
                 </a>
             `;
         }).join('');
 
-        grid.querySelectorAll('[data-scroll-to]').forEach(card => {
+        // Привязка событий скролла
+        grid.querySelectorAll(`[${CONFIG.SCROLL_ATTR}]`).forEach(card => {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
-                const id = card.dataset.scrollTo;
+                const id = card.getAttribute(CONFIG.SCROLL_ATTR);
                 const target = document.getElementById(id);
-                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             });
         });
     }
 
+    // ============================================
+    // Рендеринг FAQ
+    // ============================================
+    
+    /**
+     * Рендеринг списка FAQ с фильтрацией и подсветкой
+     */
     function renderFAQ() {
-        const container = document.getElementById('faqContainer');
+        const container = document.getElementById(CONFIG.FAQ_CONTAINER_ID);
         const query = State.searchQuery.toLowerCase().trim();
 
-        // Фильтрация по поиску
+        // Фильтрация секций и элементов по поисковому запросу
         const filtered = State.faq.map(section => ({
             ...section,
             items: (section.items || []).filter(item => {
                 if (!query) return true;
-                return item.q.toLowerCase().includes(query) ||
-                       stripHtml(item.a).toLowerCase().includes(query);
+                
+                const questionMatch = item.q.toLowerCase().includes(query);
+                const answerMatch = stripHtml(item.a).toLowerCase().includes(query);
+                
+                return questionMatch || answerMatch;
             })
         })).filter(section => section.items.length > 0);
 
+        // Пустой результат
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -857,50 +1044,67 @@ body {
             return;
         }
 
+        // Подсчет статистики
         let totalVisible = 0;
         let totalAll = 0;
-        filtered.forEach(s => totalVisible += s.items.length);
-        State.faq.forEach(s => totalAll += (s.items || []).length);
+        
+        filtered.forEach(section => {
+            totalVisible += section.items.length;
+        });
+        
+        State.faq.forEach(section => {
+            totalAll += (section.items || []).length;
+        });
 
+        // Генерация HTML секций
         container.innerHTML = filtered.map(section => {
-            const meta = CATEGORY_META[section.category] || CATEGORY_META.general;
+            const meta = CATEGORY_META[section.category] || CATEGORY_META[DEFAULT_CATEGORY];
+            const countText = `${section.items.length} ${pluralize(section.items.length, ['вопрос', 'вопроса', 'вопросов'])}`;
+            
+            const itemsHtml = section.items.map((item, idx) => {
+                const itemId = `${section.id}-${idx}`;
+                const isOpen = State.openItems.has(itemId);
+                const questionHtml = query 
+                    ? highlightText(Security.escapeHtml(item.q), query) 
+                    : Security.escapeHtml(item.q);
+                
+                return `
+                    <div class="faq-item ${isOpen ? CONFIG.OPEN_CLASS : ''}" ${CONFIG.ITEM_ID_ATTR}="${itemId}">
+                        <div class="faq-question" ${CONFIG.TOGGLE_ATTR}="${itemId}">
+                            <div class="faq-q-icon">Q</div>
+                            <div class="faq-q-text">${questionHtml}</div>
+                            <svg class="faq-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <div class="faq-answer">${item.a}</div>
+                    </div>
+                `;
+            }).join('');
+            
             return `
                 <section class="faq-section" id="${section.id}">
                     <div class="section-header">
                         <div class="section-icon" style="background: ${meta.color}20; color: ${meta.color};">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${meta.icon}</svg>
                         </div>
-                        <h2 class="section-title">${escapeHtml(meta.name)}</h2>
-                        <span class="section-count">${section.items.length} ${pluralize(section.items.length, ['вопрос', 'вопроса', 'вопросов'])}</span>
+                        <h2 class="section-title">${Security.escapeHtml(meta.name)}</h2>
+                        <span class="section-count">${countText}</span>
                     </div>
-                    ${section.items.map((item, idx) => {
-                        const itemId = `${section.id}-${idx}`;
-                        const isOpen = State.openItems.has(itemId);
-                        const qHtml = query ? highlightText(escapeHtml(item.q), query) : escapeHtml(item.q);
-                        return `
-                            <div class="faq-item ${isOpen ? 'open' : ''}" data-item-id="${itemId}">
-                                <div class="faq-question" data-toggle="${itemId}">
-                                    <div class="faq-q-icon">Q</div>
-                                    <div class="faq-q-text">${qHtml}</div>
-                                    <svg class="faq-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </div>
-                                <div class="faq-answer">${item.a}</div>
-                            </div>
-                        `;
-                    }).join('')}
+                    ${itemsHtml}
                 </section>
             `;
         }).join('');
 
-        // События
-        container.querySelectorAll('[data-toggle]').forEach(btn => {
+        // Привязка событий toggle
+        container.querySelectorAll(`[${CONFIG.TOGGLE_ATTR}]`).forEach(btn => {
             btn.addEventListener('click', () => {
-                const itemId = btn.dataset.toggle;
+                const itemId = btn.getAttribute(CONFIG.TOGGLE_ATTR);
                 const item = btn.closest('.faq-item');
-                item.classList.toggle('open');
-                if (item.classList.contains('open')) {
+                
+                item.classList.toggle(CONFIG.OPEN_CLASS);
+                
+                if (item.classList.contains(CONFIG.OPEN_CLASS)) {
                     State.openItems.add(itemId);
                 } else {
                     State.openItems.delete(itemId);
@@ -911,14 +1115,15 @@ body {
         updateSearchStats(totalVisible, totalAll);
     }
 
-    function stripHtml(html) {
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
-    }
-
+    /**
+     * Обновление статистики поиска
+     * 
+     * @param {number} visible - Количество видимых вопросов
+     * @param {number} total - Общее количество вопросов
+     */
     function updateSearchStats(visible, total) {
-        const stats = document.getElementById('searchStats');
+        const stats = document.getElementById(CONFIG.SEARCH_STATS_ID);
+        
         if (!State.searchQuery) {
             stats.textContent = `Всего вопросов: ${total}`;
         } else {
@@ -926,65 +1131,85 @@ body {
         }
     }
 
+    /**
+     * Полный рендеринг всех компонентов
+     */
     function renderAll() {
         renderCategories();
         renderFAQ();
     }
 
-    function pluralize(n, forms) {
-        const abs = Math.abs(n) % 100;
-        const n1 = abs % 10;
-        if (abs > 10 && abs < 20) return forms[2];
-        if (n1 > 1 && n1 < 5) return forms[1];
-        if (n1 === 1) return forms[0];
-        return forms[2];
-    }
-
     // ============================================
     // Поиск
     // ============================================
+    
+    /**
+     * Инициализация поиска с debounce
+     */
     function initSearch() {
-        const input = document.getElementById('searchInput');
-        const clearBtn = document.getElementById('searchClear');
+        const input = document.getElementById(CONFIG.SEARCH_INPUT_ID);
+        const clearBtn = document.getElementById(CONFIG.SEARCH_CLEAR_ID);
         let debounceTimer;
 
+        // Обработчик ввода с debounce
         input.addEventListener('input', () => {
             clearTimeout(debounceTimer);
-            clearBtn.classList.toggle('visible', input.value.length > 0);
+            
+            // Показ/скрытие кнопки очистки
+            clearBtn.classList.toggle(CONFIG.VISIBLE_CLASS, input.value.length > 0);
+            
             debounceTimer = setTimeout(() => {
                 State.searchQuery = input.value;
                 renderFAQ();
-                // Если есть поиск и есть результаты — скроллим к первому
+                
+                // Автоскролл к первому результату при поиске
                 if (State.searchQuery) {
-                    const first = document.querySelector('.faq-section');
-                    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const firstSection = document.querySelector('.faq-section');
+                    if (firstSection) {
+                        firstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 }
-            }, 200);
+            }, CONFIG.SEARCH_DEBOUNCE_MS);
         });
 
+        // Обработчик очистки поиска
         clearBtn.addEventListener('click', () => {
             input.value = '';
             State.searchQuery = '';
-            clearBtn.classList.remove('visible');
+            clearBtn.classList.remove(CONFIG.VISIBLE_CLASS);
             renderFAQ();
             input.focus();
         });
 
-        // Поиск по URL-параметру
+        // Инициализация поиска из URL параметра
         const params = new URLSearchParams(window.location.search);
-        const q = params.get('q');
-        if (q) {
-            input.value = q;
-            State.searchQuery = q;
-            clearBtn.classList.add('visible');
+        const queryParam = params.get('q');
+        
+        if (queryParam) {
+            input.value = queryParam;
+            State.searchQuery = queryParam;
+            clearBtn.classList.add(CONFIG.VISIBLE_CLASS);
         }
     }
 
     // ============================================
-    // Init
+    // Инициализация
     // ============================================
-    initSearch();
-    loadFAQ();
+    
+    /**
+     * Инициализация приложения
+     */
+    function init() {
+        initSearch();
+        loadFAQ();
+    }
+
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
 </script>
 

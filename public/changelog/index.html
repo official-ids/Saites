@@ -220,94 +220,264 @@
         </footer>
     </div>
 
-    <script>
-        (function() {
-            'use strict';
+<script>
+(function() {
+    'use strict';
 
-            document.getElementById('year').textContent = new Date().getFullYear();
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {string} API endpoint для загрузки changelog */
+        API_ENDPOINT: '/api/changelog',
+        
+        /** @type {number} Задержка анимации между элементами (мс) */
+        ANIMATION_DELAY_STEP: 0.08,
+        
+        /** @type {string} ID элемента для отображения года */
+        YEAR_ELEMENT_ID: 'year',
+        
+        /** @type {string} ID контейнера timeline */
+        TIMELINE_CONTAINER_ID: 'timeline',
+        
+        /** @type {string} CSS класс для сообщений статуса */
+        STATUS_MESSAGE_CLASS: 'status-message',
+        
+        /** @type {string} CSS класс для сообщений об ошибках */
+        ERROR_MESSAGE_CLASS: 'error'
+    };
 
-            const Security = {
-                escapeHtml(str) {
-                    if (!str) return '';
-                    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-                    return String(str).replace(/[&<>"']/g, m => map[m]);
-                }
-            };
+    /**
+     * Карта типов изменений с метаданными
+     * @constant {Object<string, {label: string, cls: string}>}
+     */
+    const CHANGE_TYPES = {
+        feat: { label: 'Feature', cls: 'type-feat' },
+        feature: { label: 'Feature', cls: 'type-feat' },
+        fix: { label: 'Fix', cls: 'type-fix' },
+        breaking: { label: 'Breaking', cls: 'type-breaking' },
+        perf: { label: 'Perf', cls: 'type-perf' },
+        docs: { label: 'Docs', cls: 'type-docs' },
+        refactor: { label: 'Refactor', cls: 'type-refactor' },
+        chore: { label: 'Chore', cls: 'type-chore' },
+        security: { label: 'Security', cls: 'type-security' },
+        sec: { label: 'Security', cls: 'type-security' }
+    };
 
-            function getTypeBadge(type) {
-                const t = (type || 'default').toLowerCase();
-                const map = {
-                    feat:     { label: 'Feature',  cls: 'type-feat' },
-                    feature:  { label: 'Feature',  cls: 'type-feat' },
-                    fix:      { label: 'Fix',      cls: 'type-fix' },
-                    breaking: { label: 'Breaking', cls: 'type-breaking' },
-                    perf:     { label: 'Perf',     cls: 'type-perf' },
-                    docs:     { label: 'Docs',     cls: 'type-docs' },
-                    refactor: { label: 'Refactor', cls: 'type-refactor' },
-                    chore:    { label: 'Chore',    cls: 'type-chore' },
-                    security: { label: 'Security', cls: 'type-security' },
-                    sec:      { label: 'Security', cls: 'type-security' }
-                };
-                const meta = map[t] || { label: 'Update', cls: 'type-default' };
-                return `<span class="type-badge ${meta.cls}">${meta.label}</span>`;
+    /**
+     * Значения по умолчанию для типов изменений
+     * @constant {{label: string, cls: string}}
+     */
+    const DEFAULT_CHANGE_TYPE = {
+        label: 'Update',
+        cls: 'type-default'
+    };
+
+    /**
+     * Сообщения для UI
+     * @constant {Object<string, string>}
+     */
+    const MESSAGES = {
+        empty: 'История изменений пуста',
+        loadError: 'Не удалось загрузить историю изменений',
+        unknownVersion: 'Unknown'
+    };
+
+// ============================================
+// Утилиты безопасности
+// ============================================
+const Security = {
+    /**
+     * Экранирование HTML-сущностей
+     * @param {string|number|null|undefined} str
+     * @returns {string}
+     */
+    escapeHtml: function(str) {
+        if (!str) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(str).replace(/[&<>"']/g, function(m) {
+            return map[m];
+        });
+    },
+
+    /**
+     * Безопасное получение текста
+     * @param {string|number|null|undefined} str
+     * @returns {string}
+     */
+    safeText: function(str) {
+        return this.escapeHtml(str || '');
+    }
+};
+
+    // ============================================
+    // Утилиты рендеринга
+    // ============================================
+    
+    /**
+     * Создание HTML бейджа для типа изменения
+     * 
+     * @param {string} type - Тип изменения (feat, fix, breaking и т.д.)
+     * @returns {string} - HTML строка бейджа
+     * 
+     * @example
+     * getTypeBadge('feat');
+     * // returns '<span class="type-badge type-feat">Feature</span>'
+     */
+    function getTypeBadge(type) {
+        const normalizedType = (type || 'default').toLowerCase();
+        const meta = CHANGE_TYPES[normalizedType] || DEFAULT_CHANGE_TYPE;
+        
+        return `<span class="type-badge ${meta.cls}">${meta.label}</span>`;
+    }
+
+    /**
+     * Создание HTML для списка изменений
+     * 
+     * @param {Array<Object>} changes - Массив изменений
+     * @returns {string} - HTML строка списка изменений
+     */
+    function renderChangesList(changes) {
+        if (!Array.isArray(changes) || changes.length === 0) {
+            return '';
+        }
+
+        const listItems = changes.map(change => {
+            const safeText = Security.escapeHtml(change.text || '');
+            const badge = getTypeBadge(change.type);
+            return `<li>${badge} ${safeText}</li>`;
+        }).join('');
+
+        return `<ul>${listItems}</ul>`;
+    }
+
+    /**
+     * Создание HTML для одного релиза
+     * 
+     * @param {Object} release - Данные релиза
+     * @param {number} index - Индекс релиза для анимации
+     * @returns {string} - HTML строка релиза
+     */
+    function renderRelease(release, index) {
+        const safeVersion = Security.escapeHtml(release.version || MESSAGES.unknownVersion);
+        const safeDate = Security.escapeHtml(release.date || '');
+        const changesHtml = renderChangesList(release.changes);
+        const animationDelay = index * CONFIG.ANIMATION_DELAY_STEP;
+
+        return `
+            <div class="release" style="animation-delay: ${animationDelay}s">
+                <div class="dot"></div>
+                <span class="version-tag">${safeVersion}</span>
+                ${safeDate ? `<span class="date">${safeDate}</span>` : ''}
+                <div class="changes">
+                    ${changesHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Отображение сообщения статуса
+     * 
+     * @param {HTMLElement} container - Контейнер для сообщения
+     * @param {string} message - Текст сообщения
+     * @param {boolean} isError - Является ли сообщение ошибкой
+     */
+    function showStatusMessage(container, message, isError = false) {
+        const messageClass = isError 
+            ? `${CONFIG.STATUS_MESSAGE_CLASS} ${CONFIG.ERROR_MESSAGE_CLASS}`
+            : CONFIG.STATUS_MESSAGE_CLASS;
+        
+        container.innerHTML = `<div class="${messageClass}">${message}</div>`;
+    }
+
+    // ============================================
+    // Загрузка и отображение данных
+    // ============================================
+    
+    /**
+     * Загрузка и отображение истории изменений
+     * Получает данные из API и рендерит timeline
+     * 
+     * @returns {Promise<void>}
+     */
+    async function loadChangelog() {
+        const container = document.getElementById(CONFIG.TIMELINE_CONTAINER_ID);
+        
+        if (!container) {
+            console.error('[Changelog] Timeline container not found');
+            return;
+        }
+
+        try {
+            const response = await fetch(CONFIG.API_ENDPOINT);
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with status ${response.status}`);
             }
 
-            async function loadChangelog() {
-                const container = document.getElementById('timeline');
-                
-                try {
-                    const response = await fetch('/api/changelog');
-                    
-                    if (!response.ok) {
-                        throw new Error(`Server responded with ${response.status}`);
-                    }
+            const data = await response.json();
 
-                    const data = await response.json();
-
-                    if (!Array.isArray(data) || data.length === 0) {
-                        container.innerHTML = '<div class="status-message">История изменений пуста</div>';
-                        return;
-                    }
-
-                    let html = '';
-                    data.forEach((release, index) => {
-                        const safeVersion = Security.escapeHtml(release.version || 'Unknown');
-                        const safeDate = Security.escapeHtml(release.date || '');
-                        
-                        let changesHtml = '';
-                        if (Array.isArray(release.changes) && release.changes.length > 0) {
-                            changesHtml = '<ul>' + release.changes.map(change => {
-                                const safeText = Security.escapeHtml(change.text || '');
-                                return `<li>${getTypeBadge(change.type)} ${safeText}</li>`;
-                            }).join('') + '</ul>';
-                        }
-
-                        html += `
-                            <div class="release" style="animation-delay: ${index * 0.08}s">
-                                <div class="dot"></div>
-                                <span class="version-tag">${safeVersion}</span>
-                                ${safeDate ? `<span class="date">${safeDate}</span>` : ''}
-                                <div class="changes">
-                                    ${changesHtml}
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    container.innerHTML = html;
-
-                } catch (err) {
-                    console.error('Failed to load changelog:', err);
-                    container.innerHTML = '<div class="status-message error">Не удалось загрузить историю изменений</div>';
-                }
+            // Валидация данных
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format: expected array');
             }
 
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', loadChangelog);
-            } else {
-                loadChangelog();
+            if (data.length === 0) {
+                showStatusMessage(container, MESSAGES.empty);
+                return;
             }
-        })();
-    </script>
+
+            // Рендеринг всех релизов
+            const html = data.map((release, index) => renderRelease(release, index)).join('');
+            container.innerHTML = html;
+
+        } catch (err) {
+            console.error('[Changelog] Failed to load:', err);
+            showStatusMessage(container, MESSAGES.loadError, true);
+        }
+    }
+
+    // ============================================
+    // Инициализация
+    // ============================================
+    
+    /**
+     * Установка текущего года в footer
+     */
+    function setCurrentYear() {
+        const yearElement = document.getElementById(CONFIG.YEAR_ELEMENT_ID);
+        if (yearElement) {
+            yearElement.textContent = new Date().getFullYear();
+        }
+    }
+
+    /**
+     * Инициализация приложения
+     */
+    function init() {
+        setCurrentYear();
+        loadChangelog();
+    }
+
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 </body>
 </html>

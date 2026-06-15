@@ -871,218 +871,616 @@
         </div>
     </footer>
 
-    <script>
-        (function() {
-            'use strict';
+<script>
+(function() {
+    'use strict';
 
-            // --- Category Metadata ---
-            const CATEGORY_META = {
-                tools:     { label: 'Инструменты',       icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', color: '#FF9F0A' },
-                dev:       { label: 'Для разработчиков', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4', color: '#0071E3' },
-                design:    { label: 'Дизайн',            icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01', color: '#AF52DE' },
-                education: { label: 'Образование',       icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z', color: '#34C759' },
-                games:     { label: 'Игры',              icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z', color: '#FF3B30' },
-                media:     { label: 'Медиа',             icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', color: '#FF9F0A' },
-                social:    { label: 'Соцсети',           icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: '#5E5CE6' },
-                other:     { label: 'Другое',            icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z', color: '#8E8E93' }
-            };
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {number} Задержка анимации между карточками (с) */
+        CARD_ANIMATION_DELAY_STEP: 0.04,
+        
+        /** @type {number} Минимальная задержка перед отображением данных (мс) */
+        MIN_LOADING_DELAY: 500,
+        
+        /** @type {number} Длительность анимации закрытия модального окна (мс) */
+        MODAL_CLOSE_DURATION: 300,
+        
+        /** @type {string} API endpoint для получения списка сайтов */
+        SITES_API_ENDPOINT: '/api/sites',
+        
+        /** @type {string} API endpoint для принудительной перезагрузки сайтов */
+        SITES_RELOAD_ENDPOINT: '/api/sites/reload',
+        
+        /** @type {string} CSS класс для активных фильтров */
+        ACTIVE_CLASS: 'active',
+        
+        /** @type {string} CSS класс для вращающейся кнопки */
+        SPINNING_CLASS: 'spinning',
+        
+        /** @type {string} CSS класс для активных модальных окон */
+        MODAL_ACTIVE_CLASS: 'active',
+        
+        /** @type {string} CSS класс для состояния ошибки */
+        ERROR_STATE_CLASS: 'error-state',
+        
+        /** @type {string} Категория по умолчанию */
+        DEFAULT_CATEGORY: 'other',
+        
+        /** @type {string} Значение "все категории" */
+        ALL_CATEGORIES: 'all',
+        
+        /** @type {string} CSS переменная для цвета категории */
+        CATEGORY_COLOR_VAR: '--category-color',
+        
+        /** @type {string} CSS переменная для фона категории */
+        CATEGORY_BG_VAR: '--category-bg',
+        
+        /** @type {string} Прозрачность для фона категории (hex) */
+        CATEGORY_BG_OPACITY: '18'
+    };
 
-            // --- Security Utilities ---
-            const Security = {
-                sanitizeUrl(url) {
-                    if (!url) return '#';
-                    try {
-                        const parsed = new URL(url, window.location.origin);
-                        if (!['http:', 'https:'].includes(parsed.protocol)) {
-                            console.warn(`Blocked unsafe protocol: ${parsed.protocol}`);
-                            return '#';
-                        }
-                        return parsed.href;
-                    } catch (e) {
-                        return '#';
-                    }
-                },
+    /**
+     * Сообщения для UI
+     * @constant {Object<string, string>}
+     */
+    const MESSAGES = {
+        loading: 'Загрузка экосистемы...',
+        empty: 'Проекты временно недоступны',
+        networkError: 'Ошибка соединения. Проверьте сеть.',
+        notFound: 'Ничего не найдено',
+        notFoundHint: 'Попробуйте изменить запрос или выбрать другую категорию',
+        noDescription: 'Описание отсутствует',
+        noTitle: 'Без названия',
+        open: 'Открыть'
+    };
+
+    // ============================================
+    // Метаданные категорий
+    // ============================================
+    
+    /**
+     * Метаданные категорий проектов (иконки, цвета, метки)
+     * @constant {Object<string, {label: string, icon: string, color: string}>}
+     */
+    const CATEGORY_META = {
+        tools: {
+            label: 'Инструменты',
+            icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+            color: '#FF9F0A'
+        },
+        dev: {
+            label: 'Для разработчиков',
+            icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4',
+            color: '#0071E3'
+        },
+        design: {
+            label: 'Дизайн',
+            icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
+            color: '#AF52DE'
+        },
+        education: {
+            label: 'Образование',
+            icon: 'M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z',
+            color: '#34C759'
+        },
+        games: {
+            label: 'Игры',
+            icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+            color: '#FF3B30'
+        },
+        media: {
+            label: 'Медиа',
+            icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+            color: '#FF9F0A'
+        },
+        social: {
+            label: 'Соцсети',
+            icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+            color: '#5E5CE6'
+        },
+        other: {
+            label: 'Другое',
+            icon: 'M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z',
+            color: '#8E8E93'
+        }
+    };
+
+    /**
+     * SVG иконка для фильтра "Все"
+     * @constant {string}
+     */
+    const ALL_FILTER_ICON = 'M4 6h16M4 12h16M4 18h16';
+
+    /**
+     * SVG иконка для кнопки "Открыть"
+     * @constant {string}
+     */
+    const OPEN_ICON = 'M17 8l4 4m0 0l-4 4m4-4H3';
+
+    /**
+     * SVG иконка для состояния "не найдено"
+     * @constant {string}
+     */
+    const NOT_FOUND_ICON = 'M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+
+    // ============================================
+    // Состояние приложения
+    // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
+    const State = {
+        /** @type {Array<Object>} Список проектов */
+        sites: [],
+        
+        /** @type {Object<string, number>} Счётчики проектов по категориям */
+        categories: {},
+        
+        /** @type {string} Активная категория */
+        activeCategory: CONFIG.ALL_CATEGORIES,
+        
+        /** @type {string} Поисковый запрос */
+        searchQuery: ''
+    };
+
+    // ============================================
+    // DOM элементы
+    // ============================================
+    
+    /**
+     * Кэш DOM элементов
+     * @namespace
+     */
+    const DOM = {
+        /** @type {HTMLElement|null} Сетка проектов */
+        grid: document.getElementById('sitesGrid'),
+        
+        /** @type {HTMLElement|null} Кнопка обновления */
+        refreshBtn: document.getElementById('refreshBtn'),
+        
+        /** @type {HTMLElement|null} Поле поиска */
+        searchInput: document.getElementById('searchInput'),
+        
+        /** @type {HTMLElement|null} Контейнер фильтров категорий */
+        categoryFilters: document.getElementById('categoryFilters'),
+        
+        /** @type {HTMLElement|null} Элемент общего счётчика */
+        totalCount: document.getElementById('totalCount'),
+        
+        /** @type {HTMLElement|null} Элемент счётчика категорий */
+        categoryCount: document.getElementById('categoryCount'),
+        
+        /** @type {HTMLElement|null} Элемент текущего года */
+        yearSpan: document.getElementById('currentYear')
+    };
+
+    // ============================================
+    // Утилиты безопасности
+    // ============================================
+    
+    /**
+     * Утилиты безопасности для защиты от XSS-атак
+     * @namespace
+     */
+    const Security = {
+        /**
+         * Разрешённые протоколы для URL
+         * @constant {Array<string>}
+         */
+        SAFE_PROTOCOLS: ['http:', 'https:'],
+
+        /**
+         * Карта соответствия символов HTML-сущностям
+         * @type {Object<string, string>}
+         */
+        HTML_ESCAPE_MAP: {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        },
+
+        /**
+         * Санитизация URL — проверка безопасного протокола
+         * 
+         * @param {string} url - URL для проверки
+         * @returns {string} - Безопасный URL или '#' если небезопасен
+         * 
+         * @example
+         * Security.sanitizeUrl('https://example.com'); // 'https://example.com/'
+         * Security.sanitizeUrl('javascript:alert(1)'); // '#'
+         */
+        sanitizeUrl(url) {
+            if (!url) return '#';
+            
+            try {
+                const parsed = new URL(url, window.location.origin);
                 
-                escapeHtml(str) {
-                    if (!str) return '';
-                    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-                    return String(str).replace(/[&<>"']/g, m => map[m]);
-                },
+                if (!this.SAFE_PROTOCOLS.includes(parsed.protocol)) {
+                    console.warn(`[Security] Blocked unsafe protocol: ${parsed.protocol}`);
+                    return '#';
+                }
+                
+                return parsed.href;
+            } catch (error) {
+                return '#';
+            }
+        },
 
-                getDomain(url) {
-                    try {
-                        return new URL(url).hostname.replace('www.', '');
-                    } catch {
-                        return '';
+        /**
+         * Экранирование HTML-сущностей в строке
+         * 
+         * @param {string|number|null|undefined} str - Исходная строка
+         * @returns {string} - Строка с экранированными HTML-сущностями
+         */
+        escapeHtml(str) {
+            if (!str) return '';
+            
+            return String(str).replace(/[&<>"']/g, (match) => {
+                return this.HTML_ESCAPE_MAP[match];
+            });
+        },
+
+        /**
+         * Извлечение домена из URL
+         * 
+         * @param {string} url - URL для извлечения домена
+         * @returns {string} - Домен без 'www.' или пустая строка
+         * 
+         * @example
+         * Security.getDomain('https://www.example.com/path'); // 'example.com'
+         */
+        getDomain(url) {
+            try {
+                return new URL(url).hostname.replace('www.', '');
+            } catch {
+                return '';
+            }
+        }
+    };
+
+    // ============================================
+    // Система модальных окон
+    // ============================================
+    
+    /**
+     * Менеджер модальных окон
+     * @namespace
+     */
+    const ModalManager = {
+        /**
+         * Инициализация обработчиков событий модальных окон
+         */
+        init() {
+            // Обработка кликов для открытия/закрытия
+            document.addEventListener('click', (event) => {
+                // Открытие модального окна
+                const trigger = event.target.closest('[data-modal]');
+                if (trigger) {
+                    event.preventDefault();
+                    this.open(trigger.dataset.modal);
+                    return;
+                }
+
+                // Закрытие через кнопку
+                const closer = event.target.closest('[data-close-modal]');
+                if (closer) {
+                    const overlay = closer.closest('.modal-overlay');
+                    if (overlay) {
+                        this.close(overlay.id);
+                    }
+                    return;
+                }
+
+                // Закрытие через клик по оверлею
+                if (event.target.classList.contains('modal-overlay') && 
+                    event.target.classList.contains(CONFIG.MODAL_ACTIVE_CLASS)) {
+                    this.close(event.target.id);
+                }
+            });
+
+            // Закрытие по Escape
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    const activeModal = document.querySelector(`.modal-overlay.${CONFIG.MODAL_ACTIVE_CLASS}`);
+                    if (activeModal) {
+                        this.close(activeModal.id);
                     }
                 }
-            };
+            });
+        },
 
-            // --- Modal System ---
-            const ModalManager = {
-                init() {
-                    document.addEventListener('click', (e) => {
-                        const trigger = e.target.closest('[data-modal]');
-                        if (trigger) {
-                            e.preventDefault();
-                            this.open(trigger.dataset.modal);
-                            return;
-                        }
-                        const closer = e.target.closest('[data-close-modal]');
-                        if (closer) {
-                            const overlay = closer.closest('.modal-overlay');
-                            if (overlay) this.close(overlay.id);
-                            return;
-                        }
-                        if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
-                            this.close(e.target.id);
-                        }
-                    });
+        /**
+         * Открытие модального окна
+         * 
+         * @param {string} id - ID модального окна
+         */
+        open(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
 
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Escape') {
-                            const active = document.querySelector('.modal-overlay.active');
-                            if (active) this.close(active.id);
-                        }
-                    });
-                },
+            modal.style.display = 'flex';
+            
+            // Force reflow для корректной работы CSS transitions
+            void modal.offsetWidth;
+            
+            modal.classList.add(CONFIG.MODAL_ACTIVE_CLASS);
+            document.body.style.overflow = 'hidden';
 
-                open(id) {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    el.style.display = 'flex';
-                    void el.offsetWidth;
-                    el.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                    const firstFocusable = el.querySelector('button, [href], input, select, textarea');
-                    if (firstFocusable) firstFocusable.focus();
-                },
+            // Фокус на первом интерактивном элементе
+            const firstFocusable = modal.querySelector('button, [href], input, select, textarea');
+            if (firstFocusable) {
+                firstFocusable.focus();
+            }
+        },
 
-                close(id) {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    el.classList.remove('active');
-                    setTimeout(() => {
-                        el.style.display = 'none';
-                        document.body.style.overflow = '';
-                    }, 300);
-                }
-            };
+        /**
+         * Закрытие модального окна
+         * 
+         * @param {string} id - ID модального окна
+         */
+        close(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
 
-            // --- App ---
-            const App = {
-                elements: {
-                    grid: document.getElementById('sitesGrid'),
-                    refreshBtn: document.getElementById('refreshBtn'),
-                    searchInput: document.getElementById('searchInput'),
-                    categoryFilters: document.getElementById('categoryFilters'),
-                    totalCount: document.getElementById('totalCount'),
-                    categoryCount: document.getElementById('categoryCount'),
-                    yearSpan: document.getElementById('currentYear')
-                },
+            modal.classList.remove(CONFIG.MODAL_ACTIVE_CLASS);
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, CONFIG.MODAL_CLOSE_DURATION);
+        }
+    };
 
-                state: {
-                    sites: [],
-                    categories: {},
-                    activeCategory: 'all',
-                    searchQuery: ''
-                },
-
-                init() {
-                    ModalManager.init();
-                    this.elements.yearSpan.textContent = new Date().getFullYear();
-                    this.elements.refreshBtn.addEventListener('click', () => this.loadProjects(true));
-                    this.elements.searchInput.addEventListener('input', (e) => {
-                        this.state.searchQuery = e.target.value.toLowerCase().trim();
-                        this.renderGrid();
-                    });
-                    this.loadProjects();
-                },
-
-                renderStatus(message, type = 'loading') {
-                    const isError = type === 'error';
-                    const isLoading = type === 'loading';
-                    this.elements.grid.innerHTML = `
-                        <div class="status-container">
-                            ${isLoading ? '<div class="spinner"></div>' : ''}
-                            <div class="status-text ${isError ? 'error-state' : ''}">${Security.escapeHtml(message)}</div>
-                        </div>
-                    `;
-                },
-
-                renderEmpty() {
-                    this.elements.grid.innerHTML = `
-                        <div class="empty-state">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <h3>Ничего не найдено</h3>
-                            <p>Попробуйте изменить запрос или выбрать другую категорию</p>
-                        </div>
-                    `;
-                },
-
-                buildCategoryFilters() {
-                    const counts = {};
-                    this.state.sites.forEach(s => {
-                        const cat = s.category || 'other';
-                        counts[cat] = (counts[cat] || 0) + 1;
-                    });
-
-                    const allCount = this.state.sites.length;
-                    const uniqueCategories = Object.keys(counts).filter(c => CATEGORY_META[c]);
-
-                    let html = `
-                        <button class="filter-chip ${this.state.activeCategory === 'all' ? 'active' : ''}" data-category="all">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            <span>Все</span>
-                            <span class="filter-count">${allCount}</span>
-                        </button>
-                    `;
-
-                    uniqueCategories.forEach(cat => {
-                        const meta = CATEGORY_META[cat] || CATEGORY_META.other;
-                        const isActive = this.state.activeCategory === cat;
-                        html += `
-                            <button class="filter-chip ${isActive ? 'active' : ''}" data-category="${cat}" style="${isActive ? `background:${meta.color};border-color:${meta.color};` : ''}">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/></svg>
-                                <span>${meta.label}</span>
-                                <span class="filter-count">${counts[cat]}</span>
-                            </button>
-                        `;
-                    });
-
-                    this.elements.categoryFilters.innerHTML = html;
-                    this.elements.categoryCount.textContent = uniqueCategories.length;
-
-                    this.elements.categoryFilters.querySelectorAll('.filter-chip').forEach(chip => {
-                        chip.addEventListener('click', () => {
-                            this.state.activeCategory = chip.dataset.category;
-                            this.buildCategoryFilters();
-                            this.renderGrid();
-                        });
-                    });
-                },
-
-                getFilteredSites() {
-            let filtered = this.state.sites;
-
-            if (this.state.activeCategory !== 'all') {
-                filtered = filtered.filter(s => (s.category || 'other') === this.state.activeCategory);
+    // ============================================
+    // Основное приложение
+    // ============================================
+    
+    /**
+     * Основной модуль приложения
+     * @namespace
+     */
+    const App = {
+        // ----------------------------------------
+        // Инициализация
+        // ----------------------------------------
+        
+        /**
+         * Инициализация приложения
+         */
+        init() {
+            ModalManager.init();
+            
+            // Установка текущего года
+            if (DOM.yearSpan) {
+                DOM.yearSpan.textContent = new Date().getFullYear();
             }
 
-            if (this.state.searchQuery) {
-                const q = this.state.searchQuery;
-                filtered = filtered.filter(s =>
-                    (s.title || '').toLowerCase().includes(q) ||
-                    (s.desc || '').toLowerCase().includes(q) ||
-                    (s.url || '').toLowerCase().includes(q)
-                );
+            // Привязка обработчиков событий
+            this.bindEvents();
+            
+            // Первоначальная загрузка данных
+            this.loadProjects();
+        },
+
+        /**
+         * Привязка всех обработчиков событий
+         */
+        bindEvents() {
+            // Кнопка обновления
+            if (DOM.refreshBtn) {
+                DOM.refreshBtn.addEventListener('click', () => {
+                    this.loadProjects(true);
+                });
+            }
+
+            // Поле поиска
+            if (DOM.searchInput) {
+                DOM.searchInput.addEventListener('input', (event) => {
+                    State.searchQuery = event.target.value.toLowerCase().trim();
+                    this.renderGrid();
+                });
+            }
+        },
+
+        // ----------------------------------------
+        // Отображение состояний
+        // ----------------------------------------
+        
+        /**
+         * Отображение статуса (загрузка/ошибка/пусто)
+         * 
+         * @param {string} message - Текст сообщения
+         * @param {string} type - Тип статуса: 'loading' | 'error' | 'empty'
+         */
+        renderStatus(message, type = 'loading') {
+            const isError = type === 'error';
+            const isLoading = type === 'loading';
+            
+            const spinnerHtml = isLoading ? '<div class="spinner"></div>' : '';
+            const errorClass = isError ? CONFIG.ERROR_STATE_CLASS : '';
+
+            DOM.grid.innerHTML = `
+                <div class="status-container">
+                    ${spinnerHtml}
+                    <div class="status-text ${errorClass}">${Security.escapeHtml(message)}</div>
+                </div>
+            `;
+        },
+
+        /**
+         * Отображение пустого состояния (ничего не найдено)
+         */
+        renderEmpty() {
+            DOM.grid.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="${NOT_FOUND_ICON}"/>
+                    </svg>
+                    <h3>${MESSAGES.notFound}</h3>
+                    <p>${MESSAGES.notFoundHint}</p>
+                </div>
+            `;
+        },
+
+        // ----------------------------------------
+        // Фильтры и категории
+        // ----------------------------------------
+        
+        /**
+         * Подсчёт количества проектов по категориям
+         * 
+         * @returns {Object<string, number>} Счётчики по категориям
+         */
+        countProjectsByCategory() {
+            const counts = {};
+            
+            State.sites.forEach(site => {
+                const category = site.category || CONFIG.DEFAULT_CATEGORY;
+                counts[category] = (counts[category] || 0) + 1;
+            });
+            
+            return counts;
+        },
+
+        /**
+         * Получение списка уникальных категорий
+         * 
+         * @param {Object<string, number>} counts - Счётчики по категориям
+         * @returns {Array<string>} Список уникальных категорий
+         */
+        getUniqueCategories(counts) {
+            return Object.keys(counts).filter(category => CATEGORY_META[category]);
+        },
+
+        /**
+         * Создание HTML для кнопки фильтра "Все"
+         * 
+         * @param {number} totalCount - Общее количество проектов
+         * @returns {string} HTML кнопки
+         */
+        createAllFilterButton(totalCount) {
+            const isActive = State.activeCategory === CONFIG.ALL_CATEGORIES;
+            const activeClass = isActive ? CONFIG.ACTIVE_CLASS : '';
+
+            return `
+                <button class="filter-chip ${activeClass}" data-category="${CONFIG.ALL_CATEGORIES}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${ALL_FILTER_ICON}"/>
+                    </svg>
+                    <span>Все</span>
+                    <span class="filter-count">${totalCount}</span>
+                </button>
+            `;
+        },
+
+        /**
+         * Создание HTML для кнопки фильтра категории
+         * 
+         * @param {string} category - Ключ категории
+         * @param {number} count - Количество проектов в категории
+         * @returns {string} HTML кнопки
+         */
+        createCategoryFilterButton(category, count) {
+            const meta = CATEGORY_META[category] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY];
+            const isActive = State.activeCategory === category;
+            const activeClass = isActive ? CONFIG.ACTIVE_CLASS : '';
+            const activeStyle = isActive ? `background:${meta.color};border-color:${meta.color};` : '';
+
+            return `
+                <button class="filter-chip ${activeClass}" data-category="${category}" style="${activeStyle}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/>
+                    </svg>
+                    <span>${meta.label}</span>
+                    <span class="filter-count">${count}</span>
+                </button>
+            `;
+        },
+
+        /**
+         * Построение и отображение фильтров категорий
+         */
+        buildCategoryFilters() {
+            const counts = this.countProjectsByCategory();
+            const totalCount = State.sites.length;
+            const uniqueCategories = this.getUniqueCategories(counts);
+
+            // Генерация HTML фильтров
+            let filtersHtml = this.createAllFilterButton(totalCount);
+            
+            uniqueCategories.forEach(category => {
+                filtersHtml += this.createCategoryFilterButton(category, counts[category]);
+            });
+
+            DOM.categoryFilters.innerHTML = filtersHtml;
+            DOM.categoryCount.textContent = uniqueCategories.length;
+
+            // Привязка обработчиков событий к фильтрам
+            DOM.categoryFilters.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    State.activeCategory = chip.dataset.category;
+                    this.buildCategoryFilters();
+                    this.renderGrid();
+                });
+            });
+        },
+
+        // ----------------------------------------
+        // Фильтрация данных
+        // ----------------------------------------
+        
+        /**
+         * Фильтрация проектов по категории и поисковому запросу
+         * 
+         * @returns {Array<Object>} Отфильтрованный список проектов
+         */
+        getFilteredSites() {
+            let filtered = State.sites;
+
+            // Фильтрация по категории
+            if (State.activeCategory !== CONFIG.ALL_CATEGORIES) {
+                filtered = filtered.filter(site => {
+                    const category = site.category || CONFIG.DEFAULT_CATEGORY;
+                    return category === State.activeCategory;
+                });
+            }
+
+            // Фильтрация по поисковому запросу
+            if (State.searchQuery) {
+                const query = State.searchQuery;
+                filtered = filtered.filter(site => {
+                    const title = (site.title || '').toLowerCase();
+                    const description = (site.desc || '').toLowerCase();
+                    const url = (site.url || '').toLowerCase();
+                    
+                    return title.includes(query) || 
+                           description.includes(query) || 
+                           url.includes(query);
+                });
             }
 
             return filtered;
         },
 
+        // ----------------------------------------
+        // Рендеринг сетки проектов
+        // ----------------------------------------
+        
+        /**
+         * Рендеринг сетки проектов с применением фильтров
+         */
         renderGrid() {
             const filtered = this.getFilteredSites();
 
@@ -1091,22 +1489,33 @@
                 return;
             }
 
-            this.elements.grid.innerHTML = '';
+            // Очистка сетки
+            DOM.grid.innerHTML = '';
+            
+            // Использование DocumentFragment для производительности
             const fragment = document.createDocumentFragment();
 
-            filtered.forEach((site, i) => {
-                fragment.appendChild(this.createCard(site, i));
+            filtered.forEach((site, index) => {
+                const card = this.createCard(site, index);
+                fragment.appendChild(card);
             });
 
-            this.elements.grid.appendChild(fragment);
+            DOM.grid.appendChild(fragment);
         },
 
+        /**
+         * Создание DOM-элемента карточки проекта
+         * 
+         * @param {Object} site - Данные проекта
+         * @param {number} index - Индекс для анимации появления
+         * @returns {HTMLElement} DOM-элемент карточки
+         */
         createCard(site, index) {
             const safeUrl = Security.sanitizeUrl(site.url);
-            const safeTitle = Security.escapeHtml(site.title || 'Без названия');
-            const safeDesc = Security.escapeHtml(site.desc || 'Описание отсутствует');
-            const category = site.category || 'other';
-            const meta = CATEGORY_META[category] || CATEGORY_META.other;
+            const safeTitle = Security.escapeHtml(site.title || MESSAGES.noTitle);
+            const safeDescription = Security.escapeHtml(site.desc || MESSAGES.noDescription);
+            const category = site.category || CONFIG.DEFAULT_CATEGORY;
+            const meta = CATEGORY_META[category] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY];
             const domain = Security.getDomain(site.url);
 
             const card = document.createElement('a');
@@ -1114,10 +1523,15 @@
             card.href = safeUrl;
             card.target = '_blank';
             card.rel = 'noopener noreferrer';
-            card.style.animationDelay = `${index * 0.04}s`;
-            card.style.setProperty('--category-color', meta.color);
-            card.style.setProperty('--category-bg', meta.color + '18');
+            
+            // Задержка анимации появления
+            card.style.animationDelay = `${index * CONFIG.CARD_ANIMATION_DELAY_STEP}s`;
+            
+            // CSS переменные для цвета категории
+            card.style.setProperty(CONFIG.CATEGORY_COLOR_VAR, meta.color);
+            card.style.setProperty(CONFIG.CATEGORY_BG_VAR, meta.color + CONFIG.CATEGORY_BG_OPACITY);
 
+            // Содержимое карточки
             card.innerHTML = `
                 <div class="card-header">
                     <div class="card-icon">
@@ -1135,64 +1549,110 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-desc">${safeDesc}</div>
+                <div class="card-desc">${safeDescription}</div>
                 <div class="card-footer">
                     <span class="card-link">
-                        Открыть
+                        ${MESSAGES.open}
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${OPEN_ICON}"/>
                         </svg>
                     </span>
                     ${domain ? `<span class="card-domain">${Security.escapeHtml(domain)}</span>` : ''}
                 </div>
             `;
+            
             return card;
         },
 
+        // ----------------------------------------
+        // Загрузка данных
+        // ----------------------------------------
+        
+        /**
+         * Принудительная перезагрузка списка проектов на сервере
+         * 
+         * @returns {Promise<void>}
+         */
+        async forceReloadProjects() {
+            try {
+                await fetch(CONFIG.SITES_RELOAD_ENDPOINT, { method: 'POST' });
+            } catch (error) {
+                console.warn('[App] Force reload failed:', error);
+            }
+        },
+
+        /**
+         * Загрузка списка проектов с сервера
+         * 
+         * @param {boolean} forceReload - Принудительно перезагрузить данные на сервере
+         * @returns {Promise<void>}
+         */
         async loadProjects(forceReload = false) {
-            this.renderStatus('Загрузка экосистемы...', 'loading');
-            this.elements.refreshBtn.disabled = true;
-            this.elements.refreshBtn.classList.add('spinning');
+            this.renderStatus(MESSAGES.loading, 'loading');
+            
+            // Блокировка кнопки обновления
+            DOM.refreshBtn.disabled = true;
+            DOM.refreshBtn.classList.add(CONFIG.SPINNING_CLASS);
 
             try {
+                // Принудительная перезагрузка при необходимости
                 if (forceReload) {
-                    await fetch('/api/sites/reload', { method: 'POST' }).catch(() => {});
+                    await this.forceReloadProjects();
                 }
 
-                await new Promise(r => setTimeout(r, 500));
+                // Минимальная задержка для UX
+                await new Promise(resolve => setTimeout(resolve, CONFIG.MIN_LOADING_DELAY));
 
-                const response = await fetch('/api/sites');
-                if (!response.ok) throw new Error('Server error');
+                // Получение списка проектов
+                const response = await fetch(CONFIG.SITES_API_ENDPOINT);
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
 
                 const sites = await response.json();
 
+                // Проверка на пустой результат
                 if (!sites || sites.length === 0) {
-                    this.renderStatus('Проекты временно недоступны', 'empty');
+                    this.renderStatus(MESSAGES.empty, 'empty');
                     return;
                 }
 
-                this.state.sites = sites;
-                this.elements.totalCount.textContent = sites.length;
+                // Сохранение данных и обновление UI
+                State.sites = sites;
+                DOM.totalCount.textContent = sites.length;
 
                 this.buildCategoryFilters();
                 this.renderGrid();
 
-            } catch (err) {
-                console.error('Load failed:', err);
-                this.renderStatus('Ошибка соединения. Проверьте сеть.', 'error');
+            } catch (error) {
+                console.error('[App] Load failed:', error);
+                this.renderStatus(MESSAGES.networkError, 'error');
             } finally {
-                this.elements.refreshBtn.disabled = false;
-                this.elements.refreshBtn.classList.remove('spinning');
+                // Разблокировка кнопки обновления
+                DOM.refreshBtn.disabled = false;
+                DOM.refreshBtn.classList.remove(CONFIG.SPINNING_CLASS);
             }
         }
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => App.init());
-    } else {
+    // ============================================
+    // Запуск приложения
+    // ============================================
+    
+    /**
+     * Точка входа приложения
+     */
+    function startApp() {
         App.init();
     }
+
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startApp);
+    } else {
+        startApp();
+    }
 })();
-    </script>
+</script>
 </body>
 </html>

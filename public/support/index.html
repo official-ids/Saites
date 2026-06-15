@@ -944,112 +944,385 @@ body {
 (function() {
     'use strict';
 
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {number} Интервал опроса новых сообщений (мс) */
+        POLLING_INTERVAL: 4000,
+        
+        /** @type {number} Максимальная высота поля ввода (px) */
+        MAX_INPUT_HEIGHT: 120,
+        
+        /** @type {number} Длительность показа toast (мс) */
+        TOAST_DURATION: 3000,
+        
+        /** @type {number} Максимальная длина превью сообщения */
+        MESSAGE_PREVIEW_LENGTH: 80,
+        
+        /** @type {number} Задержка прокрутки чата (мс) */
+        SCROLL_DELAY: 50,
+        
+        /** @type {string} Ключ для хранения токена в localStorage */
+        TOKEN_STORAGE_KEY: 'oris_support_token',
+        
+        /** @type {string} Regex для поиска файловых маркеров */
+        FILE_MARKER_REGEX: '\\[\\[file:([A-Za-z0-9+/=]+)\\]\\]'
+    };
+
+    /**
+     * API endpoints
+     * @namespace
+     */
     const API = {
+        /** @type {string} Авторизация пользователя */
         USER_AUTH: '/api/support/auth/user',
+        
+        /** @type {string} Авторизация администратора */
         ADMIN_AUTH: '/api/support/auth/admin',
+        
+        /** @type {string} Выход из системы */
         LOGOUT: '/api/support/auth/logout',
+        
+        /** @type {string} Список тикетов */
         TICKETS: '/api/support/tickets',
+        
+        /**
+         * Конкретный тикет
+         * @param {string} id - ID тикета
+         * @returns {string} URL endpoint
+         */
         TICKET: (id) => `/api/support/tickets/${id}`,
+        
+        /**
+         * Сообщения тикета
+         * @param {string} id - ID тикета
+         * @returns {string} URL endpoint
+         */
         MESSAGES: (id) => `/api/support/tickets/${id}/messages`,
+        
+        /**
+         * Статус тикета
+         * @param {string} id - ID тикета
+         * @returns {string} URL endpoint
+         */
         STATUS: (id) => `/api/support/tickets/${id}/status`
     };
 
+    /**
+     * Эмодзи для быстрого выбора
+     * @constant {Array<string>}
+     */
+    const COMMON_EMOJIS = [
+        '😊', '😂', '❤️', '👍', '🎉', '😢', '😡', '🤔',
+        '👋', '🙏', '🔥', '✨', '💡', '📎', '🔒', '✅',
+        '⭐', '🍕', '🚀', '💬', '🕒', '⚠️', '🔧', '📌'
+    ];
+
+    // ============================================
+    // Состояние приложения
+    // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
     const State = {
+        /** @type {Object|null} Данные сессии пользователя */
         session: null,
+        
+        /** @type {string|null} Токен авторизации */
         token: null,
+        
+        /** @type {Array<Object>} Список тикетов */
         tickets: [],
+        
+        /** @type {string|null} ID текущего открытого тикета */
         currentTicketId: null,
+        
+        /** @type {Object|null} Данные текущего тикета */
         currentTicket: null,
+        
+        /** @type {number|null} ID интервала опроса */
         pollingTimer: null,
+        
+        /** @type {string} Режим входа: 'user' | 'admin' */
         loginMode: 'user',
+        
+        /** @type {number} Количество непрочитанных сообщений */
         unreadCount: 0,
+        
+        /** @type {Map<string, number>} Счетчики сообщений для каждого тикета */
         lastKnownMessagesCount: new Map(),
+        
+        /** @type {string} Оригинальный заголовок страницы */
         originalTitle: document.title
     };
 
+    // ============================================
+    // API Client
+    // ============================================
+    
+    /**
+     * Клиент для работы с API
+     * @namespace
+     */
     const ApiClient = {
+        /**
+         * Получение заголовков для запроса
+         * @returns {Object} Заголовки HTTP
+         */
         headers() {
-            const h = { 'Content-Type': 'application/json' };
-            if (State.token) h['Authorization'] = `Bearer ${State.token}`;
-            return h;
+            const headers = { 'Content-Type': 'application/json' };
+            if (State.token) {
+                headers['Authorization'] = `Bearer ${State.token}`;
+            }
+            return headers;
         },
+
+        /**
+         * Выполнение HTTP запроса
+         * @param {string} url - URL endpoint
+         * @param {Object} options - Опции fetch
+         * @returns {Promise<Object>} Ответ сервера
+         * @throws {Error} Если запрос не удался
+         */
         async request(url, options = {}) {
             try {
-                const res = await fetch(url, { ...options, headers: { ...this.headers(), ...(options.headers || {}) } });
-                if (res.status === 401) {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        ...this.headers(),
+                        ...(options.headers || {})
+                    }
+                });
+
+                // Обработка истекшей сессии
+                if (response.status === 401) {
                     State.session = null;
                     State.token = null;
-                    localStorage.removeItem('oris_support_token');
+                    localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
                     showLoginScreen();
                     throw new Error('Сессия истекла');
                 }
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || `Ошибка ${res.status}`);
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data.error || `Ошибка ${response.status}`);
+                }
+
                 return data;
-            } catch (err) {
-                if (err.name === 'TypeError') throw new Error('Нет соединения');
-                throw err;
+            } catch (error) {
+                if (error.name === 'TypeError') {
+                    throw new Error('Нет соединения');
+                }
+                throw error;
             }
         },
+
+        /**
+         * Авторизация пользователя
+         * @param {string} name - Имя пользователя
+         * @param {string} token - Токен (опционально)
+         * @returns {Promise<Object>} Данные сессии
+         */
         userAuth(name, token) {
-            return this.request(API.USER_AUTH, { method: 'POST', body: JSON.stringify({ name, token }) });
+            return this.request(API.USER_AUTH, {
+                method: 'POST',
+                body: JSON.stringify({ name, token })
+            });
         },
+
+        /**
+         * Авторизация администратора
+         * @param {string} token - Admin token
+         * @returns {Promise<Object>} Данные сессии
+         */
         adminAuth(token) {
-            return this.request(API.ADMIN_AUTH, { method: 'POST', body: JSON.stringify({ token }) });
+            return this.request(API.ADMIN_AUTH, {
+                method: 'POST',
+                body: JSON.stringify({ token })
+            });
         },
-        logout() { return this.request(API.LOGOUT, { method: 'POST' }); },
-        getTickets() { return this.request(API.TICKETS); },
-        getTicket(id) { return this.request(API.TICKET(id)); },
+
+        /**
+         * Выход из системы
+         * @returns {Promise<Object>} Результат
+         */
+        logout() {
+            return this.request(API.LOGOUT, { method: 'POST' });
+        },
+
+        /**
+         * Получение списка тикетов
+         * @returns {Promise<Object>} Список тикетов
+         */
+        getTickets() {
+            return this.request(API.TICKETS);
+        },
+
+        /**
+         * Получение конкретного тикета
+         * @param {string} id - ID тикета
+         * @returns {Promise<Object>} Данные тикета
+         */
+        getTicket(id) {
+            return this.request(API.TICKET(id));
+        },
+
+        /**
+         * Создание нового тикета
+         * @param {string} subject - Тема тикета
+         * @param {string} firstMessage - Первое сообщение
+         * @returns {Promise<Object>} Созданный тикет
+         */
         createTicket(subject, firstMessage) {
-            return this.request(API.TICKETS, { method: 'POST', body: JSON.stringify({ subject, firstMessage }) });
+            return this.request(API.TICKETS, {
+                method: 'POST',
+                body: JSON.stringify({ subject, firstMessage })
+            });
         },
+
+        /**
+         * Отправка сообщения в тикет
+         * @param {string} id - ID тикета
+         * @param {string} text - Текст сообщения
+         * @returns {Promise<Object>} Результат
+         */
         sendMessage(id, text) {
-            return this.request(API.MESSAGES(id), { method: 'POST', body: JSON.stringify({ text }) });
+            return this.request(API.MESSAGES(id), {
+                method: 'POST',
+                body: JSON.stringify({ text })
+            });
         },
+
+        /**
+         * Изменение статуса тикета
+         * @param {string} id - ID тикета
+         * @param {string} status - Новый статус: 'open' | 'closed'
+         * @returns {Promise<Object>} Результат
+         */
         setStatus(id, status) {
-            return this.request(API.STATUS(id), { method: 'POST', body: JSON.stringify({ status }) });
+            return this.request(API.STATUS(id), {
+                method: 'POST',
+                body: JSON.stringify({ status })
+            });
         }
     };
 
+    // ============================================
+    // UI Utilities
+    // ============================================
+    
+    /**
+     * Показ toast-уведомления
+     * @param {string} message - Текст уведомления
+     * @param {string} type - Тип: 'info' | 'success' | 'error'
+     */
     function toast(message, type = 'info') {
-        const t = document.getElementById('toast');
-        t.textContent = message;
-        t.className = `toast ${type} visible`;
-        clearTimeout(t._timer);
-        t._timer = setTimeout(() => t.classList.remove('visible'), 3000);
+        const toastElement = document.getElementById('toast');
+        toastElement.textContent = message;
+        toastElement.className = `toast ${type} visible`;
+        
+        clearTimeout(toastElement._timer);
+        toastElement._timer = setTimeout(() => {
+            toastElement.classList.remove('visible');
+        }, CONFIG.TOAST_DURATION);
     }
 
+    /**
+     * Экранирование HTML-сущностей
+     * @param {string|null|undefined} str - Исходная строка
+     * @returns {string} Экранированная строка
+     */
     function escapeHtml(str) {
         if (str == null) return '';
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return String(str).replace(/[&<>"']/g, m => map[m]);
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(str).replace(/[&<>"']/g, (match) => map[match]);
     }
 
+    /**
+     * Форматирование относительного времени
+     * @param {string} iso - ISO строка даты
+     * @returns {string} Отформатированное время
+     */
     function formatTime(iso) {
-        const d = new Date(iso);
+        const date = new Date(iso);
         const now = new Date();
-        const diff = now - d;
+        const diff = now - date;
+
+        // Только что (менее минуты)
         if (diff < 60000) return 'только что';
-        if (diff < 3600000) return Math.floor(diff / 60000) + ' мин';
+        
+        // Менее часа
+        if (diff < 3600000) {
+            return Math.floor(diff / 60000) + ' мин';
+        }
+        
+        // Вчера
         const yesterday = new Date(now);
         yesterday.setDate(now.getDate() - 1);
-        if (d.toDateString() === yesterday.toDateString()) return 'вчера';
-        if (d.toDateString() === now.toDateString()) {
-            return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        if (date.toDateString() === yesterday.toDateString()) {
+            return 'вчера';
         }
-        if (diff < 604800000) return Math.floor(diff / 86400000) + ' дн';
-        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-    }
-
-    function formatFullTime(iso) {
-        return new Date(iso).toLocaleString('ru-RU', {
-            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+        
+        // Сегодня
+        if (date.toDateString() === now.toDateString()) {
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Менее недели
+        if (diff < 604800000) {
+            return Math.floor(diff / 86400000) + ' дн';
+        }
+        
+        // Старые даты
+        return date.toLocaleDateString('ru-RU', {
+            day: 'numeric',
+            month: 'short'
         });
     }
 
+    /**
+     * Форматирование полного времени
+     * @param {string} iso - ISO строка даты
+     * @returns {string} Отформатированная дата и время
+     */
+    function formatFullTime(iso) {
+        return new Date(iso).toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // ============================================
+    // File Rendering
+    // ============================================
+    
+    /**
+     * Рендеринг карточки файла
+     * @param {Object} fileMeta - Метаданные файла
+     * @returns {string} HTML карточки файла
+     */
     function renderFileCard(fileMeta) {
         const isImage = fileMeta.mime && fileMeta.mime.startsWith('image/');
-        const sizeKB = (fileMeta.size / 1024);
+        const sizeKB = fileMeta.size / 1024;
         const sizeStr = sizeKB < 1024
             ? `${sizeKB.toFixed(1)} KB`
             : `${(fileMeta.size / 1048576).toFixed(1)} MB`;
@@ -1081,6 +1354,13 @@ body {
         }
     }
 
+    // ============================================
+    // Title Notifications
+    // ============================================
+    
+    /**
+     * Обновление заголовка страницы с уведомлением о непрочитанных
+     */
     function updateTitleNotification() {
         if (State.unreadCount > 0) {
             document.title = `(${State.unreadCount}) ${State.originalTitle}`;
@@ -1089,33 +1369,50 @@ body {
         }
     }
 
+    // ============================================
+    // Auth & Login
+    // ============================================
+    
+    /**
+     * Показ экрана входа
+     */
     function showLoginScreen() {
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('app').style.display = 'none';
     }
 
+    /**
+     * Показ основного приложения
+     */
     function showApp() {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'flex';
+        
         const isAdmin = State.session.role === 'admin';
         document.getElementById('currentUserName').textContent = State.session.name;
         document.getElementById('adminBadge').style.display = isAdmin ? 'inline' : 'none';
         document.getElementById('userActions').style.display = isAdmin ? 'none' : 'block';
+        
         loadTickets();
         startPolling();
     }
 
+    /**
+     * Инициализация формы входа
+     */
     function initLogin() {
         const tabs = document.querySelectorAll('[data-login-tab]');
         const nameField = document.getElementById('nameField');
         const tokenField = document.getElementById('tokenField');
         const loginBtn = document.getElementById('loginBtn');
 
+        // Переключение вкладок
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 State.loginMode = tab.dataset.loginTab;
+                
                 if (State.loginMode === 'admin') {
                     nameField.style.display = 'none';
                     tokenField.style.display = 'block';
@@ -1125,18 +1422,21 @@ body {
                     tokenField.style.display = 'none';
                     loginBtn.textContent = 'Войти';
                 }
+                
                 document.getElementById('loginError').style.display = 'none';
             });
         });
 
+        // Обработка отправки формы
         document.getElementById('loginForm').addEventListener('submit', async () => {
-            const errEl = document.getElementById('loginError');
-            errEl.style.display = 'none';
+            const errorElement = document.getElementById('loginError');
+            errorElement.style.display = 'none';
             loginBtn.disabled = true;
             loginBtn.textContent = 'Вход...';
 
             try {
                 let data;
+                
                 if (State.loginMode === 'admin') {
                     const token = document.getElementById('loginToken').value.trim();
                     if (!token) throw new Error('Введите токен');
@@ -1144,16 +1444,17 @@ body {
                 } else {
                     const name = document.getElementById('loginName').value.trim();
                     if (!name) throw new Error('Введите имя');
-                    const existingToken = localStorage.getItem('oris_support_token');
+                    const existingToken = localStorage.getItem(CONFIG.TOKEN_STORAGE_KEY);
                     data = await ApiClient.userAuth(name, existingToken);
                 }
+                
                 State.session = data.session;
                 State.token = data.token;
-                localStorage.setItem('oris_support_token', data.token);
+                localStorage.setItem(CONFIG.TOKEN_STORAGE_KEY, data.token);
                 showApp();
-            } catch (err) {
-                errEl.textContent = err.message;
-                errEl.style.display = 'block';
+            } catch (error) {
+                errorElement.textContent = error.message;
+                errorElement.style.display = 'block';
             } finally {
                 loginBtn.disabled = false;
                 loginBtn.textContent = State.loginMode === 'admin' ? 'Войти как команда' : 'Войти';
@@ -1161,36 +1462,59 @@ body {
         });
     }
 
+    // ============================================
+    // Tickets Management
+    // ============================================
+    
+    /**
+     * Загрузка списка тикетов
+     * @returns {Promise<void>}
+     */
     async function loadTickets() {
         const list = document.getElementById('ticketsList');
+        
         try {
             const data = await ApiClient.getTickets();
             State.tickets = data.tickets || [];
 
+            // Подсчет непрочитанных для пользователей
             if (State.session && State.session.role === 'user') {
                 let newUnread = 0;
+                
                 for (const ticket of State.tickets) {
                     const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
+                    
                     if (ticket.messagesCount > lastCount && ticket.status === 'open') {
-                        const lastMsg = ticket.lastMessage;
-                        if (lastMsg && lastMsg.from !== 'user') {
+                        const lastMessage = ticket.lastMessage;
+                        if (lastMessage && lastMessage.from !== 'user') {
                             newUnread += ticket.messagesCount - lastCount;
                         }
                     }
+                    
                     State.lastKnownMessagesCount.set(ticket.id, ticket.messagesCount);
                 }
+                
                 State.unreadCount = newUnread;
                 updateTitleNotification();
             }
 
             renderTickets();
-        } catch (err) {
-            list.innerHTML = `<div class="empty-state"><div class="empty-state-text">${escapeHtml(err.message)}</div></div>`;
+        } catch (error) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-text">${escapeHtml(error.message)}</div>
+                </div>
+            `;
         }
     }
 
-            function renderTickets() {
+    /**
+     * Рендеринг списка тикетов
+     */
+    function renderTickets() {
         const list = document.getElementById('ticketsList');
+        
+        // Пустой список
         if (State.tickets.length === 0) {
             const isAdmin = State.session.role === 'admin';
             list.innerHTML = `
@@ -1205,43 +1529,58 @@ body {
             return;
         }
 
-        list.innerHTML = State.tickets.map(t => {
-            const lastMsg = t.lastMessage;
+        // Рендеринг тикетов
+        list.innerHTML = State.tickets.map(ticket => {
+            const lastMessage = ticket.lastMessage;
             const fileMarkerRegex = new RegExp('\\[\\[file:[A-Za-z0-9+/=]+\\]\\]', 'g');
-            let preview = lastMsg
-                ? (lastMsg.from === 'admin' ? '🛡 ' : '') + lastMsg.text.replace(fileMarkerRegex, '📎 Файл')
+            
+            let preview = lastMessage
+                ? (lastMessage.from === 'admin' ? '🛡 ' : '') + lastMessage.text.replace(fileMarkerRegex, '📎 Файл')
                 : 'Нет сообщений';
-            if (preview.length > 80) preview = preview.slice(0, 80) + '…';
+            
+            if (preview.length > CONFIG.MESSAGE_PREVIEW_LENGTH) {
+                preview = preview.slice(0, CONFIG.MESSAGE_PREVIEW_LENGTH) + '…';
+            }
+            
             return `
-                <div class="ticket-item ${t.id === State.currentTicketId ? 'active' : ''}" data-ticket-id="${t.id}">
+                <div class="ticket-item ${ticket.id === State.currentTicketId ? 'active' : ''}" data-ticket-id="${ticket.id}">
                     <div class="ticket-subject">
-                        <span class="ticket-subject-text">${escapeHtml(t.subject)}</span>
-                        <span class="ticket-status ${t.status}">${t.status === 'open' ? 'Открыт' : 'Закрыт'}</span>
+                        <span class="ticket-subject-text">${escapeHtml(ticket.subject)}</span>
+                        <span class="ticket-status ${ticket.status}">${ticket.status === 'open' ? 'Открыт' : 'Закрыт'}</span>
                     </div>
                     <div class="ticket-preview">${escapeHtml(preview)}</div>
                     <div class="ticket-meta">
-                        <span>${escapeHtml(t.userName)}</span>
-                        <span>${formatTime(t.updatedAt)} · ${t.messagesCount} сообщ.</span>
+                        <span>${escapeHtml(ticket.userName)}</span>
+                        <span>${formatTime(ticket.updatedAt)} · ${ticket.messagesCount} сообщ.</span>
                     </div>
                 </div>
             `;
         }).join('');
 
-        list.querySelectorAll('[data-ticket-id]').forEach(el => {
-            el.addEventListener('click', () => openTicket(el.dataset.ticketId));
+        // Привязка событий
+        list.querySelectorAll('[data-ticket-id]').forEach(element => {
+            element.addEventListener('click', () => openTicket(element.dataset.ticketId));
         });
     }
 
+    /**
+     * Открытие тикета
+     * @param {string} id - ID тикета
+     * @returns {Promise<void>}
+     */
     async function openTicket(id) {
+        // Сброс счетчика непрочитанных для пользователя
         if (State.session && State.session.role === 'user') {
             const ticket = State.tickets.find(t => t.id === id);
             if (ticket) {
                 const lastCount = State.lastKnownMessagesCount.get(id) || 0;
-                const newMsgs = ticket.messagesCount - lastCount;
-                if (newMsgs > 0) {
-                    State.unreadCount = Math.max(0, State.unreadCount - newMsgs);
+                const newMessages = ticket.messagesCount - lastCount;
+                
+                if (newMessages > 0) {
+                    State.unreadCount = Math.max(0, State.unreadCount - newMessages);
                     updateTitleNotification();
                 }
+                
                 State.lastKnownMessagesCount.set(id, ticket.messagesCount);
             }
         }
@@ -1260,115 +1599,150 @@ body {
             const data = await ApiClient.getTicket(id);
             State.currentTicket = data.ticket;
             renderChat();
+            
             if (State.currentTicket.status === 'open') {
                 document.getElementById('messageInput').focus();
             }
-        } catch (err) {
-            messages.innerHTML = `<div class="empty-state"><div class="empty-state-text">${escapeHtml(err.message)}</div></div>`;
+        } catch (error) {
+            messages.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-text">${escapeHtml(error.message)}</div>
+                </div>
+            `;
         }
     }
 
-        function renderChat() {
-        const t = State.currentTicket;
-        if (!t) return;
+    // ============================================
+    // Chat Management
+    // ============================================
+    
+    /**
+     * Рендеринг чата
+     */
+    function renderChat() {
+        const ticket = State.currentTicket;
+        if (!ticket) return;
 
-        document.getElementById('chatTitle').textContent = t.subject;
+        // Заголовок и подзаголовок
+        document.getElementById('chatTitle').textContent = ticket.subject;
         const subtitleParts = [
-            `Создан ${formatFullTime(t.createdAt)}`,
-            `Статус: ${t.status === 'open' ? 'открыт' : 'закрыт'}`
+            `Создан ${formatFullTime(ticket.createdAt)}`,
+            `Статус: ${ticket.status === 'open' ? 'открыт' : 'закрыт'}`
         ];
         document.getElementById('chatSubtitle').textContent = subtitleParts.join(' · ');
 
-        const toggleBtn = document.getElementById('toggleStatusBtn');
+        // Кнопка изменения статуса (только для админа)
+        const toggleButton = document.getElementById('toggleStatusBtn');
         if (State.session.role === 'admin') {
-            toggleBtn.style.display = 'inline-flex';
-            toggleBtn.textContent = t.status === 'open' ? 'Закрыть тикет' : 'Переоткрыть';
-            toggleBtn.onclick = async () => {
-                const newStatus = t.status === 'open' ? 'closed' : 'open';
+            toggleButton.style.display = 'inline-flex';
+            toggleButton.textContent = ticket.status === 'open' ? 'Закрыть тикет' : 'Переоткрыть';
+            toggleButton.onclick = async () => {
+                const newStatus = ticket.status === 'open' ? 'closed' : 'open';
                 try {
-                    await ApiClient.setStatus(t.id, newStatus);
+                    await ApiClient.setStatus(ticket.id, newStatus);
                     toast(newStatus === 'closed' ? 'Тикет закрыт' : 'Тикет переоткрыт', 'success');
                     await loadTickets();
-                    await openTicket(t.id);
-                } catch (err) {
-                    toast(err.message, 'error');
+                    await openTicket(ticket.id);
+                } catch (error) {
+                    toast(error.message, 'error');
                 }
             };
         } else {
-            toggleBtn.style.display = 'none';
+            toggleButton.style.display = 'none';
         }
 
-        const messagesEl = document.getElementById('chatMessages');
+        // Рендеринг сообщений
+        const messagesElement = document.getElementById('chatMessages');
         const isAdmin = State.session.role === 'admin';
-
         let lastSender = null;
-        messagesEl.innerHTML = t.messages.map((m, idx) => {
-            const processedText = m.text;
-            const fileRegex = new RegExp('\\[\\[file:([A-Za-z0-9+/=]+)\\]\\]', 'g');
+
+        messagesElement.innerHTML = ticket.messages.map((message, index) => {
+            // Обработка файловых маркеров
+            const processedText = message.text;
+            const fileRegex = new RegExp(CONFIG.FILE_MARKER_REGEX, 'g');
             let lastIndex = 0;
             const parts = [];
             let match;
+            
             while ((match = fileRegex.exec(processedText)) !== null) {
                 const before = processedText.substring(lastIndex, match.index);
-                if (before) parts.push('<span class="msg-text">' + escapeHtml(before) + '</span>');
+                if (before) {
+                    parts.push('<span class="msg-text">' + escapeHtml(before) + '</span>');
+                }
+                
                 try {
                     const base64 = match[1];
-                    const jsonStr = decodeURIComponent(escape(atob(base64)));
-                    const fileMeta = JSON.parse(jsonStr);
+                    const jsonString = decodeURIComponent(escape(atob(base64)));
+                    const fileMeta = JSON.parse(jsonString);
                     parts.push(renderFileCard(fileMeta));
-                } catch(e) {
+                } catch (error) {
                     parts.push('<span class="msg-text">' + escapeHtml(match[0]) + '</span>');
                 }
+                
                 lastIndex = fileRegex.lastIndex;
             }
+            
             const tail = processedText.substring(lastIndex);
-            if (tail) parts.push('<span class="msg-text">' + escapeHtml(tail) + '</span>');
+            if (tail) {
+                parts.push('<span class="msg-text">' + escapeHtml(tail) + '</span>');
+            }
+            
             const finalText = parts.join('');
 
-            const isOwnMessage = (isAdmin && m.from === 'admin') || (!isAdmin && m.from === 'user');
+            // Определение стороны сообщения
+            const isOwnMessage = (isAdmin && message.from === 'admin') || (!isAdmin && message.from === 'user');
             const side = isOwnMessage ? 'user' : 'admin';
             const senderName = isOwnMessage
                 ? 'Вы'
-                : (m.from === 'admin' ? 'Support Team' : escapeHtml(t.userName));
+                : (message.from === 'admin' ? 'Support Team' : escapeHtml(ticket.userName));
 
-            const showSender = !lastSender || lastSender !== m.from;
-            lastSender = m.from;
+            // Показ имени отправителя
+            const showSender = !lastSender || lastSender !== message.from;
+            lastSender = message.from;
 
             return `
-                ${showSender ? `<div class="message-sender" style="align-self: ${side === 'user' ? 'flex-end' : 'flex-start'}; padding: ${idx === 0 ? '0 6px' : '8px 6px 2px'};">${senderName}</div>` : ''}
+                ${showSender ? `<div class="message-sender" style="align-self: ${side === 'user' ? 'flex-end' : 'flex-start'}; padding: ${index === 0 ? '0 6px' : '8px 6px 2px'};">${senderName}</div>` : ''}
                 <div class="message ${side}">
                     <div class="message-bubble">${finalText}</div>
-                    <div class="message-time">${formatTime(m.createdAt)}</div>
+                    <div class="message-time">${formatTime(message.createdAt)}</div>
                 </div>
             `;
         }).join('');
 
+        // Прокрутка вниз
         setTimeout(() => {
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        }, 50);
+            messagesElement.scrollTop = messagesElement.scrollHeight;
+        }, CONFIG.SCROLL_DELAY);
 
+        // Блокировка ввода для закрытых тикетов
         const input = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        if (t.status === 'closed' && !isAdmin) {
+        const sendButton = document.getElementById('sendBtn');
+        
+        if (ticket.status === 'closed' && !isAdmin) {
             input.disabled = true;
             input.placeholder = 'Тикет закрыт. Только команда поддержки может его переоткрыть.';
-            sendBtn.disabled = true;
+            sendButton.disabled = true;
         } else {
             input.disabled = false;
             input.placeholder = 'Напишите сообщение...';
-            sendBtn.disabled = !input.value.trim();
+            sendButton.disabled = !input.value.trim();
         }
     }
 
+    /**
+     * Отправка сообщения
+     * @returns {Promise<void>}
+     */
     async function sendMessage() {
         const input = document.getElementById('messageInput');
         const text = input.value.trim();
+        
         if (!text || !State.currentTicketId) return;
 
-        const btn = document.getElementById('sendBtn');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>';
+        const button = document.getElementById('sendBtn');
+        const originalContent = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>';
         input.value = '';
         input.style.height = 'auto';
 
@@ -1376,37 +1750,51 @@ body {
             await ApiClient.sendMessage(State.currentTicketId, text);
             await openTicket(State.currentTicketId);
             await loadTickets();
-        } catch (err) {
-            toast(err.message, 'error');
+        } catch (error) {
+            toast(error.message, 'error');
             input.value = text;
         } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = !input.value.trim();
+            button.innerHTML = originalContent;
+            button.disabled = !input.value.trim();
         }
     }
 
+    /**
+     * Инициализация поля ввода чата
+     */
     function initChatInput() {
         const input = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
+        const sendButton = document.getElementById('sendBtn');
 
+        // Автоматическое изменение высоты
         input.addEventListener('input', () => {
-            sendBtn.disabled = !input.value.trim();
+            sendButton.disabled = !input.value.trim();
             input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+            input.style.height = Math.min(input.scrollHeight, CONFIG.MAX_INPUT_HEIGHT) + 'px';
         });
 
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+        // Отправка по Enter
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 sendMessage();
             }
         });
 
-        sendBtn.addEventListener('click', sendMessage);
+        // Кнопка отправки
+        sendButton.addEventListener('click', sendMessage);
     }
 
+    // ============================================
+    // New Ticket Modal
+    // ============================================
+    
+    /**
+     * Инициализация модального окна создания тикета
+     */
     function initNewTicket() {
         const modal = document.getElementById('newTicketModal');
+        
         const open = () => modal.classList.add('active');
         const close = () => {
             modal.classList.remove('active');
@@ -1414,77 +1802,105 @@ body {
             document.getElementById('ticketMessage').value = '';
         };
 
+        // Открытие/закрытие
         document.getElementById('newTicketBtn').addEventListener('click', open);
         document.getElementById('cancelNewTicket').addEventListener('click', close);
-        modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('active')) close();
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) close();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('active')) close();
         });
 
-        document.getElementById('newTicketForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Отправка формы
+        document.getElementById('newTicketForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
             const subject = document.getElementById('ticketSubject').value.trim();
             const message = document.getElementById('ticketMessage').value.trim();
-            const btn = document.getElementById('submitNewTicket');
+            const button = document.getElementById('submitNewTicket');
 
             if (!subject) return toast('Укажите тему', 'error');
             if (!message) return toast('Напишите сообщение', 'error');
 
-            btn.disabled = true;
-            btn.textContent = 'Создание...';
+            button.disabled = true;
+            button.textContent = 'Создание...';
+            
             try {
                 const data = await ApiClient.createTicket(subject, message);
                 toast('Тикет создан', 'success');
                 close();
                 await loadTickets();
                 await openTicket(data.ticket.id);
-            } catch (err) {
-                toast(err.message, 'error');
+            } catch (error) {
+                toast(error.message, 'error');
             } finally {
-                btn.disabled = false;
-                btn.textContent = 'Создать тикет';
+                button.disabled = false;
+                button.textContent = 'Создать тикет';
             }
         });
     }
 
+    // ============================================
+    // Polling
+    // ============================================
+    
+    /**
+     * Запуск опроса новых сообщений
+     */
     function startPolling() {
         if (State.pollingTimer) clearInterval(State.pollingTimer);
+        
         State.pollingTimer = setInterval(async () => {
             try {
                 const data = await ApiClient.getTickets();
                 const oldTickets = State.tickets;
                 State.tickets = data.tickets || [];
 
+                // Подсчет непрочитанных
                 if (State.session && State.session.role === 'user') {
                     let newUnread = 0;
+                    
                     for (const ticket of State.tickets) {
                         const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
+                        
                         if (ticket.messagesCount > lastCount && ticket.status === 'open') {
-                            const lastMsg = ticket.lastMessage;
-                            if (lastMsg && lastMsg.from !== 'user') {
+                            const lastMessage = ticket.lastMessage;
+                            if (lastMessage && lastMessage.from !== 'user') {
                                 newUnread += ticket.messagesCount - lastCount;
                             }
                         }
+                        
                         State.lastKnownMessagesCount.set(ticket.id, ticket.messagesCount);
                     }
+                    
                     State.unreadCount = newUnread;
                     updateTitleNotification();
                 }
 
+                // Обновление текущего тикета
                 if (State.currentTicketId) {
-                    const cur = State.tickets.find(t => t.id === State.currentTicketId);
-                    const oldCur = oldTickets.find(t => t.id === State.currentTicketId);
-                    if (cur && oldCur && cur.messagesCount > oldCur.messagesCount) {
+                    const current = State.tickets.find(t => t.id === State.currentTicketId);
+                    const oldCurrent = oldTickets.find(t => t.id === State.currentTicketId);
+                    
+                    if (current && oldCurrent && current.messagesCount > oldCurrent.messagesCount) {
                         const fresh = await ApiClient.getTicket(State.currentTicketId);
                         State.currentTicket = fresh.ticket;
                         renderChat();
                     }
                 }
+                
                 renderTickets();
-            } catch (e) {}
-        }, 4000);
+            } catch (error) {
+                // Игнорируем ошибки опроса
+            }
+        }, CONFIG.POLLING_INTERVAL);
     }
 
+    // ============================================
+    // Event Handlers
+    // ============================================
+    
+    // Кнопка назад
     document.getElementById('backBtn').addEventListener('click', () => {
         document.getElementById('app').classList.remove('chat-open');
         State.currentTicketId = null;
@@ -1492,18 +1908,25 @@ body {
         renderTickets();
     });
 
+    // Кнопка выхода
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         if (!confirm('Выйти из аккаунта?')) return;
+        
         try {
             await ApiClient.logout();
-        } catch (e) {}
+        } catch (error) {
+            // Игнорируем ошибки
+        }
+        
         State.session = null;
         State.token = null;
-        localStorage.removeItem('oris_support_token');
+        localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
+        
         if (State.pollingTimer) clearInterval(State.pollingTimer);
         showLoginScreen();
     });
 
+    // Обновление при получении фокуса
     window.addEventListener('focus', () => {
         if (State.session) {
             loadTickets();
@@ -1511,24 +1934,29 @@ body {
         }
     });
 
-    const emojiBtn = document.getElementById('emojiPickerBtn');
+    // ============================================
+    // Emoji Picker
+    // ============================================
+    
+    const emojiButton = document.getElementById('emojiPickerBtn');
     const emojiPanel = document.getElementById('emojiPanel');
     const messageInput = document.getElementById('messageInput');
 
-    const commonEmojis = [
-        '😊', '😂', '❤️', '👍', '🎉', '😢', '😡', '🤔',
-        '👋', '🙏', '🔥', '✨', '💡', '📎', '🔒', '✅',
-        '⭐', '🍕', '🚀', '💬', '🕒', '⚠️', '🔧', '📌'
-    ];
-
+    /**
+     * Построение панели эмодзи
+     */
     function buildEmojiPanel() {
-        emojiPanel.innerHTML = commonEmojis.map(emoji => `<button type="button">${emoji}</button>`).join('');
-        emojiPanel.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const emoji = e.currentTarget.textContent;
-                const cursorPos = messageInput.selectionStart;
+        emojiPanel.innerHTML = COMMON_EMOJIS.map(emoji => {
+            return `<button type="button">${emoji}</button>`;
+        }).join('');
+        
+        emojiPanel.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const emoji = event.currentTarget.textContent;
+                const cursorPosition = messageInput.selectionStart;
                 const text = messageInput.value;
-                messageInput.value = text.slice(0, cursorPos) + emoji + text.slice(cursorPos);
+                
+                messageInput.value = text.slice(0, cursorPosition) + emoji + text.slice(cursorPosition);
                 messageInput.focus();
                 messageInput.dispatchEvent(new Event('input'));
                 emojiPanel.style.display = 'none';
@@ -1536,113 +1964,125 @@ body {
         });
     }
 
-    emojiBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+    // Открытие/закрытие панели
+    emojiButton.addEventListener('click', (event) => {
+        event.stopPropagation();
         const isVisible = emojiPanel.style.display === 'grid';
         emojiPanel.style.display = isVisible ? 'none' : 'grid';
-        if (!isVisible && emojiPanel.children.length === 0) buildEmojiPanel();
+        
+        if (!isVisible && emojiPanel.children.length === 0) {
+            buildEmojiPanel();
+        }
     });
 
-    document.addEventListener('click', (e) => {
-        if (!emojiPanel.contains(e.target) && e.target !== emojiBtn) {
+    // Закрытие при клике вне панели
+    document.addEventListener('click', (event) => {
+        if (!emojiPanel.contains(event.target) && event.target !== emojiButton) {
             emojiPanel.style.display = 'none';
         }
     });
 
-    const attachBtn = document.getElementById('attachFileBtn');
+    // ============================================
+    // File Upload
+    // ============================================
+    
+    const attachButton = document.getElementById('attachFileBtn');
     const fileInput = document.getElementById('fileInput');
     const filePreview = document.getElementById('filePreview');
 
-    attachBtn.addEventListener('click', () => fileInput.click());
+    // Открытие диалога выбора файла
+    attachButton.addEventListener('click', () => fileInput.click());
 
-    fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
+    // Обработка выбранного файла
+    fileInput.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = async (ev) => {
+        
+        reader.onload = async (loadEvent) => {
+            // Превью файла
             let previewHtml = `<div class="file-name">${escapeHtml(file.name)} (${(file.size/1024).toFixed(1)} KB)</div>`;
+            
             if (file.type.startsWith('image/')) {
-                previewHtml += `<img src="${ev.target.result}" alt="preview">`;
+                previewHtml += `<img src="${loadEvent.target.result}" alt="preview">`;
             }
+            
             previewHtml += `<button id="cancelUpload">Отмена</button>`;
             filePreview.innerHTML = previewHtml;
             filePreview.style.display = 'block';
 
+            // Кнопка отмены
             document.getElementById('cancelUpload').addEventListener('click', () => {
                 filePreview.style.display = 'none';
                 fileInput.value = '';
             });
 
+            // Загрузка файла
             const formData = new FormData();
             formData.append('file', file);
+            
             try {
-                const res = await fetch('/api/support/upload', {
+                const response = await fetch('/api/support/upload', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${State.token}` },
                     body: formData
                 });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Ошибка загрузки');
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Ошибка загрузки');
 
-                    const fileMeta = {
+                // Создание файлового маркера
+                const fileMeta = {
                     name: file.name,
                     url: data.url,
                     size: file.size,
                     mime: file.type
                 };
-                const jsonStr = JSON.stringify(fileMeta);
-                const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+                
+                const jsonString = JSON.stringify(fileMeta);
+                const base64 = btoa(unescape(encodeURIComponent(jsonString)));
                 const fileBlock = `[[file:${base64}]]`;
 
-                const cursorPos = messageInput.selectionStart;
+                // Вставка в поле ввода
+                const cursorPosition = messageInput.selectionStart;
                 const text = messageInput.value;
-                const needSpace = text.length > 0 && text[cursorPos - 1] && text[cursorPos - 1] !== '\n' && text[cursorPos - 1] !== ' ';
+                const needSpace = text.length > 0 && text[cursorPosition - 1] && 
+                                 text[cursorPosition - 1] !== '\n' && text[cursorPosition - 1] !== ' ';
                 const insert = (needSpace ? '\n' : '') + fileBlock + '\n';
-                messageInput.value = text.slice(0, cursorPos) + insert + text.slice(cursorPos);
+                
+                messageInput.value = text.slice(0, cursorPosition) + insert + text.slice(cursorPosition);
                 messageInput.dispatchEvent(new Event('input'));
                 toast('Файл загружен', 'success');
-            } catch (err) {
-                toast(err.message, 'error');
+            } catch (error) {
+                toast(error.message, 'error');
             } finally {
                 filePreview.style.display = 'none';
                 fileInput.value = '';
             }
         };
+        
         reader.readAsDataURL(file);
     });
 
-    document.addEventListener('click', (e) => {
-        if (!filePreview.contains(e.target) && e.target !== attachBtn && e.target !== fileInput) {
+    // Закрытие превью при клике вне
+    document.addEventListener('click', (event) => {
+        if (!filePreview.contains(event.target) && 
+            event.target !== attachButton && 
+            event.target !== fileInput) {
             filePreview.style.display = 'none';
         }
     });
 
-    async function init() {
-        initLogin();
-        initChatInput();
-        initNewTicket();
-
-        const saved = localStorage.getItem('oris_support_token');
-        if (saved) {
-            try {
-                const data = await ApiClient.userAuth('', saved);
-                State.session = data.session;
-                State.token = data.token;
-                showApp();
-                return;
-            } catch (e) {
-                localStorage.removeItem('oris_support_token');
-            }
-        }
-        showLoginScreen();
-    }
-    init();
-
-    // -----------------------------
-    // Legal Pages Modal Handler
-    // -----------------------------
-    const legalPages = {
+    // ============================================
+    // Legal Pages
+    // ============================================
+    
+    /**
+     * Контент юридических страниц
+     * @constant {Object}
+     */
+    const LEGAL_PAGES = {
         privacy: {
             title: 'Политика конфиденциальности',
             content: `
@@ -1679,8 +2119,12 @@ body {
         }
     };
 
+    /**
+     * Показ юридической страницы
+     * @param {string} pageKey - Ключ страницы
+     */
     function showLegalPage(pageKey) {
-        const page = legalPages[pageKey];
+        const page = LEGAL_PAGES[pageKey];
         if (!page) return;
 
         const overlay = document.createElement('div');
@@ -1711,7 +2155,6 @@ body {
             }
         `;
         document.head.appendChild(style);
-
         document.body.appendChild(overlay);
 
         const closeModal = () => {
@@ -1720,20 +2163,21 @@ body {
         };
 
         document.getElementById('closeLegalModal').addEventListener('click', closeModal);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) closeModal();
         });
-        document.addEventListener('keydown', function escHandler(e) {
-            if (e.key === 'Escape') {
+        document.addEventListener('keydown', function escapeHandler(event) {
+            if (event.key === 'Escape') {
                 closeModal();
-                document.removeEventListener('keydown', escHandler);
+                document.removeEventListener('keydown', escapeHandler);
             }
         });
     }
 
+    // Обработчики ссылок на юридические страницы
     document.querySelectorAll('.sidebar-footer a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
             const url = new URL(link.href);
             const pageKey = url.searchParams.get('p');
             if (pageKey) {
@@ -1742,6 +2186,38 @@ body {
         });
     });
 
+    // ============================================
+    // Initialization
+    // ============================================
+    
+    /**
+     * Инициализация приложения
+     * @returns {Promise<void>}
+     */
+    async function init() {
+        initLogin();
+        initChatInput();
+        initNewTicket();
+
+        // Попытка восстановления сессии
+        const savedToken = localStorage.getItem(CONFIG.TOKEN_STORAGE_KEY);
+        if (savedToken) {
+            try {
+                const data = await ApiClient.userAuth('', savedToken);
+                State.session = data.session;
+                State.token = data.token;
+                showApp();
+                return;
+            } catch (error) {
+                localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
+            }
+        }
+        
+        showLoginScreen();
+    }
+
+    // Запуск инициализации
+    init();
 })();
 </script>
 

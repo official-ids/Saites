@@ -399,22 +399,228 @@ body {
 (function() {
     'use strict';
 
-    // ============================================================
-    // State
-    // ============================================================
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {number} Таймаут для внутренних endpoint проверок (мс) */
+        DEFAULT_TIMEOUT: 3000,
+        
+        /** @type {number} Таймаут для внешних URL проверок (мс) */
+        EXTERNAL_TIMEOUT: 5000,
+        
+        /** @type {number} Таймаут для проверки KV (мс) */
+        KV_TIMEOUT: 5000,
+        
+        /** @type {number} Интервал автообновления (мс) */
+        REFRESH_INTERVAL: 30000,
+        
+        /** @type {number} Максимальное количество записей в истории проверок */
+        MAX_HISTORY_SIZE: 90,
+        
+        /** @type {number} Количество отображаемых элементов в uptime bar */
+        UPTIME_BAR_VISIBLE_COUNT: 90,
+        
+        /** @type {string} API endpoint для загрузки конфигурации */
+        STATUS_CONFIG_ENDPOINT: '/api/status-config',
+        
+        /** @type {string} ID контейнера сетки сервисов */
+        SERVICES_GRID_ID: 'servicesGrid',
+        
+        /** @type {string} ID элемента количества сервисов */
+        SERVICES_COUNT_ID: 'servicesCount',
+        
+        /** @type {string} ID элемента списка инцидентов */
+        INCIDENTS_LIST_ID: 'incidentsList',
+        
+        /** @type {string} ID элемента количества инцидентов */
+        INCIDENTS_COUNT_ID: 'incidentsCount',
+        
+        /** @type {string} ID элемента uptime bar */
+        UPTIME_BAR_ID: 'uptimeBar',
+        
+        /** @type {string} ID элемента процента uptime */
+        UPTIME_PERCENTAGE_ID: 'uptimePercentage',
+        
+        /** @type {string} ID элемента начальной метки uptime */
+        UPTIME_START_ID: 'uptimeStart',
+        
+        /** @type {string} ID элемента последней проверки */
+        LAST_UPDATED_ID: 'lastUpdated',
+        
+        /** @type {string} ID кнопки автообновления */
+        AUTO_REFRESH_BTN_ID: 'autoRefreshBtn'
+    };
+
+    /**
+     * Статусы сервисов
+     * @constant {Object<string, string>}
+     */
+    const STATUS = {
+        OPERATIONAL: 'operational',
+        DEGRADED: 'degraded',
+        OUTAGE: 'outage',
+        CHECKING: 'checking'
+    };
+
+    /**
+     * Пороги латентности для классификации
+     * @constant {Object}
+     */
+    const LATENCY_THRESHOLDS = {
+        /** @type {number} Порог для быстрой латентности (мс) */
+        FAST: 300,
+        
+        /** @type {number} Порог для средней латентности (мс) */
+        MEDIUM: 1500
+    };
+
+    /**
+     * Сообщения для UI
+     * @constant {Object<string, string>}
+     */
+    const MESSAGES = {
+        loadingServices: 'Загрузка сервисов...',
+        noIncidents: 'Активных инцидентов нет',
+        noIncidentsText: 'Все сервисы работают корректно по результатам последней проверки',
+        checkingSystems: 'Проверка систем...',
+        checkingDescription: 'Выполняем диагностику всех компонентов платформы',
+        allSystemsOperational: 'Все системы работают',
+        allSystemsDescription: 'Все API-эндпоинты отвечают корректно. Последние проверки выполнены успешно.',
+        partialProblems: 'Частичные проблемы',
+        outagesDetected: 'Обнаружены сбои',
+        configLoadError: 'Ошибка загрузки конфигурации',
+        noCheckConfigured: 'No check configured',
+        unknownCustomCheck: 'Unknown custom check',
+        kvUnavailable: 'KV недоступен',
+        connectionFailed: 'Connection failed',
+        autoRefreshOn: 'Auto-refresh 30s',
+        autoRefreshOff: 'Auto-refresh OFF'
+    };
+
+    // ============================================
+    // Состояние приложения
+    // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
     const State = {
+        /** @type {Object<string, Object>} Результаты проверок сервисов */
         services: {},
+        
+        /** @type {boolean} Флаг автообновления */
         autoRefresh: true,
+        
+        /** @type {number|null} ID интервала автообновления */
         refreshInterval: null,
+        
+        /** @type {Array<Object>} История проверок */
         checkHistory: []
     };
+
+    /**
+     * Список сервисов для проверки
+     * @type {Array<Object>}
+     */
     let SERVICES = [];
 
-    // ============================================================
-    // Проверки
-    // ============================================================
+    // ============================================
+    // Утилиты безопасности
+    // ============================================
+    
+    /**
+     * Утилиты безопасности для защиты от XSS-атак
+     * @namespace
+     */
+    const Security = {
+        /**
+         * Карта соответствия символов HTML-сущностям
+         * @type {Object<string, string>}
+         */
+        HTML_ESCAPE_MAP: {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        },
+
+        /**
+         * Экранирование HTML-сущностей в строке
+         * 
+         * @param {string|number|null|undefined} str - Исходная строка
+         * @returns {string} - Строка с экранированными HTML-сущностями
+         */
+        escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, (match) => {
+                return this.HTML_ESCAPE_MAP[match];
+            });
+        }
+    };
+
+    // ============================================
+    // SVG иконки
+    // ============================================
+    
+    /**
+     * SVG иконки для статусов
+     * @namespace
+     */
+    const ICONS = {
+        /** @type {string} Иконка успеха */
+        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+        
+        /** @type {string} Иконка предупреждения */
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/>',
+        
+        /** @type {string} Иконка ошибки */
+        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+        
+        /** @type {string} Иконка обновления */
+        refresh: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>',
+        
+        /** @type {string} Иконка времени */
+        clock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        
+        /** @type {string} Иконка щита */
+        shield: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>'
+    };
+
+    /**
+     * Иконки для статусов сервисов
+     * @constant {Object<string, string>}
+     */
+    const STATUS_ICONS = {
+        operational: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>',
+        degraded: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/>',
+        outage: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>',
+        checking: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>'
+    };
+
+    // ============================================
+    // Проверки сервисов
+    // ============================================
+    
+    /**
+     * Проверка внутреннего endpoint
+     * 
+     * @param {string} path - Путь endpoint
+     * @param {string} method - HTTP метод
+     * @param {Array<number>} expectedStatuses - Ожидаемые HTTP статусы
+     * @param {number} timeout - Таймаут в мс
+     * @param {string|null} body - Тело запроса для POST
+     * @returns {Promise<Object>} Результат проверки
+     */
     async function pingEndpoint(path, method, expectedStatuses, timeout, body) {
-        timeout = timeout || 3000;
+        timeout = timeout || CONFIG.DEFAULT_TIMEOUT;
         const start = performance.now();
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -426,17 +632,20 @@ body {
                 cache: 'no-store',
                 headers: { 'X-Status-Check': '1' }
             };
+            
             if (body) {
                 options.headers['Content-Type'] = 'application/json';
                 options.body = body;
             }
+            
             const response = await fetch(path, options);
             clearTimeout(timeoutId);
+            
             const latency = Math.round(performance.now() - start);
             const isSuccess = (expectedStatuses || [200]).includes(response.status);
 
             return {
-                status: isSuccess ? 'operational' : 'outage',
+                status: isSuccess ? STATUS.OPERATIONAL : STATUS.OUTAGE,
                 latency,
                 statusCode: response.status,
                 checkedAt: new Date().toISOString(),
@@ -445,147 +654,277 @@ body {
         } catch (error) {
             clearTimeout(timeoutId);
             const latency = Math.round(performance.now() - start);
+            
             if (error.name === 'AbortError') {
                 return {
-                    status: 'degraded', latency,
+                    status: STATUS.DEGRADED,
+                    latency,
                     error: `Timeout after ${timeout}ms`,
                     checkedAt: new Date().toISOString()
                 };
             }
+            
             return {
-                status: 'outage', latency,
-                error: error.message || 'Connection failed',
+                status: STATUS.OUTAGE,
+                latency,
+                error: error.message || MESSAGES.connectionFailed,
                 checkedAt: new Date().toISOString()
             };
         }
     }
 
+    /**
+     * Проверка внешнего URL
+     * 
+     * @param {string} url - URL для проверки
+     * @param {number} timeout - Таймаут в мс
+     * @returns {Promise<Object>} Результат проверки
+     */
     async function pingExternal(url, timeout) {
-        timeout = timeout || 5000;
+        timeout = timeout || CONFIG.EXTERNAL_TIMEOUT;
         const start = performance.now();
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         try {
             await fetch(url, {
-                method: 'HEAD', mode: 'no-cors',
-                cache: 'no-store', signal: controller.signal
+                method: 'HEAD',
+                mode: 'no-cors',
+                cache: 'no-store',
+                signal: controller.signal
             });
+            
             clearTimeout(timeoutId);
+            
             return {
-                status: 'operational',
+                status: STATUS.OPERATIONAL,
                 latency: Math.round(performance.now() - start),
                 statusCode: '—',
                 checkedAt: new Date().toISOString()
             };
         } catch (error) {
             clearTimeout(timeoutId);
+            
             return {
-                status: 'degraded',
+                status: STATUS.DEGRADED,
                 latency: Math.round(performance.now() - start),
-                error: 'Connection failed',
+                error: MESSAGES.connectionFailed,
                 checkedAt: new Date().toISOString()
             };
         }
     }
 
-    // Косвенная проверка Vercel KV через news endpoint
+    /**
+     * Косвенная проверка Vercel KV через news endpoint
+     * 
+     * @returns {Promise<Object>} Результат проверки
+     */
     async function checkKV() {
-        const result = await pingEndpoint('/api/news/posts', 'GET', [200], 5000);
-        if (result.status === 'operational') {
+        const result = await pingEndpoint('/api/news/posts', 'GET', [200], CONFIG.KV_TIMEOUT);
+        
+        if (result.status === STATUS.OPERATIONAL) {
             return { ...result, statusCode: '200 (KV OK)' };
         }
-        return { ...result, error: 'KV недоступен: ' + (result.error || 'posts endpoint failed') };
+        
+        return { 
+            ...result, 
+            error: `${MESSAGES.kvUnavailable}: ${result.error || 'posts endpoint failed'}` 
+        };
     }
 
-    // ============================================================
-    // Рендеринг
-    // ============================================================
-    function escapeHtml(str) {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return String(str || '').replace(/[&<>"']/g, m => map[m]);
-    }
-
+    // ============================================
+    // Утилиты форматирования
+    // ============================================
+    
+    /**
+     * Форматирование латентности с классификацией
+     * 
+     * @param {number} ms - Латентность в миллисекундах
+     * @returns {Object} Объект с значением и CSS классом
+     * 
+     * @example
+     * formatLatency(150); // { value: '150ms', cls: 'fast' }
+     * formatLatency(800); // { value: '800ms', cls: 'medium' }
+     * formatLatency(2000); // { value: '2000ms', cls: 'slow' }
+     */
     function formatLatency(ms) {
         if (!ms && ms !== 0) return { value: '—', cls: '' };
-        if (ms < 300) return { value: `${ms}ms`, cls: 'fast' };
-        if (ms < 1500) return { value: `${ms}ms`, cls: 'medium' };
+        
+        if (ms < LATENCY_THRESHOLDS.FAST) {
+            return { value: `${ms}ms`, cls: 'fast' };
+        }
+        
+        if (ms < LATENCY_THRESHOLDS.MEDIUM) {
+            return { value: `${ms}ms`, cls: 'medium' };
+        }
+        
         return { value: `${ms}ms`, cls: 'slow' };
     }
 
+    /**
+     * Получение текстовой метки статуса
+     * 
+     * @param {string} status - Статус сервиса
+     * @returns {string} Текстовая метка
+     */
     function getStatusLabel(status) {
-        return {
+        const labels = {
             operational: 'Operational',
             degraded: 'Degraded',
             outage: 'Outage',
             checking: 'Checking'
-        }[status] || status;
+        };
+        
+        return labels[status] || status;
     }
 
+    /**
+     * Получение SVG иконки для статуса
+     * 
+     * @param {string} status - Статус сервиса
+     * @returns {string} SVG path
+     */
     function getStatusIcon(status) {
-        return {
-            operational: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>',
-            degraded: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/>',
-            outage: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>',
-            checking: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>'
-        }[status];
+        return STATUS_ICONS[status];
     }
 
-    function renderServices() {
-        const grid = document.getElementById('servicesGrid');
-        if (SERVICES.length === 0) {
-            grid.innerHTML = '<div class="no-incidents"><div class="no-incidents-text">Загрузка сервисов...</div></div>';
-            return;
-        }
-        grid.innerHTML = SERVICES.map(service => {
-            const result = State.services[service.id];
-            const status = result?.status || 'checking';
-            const latency = formatLatency(result?.latency);
-            const statusCode = result?.statusCode ?? '—';
+    /**
+     * Склонение слов
+     * 
+     * @param {number} n - Число
+     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
+     * @returns {string} Правильная форма
+     */
+    function pluralize(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const n1 = abs % 10;
+        
+        if (abs > 10 && abs < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
+    }
 
-            const errorHtml = result?.error ? `
-                <div class="service-error">
-                    <strong>Error:</strong> ${escapeHtml(result.error)}
+    // ============================================
+    // Рендеринг сервисов
+    // ============================================
+    
+    /**
+     * Рендеринг ошибки сервиса
+     * 
+     * @param {string} error - Текст ошибки
+     * @returns {string} HTML ошибки
+     */
+    function renderServiceError(error) {
+        if (!error) return '';
+        
+        return `
+            <div class="service-error">
+                <strong>Error:</strong> ${Security.escapeHtml(error)}
+            </div>
+        `;
+    }
+
+    /**
+     * Рендеринг одной карточки сервиса
+     * 
+     * @param {Object} service - Данные сервиса
+     * @returns {string} HTML карточки
+     */
+    function renderServiceCard(service) {
+        const result = State.services[service.id];
+        const status = result?.status || STATUS.CHECKING;
+        const latency = formatLatency(result?.latency);
+        const statusCode = result?.statusCode ?? '—';
+        
+        const checkedTime = result 
+            ? new Date(result.checkedAt).toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+              })
+            : '—';
+
+        return `
+            <div class="service-card" data-service="${service.id}">
+                <div class="service-header">
+                    <div class="service-icon" style="background: ${service.color}20; color: ${service.color};">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${service.icon}</svg>
+                    </div>
+                    <div class="service-info">
+                        <div class="service-name">${Security.escapeHtml(service.name)}</div>
+                        <div class="service-category">${Security.escapeHtml(service.category)}</div>
+                    </div>
+                    <div class="service-status-badge ${status}">
+                        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            ${getStatusIcon(status)}
+                        </svg>
+                        ${getStatusLabel(status)}
+                    </div>
                 </div>
-            ` : '';
+                <div class="service-metrics">
+                    <div class="metric">
+                        <div class="metric-label">Latency</div>
+                        <div class="metric-value ${latency.cls}">${latency.value}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Status</div>
+                        <div class="metric-value">${Security.escapeHtml(String(statusCode))}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Checked</div>
+                        <div class="metric-value">${checkedTime}</div>
+                    </div>
+                </div>
+                ${renderServiceError(result?.error)}
+            </div>
+        `;
+    }
 
-            return `
-                <div class="service-card" data-service="${service.id}">
-                    <div class="service-header">
-                        <div class="service-icon" style="background: ${service.color}20; color: ${service.color};">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${service.icon}</svg>
-                        </div>
-                        <div class="service-info">
-                            <div class="service-name">${escapeHtml(service.name)}</div>
-                            <div class="service-category">${escapeHtml(service.category)}</div>
-                        </div>
-                        <div class="service-status-badge ${status}">
-                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(status)}</svg>
-                            ${getStatusLabel(status)}
-                        </div>
-                    </div>
-                    <div class="service-metrics">
-                        <div class="metric">
-                            <div class="metric-label">Latency</div>
-                            <div class="metric-value ${latency.cls}">${latency.value}</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Status</div>
-                            <div class="metric-value">${escapeHtml(String(statusCode))}</div>
-                        </div>
-                        <div class="metric">
-                            <div class="metric-label">Checked</div>
-                            <div class="metric-value">${result ? new Date(result.checkedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}</div>
-                        </div>
-                    </div>
-                    ${errorHtml}
+    /**
+     * Рендеринг списка сервисов
+     */
+    function renderServices() {
+        const grid = document.getElementById(CONFIG.SERVICES_GRID_ID);
+        
+        if (SERVICES.length === 0) {
+            grid.innerHTML = `
+                <div class="no-incidents">
+                    <div class="no-incidents-text">${MESSAGES.loadingServices}</div>
                 </div>
             `;
-        }).join('');
-
-        document.getElementById('servicesCount').textContent = `${SERVICES.length} сервисов`;
+            return;
+        }
+        
+        grid.innerHTML = SERVICES.map(service => renderServiceCard(service)).join('');
+        document.getElementById(CONFIG.SERVICES_COUNT_ID).textContent = `${SERVICES.length} сервисов`;
     }
 
+    // ============================================
+    // Рендеринг общего статуса
+    // ============================================
+    
+    /**
+     * Создание HTML для meta chip
+     * 
+     * @param {string} type - Тип chip: 'success' | 'warning' | 'danger' | ''
+     * @param {string} icon - SVG иконка
+     * @param {string} text - Текст
+     * @returns {string} HTML chip
+     */
+    function createMetaChip(type, icon, text) {
+        const className = type ? `meta-chip ${type}` : 'meta-chip';
+        return `
+            <span class="${className}">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg>
+                ${text}
+            </span>
+        `;
+    }
+
+    /**
+     * Рендеринг общего статуса всех систем
+     */
     function renderOverallStatus() {
         const results = Object.values(State.services).filter(r => r && r.status);
         const indicator = document.querySelector('.status-indicator');
@@ -593,103 +932,158 @@ body {
         const description = document.getElementById('overallDescription');
         const meta = document.getElementById('overallMeta');
 
+        // Начальное состояние - проверка
         if (results.length === 0) {
-            indicator.className = 'status-indicator checking';
-            indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon('checking')}</svg>`;
-            title.textContent = 'Проверка систем...';
-            description.textContent = 'Выполняем диагностику всех компонентов платформы';
+            indicator.className = `status-indicator ${STATUS.CHECKING}`;
+            indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(STATUS.CHECKING)}</svg>`;
+            title.textContent = MESSAGES.checkingSystems;
+            description.textContent = MESSAGES.checkingDescription;
             meta.innerHTML = '';
             return;
         }
 
-        const outageCount = results.filter(r => r.status === 'outage').length;
-        const degradedCount = results.filter(r => r.status === 'degraded').length;
-        const operationalCount = results.filter(r => r.status === 'operational').length;
-        const avgLatency = Math.round(results.reduce((s, r) => s + (r.latency || 0), 0) / results.length);
+        // Подсчет статусов
+        const outageCount = results.filter(r => r.status === STATUS.OUTAGE).length;
+        const degradedCount = results.filter(r => r.status === STATUS.DEGRADED).length;
+        const operationalCount = results.filter(r => r.status === STATUS.OPERATIONAL).length;
+        const avgLatency = Math.round(results.reduce((sum, r) => sum + (r.latency || 0), 0) / results.length);
 
-        let finalStatus = 'operational';
-        if (outageCount > 0) finalStatus = 'outage';
-        else if (degradedCount > 0) finalStatus = 'degraded';
+        // Определение финального статуса
+        let finalStatus = STATUS.OPERATIONAL;
+        if (outageCount > 0) finalStatus = STATUS.OUTAGE;
+        else if (degradedCount > 0) finalStatus = STATUS.DEGRADED;
 
+        // Обновление индикатора
         indicator.className = `status-indicator ${finalStatus}`;
         indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(finalStatus)}</svg>`;
 
+        // Обновление текста
         if (outageCount > 0) {
-            title.textContent = 'Обнаружены сбои';
+            title.textContent = MESSAGES.outagesDetected;
             description.textContent = `${outageCount} ${pluralize(outageCount, ['сервис недоступен', 'сервиса недоступны', 'сервисов недоступно'])}. Детали ниже в секции инцидентов.`;
         } else if (degradedCount > 0) {
-            title.textContent = 'Частичные проблемы';
+            title.textContent = MESSAGES.partialProblems;
             description.textContent = `${degradedCount} ${pluralize(degradedCount, ['сервис работает с задержками', 'сервиса работают с задержками', 'сервисов работают с задержками'])}.`;
         } else {
-            title.textContent = 'Все системы работают';
-            description.textContent = 'Все API-эндпоинты отвечают корректно. Последние проверки выполнены успешно.';
+            title.textContent = MESSAGES.allSystemsOperational;
+            description.textContent = MESSAGES.allSystemsDescription;
         }
 
-        meta.innerHTML = `
-            <span class="meta-chip success">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                ${operationalCount} ok
-            </span>
-            ${degradedCount > 0 ? `<span class="meta-chip warning">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/></svg>
-                ${degradedCount} slow
-            </span>` : ''}
-            ${outageCount > 0 ? `<span class="meta-chip danger">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                ${outageCount} down
-            </span>` : ''}
-            <span class="meta-chip">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                avg ${avgLatency}ms
-            </span>
+        // Обновление meta chips
+        const metaChips = [
+            createMetaChip('success', ICONS.success, `${operationalCount} ok`),
+            degradedCount > 0 ? createMetaChip('warning', ICONS.warning, `${degradedCount} slow`) : '',
+            outageCount > 0 ? createMetaChip('danger', ICONS.error, `${outageCount} down`) : '',
+            createMetaChip('', ICONS.clock, `avg ${avgLatency}ms`)
+        ].filter(Boolean).join('');
+
+        meta.innerHTML = metaChips;
+    }
+
+    // ============================================
+    // Рендеринг инцидентов
+    // ============================================
+    
+    /**
+     * Рендеринг одной карточки инцидента
+     * 
+     * @param {Object} service - Данные сервиса
+     * @param {Object} result - Результат проверки
+     * @returns {string} HTML карточки инцидента
+     */
+    function renderIncidentCard(service, result) {
+        const checkedTime = new Date(result.checkedAt).toLocaleTimeString('ru-RU');
+        
+        return `
+            <div class="incident-card ${result.status}">
+                <div class="incident-header">
+                    <div class="incident-title">${Security.escapeHtml(service.name)}</div>
+                    <div class="incident-status ${result.status}">${getStatusLabel(result.status)}</div>
+                </div>
+                <div class="incident-description">
+                    Сервис в категории <strong>${Security.escapeHtml(service.category)}</strong> не отвечает корректно.
+                </div>
+                ${result.error ? `<div class="incident-details">${Security.escapeHtml(result.error)}</div>` : ''}
+                <div class="incident-meta">
+                    <span>Latency: ${result.latency}ms</span>
+                    <span>HTTP: ${result.statusCode || '—'}</span>
+                    <span>Detected: ${checkedTime}</span>
+                </div>
+            </div>
         `;
     }
 
+    /**
+     * Рендеринг списка инцидентов
+     */
     function renderIncidents() {
-        const list = document.getElementById('incidentsList');
+        const list = document.getElementById(CONFIG.INCIDENTS_LIST_ID);
+        
         const incidents = SERVICES
-            .map(s => ({ service: s, result: State.services[s.id] }))
-            .filter(x => x.result && (x.result.status === 'outage' || x.result.status === 'degraded'));
+            .map(service => ({ service, result: State.services[service.id] }))
+            .filter(item => item.result && (item.result.status === STATUS.OUTAGE || item.result.status === STATUS.DEGRADED));
 
         if (incidents.length === 0) {
             list.innerHTML = `
                 <div class="no-incidents">
                     <svg class="no-incidents-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        ${ICONS.shield}
                     </svg>
-                    <div class="no-incidents-title">Активных инцидентов нет</div>
-                    <div class="no-incidents-text">Все сервисы работают корректно по результатам последней проверки</div>
+                    <div class="no-incidents-title">${MESSAGES.noIncidents}</div>
+                    <div class="no-incidents-text">${MESSAGES.noIncidentsText}</div>
                 </div>
             `;
-            document.getElementById('incidentsCount').textContent = '0 инцидентов';
+            document.getElementById(CONFIG.INCIDENTS_COUNT_ID).textContent = '0 инцидентов';
             return;
         }
 
-        list.innerHTML = incidents.map(({ service, result }) => `
-            <div class="incident-card ${result.status}">
-                <div class="incident-header">
-                    <div class="incident-title">${escapeHtml(service.name)}</div>
-                    <div class="incident-status ${result.status}">${getStatusLabel(result.status)}</div>
-                </div>
-                <div class="incident-description">
-                    Сервис в категории <strong>${escapeHtml(service.category)}</strong> не отвечает корректно.
-                </div>
-                ${result.error ? `<div class="incident-details">${escapeHtml(result.error)}</div>` : ''}
-                <div class="incident-meta">
-                    <span>Latency: ${result.latency}ms</span>
-                    <span>HTTP: ${result.statusCode || '—'}</span>
-                    <span>Detected: ${new Date(result.checkedAt).toLocaleTimeString('ru-RU')}</span>
-                </div>
-            </div>
-        `).join('');
+        list.innerHTML = incidents
+            .map(({ service, result }) => renderIncidentCard(service, result))
+            .join('');
 
-        document.getElementById('incidentsCount').textContent = `${incidents.length} ${pluralize(incidents.length, ['инцидент', 'инцидента', 'инцидентов'])}`;
+        document.getElementById(CONFIG.INCIDENTS_COUNT_ID).textContent = 
+            `${incidents.length} ${pluralize(incidents.length, ['инцидент', 'инцидента', 'инцидентов'])}`;
     }
 
+    // ============================================
+    // Рендеринг uptime bar
+    // ============================================
+    
+    /**
+     * Создание HTML для одного элемента uptime bar
+     * 
+     * @param {Object} check - Данные проверки
+     * @param {number} index - Индекс в видимом списке
+     * @param {number} totalVisible - Всего видимых элементов
+     * @returns {string} HTML элемента
+     */
+    function renderUptimeDay(check, index, totalVisible) {
+        const time = new Date(check.timestamp).toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        
+        const checkNumber = State.checkHistory.length - totalVisible + index + 1;
+        
+        return `
+            <div class="uptime-day ${check.status}">
+                <div class="day-tooltip">
+                    <div>Check #${checkNumber}</div>
+                    <div>${time}</div>
+                    <div>${check.operational}/${check.total} ok · ${check.avgLatency}ms</div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Рендеринг полосы uptime
+     */
     function renderUptimeBar() {
-        const bar = document.getElementById('uptimeBar');
-        const percentage = document.getElementById('uptimePercentage');
-        const startLabel = document.getElementById('uptimeStart');
+        const bar = document.getElementById(CONFIG.UPTIME_BAR_ID);
+        const percentage = document.getElementById(CONFIG.UPTIME_PERCENTAGE_ID);
+        const startLabel = document.getElementById(CONFIG.UPTIME_START_ID);
 
         if (State.checkHistory.length === 0) {
             bar.innerHTML = '<div class="uptime-day unknown" style="flex: 1;"></div>';
@@ -697,99 +1091,148 @@ body {
             return;
         }
 
-        const successful = State.checkHistory.filter(h => h.status === 'operational').length;
+        // Подсчет uptime
+        const successful = State.checkHistory.filter(h => h.status === STATUS.OPERATIONAL).length;
         const total = State.checkHistory.length;
         const uptimePercent = ((successful / total) * 100).toFixed(1);
         percentage.textContent = `${uptimePercent}%`;
 
+        // Начальная метка
         const firstCheck = new Date(State.checkHistory[0].timestamp);
-        startLabel.textContent = firstCheck.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-
-        const visible = State.checkHistory.slice(-90);
-        bar.innerHTML = visible.map((check, idx) => {
-            const time = new Date(check.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            return `
-                <div class="uptime-day ${check.status}">
-                    <div class="day-tooltip">
-                        <div>Check #${State.checkHistory.length - visible.length + idx + 1}</div>
-                        <div>${time}</div>
-                        <div>${check.operational}/${check.total} ok · ${check.avgLatency}ms</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    function updateLastUpdated() {
-        document.getElementById('lastUpdated').textContent =
-            'Последняя проверка: ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    }
-
-    function pluralize(n, forms) {
-        const abs = Math.abs(n) % 100;
-        const n1 = abs % 10;
-        if (abs > 10 && abs < 20) return forms[2];
-        if (n1 > 1 && n1 < 5) return forms[1];
-        if (n1 === 1) return forms[0];
-        return forms[2];
-    }
-
-    // ============================================================
-    // Главный цикл
-    // ============================================================
-    async function runAllChecks() {
-        SERVICES.forEach(s => {
-            if (!State.services[s.id]) State.services[s.id] = { status: 'checking' };
+        startLabel.textContent = firstCheck.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
         });
+
+        // Видимые элементы
+        const visible = State.checkHistory.slice(-CONFIG.UPTIME_BAR_VISIBLE_COUNT);
+        bar.innerHTML = visible
+            .map((check, idx) => renderUptimeDay(check, idx, visible.length))
+            .join('');
+    }
+
+    /**
+     * Обновление времени последней проверки
+     */
+    function updateLastUpdated() {
+        const time = new Date().toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        });
+        
+        document.getElementById(CONFIG.LAST_UPDATED_ID).textContent = `Последняя проверка: ${time}`;
+    }
+
+    // ============================================
+    // Главный цикл проверок
+    // ============================================
+    
+    /**
+     * Выполнение одной проверки сервиса
+     * 
+     * @param {Object} service - Данные сервиса
+     * @returns {Promise<Object>} Результат проверки
+     */
+    async function executeServiceCheck(service) {
+        try {
+            const result = await service.check();
+            State.services[service.id] = result;
+        } catch (error) {
+            State.services[service.id] = {
+                status: STATUS.OUTAGE,
+                latency: 0,
+                error: error.message,
+                checkedAt: new Date().toISOString()
+            };
+        }
+        
+        // Обновление UI после каждой проверки
         renderServices();
         renderOverallStatus();
+        renderIncidents();
+        
+        return State.services[service.id];
+    }
 
-        await Promise.all(SERVICES.map(async service => {
-            try {
-                const result = await service.check();
-                State.services[service.id] = result;
-            } catch (error) {
-                State.services[service.id] = {
-                    status: 'outage', latency: 0,
-                    error: error.message,
-                    checkedAt: new Date().toISOString()
-                };
-            }
-            renderServices();
-            renderOverallStatus();
-            renderIncidents();
-        }));
+    /**
+     * Добавление результата в историю проверок
+     * 
+     * @param {Array<Object>} results - Результаты всех проверок
+     */
+    function addToCheckHistory(results) {
+        const operational = results.filter(r => r.status === STATUS.OPERATIONAL).length;
+        const avgLatency = Math.round(results.reduce((sum, r) => sum + (r.latency || 0), 0) / results.length);
+        const allOperational = results.every(r => r.status === STATUS.OPERATIONAL);
 
-        const results = Object.values(State.services);
-        const operational = results.filter(r => r.status === 'operational').length;
-        const avgLatency = Math.round(results.reduce((s, r) => s + (r.latency || 0), 0) / results.length);
-        const allOperational = results.every(r => r.status === 'operational');
+        let status = STATUS.OPERATIONAL;
+        if (results.some(r => r.status === STATUS.OUTAGE)) {
+            status = STATUS.OUTAGE;
+        } else if (results.some(r => r.status === STATUS.DEGRADED)) {
+            status = STATUS.DEGRADED;
+        }
 
         State.checkHistory.push({
             timestamp: Date.now(),
-            status: allOperational ? 'operational' : (results.some(r => r.status === 'outage') ? 'outage' : 'degraded'),
+            status,
             operational,
             total: results.length,
             avgLatency
         });
 
-        if (State.checkHistory.length > 90) {
-            State.checkHistory = State.checkHistory.slice(-90);
+        // Ограничение размера истории
+        if (State.checkHistory.length > CONFIG.MAX_HISTORY_SIZE) {
+            State.checkHistory = State.checkHistory.slice(-CONFIG.MAX_HISTORY_SIZE);
         }
+    }
 
+    /**
+     * Запуск всех проверок сервисов
+     * 
+     * @returns {Promise<void>}
+     */
+    async function runAllChecks() {
+        // Инициализация статусов
+        SERVICES.forEach(service => {
+            if (!State.services[service.id]) {
+                State.services[service.id] = { status: STATUS.CHECKING };
+            }
+        });
+        
+        renderServices();
+        renderOverallStatus();
+
+        // Выполнение всех проверок параллельно
+        await Promise.all(SERVICES.map(service => executeServiceCheck(service)));
+
+        // Добавление в историю
+        const results = Object.values(State.services);
+        addToCheckHistory(results);
+
+        // Финальное обновление UI
         renderUptimeBar();
         renderIncidents();
         updateLastUpdated();
     }
 
-    // ============================================================
-    // Auto-refresh
-    // ============================================================
+    // ============================================
+    // Автообновление
+    // ============================================
+    
+    /**
+     * Запуск автообновления
+     */
     function startAutoRefresh() {
-        if (State.refreshInterval) clearInterval(State.refreshInterval);
-        State.refreshInterval = setInterval(runAllChecks, 30000);
+        if (State.refreshInterval) {
+            clearInterval(State.refreshInterval);
+        }
+        
+        State.refreshInterval = setInterval(runAllChecks, CONFIG.REFRESH_INTERVAL);
     }
 
+    /**
+     * Остановка автообновления
+     */
     function stopAutoRefresh() {
         if (State.refreshInterval) {
             clearInterval(State.refreshInterval);
@@ -797,91 +1240,195 @@ body {
         }
     }
 
-    // ============================================================
-    // Преобразование серверного check-объекта в функцию
-    // ============================================================
+    // ============================================
+    // Построение функций проверок
+    // ============================================
+    
+    /**
+     * Построение функции проверки из конфигурации
+     * 
+     * @param {Object} service - Данные сервиса
+     * @param {Object} check - Конфигурация проверки
+     * @returns {Function} Функция проверки
+     */
     function buildCheckFunction(service, check) {
-        if (!check) return () => Promise.resolve({ status: 'outage', latency: 0, error: 'No check configured', checkedAt: new Date().toISOString() });
-
-        if (check.type === 'external') {
-            return () => pingExternal(check.url, check.timeout || 5000);
+        if (!check) {
+            return () => Promise.resolve({ 
+                status: STATUS.OUTAGE, 
+                latency: 0, 
+                error: MESSAGES.noCheckConfigured, 
+                checkedAt: new Date().toISOString() 
+            });
         }
+
+        // Внешний URL
+        if (check.type === 'external') {
+            return () => pingExternal(check.url, check.timeout || CONFIG.EXTERNAL_TIMEOUT);
+        }
+        
+        // Кастомная проверка
         if (check.type === 'custom') {
             if (check.name === 'checkKV') return checkKV;
-            return () => Promise.resolve({ status: 'outage', latency: 0, error: 'Unknown custom check: ' + check.name, checkedAt: new Date().toISOString() });
+            
+            return () => Promise.resolve({ 
+                status: STATUS.OUTAGE, 
+                latency: 0, 
+                error: `${MESSAGES.unknownCustomCheck}: ${check.name}`, 
+                checkedAt: new Date().toISOString() 
+            });
         }
-        // Обычный endpoint check
+        
+        // Обычный endpoint
         return () => pingEndpoint(
             check.path,
             check.method || 'GET',
             check.expectedStatuses || [200],
-            check.timeout || 3000,
+            check.timeout || CONFIG.DEFAULT_TIMEOUT,
             check.body || null
         );
     }
 
+    /**
+     * Трансформация сырых данных сервисов в объекты с функциями проверок
+     * 
+     * @param {Array<Object>} rawServices - Сырые данные сервисов
+     * @returns {Array<Object>} Трансформированные сервисы
+     */
     function transformServices(rawServices) {
-        return rawServices.map(s => ({
-            ...s,
-            check: buildCheckFunction(s, s.check)
+        return rawServices.map(service => ({
+            ...service,
+            check: buildCheckFunction(service, service.check)
         }));
     }
 
-    // ============================================================
+    // ============================================
     // Загрузка конфигурации
-    // ============================================================
+    // ============================================
+    
+    /**
+     * Отображение ошибки загрузки конфигурации
+     * 
+     * @param {Error} error - Объект ошибки
+     */
+    function showConfigLoadError(error) {
+        const grid = document.getElementById(CONFIG.SERVICES_GRID_ID);
+        grid.innerHTML = `
+            <div class="no-incidents" style="grid-column: 1/-1;">
+                <div class="no-incidents-title">${MESSAGES.configLoadError}</div>
+                <div class="no-incidents-text">${Security.escapeHtml(error.message)}. Обновите страницу.</div>
+            </div>
+        `;
+    }
+
+    /**
+     * Загрузка конфигурации сервисов с сервера
+     * 
+     * @returns {Promise<void>}
+     */
     async function loadServices() {
         try {
-            const res = await fetch('/api/status-config');
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const raw = await res.json();
-            if (!Array.isArray(raw)) throw new Error('Invalid config');
+            const response = await fetch(CONFIG.STATUS_CONFIG_ENDPOINT);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const raw = await response.json();
+            
+            if (!Array.isArray(raw)) {
+                throw new Error('Invalid config');
+            }
+            
             SERVICES = transformServices(raw);
             init();
-        } catch (err) {
-            console.error('Failed to load status config:', err);
-            document.getElementById('servicesGrid').innerHTML = `
-                <div class="no-incidents" style="grid-column: 1/-1;">
-                    <div class="no-incidents-title">Ошибка загрузки конфигурации</div>
-                    <div class="no-incidents-text">${escapeHtml(err.message)}. Обновите страницу.</div>
-                </div>
-            `;
+            
+        } catch (error) {
+            console.error('[Status] Failed to load config:', error);
+            showConfigLoadError(error);
         }
     }
 
-    // ============================================================
-    // Init
-    // ============================================================
+    // ============================================
+    // Обработчики событий
+    // ============================================
+    
+    /**
+     * Обновление UI кнопки автообновления
+     */
+    function updateAutoRefreshButton() {
+        const button = document.getElementById(CONFIG.AUTO_REFRESH_BTN_ID);
+        button.classList.toggle('active', State.autoRefresh);
+        button.querySelector('span').textContent = State.autoRefresh 
+            ? MESSAGES.autoRefreshOn 
+            : MESSAGES.autoRefreshOff;
+    }
+
+    /**
+     * Обработчик клика по кнопке автообновления
+     */
+    function handleAutoRefreshToggle() {
+        State.autoRefresh = !State.autoRefresh;
+        updateAutoRefreshButton();
+        
+        if (State.autoRefresh) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    }
+
+    /**
+     * Обработчик изменения видимости вкладки
+     */
+    function handleVisibilityChange() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else if (State.autoRefresh) {
+            runAllChecks();
+            startAutoRefresh();
+        }
+    }
+
+    /**
+     * Привязка обработчиков событий
+     */
+    function bindEvents() {
+        // Автообновление
+        document.getElementById(CONFIG.AUTO_REFRESH_BTN_ID)
+            .addEventListener('click', handleAutoRefreshToggle);
+
+        // Пауза при скрытии вкладки
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    // ============================================
+    // Инициализация
+    // ============================================
+    
+    /**
+     * Инициализация приложения
+     */
     function init() {
+        // Первоначальный рендеринг
         renderServices();
         renderUptimeBar();
         renderIncidents();
         renderOverallStatus();
 
+        // Запуск проверок
         runAllChecks();
         startAutoRefresh();
 
-        // Auto-refresh button
-        document.getElementById('autoRefreshBtn').addEventListener('click', () => {
-            State.autoRefresh = !State.autoRefresh;
-            const btn = document.getElementById('autoRefreshBtn');
-            btn.classList.toggle('active', State.autoRefresh);
-            btn.querySelector('span').textContent = State.autoRefresh ? 'Auto-refresh 30s' : 'Auto-refresh OFF';
-            if (State.autoRefresh) startAutoRefresh();
-            else stopAutoRefresh();
-        });
-
-        // Pause on tab hidden
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) stopAutoRefresh();
-            else if (State.autoRefresh) {
-                runAllChecks();
-                startAutoRefresh();
-            }
-        });
+        // Привязка событий
+        bindEvents();
     }
 
-    loadServices();
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadServices);
+    } else {
+        loadServices();
+    }
 })();
 </script>
 

@@ -1064,24 +1064,102 @@ body {
     'use strict';
 
     // ============================================
-    // Состояние приложения
+    // Константы конфигурации
     // ============================================
-    const State = {
-        peer: null,
-        localStream: null,
-        currentCall: null,
-        dataConnection: null,
-        roomId: null,
-        isMuted: false,
-        isVideoOff: false,
-        isChatOpen: false,
-        unreadCount: 0,
-        isHost: false
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {number} Длина ID комнаты */
+        ROOM_ID_LENGTH: 6,
+        
+        /** @type {string} Символы для генерации ID комнаты */
+        ROOM_ID_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+        
+        /** @type {number} Таймаут подключения к серверу PeerJS (мс) */
+        PEER_CONNECTION_TIMEOUT: 12000,
+        
+        /** @type {number} Максимальная высота поля ввода чата (px) */
+        CHAT_INPUT_MAX_HEIGHT: 120,
+        
+        /** @type {number} Задержка фокуса на поле ввода чата (мс) */
+        CHAT_FOCUS_DELAY: 100,
+        
+        /** @type {number} Длительность toast-уведомления по умолчанию (мс) */
+        TOAST_DURATION: 3000,
+        
+        /** @type {number} Длительность коротких уведомлений (мс) */
+        TOAST_SHORT_DURATION: 1500,
+        
+        /** @type {number} Максимальное количество попыток применения состояния звонка */
+        CALL_STATE_ATTEMPTS: 5,
+        
+        /** @type {number} Задержка между попытками применения состояния (мс) */
+        CALL_STATE_RETRY_DELAY: 200,
+        
+        /** @type {number} Задержка применения состояния после подключения (мс) */
+        CALL_STATE_INITIAL_DELAY: 500,
+        
+        /** @type {string} Префикс для ID участников */
+        PEER_ID_PREFIX: 'oris-',
+        
+        /** @type {number} Максимальное значение счетчика непрочитанных */
+        MAX_UNREAD_BADGE: 9
     };
 
-    // ============================================
-    // Константы
-    // ============================================
+    /**
+     * Конфигурация серверов PeerJS (fallback)
+     * @constant {Array<Object>}
+     */
+    const PEER_SERVERS = [
+        { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
+        { host: '1.peerjs.com', port: 443, secure: true, path: '/' },
+        { host: 'peerjs.com', port: 443, secure: true, path: '/peerjs' },
+        { host: 'west.peerjs.com', port: 443, secure: true, path: '/' },
+        { host: 'east.peerjs.com', port: 443, secure: true, path: '/' }
+    ];
+
+    /**
+     * Конфигурация ICE серверов для WebRTC
+     * @constant {Object}
+     */
+    const ICE_SERVERS = {
+        iceServers: [
+            // STUN серверы Google
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+            
+            // TURN серверы для обхода симметричного NAT
+            { 
+                urls: 'turn:openrelay.metered.ca:80',
+                username: 'openrelayprojectuser',
+                credential: 'openrelayprojectpass'
+            },
+            { 
+                urls: 'turn:openrelay.metered.ca:443',
+                username: 'openrelayprojectuser',
+                credential: 'openrelayprojectpass'
+            },
+            { 
+                urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                username: 'openrelayprojectuser',
+                credential: 'openrelayprojectpass'
+            }
+        ],
+        iceCandidatePoolSize: 10,
+        bundlePolicy: 'max-bundle',
+        rtcpMuxPolicy: 'require'
+    };
+
+    /**
+     * SVG иконки для UI
+     * @namespace
+     */
     const ICONS = {
         micOn: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>',
         micOff: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>',
@@ -1093,13 +1171,63 @@ body {
     };
 
     // ============================================
-    // DOM-элементы
+    // Состояние приложения
     // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
+    const State = {
+        /** @type {Peer|null} PeerJS объект */
+        peer: null,
+        
+        /** @type {MediaStream|null} Локальный медиа-поток */
+        localStream: null,
+        
+        /** @type {MediaConnection|null} Текущий звонок */
+        currentCall: null,
+        
+        /** @type {DataConnection|null} DataChannel для чата */
+        dataConnection: null,
+        
+        /** @type {string|null} ID текущей комнаты */
+        roomId: null,
+        
+        /** @type {boolean} Состояние микрофона (выключен/включен) */
+        isMuted: false,
+        
+        /** @type {boolean} Состояние камеры (выключена/включена) */
+        isVideoOff: false,
+        
+        /** @type {boolean} Открыта ли панель чата */
+        isChatOpen: false,
+        
+        /** @type {number} Количество непрочитанных сообщений */
+        unreadCount: 0,
+        
+        /** @type {boolean} Является ли пользователь хостом комнаты */
+        isHost: false
+    };
+
+    // ============================================
+    // DOM элементы
+    // ============================================
+    
+    /**
+     * Сокращение для document.getElementById
+     * @param {string} id - ID элемента
+     * @returns {HTMLElement|null}
+     */
     const $ = (id) => document.getElementById(id);
     
+    /**
+     * Кэш DOM элементов
+     * @namespace
+     */
     const DOM = {
+        // Lobby
         lobby: $('lobby'),
-        callScreen: $('callScreen'),
         createRoomBtn: $('createRoomBtn'),
         joinRoomInput: $('joinRoomInput'),
         joinRoomBtn: $('joinRoomBtn'),
@@ -1108,6 +1236,9 @@ body {
         lobbyStatus: $('lobbyStatus'),
         lobbyStatusIcon: $('lobbyStatusIcon'),
         lobbyStatusText: $('lobbyStatusText'),
+        
+        // Call Screen
+        callScreen: $('callScreen'),
         localVideo: $('localVideo'),
         remoteVideo: $('remoteVideo'),
         localPlaceholder: $('localPlaceholder'),
@@ -1115,21 +1246,29 @@ body {
         remotePlaceholderText: $('remotePlaceholderText'),
         remoteLabel: $('remoteLabel'),
         localMuteIndicator: $('localMuteIndicator'),
+        
+        // Controls
         muteBtn: $('muteBtn'),
         videoBtn: $('videoBtn'),
         hangupBtn: $('hangupBtn'),
         chatToggleBtn: $('chatToggleBtn'),
         chatBadge: $('chatBadge'),
+        micIcon: $('micIcon'),
+        videoIcon: $('videoIcon'),
+        
+        // Chat Panel
         chatPanel: $('chatPanel'),
         chatCloseBtn: $('chatCloseBtn'),
         chatMessages: $('chatMessages'),
         chatEmpty: $('chatEmpty'),
         chatInput: $('chatInput'),
         chatSendBtn: $('chatSendBtn'),
-        micIcon: $('micIcon'),
-        videoIcon: $('videoIcon'),
+        
+        // Status
         peerStatusDot: $('peerStatusDot'),
         peerStatusText: $('peerStatusText'),
+        
+        // Toast
         toast: $('toast'),
         toastIcon: $('toastIcon'),
         toastText: $('toastText')
@@ -1138,128 +1277,168 @@ body {
     // ============================================
     // Утилиты
     // ============================================
+    
+    /**
+     * Генерация уникального ID комнаты
+     * @returns {string} ID комнаты длиной CONFIG.ROOM_ID_LENGTH
+     */
     function generateRoomId() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let result = '';
-        for (let i = 0; i < 6; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        for (let i = 0; i < CONFIG.ROOM_ID_LENGTH; i++) {
+            result += CONFIG.ROOM_ID_CHARS.charAt(
+                Math.floor(Math.random() * CONFIG.ROOM_ID_CHARS.length)
+            );
         }
         return result;
     }
 
+    /**
+     * Отображение статуса в лобби
+     * @param {string} message - Текст сообщения
+     * @param {string} type - Тип статуса: '' | 'success' | 'error'
+     */
     function showLobbyStatus(message, type = '') {
         DOM.lobbyStatus.classList.add('visible');
         DOM.lobbyStatus.classList.remove('success', 'error');
-        if (type) DOM.lobbyStatus.classList.add(type);
         
+        if (type) {
+            DOM.lobbyStatus.classList.add(type);
+        }
+        
+        // Установка иконки в зависимости от типа
         if (type === 'success') {
-            DOM.lobbyStatusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${ICONS.success}</svg>`;
+            DOM.lobbyStatusIcon.innerHTML = `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${ICONS.success}
+                </svg>
+            `;
         } else if (type === 'error') {
-            DOM.lobbyStatusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${ICONS.error}</svg>`;
+            DOM.lobbyStatusIcon.innerHTML = `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    ${ICONS.error}
+                </svg>
+            `;
         } else {
             DOM.lobbyStatusIcon.innerHTML = '<div class="spinner-small"></div>';
         }
+        
         DOM.lobbyStatusText.textContent = message;
     }
 
+    /**
+     * Скрытие статуса в лобби
+     */
     function hideLobbyStatus() {
         DOM.lobbyStatus.classList.remove('visible');
     }
 
-    function showToast(message, type = 'info', duration = 3000) {
-        const iconMap = { success: ICONS.success, error: ICONS.error, info: ICONS.info };
-        DOM.toastIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconMap[type] || ICONS.info}</svg>`;
+    /**
+     * Отображение toast-уведомления
+     * @param {string} message - Текст уведомления
+     * @param {string} type - Тип: 'info' | 'success' | 'error'
+     * @param {number} duration - Длительность показа в мс
+     */
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const iconMap = {
+            success: ICONS.success,
+            error: ICONS.error,
+            info: ICONS.info
+        };
+        
+        DOM.toastIcon.innerHTML = `
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ${iconMap[type] || ICONS.info}
+            </svg>
+        `;
         DOM.toastText.textContent = message;
         DOM.toast.className = `toast ${type} visible`;
+        
         clearTimeout(showToast._timer);
-        showToast._timer = setTimeout(() => DOM.toast.classList.remove('visible'), duration);
+        showToast._timer = setTimeout(() => {
+            DOM.toast.classList.remove('visible');
+        }, duration);
     }
 
+    /**
+     * Копирование текста в буфер обмена
+     * @param {string} text - Текст для копирования
+     * @returns {Promise<boolean>} true если успешно
+     */
     async function copyToClipboard(text) {
+        // Попытка использовать современный API
         try {
             await navigator.clipboard.writeText(text);
             return true;
         } catch (err) {
+            // Fallback для старых браузеров
             const textarea = document.createElement('textarea');
             textarea.value = text;
             textarea.style.position = 'fixed';
             textarea.style.opacity = '0';
             document.body.appendChild(textarea);
             textarea.select();
-            let ok = false;
-            try { ok = document.execCommand('copy'); } catch (e) {}
+            
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (e) {
+                console.warn('[Clipboard] execCommand failed:', e);
+            }
+            
             document.body.removeChild(textarea);
-            return ok;
+            return success;
         }
     }
 
     // ============================================
-    // PeerJS: создание и подключение (с fallback)
+    // PeerJS: создание и подключение
     // ============================================
-const PEER_SERVERS = [
-    { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
-    { host: '1.peerjs.com', port: 443, secure: true, path: '/' },
-    { host: 'peerjs.com', port: 443, secure: true, path: '/peerjs' },
-    { host: 'west.peerjs.com', port: 443, secure: true, path: '/' },
-    { host: 'east.peerjs.com', port: 443, secure: true, path: '/' }
-];
+    
+    /**
+     * Создание PeerJS объекта с fallback на другие серверы
+     * @param {string|null} id - ID комнаты (для хоста)
+     * @param {number} serverIndex - Индекс сервера для попытки подключения
+     * @returns {Promise<Peer>} PeerJS объект
+     * @throws {Error} Если все серверы недоступны
+     */
+    function createPeer(id = null, serverIndex = 0) {
+        return new Promise((resolve, reject) => {
+            // Проверка: все серверы испробованы
+            if (serverIndex >= PEER_SERVERS.length) {
+                reject(new Error(
+                    'Все серверы PeerJS недоступны. Попробуйте позже или используйте другой браузер/сеть.'
+                ));
+                return;
+            }
 
-const ICE_SERVERS = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        // Бесплатные TURN для обхода симметричного NAT
-        { 
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayprojectuser',
-            credential: 'openrelayprojectpass'
-        },
-        { 
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelayprojectuser',
-            credential: 'openrelayprojectpass'
-        },
-        { 
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-            username: 'openrelayprojectuser',
-            credential: 'openrelayprojectpass'
-        }
-    ],
-    iceCandidatePoolSize: 10,
-    // Принудительное эхоподавление на уровне RTCPeerConnection
-    bundlePolicy: 'max-bundle',
-    rtcpMuxPolicy: 'require'
-};
+            const server = PEER_SERVERS[serverIndex];
+            
+            const peerOptions = {
+                host: server.host,
+                port: server.port,
+                secure: server.secure,
+                path: server.path,
+                debug: 0,
+                config: ICE_SERVERS
+            };
 
-function createPeer(id = null, serverIndex = 0) {
-    return new Promise((resolve, reject) => {
-        if (serverIndex >= PEER_SERVERS.length) {
-            reject(new Error('Все серверы PeerJS недоступны. Попробуйте позже или используйте другой браузер/сеть.'));
-            return;
-        }
+            // Создание ID с префиксом для хоста
+            const peerId = id ? `${CONFIG.PEER_ID_PREFIX}${id}` : null;
+            const peer = peerId ? new Peer(peerId, peerOptions) : new Peer(peerOptions);
 
-        const server = PEER_SERVERS[serverIndex];
-    const peerOptions = {
-    host: server.host,
-    port: server.port,
-    secure: server.secure,
-    path: server.path,
-    debug: 0,
-    config: ICE_SERVERS
-};
+            // Таймаут подключения
+            const connectionTimeout = setTimeout(() => {
+                console.warn(`[Peer] Timeout on ${server.host}, trying next server...`);
+                try {
+                    peer.destroy();
+                } catch (e) {}
+                
+                createPeer(id, serverIndex + 1)
+                    .then(resolve)
+                    .catch(reject);
+            }, CONFIG.PEER_CONNECTION_TIMEOUT);
 
-        const peerId = id ? `oris-${id}` : null;
-        const peer = peerId ? new Peer(peerId, peerOptions) : new Peer(peerOptions);
-
-        let connectionTimeout = setTimeout(() => {
-            console.warn(`[Peer] Timeout on ${server.host}, trying next server...`);
-            try { peer.destroy(); } catch (e) {}
-            createPeer(id, serverIndex + 1).then(resolve).catch(reject);
-        }, 12000); // Увеличили до 12 секунд
-
+            // Обработчик успешного подключения
             peer.on('open', (openedId) => {
                 clearTimeout(connectionTimeout);
                 setPeerStatus('connected', `Подключено к ${server.host}`);
@@ -1267,121 +1446,169 @@ function createPeer(id = null, serverIndex = 0) {
                 resolve(peer);
             });
 
+            // Обработчик ошибок
             peer.on('error', (err) => {
                 clearTimeout(connectionTimeout);
                 console.error(`[Peer] Error on ${server.host}:`, err);
 
-                if (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed') {
-                    try { peer.destroy(); } catch (e) {}
+                // Попытка переключения на следующий сервер для сетевых ошибок
+                const networkErrors = ['network', 'server-error', 'socket-error', 'socket-closed'];
+                if (networkErrors.includes(err.type)) {
+                    try {
+                        peer.destroy();
+                    } catch (e) {}
+                    
                     console.warn(`[Peer] Trying next server...`);
-                    createPeer(id, serverIndex + 1).then(resolve).catch(reject);
+                    createPeer(id, serverIndex + 1)
+                        .then(resolve)
+                        .catch(reject);
                     return;
                 }
 
+                // Обработка специфичных ошибок
                 setPeerStatus('error', 'Ошибка соединения');
-                if (err.type === 'unavailable-id') {
-                    reject(new Error('Комната уже существует или ID занят'));
-                } else if (err.type === 'peer-unavailable') {
-                    reject(new Error('Комната не найдена. Проверьте ID.'));
-                } else if (err.type === 'webrtc') {
-                    reject(new Error('Ошибка WebRTC. Проверьте камеру и микрофон.'));
-                } else {
-                    reject(new Error(`Ошибка: ${err.type || 'неизвестная'}`));
+                
+                let errorMessage;
+                switch (err.type) {
+                    case 'unavailable-id':
+                        errorMessage = 'Комната уже существует или ID занят';
+                        break;
+                    case 'peer-unavailable':
+                        errorMessage = 'Комната не найдена. Проверьте ID.';
+                        break;
+                    case 'webrtc':
+                        errorMessage = 'Ошибка WebRTC. Проверьте камеру и микрофон.';
+                        break;
+                    default:
+                        errorMessage = `Ошибка: ${err.type || 'неизвестная'}`;
                 }
+                
+                reject(new Error(errorMessage));
             });
 
+            // Обработчик отключения
             peer.on('disconnected', () => {
                 setPeerStatus('error', 'Отключено от сервера');
             });
 
+            // Обработчик закрытия
             peer.on('close', () => {
                 setPeerStatus('', 'Соединение закрыто');
             });
         });
     }
 
+    /**
+     * Установка статуса подключения в UI
+     * @param {string} state - Состояние: '' | 'connected' | 'error'
+     * @param {string} text - Текст статуса
+     */
     function setPeerStatus(state, text) {
         DOM.peerStatusDot.className = 'status-dot' + (state ? ` ${state}` : '');
         DOM.peerStatusText.textContent = text;
     }
 
-// ============================================
-// Медиа
-// ============================================
-async function getLocalStream() {
-    try {
-        // Расширенные constraints с усиленным эхоподавлением
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                width: { ideal: 1280 }, 
-                height: { ideal: 720 },
-                facingMode: 'user',
-                frameRate: { ideal: 30, max: 30 }
-            },
-            audio: { 
-                echoCancellation: true, 
-                noiseSuppression: true,
-                autoGainControl: true,
-                // Chrome-specific advanced constraints
-                googEchoCancellation: true,
-                googEchoCancellation2: true,
-                googNoiseSuppression: true,
-                googNoiseSuppression2: true,
-                googAutoGainControl: true,
-                googAutoGainControl2: true,
-                googHighpassFilter: true,
-                googTypingNoiseDetection: true,
-                // Подавление фонового шума
-                suppressLocalAudioPlayback: false
+    // ============================================
+    // Медиа: получение и управление потоками
+    // ============================================
+    
+    /**
+     * Получение локального медиа-потока с расширенными настройками
+     * @returns {Promise<MediaStream>} Медиа-поток с видео и аудио
+     * @throws {Error} Если доступ к медиа запрещен или устройства не найдены
+     */
+    async function getLocalStream() {
+        try {
+            // Расширенные constraints с усиленным эхоподавлением
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    width: { ideal: 1280 }, 
+                    height: { ideal: 720 },
+                    facingMode: 'user',
+                    frameRate: { ideal: 30, max: 30 }
+                },
+                audio: { 
+                    echoCancellation: true, 
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    // Chrome-specific advanced constraints
+                    googEchoCancellation: true,
+                    googEchoCancellation2: true,
+                    googNoiseSuppression: true,
+                    googNoiseSuppression2: true,
+                    googAutoGainControl: true,
+                    googAutoGainControl2: true,
+                    googHighpassFilter: true,
+                    googTypingNoiseDetection: true,
+                    suppressLocalAudioPlayback: false
+                }
+            });
+            
+            // Применение дополнительных настроек к аудио-трекам
+            stream.getAudioTracks().forEach(track => {
+                try {
+                    const capabilities = track.getCapabilities?.() || {};
+                    const constraints = {};
+                    
+                    if (capabilities.echoCancellation) {
+                        constraints.echoCancellation = true;
+                    }
+                    if (capabilities.noiseSuppression) {
+                        constraints.noiseSuppression = true;
+                    }
+                    if (capabilities.autoGainControl) {
+                        constraints.autoGainControl = true;
+                    }
+                    
+                    if (Object.keys(constraints).length > 0) {
+                        track.applyConstraints({ advanced: [constraints] });
+                    }
+                } catch (err) {
+                    console.warn('[Media] Could not apply advanced audio constraints:', err);
+                }
+            });
+            
+            return stream;
+        } catch (err) {
+            console.error('[Media] Error:', err);
+            
+            // Обработка специфичных ошибок доступа к медиа
+            let errorMessage;
+            switch (err.name) {
+                case 'NotAllowedError':
+                    errorMessage = 'Нет доступа к камере и микрофону. Разрешите доступ в настройках браузера.';
+                    break;
+                case 'NotFoundError':
+                    errorMessage = 'Камера или микрофон не найдены на устройстве.';
+                    break;
+                case 'NotReadableError':
+                    errorMessage = 'Камера или микрофон уже используются другим приложением.';
+                    break;
+                case 'OverconstrainedError':
+                    errorMessage = 'Не удалось найти подходящую камеру. Попробуйте другое устройство.';
+                    break;
+                default:
+                    errorMessage = 'Не удалось получить доступ к медиа: ' + err.message;
             }
-        });
-        
-        // Применяем дополнительные настройки к аудио-трекам
-        stream.getAudioTracks().forEach(track => {
-            try {
-                const capabilities = track.getCapabilities?.() || {};
-                const constraints = {};
-                
-                if (capabilities.echoCancellation) {
-                    constraints.echoCancellation = true;
-                }
-                if (capabilities.noiseSuppression) {
-                    constraints.noiseSuppression = true;
-                }
-                if (capabilities.autoGainControl) {
-                    constraints.autoGainControl = true;
-                }
-                
-                if (Object.keys(constraints).length > 0) {
-                    track.applyConstraints({ advanced: [constraints] });
-                }
-            } catch (err) {
-                console.warn('[Media] Could not apply advanced audio constraints:', err);
-            }
-        });
-        
-        return stream;
-    } catch (err) {
-        console.error('[Media] Error:', err);
-        if (err.name === 'NotAllowedError') {
-            throw new Error('Нет доступа к камере и микрофону. Разрешите доступ в настройках браузера.');
-        } else if (err.name === 'NotFoundError') {
-            throw new Error('Камера или микрофон не найдены на устройстве.');
-        } else if (err.name === 'NotReadableError') {
-            throw new Error('Камера или микрофон уже используются другим приложением.');
-        } else if (err.name === 'OverconstrainedError') {
-            throw new Error('Не удалось найти подходящую камеру. Попробуйте другое устройство.');
+            
+            throw new Error(errorMessage);
         }
-        throw new Error('Не удалось получить доступ к медиа: ' + err.message);
     }
-}
 
+    /**
+     * Привязка локального потока к видео-элементу
+     * @param {MediaStream} stream - Локальный медиа-поток
+     */
     function attachLocalStream(stream) {
         State.localStream = stream;
         DOM.localVideo.srcObject = stream;
         DOM.localPlaceholder.style.display = 'none';
     }
 
+    /**
+     * Привязка удаленного потока к видео-элементу
+     * @param {MediaStream} stream - Удаленный медиа-поток
+     */
     function attachRemoteStream(stream) {
         DOM.remoteVideo.srcObject = stream;
         DOM.remotePlaceholder.style.display = 'none';
@@ -1391,71 +1618,111 @@ async function getLocalStream() {
     // ============================================
     // DataChannel: чат
     // ============================================
+    
+    /**
+     * Настройка DataConnection для чата
+     * @param {DataConnection} conn - PeerJS DataConnection
+     */
     function setupDataConnection(conn) {
         State.dataConnection = conn;
         
+        // Обработчик открытия соединения
         conn.on('open', () => {
             console.log('[Data] Connection opened');
             addSystemMessage('Соединение установлено');
         });
         
+        // Обработчик входящих данных
         conn.on('data', (data) => {
             if (data.type === 'chat') {
                 addChatMessage(data.text, 'received');
             }
         });
         
+        // Обработчик закрытия соединения
         conn.on('close', () => {
             console.log('[Data] Connection closed');
             addSystemMessage('Соединение закрыто');
         });
         
+        // Обработчик ошибок
         conn.on('error', (err) => {
             console.error('[Data] Error:', err);
         });
     }
 
+    /**
+     * Отправка сообщения в чат
+     * @param {string} text - Текст сообщения
+     */
     function sendChatMessage(text) {
         if (!State.dataConnection || !State.dataConnection.open) {
             showToast('Нет соединения с собеседником', 'error');
             return;
         }
+        
         try {
             State.dataConnection.send({ type: 'chat', text });
             addChatMessage(text, 'sent');
         } catch (err) {
+            console.error('[Chat] Send error:', err);
             showToast('Не удалось отправить сообщение', 'error');
         }
     }
 
+    /**
+     * Добавление сообщения в чат
+     * @param {string} text - Текст сообщения
+     * @param {string} type - Тип сообщения: 'sent' | 'received'
+     */
     function addChatMessage(text, type) {
-        if (DOM.chatEmpty) DOM.chatEmpty.style.display = 'none';
+        if (DOM.chatEmpty) {
+            DOM.chatEmpty.style.display = 'none';
+        }
         
         const msg = document.createElement('div');
         msg.className = `chat-message ${type}`;
         msg.textContent = text;
         DOM.chatMessages.appendChild(msg);
+        
+        // Прокрутка к последнему сообщению
         DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
         
+        // Увеличение счетчика непрочитанных для входящих сообщений
         if (type === 'received' && !State.isChatOpen) {
             State.unreadCount++;
             updateChatBadge();
         }
     }
 
+    /**
+     * Добавление системного сообщения в чат
+     * @param {string} text - Текст системного сообщения
+     */
     function addSystemMessage(text) {
-        if (DOM.chatEmpty) DOM.chatEmpty.style.display = 'none';
+        if (DOM.chatEmpty) {
+            DOM.chatEmpty.style.display = 'none';
+        }
         
         const msg = document.createElement('div');
         msg.className = 'chat-message system';
         msg.textContent = text;
         DOM.chatMessages.appendChild(msg);
+        
+        // Прокрутка к последнему сообщению
         DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
     }
 
+    /**
+     * Обновление бейджа непрочитанных сообщений
+     */
     function updateChatBadge() {
         if (State.unreadCount > 0) {
-            DOM.chatBadge.textContent = State.unreadCount > 9 ? '9+' : State.unreadCount;
+            const displayCount = State.unreadCount > CONFIG.MAX_UNREAD_BADGE 
+                ? `${CONFIG.MAX_UNREAD_BADGE}+` 
+                : State.unreadCount;
+            
+            DOM.chatBadge.textContent = displayCount;
             DOM.chatBadge.classList.add('visible');
         } else {
             DOM.chatBadge.classList.remove('visible');
@@ -1465,78 +1732,99 @@ async function getLocalStream() {
     // ============================================
     // Управление звонком
     // ============================================
+    
+    /**
+     * Начало звонка и настройка обработчиков
+     * @param {MediaConnection} call - PeerJS MediaConnection
+     */
     function startCall(call) {
-    State.currentCall = call;
-    
-        call.on('stream', (remoteStream) => {
-        attachRemoteStream(remoteStream);
-        showToast('Собеседник подключился', 'success');
+        State.currentCall = call;
         
-        // Применяем mute/video с повторными попытками
-        let attempts = 0;
-        const tryApplyState = () => {
-            if (State.currentCall?.peerConnection) {
-                applyAudioState();
-                applyVideoState();
-            } else if (attempts < 5) {
-                attempts++;
-                setTimeout(tryApplyState, 200);
-            }
-        };
-        tryApplyState();
-    });
-    
-    call.on('close', () => {
-        handleHangup(false);
-    });
-    
-    call.on('error', (err) => {
-        console.error('[Call] Error:', err);
-        showToast('Ошибка звонка', 'error');
-    });
-    
-    // Применяем mute/video сразу, если они были включены до подключения
-    setTimeout(() => {
-        applyAudioState();
-        applyVideoState();
-    }, 500);
-}
+        // Обработчик получения удаленного потока
+        call.on('stream', (remoteStream) => {
+            attachRemoteStream(remoteStream);
+            showToast('Собеседник подключился', 'success');
+            
+            // Применение состояния mute/video с повторными попытками
+            let attempts = 0;
+            const tryApplyState = () => {
+                if (State.currentCall?.peerConnection) {
+                    applyAudioState();
+                    applyVideoState();
+                } else if (attempts < CONFIG.CALL_STATE_ATTEMPTS) {
+                    attempts++;
+                    setTimeout(tryApplyState, CONFIG.CALL_STATE_RETRY_DELAY);
+                }
+            };
+            tryApplyState();
+        });
+        
+        // Обработчик закрытия звонка
+        call.on('close', () => {
+            handleHangup(false);
+        });
+        
+        // Обработчик ошибок звонка
+        call.on('error', (err) => {
+            console.error('[Call] Error:', err);
+            showToast('Ошибка звонка', 'error');
+        });
+        
+        // Применение состояния после небольшой задержки
+        setTimeout(() => {
+            applyAudioState();
+            applyVideoState();
+        }, CONFIG.CALL_STATE_INITIAL_DELAY);
+    }
 
+    /**
+     * Создание комнаты (хост)
+     * @returns {Promise<void>}
+     */
     async function handleCreateRoom() {
         DOM.createRoomBtn.disabled = true;
         DOM.joinRoomBtn.disabled = true;
         showLobbyStatus('Запрос доступа к камере...');
         
         try {
+            // Получение локального медиа-потока
             const stream = await getLocalStream();
             attachLocalStream(stream);
             
+            // Генерация ID комнаты
             const roomId = generateRoomId();
             showLobbyStatus('Создание комнаты...');
             
+            // Создание PeerJS объекта
             State.peer = await createPeer(roomId);
             State.roomId = roomId;
             State.isHost = true;
             
+            // Обработчик входящих звонков
             State.peer.on('call', (call) => {
                 call.answer(State.localStream);
                 startCall(call);
                 enterCallScreen();
             });
             
+            // Обработчик входящих DataConnections
             State.peer.on('connection', (conn) => {
                 setupDataConnection(conn);
             });
             
+            // Отображение ID комнаты
             DOM.roomIdText.textContent = roomId;
             DOM.roomIdBox.classList.add('visible');
             showLobbyStatus('Ожидание собеседника...', 'success');
         } catch (err) {
             console.error('[Room] Create error:', err);
             showLobbyStatus(err.message || 'Не удалось подключиться к серверу. Попробуйте позже.', 'error');
+            
+            // Восстановление состояния UI
             DOM.createRoomBtn.disabled = false;
             DOM.joinRoomBtn.disabled = false;
             
+            // Остановка медиа-потока при ошибке
             if (State.localStream) {
                 State.localStream.getTracks().forEach(t => t.stop());
                 State.localStream = null;
@@ -1546,10 +1834,16 @@ async function getLocalStream() {
         }
     }
 
+    /**
+     * Подключение к комнате (гость)
+     * @returns {Promise<void>}
+     */
     async function handleJoinRoom() {
         const input = DOM.joinRoomInput.value.trim().toUpperCase();
-        if (!input || input.length !== 6) {
-            showLobbyStatus('ID должен состоять из 6 символов', 'error');
+        
+        // Валидация ID
+        if (!input || input.length !== CONFIG.ROOM_ID_LENGTH) {
+            showLobbyStatus(`ID должен состоять из ${CONFIG.ROOM_ID_LENGTH} символов`, 'error');
             return;
         }
         
@@ -1558,29 +1852,38 @@ async function getLocalStream() {
         showLobbyStatus('Запрос доступа к камере...');
         
         try {
+            // Получение локального медиа-потока
             const stream = await getLocalStream();
             attachLocalStream(stream);
             
             showLobbyStatus('Подключение к комнате...');
             
+            // Создание PeerJS объекта без ID
             State.peer = await createPeer();
             State.roomId = input;
             State.isHost = false;
             
-            const conn = State.peer.connect(`oris-${input}`, { reliable: true });
+            // Создание DataConnection для чата
+            const conn = State.peer.connect(`${CONFIG.PEER_ID_PREFIX}${input}`, { reliable: true });
             setupDataConnection(conn);
             
-            const call = State.peer.call(`oris-${input}`, State.localStream);
-            if (!call) throw new Error('Не удалось начать звонок');
+            // Начало звонка
+            const call = State.peer.call(`${CONFIG.PEER_ID_PREFIX}${input}`, State.localStream);
+            if (!call) {
+                throw new Error('Не удалось начать звонок');
+            }
             
             startCall(call);
             enterCallScreen();
         } catch (err) {
             console.error('[Room] Join error:', err);
             showLobbyStatus(err.message || 'Не удалось подключиться к серверу. Попробуйте позже.', 'error');
+            
+            // Восстановление состояния UI
             DOM.createRoomBtn.disabled = false;
             DOM.joinRoomBtn.disabled = false;
             
+            // Остановка медиа-потока при ошибке
             if (State.localStream) {
                 State.localStream.getTracks().forEach(t => t.stop());
                 State.localStream = null;
@@ -1590,30 +1893,51 @@ async function getLocalStream() {
         }
     }
 
+    /**
+     * Переход на экран звонка
+     */
     function enterCallScreen() {
         DOM.lobby.style.display = 'none';
         DOM.callScreen.classList.add('active');
         hideLobbyStatus();
     }
 
+    /**
+     * Завершение звонка и очистка ресурсов
+     * @param {boolean} notifyPeer - Уведомлять ли собеседника
+     */
     function handleHangup(notifyPeer = true) {
+        // Закрытие текущего звонка
         if (State.currentCall) {
-            try { State.currentCall.close(); } catch (e) {}
+            try {
+                State.currentCall.close();
+            } catch (e) {}
             State.currentCall = null;
         }
+        
+        // Закрытие DataConnection
         if (State.dataConnection) {
-            try { State.dataConnection.close(); } catch (e) {}
+            try {
+                State.dataConnection.close();
+            } catch (e) {}
             State.dataConnection = null;
         }
+        
+        // Уничтожение PeerJS объекта
         if (State.peer) {
-            try { State.peer.destroy(); } catch (e) {}
+            try {
+                State.peer.destroy();
+            } catch (e) {}
             State.peer = null;
         }
+        
+        // Остановка локального медиа-потока
         if (State.localStream) {
             State.localStream.getTracks().forEach(t => t.stop());
             State.localStream = null;
         }
         
+        // Сброс состояния
         State.roomId = null;
         State.isMuted = false;
         State.isVideoOff = false;
@@ -1621,6 +1945,7 @@ async function getLocalStream() {
         State.unreadCount = 0;
         State.isHost = false;
         
+        // Сброс видео-элементов
         DOM.localVideo.srcObject = null;
         DOM.remoteVideo.srcObject = null;
         DOM.localPlaceholder.style.display = 'flex';
@@ -1628,10 +1953,12 @@ async function getLocalStream() {
         DOM.remoteLabel.style.display = 'none';
         DOM.remotePlaceholderText.textContent = 'Ожидание собеседника...';
         
+        // Возврат в лобби
         DOM.callScreen.classList.remove('active');
         DOM.chatPanel.classList.remove('active');
         DOM.lobby.style.display = 'flex';
         
+        // Сброс UI элементов
         DOM.roomIdBox.classList.remove('visible');
         DOM.createRoomBtn.disabled = false;
         DOM.joinRoomBtn.disabled = false;
@@ -1640,16 +1967,21 @@ async function getLocalStream() {
         hideLobbyStatus();
         setPeerStatus('', 'Готов к работе');
         
+        // Очистка чата
         DOM.chatMessages.innerHTML = '';
         DOM.chatMessages.appendChild(DOM.chatEmpty);
         DOM.chatEmpty.style.display = 'flex';
         updateChatBadge();
         
+        // Сброс кнопок управления
         resetControlButtons();
         
         showToast('Звонок завершён', 'info');
     }
 
+    /**
+     * Сброс кнопок управления в начальное состояние
+     */
     function resetControlButtons() {
         DOM.muteBtn.classList.remove('active');
         DOM.videoBtn.classList.remove('active');
@@ -1660,96 +1992,126 @@ async function getLocalStream() {
     }
 
     /**
- * Применяет состояние mute через RTCRtpSender (надёжнее, чем track.enabled)
- * Полностью останавливает передачу аудио на уровне RTP
- */
-function applyAudioState() {
-    if (!State.currentCall || !State.currentCall.peerConnection) return;
-    
-    const pc = State.currentCall.peerConnection;
-    const senders = pc.getSenders();
-    
-    senders.forEach(sender => {
-        if (sender.track && sender.track.kind === 'audio') {
-            // Способ 1: Через setParameters (самый надёжный)
-            const params = sender.getParameters();
-            if (!params.encodings || params.encodings.length === 0) {
-                params.encodings = [{}];
+     * Применение состояния микрофона через RTCRtpSender
+     * Полностью останавливает передачу аудио на уровне RTP
+     */
+    function applyAudioState() {
+        if (!State.currentCall || !State.currentCall.peerConnection) {
+            return;
+        }
+        
+        const pc = State.currentCall.peerConnection;
+        const senders = pc.getSenders();
+        
+        senders.forEach(sender => {
+            if (sender.track && sender.track.kind === 'audio') {
+                // Применение через setParameters (самый надёжный способ)
+                const params = sender.getParameters();
+                if (!params.encodings || params.encodings.length === 0) {
+                    params.encodings = [{}];
+                }
+                params.encodings[0].active = !State.isMuted;
+                
+                sender.setParameters(params).catch(err => {
+                    console.warn('[Audio] setParameters failed:', err);
+                });
             }
-            params.encodings[0].active = !State.isMuted;
-            sender.setParameters(params).catch(err => {
-                console.warn('[Audio] setParameters failed:', err);
+        });
+        
+        // Дополнительное отключение самого трека
+        if (State.localStream) {
+            State.localStream.getAudioTracks().forEach(t => {
+                t.enabled = !State.isMuted;
             });
         }
-    });
-    
-    // Способ 2: Дополнительно отключаем сам трек
-    if (State.localStream) {
-        State.localStream.getAudioTracks().forEach(t => {
-            t.enabled = !State.isMuted;
-        });
     }
-}
 
-/**
- * Применяет состояние видео через RTCRtpSender
- */
-function applyVideoState() {
-    if (!State.currentCall || !State.currentCall.peerConnection) return;
-    
-    const pc = State.currentCall.peerConnection;
-    const senders = pc.getSenders();
-    
-    senders.forEach(sender => {
-        if (sender.track && sender.track.kind === 'video') {
-            const params = sender.getParameters();
-            if (!params.encodings || params.encodings.length === 0) {
-                params.encodings = [{}];
+    /**
+     * Применение состояния камеры через RTCRtpSender
+     */
+    function applyVideoState() {
+        if (!State.currentCall || !State.currentCall.peerConnection) {
+            return;
+        }
+        
+        const pc = State.currentCall.peerConnection;
+        const senders = pc.getSenders();
+        
+        senders.forEach(sender => {
+            if (sender.track && sender.track.kind === 'video') {
+                const params = sender.getParameters();
+                if (!params.encodings || params.encodings.length === 0) {
+                    params.encodings = [{}];
+                }
+                params.encodings[0].active = !State.isVideoOff;
+                
+                sender.setParameters(params).catch(err => {
+                    console.warn('[Video] setParameters failed:', err);
+                });
             }
-            params.encodings[0].active = !State.isVideoOff;
-            sender.setParameters(params).catch(err => {
-                console.warn('[Video] setParameters failed:', err);
+        });
+        
+        // Дополнительное отключение трека
+        if (State.localStream) {
+            State.localStream.getVideoTracks().forEach(t => {
+                t.enabled = !State.isVideoOff;
             });
         }
-    });
-    
-    if (State.localStream) {
-        State.localStream.getVideoTracks().forEach(t => {
-            t.enabled = !State.isVideoOff;
-        });
     }
-}
 
-function toggleMute() {
-    if (!State.localStream) return;
-    State.isMuted = !State.isMuted;
-    
-    // Применяем на уровне RTP (полностью останавливает передачу)
-    applyAudioState();
-    
-    // UI
-    DOM.muteBtn.classList.toggle('active', State.isMuted);
-    DOM.micIcon.innerHTML = State.isMuted ? ICONS.micOff : ICONS.micOn;
-    DOM.localMuteIndicator.classList.toggle('visible', State.isMuted);
-    
-    showToast(State.isMuted ? 'Микрофон выключен' : 'Микрофон включён', 'info', 1500);
-}
+    /**
+     * Переключение состояния микрофона
+     */
+    function toggleMute() {
+        if (!State.localStream) {
+            return;
+        }
+        
+        State.isMuted = !State.isMuted;
+        
+        // Применение на уровне RTP
+        applyAudioState();
+        
+        // Обновление UI
+        DOM.muteBtn.classList.toggle('active', State.isMuted);
+        DOM.micIcon.innerHTML = State.isMuted ? ICONS.micOff : ICONS.micOn;
+        DOM.localMuteIndicator.classList.toggle('visible', State.isMuted);
+        
+        showToast(
+            State.isMuted ? 'Микрофон выключен' : 'Микрофон включён',
+            'info',
+            CONFIG.TOAST_SHORT_DURATION
+        );
+    }
 
-function toggleVideo() {
-    if (!State.localStream) return;
-    State.isVideoOff = !State.isVideoOff;
-    
-    // Применяем на уровне RTP
-    applyVideoState();
-    
-    // UI
-    DOM.videoBtn.classList.toggle('active', State.isVideoOff);
-    DOM.videoIcon.innerHTML = State.isVideoOff ? ICONS.videoOff : ICONS.videoOn;
-    DOM.localPlaceholder.style.display = State.isVideoOff ? 'flex' : 'none';
-    
-    showToast(State.isVideoOff ? 'Камера выключена' : 'Камера включена', 'info', 1500);
-}
+    /**
+     * Переключение состояния камеры
+     */
+    function toggleVideo() {
+        if (!State.localStream) {
+            return;
+        }
+        
+        State.isVideoOff = !State.isVideoOff;
+        
+        // Применение на уровне RTP
+        applyVideoState();
+        
+        // Обновление UI
+        DOM.videoBtn.classList.toggle('active', State.isVideoOff);
+        DOM.videoIcon.innerHTML = State.isVideoOff ? ICONS.videoOff : ICONS.videoOn;
+        DOM.localPlaceholder.style.display = State.isVideoOff ? 'flex' : 'none';
+        
+        showToast(
+            State.isVideoOff ? 'Камера выключена' : 'Камера включена',
+            'info',
+            CONFIG.TOAST_SHORT_DURATION
+        );
+    }
 
+    /**
+     * Переключение панели чата
+     */
     function toggleChat() {
         State.isChatOpen = !State.isChatOpen;
         DOM.chatPanel.classList.toggle('active', State.isChatOpen);
@@ -1758,44 +2120,71 @@ function toggleVideo() {
         if (State.isChatOpen) {
             State.unreadCount = 0;
             updateChatBadge();
-            setTimeout(() => DOM.chatInput.focus(), 100);
+            setTimeout(() => DOM.chatInput.focus(), CONFIG.CHAT_FOCUS_DELAY);
         }
     }
 
     // ============================================
     // Обработчики событий
     // ============================================
+    
+    /**
+     * Привязка всех обработчиков событий
+     */
     function bindEvents() {
+        // Кнопки лобби
         DOM.createRoomBtn.addEventListener('click', handleCreateRoom);
         DOM.joinRoomBtn.addEventListener('click', handleJoinRoom);
         
+        // Валидация ввода ID комнаты
         DOM.joinRoomInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+            e.target.value = e.target.value
+                .toUpperCase()
+                .replace(/[^A-Z0-9]/g, '')
+                .slice(0, CONFIG.ROOM_ID_LENGTH);
         });
         
+        // Поддержка Enter для подключения
         DOM.joinRoomInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleJoinRoom();
+            if (e.key === 'Enter') {
+                handleJoinRoom();
+            }
         });
         
+        // Копирование ID комнаты по клику
         DOM.roomIdBox.addEventListener('click', async () => {
             const id = DOM.roomIdText.textContent;
-            if (!id) return;
-            const ok = await copyToClipboard(id);
-            showToast(ok ? 'ID скопирован в буфер' : 'Не удалось скопировать', ok ? 'success' : 'error');
+            if (!id) {
+                return;
+            }
+            
+            const success = await copyToClipboard(id);
+            showToast(
+                success ? 'ID скопирован в буфер' : 'Не удалось скопировать',
+                success ? 'success' : 'error'
+            );
         });
         
+        // Кнопки управления звонком
         DOM.muteBtn.addEventListener('click', toggleMute);
         DOM.videoBtn.addEventListener('click', toggleVideo);
         DOM.hangupBtn.addEventListener('click', () => handleHangup(true));
         DOM.chatToggleBtn.addEventListener('click', toggleChat);
         DOM.chatCloseBtn.addEventListener('click', toggleChat);
         
+        // Поле ввода чата
         DOM.chatInput.addEventListener('input', () => {
             DOM.chatSendBtn.disabled = !DOM.chatInput.value.trim();
+            
+            // Автоматическое изменение высоты
             DOM.chatInput.style.height = 'auto';
-            DOM.chatInput.style.height = Math.min(DOM.chatInput.scrollHeight, 120) + 'px';
+            DOM.chatInput.style.height = Math.min(
+                DOM.chatInput.scrollHeight,
+                CONFIG.CHAT_INPUT_MAX_HEIGHT
+            ) + 'px';
         });
         
+        // Отправка по Enter (без Shift)
         DOM.chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -1803,21 +2192,31 @@ function toggleVideo() {
             }
         });
         
+        // Кнопка отправки сообщения
         DOM.chatSendBtn.addEventListener('click', sendCurrentMessage);
         
+        // Очистка ресурсов при закрытии страницы
         window.addEventListener('beforeunload', () => {
             if (State.localStream) {
                 State.localStream.getTracks().forEach(t => t.stop());
             }
             if (State.peer) {
-                try { State.peer.destroy(); } catch (e) {}
+                try {
+                    State.peer.destroy();
+                } catch (e) {}
             }
         });
     }
 
+    /**
+     * Отправка текущего сообщения из поля ввода
+     */
     function sendCurrentMessage() {
         const text = DOM.chatInput.value.trim();
-        if (!text) return;
+        if (!text) {
+            return;
+        }
+        
         sendChatMessage(text);
         DOM.chatInput.value = '';
         DOM.chatInput.style.height = 'auto';
@@ -1827,17 +2226,24 @@ function toggleVideo() {
     // ============================================
     // Инициализация
     // ============================================
+    
+    /**
+     * Инициализация приложения
+     */
     function init() {
         bindEvents();
         setPeerStatus('', 'Готов к работе');
         
+        // Проверка параметра room в URL
         const params = new URLSearchParams(window.location.search);
         const roomParam = params.get('room');
+        
         if (roomParam && /^[A-Z0-9]{6}$/i.test(roomParam)) {
             DOM.joinRoomInput.value = roomParam.toUpperCase();
         }
     }
 
+    // Запуск после загрузки DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

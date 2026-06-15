@@ -523,104 +523,295 @@
     </footer>
 
     <script>
-        // Scroll Reveal Animation with Staggering
+(function() {
+    'use strict';
+
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {string} Корневой отступ для IntersectionObserver */
+        OBSERVER_ROOT_MARGIN: '0px 0px -50px 0px',
+        
+        /** @type {number} Порог срабатывания для IntersectionObserver */
+        OBSERVER_THRESHOLD: 0.1,
+        
+        /** @type {number} Порог скролла для изменения стиля хедера (px) */
+        HEADER_SCROLL_THRESHOLD: 50,
+        
+        /** @type {number} Задержка анимации закрытия меню (мс) */
+        MENU_CLOSE_DELAY: 300,
+        
+        /** @type {number} Длительность подсветки правила (мс) */
+        RULE_HIGHLIGHT_DURATION: 5000,
+        
+        /** @type {number} Задержка перед скроллом к правилу (мс) */
+        RULE_SCROLL_DELAY: 300,
+        
+        /** @type {number} Задержка появления хедера (мс) */
+        HEADER_REVEAL_DELAY: 100,
+        
+        /** @type {string} Префикс хеша для правил */
+        RULE_HASH_PREFIX: '#rule-',
+        
+        /** @type {string} CSS класс для анимации появления */
+        VISIBLE_CLASS: 'visible',
+        
+        /** @type {string} CSS класс для открытого меню */
+        MENU_OPEN_CLASS: 'open',
+        
+        /** @type {string} CSS класс для подсветки правила */
+        RULE_HIGHLIGHT_CLASS: 'rule-highlight',
+        
+        /** @type {string} CSS класс для скрытия элемента */
+        HIDDEN_CLASS: 'hidden',
+        
+        /** @type {string} CSS класс для полной непрозрачности */
+        OPACITY_FULL_CLASS: 'opacity-100'
+    };
+
+    // ============================================
+    // DOM элементы
+    // ============================================
+    
+    /**
+     * Кэш DOM элементов
+     * @namespace
+     */
+    const DOM = {
+        /** @type {HTMLElement|null} Навигационная панель */
+        navbar: document.getElementById('navbar'),
+        
+        /** @type {HTMLElement|null} Кнопка открытия мобильного меню */
+        mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+        
+        /** @type {HTMLElement|null} Кнопка закрытия мобильного меню */
+        closeMenuBtn: document.getElementById('close-menu-btn'),
+        
+        /** @type {HTMLElement|null} Контейнер мобильного меню */
+        mobileMenu: document.getElementById('mobile-menu'),
+        
+        /** @type {HTMLElement|null} Оверлей мобильного меню */
+        mobileOverlay: document.getElementById('mobile-overlay'),
+        
+        /** @type {NodeList} Ссылки в мобильном меню */
+        mobileLinks: document.querySelectorAll('.mobile-link'),
+        
+        /** @type {NodeList} Элементы для динамического года */
+        yearElements: document.querySelectorAll('#dynamic-year, .footer-year'),
+        
+        /** @type {NodeList} Элементы с анимацией появления */
+        revealElements: document.querySelectorAll('.scroll-reveal')
+    };
+
+    // ============================================
+    // Scroll Reveal Animation
+    // ============================================
+    
+    /**
+     * Инициализация анимации появления элементов при скролле
+     */
+    function initScrollReveal() {
         const observerOptions = {
             root: null,
-            rootMargin: '0px 0px -50px 0px',
-            threshold: 0.1
+            rootMargin: CONFIG.OBSERVER_ROOT_MARGIN,
+            threshold: CONFIG.OBSERVER_THRESHOLD
         };
 
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
+                    entry.target.classList.add(CONFIG.VISIBLE_CLASS);
                     observer.unobserve(entry.target);
                 }
             });
         }, observerOptions);
 
-        document.querySelectorAll('.scroll-reveal').forEach(el => {
-            observer.observe(el);
+        DOM.revealElements.forEach(element => {
+            observer.observe(element);
         });
+    }
 
-        // Dynamic Year
+    // ============================================
+    // Dynamic Year
+    // ============================================
+    
+    /**
+     * Обновление года в футере и других элементах
+     */
+    function updateDynamicYear() {
         const currentYear = new Date().getFullYear();
-        const yearElements = document.querySelectorAll('#dynamic-year, .footer-year');
-        yearElements.forEach(el => el.textContent = currentYear);
-
-        // Header Scroll Effect
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                navbar.classList.add('shadow-lg', 'bg-dark/95');
-                navbar.classList.remove('bg-dark/80');
-            } else {
-                navbar.classList.remove('shadow-lg', 'bg-dark/95');
-                navbar.classList.add('bg-dark/80');
-            }
+        DOM.yearElements.forEach(element => {
+            element.textContent = currentYear;
         });
+    }
 
-        // Mobile Menu Logic
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const closeMenuBtn = document.getElementById('close-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const mobileOverlay = document.getElementById('mobile-overlay');
-        const mobileLinks = document.querySelectorAll('.mobile-link');
+    // ============================================
+    // Header Scroll Effect
+    // ============================================
+    
+    /**
+     * Обработчик скролла для изменения стиля хедера
+     */
+    function handleHeaderScroll() {
+        if (!DOM.navbar) return;
 
-        function toggleMenu() {
-            const isOpen = mobileMenu.classList.contains('open');
-            if (isOpen) {
-                mobileMenu.classList.remove('open');
-                mobileOverlay.classList.remove('opacity-100');
-                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
-                document.body.style.overflow = '';
-            } else {
-                mobileOverlay.classList.remove('hidden');
-                // Force reflow
-                void mobileOverlay.offsetWidth;
-                mobileOverlay.classList.add('opacity-100');
-                mobileMenu.classList.add('open');
-                document.body.style.overflow = 'hidden';
-            }
+        if (window.scrollY > CONFIG.HEADER_SCROLL_THRESHOLD) {
+            DOM.navbar.classList.add('shadow-lg', 'bg-dark/95');
+            DOM.navbar.classList.remove('bg-dark/80');
+        } else {
+            DOM.navbar.classList.remove('shadow-lg', 'bg-dark/95');
+            DOM.navbar.classList.add('bg-dark/80');
         }
+    }
 
-        mobileMenuBtn.addEventListener('click', toggleMenu);
-        closeMenuBtn.addEventListener('click', toggleMenu);
-        mobileOverlay.addEventListener('click', toggleMenu);
+    /**
+     * Инициализация эффекта изменения хедера при скролле
+     */
+    function initHeaderScrollEffect() {
+        window.addEventListener('scroll', handleHeaderScroll);
+        // Первичная проверка на случай, если страница уже прокручена
+        handleHeaderScroll();
+    }
+
+    // ============================================
+    // Mobile Menu Logic
+    // ============================================
+    
+    /**
+     * Переключение состояния мобильного меню
+     */
+    function toggleMenu() {
+        if (!DOM.mobileMenu || !DOM.mobileOverlay) return;
+
+        const isOpen = DOM.mobileMenu.classList.contains(CONFIG.MENU_OPEN_CLASS);
         
-        mobileLinks.forEach(link => {
+        if (isOpen) {
+            // Закрытие меню
+            DOM.mobileMenu.classList.remove(CONFIG.MENU_OPEN_CLASS);
+            DOM.mobileOverlay.classList.remove(CONFIG.OPACITY_FULL_CLASS);
+            
+            setTimeout(() => {
+                DOM.mobileOverlay.classList.add(CONFIG.HIDDEN_CLASS);
+            }, CONFIG.MENU_CLOSE_DELAY);
+            
+            document.body.style.overflow = '';
+        } else {
+            // Открытие меню
+            DOM.mobileOverlay.classList.remove(CONFIG.HIDDEN_CLASS);
+            
+            // Force reflow для корректной работы CSS transitions
+            void DOM.mobileOverlay.offsetWidth;
+            
+            DOM.mobileOverlay.classList.add(CONFIG.OPACITY_FULL_CLASS);
+            DOM.mobileMenu.classList.add(CONFIG.MENU_OPEN_CLASS);
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    /**
+     * Инициализация мобильного меню и привязка событий
+     */
+    function initMobileMenu() {
+        if (DOM.mobileMenuBtn) {
+            DOM.mobileMenuBtn.addEventListener('click', toggleMenu);
+        }
+        
+        if (DOM.closeMenuBtn) {
+            DOM.closeMenuBtn.addEventListener('click', toggleMenu);
+        }
+        
+        if (DOM.mobileOverlay) {
+            DOM.mobileOverlay.addEventListener('click', toggleMenu);
+        }
+        
+        DOM.mobileLinks.forEach(link => {
             link.addEventListener('click', toggleMenu);
         });
+    }
 
-        // Rule Highlight on Hash Change
-        function checkRuleAnchor() {
-            const hash = window.location.hash;
-            if (hash && hash.startsWith('#rule-')) {
-                const targetId = hash.substring(1);
-                const targetElement = document.getElementById(targetId);
-                
-                if (targetElement) {
-                    setTimeout(() => {
-                        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        targetElement.classList.add('rule-highlight');
-                        setTimeout(() => {
-                            targetElement.classList.remove('rule-highlight');
-                        }, 5000);
-                    }, 300);
-                }
-            }
+    // ============================================
+    // Rule Highlight on Hash Change
+    // ============================================
+    
+    /**
+     * Проверка и подсветка правила на основе хеша URL
+     */
+    function checkRuleAnchor() {
+        const hash = window.location.hash;
+        
+        if (!hash || !hash.startsWith(CONFIG.RULE_HASH_PREFIX)) {
+            return;
         }
+        
+        const targetId = hash.substring(1);
+        const targetElement = document.getElementById(targetId);
+        
+        if (!targetElement) return;
+        
+        setTimeout(() => {
+            targetElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            targetElement.classList.add(CONFIG.RULE_HIGHLIGHT_CLASS);
+            
+            setTimeout(() => {
+                targetElement.classList.remove(CONFIG.RULE_HIGHLIGHT_CLASS);
+            }, CONFIG.RULE_HIGHLIGHT_DURATION);
+            
+        }, CONFIG.RULE_SCROLL_DELAY);
+    }
 
-        window.addEventListener('load', () => {
-            const headerReveal = document.querySelector('header .scroll-reveal');
-            if (headerReveal) {
-                setTimeout(() => headerReveal.classList.add('visible'), 100);
-            }
-            checkRuleAnchor();
-        });
+    // ============================================
+    // Window Events
+    // ============================================
+    
+    /**
+     * Обработчик события загрузки страницы
+     */
+    function handleWindowLoad() {
+        const headerReveal = document.querySelector('header .scroll-reveal');
+        if (headerReveal) {
+            setTimeout(() => {
+                headerReveal.classList.add(CONFIG.VISIBLE_CLASS);
+            }, CONFIG.HEADER_REVEAL_DELAY);
+        }
+        
+        checkRuleAnchor();
+    }
 
+    // ============================================
+    // Инициализация
+    // ============================================
+    
+    /**
+     * Инициализация всех модулей приложения
+     */
+    function init() {
+        initScrollReveal();
+        updateDynamicYear();
+        initHeaderScrollEffect();
+        initMobileMenu();
+        
+        window.addEventListener('load', handleWindowLoad);
         window.addEventListener('hashchange', checkRuleAnchor);
-    </script>
+    }
+
+    // Запуск после построения DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 </body>
 </html>
 

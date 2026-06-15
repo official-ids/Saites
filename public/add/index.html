@@ -1150,367 +1150,604 @@
         <span id="toast-message"></span>
     </div>
 
-    <script>
-    (function() {
-        'use strict';
+<script>
+(function() {
+    'use strict';
 
-        const State = {
-            mode: 'saite'
-        };
+    // ============================================
+    // Константы конфигурации
+    // ============================================
+    
+    /**
+     * Конфигурация приложения
+     * @namespace
+     */
+    const CONFIG = {
+        /** @type {number} Длительность показа toast-уведомления по умолчанию (мс) */
+        TOAST_DURATION: 4500,
+        
+        /** @type {number} Минимальная длина заголовка сайта */
+        MIN_TITLE_LENGTH: 3,
+        
+        /** @type {number} Минимальная длина описания */
+        MIN_DESCRIPTION_LENGTH: 20,
+        
+        /** @type {number} Минимальная длина имени */
+        MIN_NAME_LENGTH: 2,
+        
+        /** @type {string} URL для отправки заявки на добавление сайта */
+        SAITE_SUBMIT_URL: '/api/add/saite',
+        
+        /** @type {string} URL для отправки заявки на сотрудничество */
+        CORP_SUBMIT_URL: '/api/add/corp',
+        
+        /** @type {string} Базовый URL для страниц */
+        BASE_URL: '/add',
+        
+        /** @type {string} Параметр URL для режима */
+        MODE_PARAM: 'p'
+    };
 
-        const UI = {
-            toastTimer: null,
-            toast(message, type = 'info', duration = 4500) {
-                const toast = document.getElementById('toast');
-                const msg = document.getElementById('toast-message');
-                const icon = document.getElementById('toast-icon');
+    /**
+     * Доступные режимы работы
+     * @constant {Array<string>}
+     */
+    const VALID_MODES = ['saite', 'corp', 'rules'];
 
-                const icons = {
-                    success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-                    error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-                    warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
-                    info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-                };
+    /**
+     * Режим по умолчанию
+     * @constant {string}
+     */
+    const DEFAULT_MODE = 'saite';
 
-                toast.className = `toast ${type} visible`;
-                msg.textContent = message;
-                icon.innerHTML = icons[type] || icons.info;
+    /**
+     * Сообщения для UI
+     * @constant {Object<string, string>}
+     */
+    const MESSAGES = {
+        validationError: 'Проверьте правильность заполнения полей',
+        submitSuccess: 'Успешно отправлено',
+        saiteSuccessTitle: 'Заявка отправлена!',
+        saiteSuccessText: 'Мы получили ваш сайт и рассмотрим его в течение 24 часов. Результат придёт на указанный email.',
+        corpSuccessTitle: 'Предложение отправлено!',
+        corpSuccessText: 'Спасибо за интерес к сотрудничеству. Наша команда свяжется с вами в течение 24 часов.',
+        serverError: 'Ошибка сервера'
+    };
 
-                clearTimeout(this.toastTimer);
-                this.toastTimer = setTimeout(() => {
-                    toast.classList.remove('visible');
-                }, duration);
-            },
+    // ============================================
+    // Состояние приложения
+    // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
+    const State = {
+        /** @type {string} Текущий режим работы: 'saite' | 'corp' | 'rules' */
+        mode: DEFAULT_MODE
+    };
 
-            setLoading(btn, isLoading) {
-                if (isLoading) {
-                    btn.dataset.originalHtml = btn.innerHTML;
-                    btn.innerHTML = '<span class="spinner"></span><span>Отправка...</span>';
-                    btn.disabled = true;
-                } else {
-                    btn.innerHTML = btn.dataset.originalHtml || btn.innerHTML;
-                    btn.disabled = false;
-                }
-            },
+    // ============================================
+    // UI Utilities
+    // ============================================
+    
+    /**
+     * Утилиты пользовательского интерфейса
+     * @namespace
+     */
+    const UI = {
+        /** @type {number|null} ID таймера toast */
+        toastTimer: null,
 
-            showError(inputId, show = true) {
-                const input = document.getElementById(inputId);
-                const error = document.querySelector(`[data-error-for="${inputId}"]`);
-                if (input) input.classList.toggle('error', show);
-                if (error) error.classList.toggle('visible', show);
-            },
+        /**
+         * SVG иконки для toast-уведомлений
+         * @type {Object<string, string>}
+         */
+        icons: {
+            success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+            error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+            warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+            info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+        },
 
-            clearErrors(form) {
-                form.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(el => {
-                    el.classList.remove('error');
-                });
-                form.querySelectorAll('.form-error').forEach(el => {
-                    el.classList.remove('visible');
-                });
+        /**
+         * Показ toast-уведомления
+         * 
+         * @param {string} message - Текст уведомления
+         * @param {string} type - Тип уведомления: 'info' | 'success' | 'error' | 'warning'
+         * @param {number} duration - Длительность показа в мс
+         */
+        toast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+            const toastElement = document.getElementById('toast');
+            const messageElement = document.getElementById('toast-message');
+            const iconElement = document.getElementById('toast-icon');
+
+            toastElement.className = `toast ${type} visible`;
+            messageElement.textContent = message;
+            iconElement.innerHTML = this.icons[type] || this.icons.info;
+
+            clearTimeout(this.toastTimer);
+            this.toastTimer = setTimeout(() => {
+                toastElement.classList.remove('visible');
+            }, duration);
+        },
+
+        /**
+         * Установка состояния загрузки для кнопки
+         * 
+         * @param {HTMLElement} button - Элемент кнопки
+         * @param {boolean} isLoading - Состояние загрузки
+         */
+        setLoading(button, isLoading) {
+            if (isLoading) {
+                button.dataset.originalHtml = button.innerHTML;
+                button.innerHTML = '<span class="spinner"></span><span>Отправка...</span>';
+                button.disabled = true;
+            } else {
+                button.innerHTML = button.dataset.originalHtml || button.innerHTML;
+                button.disabled = false;
             }
-        };
+        },
 
-        function setModeFromUrl(pushState = false) {
-            const params = new URLSearchParams(window.location.search);
-            const mode = params.get('p') || 'saite';
-            const validModes = ['saite', 'corp', 'rules'];
-            const newMode = validModes.includes(mode) ? mode : 'saite';
-
-            if (pushState && newMode !== State.mode) {
-                const newUrl = `/add?p=${newMode}`;
-                window.history.pushState({ mode: newMode }, '', newUrl);
+        /**
+         * Показ/скрытие ошибки для поля ввода
+         * 
+         * @param {string} inputId - ID поля ввода
+         * @param {boolean} show - Показать или скрыть ошибку
+         */
+        showError(inputId, show = true) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.querySelector(`[data-error-for="${inputId}"]`);
+            
+            if (input) {
+                input.classList.toggle('error', show);
             }
+            if (errorElement) {
+                errorElement.classList.toggle('visible', show);
+            }
+        },
 
-            State.mode = newMode;
-
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            const activeTab = document.getElementById(`tab-${State.mode}`);
-            if (activeTab) activeTab.classList.add('active');
-
-            document.querySelectorAll('.form-section').forEach(s => {
-                s.classList.toggle('active', s.dataset.mode === State.mode);
+        /**
+         * Очистка всех ошибок в форме
+         * 
+         * @param {HTMLFormElement} form - Элемент формы
+         */
+        clearErrors(form) {
+            form.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(element => {
+                element.classList.remove('error');
             });
+            form.querySelectorAll('.form-error').forEach(element => {
+                element.classList.remove('visible');
+            });
+        }
+    };
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    // ============================================
+    // Навигация и режимы
+    // ============================================
+    
+    /**
+     * Установка режима работы из URL параметра
+     * 
+     * @param {boolean} pushState - Добавлять ли запись в историю браузера
+     */
+    function setModeFromUrl(pushState = false) {
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get(CONFIG.MODE_PARAM) || DEFAULT_MODE;
+        const newMode = VALID_MODES.includes(mode) ? mode : DEFAULT_MODE;
+
+        // Обновление URL если нужно
+        if (pushState && newMode !== State.mode) {
+            const newUrl = `${CONFIG.BASE_URL}?${CONFIG.MODE_PARAM}=${newMode}`;
+            window.history.pushState({ mode: newMode }, '', newUrl);
         }
 
-        const Validators = {
-            required(value) {
-                return value && value.trim().length > 0;
-            },
-            minLength(value, min) {
-                return value && value.trim().length >= min;
-            },
-            email(value) {
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-            },
-            url(value) {
-                try {
-                    const u = new URL(value);
-                    return u.protocol === 'http:' || u.protocol === 'https:';
-                } catch {
-                    return false;
-                }
-            }
-        };
+        State.mode = newMode;
 
-        function validateSaiteForm() {
-            const form = document.getElementById('form-saite');
-            UI.clearErrors(form);
-            let valid = true;
-
-            const title = document.getElementById('saite-title').value;
-            if (!Validators.minLength(title, 3)) {
-                UI.showError('saite-title');
-                valid = false;
-            }
-
-            const url = document.getElementById('saite-url').value;
-            if (!Validators.url(url)) {
-                UI.showError('saite-url');
-                valid = false;
-            }
-
-            const desc = document.getElementById('saite-desc').value;
-            if (!Validators.minLength(desc, 20)) {
-                UI.showError('saite-desc');
-                valid = false;
-            }
-
-            const name = document.getElementById('saite-name').value;
-            if (!Validators.minLength(name, 2)) {
-                UI.showError('saite-name');
-                valid = false;
-            }
-
-            const email = document.getElementById('saite-email').value;
-            if (!Validators.email(email)) {
-                UI.showError('saite-email');
-                valid = false;
-            }
-
-            const rules = document.getElementById('saite-rules').checked;
-            if (!rules) {
-                UI.showError('saite-rules');
-                valid = false;
-            }
-
-            return valid;
+        // Обновление активной вкладки
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        const activeTab = document.getElementById(`tab-${State.mode}`);
+        if (activeTab) {
+            activeTab.classList.add('active');
         }
 
-        function validateCorpForm() {
-            const form = document.getElementById('form-corp');
-            UI.clearErrors(form);
-            let valid = true;
+        // Обновление активной секции
+        document.querySelectorAll('.form-section').forEach(section => {
+            section.classList.toggle('active', section.dataset.mode === State.mode);
+        });
 
-            const name = document.getElementById('corp-name').value;
-            if (!Validators.minLength(name, 2)) {
-                UI.showError('corp-name');
-                valid = false;
+        // Прокрутка наверх
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ============================================
+    // Валидация
+    // ============================================
+    
+    /**
+     * Валидаторы для полей формы
+     * @namespace
+     */
+    const Validators = {
+        /**
+         * Проверка обязательного поля
+         * 
+         * @param {string} value - Значение для проверки
+         * @returns {boolean} true если поле не пустое
+         */
+        required(value) {
+            return value && value.trim().length > 0;
+        },
+
+        /**
+         * Проверка минимальной длины
+         * 
+         * @param {string} value - Значение для проверки
+         * @param {number} min - Минимальная длина
+         * @returns {boolean} true если длина достаточна
+         */
+        minLength(value, min) {
+            return value && value.trim().length >= min;
+        },
+
+        /**
+         * Проверка валидности email
+         * 
+         * @param {string} value - Email для проверки
+         * @returns {boolean} true если email валиден
+         */
+        email(value) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        },
+
+        /**
+         * Проверка валидности URL
+         * 
+         * @param {string} value - URL для проверки
+         * @returns {boolean} true если URL валиден
+         */
+        url(value) {
+            try {
+                const urlObject = new URL(value);
+                return urlObject.protocol === 'http:' || urlObject.protocol === 'https:';
+            } catch {
+                return false;
             }
+        }
+    };
 
-            const email = document.getElementById('corp-email').value;
-            if (!Validators.email(email)) {
-                UI.showError('corp-email');
-                valid = false;
-            }
+    /**
+     * Валидация формы добавления сайта
+     * 
+     * @returns {boolean} true если форма валидна
+     */
+    function validateSaiteForm() {
+        const form = document.getElementById('form-saite');
+        UI.clearErrors(form);
+        let isValid = true;
 
-            const type = document.getElementById('corp-type').value;
-            if (!type) {
-                UI.showError('corp-type');
-                valid = false;
-            }
-
-            const message = document.getElementById('corp-message').value;
-            if (!Validators.minLength(message, 20)) {
-                UI.showError('corp-message');
-                valid = false;
-            }
-
-            const agree = document.getElementById('corp-agree').checked;
-            if (!agree) {
-                UI.showError('corp-agree');
-                valid = false;
-            }
-
-            return valid;
+        // Проверка заголовка
+        const title = document.getElementById('saite-title').value;
+        if (!Validators.minLength(title, CONFIG.MIN_TITLE_LENGTH)) {
+            UI.showError('saite-title');
+            isValid = false;
         }
 
-        async function submitSaite(data) {
-            const res = await fetch('/api/add/saite', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({ error: 'Ошибка сервера' }));
-                throw new Error(err.error || `Ошибка ${res.status}`);
-            }
-            return await res.json();
+        // Проверка URL
+        const url = document.getElementById('saite-url').value;
+        if (!Validators.url(url)) {
+            UI.showError('saite-url');
+            isValid = false;
         }
 
-        async function submitCorp(data) {
-            const res = await fetch('/api/add/corp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({ error: 'Ошибка сервера' }));
-                throw new Error(err.error || `Ошибка ${res.status}`);
-            }
-            return await res.json();
+        // Проверка описания
+        const description = document.getElementById('saite-desc').value;
+        if (!Validators.minLength(description, CONFIG.MIN_DESCRIPTION_LENGTH)) {
+            UI.showError('saite-desc');
+            isValid = false;
         }
 
-        function bindEvents() {
-            // Tab clicks - SPA behavior
-            document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-        e.preventDefault();
-        const mode = tab.dataset.mode;
-        const newUrl = `/add?p=${mode}`;
-        window.history.pushState({ mode }, '', newUrl);
-        setModeFromUrl(false);
-    });
-});
+        // Проверка имени
+        const name = document.getElementById('saite-name').value;
+        if (!Validators.minLength(name, CONFIG.MIN_NAME_LENGTH)) {
+            UI.showError('saite-name');
+            isValid = false;
+        }
 
-            // Saite form
-            document.getElementById('form-saite').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!validateSaiteForm()) {
-                    UI.toast('Проверьте правильность заполнения полей', 'error');
-                    return;
-                }
+        // Проверка email
+        const email = document.getElementById('saite-email').value;
+        if (!Validators.email(email)) {
+            UI.showError('saite-email');
+            isValid = false;
+        }
 
-                const btn = document.getElementById('submit-saite');
-                UI.setLoading(btn, true);
+        // Проверка согласия с правилами
+        const rulesCheckbox = document.getElementById('saite-rules').checked;
+        if (!rulesCheckbox) {
+            UI.showError('saite-rules');
+            isValid = false;
+        }
 
-                try {
-                    const data = {
-                        title: document.getElementById('saite-title').value.trim(),
-                        url: document.getElementById('saite-url').value.trim(),
-                        description: document.getElementById('saite-desc').value.trim(),
-                        category: document.getElementById('saite-category').value,
-                        authorName: document.getElementById('saite-name').value.trim(),
-                        email: document.getElementById('saite-email').value.trim(),
-                        telegram: document.getElementById('saite-telegram').value.trim()
-                    };
+        return isValid;
+    }
 
-                    await submitSaite(data);
-                    showSuccess('saite');
-                } catch (err) {
-                    UI.toast(err.message, 'error');
-                } finally {
-                    UI.setLoading(btn, false);
-                }
-            });
+    /**
+     * Валидация формы сотрудничества
+     * 
+     * @returns {boolean} true если форма валидна
+     */
+    function validateCorpForm() {
+        const form = document.getElementById('form-corp');
+        UI.clearErrors(form);
+        let isValid = true;
 
-            // Corp form
-            document.getElementById('form-corp').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!validateCorpForm()) {
-                    UI.toast('Проверьте правильность заполнения полей', 'error');
-                    return;
-                }
+        // Проверка имени
+        const name = document.getElementById('corp-name').value;
+        if (!Validators.minLength(name, CONFIG.MIN_NAME_LENGTH)) {
+            UI.showError('corp-name');
+            isValid = false;
+        }
 
-                const btn = document.getElementById('submit-corp');
-                UI.setLoading(btn, true);
+        // Проверка email
+        const email = document.getElementById('corp-email').value;
+        if (!Validators.email(email)) {
+            UI.showError('corp-email');
+            isValid = false;
+        }
 
-                try {
-                    const data = {
-                        name: document.getElementById('corp-name').value.trim(),
-                        company: document.getElementById('corp-company').value.trim(),
-                        email: document.getElementById('corp-email').value.trim(),
-                        telegram: document.getElementById('corp-telegram').value.trim(),
-                        type: document.getElementById('corp-type').value,
-                        message: document.getElementById('corp-message').value.trim(),
-                        budget: document.getElementById('corp-budget').value,
-                        website: document.getElementById('corp-website').value.trim()
-                    };
+        // Проверка типа
+        const type = document.getElementById('corp-type').value;
+        if (!type) {
+            UI.showError('corp-type');
+            isValid = false;
+        }
 
-                    await submitCorp(data);
-                    showSuccess('corp');
-                } catch (err) {
-                    UI.toast(err.message, 'error');
-                } finally {
-                    UI.setLoading(btn, false);
-                }
-            });
+        // Проверка сообщения
+        const message = document.getElementById('corp-message').value;
+        if (!Validators.minLength(message, CONFIG.MIN_DESCRIPTION_LENGTH)) {
+            UI.showError('corp-message');
+            isValid = false;
+        }
 
-            // Character counters
-            document.getElementById('saite-desc').addEventListener('input', (e) => {
-                document.getElementById('saite-desc-counter').textContent = e.target.value.length;
-            });
+        // Проверка согласия
+        const agreeCheckbox = document.getElementById('corp-agree').checked;
+        if (!agreeCheckbox) {
+            UI.showError('corp-agree');
+            isValid = false;
+        }
 
-            document.getElementById('corp-message').addEventListener('input', (e) => {
-                document.getElementById('corp-message-counter').textContent = e.target.value.length;
-            });
+        return isValid;
+    }
 
-            // Clear errors on input
-            document.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(input => {
-                input.addEventListener('input', () => {
-                    input.classList.remove('error');
-                    const err = document.querySelector(`[data-error-for="${input.id}"]`);
-                    if (err) err.classList.remove('visible');
-                });
-            });
+    // ============================================
+    // Отправка данных
+    // ============================================
+    
+    /**
+     * Отправка заявки на добавление сайта
+     * 
+     * @param {Object} data - Данные формы
+     * @returns {Promise<Object>} Ответ сервера
+     * @throws {Error} Если запрос не удался
+     */
+    async function submitSaite(data) {
+        const response = await fetch(CONFIG.SAITE_SUBMIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: MESSAGES.serverError }));
+            throw new Error(errorData.error || `Ошибка ${response.status}`);
+        }
+        
+        return await response.json();
+    }
 
-            // Telegram auto-formatting
-            document.querySelectorAll('input[name="telegram"]').forEach(input => {
-                input.addEventListener('blur', (e) => {
-                    let val = e.target.value.trim();
-                    if (val && !val.startsWith('@')) {
-                        e.target.value = '@' + val;
-                    }
-                });
-            });
+    /**
+     * Отправка заявки на сотрудничество
+     * 
+     * @param {Object} data - Данные формы
+     * @returns {Promise<Object>} Ответ сервера
+     * @throws {Error} Если запрос не удался
+     */
+    async function submitCorp(data) {
+        const response = await fetch(CONFIG.CORP_SUBMIT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: MESSAGES.serverError }));
+            throw new Error(errorData.error || `Ошибка ${response.status}`);
+        }
+        
+        return await response.json();
+    }
 
-            // New submission button
-            document.getElementById('new-submission').addEventListener('click', () => {
-                document.getElementById('success-screen').classList.remove('active');
-                document.getElementById(`section-${State.mode}`).classList.add('active');
-                document.getElementById('form-saite').reset();
-                document.getElementById('form-corp').reset();
-                document.getElementById('saite-desc-counter').textContent = '0';
-                document.getElementById('corp-message-counter').textContent = '0';
-            });
-
-            // Popstate for browser back/forward
-            window.addEventListener('popstate', () => {
+    // ============================================
+    // Обработчики событий
+    // ============================================
+    
+    /**
+     * Привязка всех обработчиков событий
+     */
+    function bindEvents() {
+        // Клики по вкладкам - SPA поведение
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', (event) => {
+                event.preventDefault();
+                const mode = tab.dataset.mode;
+                const newUrl = `${CONFIG.BASE_URL}?${CONFIG.MODE_PARAM}=${mode}`;
+                window.history.pushState({ mode }, '', newUrl);
                 setModeFromUrl(false);
             });
-        }
+        });
 
-        function showSuccess(type) {
-            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-            const screen = document.getElementById('success-screen');
-            const title = document.getElementById('success-title');
-            const text = document.getElementById('success-text');
-
-            if (type === 'saite') {
-                title.textContent = 'Заявка отправлена!';
-                text.textContent = 'Мы получили ваш сайт и рассмотрим его в течение 24 часов. Результат придёт на указанный email.';
-            } else {
-                title.textContent = 'Предложение отправлено!';
-                text.textContent = 'Спасибо за интерес к сотрудничеству. Наша команда свяжется с вами в течение 24 часов.';
+        // Отправка формы добавления сайта
+        document.getElementById('form-saite').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            if (!validateSaiteForm()) {
+                UI.toast(MESSAGES.validationError, 'error');
+                return;
             }
 
-            screen.classList.add('active');
-            UI.toast('Успешно отправлено', 'success');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+            const submitButton = document.getElementById('submit-saite');
+            UI.setLoading(submitButton, true);
 
-        function init() {
+            try {
+                const formData = {
+                    title: document.getElementById('saite-title').value.trim(),
+                    url: document.getElementById('saite-url').value.trim(),
+                    description: document.getElementById('saite-desc').value.trim(),
+                    category: document.getElementById('saite-category').value,
+                    authorName: document.getElementById('saite-name').value.trim(),
+                    email: document.getElementById('saite-email').value.trim(),
+                    telegram: document.getElementById('saite-telegram').value.trim()
+                };
+
+                await submitSaite(formData);
+                showSuccess('saite');
+            } catch (error) {
+                UI.toast(error.message, 'error');
+            } finally {
+                UI.setLoading(submitButton, false);
+            }
+        });
+
+        // Отправка формы сотрудничества
+        document.getElementById('form-corp').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            if (!validateCorpForm()) {
+                UI.toast(MESSAGES.validationError, 'error');
+                return;
+            }
+
+            const submitButton = document.getElementById('submit-corp');
+            UI.setLoading(submitButton, true);
+
+            try {
+                const formData = {
+                    name: document.getElementById('corp-name').value.trim(),
+                    company: document.getElementById('corp-company').value.trim(),
+                    email: document.getElementById('corp-email').value.trim(),
+                    telegram: document.getElementById('corp-telegram').value.trim(),
+                    type: document.getElementById('corp-type').value,
+                    message: document.getElementById('corp-message').value.trim(),
+                    budget: document.getElementById('corp-budget').value,
+                    website: document.getElementById('corp-website').value.trim()
+                };
+
+                await submitCorp(formData);
+                showSuccess('corp');
+            } catch (error) {
+                UI.toast(error.message, 'error');
+            } finally {
+                UI.setLoading(submitButton, false);
+            }
+        });
+
+        // Счетчики символов
+        document.getElementById('saite-desc').addEventListener('input', (event) => {
+            document.getElementById('saite-desc-counter').textContent = event.target.value.length;
+        });
+
+        document.getElementById('corp-message').addEventListener('input', (event) => {
+            document.getElementById('corp-message-counter').textContent = event.target.value.length;
+        });
+
+        // Очистка ошибок при вводе
+        document.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('error');
+                const errorElement = document.querySelector(`[data-error-for="${input.id}"]`);
+                if (errorElement) {
+                    errorElement.classList.remove('visible');
+                }
+            });
+        });
+
+        // Автоформатирование Telegram
+        document.querySelectorAll('input[name="telegram"]').forEach(input => {
+            input.addEventListener('blur', (event) => {
+                let value = event.target.value.trim();
+                if (value && !value.startsWith('@')) {
+                    event.target.value = '@' + value;
+                }
+            });
+        });
+
+        // Кнопка новой заявки
+        document.getElementById('new-submission').addEventListener('click', () => {
+            document.getElementById('success-screen').classList.remove('active');
+            document.getElementById(`section-${State.mode}`).classList.add('active');
+            document.getElementById('form-saite').reset();
+            document.getElementById('form-corp').reset();
+            document.getElementById('saite-desc-counter').textContent = '0';
+            document.getElementById('corp-message-counter').textContent = '0';
+        });
+
+        // Навигация браузера назад/вперед
+        window.addEventListener('popstate', () => {
             setModeFromUrl(false);
-            bindEvents();
+        });
+    }
+
+    // ============================================
+    // Экран успеха
+    // ============================================
+    
+    /**
+     * Показ экрана успешной отправки
+     * 
+     * @param {string} type - Тип формы: 'saite' | 'corp'
+     */
+    function showSuccess(type) {
+        // Скрытие всех секций
+        document.querySelectorAll('.form-section').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        const successScreen = document.getElementById('success-screen');
+        const titleElement = document.getElementById('success-title');
+        const textElement = document.getElementById('success-text');
+
+        if (type === 'saite') {
+            titleElement.textContent = MESSAGES.saiteSuccessTitle;
+            textElement.textContent = MESSAGES.saiteSuccessText;
+        } else {
+            titleElement.textContent = MESSAGES.corpSuccessTitle;
+            textElement.textContent = MESSAGES.corpSuccessText;
         }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-    })();
-    </script>
+        successScreen.classList.add('active');
+        UI.toast(MESSAGES.submitSuccess, 'success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ============================================
+    // Инициализация
+    // ============================================
+    
+    /**
+     * Инициализация приложения
+     */
+    function init() {
+        setModeFromUrl(false);
+        bindEvents();
+    }
+
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 </body>
 </html>
