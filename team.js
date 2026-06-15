@@ -398,19 +398,63 @@ function createApplicationKeyboard(code) {
 }
 
 /**
- * Отправка уведомления о новой заявке с inline-кнопками
+ * Отправка уведомления в Telegram с inline-кнопками
  * @param {string} text - Текст сообщения
- * @param {string} code - Код заявки (для кнопок)
+ * @param {string} [code] - Код заявки (для кнопок)
  * @returns {Promise<Object|null>}
  */
 async function sendTelegramNotification(text, code = null) {
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        console.warn('[Team] Telegram credentials not configured');
+        console.warn('[Telegram] Credentials not configured');
         return null;
     }
 
-    const replyMarkup = code ? createApplicationKeyboard(code) : null;
-    return await sendTelegramMessage(text, replyMarkup);
+    const body = {
+        chat_id: TELEGRAM_CHAT_ID,
+        text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+    };
+
+    // Добавляем inline кнопки если есть код
+    if (code) {
+        body.reply_markup = {
+            inline_keyboard: [
+                [
+                    {
+                        text: '✅ Одобрить',
+                        callback_data: `approve_${code}`
+                    },
+                    {
+                        text: '🚫 Отклонить',
+                        callback_data: `reject_${code}`
+                    }
+                ]
+            ]
+        };
+    }
+
+    try {
+        const response = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('[Telegram] Send failed:', errorData);
+            return null;
+        }
+
+        return await response.json();
+    } catch (err) {
+        console.error('[Telegram] Network error:', err.message);
+        return null;
+    }
 }
 
 // ============================================
@@ -566,17 +610,19 @@ async function handleListCommand(chatId) {
 }
 
 // ============================================
-// Telegram Bot: Бизнес-логика
+// Telegram Bot: Бизнес-логика (ПРЯМЫЕ ВЫЗОВЫ)
 // ============================================
 
 /**
- * Одобрение заявки (внутренняя функция)
+ * Одобрение заявки (прямой вызов, без HTTP)
  * @param {string} code - Код заявки
  * @returns {Promise<Object>} Результат { success, login?, password?, error? }
  */
 async function approveApplication(code) {
     try {
-        const app = await kv.hgetall(K.APPLICATION(code.toUpperCase()));
+        const normalizedCode = code.toUpperCase();
+        const app = await kv.hgetall(K.APPLICATION(normalizedCode));
+        
         if (!app || !app.code) {
             return { success: false, error: ERROR_MESSAGES.APPLICATION_NOT_FOUND };
         }
@@ -584,17 +630,20 @@ async function approveApplication(code) {
             return { success: false, error: ERROR_MESSAGES.APPLICATION_ALREADY_APPROVED };
         }
 
+        // Генерация учётных данных
         const login = generateLogin(app.fullName);
         const password = generatePassword();
         const passwordHash = await hashPassword(password);
 
-        await kv.hset(K.APPLICATION(app.code), {
+        // Обновление заявки
+        await kv.hset(K.APPLICATION(normalizedCode), {
             status: 'approved',
             login,
             password,
             passwordShown: 'false'
         });
 
+        // Создание пользователя
         await kv.hset(K.USER(login), {
             login,
             passwordHash,
@@ -603,35 +652,39 @@ async function approveApplication(code) {
             contact: app.contact,
             age: String(app.age),
             hasMicrophone: String(app.hasMicrophone),
-            applicationCode: app.code,
+            applicationCode: normalizedCode,
             createdAt: new Date().toISOString(),
             role: 'team'
         });
         await kv.sadd(K.USERS_INDEX, login);
 
+        console.log(`[Team] Application approved: ${normalizedCode} → login: ${login}`);
         return { success: true, login, password };
     } catch (err) {
-        console.error('[Bot] Approve error:', err);
+        console.error('[Team] Approve error:', err);
         return { success: false, error: err.message };
     }
 }
 
 /**
- * Отклонение заявки (внутренняя функция)
+ * Отклонение заявки (прямой вызов, без HTTP)
  * @param {string} code - Код заявки
  * @returns {Promise<Object>} Результат { success, error? }
  */
 async function rejectApplication(code) {
     try {
-        const app = await kv.hgetall(K.APPLICATION(code.toUpperCase()));
+        const normalizedCode = code.toUpperCase();
+        const app = await kv.hgetall(K.APPLICATION(normalizedCode));
+        
         if (!app || !app.code) {
             return { success: false, error: ERROR_MESSAGES.APPLICATION_NOT_FOUND };
         }
 
-        await kv.hset(K.APPLICATION(app.code), { status: 'rejected' });
+        await kv.hset(K.APPLICATION(normalizedCode), { status: 'rejected' });
+        console.log(`[Team] Application rejected: ${normalizedCode}`);
         return { success: true };
     } catch (err) {
-        console.error('[Bot] Reject error:', err);
+        console.error('[Team] Reject error:', err);
         return { success: false, error: err.message };
     }
 }
@@ -649,24 +702,28 @@ async function handleCallbackQuery(callbackQuery) {
     const messageId = callbackQuery.message.message_id;
     const data = callbackQuery.data;
 
+    console.log(`[Bot] Callback: ${data} from chat ${chatId}`);
+
     // Формат: "approve_CODE" или "reject_CODE"
     const separatorIndex = data.indexOf('_');
     if (separatorIndex === -1) {
-        await answerCallbackQuery(callbackQuery.id, 'Неизвестное действие');
+        await answerCallbackQuery(callbackQuery.id, '❌ Неизвестное действие');
         return;
     }
 
     const action = data.substring(0, separatorIndex);
     const code = data.substring(separatorIndex + 1);
 
+    console.log(`[Bot] Parsed action: ${action}, code: ${code}`);
+
     if (action === 'approve') {
         await handleApproveCommand(chatId, messageId, code);
-        await answerCallbackQuery(callbackQuery.id, 'Заявка одобрена ✅');
+        await answerCallbackQuery(callbackQuery.id, '✅ Заявка одобрена');
     } else if (action === 'reject') {
         await handleRejectCommand(chatId, messageId, code);
-        await answerCallbackQuery(callbackQuery.id, 'Заявка отклонена 🚫');
+        await answerCallbackQuery(callbackQuery.id, '🚫 Заявка отклонена');
     } else {
-        await answerCallbackQuery(callbackQuery.id, 'Неизвестное действие');
+        await answerCallbackQuery(callbackQuery.id, '❌ Неизвестное действие');
     }
 }
 
@@ -676,8 +733,11 @@ async function handleCallbackQuery(callbackQuery) {
  */
 async function processUpdate(update) {
     try {
+        console.log('[Bot] Processing update type:', Object.keys(update).join(', '));
+
         // Callback query (нажатие inline кнопки)
         if (update.callback_query) {
+            console.log('[Bot] Callback query received:', update.callback_query.data);
             await handleCallbackQuery(update.callback_query);
             return;
         }
@@ -688,8 +748,11 @@ async function processUpdate(update) {
             const messageId = update.message.message_id;
             const text = update.message.text.trim();
 
+            console.log(`[Bot] Message from chat ${chatId}: ${text}`);
+
             // Проверка, что запрос от авторизованного чата
             if (String(chatId) !== String(TELEGRAM_CHAT_ID)) {
+                console.warn(`[Bot] Unauthorized chat: ${chatId} (expected: ${TELEGRAM_CHAT_ID})`);
                 await sendTelegramMessage(
                     '⛔ Доступ запрещён. Этот бот только для администратора.',
                     null,
@@ -711,15 +774,24 @@ async function processUpdate(update) {
 
             if (text.startsWith('/approve')) {
                 const code = text.split(' ')[1]?.trim().toUpperCase();
+                console.log(`[Bot] Approve command with code: ${code}`);
                 await handleApproveCommand(chatId, messageId, code);
                 return;
             }
 
             if (text.startsWith('/reject')) {
                 const code = text.split(' ')[1]?.trim().toUpperCase();
+                console.log(`[Bot] Reject command with code: ${code}`);
                 await handleRejectCommand(chatId, messageId, code);
                 return;
             }
+
+            // Неизвестная команда
+            await sendTelegramMessage(
+                `Неизвестная команда: <code>${text}</code>\n\nИспользуйте /help для списка команд.`,
+                null,
+                chatId
+            );
         }
     } catch (err) {
         console.error('[Bot] Process update error:', err);
@@ -1081,13 +1153,16 @@ router.get('/applications', verifyAdminToken, async (req, res) => {
 
 /**
  * POST /bot — webhook endpoint для Telegram Bot
- * Принимает update'ы от Telegram и обрабатывает команды/кнопки
  */
 router.post('/bot', async (req, res) => {
-    // Проверка секретного токена (если настроен)
+    // Логирование входящего запроса для отладки
+    console.log('[Bot] Webhook received:', JSON.stringify(req.body).substring(0, 500));
+
+    // Опциональная проверка секретного токена
     if (TELEGRAM_WEBHOOK_SECRET) {
         const receivedSecret = req.headers['x-telegram-bot-api-secret-token'];
         if (receivedSecret !== TELEGRAM_WEBHOOK_SECRET) {
+            console.warn('[Bot] Invalid secret token');
             return res.status(403).json({ error: ERROR_MESSAGES.INVALID_SECRET });
         }
     }
@@ -1101,12 +1176,11 @@ router.post('/bot', async (req, res) => {
     const update = req.body;
 
     // Асинхронная обработка (не блокируем ответ Telegram)
-    // Telegram требует быстрый ответ (< 30 секунд)
     processUpdate(update).catch(err => {
         console.error('[Bot] Async processing error:', err);
     });
 
-    // Сразу отвечаем 200 OK
+    // Сразу отвечаем 200 OK (Telegram требует быстрый ответ)
     res.status(200).json({ ok: true });
 });
 
@@ -1170,6 +1244,94 @@ router.post('/bot/setup', verifyAdminToken, async (req, res) => {
     } catch (err) {
         console.error('[Bot] Setup error:', err);
         res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+});
+
+/**
+ * GET /bot/diagnose — диагностика webhook (только для админа)
+ */
+router.get('/bot/diagnose', verifyAdminToken, async (req, res) => {
+    if (!TELEGRAM_BOT_TOKEN) {
+        return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN not set' });
+    }
+
+    try {
+        // Получаем информацию о боте
+        const botInfoRes = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`
+        );
+        const botInfo = await botInfoRes.json();
+
+        // Получаем информацию о webhook
+        const webhookInfoRes = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`
+        );
+        const webhookInfo = await webhookInfoRes.json();
+
+        // Получаем последние ошибки
+        const updatesRes = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?limit=5`
+        );
+        const updates = await updatesRes.json();
+
+        res.json({
+            bot: botInfo.result || null,
+            webhook: webhookInfo.result || null,
+            recentUpdates: updates.result || [],
+            config: {
+                chatId: TELEGRAM_CHAT_ID,
+                hasSecret: !!TELEGRAM_WEBHOOK_SECRET,
+                expectedWebhookUrl: `${req.protocol}://${req.get('host')}/api/team/bot`
+            }
+        });
+    } catch (err) {
+        console.error('[Bot] Diagnose error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/**
+ * POST /bot/setup — установка webhook (только для админа)
+ */
+router.post('/bot/setup', verifyAdminToken, async (req, res) => {
+    if (!TELEGRAM_BOT_TOKEN) {
+        return res.status(500).json({ error: 'TELEGRAM_BOT_TOKEN not set' });
+    }
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const webhookUrl = `${baseUrl}/api/team/bot`;
+
+    console.log(`[Bot] Setting webhook to: ${webhookUrl}`);
+
+    try {
+        const body = { url: webhookUrl };
+        if (TELEGRAM_WEBHOOK_SECRET) {
+            body.secret_token = TELEGRAM_WEBHOOK_SECRET;
+        }
+
+        const response = await fetch(
+            `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            return res.status(400).json({ error: data.description || 'Failed to set webhook' });
+        }
+
+        res.json({
+            success: true,
+            webhookUrl,
+            description: data.description || 'Webhook установлен'
+        });
+    } catch (err) {
+        console.error('[Bot] Setup error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
