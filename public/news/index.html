@@ -1998,1893 +1998,2395 @@ Level Badges
         <span id="toastMessage"></span>
     </div>
 
-    <!-- ===========================
-         JavaScript (клиентская логика)
-         =========================== -->
-    <script>
-        (function() {
-            'use strict';
+<!-- ===========================
+JavaScript (клиентская логика)
+=========================== -->
+<script>
+(function() {
+    'use strict';
 
-            // ============================================
-            // Конфигурация API
-            // ============================================
-            const API = {
-                BASE: '', // Тот же домен (oris-sand.vercel.app)
-                AUTH_REGISTER: '/api/news/auth/register',
-                AUTH_LOGIN: '/api/news/auth/login',
-                AUTH_ME: '/api/news/auth/me',
-                POSTS: '/api/news/posts',
-                POSTS_LIKE: (id) => `/api/news/posts/${id}/like`,
-                POSTS_DISLIKE: (id) => `/api/news/posts/${id}/dislike`,
-                POSTS_FAVORITE: (id) => `/api/news/posts/${id}/favorite`,
-                POSTS_PIN: (id) => `/api/news/posts/${id}/pin`,
-                COMMENTS: (postId) => `/api/news/posts/${postId}/comments`,
-                COMMENT_LIKE: (id) => `/api/news/comments/${id}/like`,
-                COMMENT_DISLIKE: (id) => `/api/news/comments/${id}/dislike`,
-                COMMENT_PIN: (id) => `/api/news/comments/${id}/pin`,
-                COMMENT: (id) => `/api/news/comments/${id}`,
-                UPLOAD: '/api/news/upload'
-            };
+    // ============================================
+    // Константы и конфигурация
+    // ============================================
+    
+    /**
+     * Конфигурация API endpoints
+     * @namespace
+     */
+    const API = {
+        BASE: '',
+        
+        /**
+         * Endpoints для аутентификации
+         */
+        AUTH: {
+            REGISTER: '/api/news/auth/register',
+            LOGIN: '/api/news/auth/login',
+            ME: '/api/news/auth/me'
+        },
+        
+        /**
+         * Endpoints для работы с постами
+         */
+        POSTS: {
+            LIST: '/api/news/posts',
+            LIKE: (id) => `/api/news/posts/${id}/like`,
+            DISLIKE: (id) => `/api/news/posts/${id}/dislike`,
+            FAVORITE: (id) => `/api/news/posts/${id}/favorite`,
+            PIN: (id) => `/api/news/posts/${id}/pin`
+        },
+        
+        /**
+         * Endpoints для работы с комментариями
+         */
+        COMMENTS: {
+            LIST: (postId) => `/api/news/posts/${postId}/comments`,
+            LIKE: (id) => `/api/news/comments/${id}/like`,
+            DISLIKE: (id) => `/api/news/comments/${id}/dislike`,
+            PIN: (id) => `/api/news/comments/${id}/pin`,
+            SINGLE: (id) => `/api/news/comments/${id}`
+        },
+        
+        /**
+         * Endpoint для загрузки файлов
+         */
+        UPLOAD: '/api/news/upload'
+    };
 
-            // ============================================
-            // Состояние приложения
-            // ============================================
-            const State = {
-                user: null,              // { id, role, nickname, avatar, token }
-                posts: [],               // массив постов
-                currentFilter: 'all',    // all | favorites | mine
-                currentPostId: null,     // ID поста в модалке комментариев
-                comments: [],            // комментарии текущего поста
-                commentSort: 'newest',   // newest | top
-                replyToId: null,         // ID комментария для ответа
-                editingCommentId: null,  // ID редактируемого комментария
-                editingPostId: null,     // ID редактируемого поста
-                pendingFiles: [],        // файлы для загрузки к посту
-                uploadedFileUrls: [],    // URL уже загруженных файлов
-                authMode: 'login',       // login | register
-                authRole: 'reader'       // reader | admin
-            };
+    /**
+     * Константы приложения
+     * @namespace
+     */
+    const CONSTANTS = {
+        MAX_FILE_SIZE: 50 * 1024 * 1024, // 50 MB
+        MAX_COMMENT_LENGTH: 2000,
+        MIN_LOGIN_LENGTH: 3,
+        MIN_PASSWORD_LENGTH: 6,
+        TOAST_DURATION: 3000,
+        MODAL_CLOSE_DELAY: 250,
+        MAX_REPLY_DEPTH: 3,
+        LS_USER_KEY: 'oris_news_user'
+    };
 
-            // ============================================
-            // Настройка Markdown
-            // ============================================
-            marked.setOptions({
-                gfm: true,
-                breaks: true,
-                headerIds: false,
-                mangle: false,
-                highlight: function(code, lang) {
-                    if (lang && hljs.getLanguage(lang)) {
-                        try { return hljs.highlight(code, { language: lang }).value; } 
-                        catch (e) {}
-                    }
-                    return hljs.highlightAuto(code).value;
+    /**
+     * Состояние приложения
+     * @namespace
+     */
+    const State = {
+        /** @type {Object|null} Данные текущего пользователя */
+        user: null,
+        
+        /** @type {Array} Массив постов */
+        posts: [],
+        
+        /** @type {string} Текущий фильтр постов: 'all' | 'favorites' | 'mine' */
+        currentFilter: 'all',
+        
+        /** @type {string|null} ID поста в модальном окне комментариев */
+        currentPostId: null,
+        
+        /** @type {Array} Комментарии текущего поста */
+        comments: [],
+        
+        /** @type {string} Сортировка комментариев: 'newest' | 'top' */
+        commentSort: 'newest',
+        
+        /** @type {string|null} ID комментария для ответа */
+        replyToId: null,
+        
+        /** @type {string|null} ID редактируемого комментария */
+        editingCommentId: null,
+        
+        /** @type {string|null} ID редактируемого поста */
+        editingPostId: null,
+        
+        /** @type {Array} Файлы, ожидающие загрузки */
+        pendingFiles: [],
+        
+        /** @type {Array} URL уже загруженных файлов */
+        uploadedFileUrls: [],
+        
+        /** @type {string} Режим модального окна: 'login' | 'register' */
+        authMode: 'login',
+        
+        /** @type {string} Роль пользователя: 'reader' | 'admin' */
+        authRole: 'reader'
+    };
+
+    // ============================================
+    // Markdown Configuration
+    // ============================================
+    
+    /**
+     * Инициализация настроек Markdown парсера
+     */
+    marked.setOptions({
+        gfm: true,
+        breaks: true,
+        headerIds: false,
+        mangle: false,
+        highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return hljs.highlight(code, { language: lang }).value;
+                } catch (error) {
+                    console.warn(`Markdown highlight error for language "${lang}":`, error);
                 }
-            });
-
-            function renderMarkdown(text) {
-                if (!text) return '';
-                const raw = marked.parse(text);
-                return DOMPurify.sanitize(raw, {
-                    ADD_TAGS: ['iframe'],
-                    ADD_ATTR: ['target', 'rel']
-                });
             }
-
-            // ============================================
-            // Security Utilities
-            // ============================================
-            const Security = {
-                escapeHtml(str) {
-                    if (!str) return '';
-                    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-                    return String(str).replace(/[&<>"']/g, m => map[m]);
-                },
-                safeText(str) {
-                    return this.escapeHtml(str || '');
-                }
-            };
-
-            // ============================================
-            // UI Utilities
-            // ============================================
-            const UI = {
-                toast(message, type = 'info', duration = 3000) {
-                    const toast = document.getElementById('toast');
-                    const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
-                    document.getElementById('toastMessage').textContent = message;
-                    document.getElementById('toastIcon').textContent = icons[type] || '';
-                    toast.className = `toast ${type} visible`;
-                    clearTimeout(this._toastTimer);
-                    this._toastTimer = setTimeout(() => {
-                        toast.classList.remove('visible');
-                    }, duration);
-                },
-
-                openModal(id) {
-                    const modal = document.getElementById(id);
-                    if (!modal) return;
-                    modal.style.display = 'flex';
-                    void modal.offsetWidth;
-                    modal.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                },
-
-                closeModal(id) {
-                    const modal = document.getElementById(id);
-                    if (!modal) return;
-                    modal.classList.remove('active');
-                    setTimeout(() => {
-                        modal.style.display = 'none';
-                        document.body.style.overflow = '';
-                    }, 250);
-                },
-
-                setLoading(btn, isLoading, loadingText = 'Загрузка...') {
-                    if (isLoading) {
-                        btn.dataset.originalText = btn.innerHTML;
-                        btn.innerHTML = loadingText;
-                        btn.disabled = true;
-                    } else {
-                        btn.innerHTML = btn.dataset.originalText || 'OK';
-                        btn.disabled = false;
-                    }
-                },
-
-                formatBytes(bytes) {
-                    if (bytes === 0) return '0 B';
-                    const k = 1024;
-                    const sizes = ['B', 'KB', 'MB', 'GB'];
-                    const i = Math.floor(Math.log(bytes) / Math.log(k));
-                    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-                },
-
-                formatRelativeDate(dateStr) {
-                    const date = new Date(dateStr);
-                    const now = new Date();
-                    const diff = Math.floor((now - date) / 1000);
-
-                    if (diff < 60) return 'только что';
-                    if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
-                    if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
-                    if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
-                    
-                    return date.toLocaleDateString('ru-RU', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-                    });
-                }
-            };
-
-            // ============================================
-            // Генерация SVG-аватаров для читателей
-            // ============================================
-            const AvatarGenerator = {
-                colors: [
-                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
-                    '#98D8C8', '#F7B731', '#A29BFE', '#FD79A8',
-                    '#00B894', '#6C5CE7', '#E17055', '#00CEC9'
-                ],
-
-                generate(seed) {
-                    // Детерминированная генерация на основе seed (ID пользователя)
-                    let hash = 0;
-                    const s = String(seed);
-                    for (let i = 0; i < s.length; i++) {
-                        hash = ((hash << 5) - hash) + s.charCodeAt(i);
-                        hash |= 0;
-                    }
-                    const idx = Math.abs(hash) % this.colors.length;
-                    const color = this.colors[idx];
-                    const bgColor = this.colors[(idx + 3) % this.colors.length];
-                    
-                    // Инициалы из seed
-                    const initials = s.slice(-2).toUpperCase();
-
-                    const svg = `
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-                            <defs>
-                                <linearGradient id="g${hash}" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stop-color="${color}"/>
-                                    <stop offset="100%" stop-color="${bgColor}"/>
-                                </linearGradient>
-                            </defs>
-                            <rect width="100" height="100" fill="url(#g${hash})"/>
-                            <text x="50" y="58" text-anchor="middle" font-family="Inter, sans-serif" font-size="36" font-weight="600" fill="white">${initials}</text>
-                        </svg>
-                    `;
-                    return 'data:image/svg+xml;base64,' + btoa(svg);
-                }
-            };
-
-            // ============================================
-            // API Client
-            // ============================================
-            const ApiClient = {
-                getHeaders(includeAuth = true) {
-                    const headers = {
-                        'Content-Type': 'application/json'
-                    };
-                    if (includeAuth && State.user && State.user.token) {
-                        headers['Authorization'] = `Bearer ${State.user.token}`;
-                    }
-                    return headers;
-                },
-
-                async request(url, options = {}) {
-                    try {
-                        const response = await fetch(API.BASE + url, {
-                            ...options,
-                            headers: {
-                                ...this.getHeaders(options.includeAuth !== false),
-                                ...(options.headers || {})
-                            }
-                        });
-
-                        // Специальная обработка ошибок
-                        if (response.status === 401) {
-                            // Токен недействителен
-                            this.handleAuthError();
-                            throw new Error('Сессия истекла');
-                        }
-
-                        if (response.status === 403) {
-                            throw new Error('Недостаточно прав');
-                        }
-
-                        if (response.status === 404) {
-                            throw new Error('Ресурс не найден');
-                        }
-
-                        if (response.status === 413) {
-                            throw new Error('Файл слишком большой');
-                        }
-
-                        if (!response.ok) {
-                            const errData = await response.json().catch(() => ({}));
-                            throw new Error(errData.error || `Ошибка ${response.status}`);
-                        }
-
-                        // Пустой ответ
-                        const text = await response.text();
-                        return text ? JSON.parse(text) : {};
-                    } catch (err) {
-                        if (err.name === 'TypeError' && err.message.includes('fetch')) {
-                            throw new Error('Нет соединения с сервером');
-                        }
-                        throw err;
-                    }
-                },
-
-                handleAuthError() {
-                    State.user = null;
-                    localStorage.removeItem('oris_news_user');
-                    renderAuthArea();
-                    UI.toast('Сессия истекла. Войдите снова.', 'warning');
-                },
-
-                // Auth endpoints
-                async register(login, password, nickname, role, adminToken = null) {
-    const body = { login, password, nickname: nickname || login, role };
-    if (role === 'admin' && adminToken) {
-        body.adminToken = adminToken;
-    }
-    return this.request(API.AUTH_REGISTER, {
-        method: 'POST',
-        body: JSON.stringify(body),
-        includeAuth: false
-    });
-},
-
-                async login(login, password) {
-    return this.request(API.AUTH_LOGIN, {
-        method: 'POST',
-        body: JSON.stringify({ login, password }),
-        includeAuth: false
-    });
-},
-
-                async me() {
-                    return this.request(API.AUTH_ME);
-                },
-
-                // Posts endpoints
-                async getPosts() {
-                    return this.request(API.POSTS);
-                },
-
-                async createPost(title, content, files) {
-                    return this.request(API.POSTS, {
-                        method: 'POST',
-                        body: JSON.stringify({ title, content, files })
-                    });
-                },
-
-                async updatePost(id, title, content, files) {
-                    return this.request(`${API.POSTS}/${id}`, {
-                        method: 'PUT',
-                        body: JSON.stringify({ title, content, files })
-                    });
-                },
-
-                async deletePost(id) {
-                    return this.request(`${API.POSTS}/${id}`, {
-                        method: 'DELETE'
-                    });
-                },
-
-                async toggleLike(postId) {
-                    return this.request(API.POSTS_LIKE(postId), { method: 'POST' });
-                },
-
-                async toggleDislike(postId) {
-                    return this.request(API.POSTS_DISLIKE(postId), { method: 'POST' });
-                },
-
-                async toggleFavorite(postId) {
-                    return this.request(API.POSTS_FAVORITE(postId), { method: 'POST' });
-                },
-
-                async togglePin(postId) {
-                    return this.request(API.POSTS_PIN(postId), { method: 'POST' });
-                },
-
-                // Comments endpoints
-                async getComments(postId) {
-                    return this.request(API.COMMENTS(postId));
-                },
-
-                async createComment(postId, text, parentId = null) {
-                    const body = { text };
-                    if (parentId) body.parentId = parentId;
-                    return this.request(API.COMMENTS(postId), {
-                        method: 'POST',
-                        body: JSON.stringify(body)
-                    });
-                },
-
-                async updateComment(commentId, text) {
-                    return this.request(API.COMMENT(commentId), {
-                        method: 'PUT',
-                        body: JSON.stringify({ text })
-                    });
-                },
-
-                async deleteComment(commentId) {
-                    return this.request(API.COMMENT(commentId), {
-                        method: 'DELETE'
-                    });
-                },
-
-                async toggleCommentLike(commentId) {
-                    return this.request(API.COMMENT_LIKE(commentId), { method: 'POST' });
-                },
-
-                async toggleCommentDislike(commentId) {
-                    return this.request(API.COMMENT_DISLIKE(commentId), { method: 'POST' });
-                },
-
-                async toggleCommentPin(commentId) {
-                    return this.request(API.COMMENT_PIN(commentId), { method: 'POST' });
-                },
-
-                // File upload (multipart/form-data)
-                async uploadFile(file, onProgress) {
-                    return new Promise((resolve, reject) => {
-                        const formData = new FormData();
-                        formData.append('file', file);
-
-                        const xhr = new XMLHttpRequest();
-                        xhr.open('POST', API.BASE + API.UPLOAD);
-                        
-                        if (State.user && State.user.token) {
-                            xhr.setRequestHeader('Authorization', `Bearer ${State.user.token}`);
-                        }
-
-                        xhr.upload.onprogress = (e) => {
-                            if (e.lengthComputable && onProgress) {
-                                onProgress((e.loaded / e.total) * 100);
-                            }
-                        };
-
-                        xhr.onload = () => {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                try {
-                                    resolve(JSON.parse(xhr.responseText));
-                                } catch (e) {
-                                    reject(new Error('Неверный ответ сервера'));
-                                }
-                            } else if (xhr.status === 401) {
-                                this.handleAuthError();
-                                reject(new Error('Сессия истекла'));
-                            } else if (xhr.status === 413) {
-                                reject(new Error('Файл превышает 50 МБ'));
-                            } else {
-                                reject(new Error(`Ошибка загрузки: ${xhr.status}`));
-                            }
-                        };
-
-                        xhr.onerror = () => reject(new Error('Ошибка сети'));
-                        xhr.send(formData);
-                    });
-                }
-            };
-
-            // ============================================
-            // Инициализация сессии
-            // ============================================
-            async function initSession() {
-                const savedUser = localStorage.getItem('oris_news_user');
-                if (savedUser) {
-                    try {
-                        State.user = JSON.parse(savedUser);
-                        // Проверка валидности токена
-                        try {
-                            const me = await ApiClient.me();
-                            State.user = { ...State.user, ...me };
-                            localStorage.setItem('oris_news_user', JSON.stringify(State.user));
-                        } catch (e) {
-                            // Токен невалидный
-                            State.user = null;
-                            localStorage.removeItem('oris_news_user');
-                        }
-                    } catch (e) {
-                        localStorage.removeItem('oris_news_user');
-                    }
-                }
-                renderAuthArea();
-                updateFabVisibility();
-                await loadPosts();
-                handleUrlParams();
-            }
-
-            // ============================================
-// Обработка URL параметров
-// ============================================
-function handleUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    const commentsId = params.get('comments');
-    const shareId = params.get('share');
-    const sharedId = params.get('shared');
-
-    if (commentsId) {
-        setTimeout(() => openCommentsModal(commentsId), 500);
-    }
-    if (sharedId) {
-        // Открываем сам пост (модалку комментариев) при переходе по shared-ссылке
-        setTimeout(() => openCommentsModal(sharedId), 500);
-    }
-    if (shareId) {
-        setTimeout(() => openShareModal(shareId), 500);
-    }
-}
-
-            // ============================================
-            // Рендер области авторизации
-            // ============================================
-            function renderAuthArea() {
-    const area = document.getElementById('authArea');
-    if (!area) return;
-
-    if (!State.user) {
-        area.innerHTML = `<button class="btn btn-primary" id="loginBtn" style="padding: 6px 14px; font-size: 0.85rem;">Войти</button>`;
-        const loginBtn = document.getElementById('loginBtn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
-                State.authMode = 'login';
-                openAuthModal();
-            });
+            return hljs.highlightAuto(code).value;
         }
-    } else {
-        // Скрываем вкладку "Мои" для читателей
-        const myTab = document.querySelector('[data-filter="mine"]');
-        if (myTab) {
-            myTab.style.display = State.user.role === 'admin' ? '' : 'none';
-        }
+    });
 
-        // Выносим тяжелый рендер в requestAnimationFrame
-        requestAnimationFrame(() => {
-            const isAdmin = State.user.role === 'admin';
-            const avatarSrc = isAdmin 
-                ? '/favicon.svg' 
-                : AvatarGenerator.generate(State.user.id);
-            const displayName = isAdmin ? 'Oris' : State.user.nickname;
-            const verifiedBadge = isAdmin ? `
-                <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>` : '';
-
-            area.innerHTML = `
-                <div class="user-chip" id="userChip" title="Выйти">
-                    <div class="user-avatar">
-                        <img src="${avatarSrc}" alt="avatar">
-                    </div>
-                    <span class="user-name ${isAdmin ? 'admin' : ''}">${Security.safeText(displayName)}</span>
-${verifiedBadge}
-${!isAdmin && State.user.level ? `<span class="level-badge level-${State.user.level}">${({active:'Активный',expert:'Эксперт',plus:'Plus'})[State.user.level] || ''}</span>` : ''}
-                </div>
-            `;
-
-            const userChip = document.getElementById('userChip');
-            if (userChip) {
-                userChip.addEventListener('click', () => {
-                    if (confirm('Выйти из аккаунта?')) {
-                        logout();
-                    }
-                });
-            }
+    /**
+     * Рендеринг Markdown текста в безопасный HTML
+     * @param {string} text - Исходный Markdown текст
+     * @returns {string} - Очищенный HTML
+     */
+    function renderMarkdown(text) {
+        if (!text) return '';
+        
+        const raw = marked.parse(text);
+        
+        return DOMPurify.sanitize(raw, {
+            ADD_TAGS: ['iframe'],
+            ADD_ATTR: ['target', 'rel']
         });
     }
-}
 
-            function logout() {
-                State.user = null;
-                localStorage.removeItem('oris_news_user');
-                renderAuthArea();
-                updateFabVisibility();
-                UI.toast('Вы вышли из системы', 'info');
-                loadPosts();
-            }
+    // ============================================
+    // Security Utilities
+    // ============================================
+    
+    /**
+     * Утилиты безопасности для защиты от XSS-атак
+     * @namespace
+     */
+    const Security = {
+        /**
+         * Экранирование HTML-сущностей
+         * @param {string} str - Исходная строка
+         * @returns {string} - Экранированная строка
+         */
+        escapeHtml(str) {
+            if (!str) return '';
+            const map = { 
+                '&': '&amp;', 
+                '<': '&lt;', 
+                '>': '&gt;', 
+                '"': '&quot;', 
+                "'": '&#039;' 
+            };
+            return String(str).replace(/[&<>"']/g, m => map[m]);
+        },
+        
+        /**
+         * Безопасное получение текста для отображения
+         * @param {string} str - Исходная строка
+         * @returns {string} - Безопасная строка
+         */
+        safeText(str) {
+            return this.escapeHtml(str || '');
+        }
+    };
 
-            function updateFabVisibility() {
-                const fab = document.getElementById('createPostFab');
-                if (State.user && State.user.role === 'admin') {
-                    fab.classList.remove('hidden');
-                } else {
-                    fab.classList.add('hidden');
-                }
-            }
+    // ============================================
+    // UI Utilities
+    // ============================================
+    
+    /**
+     * Утилиты пользовательского интерфейса
+     * @namespace
+     */
+    const UI = {
+        /**
+         * Показать уведомление
+         * @param {string} message - Текст уведомления
+         * @param {string} type - Тип: 'info' | 'success' | 'error' | 'warning'
+         * @param {number} duration - Длительность показа в мс
+         */
+        toast(message, type = 'info', duration = CONSTANTS.TOAST_DURATION) {
+            const toast = document.getElementById('toast');
+            const icons = { 
+                success: '✓', 
+                error: '✕', 
+                info: 'ℹ', 
+                warning: '⚠' 
+            };
+            
+            document.getElementById('toastMessage').textContent = message;
+            document.getElementById('toastIcon').textContent = icons[type] || '';
+            toast.className = `toast ${type} visible`;
+            
+            clearTimeout(this._toastTimer);
+            this._toastTimer = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, duration);
+        },
 
-            // ============================================
-// Auth Modal
-// ============================================
+        /**
+         * Открыть модальное окно
+         * @param {string} id - ID модального окна
+         */
+        openModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            
+            modal.style.display = 'flex';
+            void modal.offsetWidth; // Force reflow
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        },
 
-function openAuthModal() {
-    // Сброс всех полей
-    const fieldsToReset = [
-        'loginInput', 'passwordInput', 'nicknameInput',
-        'loginInput2', 'passwordInput2', 'adminTokenInput'
-    ];
-    fieldsToReset.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
+        /**
+         * Закрыть модальное окно
+         * @param {string} id - ID модального окна
+         */
+        closeModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }, CONSTANTS.MODAL_CLOSE_DELAY);
+        },
 
-    // Обновление заголовков
-    const titleEl = document.getElementById('authModalTitle');
-    const submitBtn = document.getElementById('authSubmitBtn');
-    const submitText = document.getElementById('authSubmitText');
-
-    if (titleEl) {
-        titleEl.textContent = State.authMode === 'register' ? 'Регистрация' : 'Вход в аккаунт';
-    }
-    if (submitBtn && submitText) {
-        submitText.textContent = State.authMode === 'register' ? 'Создать аккаунт' : 'Войти';
-    }
-
-    showAuthStep(1);
-    UI.openModal('authModal');
-}
-
-function showAuthStep(step) {
-    document.getElementById('authStep1').classList.toggle('hidden', step !== 1);
-    document.getElementById('authStep2').classList.toggle('hidden', step !== 2);
-}
-
-function bindAuthEvents() {
-    // Role selector
-    document.querySelectorAll('.role-option').forEach(opt => {
-        opt.addEventListener('click', () => {
-            document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            State.authRole = opt.dataset.role;
-
-            const adminField = document.getElementById('adminTokenField');
-            const loginField = document.getElementById('loginField');
-            const passwordField = document.getElementById('passwordField');
-            const nicknameField = document.getElementById('nicknameField');
-
-            if (State.authRole === 'admin') {
-                adminField.classList.add('visible');
-                loginField.classList.add('hidden');
-                passwordField.classList.add('hidden');
-                nicknameField.classList.add('hidden');
+        /**
+         * Установить состояние загрузки для кнопки
+         * @param {HTMLElement} btn - Элемент кнопки
+         * @param {boolean} isLoading - Состояние загрузки
+         * @param {string} loadingText - Текст для состояния загрузки
+         */
+        setLoading(btn, isLoading, loadingText = 'Загрузка...') {
+            if (isLoading) {
+                btn.dataset.originalText = btn.innerHTML;
+                btn.innerHTML = loadingText;
+                btn.disabled = true;
             } else {
-                adminField.classList.remove('visible');
-                loginField.classList.remove('hidden');
-                passwordField.classList.remove('hidden');
-                nicknameField.classList.remove('hidden');
+                btn.innerHTML = btn.dataset.originalText || 'OK';
+                btn.disabled = false;
             }
-        });
-    });
+        },
 
-    // Submit button
-    document.getElementById('authSubmitBtn').addEventListener('click', handleAuthSubmit);
+        /**
+         * Форматирование размера файла
+         * @param {number} bytes - Размер в байтах
+         * @returns {string} - Отформатированный размер
+         */
+        formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        },
 
-    // Switch to login step
-    document.getElementById('authSwitchLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        showAuthStep(2);
-    });
+        /**
+         * Форматирование относительной даты
+         * @param {string} dateStr - ISO строка даты
+         * @returns {string} - Отформатированная дата
+         */
+        formatRelativeDate(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
 
-    // Back to register step
-    document.getElementById('backToRegister').addEventListener('click', (e) => {
-        e.preventDefault();
-        showAuthStep(1);
-    });
-
-    // Reader login button (step 2)
-    document.getElementById('readerLoginBtn').addEventListener('click', handleReaderLogin);
-
-    // Enter keys for admin
-    document.getElementById('adminTokenInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleAuthSubmit();
-    });
-
-    // Enter keys for registration fields
-    document.getElementById('loginInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('passwordInput').focus();
-    });
-    document.getElementById('passwordInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('nicknameInput').focus();
-    });
-    document.getElementById('nicknameInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleAuthSubmit();
-    });
-
-    // Enter keys for login step
-    document.getElementById('loginInput2').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('passwordInput2').focus();
-    });
-    document.getElementById('passwordInput2').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleReaderLogin();
-    });
-}
-
-async function handleAuthSubmit() {
-    const btn = document.getElementById('authSubmitBtn');
-
-    if (State.authRole === 'admin') {
-        // --- Вход администратора ---
-        const token = document.getElementById('adminTokenInput').value.trim();
-        if (!token) {
-            UI.toast('Введите admin token', 'error');
-            return;
+            if (diff < 60) return 'только что';
+            if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+            if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
+            
+            return date.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+            });
         }
+    };
 
-        UI.setLoading(btn, true, 'Проверка...');
-        try {
-            const data = await ApiClient.register('Oris', 'admin', token);
-            State.user = data.user;
-            localStorage.setItem('oris_news_user', JSON.stringify(State.user));
-            UI.closeModal('authModal');
+    // ============================================
+    // Avatar Generator
+    // ============================================
+    
+    /**
+     * Генератор SVG-аватаров для пользователей
+     * @namespace
+     */
+    const AvatarGenerator = {
+        /**
+         * Палитра цветов для аватаров
+         * @type {Array<string>}
+         */
+        colors: [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', 
+            '#98D8C8', '#F7B731', '#A29BFE', '#FD79A8',
+            '#00B894', '#6C5CE7', '#E17055', '#00CEC9'
+        ],
+
+        /**
+         * Генерация аватара на основе seed
+         * @param {string} seed - Seed для генерации (обычно ID пользователя)
+         * @returns {string} - Data URL SVG аватара
+         */
+        generate(seed) {
+            let hash = 0;
+            const s = String(seed);
+            
+            // Детерминированный хеш
+            for (let i = 0; i < s.length; i++) {
+                hash = ((hash << 5) - hash) + s.charCodeAt(i);
+                hash |= 0;
+            }
+            
+            const idx = Math.abs(hash) % this.colors.length;
+            const color = this.colors[idx];
+            const bgColor = this.colors[(idx + 3) % this.colors.length];
+            const initials = s.slice(-2).toUpperCase();
+
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="g${hash}" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="${color}"/>
+                            <stop offset="100%" stop-color="${bgColor}"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="100" height="100" fill="url(#g${hash})"/>
+                    <text x="50" y="58" text-anchor="middle" font-family="Inter, sans-serif" 
+                          font-size="36" font-weight="600" fill="white">${initials}</text>
+                </svg>
+            `;
+            
+            return 'data:image/svg+xml;base64,' + btoa(svg);
+        }
+    };
+
+    // ============================================
+    // API Client
+    // ============================================
+    
+    /**
+     * Клиент для работы с API
+     * @namespace
+     */
+    const ApiClient = {
+        /**
+         * Получение заголовков для запроса
+         * @param {boolean} includeAuth - Включать ли токен авторизации
+         * @returns {Object} - Заголовки запроса
+         */
+        getHeaders(includeAuth = true) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (includeAuth && State.user && State.user.token) {
+                headers['Authorization'] = `Bearer ${State.user.token}`;
+            }
+            
+            return headers;
+        },
+
+        /**
+         * Выполнение HTTP запроса
+         * @param {string} url - URL endpoint
+         * @param {Object} options - Опции fetch
+         * @returns {Promise<Object>} - Ответ сервера
+         */
+        async request(url, options = {}) {
+            try {
+                const response = await fetch(API.BASE + url, {
+                    ...options,
+                    headers: {
+                        ...this.getHeaders(options.includeAuth !== false),
+                        ...(options.headers || {})
+                    }
+                });
+
+                // Обработка ошибок
+                if (response.status === 401) {
+                    this.handleAuthError();
+                    throw new Error('Сессия истекла');
+                }
+                if (response.status === 403) {
+                    throw new Error('Недостаточно прав');
+                }
+                if (response.status === 404) {
+                    throw new Error('Ресурс не найден');
+                }
+                if (response.status === 413) {
+                    throw new Error('Файл слишком большой');
+                }
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || `Ошибка ${response.status}`);
+                }
+
+                const text = await response.text();
+                return text ? JSON.parse(text) : {};
+            } catch (err) {
+                if (err.name === 'TypeError' && err.message.includes('fetch')) {
+                    throw new Error('Нет соединения с сервером');
+                }
+                throw err;
+            }
+        },
+
+        /**
+         * Обработка ошибки авторизации
+         */
+        handleAuthError() {
+            State.user = null;
+            localStorage.removeItem(CONSTANTS.LS_USER_KEY);
             renderAuthArea();
-            updateFabVisibility();
-            await loadPosts();
-            UI.toast('Добро пожаловать, администратор!', 'success');
-        } catch (err) {
-            UI.toast(err.message, 'error');
-        } finally {
-            UI.setLoading(btn, false);
-        }
-    } else {
-        // --- Регистрация читателя ---
-        const login = document.getElementById('loginInput').value.trim();
-        const password = document.getElementById('passwordInput').value;
-        const nickname = document.getElementById('nicknameInput').value.trim() || login;
+            UI.toast('Сессия истекла. Войдите снова.', 'warning');
+        },
 
-        // Валидация логина
-        if (!login) {
-            UI.toast('Введите логин', 'error');
-            return;
-        }
-        if (login.length < 3) {
-            UI.toast('Логин должен содержать минимум 3 символа', 'error');
-            return;
-        }
-        if (!/^[a-zA-Z0-9_-]+$/.test(login)) {
-            UI.toast('Логин может содержать только латинские буквы, цифры, _ и -', 'error');
-            return;
-        }
+        // --- Authentication ---
+        
+        /**
+         * Регистрация пользователя
+         * @param {Object} params - Параметры регистрации
+         * @returns {Promise<Object>} - Данные пользователя
+         */
+        async register({ login, password, nickname, role, adminToken }) {
+            const body = { login, password, nickname: nickname || login, role };
+            if (role === 'admin' && adminToken) {
+                body.adminToken = adminToken;
+            }
+            
+            return this.request(API.AUTH.REGISTER, {
+                method: 'POST',
+                body: JSON.stringify(body),
+                includeAuth: false
+            });
+        },
 
-        // Валидация пароля
-        if (!password || password.length < 6) {
-            UI.toast('Пароль должен содержать минимум 6 символов', 'error');
-            return;
+        /**
+         * Вход в систему
+         * @param {string} login - Логин
+         * @param {string} password - Пароль
+         * @returns {Promise<Object>} - Данные пользователя
+         */
+        async login(login, password) {
+            return this.request(API.AUTH.LOGIN, {
+                method: 'POST',
+                body: JSON.stringify({ login, password }),
+                includeAuth: false
+            });
+        },
+
+        /**
+         * Получение данных текущего пользователя
+         * @returns {Promise<Object>} - Данные пользователя
+         */
+        async me() {
+            return this.request(API.AUTH.ME);
+        },
+
+        // --- Posts ---
+        
+        /**
+         * Получение списка постов
+         * @returns {Promise<Object>} - Список постов
+         */
+        async getPosts() {
+            return this.request(API.POSTS.LIST);
+        },
+
+        /**
+         * Создание поста
+         * @param {string} title - Заголовок
+         * @param {string} content - Содержимое
+         * @param {Array} files - Прикрепленные файлы
+         * @returns {Promise<Object>} - Созданный пост
+         */
+        async createPost(title, content, files) {
+            return this.request(API.POSTS.LIST, {
+                method: 'POST',
+                body: JSON.stringify({ title, content, files })
+            });
+        },
+
+        /**
+         * Обновление поста
+         * @param {string} id - ID поста
+         * @param {string} title - Заголовок
+         * @param {string} content - Содержимое
+         * @param {Array} files - Прикрепленные файлы
+         * @returns {Promise<Object>} - Обновленный пост
+         */
+        async updatePost(id, title, content, files) {
+            return this.request(`${API.POSTS.LIST}/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ title, content, files })
+            });
+        },
+
+        /**
+         * Удаление поста
+         * @param {string} id - ID поста
+         * @returns {Promise<Object>} - Результат удаления
+         */
+        async deletePost(id) {
+            return this.request(`${API.POSTS.LIST}/${id}`, {
+                method: 'DELETE'
+            });
+        },
+
+        /**
+         * Переключение лайка поста
+         * @param {string} postId - ID поста
+         * @returns {Promise<Object>} - Результат
+         */
+        async toggleLike(postId) {
+            return this.request(API.POSTS.LIKE(postId), { method: 'POST' });
+        },
+
+        /**
+         * Переключение дизлайка поста
+         * @param {string} postId - ID поста
+         * @returns {Promise<Object>} - Результат
+         */
+        async toggleDislike(postId) {
+            return this.request(API.POSTS.DISLIKE(postId), { method: 'POST' });
+        },
+
+        /**
+         * Переключение избранного поста
+         * @param {string} postId - ID поста
+         * @returns {Promise<Object>} - Результат
+         */
+        async toggleFavorite(postId) {
+            return this.request(API.POSTS.FAVORITE(postId), { method: 'POST' });
+        },
+
+        /**
+         * Переключение закрепления поста
+         * @param {string} postId - ID поста
+         * @returns {Promise<Object>} - Результат
+         */
+        async togglePin(postId) {
+            return this.request(API.POSTS.PIN(postId), { method: 'POST' });
+        },
+
+        // --- Comments ---
+        
+        /**
+         * Получение комментариев поста
+         * @param {string} postId - ID поста
+         * @returns {Promise<Object>} - Список комментариев
+         */
+        async getComments(postId) {
+            return this.request(API.COMMENTS.LIST(postId));
+        },
+
+        /**
+         * Создание комментария
+         * @param {string} postId - ID поста
+         * @param {string} text - Текст комментария
+         * @param {string|null} parentId - ID родительского комментария
+         * @returns {Promise<Object>} - Созданный комментарий
+         */
+        async createComment(postId, text, parentId = null) {
+            const body = { text };
+            if (parentId) body.parentId = parentId;
+            
+            return this.request(API.COMMENTS.LIST(postId), {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+        },
+
+        /**
+         * Обновление комментария
+         * @param {string} commentId - ID комментария
+         * @param {string} text - Новый текст
+         * @returns {Promise<Object>} - Обновленный комментарий
+         */
+        async updateComment(commentId, text) {
+            return this.request(API.COMMENTS.SINGLE(commentId), {
+                method: 'PUT',
+                body: JSON.stringify({ text })
+            });
+        },
+
+        /**
+         * Удаление комментария
+         * @param {string} commentId - ID комментария
+         * @returns {Promise<Object>} - Результат удаления
+         */
+        async deleteComment(commentId) {
+            return this.request(API.COMMENTS.SINGLE(commentId), {
+                method: 'DELETE'
+            });
+        },
+
+        /**
+         * Переключение лайка комментария
+         * @param {string} commentId - ID комментария
+         * @returns {Promise<Object>} - Результат
+         */
+        async toggleCommentLike(commentId) {
+            return this.request(API.COMMENTS.LIKE(commentId), { method: 'POST' });
+        },
+
+        /**
+         * Переключение дизлайка комментария
+         * @param {string} commentId - ID комментария
+         * @returns {Promise<Object>} - Результат
+         */
+        async toggleCommentDislike(commentId) {
+            return this.request(API.COMMENTS.DISLIKE(commentId), { method: 'POST' });
+        },
+
+        /**
+         * Переключение закрепления комментария
+         * @param {string} commentId - ID комментария
+         * @returns {Promise<Object>} - Результат
+         */
+        async toggleCommentPin(commentId) {
+            return this.request(API.COMMENTS.PIN(commentId), { method: 'POST' });
+        },
+
+        // --- File Upload ---
+        
+        /**
+         * Загрузка файла
+         * @param {File} file - Файл для загрузки
+         * @param {Function} onProgress - Callback прогресса загрузки
+         * @returns {Promise<Object>} - Данные загруженного файла
+         */
+        async uploadFile(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', API.BASE + API.UPLOAD);
+                
+                if (State.user && State.user.token) {
+                    xhr.setRequestHeader('Authorization', `Bearer ${State.user.token}`);
+                }
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable && onProgress) {
+                        onProgress((e.loaded / e.total) * 100);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.responseText));
+                        } catch (e) {
+                            reject(new Error('Неверный ответ сервера'));
+                        }
+                    } else if (xhr.status === 401) {
+                        this.handleAuthError();
+                        reject(new Error('Сессия истекла'));
+                    } else if (xhr.status === 413) {
+                        reject(new Error(`Файл превышает ${CONSTANTS.MAX_FILE_SIZE / 1024 / 1024} МБ`));
+                    } else {
+                        reject(new Error(`Ошибка загрузки: ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Ошибка сети'));
+                xhr.send(formData);
+            });
         }
+    };
 
-        UI.setLoading(btn, true, 'Создание...');
-        try {
-            const data = await ApiClient.register(login, password, nickname, 'reader');
-            State.user = data.user;
-            localStorage.setItem('oris_news_user', JSON.stringify(State.user));
-            UI.closeModal('authModal');
-            renderAuthArea();
-            updateFabVisibility();
-            await loadPosts();
-            UI.toast(`Добро пожаловать, ${State.user.nickname}!`, 'success');
-        } catch (err) {
-            UI.toast(err.message, 'error');
-        } finally {
-            UI.setLoading(btn, false);
+    // ============================================
+    // Session Management
+    // ============================================
+    
+    /**
+     * Инициализация сессии пользователя
+     */
+    async function initSession() {
+        const savedUser = localStorage.getItem(CONSTANTS.LS_USER_KEY);
+        
+        if (savedUser) {
+            try {
+                State.user = JSON.parse(savedUser);
+                
+                // Проверка валидности токена
+                try {
+                    const me = await ApiClient.me();
+                    State.user = { ...State.user, ...me };
+                    localStorage.setItem(CONSTANTS.LS_USER_KEY, JSON.stringify(State.user));
+                } catch (e) {
+                    // Токен невалидный
+                    State.user = null;
+                    localStorage.removeItem(CONSTANTS.LS_USER_KEY);
+                }
+            } catch (e) {
+                localStorage.removeItem(CONSTANTS.LS_USER_KEY);
+            }
         }
-    }
-}
-
-async function handleReaderLogin() {
-    const btn = document.getElementById('readerLoginBtn');
-    const login = document.getElementById('loginInput2').value.trim();
-    const password = document.getElementById('passwordInput2').value;
-
-    if (!login || !password) {
-        UI.toast('Введите логин и пароль', 'error');
-        return;
-    }
-
-    UI.setLoading(btn, true, 'Вход...');
-    try {
-        const data = await ApiClient.login(login, password);
-        State.user = data.user;
-        localStorage.setItem('oris_news_user', JSON.stringify(State.user));
-        UI.closeModal('authModal');
+        
         renderAuthArea();
         updateFabVisibility();
         await loadPosts();
-        UI.toast(`С возвращением, ${State.user.nickname}!`, 'success');
-    } catch (err) {
-        UI.toast(err.message, 'error');
-    } finally {
-        UI.setLoading(btn, false);
+        handleUrlParams();
     }
-}
 
-            // ============================================
-            // Posts
-            // ============================================
-            async function loadPosts() {
-                const feed = document.getElementById('postsFeed');
-                feed.innerHTML = '<div class="spinner"></div>';
+    /**
+     * Обработка URL параметров
+     */
+    function handleUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const commentsId = params.get('comments');
+        const shareId = params.get('share');
+        const sharedId = params.get('shared');
 
-                try {
-                    const data = await ApiClient.getPosts();
-                    State.posts = data.posts || [];
-                    renderPosts();
-                } catch (err) {
-                    feed.innerHTML = `
-                        <div class="empty-state">
-                            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                            </svg>
-                            <div class="empty-state-title">Не удалось загрузить посты</div>
-                            <div class="empty-state-text">${Security.safeText(err.message)}</div>
-                            <button class="btn btn-primary" onclick="location.reload()">Попробовать снова</button>
-                        </div>
-                    `;
-                }
-            }
-
-            let renderPostsRafId = null;
-function renderPosts() {
-    const feed = document.getElementById('postsFeed');
-    let posts = [...State.posts];
-
-    // Фильтрация
-    if (State.currentFilter === 'favorites' && State.user) {
-        posts = posts.filter(p => p.isFavorited);
-    } else if (State.currentFilter === 'mine' && State.user) {
-        if (State.user.role === 'admin') {
-            posts = posts.filter(p => p.authorRole === 'admin');
-        } else {
-            posts = [];
+        if (commentsId) {
+            setTimeout(() => openCommentsModal(commentsId), 500);
+        }
+        if (sharedId) {
+            setTimeout(() => openCommentsModal(sharedId), 500);
+        }
+        if (shareId) {
+            setTimeout(() => openShareModal(shareId), 500);
         }
     }
 
-    // Сортировка: закреплённые сверху, потом по дате
-    posts.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return new Date(b.createdAt) - new Date(a.createdAt);
-    });
-
-    if (posts.length === 0) {
-        feed.innerHTML = `
-        <div class="empty-state">
-            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-            </svg>
-            <div class="empty-state-title">${State.currentFilter === 'favorites' ? 'Нет избранных постов' : 'Пока нет постов'}</div>
-            <div class="empty-state-text">${State.currentFilter === 'favorites' ? 'Добавляйте посты в избранное, чтобы они появились здесь' : 'Новые публикации появятся здесь'}</div>
-        </div>
-        `;
-        return;
-    }
-
-    const postsHtml = posts.map((post, idx) => renderPostCard(post, idx)).join('');
+    // ============================================
+    // Authentication UI
+    // ============================================
     
-    if (renderPostsRafId) cancelAnimationFrame(renderPostsRafId);
-    renderPostsRafId = requestAnimationFrame(() => {
-        feed.innerHTML = postsHtml;
-        attachPostEvents();
-        renderPostsRafId = null;
-    });
-}
+    /**
+     * Рендер области авторизации
+     */
+    function renderAuthArea() {
+        const area = document.getElementById('authArea');
+        if (!area) return;
 
-            function renderPostCard(post, index) {
-                const isAdmin = post.authorRole === 'admin';
-                const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(post.authorId);
-                const authorName = isAdmin ? 'Oris' : Security.safeText(post.authorName || 'Аноним');
+        if (!State.user) {
+            area.innerHTML = `<button class="btn btn-primary" id="loginBtn" style="padding: 6px 14px; font-size: 0.85rem;">Войти</button>`;
+            
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    State.authMode = 'login';
+                    openAuthModal();
+                });
+            }
+        } else {
+            // Скрываем вкладку "Мои" для читателей
+            const myTab = document.querySelector('[data-filter="mine"]');
+            if (myTab) {
+                myTab.style.display = State.user.role === 'admin' ? '' : 'none';
+            }
+
+            // Выносим тяжелый рендер в requestAnimationFrame
+            requestAnimationFrame(() => {
+                const isAdmin = State.user.role === 'admin';
+                const avatarSrc = isAdmin 
+                    ? '/favicon.svg' 
+                    : AvatarGenerator.generate(State.user.id);
+                const displayName = isAdmin ? 'Oris' : State.user.nickname;
+                
                 const verifiedBadge = isAdmin ? `
-                    <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                    <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>` : '';
-                    const levelBadge = !isAdmin && post.authorLevel ? (() => {
-    const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
-    const label = labels[post.authorLevel];
-    if (!label) return '';
-    return `<span class="level-badge level-${post.authorLevel}">${label}</span>`;
-})() : '';
 
-                const pinnedBadge = post.isPinned ? `
-                    <div class="post-pinned-badge">
-                        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
-                        Закреплено
-                    </div>
-                ` : '';
+                const levelBadge = !isAdmin && State.user.level 
+                    ? `<span class="level-badge level-${State.user.level}">${({active:'Активный',expert:'Эксперт',plus:'Plus'})[State.user.level] || ''}</span>` 
+                    : '';
 
-                const filesHtml = (post.files && post.files.length > 0) ? `
-                    <div class="post-files">
-                        ${post.files.map(f => renderFileCard(f)).join('')}
-                    </div>
-                ` : '';
-
-                const isOwner = State.user && (
-                    State.user.role === 'admin' || 
-                    (State.user.id === post.authorId)
-                );
-                const canManage = State.user && State.user.role === 'admin';
-
-                const menuItems = [];
-                if (State.user) {
-                    menuItems.push({
-                        id: 'favorite',
-                        label: post.isFavorited ? 'Убрать из избранного' : 'В избранное',
-                        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>',
-                        action: 'favorite'
-                    });
-                    menuItems.push({
-                        id: 'share',
-                        label: 'Поделиться',
-                        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>',
-                        action: 'share'
-                    });
-                }
-                if (canManage) {
-                    menuItems.push({
-                        id: 'edit',
-                        label: 'Редактировать',
-                        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
-                        action: 'edit'
-                    });
-                    menuItems.push({
-                        id: 'pin',
-                        label: post.isPinned ? 'Открепить' : 'Закрепить',
-                        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>',
-                        action: 'pin'
-                    });
-                    menuItems.push({
-                        id: 'delete',
-                        label: 'Удалить',
-                        icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>',
-                        action: 'delete',
-                        danger: true
-                    });
-                }
-
-                const menuHtml = menuItems.length > 0 ? `
-                    <div class="post-menu">
-                        <button class="post-menu-btn" data-menu-for="${post.id}" aria-label="Меню">
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
-                        </button>
-                        <div class="post-menu-dropdown" id="menu-${post.id}">
-                            ${menuItems.map(item => `
-                                <button class="post-menu-item ${item.danger ? 'danger' : ''}" data-post-id="${post.id}" data-action="${item.action}">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${item.icon}</svg>
-                                    ${Security.safeText(item.label)}
-                                </button>
-                            `).join('')}
+                area.innerHTML = `
+                    <div class="user-chip" id="userChip" title="Выйти">
+                        <div class="user-avatar">
+                            <img src="${avatarSrc}" alt="avatar">
                         </div>
+                        <span class="user-name ${isAdmin ? 'admin' : ''}">${Security.safeText(displayName)}</span>
+                        ${verifiedBadge}
+                        ${levelBadge}
                     </div>
-                ` : '';
-
-                return `
-                    <article class="post-card ${post.isPinned ? 'pinned' : ''}" data-post-id="${post.id}" style="animation-delay: ${index * 0.05}s">
-                        ${pinnedBadge}
-                        <div class="post-header">
-                            <div class="post-avatar">
-                                <img src="${avatarSrc}" alt="${Security.safeText(authorName)}">
-                            </div>
-                            <div class="post-meta">
-                                <div class="post-author ${isAdmin ? 'admin' : ''}">
-${Security.safeText(authorName)}
-${verifiedBadge}
-${levelBadge}
-</div>
-                                <div class="post-date">${UI.formatRelativeDate(post.createdAt)}</div>
-                            </div>
-                            ${menuHtml}
-                        </div>
-                        <h2 class="post-title">${Security.safeText(post.title)}</h2>
-                        <div class="post-body">${renderMarkdown(post.content)}</div>
-                        ${filesHtml}
-                        <div class="post-actions">
-                            <button class="action-btn ${post.isLiked ? 'liked' : ''}" data-action="like" data-post-id="${post.id}">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                <span>${post.likes || 0}</span>
-                            </button>
-                            <button class="action-btn ${post.isDisliked ? 'disliked' : ''}" data-action="dislike" data-post-id="${post.id}">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
-                                <span>${post.dislikes || 0}</span>
-                            </button>
-                            <button class="action-btn" data-action="comment" data-post-id="${post.id}">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                <span>${post.commentsCount || 0}</span>
-                            </button>
-                            <button class="action-btn" data-action="share" data-post-id="${post.id}">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                            </button>
-                            <div class="action-spacer"></div>
-                            <button class="action-btn ${post.isFavorited ? 'favorited' : ''}" data-action="favorite" data-post-id="${post.id}">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
-                            </button>
-                        </div>
-                    </article>
                 `;
-            }
 
-            function renderFileCard(file) {
-                const ext = (file.name || '').split('.').pop().toLowerCase();
-                let iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>';
-                
-                if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
-                    iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>';
-                } else if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) {
-                    iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
-                } else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-                    iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>';
-                } else if (['pdf'].includes(ext)) {
-                    iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>';
-                }
-
-                return `
-                    <a href="${Security.safeText(file.url)}" target="_blank" rel="noopener" class="file-card" download="${Security.safeText(file.name)}">
-                        <div class="file-icon">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconSvg}</svg>
-                        </div>
-                        <div class="file-info">
-                            <div class="file-name">${Security.safeText(file.name)}</div>
-                            <div class="file-size">${UI.formatBytes(file.size || 0)}</div>
-                        </div>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0; color: var(--text-secondary);">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                    </a>
-                `;
-            }
-
-            function attachPostEvents() {
-                // Action buttons
-                document.querySelectorAll('.post-actions .action-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const action = btn.dataset.action;
-                        const postId = btn.dataset.postId;
-                        handlePostAction(action, postId, btn);
+                const userChip = document.getElementById('userChip');
+                if (userChip) {
+                    userChip.addEventListener('click', () => {
+                        if (confirm('Выйти из аккаунта?')) {
+                            logout();
+                        }
                     });
-                });
-
-                // Menu buttons
-                document.querySelectorAll('.post-menu-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const postId = btn.dataset.menuFor;
-                        togglePostMenu(postId);
-                    });
-                });
-
-                // Menu items
-                document.querySelectorAll('.post-menu-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const postId = item.dataset.postId;
-                        const action = item.dataset.action;
-                        closeAllMenus();
-                        handlePostAction(action, postId);
-                    });
-                });
-
-                // Close menus on outside click
-                document.addEventListener('click', closeAllMenus);
-            }
-
-            function togglePostMenu(postId) {
-                const menu = document.getElementById(`menu-${postId}`);
-                const wasOpen = menu.classList.contains('open');
-                closeAllMenus();
-                if (!wasOpen) menu.classList.add('open');
-            }
-
-            function closeAllMenus() {
-                document.querySelectorAll('.post-menu-dropdown.open').forEach(m => m.classList.remove('open'));
-            }
-
-            async function handlePostAction(action, postId, btn = null) {
-                if (!State.user && ['like', 'dislike', 'favorite', 'comment'].includes(action)) {
-                    UI.toast('Войдите, чтобы взаимодействовать с постами', 'warning');
-                    openAuthModal();
-                    return;
                 }
-
-                const post = State.posts.find(p => p.id === postId);
-                if (!post && action !== 'share') return;
-
-                try {
-                    switch (action) {
-                        case 'like':
-                            if (btn) btn.classList.add('like-animate');
-                            const likeRes = await ApiClient.toggleLike(postId);
-                            post.likes = likeRes.likes;
-                            post.isLiked = likeRes.isLiked;
-                            if (likeRes.isLiked) post.dislikes = Math.max(0, (post.dislikes || 0) - (post.isDisliked ? 1 : 0));
-                            post.isDisliked = false;
-                            renderPosts();
-                            break;
-
-                        case 'dislike':
-                            const dislikeRes = await ApiClient.toggleDislike(postId);
-                            post.dislikes = dislikeRes.dislikes;
-                            post.isDisliked = dislikeRes.isDisliked;
-                            if (dislikeRes.isDisliked) post.likes = Math.max(0, (post.likes || 0) - (post.isLiked ? 1 : 0));
-                            post.isLiked = false;
-                            renderPosts();
-                            break;
-
-                        case 'favorite':
-                            const favRes = await ApiClient.toggleFavorite(postId);
-                            post.isFavorited = favRes.isFavorited;
-                            renderPosts();
-                            UI.toast(favRes.isFavorited ? 'Добавлено в избранное' : 'Убрано из избранного', 'success');
-                            break;
-
-                        case 'comment':
-                            openCommentsModal(postId);
-                            break;
-
-                        case 'share':
-                            openShareModal(postId);
-                            break;
-
-                        case 'edit':
-                            openEditPostModal(postId);
-                            break;
-
-                        case 'pin':
-                            const pinRes = await ApiClient.togglePin(postId);
-                            post.isPinned = pinRes.isPinned;
-                            renderPosts();
-                            UI.toast(pinRes.isPinned ? 'Пост закреплён' : 'Пост откреплён', 'success');
-                            break;
-
-                        case 'delete':
-                            if (confirm('Удалить этот пост? Это действие необратимо.')) {
-                                await ApiClient.deletePost(postId);
-                                State.posts = State.posts.filter(p => p.id !== postId);
-                                renderPosts();
-                                UI.toast('Пост удалён', 'success');
-                            }
-                            break;
-                    }
-                } catch (err) {
-                    UI.toast(err.message, 'error');
-                }
-            }
-
-            // ============================================
-            // Create/Edit Post Modal
-            // ============================================
-            function bindCreatePostEvents() {
-                document.getElementById('createPostFab').addEventListener('click', () => {
-                    State.editingPostId = null;
-                    State.pendingFiles = [];
-                    State.uploadedFileUrls = [];
-                    document.getElementById('postModalTitle').textContent = 'Новый пост';
-                    document.getElementById('postTitleInput').value = '';
-                    document.getElementById('postContentInput').value = '';
-                    document.getElementById('uploadPreviewList').innerHTML = '';
-                    document.getElementById('postSubmitBtn').textContent = 'Опубликовать';
-                    switchEditorTab('write');
-                    UI.openModal('createPostModal');
-                });
-
-                // Editor tabs
-                document.querySelectorAll('[data-editor-tab]').forEach(tab => {
-                    tab.addEventListener('click', () => switchEditorTab(tab.dataset.editorTab));
-                });
-
-                // File upload
-                const uploadZone = document.getElementById('fileUploadZone');
-                const fileInput = document.getElementById('fileInput');
-
-                uploadZone.addEventListener('click', () => fileInput.click());
-                uploadZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    uploadZone.classList.add('dragover');
-                });
-                uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-                uploadZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    uploadZone.classList.remove('dragover');
-                    handleFiles(e.dataTransfer.files);
-                });
-                fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-                // Form submit
-                document.getElementById('postForm').addEventListener('submit', handlePostSubmit);
-            }
-
-            function switchEditorTab(tab) {
-                document.querySelectorAll('[data-editor-tab]').forEach(t => {
-                    t.classList.toggle('active', t.dataset.editorTab === tab);
-                });
-                const textarea = document.getElementById('postContentInput');
-                const preview = document.getElementById('postPreview');
-                if (tab === 'write') {
-                    textarea.classList.remove('hidden');
-                    preview.classList.add('hidden');
-                } else {
-                    textarea.classList.add('hidden');
-                    preview.classList.remove('hidden');
-                    preview.innerHTML = renderMarkdown(textarea.value) || '<em style="color: var(--text-secondary)">Пустой предпросмотр</em>';
-                }
-            }
-
-            function handleFiles(fileList) {
-                const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
-                for (const file of fileList) {
-                    if (file.size > MAX_SIZE) {
-                        UI.toast(`Файл ${file.name} превышает 50 МБ`, 'error');
-                        continue;
-                    }
-                    State.pendingFiles.push(file);
-                }
-                renderUploadPreview();
-            }
-
-            function renderUploadPreview() {
-                const list = document.getElementById('uploadPreviewList');
-                if (State.pendingFiles.length === 0) {
-                    list.innerHTML = '';
-                    return;
-                }
-                list.innerHTML = State.pendingFiles.map((file, idx) => `
-                    <div class="upload-preview-item" data-idx="${idx}">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="upload-preview-name">${Security.safeText(file.name)}</span>
-                        <span class="upload-preview-size">${UI.formatBytes(file.size)}</span>
-                        <button type="button" class="upload-preview-remove" data-remove-idx="${idx}" aria-label="Удалить">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-                `).join('');
-
-                list.querySelectorAll('[data-remove-idx]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const idx = parseInt(btn.dataset.removeIdx);
-                        State.pendingFiles.splice(idx, 1);
-                        renderUploadPreview();
-                    });
-                });
-            }
-
-            async function handlePostSubmit(e) {
-                e.preventDefault();
-                const btn = document.getElementById('postSubmitBtn');
-                const title = document.getElementById('postTitleInput').value.trim();
-                const content = document.getElementById('postContentInput').value.trim();
-
-                if (!title) {
-                    UI.toast('Введите заголовок', 'error');
-                    return;
-                }
-                if (!content) {
-                    UI.toast('Введите содержание', 'error');
-                    return;
-                }
-
-                UI.setLoading(btn, true, State.editingPostId ? 'Сохранение...' : 'Публикация...');
-
-                try {
-                    // Сначала загружаем новые файлы
-                    const newFileUrls = [];
-                    for (const file of State.pendingFiles) {
-                        const result = await ApiClient.uploadFile(file);
-                        newFileUrls.push({
-                            name: file.name,
-                            size: file.size,
-                            url: result.url
-                        });
-                    }
-
-                    // Объединяем с уже существующими файлами (при редактировании)
-                    const allFiles = [...(State.uploadedFileUrls || []), ...newFileUrls];
-
-                    if (State.editingPostId) {
-                        await ApiClient.updatePost(State.editingPostId, title, content, allFiles);
-                        UI.toast('Пост обновлён', 'success');
-                    } else {
-                        await ApiClient.createPost(title, content, allFiles);
-                        UI.toast('Пост опубликован', 'success');
-                    }
-
-                    UI.closeModal('createPostModal');
-                    State.pendingFiles = [];
-                    State.uploadedFileUrls = [];
-                    State.editingPostId = null;
-                    await loadPosts();
-                } catch (err) {
-                    UI.toast(err.message, 'error');
-                } finally {
-                    UI.setLoading(btn, false);
-                    btn.textContent = State.editingPostId ? 'Сохранить' : 'Опубликовать';
-                }
-            }
-
-            function openEditPostModal(postId) {
-                const post = State.posts.find(p => p.id === postId);
-                if (!post) return;
-
-                State.editingPostId = postId;
-                State.pendingFiles = [];
-                State.uploadedFileUrls = post.files || [];
-                
-                document.getElementById('postModalTitle').textContent = 'Редактировать пост';
-                document.getElementById('postTitleInput').value = post.title;
-                document.getElementById('postContentInput').value = post.content;
-                document.getElementById('postSubmitBtn').textContent = 'Сохранить';
-                
-                // Показываем уже загруженные файлы
-                const list = document.getElementById('uploadPreviewList');
-                list.innerHTML = State.uploadedFileUrls.map((f, idx) => `
-                    <div class="upload-preview-item">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="upload-preview-name">${Security.safeText(f.name)}</span>
-                        <span class="upload-preview-size">${UI.formatBytes(f.size)}</span>
-                        <button type="button" class="upload-preview-remove" data-remove-existing="${idx}" aria-label="Удалить">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-                `).join('');
-
-                list.querySelectorAll('[data-remove-existing]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const idx = parseInt(btn.dataset.removeExisting);
-                        State.uploadedFileUrls.splice(idx, 1);
-                        openEditPostModal(postId);
-                    });
-                });
-
-                switchEditorTab('write');
-                UI.openModal('createPostModal');
-            }
-
-            // ============================================
-            // Comments Modal
-            // ============================================
-            async function openCommentsModal(postId) {
-                const post = State.posts.find(p => p.id === postId);
-                if (!post) return;
-
-                State.currentPostId = postId;
-                State.comments = [];
-                State.replyToId = null;
-                State.editingCommentId = null;
-
-                document.getElementById('commentsPostTitle').textContent = post.title;
-                document.getElementById('commentInput').value = '';
-                document.getElementById('commentActions').classList.remove('visible');
-                document.getElementById('replyToHint').classList.add('hidden');
-
-                // Set compose avatar
-                const composeAvatar = document.getElementById('composeAvatar');
-                if (State.user) {
-                    const isAdmin = State.user.role === 'admin';
-                    const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(State.user.id);
-                    composeAvatar.innerHTML = `<img src="${avatarSrc}" alt="avatar">`;
-                    document.getElementById('commentCompose').style.display = 'flex';
-                } else {
-                    document.getElementById('commentCompose').style.display = 'none';
-                }
-
-                UI.openModal('commentsModal');
-
-                // Update URL без перезагрузки
-                const newUrl = `${window.location.pathname}?comments=${postId}`;
-                window.history.replaceState({}, '', newUrl);
-
-                await loadComments();
-            }
-
-            async function loadComments() {
-                const list = document.getElementById('commentList');
-                list.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-
-                try {
-                    const data = await ApiClient.getComments(State.currentPostId);
-                    State.comments = data.comments || [];
-                    renderComments();
-                } catch (err) {
-                    list.innerHTML = `
-                        <div class="empty-state" style="padding: 40px 0;">
-                            <div class="empty-state-text">${Security.safeText(err.message)}</div>
-                        </div>
-                    `;
-                }
-            }
-
-            let renderCommentsRafId = null;
-function renderComments() {
-    const list = document.getElementById('commentList');
-    const countEl = document.getElementById('commentsCount');
-
-    // Построение дерева
-    const tree = buildCommentTree(State.comments);
-
-    // Сортировка
-    const sortFn = State.commentSort === 'top'
-        ? (a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes)
-        : (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
-
-    // Закрепленные всегда сверху
-    tree.sort((a, b) => {
-        if (a.isPinned && !b.isPinned) return -1;
-        if (!a.isPinned && b.isPinned) return 1;
-        return sortFn(a, b);
-    });
-
-    countEl.textContent = `${State.comments.length} ${pluralize(State.comments.length, ['комментарий', 'комментария', 'комментариев'])}`;
-
-    if (tree.length === 0) {
-        list.innerHTML = `
-        <div class="empty-state" style="padding: 40px 0;">
-            <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-            </svg>
-            <div class="empty-state-title">Пока нет комментариев</div>
-            <div class="empty-state-text">Будьте первым!</div>
-        </div>
-        `;
-        return;
-    }
-
-    const commentsHtml = tree.map(c => renderCommentNode(c, 0)).join('');
-
-    if (renderCommentsRafId) cancelAnimationFrame(renderCommentsRafId);
-    renderCommentsRafId = requestAnimationFrame(() => {
-        list.innerHTML = commentsHtml;
-        attachCommentEvents();
-        renderCommentsRafId = null;
-    });
-}
-
-            function buildCommentTree(comments) {
-                const map = {};
-                const roots = [];
-                comments.forEach(c => { map[c.id] = { ...c, replies: [] }; });
-                comments.forEach(c => {
-                    if (c.parentId && map[c.parentId]) {
-                        map[c.parentId].replies.push(map[c.id]);
-                    } else {
-                        roots.push(map[c.id]);
-                    }
-                });
-                return roots;
-            }
-
-            function renderCommentNode(comment, depth) {
-    const isAdmin = comment.authorRole === 'admin';
-    const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(comment.authorId);
-    const authorName = isAdmin ? 'Oris' : Security.safeText(comment.authorName || 'Аноним');
-    
-    // Явная нормализация булевых значений
-    const isLiked = comment.isLiked === true || comment.isLiked === 1 || comment.isLiked === 'true';
-    const isDisliked = comment.isDisliked === true || comment.isDisliked === 1 || comment.isDisliked === 'true';
-    
-    const verifiedBadge = isAdmin ? `
-        <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>` : '';
-    
-    const levelBadge = !isAdmin && comment.authorLevel ? (() => {
-        const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
-        const label = labels[comment.authorLevel];
-        if (!label) return '';
-        return `<span class="level-badge level-${comment.authorLevel}">${label}</span>`;
-    })() : '';
-    
-    const isOwner = State.user && State.user.id === comment.authorId;
-    const canManage = State.user && State.user.role === 'admin';
-    
-    const pinnedBadge = comment.isPinned ? `
-        <span class="comment-pinned-badge">
-            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
-            Закреплён
-        </span>
-    ` : '';
-    
-    const editedMark = comment.isEdited ? `<span class="comment-edited">(изменено)</span>` : '';
-    
-    const replyToHtml = comment.parentId
-        ? (() => {
-            const parent = State.comments.find(c => c.id === comment.parentId);
-            if (parent) {
-                const parentName = parent.authorRole === 'admin' ? 'Oris' : (parent.authorName || 'Аноним');
-                return `<div class="comment-reply-to">@${Security.safeText(parentName)}</div>`;
-            }
-            return '';
-        })()
-        : '';
-    
-    const actions = [];
-    if (State.user) {
-        actions.push(`
-            <button class="comment-action-btn ${isLiked ? 'liked' : ''}" data-comment-action="like" data-comment-id="${comment.id}">
-                <svg fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
-                ${comment.likes || 0}
-            </button>
-        `);
-        actions.push(`
-            <button class="comment-action-btn ${isDisliked ? 'disliked' : ''}" data-comment-action="dislike" data-comment-id="${comment.id}">
-                <svg fill="${isDisliked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/></svg>
-                ${comment.dislikes || 0}
-            </button>
-        `);
-        if (depth < 3) {
-            actions.push(`
-                <button class="comment-action-btn" data-comment-action="reply" data-comment-id="${comment.id}" data-author-name="${Security.safeText(authorName)}">
-                    Ответить
-                </button>
-            `);
+            });
         }
     }
-    if (isOwner) {
-        actions.push(`
-            <button class="comment-action-btn" data-comment-action="edit" data-comment-id="${comment.id}">
-                Изменить
-            </button>
-        `);
-        actions.push(`
-            <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
-                Удалить
-            </button>
-        `);
-    } else if (canManage) {
-        actions.push(`
-            <button class="comment-action-btn" data-comment-action="pin" data-comment-id="${comment.id}">
-                ${comment.isPinned ? 'Открепить' : 'Закрепить'}
-            </button>
-        `);
-        actions.push(`
-            <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
-                Удалить
-            </button>
-        `);
+
+    /**
+     * Выход из системы
+     */
+    function logout() {
+        State.user = null;
+        localStorage.removeItem(CONSTANTS.LS_USER_KEY);
+        renderAuthArea();
+        updateFabVisibility();
+        UI.toast('Вы вышли из системы', 'info');
+        loadPosts();
     }
+
+    /**
+     * Обновление видимости FAB кнопки
+     */
+    function updateFabVisibility() {
+        const fab = document.getElementById('createPostFab');
+        if (State.user && State.user.role === 'admin') {
+            fab.classList.remove('hidden');
+        } else {
+            fab.classList.add('hidden');
+        }
+    }
+
+    // ============================================
+    // Auth Modal
+    // ============================================
     
-    const commentHtml = `
-        <div class="comment ${comment.isPinned ? 'pinned' : ''}" data-comment-id="${comment.id}">
-            <div class="comment-avatar">
-                <img src="${avatarSrc}" alt="${Security.safeText(authorName)}">
-            </div>
-            <div class="comment-body">
-                <div class="comment-header">
-                    <span class="comment-author ${isAdmin ? 'admin' : ''}">${Security.safeText(authorName)}</span>
-                    ${verifiedBadge}
-                    ${levelBadge}
-                    ${pinnedBadge}
-                    <span class="comment-date">${UI.formatRelativeDate(comment.createdAt)}</span>
-                    ${editedMark}
-                </div>
-                ${replyToHtml}
-                <div class="comment-text">${Security.safeText(comment.text).replace(/\n/g, '<br>')}</div>
-                <div class="comment-actions">
-                    ${actions.join('')}
-                </div>
-            </div>
-        </div>
-    `;
-    
-    const repliesHtml = comment.replies && comment.replies.length > 0
-        ? `<div class="comment-replies">${comment.replies.map(r => renderCommentNode(r, depth + 1)).join('')}</div>`
-        : '';
-    
-    return commentHtml + repliesHtml;
-}
+    /**
+     * Открытие модального окна авторизации
+     */
+    function openAuthModal() {
+        // Сброс всех полей
+        const fieldsToReset = [
+            'loginInput', 'passwordInput', 'nicknameInput',
+            'loginInput2', 'passwordInput2', 'adminTokenInput'
+        ];
+        
+        fieldsToReset.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
 
-            function attachCommentEvents() {
-                document.querySelectorAll('[data-comment-action]').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const action = btn.dataset.commentAction;
-                        const commentId = btn.dataset.commentId;
-                        const authorName = btn.dataset.authorName;
-                        handleCommentAction(action, commentId, authorName);
-                    });
-                });
-            }
+        // Обновление заголовков
+        const titleEl = document.getElementById('authModalTitle');
+        const submitBtn = document.getElementById('authSubmitBtn');
+        const submitText = document.getElementById('authSubmitText');
 
-            async function handleCommentAction(action, commentId, authorName) {
-                const comment = State.comments.find(c => c.id === commentId);
-                if (!comment && action !== 'reply') return;
+        if (titleEl) {
+            titleEl.textContent = State.authMode === 'register' ? 'Регистрация' : 'Вход в аккаунт';
+        }
+        if (submitBtn && submitText) {
+            submitText.textContent = State.authMode === 'register' ? 'Создать аккаунт' : 'Войти';
+        }
 
-                try {
-                    switch (action) {
-                        case 'like':
-                            const likeRes = await ApiClient.toggleCommentLike(commentId);
-                            comment.likes = likeRes.likes;
-                            comment.isLiked = likeRes.isLiked;
-                            if (likeRes.isLiked) {
-                                comment.dislikes = Math.max(0, (comment.dislikes || 0) - (comment.isDisliked ? 1 : 0));
-                                comment.isDisliked = false;
-                            }
-                            renderComments();
-                            break;
+        showAuthStep(1);
+        UI.openModal('authModal');
+    }
 
-                        case 'dislike':
-                            const dislikeRes = await ApiClient.toggleCommentDislike(commentId);
-                            comment.dislikes = dislikeRes.dislikes;
-                            comment.isDisliked = dislikeRes.isDisliked;
-                            if (dislikeRes.isDisliked) {
-                                comment.likes = Math.max(0, (comment.likes || 0) - (comment.isLiked ? 1 : 0));
-                                comment.isLiked = false;
-                            }
-                            renderComments();
-                            break;
+    /**
+     * Переключение шага авторизации
+     * @param {number} step - Номер шага (1 или 2)
+     */
+    function showAuthStep(step) {
+        document.getElementById('authStep1').classList.toggle('hidden', step !== 1);
+        document.getElementById('authStep2').classList.toggle('hidden', step !== 2);
+    }
 
-                        case 'reply':
-                            State.replyToId = commentId;
-                            document.getElementById('replyToHint').classList.remove('hidden');
-                            document.getElementById('replyToName').textContent = authorName;
-                            document.getElementById('commentInput').focus();
-                            document.getElementById('commentActions').classList.add('visible');
-                            break;
+    /**
+     * Привязка событий модального окна авторизации
+     */
+    function bindAuthEvents() {
+        // Role selector
+        document.querySelectorAll('.role-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                State.authRole = opt.dataset.role;
 
-                        case 'edit':
-                            startEditComment(commentId);
-                            break;
+                const adminField = document.getElementById('adminTokenField');
+                const loginField = document.getElementById('loginField');
+                const passwordField = document.getElementById('passwordField');
+                const nicknameField = document.getElementById('nicknameField');
 
-                        case 'delete':
-                            if (confirm('Удалить этот комментарий?')) {
-                                await ApiClient.deleteComment(commentId);
-                                UI.toast('Комментарий удалён', 'success');
-                                await loadComments();
-                                updatePostCommentCount(State.currentPostId, -1);
-                            }
-                            break;
-
-                        case 'pin':
-                            const pinRes = await ApiClient.toggleCommentPin(commentId);
-                            comment.isPinned = pinRes.isPinned;
-                            renderComments();
-                            UI.toast(pinRes.isPinned ? 'Комментарий закреплён' : 'Комментарий откреплён', 'success');
-                            break;
-                    }
-                } catch (err) {
-                    UI.toast(err.message, 'error');
+                if (State.authRole === 'admin') {
+                    adminField.classList.add('visible');
+                    loginField.classList.add('hidden');
+                    passwordField.classList.add('hidden');
+                    nicknameField.classList.add('hidden');
+                } else {
+                    adminField.classList.remove('visible');
+                    loginField.classList.remove('hidden');
+                    passwordField.classList.remove('hidden');
+                    nicknameField.classList.remove('hidden');
                 }
+            });
+        });
+
+        // Submit button
+        document.getElementById('authSubmitBtn').addEventListener('click', handleAuthSubmit);
+
+        // Navigation
+        document.getElementById('authSwitchLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            showAuthStep(2);
+        });
+
+        document.getElementById('backToRegister').addEventListener('click', (e) => {
+            e.preventDefault();
+            showAuthStep(1);
+        });
+
+        document.getElementById('readerLoginBtn').addEventListener('click', handleReaderLogin);
+
+        // Enter key handlers
+        document.getElementById('adminTokenInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleAuthSubmit();
+        });
+
+        document.getElementById('loginInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('passwordInput').focus();
+        });
+        
+        document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('nicknameInput').focus();
+        });
+        
+        document.getElementById('nicknameInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleAuthSubmit();
+        });
+
+        document.getElementById('loginInput2').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('passwordInput2').focus();
+        });
+        
+        document.getElementById('passwordInput2').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleReaderLogin();
+        });
+    }
+
+    /**
+     * Обработка отправки формы авторизации
+     */
+    async function handleAuthSubmit() {
+        const btn = document.getElementById('authSubmitBtn');
+        
+        if (State.authRole === 'admin') {
+            // Вход администратора
+            const token = document.getElementById('adminTokenInput').value.trim();
+            if (!token) {
+                UI.toast('Введите admin token', 'error');
+                return;
+            }
+            
+            UI.setLoading(btn, true, 'Проверка...');
+            try {
+                const data = await ApiClient.register({
+                    login: 'Oris',
+                    password: 'admin',
+                    nickname: 'Oris',
+                    role: 'admin',
+                    adminToken: token
+                });
+                
+                State.user = data.user;
+                localStorage.setItem(CONSTANTS.LS_USER_KEY, JSON.stringify(State.user));
+                UI.closeModal('authModal');
+                renderAuthArea();
+                updateFabVisibility();
+                await loadPosts();
+                UI.toast('Добро пожаловать, администратор!', 'success');
+            } catch (err) {
+                UI.toast(err.message, 'error');
+            } finally {
+                UI.setLoading(btn, false);
+            }
+        } else {
+            // Регистрация читателя
+            const login = document.getElementById('loginInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const nickname = document.getElementById('nicknameInput').value.trim() || login;
+
+            // Валидация
+            if (!login) {
+                UI.toast('Введите логин', 'error');
+                return;
+            }
+            if (login.length < CONSTANTS.MIN_LOGIN_LENGTH) {
+                UI.toast(`Логин должен содержать минимум ${CONSTANTS.MIN_LOGIN_LENGTH} символа`, 'error');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_-]+$/.test(login)) {
+                UI.toast('Логин может содержать только латинские буквы, цифры, _ и -', 'error');
+                return;
+            }
+            if (!password || password.length < CONSTANTS.MIN_PASSWORD_LENGTH) {
+                UI.toast(`Пароль должен содержать минимум ${CONSTANTS.MIN_PASSWORD_LENGTH} символов`, 'error');
+                return;
             }
 
-            function startEditComment(commentId) {
-    const comment = State.comments.find(c => c.id === commentId);
-    if (!comment) return;
+            UI.setLoading(btn, true, 'Создание...');
+            try {
+                const data = await ApiClient.register({
+                    login,
+                    password,
+                    nickname,
+                    role: 'reader'
+                });
+                
+                State.user = data.user;
+                localStorage.setItem(CONSTANTS.LS_USER_KEY, JSON.stringify(State.user));
+                UI.closeModal('authModal');
+                renderAuthArea();
+                updateFabVisibility();
+                await loadPosts();
+                UI.toast(`Добро пожаловать, ${State.user.nickname}!`, 'success');
+            } catch (err) {
+                UI.toast(err.message, 'error');
+            } finally {
+                UI.setLoading(btn, false);
+            }
+        }
+    }
 
-    State.editingCommentId = commentId;
-    const commentEl = document.querySelector(`[data-comment-id="${commentId}"] .comment-text`);
-    if (!commentEl) return;
+    /**
+     * Обработка входа читателя
+     */
+    async function handleReaderLogin() {
+        const btn = document.getElementById('readerLoginBtn');
+        const login = document.getElementById('loginInput2').value.trim();
+        const password = document.getElementById('passwordInput2').value;
 
-    const originalText = comment.text;
-
-    // Создаём безопасную разметку через создание элементов, а не innerHTML
-    commentEl.innerHTML = ''; // очищаем
-
-    const textarea = document.createElement('textarea');
-    textarea.className = 'comment-edit-input';
-    textarea.id = 'editCommentInput';
-    textarea.value = originalText; // безопасная установка текста
-
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'comment-edit-actions';
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'btn btn-ghost';
-    cancelBtn.id = 'cancelEditComment';
-    cancelBtn.style.cssText = 'padding: 6px 12px; font-size: 0.82rem;';
-    cancelBtn.textContent = 'Отмена';
-
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'btn btn-primary';
-    saveBtn.id = 'saveEditComment';
-    saveBtn.style.cssText = 'padding: 6px 14px; font-size: 0.82rem;';
-    saveBtn.textContent = 'Сохранить';
-
-    actionsDiv.appendChild(cancelBtn);
-    actionsDiv.appendChild(saveBtn);
-
-    commentEl.appendChild(textarea);
-    commentEl.appendChild(actionsDiv);
-
-    textarea.focus();
-    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-
-    cancelBtn.addEventListener('click', () => {
-        State.editingCommentId = null;
-        renderComments();
-    });
-
-    saveBtn.addEventListener('click', async () => {
-        const newText = textarea.value.trim();
-        if (!newText) {
-            UI.toast('Комментарий не может быть пустым', 'error');
+        if (!login || !password) {
+            UI.toast('Введите логин и пароль', 'error');
             return;
         }
-        if (newText === originalText) {
-            State.editingCommentId = null;
-            renderComments();
-            return;
-        }
+
+        UI.setLoading(btn, true, 'Вход...');
         try {
-            await ApiClient.updateComment(commentId, newText);
-            UI.toast('Комментарий обновлён', 'success');
-            State.editingCommentId = null;
-            await loadComments();
+            const data = await ApiClient.login(login, password);
+            State.user = data.user;
+            localStorage.setItem(CONSTANTS.LS_USER_KEY, JSON.stringify(State.user));
+            UI.closeModal('authModal');
+            renderAuthArea();
+            updateFabVisibility();
+            await loadPosts();
+            UI.toast(`С возвращением, ${State.user.nickname}!`, 'success');
+        } catch (err) {
+            UI.toast(err.message, 'error');
+        } finally {
+            UI.setLoading(btn, false);
+        }
+    }
+
+    // ============================================
+    // Posts Management
+    // ============================================
+    
+    /**
+     * Загрузка постов
+     */
+    async function loadPosts() {
+        const feed = document.getElementById('postsFeed');
+        feed.innerHTML = '<div class="spinner"></div>';
+
+        try {
+            const data = await ApiClient.getPosts();
+            State.posts = data.posts || [];
+            renderPosts();
+        } catch (err) {
+            feed.innerHTML = `
+                <div class="empty-state">
+                    <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div class="empty-state-title">Не удалось загрузить посты</div>
+                    <div class="empty-state-text">${Security.safeText(err.message)}</div>
+                    <button class="btn btn-primary" onclick="location.reload()">Попробовать снова</button>
+                </div>
+            `;
+        }
+    }
+
+    let renderPostsRafId = null;
+    
+    /**
+     * Рендеринг постов
+     */
+    function renderPosts() {
+        const feed = document.getElementById('postsFeed');
+        let posts = [...State.posts];
+
+        // Фильтрация
+        if (State.currentFilter === 'favorites' && State.user) {
+            posts = posts.filter(p => p.isFavorited);
+        } else if (State.currentFilter === 'mine' && State.user) {
+            if (State.user.role === 'admin') {
+                posts = posts.filter(p => p.authorRole === 'admin');
+            } else {
+                posts = [];
+            }
+        }
+
+        // Сортировка
+        posts.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+
+        if (posts.length === 0) {
+            feed.innerHTML = `
+                <div class="empty-state">
+                    <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                    </svg>
+                    <div class="empty-state-title">${State.currentFilter === 'favorites' ? 'Нет избранных постов' : 'Пока нет постов'}</div>
+                    <div class="empty-state-text">${State.currentFilter === 'favorites' ? 'Добавляйте посты в избранное, чтобы они появились здесь' : 'Новые публикации появятся здесь'}</div>
+                </div>
+            `;
+            return;
+        }
+
+        const postsHtml = posts.map((post, idx) => renderPostCard(post, idx)).join('');
+        
+        if (renderPostsRafId) cancelAnimationFrame(renderPostsRafId);
+        renderPostsRafId = requestAnimationFrame(() => {
+            feed.innerHTML = postsHtml;
+            attachPostEvents();
+            renderPostsRafId = null;
+        });
+    }
+
+    /**
+     * Рендеринг карточки поста
+     * @param {Object} post - Данные поста
+     * @param {number} index - Индекс поста
+     * @returns {string} - HTML карточки
+     */
+    function renderPostCard(post, index) {
+        const isAdmin = post.authorRole === 'admin';
+        const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(post.authorId);
+        const authorName = isAdmin ? 'Oris' : Security.safeText(post.authorName || 'Аноним');
+        
+        const verifiedBadge = isAdmin ? `
+            <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>` : '';
+        
+        const levelBadge = !isAdmin && post.authorLevel ? (() => {
+            const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
+            const label = labels[post.authorLevel];
+            if (!label) return '';
+            return `<span class="level-badge level-${post.authorLevel}">${label}</span>`;
+        })() : '';
+
+        const pinnedBadge = post.isPinned ? `
+            <div class="post-pinned-badge">
+                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                Закреплено
+            </div>
+        ` : '';
+
+        const filesHtml = (post.files && post.files.length > 0) ? `
+            <div class="post-files">
+                ${post.files.map(f => renderFileCard(f)).join('')}
+            </div>
+        ` : '';
+
+        const canManage = State.user && State.user.role === 'admin';
+
+        // Построение меню
+        const menuItems = [];
+        if (State.user) {
+            menuItems.push({
+                id: 'favorite',
+                label: post.isFavorited ? 'Убрать из избранного' : 'В избранное',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>',
+                action: 'favorite'
+            });
+            menuItems.push({
+                id: 'share',
+                label: 'Поделиться',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>',
+                action: 'share'
+            });
+        }
+        
+        if (canManage) {
+            menuItems.push({
+                id: 'edit',
+                label: 'Редактировать',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>',
+                action: 'edit'
+            });
+            menuItems.push({
+                id: 'pin',
+                label: post.isPinned ? 'Открепить' : 'Закрепить',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>',
+                action: 'pin'
+            });
+            menuItems.push({
+                id: 'delete',
+                label: 'Удалить',
+                icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>',
+                action: 'delete',
+                danger: true
+            });
+        }
+
+        const menuHtml = menuItems.length > 0 ? `
+            <div class="post-menu">
+                <button class="post-menu-btn" data-menu-for="${post.id}" aria-label="Меню">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="1.5"/>
+                        <circle cx="12" cy="12" r="1.5"/>
+                        <circle cx="19" cy="12" r="1.5"/>
+                    </svg>
+                </button>
+                <div class="post-menu-dropdown" id="menu-${post.id}">
+                    ${menuItems.map(item => `
+                        <button class="post-menu-item ${item.danger ? 'danger' : ''}" data-post-id="${post.id}" data-action="${item.action}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${item.icon}</svg>
+                            ${Security.safeText(item.label)}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        ` : '';
+
+        return `
+            <article class="post-card ${post.isPinned ? 'pinned' : ''}" data-post-id="${post.id}" style="animation-delay: ${index * 0.05}s">
+                ${pinnedBadge}
+                <div class="post-header">
+                    <div class="post-avatar">
+                        <img src="${avatarSrc}" alt="${Security.safeText(authorName)}">
+                    </div>
+                    <div class="post-meta">
+                        <div class="post-author ${isAdmin ? 'admin' : ''}">
+                            ${Security.safeText(authorName)}
+                            ${verifiedBadge}
+                            ${levelBadge}
+                        </div>
+                        <div class="post-date">${UI.formatRelativeDate(post.createdAt)}</div>
+                    </div>
+                    ${menuHtml}
+                </div>
+                <h2 class="post-title">${Security.safeText(post.title)}</h2>
+                <div class="post-body">${renderMarkdown(post.content)}</div>
+                ${filesHtml}
+                <div class="post-actions">
+                    <button class="action-btn ${post.isLiked ? 'liked' : ''}" data-action="like" data-post-id="${post.id}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span>${post.likes || 0}</span>
+                    </button>
+                    <button class="action-btn ${post.isDisliked ? 'disliked' : ''}" data-action="dislike" data-post-id="${post.id}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+                        </svg>
+                        <span>${post.dislikes || 0}</span>
+                    </button>
+                    <button class="action-btn" data-action="comment" data-post-id="${post.id}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        <span>${post.commentsCount || 0}</span>
+                    </button>
+                    <button class="action-btn" data-action="share" data-post-id="${post.id}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                    </button>
+                    <div class="action-spacer"></div>
+                    <button class="action-btn ${post.isFavorited ? 'favorited' : ''}" data-action="favorite" data-post-id="${post.id}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                        </svg>
+                    </button>
+                </div>
+            </article>
+        `;
+    }
+
+    /**
+     * Рендеринг карточки файла
+     * @param {Object} file - Данные файла
+     * @returns {string} - HTML карточки файла
+     */
+    function renderFileCard(file) {
+        const ext = (file.name || '').split('.').pop().toLowerCase();
+        let iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>';
+        
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>';
+        } else if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) {
+            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
+        } else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>';
+        } else if (['pdf'].includes(ext)) {
+            iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>';
+        }
+
+        return `
+            <a href="${Security.safeText(file.url)}" target="_blank" rel="noopener" class="file-card" download="${Security.safeText(file.name)}">
+                <div class="file-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconSvg}</svg>
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${Security.safeText(file.name)}</div>
+                    <div class="file-size">${UI.formatBytes(file.size || 0)}</div>
+                </div>
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0; color: var(--text-secondary);">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+            </a>
+        `;
+    }
+
+    /**
+     * Привязка событий постов
+     */
+    function attachPostEvents() {
+        // Action buttons
+        document.querySelectorAll('.post-actions .action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = btn.dataset.action;
+                const postId = btn.dataset.postId;
+                handlePostAction(action, postId, btn);
+            });
+        });
+
+        // Menu buttons
+        document.querySelectorAll('.post-menu-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const postId = btn.dataset.menuFor;
+                togglePostMenu(postId);
+            });
+        });
+
+        // Menu items
+        document.querySelectorAll('.post-menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const postId = item.dataset.postId;
+                const action = item.dataset.action;
+                closeAllMenus();
+                handlePostAction(action, postId);
+            });
+        });
+
+        // Close menus on outside click
+        document.addEventListener('click', closeAllMenus);
+    }
+
+    /**
+     * Переключение меню поста
+     * @param {string} postId - ID поста
+     */
+    function togglePostMenu(postId) {
+        const menu = document.getElementById(`menu-${postId}`);
+        const wasOpen = menu.classList.contains('open');
+        closeAllMenus();
+        if (!wasOpen) menu.classList.add('open');
+    }
+
+    /**
+     * Закрытие всех меню
+     */
+    function closeAllMenus() {
+        document.querySelectorAll('.post-menu-dropdown.open').forEach(m => m.classList.remove('open'));
+    }
+
+    /**
+     * Обработка действия над постом
+     * @param {string} action - Тип действия
+     * @param {string} postId - ID поста
+     * @param {HTMLElement} btn - Элемент кнопки (опционально)
+     */
+    async function handlePostAction(action, postId, btn = null) {
+        if (!State.user && ['like', 'dislike', 'favorite', 'comment'].includes(action)) {
+            UI.toast('Войдите, чтобы взаимодействовать с постами', 'warning');
+            openAuthModal();
+            return;
+        }
+
+        const post = State.posts.find(p => p.id === postId);
+        if (!post && action !== 'share') return;
+
+        try {
+            switch (action) {
+                case 'like':
+                    if (btn) btn.classList.add('like-animate');
+                    const likeRes = await ApiClient.toggleLike(postId);
+                    post.likes = likeRes.likes;
+                    post.isLiked = likeRes.isLiked;
+                    if (likeRes.isLiked) post.dislikes = Math.max(0, (post.dislikes || 0) - (post.isDisliked ? 1 : 0));
+                    post.isDisliked = false;
+                    renderPosts();
+                    break;
+
+                case 'dislike':
+                    const dislikeRes = await ApiClient.toggleDislike(postId);
+                    post.dislikes = dislikeRes.dislikes;
+                    post.isDisliked = dislikeRes.isDisliked;
+                    if (dislikeRes.isDisliked) post.likes = Math.max(0, (post.likes || 0) - (post.isLiked ? 1 : 0));
+                    post.isLiked = false;
+                    renderPosts();
+                    break;
+
+                case 'favorite':
+                    const favRes = await ApiClient.toggleFavorite(postId);
+                    post.isFavorited = favRes.isFavorited;
+                    renderPosts();
+                    UI.toast(favRes.isFavorited ? 'Добавлено в избранное' : 'Убрано из избранного', 'success');
+                    break;
+
+                case 'comment':
+                    openCommentsModal(postId);
+                    break;
+
+                case 'share':
+                    openShareModal(postId);
+                    break;
+
+                case 'edit':
+                    openEditPostModal(postId);
+                    break;
+
+                case 'pin':
+                    const pinRes = await ApiClient.togglePin(postId);
+                    post.isPinned = pinRes.isPinned;
+                    renderPosts();
+                    UI.toast(pinRes.isPinned ? 'Пост закреплён' : 'Пост откреплён', 'success');
+                    break;
+
+                case 'delete':
+                    if (confirm('Удалить этот пост? Это действие необратимо.')) {
+                        await ApiClient.deletePost(postId);
+                        State.posts = State.posts.filter(p => p.id !== postId);
+                        renderPosts();
+                        UI.toast('Пост удалён', 'success');
+                    }
+                    break;
+            }
         } catch (err) {
             UI.toast(err.message, 'error');
         }
-    });
-}
+    }
 
-            function bindCommentEvents() {
-                const input = document.getElementById('commentInput');
-                const actions = document.getElementById('commentActions');
+    // ============================================
+    // Post Editor
+    // ============================================
+    
+    /**
+     * Привязка событий создания/редактирования поста
+     */
+    function bindCreatePostEvents() {
+        document.getElementById('createPostFab').addEventListener('click', () => {
+            State.editingPostId = null;
+            State.pendingFiles = [];
+            State.uploadedFileUrls = [];
+            document.getElementById('postModalTitle').textContent = 'Новый пост';
+            document.getElementById('postTitleInput').value = '';
+            document.getElementById('postContentInput').value = '';
+            document.getElementById('uploadPreviewList').innerHTML = '';
+            document.getElementById('postSubmitBtn').textContent = 'Опубликовать';
+            switchEditorTab('write');
+            UI.openModal('createPostModal');
+        });
 
-                input.addEventListener('focus', () => {
-                    if (!State.user) {
-                        UI.toast('Войдите, чтобы комментировать', 'warning');
-                        input.blur();
-                        openAuthModal();
-                        return;
-                    }
-                    actions.classList.add('visible');
-                });
+        // Editor tabs
+        document.querySelectorAll('[data-editor-tab]').forEach(tab => {
+            tab.addEventListener('click', () => switchEditorTab(tab.dataset.editorTab));
+        });
 
-                document.getElementById('cancelCommentBtn').addEventListener('click', () => {
-                    input.value = '';
-                    actions.classList.remove('visible');
-                    State.replyToId = null;
-                    document.getElementById('replyToHint').classList.add('hidden');
-                });
+        // File upload
+        const uploadZone = document.getElementById('fileUploadZone');
+        const fileInput = document.getElementById('fileInput');
 
-                document.getElementById('cancelReplyBtn').addEventListener('click', () => {
-                    State.replyToId = null;
-                    document.getElementById('replyToHint').classList.add('hidden');
-                });
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-                document.getElementById('submitCommentBtn').addEventListener('click', submitComment);
+        // Form submit
+        document.getElementById('postForm').addEventListener('submit', handlePostSubmit);
+    }
 
-                input.addEventListener('keydown', (e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                        submitComment();
-                    }
-                });
+    /**
+     * Переключение вкладки редактора
+     * @param {string} tab - Тип вкладки: 'write' | 'preview'
+     */
+    function switchEditorTab(tab) {
+        document.querySelectorAll('[data-editor-tab]').forEach(t => {
+            t.classList.toggle('active', t.dataset.editorTab === tab);
+        });
+        
+        const textarea = document.getElementById('postContentInput');
+        const preview = document.getElementById('postPreview');
+        
+        if (tab === 'write') {
+            textarea.classList.remove('hidden');
+            preview.classList.add('hidden');
+        } else {
+            textarea.classList.add('hidden');
+            preview.classList.remove('hidden');
+            preview.innerHTML = renderMarkdown(textarea.value) || '<em style="color: var(--text-secondary)">Пустой предпросмотр</em>';
+        }
+    }
 
-                // Sort tabs
-                document.querySelectorAll('[data-comment-sort]').forEach(tab => {
-                    tab.addEventListener('click', () => {
-                        document.querySelectorAll('[data-comment-sort]').forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                        State.commentSort = tab.dataset.commentSort;
-                        renderComments();
-                    });
-                });
+    /**
+     * Обработка выбранных файлов
+     * @param {FileList} fileList - Список файлов
+     */
+    function handleFiles(fileList) {
+        for (const file of fileList) {
+            if (file.size > CONSTANTS.MAX_FILE_SIZE) {
+                UI.toast(`Файл ${file.name} превышает ${CONSTANTS.MAX_FILE_SIZE / 1024 / 1024} МБ`, 'error');
+                continue;
             }
+            State.pendingFiles.push(file);
+        }
+        renderUploadPreview();
+    }
 
-            async function submitComment() {
-                if (!State.user) {
-                    openAuthModal();
-                    return;
-                }
-                const input = document.getElementById('commentInput');
-                const text = input.value.trim();
-                if (!text) {
-                    UI.toast('Введите текст комментария', 'error');
-                    return;
-                }
-                if (text.length > 2000) {
-                    UI.toast('Комментарий слишком длинный (макс. 2000 символов)', 'error');
-                    return;
-                }
+    /**
+     * Рендеринг превью загружаемых файлов
+     */
+    function renderUploadPreview() {
+        const list = document.getElementById('uploadPreviewList');
+        
+        if (State.pendingFiles.length === 0) {
+            list.innerHTML = '';
+            return;
+        }
+        
+        list.innerHTML = State.pendingFiles.map((file, idx) => `
+            <div class="upload-preview-item" data-idx="${idx}">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="upload-preview-name">${Security.safeText(file.name)}</span>
+                <span class="upload-preview-size">${UI.formatBytes(file.size)}</span>
+                <button type="button" class="upload-preview-remove" data-remove-idx="${idx}" aria-label="Удалить">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
 
-                const btn = document.getElementById('submitCommentBtn');
-                UI.setLoading(btn, true, 'Отправка...');
+        list.querySelectorAll('[data-remove-idx]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.removeIdx);
+                State.pendingFiles.splice(idx, 1);
+                renderUploadPreview();
+            });
+        });
+    }
 
-                try {
-                    await ApiClient.createComment(State.currentPostId, text, State.replyToId);
-                    input.value = '';
-                    document.getElementById('commentActions').classList.remove('visible');
-                    State.replyToId = null;
-                    document.getElementById('replyToHint').classList.add('hidden');
-                    UI.toast('Комментарий добавлен', 'success');
-                    await loadComments();
-                    updatePostCommentCount(State.currentPostId, 1);
-                } catch (err) {
-                    UI.toast(err.message, 'error');
-                } finally {
-                    UI.setLoading(btn, false);
-                    btn.textContent = 'Отправить';
-                }
-            }
+    /**
+     * Обработка отправки формы поста
+     * @param {Event} e - Событие отправки формы
+     */
+    async function handlePostSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('postSubmitBtn');
+        const title = document.getElementById('postTitleInput').value.trim();
+        const content = document.getElementById('postContentInput').value.trim();
 
-            function updatePostCommentCount(postId, delta) {
-                const post = State.posts.find(p => p.id === postId);
-                if (post) {
-                    post.commentsCount = Math.max(0, (post.commentsCount || 0) + delta);
-                    renderPosts();
-                }
-            }
-
-            // ============================================
-            // Share Modal
-            // ============================================
-            function openShareModal(postId) {
-    const post = State.posts.find(p => p.id === postId);
-    if (!post) return;
-    
-    State.currentPostId = postId;
-    
-    // Ссылка для копирования и шаринга использует ?shared= (открывает пост)
-    const shareUrl = `${window.location.origin}/news?shared=${postId}`;
-    
-    document.getElementById('sharePostTitle').textContent = post.title;
-    document.getElementById('shareLinkInput').value = shareUrl;
-    
-    const encodedUrl = encodeURIComponent(shareUrl);
-    const encodedTitle = encodeURIComponent(post.title);
-    
-    document.getElementById('shareTelegram').href = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
-    document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-    document.getElementById('shareVK').href = `https://vk.com/share.php?url=${encodedUrl}&title=${encodedTitle}`;
-    document.getElementById('shareEmail').href = `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
-    
-    UI.openModal('shareModal');
-    
-    // Обновляем URL текущей страницы (админ открыл шаринг)
-    window.history.replaceState({}, '', `?share=${postId}`);
-}
-
-            function bindShareEvents() {
-                document.getElementById('copyLinkBtn').addEventListener('click', async () => {
-                    const input = document.getElementById('shareLinkInput');
-                    try {
-                        await navigator.clipboard.writeText(input.value);
-                        UI.toast('Ссылка скопирована', 'success');
-                    } catch (err) {
-                        input.select();
-                        document.execCommand('copy');
-                        UI.toast('Ссылка скопирована', 'success');
-                    }
-                });
-            }
-
-            // ============================================
-            // Filter tabs
-            // ============================================
-            function bindFilterEvents() {
-                document.querySelectorAll('#filterTabs .filter-tab').forEach(tab => {
-
-                    if (tab.dataset.filter === 'mine' && State.user && State.user.role !== 'admin') {
-            tab.style.display = 'none';
+        if (!title) {
+            UI.toast('Введите заголовок', 'error');
+            return;
+        }
+        if (!content) {
+            UI.toast('Введите содержание', 'error');
             return;
         }
 
-                    tab.addEventListener('click', () => {
-                        document.querySelectorAll('#filterTabs .filter-tab').forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                        State.currentFilter = tab.dataset.filter;
-                        renderPosts();
-                    });
-                });
+        UI.setLoading(btn, true, State.editingPostId ? 'Сохранение...' : 'Публикация...');
 
-                document.getElementById('refreshBtn').addEventListener('click', async () => {
-                    const btn = document.getElementById('refreshBtn');
-                    UI.setLoading(btn, true, '...');
-                    await loadPosts();
-                    UI.setLoading(btn, false);
-                    btn.innerHTML = `
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Обновить
-                    `;
+        try {
+            // Загрузка новых файлов
+            const newFileUrls = [];
+            for (const file of State.pendingFiles) {
+                const result = await ApiClient.uploadFile(file);
+                newFileUrls.push({
+                    name: file.name,
+                    size: file.size,
+                    url: result.url
                 });
             }
 
-            // ============================================
-// Close modal handlers
-// ============================================
-function bindModalCloseEvents() {
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('[data-close-modal]')) {
-            const overlay = e.target.closest('.modal-overlay');
-            if (overlay) {
-                UI.closeModal(overlay.id);
-                if (overlay.id === 'commentsModal' || overlay.id === 'shareModal') {
-                    window.history.replaceState({}, '', '/news');
-                }
-            }
-        }
-        if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
-            UI.closeModal(e.target.id);
-            if (e.target.id === 'commentsModal' || e.target.id === 'shareModal') {
-                window.history.replaceState({}, '', '/news');
-            }
-        }
-    });
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const active = document.querySelector('.modal-overlay.active');
-            if (active) {
-                UI.closeModal(active.id);
-                if (active.id === 'commentsModal' || active.id === 'shareModal') {
-                    window.history.replaceState({}, '', '/news');
-                }
-            }
-        }
-    });
-}
+            // Объединение с существующими файлами
+            const allFiles = [...(State.uploadedFileUrls || []), ...newFileUrls];
 
-            // ============================================
-            // Utilities
-            // ============================================
-            function pluralize(n, forms) {
-                const abs = Math.abs(n) % 100;
-                const n1 = abs % 10;
-                if (abs > 10 && abs < 20) return forms[2];
-                if (n1 > 1 && n1 < 5) return forms[1];
-                if (n1 === 1) return forms[0];
-                return forms[2];
-            }
-
-            // ============================================
-            // Инициализация
-            // ============================================
-            function init() {
-                bindAuthEvents();
-                bindCreatePostEvents();
-                bindCommentEvents();
-                bindShareEvents();
-                bindFilterEvents();
-                bindModalCloseEvents();
-                initSession();
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
+            if (State.editingPostId) {
+                await ApiClient.updatePost(State.editingPostId, title, content, allFiles);
+                UI.toast('Пост обновлён', 'success');
             } else {
-                init();
+                await ApiClient.createPost(title, content, allFiles);
+                UI.toast('Пост опубликован', 'success');
             }
-        })();
-    </script>
+
+            UI.closeModal('createPostModal');
+            State.pendingFiles = [];
+            State.uploadedFileUrls = [];
+            State.editingPostId = null;
+            await loadPosts();
+        } catch (err) {
+            UI.toast(err.message, 'error');
+        } finally {
+            UI.setLoading(btn, false);
+            btn.textContent = State.editingPostId ? 'Сохранить' : 'Опубликовать';
+        }
+    }
+
+    /**
+     * Открытие модального окна редактирования поста
+     * @param {string} postId - ID поста
+     */
+    function openEditPostModal(postId) {
+        const post = State.posts.find(p => p.id === postId);
+        if (!post) return;
+
+        State.editingPostId = postId;
+        State.pendingFiles = [];
+        State.uploadedFileUrls = post.files || [];
+        
+        document.getElementById('postModalTitle').textContent = 'Редактировать пост';
+        document.getElementById('postTitleInput').value = post.title;
+        document.getElementById('postContentInput').value = post.content;
+        document.getElementById('postSubmitBtn').textContent = 'Сохранить';
+        
+        // Показ существующих файлов
+        const list = document.getElementById('uploadPreviewList');
+        list.innerHTML = State.uploadedFileUrls.map((f, idx) => `
+            <div class="upload-preview-item">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="upload-preview-name">${Security.safeText(f.name)}</span>
+                <span class="upload-preview-size">${UI.formatBytes(f.size)}</span>
+                <button type="button" class="upload-preview-remove" data-remove-existing="${idx}" aria-label="Удалить">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        `).join('');
+
+        list.querySelectorAll('[data-remove-existing]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.removeExisting);
+                State.uploadedFileUrls.splice(idx, 1);
+                openEditPostModal(postId);
+            });
+        });
+
+        switchEditorTab('write');
+        UI.openModal('createPostModal');
+    }
+
+    // ============================================
+    // Comments Management
+    // ============================================
+    
+    /**
+     * Открытие модального окна комментариев
+     * @param {string} postId - ID поста
+     */
+    async function openCommentsModal(postId) {
+        const post = State.posts.find(p => p.id === postId);
+        if (!post) return;
+
+        State.currentPostId = postId;
+        State.comments = [];
+        State.replyToId = null;
+        State.editingCommentId = null;
+
+        document.getElementById('commentsPostTitle').textContent = post.title;
+        document.getElementById('commentInput').value = '';
+        document.getElementById('commentActions').classList.remove('visible');
+        document.getElementById('replyToHint').classList.add('hidden');
+
+        // Установка аватара
+        const composeAvatar = document.getElementById('composeAvatar');
+        if (State.user) {
+            const isAdmin = State.user.role === 'admin';
+            const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(State.user.id);
+            composeAvatar.innerHTML = `<img src="${avatarSrc}" alt="avatar">`;
+            document.getElementById('commentCompose').style.display = 'flex';
+        } else {
+            document.getElementById('commentCompose').style.display = 'none';
+        }
+
+        UI.openModal('commentsModal');
+
+        // Обновление URL
+        const newUrl = `${window.location.pathname}?comments=${postId}`;
+        window.history.replaceState({}, '', newUrl);
+
+        await loadComments();
+    }
+
+    /**
+     * Загрузка комментариев
+     */
+    async function loadComments() {
+        const list = document.getElementById('commentList');
+        list.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+
+        try {
+            const data = await ApiClient.getComments(State.currentPostId);
+            State.comments = data.comments || [];
+            renderComments();
+        } catch (err) {
+            list.innerHTML = `
+                <div class="empty-state" style="padding: 40px 0;">
+                    <div class="empty-state-text">${Security.safeText(err.message)}</div>
+                </div>
+            `;
+        }
+    }
+
+    let renderCommentsRafId = null;
+    
+    /**
+     * Рендеринг комментариев
+     */
+    function renderComments() {
+        const list = document.getElementById('commentList');
+        const countEl = document.getElementById('commentsCount');
+
+        // Построение дерева
+        const tree = buildCommentTree(State.comments);
+
+        // Сортировка
+        const sortFn = State.commentSort === 'top'
+            ? (a, b) => (b.likes - b.dislikes) - (a.likes - a.dislikes)
+            : (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
+
+        // Закрепленные сверху
+        tree.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return sortFn(a, b);
+        });
+
+        countEl.textContent = `${State.comments.length} ${pluralize(State.comments.length, ['комментарий', 'комментария', 'комментариев'])}`;
+
+        if (tree.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state" style="padding: 40px 0;">
+                    <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <div class="empty-state-title">Пока нет комментариев</div>
+                    <div class="empty-state-text">Будьте первым!</div>
+                </div>
+            `;
+            return;
+        }
+
+        const commentsHtml = tree.map(c => renderCommentNode(c, 0)).join('');
+
+        if (renderCommentsRafId) cancelAnimationFrame(renderCommentsRafId);
+        renderCommentsRafId = requestAnimationFrame(() => {
+            list.innerHTML = commentsHtml;
+            attachCommentEvents();
+            renderCommentsRafId = null;
+        });
+    }
+
+    /**
+     * Построение дерева комментариев
+     * @param {Array} comments - Массив комментариев
+     * @returns {Array} - Дерево комментариев
+     */
+    function buildCommentTree(comments) {
+        const map = {};
+        const roots = [];
+        
+        comments.forEach(c => { 
+            map[c.id] = { ...c, replies: [] }; 
+        });
+        
+        comments.forEach(c => {
+            if (c.parentId && map[c.parentId]) {
+                map[c.parentId].replies.push(map[c.id]);
+            } else {
+                roots.push(map[c.id]);
+            }
+        });
+        
+        return roots;
+    }
+
+    /**
+     * Рендеринг узла комментария
+     * @param {Object} comment - Данные комментария
+     * @param {number} depth - Глубина вложенности
+     * @returns {string} - HTML комментария
+     */
+    function renderCommentNode(comment, depth) {
+        const isAdmin = comment.authorRole === 'admin';
+        const avatarSrc = isAdmin ? '/favicon.svg' : AvatarGenerator.generate(comment.authorId);
+        const authorName = isAdmin ? 'Oris' : Security.safeText(comment.authorName || 'Аноним');
+        
+        // Нормализация булевых значений
+        const isLiked = comment.isLiked === true || comment.isLiked === 1 || comment.isLiked === 'true';
+        const isDisliked = comment.isDisliked === true || comment.isDisliked === 1 || comment.isDisliked === 'true';
+        
+        const verifiedBadge = isAdmin ? `
+            <svg class="verified-badge" fill="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>` : '';
+        
+        const levelBadge = !isAdmin && comment.authorLevel ? (() => {
+            const labels = { active: 'Активный', expert: 'Эксперт', plus: 'Plus' };
+            const label = labels[comment.authorLevel];
+            if (!label) return '';
+            return `<span class="level-badge level-${comment.authorLevel}">${label}</span>`;
+        })() : '';
+        
+        const isOwner = State.user && State.user.id === comment.authorId;
+        const canManage = State.user && State.user.role === 'admin';
+        
+        const pinnedBadge = comment.isPinned ? `
+            <span class="comment-pinned-badge">
+                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
+                Закреплён
+            </span>
+        ` : '';
+        
+        const editedMark = comment.isEdited ? `<span class="comment-edited">(изменено)</span>` : '';
+        
+        const replyToHtml = comment.parentId
+            ? (() => {
+                const parent = State.comments.find(c => c.id === comment.parentId);
+                if (parent) {
+                    const parentName = parent.authorRole === 'admin' ? 'Oris' : (parent.authorName || 'Аноним');
+                    return `<div class="comment-reply-to">@${Security.safeText(parentName)}</div>`;
+                }
+                return '';
+            })()
+            : '';
+        
+        // Построение кнопок действий
+        const actions = [];
+        if (State.user) {
+            actions.push(`
+                <button class="comment-action-btn ${isLiked ? 'liked' : ''}" data-comment-action="like" data-comment-id="${comment.id}">
+                    <svg fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+                    </svg>
+                    ${comment.likes || 0}
+                </button>
+            `);
+            actions.push(`
+                <button class="comment-action-btn ${isDisliked ? 'disliked' : ''}" data-comment-action="dislike" data-comment-id="${comment.id}">
+                    <svg fill="${isDisliked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+                    </svg>
+                    ${comment.dislikes || 0}
+                </button>
+            `);
+            if (depth < CONSTANTS.MAX_REPLY_DEPTH) {
+                actions.push(`
+                    <button class="comment-action-btn" data-comment-action="reply" data-comment-id="${comment.id}" data-author-name="${Security.safeText(authorName)}">
+                        Ответить
+                    </button>
+                `);
+            }
+        }
+        
+        if (isOwner) {
+            actions.push(`
+                <button class="comment-action-btn" data-comment-action="edit" data-comment-id="${comment.id}">
+                    Изменить
+                </button>
+            `);
+            actions.push(`
+                <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
+                    Удалить
+                </button>
+            `);
+        } else if (canManage) {
+            actions.push(`
+                <button class="comment-action-btn" data-comment-action="pin" data-comment-id="${comment.id}">
+                    ${comment.isPinned ? 'Открепить' : 'Закрепить'}
+                </button>
+            `);
+            actions.push(`
+                <button class="comment-action-btn" data-comment-action="delete" data-comment-id="${comment.id}" style="color: var(--danger);">
+                    Удалить
+                </button>
+            `);
+        }
+        
+        const commentHtml = `
+            <div class="comment ${comment.isPinned ? 'pinned' : ''}" data-comment-id="${comment.id}">
+                <div class="comment-avatar">
+                    <img src="${avatarSrc}" alt="${Security.safeText(authorName)}">
+                </div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-author ${isAdmin ? 'admin' : ''}">${Security.safeText(authorName)}</span>
+                        ${verifiedBadge}
+                        ${levelBadge}
+                        ${pinnedBadge}
+                        <span class="comment-date">${UI.formatRelativeDate(comment.createdAt)}</span>
+                        ${editedMark}
+                    </div>
+                    ${replyToHtml}
+                    <div class="comment-text">${Security.safeText(comment.text).replace(/\n/g, '<br>')}</div>
+                    <div class="comment-actions">
+                        ${actions.join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const repliesHtml = comment.replies && comment.replies.length > 0
+            ? `<div class="comment-replies">${comment.replies.map(r => renderCommentNode(r, depth + 1)).join('')}</div>`
+            : '';
+        
+        return commentHtml + repliesHtml;
+    }
+
+    /**
+     * Привязка событий комментариев
+     */
+    function attachCommentEvents() {
+        document.querySelectorAll('[data-comment-action]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.commentAction;
+                const commentId = btn.dataset.commentId;
+                const authorName = btn.dataset.authorName;
+                handleCommentAction(action, commentId, authorName);
+            });
+        });
+    }
+
+    /**
+     * Обработка действия над комментарием
+     * @param {string} action - Тип действия
+     * @param {string} commentId - ID комментария
+     * @param {string} authorName - Имя автора
+     */
+    async function handleCommentAction(action, commentId, authorName) {
+        const comment = State.comments.find(c => c.id === commentId);
+        if (!comment && action !== 'reply') return;
+
+        try {
+            switch (action) {
+                case 'like':
+                    const likeRes = await ApiClient.toggleCommentLike(commentId);
+                    comment.likes = likeRes.likes;
+                    comment.isLiked = likeRes.isLiked;
+                    if (likeRes.isLiked) {
+                        comment.dislikes = Math.max(0, (comment.dislikes || 0) - (comment.isDisliked ? 1 : 0));
+                        comment.isDisliked = false;
+                    }
+                    renderComments();
+                    break;
+
+                case 'dislike':
+                    const dislikeRes = await ApiClient.toggleCommentDislike(commentId);
+                    comment.dislikes = dislikeRes.dislikes;
+                    comment.isDisliked = dislikeRes.isDisliked;
+                    if (dislikeRes.isDisliked) {
+                        comment.likes = Math.max(0, (comment.likes || 0) - (comment.isLiked ? 1 : 0));
+                        comment.isLiked = false;
+                    }
+                    renderComments();
+                    break;
+
+                case 'reply':
+                    State.replyToId = commentId;
+                    document.getElementById('replyToHint').classList.remove('hidden');
+                    document.getElementById('replyToName').textContent = authorName;
+                    document.getElementById('commentInput').focus();
+                    document.getElementById('commentActions').classList.add('visible');
+                    break;
+
+                case 'edit':
+                    startEditComment(commentId);
+                    break;
+
+                case 'delete':
+                    if (confirm('Удалить этот комментарий?')) {
+                        await ApiClient.deleteComment(commentId);
+                        UI.toast('Комментарий удалён', 'success');
+                        await loadComments();
+                        updatePostCommentCount(State.currentPostId, -1);
+                    }
+                    break;
+
+                case 'pin':
+                    const pinRes = await ApiClient.toggleCommentPin(commentId);
+                    comment.isPinned = pinRes.isPinned;
+                    renderComments();
+                    UI.toast(pinRes.isPinned ? 'Комментарий закреплён' : 'Комментарий откреплён', 'success');
+                    break;
+            }
+        } catch (err) {
+            UI.toast(err.message, 'error');
+        }
+    }
+
+    /**
+     * Начало редактирования комментария
+     * @param {string} commentId - ID комментария
+     */
+    function startEditComment(commentId) {
+        const comment = State.comments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        State.editingCommentId = commentId;
+        const commentEl = document.querySelector(`[data-comment-id="${commentId}"] .comment-text`);
+        if (!commentEl) return;
+
+        const originalText = comment.text;
+
+        // Очистка и создание элементов
+        commentEl.innerHTML = '';
+
+        const textarea = document.createElement('textarea');
+        textarea.className = 'comment-edit-input';
+        textarea.id = 'editCommentInput';
+        textarea.value = originalText;
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'comment-edit-actions';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn btn-ghost';
+        cancelBtn.id = 'cancelEditComment';
+        cancelBtn.style.cssText = 'padding: 6px 12px; font-size: 0.82rem;';
+        cancelBtn.textContent = 'Отмена';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-primary';
+        saveBtn.id = 'saveEditComment';
+        saveBtn.style.cssText = 'padding: 6px 14px; font-size: 0.82rem;';
+        saveBtn.textContent = 'Сохранить';
+
+        actionsDiv.appendChild(cancelBtn);
+        actionsDiv.appendChild(saveBtn);
+
+        commentEl.appendChild(textarea);
+        commentEl.appendChild(actionsDiv);
+
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+        cancelBtn.addEventListener('click', () => {
+            State.editingCommentId = null;
+            renderComments();
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            const newText = textarea.value.trim();
+            if (!newText) {
+                UI.toast('Комментарий не может быть пустым', 'error');
+                return;
+            }
+            if (newText === originalText) {
+                State.editingCommentId = null;
+                renderComments();
+                return;
+            }
+            try {
+                await ApiClient.updateComment(commentId, newText);
+                UI.toast('Комментарий обновлён', 'success');
+                State.editingCommentId = null;
+                await loadComments();
+            } catch (err) {
+                UI.toast(err.message, 'error');
+            }
+        });
+    }
+
+    /**
+     * Привязка событий формы комментариев
+     */
+    function bindCommentEvents() {
+        const input = document.getElementById('commentInput');
+        const actions = document.getElementById('commentActions');
+
+        input.addEventListener('focus', () => {
+            if (!State.user) {
+                UI.toast('Войдите, чтобы комментировать', 'warning');
+                input.blur();
+                openAuthModal();
+                return;
+            }
+            actions.classList.add('visible');
+        });
+
+        document.getElementById('cancelCommentBtn').addEventListener('click', () => {
+            input.value = '';
+            actions.classList.remove('visible');
+            State.replyToId = null;
+            document.getElementById('replyToHint').classList.add('hidden');
+        });
+
+        document.getElementById('cancelReplyBtn').addEventListener('click', () => {
+            State.replyToId = null;
+            document.getElementById('replyToHint').classList.add('hidden');
+        });
+
+        document.getElementById('submitCommentBtn').addEventListener('click', submitComment);
+
+        input.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                submitComment();
+            }
+        });
+
+        // Sort tabs
+        document.querySelectorAll('[data-comment-sort]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('[data-comment-sort]').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                State.commentSort = tab.dataset.commentSort;
+                renderComments();
+            });
+        });
+    }
+
+    /**
+     * Отправка комментария
+     */
+    async function submitComment() {
+        if (!State.user) {
+            openAuthModal();
+            return;
+        }
+        
+        const input = document.getElementById('commentInput');
+        const text = input.value.trim();
+        
+        if (!text) {
+            UI.toast('Введите текст комментария', 'error');
+            return;
+        }
+        if (text.length > CONSTANTS.MAX_COMMENT_LENGTH) {
+            UI.toast(`Комментарий слишком длинный (макс. ${CONSTANTS.MAX_COMMENT_LENGTH} символов)`, 'error');
+            return;
+        }
+
+        const btn = document.getElementById('submitCommentBtn');
+        UI.setLoading(btn, true, 'Отправка...');
+
+        try {
+            await ApiClient.createComment(State.currentPostId, text, State.replyToId);
+            input.value = '';
+            document.getElementById('commentActions').classList.remove('visible');
+            State.replyToId = null;
+            document.getElementById('replyToHint').classList.add('hidden');
+            UI.toast('Комментарий добавлен', 'success');
+            await loadComments();
+            updatePostCommentCount(State.currentPostId, 1);
+        } catch (err) {
+            UI.toast(err.message, 'error');
+        } finally {
+            UI.setLoading(btn, false);
+            btn.textContent = 'Отправить';
+        }
+    }
+
+    /**
+     * Обновление счетчика комментариев поста
+     * @param {string} postId - ID поста
+     * @param {number} delta - Изменение счетчика
+     */
+    function updatePostCommentCount(postId, delta) {
+        const post = State.posts.find(p => p.id === postId);
+        if (post) {
+            post.commentsCount = Math.max(0, (post.commentsCount || 0) + delta);
+            renderPosts();
+        }
+    }
+
+    // ============================================
+    // Share Modal
+    // ============================================
+    
+    /**
+     * Открытие модального окна шаринга
+     * @param {string} postId - ID поста
+     */
+    function openShareModal(postId) {
+        const post = State.posts.find(p => p.id === postId);
+        if (!post) return;
+        
+        State.currentPostId = postId;
+        
+        const shareUrl = `${window.location.origin}/news?shared=${postId}`;
+        
+        document.getElementById('sharePostTitle').textContent = post.title;
+        document.getElementById('shareLinkInput').value = shareUrl;
+        
+        const encodedUrl = encodeURIComponent(shareUrl);
+        const encodedTitle = encodeURIComponent(post.title);
+        
+        document.getElementById('shareTelegram').href = `https://t.me/share/url?url=${encodedUrl}&text=${encodedTitle}`;
+        document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+        document.getElementById('shareVK').href = `https://vk.com/share.php?url=${encodedUrl}&title=${encodedTitle}`;
+        document.getElementById('shareEmail').href = `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+        
+        UI.openModal('shareModal');
+        
+        window.history.replaceState({}, '', `?share=${postId}`);
+    }
+
+    /**
+     * Привязка событий шаринга
+     */
+    function bindShareEvents() {
+        document.getElementById('copyLinkBtn').addEventListener('click', async () => {
+            const input = document.getElementById('shareLinkInput');
+            try {
+                await navigator.clipboard.writeText(input.value);
+                UI.toast('Ссылка скопирована', 'success');
+            } catch (err) {
+                input.select();
+                document.execCommand('copy');
+                UI.toast('Ссылка скопирована', 'success');
+            }
+        });
+    }
+
+    // ============================================
+    // Filter Tabs
+    // ============================================
+    
+    /**
+     * Привязка событий фильтров
+     */
+    function bindFilterEvents() {
+        document.querySelectorAll('#filterTabs .filter-tab').forEach(tab => {
+            if (tab.dataset.filter === 'mine' && State.user && State.user.role !== 'admin') {
+                tab.style.display = 'none';
+                return;
+            }
+
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('#filterTabs .filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                State.currentFilter = tab.dataset.filter;
+                renderPosts();
+            });
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('refreshBtn');
+            UI.setLoading(btn, true, '...');
+            await loadPosts();
+            UI.setLoading(btn, false);
+            btn.innerHTML = `
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Обновить
+            `;
+        });
+    }
+
+    // ============================================
+    // Modal Close Handlers
+    // ============================================
+    
+    /**
+     * Привязка событий закрытия модальных окон
+     */
+    function bindModalCloseEvents() {
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-close-modal]')) {
+                const overlay = e.target.closest('.modal-overlay');
+                if (overlay) {
+                    UI.closeModal(overlay.id);
+                    if (overlay.id === 'commentsModal' || overlay.id === 'shareModal') {
+                        window.history.replaceState({}, '', '/news');
+                    }
+                }
+            }
+            
+            if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+                UI.closeModal(e.target.id);
+                if (e.target.id === 'commentsModal' || e.target.id === 'shareModal') {
+                    window.history.replaceState({}, '', '/news');
+                }
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const active = document.querySelector('.modal-overlay.active');
+                if (active) {
+                    UI.closeModal(active.id);
+                    if (active.id === 'commentsModal' || active.id === 'shareModal') {
+                        window.history.replaceState({}, '', '/news');
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // Utilities
+    // ============================================
+    
+    /**
+     * Склонение слов
+     * @param {number} n - Число
+     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
+     * @returns {string} - Правильная форма
+     */
+    function pluralize(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const n1 = abs % 10;
+        
+        if (abs > 10 && abs < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
+    }
+
+    // ============================================
+    // Initialization
+    // ============================================
+    
+    /**
+     * Инициализация приложения
+     */
+    function init() {
+        bindAuthEvents();
+        bindCreatePostEvents();
+        bindCommentEvents();
+        bindShareEvents();
+        bindFilterEvents();
+        bindModalCloseEvents();
+        initSession();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
 </body>
 </html>
