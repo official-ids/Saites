@@ -87,7 +87,19 @@ const CONFIG = {
     MAX_CONTACT_LENGTH: 100,
 
     /** @type {number} Таймаут для Telegram API (мс) */
-    TELEGRAM_API_TIMEOUT: 30000
+    TELEGRAM_API_TIMEOUT: 30000,
+
+    /** @type {number} Rate limit: запросов в минуту */
+    RATE_LIMIT_MAX: 60,
+
+    /** @type {number} Rate limit: окно времени (мс) */
+    RATE_LIMIT_WINDOW: 60 * 1000,
+
+    /** @type {number} Максимальное количество заявок в /list */
+    MAX_LIST_SIZE: 50,
+
+    /** @type {number} TTL для audit log (7 дней) */
+    AUDIT_LOG_TTL: 7 * 24 * 60 * 60
 };
 
 /**
@@ -110,6 +122,7 @@ const ERROR_MESSAGES = {
     APPLICATION_PENDING: 'Заявка на рассмотрении',
     APPLICATION_REJECTED: 'Заявка отклонена',
     APPLICATION_ALREADY_APPROVED: 'Заявка уже одобрена',
+    INVALID_CODE_FORMAT: 'Неверный формат кода',
 
     // Авторизация
     INVALID_CREDENTIALS: 'Неверный логин или пароль',
@@ -118,9 +131,11 @@ const ERROR_MESSAGES = {
     ADMIN_REQUIRED: 'Требуются права администратора',
     INVALID_ADMIN_TOKEN: 'Неверный admin token',
 
+    // Rate limiting
+    RATE_LIMITED: 'Слишком много запросов. Попробуйте позже.',
+
     // Общие
     SERVER_ERROR: 'Ошибка сервера',
-    RATE_LIMITED: 'Слишком много запросов',
 
     // Telegram Bot
     BOT_NOT_CONFIGURED: 'Telegram bot не настроен',
@@ -144,7 +159,12 @@ const K = {
     USER: (login) => `team:user:${login}`,
     USERS_INDEX: 'team:users:index',
     /** @param {string} token */
-    SESSION: (token) => `team:session:${token}`
+    SESSION: (token) => `team:session:${token}`,
+    /** @param {string} ip */
+    RATE_LIMIT: (ip) => `team:ratelimit:${ip}`,
+    /** @param {string} actionId */
+    AUDIT_LOG: (actionId) => `team:audit:${actionId}`,
+    AUDIT_LOG_INDEX: 'team:audit:index'
 };
 
 // ============================================
@@ -203,6 +223,14 @@ function generatePassword() {
  */
 function generateSessionToken() {
     return crypto.randomBytes(CONFIG.SESSION_TOKEN_BYTES).toString('hex');
+}
+
+/**
+ * Генерация ID для audit log
+ * @returns {string} Уникальный ID
+ */
+function generateAuditId() {
+    return crypto.randomBytes(8).toString('hex');
 }
 
 // ============================================
@@ -270,6 +298,137 @@ function isValidContact(contact) {
 function isValidPhone(phone) {
     if (!phone) return true;
     return /^\+?[\d\s\-()]{7,20}$/.test(phone.trim());
+}
+
+/**
+ * Валидация кода заявки
+ * @param {string} code - Код
+ * @returns {boolean}
+ */
+function isValidCode(code) {
+    if (!code) return false;
+    const normalized = code.toUpperCase().trim();
+    return normalized.length === CONFIG.CODE_LENGTH && 
+           /^[A-Z0-9]+$/.test(normalized);
+}
+
+// ============================================
+// Утилиты: Rate Limiting
+// ============================================
+
+/**
+ * Проверка rate limit для IP
+ * @param {string} ip - IP адрес
+ * @returns {Promise<{allowed: boolean, retryAfter?: number}>}
+ */
+async function checkRateLimit(ip) {
+    const key = K.RATE_LIMIT(ip);
+    const now = Date.now();
+    
+    try {
+        const data = await kv.hgetall(key);
+        
+        if (!data || !data.count) {
+            // Первый запрос
+            await kv.hset(key, {
+                count: '1',
+                resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW)
+            });
+            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
+            return { allowed: true };
+        }
+        
+        const resetAt = parseInt(data.resetAt, 10);
+        
+        // Окно истекло
+        if (now > resetAt) {
+            await kv.del(key);
+            await kv.hset(key, {
+                count: '1',
+                resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW)
+            });
+            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
+            return { allowed: true };
+        }
+        
+        const count = parseInt(data.count, 10);
+        
+        // Лимит превышен
+        if (count >= CONFIG.RATE_LIMIT_MAX) {
+            const retryAfter = Math.ceil((resetAt - now) / 1000);
+            return { allowed: false, retryAfter };
+        }
+        
+        // Увеличиваем счётчик
+        await kv.hincrby(key, 'count', 1);
+        return { allowed: true };
+        
+    } catch (err) {
+        console.error('[RateLimit] Error:', err);
+        // При ошибке разрешаем запрос (fail-open)
+        return { allowed: true };
+    }
+}
+
+// ============================================
+// Утилиты: Audit Log
+// ============================================
+
+/**
+ * Запись действия в audit log
+ * @param {string} action - Тип действия
+ * @param {Object} details - Детали действия
+ * @param {string} [userId] - ID пользователя (опционально)
+ * @returns {Promise<string>} ID записи
+ */
+async function logAuditAction(action, details, userId = null) {
+    const actionId = generateAuditId();
+    const record = {
+        id: actionId,
+        action,
+        details,
+        userId,
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        await kv.hset(K.AUDIT_LOG(actionId), record);
+        await kv.sadd(K.AUDIT_LOG_INDEX, actionId);
+        await kv.expire(K.AUDIT_LOG(actionId), CONFIG.AUDIT_LOG_TTL);
+        
+        console.log(`[Audit] ${action}:`, details);
+        return actionId;
+    } catch (err) {
+        console.error('[Audit] Failed to log:', err);
+        return null;
+    }
+}
+
+/**
+ * Получение последних записей audit log
+ * @param {number} limit - Количество записей
+ * @returns {Promise<Array>} Список записей
+ */
+async function getAuditLog(limit = 50) {
+    try {
+        const actionIds = await kv.smembers(K.AUDIT_LOG_INDEX);
+        if (!actionIds || actionIds.length === 0) return [];
+        
+        const records = [];
+        for (const actionId of actionIds.slice(-limit)) {
+            const record = await kv.hgetall(K.AUDIT_LOG(actionId));
+            if (record && record.id) {
+                records.push(record);
+            }
+        }
+        
+        // Сортировка по времени (новые первые)
+        records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        return records;
+    } catch (err) {
+        console.error('[Audit] Failed to get log:', err);
+        return [];
+    }
 }
 
 // ============================================
@@ -504,7 +663,9 @@ async function approveApplication(code) {
         if (!app || !app.code) {
             return { success: false, error: ERROR_MESSAGES.APPLICATION_NOT_FOUND };
         }
-        if (app.status<think> 'approved') {
+        
+        // ИСПРАВЛЕНО: было app.status<think> 'approved'
+        if (app.status === 'approved') {
             return { success: false, error: ERROR_MESSAGES.APPLICATION_ALREADY_APPROVED };
         }
 
@@ -518,7 +679,8 @@ async function approveApplication(code) {
             status: 'approved',
             login,
             password,
-            passwordShown: 'false'
+            passwordShown: 'false',
+            approvedAt: new Date().toISOString()
         });
 
         // Создание пользователя
@@ -535,6 +697,13 @@ async function approveApplication(code) {
             role: 'team'
         });
         await kv.sadd(K.USERS_INDEX, login);
+
+        // Audit log
+        await logAuditAction('application_approved', {
+            code: normalizedCode,
+            login,
+            fullName: app.fullName
+        });
 
         console.log(`[Team] Application approved: ${normalizedCode} → login: ${login}`);
         return { success: true, login, password };
@@ -558,12 +727,94 @@ async function rejectApplication(code) {
             return { success: false, error: ERROR_MESSAGES.APPLICATION_NOT_FOUND };
         }
 
-        await kv.hset(K.APPLICATION(normalizedCode), { status: 'rejected' });
+        await kv.hset(K.APPLICATION(normalizedCode), { 
+            status: 'rejected',
+            rejectedAt: new Date().toISOString()
+        });
+
+        // Audit log
+        await logAuditAction('application_rejected', {
+            code: normalizedCode,
+            fullName: app.fullName
+        });
+
         console.log(`[Team] Application rejected: ${normalizedCode}`);
         return { success: true };
     } catch (err) {
         console.error('[Team] Reject error:', err);
         return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Получение детальной информации о заявке
+ * @param {string} code - Код заявки
+ * @returns {Promise<Object|null>}
+ */
+async function getApplicationInfo(code) {
+    try {
+        const normalizedCode = code.toUpperCase();
+        const app = await kv.hgetall(K.APPLICATION(normalizedCode));
+        
+        if (!app || !app.code) {
+            return null;
+        }
+
+        return {
+            code: app.code,
+            fullName: app.fullName,
+            contact: app.contact,
+            phone: app.phone || 'Не указан',
+            age: app.age,
+            hasMicrophone: app.hasMicrophone === 'true',
+            status: app.status,
+            createdAt: app.createdAt,
+            login: app.login || null,
+            approvedAt: app.approvedAt || null,
+            rejectedAt: app.rejectedAt || null
+        };
+    } catch (err) {
+        console.error('[Team] Get application info error:', err);
+        return null;
+    }
+}
+
+/**
+ * Получение статистики по заявкам
+ * @returns {Promise<Object>}
+ */
+async function getApplicationsStats() {
+    try {
+        const codes = await kv.smembers(K.APPLICATIONS_INDEX);
+        if (!codes || codes.length === 0) {
+            return {
+                total: 0,
+                pending: 0,
+                approved: 0,
+                rejected: 0
+            };
+        }
+
+        let pending = 0, approved = 0, rejected = 0;
+        
+        for (const code of codes) {
+            const app = await kv.hgetall(K.APPLICATION(code));
+            if (app && app.status) {
+                if (app.status === 'pending') pending++;
+                else if (app.status === 'approved') approved++;
+                else if (app.status === 'rejected') rejected++;
+            }
+        }
+
+        return {
+            total: codes.length,
+            pending,
+            approved,
+            rejected
+        };
+    } catch (err) {
+        console.error('[Team] Get stats error:', err);
+        return { total: 0, pending: 0, approved: 0, rejected: 0 };
     }
 }
 
@@ -578,6 +829,15 @@ async function handleApproveCommand(chatId, messageId, code) {
     if (!code) {
         await sendTelegramMessage(
             '❌ Укажите код. Пример: <code>/approve ABC123</code>',
+            null,
+            chatId
+        );
+        return;
+    }
+
+    if (!isValidCode(code)) {
+        await sendTelegramMessage(
+            '❌ Неверный формат кода. Код должен содержать 6 символов (A-Z, 0-9).',
             null,
             chatId
         );
@@ -623,6 +883,15 @@ async function handleRejectCommand(chatId, messageId, code) {
         return;
     }
 
+    if (!isValidCode(code)) {
+        await sendTelegramMessage(
+            '❌ Неверный формат кода. Код должен содержать 6 символов (A-Z, 0-9).',
+            null,
+            chatId
+        );
+        return;
+    }
+
     console.log(`[Bot] Processing reject for code: ${code}`);
     
     const result = await rejectApplication(code);
@@ -639,16 +908,99 @@ async function handleRejectCommand(chatId, messageId, code) {
 }
 
 /**
+ * Обработка команды /info (детальная информация о заявке)
+ */
+async function handleInfoCommand(chatId, code) {
+    if (!code) {
+        await sendTelegramMessage(
+            '❌ Укажите код. Пример: <code>/info ABC123</code>',
+            null,
+            chatId
+        );
+        return;
+    }
+
+    if (!isValidCode(code)) {
+        await sendTelegramMessage(
+            '❌ Неверный формат кода.',
+            null,
+            chatId
+        );
+        return;
+    }
+
+    const app = await getApplicationInfo(code);
+    
+    if (!app) {
+        await sendTelegramMessage(
+            `❌ Заявка <code>${code}</code> не найдена.`,
+            null,
+            chatId
+        );
+        return;
+    }
+
+    const statusEmoji = {
+        pending: '⏳',
+        approved: '✅',
+        rejected: '🚫'
+    };
+
+    const statusText = {
+        pending: 'На рассмотрении',
+        approved: 'Одобрена',
+        rejected: 'Отклонена'
+    };
+
+    const text = 
+        `📋 <b>Информация о заявке</b>\n\n` +
+        `<b>Код:</b> <code>${app.code}</code>\n` +
+        `<b>Статус:</b> ${statusEmoji[app.status]} ${statusText[app.status]}\n` +
+        `<b>ФИО:</b> ${app.fullName}\n` +
+        `<b>Возраст:</b> ${app.age}\n` +
+        `<b>Контакт:</b> ${app.contact}\n` +
+        `<b>Телефон:</b> ${app.phone}\n` +
+        `<b>Микрофон:</b> ${app.hasMicrophone ? '✅ Да' : '❌ Нет'}\n` +
+        `<b>Подана:</b> ${new Date(app.createdAt).toLocaleString('ru-RU')}\n` +
+        (app.login ? `<b>Логин:</b> <code>${app.login}</code>\n` : '') +
+        (app.approvedAt ? `<b>Одобрена:</b> ${new Date(app.approvedAt).toLocaleString('ru-RU')}\n` : '') +
+        (app.rejectedAt ? `<b>Отклонена:</b> ${new Date(app.rejectedAt).toLocaleString('ru-RU')}\n` : '');
+
+    await sendTelegramMessage(text, null, chatId);
+}
+
+/**
+ * Обработка команды /stats (статистика)
+ */
+async function handleStatsCommand(chatId) {
+    const stats = await getApplicationsStats();
+    
+    const text = 
+        `📊 <b>Статистика заявок</b>\n\n` +
+        `<b>Всего:</b> ${stats.total}\n` +
+        `⏳ <b>На рассмотрении:</b> ${stats.pending}\n` +
+        `✅ <b>Одобрено:</b> ${stats.approved}\n` +
+        `🚫 <b>Отклонено:</b> ${stats.rejected}\n\n` +
+        (stats.total > 0 
+            ? `<b>Процент одобрения:</b> ${Math.round((stats.approved / stats.total) * 100)}%`
+            : 'Заявок пока нет');
+
+    await sendTelegramMessage(text, null, chatId);
+}
+
+/**
  * Обработка команды /help
  * @param {number|string} chatId - ID чата
  */
 async function handleHelpCommand(chatId) {
     const helpText =
         `🤖 <b>Oris Team Bot</b>\n\n` +
-        `Доступные команды:\n\n` +
+        `<b>Команды:</b>\n\n` +
         `/approve <code>CODE</code> — одобрить заявку\n` +
         `/reject <code>CODE</code> — отклонить заявку\n` +
+        `/info <code>CODE</code> — информация о заявке\n` +
         `/list — список всех заявок\n` +
+        `/stats — статистика заявок\n` +
         `/help — показать справку\n\n` +
         `💡 Также можно использовать inline-кнопки в сообщениях заявок.`;
 
@@ -691,15 +1043,17 @@ async function handleListCommand(chatId) {
 
         let listText = `📋 <b>Заявки (${applications.length})</b>\n\n`;
 
-        applications.slice(0, 10).forEach((app, idx) => {
+        const displayApps = applications.slice(0, CONFIG.MAX_LIST_SIZE);
+        
+        displayApps.forEach((app, idx) => {
             const emoji = statusEmoji[app.status] || '❓';
             const status = statusText[app.status] || app.status;
             listText += `${idx + 1}. ${emoji} <code>${app.code}</code> — ${app.fullName}\n`;
             listText += `   ${status}\n`;
         });
 
-        if (applications.length > 10) {
-            listText += `\n...и ещё ${applications.length - 10}`;
+        if (applications.length > CONFIG.MAX_LIST_SIZE) {
+            listText += `\n...и ещё ${applications.length - CONFIG.MAX_LIST_SIZE}`;
         }
 
         await sendTelegramMessage(listText, null, chatId);
@@ -824,6 +1178,11 @@ async function processUpdate(update) {
                 return;
             }
 
+            if (text === '/stats') {
+                await handleStatsCommand(chatId);
+                return;
+            }
+
             if (text.startsWith('/approve')) {
                 const code = text.split(' ')[1]?.trim().toUpperCase();
                 console.log(`[Bot] Approve command with code: ${code}`);
@@ -835,6 +1194,13 @@ async function processUpdate(update) {
                 const code = text.split(' ')[1]?.trim().toUpperCase();
                 console.log(`[Bot] Reject command with code: ${code}`);
                 await handleRejectCommand(chatId, messageId, code);
+                return;
+            }
+
+            if (text.startsWith('/info')) {
+                const code = text.split(' ')[1]?.trim().toUpperCase();
+                console.log(`[Bot] Info command with code: ${code}`);
+                await handleInfoCommand(chatId, code);
                 return;
             }
 
@@ -853,6 +1219,24 @@ async function processUpdate(update) {
 // ============================================
 // Middleware
 // ============================================
+
+/**
+ * Rate limiting middleware
+ */
+async function rateLimitMiddleware(req, res, next) {
+    const ip = req.ip || req.connection.remoteAddress;
+    const result = await checkRateLimit(ip);
+    
+    if (!result.allowed) {
+        res.set('Retry-After', result.retryAfter);
+        return res.status(429).json({ 
+            error: ERROR_MESSAGES.RATE_LIMITED,
+            retryAfter: result.retryAfter
+        });
+    }
+    
+    next();
+}
 
 /**
  * Проверка токена администратора
@@ -899,7 +1283,7 @@ async function requireAuth(req, res, next) {
 /**
  * POST /apply — создание заявки
  */
-router.post('/apply', async (req, res) => {
+router.post('/apply', rateLimitMiddleware, async (req, res) => {
     try {
         const { fullName, phone, contact, age, hasMicrophone } = req.body;
 
@@ -955,6 +1339,13 @@ router.post('/apply', async (req, res) => {
         await kv.hset(K.APPLICATION(code), application);
         await kv.sadd(K.APPLICATIONS_INDEX, code);
 
+        // Audit log
+        await logAuditAction('application_created', {
+            code,
+            fullName: application.fullName,
+            ip: req.ip
+        });
+
         // Уведомление в Telegram с inline-кнопками
         const notificationText =
             `<b>📝 Новая заявка в команду</b>\n\n` +
@@ -982,11 +1373,12 @@ router.post('/apply', async (req, res) => {
 /**
  * GET /status/:code — проверка статуса заявки
  */
-router.get('/status/:code', async (req, res) => {
+router.get('/status/:code', rateLimitMiddleware, async (req, res) => {
     try {
         const code = req.params.code.toUpperCase().trim();
-        if (!code || code.length !== CONFIG.CODE_LENGTH) {
-            return res.status(400).json({ error: ERROR_MESSAGES.APPLICATION_NOT_FOUND });
+        
+        if (!isValidCode(code)) {
+            return res.status(400).json({ error: ERROR_MESSAGES.INVALID_CODE_FORMAT });
         }
 
         const app = await kv.hgetall(K.APPLICATION(code));
@@ -1024,7 +1416,7 @@ router.get('/status/:code', async (req, res) => {
 /**
  * POST /login — вход в личный кабинет
  */
-router.post('/login', async (req, res) => {
+router.post('/login', rateLimitMiddleware, async (req, res) => {
     try {
         const { login, password } = req.body;
         if (!login || !password) {
@@ -1038,6 +1430,11 @@ router.post('/login', async (req, res) => {
 
         const isValid = await verifyPassword(password, user.passwordHash);
         if (!isValid) {
+            // Audit log для неудачных попыток
+            await logAuditAction('login_failed', {
+                login,
+                ip: req.ip
+            });
             return res.status(401).json({ error: ERROR_MESSAGES.INVALID_CREDENTIALS });
         }
 
@@ -1050,6 +1447,12 @@ router.post('/login', async (req, res) => {
         };
 
         await kv.set(K.SESSION(token), session, { ex: CONFIG.SESSION_TTL });
+
+        // Audit log
+        await logAuditAction('login_success', {
+            login: user.login,
+            ip: req.ip
+        });
 
         res.json({
             session,
@@ -1067,6 +1470,12 @@ router.post('/login', async (req, res) => {
 router.post('/logout', requireAuth, async (req, res) => {
     try {
         await kv.del(K.SESSION(req.authToken));
+        
+        // Audit log
+        await logAuditAction('logout', {
+            login: req.session.login
+        });
+        
         res.json({ success: true });
     } catch (err) {
         console.error('[Team] Logout error:', err);
@@ -1113,6 +1522,10 @@ router.post('/approve', verifyAdminToken, async (req, res) => {
         const { code } = req.body;
         if (!code) return res.status(400).json({ error: 'Code required' });
 
+        if (!isValidCode(code)) {
+            return res.status(400).json({ error: ERROR_MESSAGES.INVALID_CODE_FORMAT });
+        }
+
         const result = await approveApplication(code);
 
         if (!result.success) {
@@ -1144,6 +1557,10 @@ router.post('/reject', verifyAdminToken, async (req, res) => {
     try {
         const { code } = req.body;
         if (!code) return res.status(400).json({ error: 'Code required' });
+
+        if (!isValidCode(code)) {
+            return res.status(400).json({ error: ERROR_MESSAGES.INVALID_CODE_FORMAT });
+        }
 
         const result = await rejectApplication(code);
 
@@ -1195,6 +1612,33 @@ router.get('/applications', verifyAdminToken, async (req, res) => {
         res.json({ applications });
     } catch (err) {
         console.error('[Team] Applications error:', err);
+        res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+});
+
+/**
+ * GET /stats — статистика заявок (админ)
+ */
+router.get('/stats', verifyAdminToken, async (req, res) => {
+    try {
+        const stats = await getApplicationsStats();
+        res.json(stats);
+    } catch (err) {
+        console.error('[Team] Stats error:', err);
+        res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
+    }
+});
+
+/**
+ * GET /audit — audit log (админ)
+ */
+router.get('/audit', verifyAdminToken, async (req, res) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+        const logs = await getAuditLog(limit);
+        res.json({ logs });
+    } catch (err) {
+        console.error('[Team] Audit error:', err);
         res.status(500).json({ error: ERROR_MESSAGES.SERVER_ERROR });
     }
 });
