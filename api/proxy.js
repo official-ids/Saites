@@ -56,7 +56,8 @@ const MODULE_PATHS = {
     NEWS: '../news',
     SUPPORT: '../support',
     DOWNLOADER: '../downloader',
-    REDIRECTS: '../redirects'
+    REDIRECTS: '../redirects',
+    REVIEWS: '../reviews'
 };
 
 /**
@@ -78,6 +79,11 @@ const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
  * Роутер для управления редиректами
  */
 const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
+
+/**
+ * Роутер для управления редиректами
+ */
+const reviewsRouter = require(MODULE_PATHS.REVIEWS);
 
 
 // -----------------------------
@@ -1197,6 +1203,7 @@ app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
+app.use('/api/reviews', reviewsRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
