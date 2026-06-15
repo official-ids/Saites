@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Отзывы о платформе Oris">
+<meta name="theme-color" content="#000000">
+<title>Отзывы · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-body: #000000; --bg-card: #1C1C1E; --bg-elevated: #2C2C2E;
+  --text-primary: #F5F5F7; --text-secondary: #86868B; --text-tertiary: #636366;
+  --accent: #0A84FF; --accent-hover: #409CFF; --danger: #FF453A; --success: #30D158; --warning: #FF9F0A;
+  --border: rgba(255, 255, 255, 0.08); --radius-lg: 18px; --radius-md: 12px;
+  --font-stack: 'Inter', -apple-system, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-stack); line-height: 1.5; min-height: 100vh; }
+
+.header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.72); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); height: 56px; }
+.header-inner { max-width: 980px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; }
+.logo svg { width: 22px; height: 22px; color: var(--accent); }
+
+.layout { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* Auth Screen */
+.auth-container { max-width: 400px; margin: 60px auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+.auth-tabs { display: flex; gap: 4px; background: var(--bg-elevated); padding: 4px; border-radius: 99px; margin-bottom: 24px; }
+.auth-tab { flex: 1; padding: 8px; border: none; background: transparent; color: var(--text-secondary); border-radius: 99px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+.auth-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 14px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; }
+.form-input:focus { outline: none; border-color: var(--accent); }
+.btn { width: 100%; padding: 12px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
+.error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 12px; text-align: center; display: none; }
+
+/* Main App */
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
+.user-info { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-elevated); object-fit: cover; border: 1px solid var(--border); }
+.user-details { display: flex; flex-direction: column; }
+.user-nickname { font-weight: 600; font-size: 0.95rem; }
+.user-role { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+.user-role.admin { color: var(--warning); }
+
+/* Review Form */
+.review-form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px; }
+.stars { display: flex; gap: 4px; margin-bottom: 12px; }
+.star { cursor: pointer; color: var(--text-tertiary); font-size: 1.5rem; transition: 0.2s; }
+.star.active { color: var(--warning); }
+.textarea { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 12px; border-radius: var(--radius-md); font-family: inherit; min-height: 100px; resize: vertical; }
+.textarea:focus { outline: none; border-color: var(--accent); }
+
+/* Reviews List */
+.review-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; position: relative; transition: 0.2s; }
+.review-card.pinned { border-color: var(--warning); background: rgba(255, 159, 10, 0.03); }
+.review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.review-author { display: flex; align-items: center; gap: 10px; }
+.review-author img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.review-meta { display: flex; flex-direction: column; }
+.review-nickname { font-weight: 600; font-size: 0.9rem; }
+.review-date { font-size: 0.75rem; color: var(--text-tertiary); }
+.review-rating { color: var(--warning); font-weight: 600; font-size: 0.9rem; }
+.review-title { font-weight: 600; font-size: 1.05rem; margin-bottom: 8px; }
+.review-text { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
+.review-actions { display: flex; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+.action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; transition: 0.2s; }
+.action-btn:hover { color: var(--text-primary); }
+.action-btn.liked { color: var(--danger); }
+.admin-actions { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; }
+.icon-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+.icon-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Profile Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; max-width: 450px; width: 100%; }
+.modal h3 { margin-bottom: 20px; }
+
+/* Admin Panel */
+.admin-panel { background: rgba(255, 159, 10, 0.05); border: 1px solid rgba(255, 159, 10, 0.2); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; display: none; }
+.admin-panel.active { display: block; }
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+.stat-box { background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-sm); text-align: center; }
+.stat-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      <span>Oris Reviews</span>
+    </a>
+    <button class="btn btn-secondary" id="logoutBtn" style="width: auto; padding: 8px 16px; display: none;">Выйти</button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- Auth Screen -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Вход</button>
+      <button class="auth-tab" data-tab="register">Регистрация</button>
+    </div>
+    
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Имя пользователя</label>
+        <input type="text" class="form-input" name="username" required>
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" class="form-input" name="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Войти</button>
+      <div class="error-msg" id="loginError"></div>
+    </form>
+
+    <form id="registerForm" class="hidden">
+      <div class="form-group">
+        <label>Имя пользователя (логин)</label>
+        <input type="text" class="form-input" name="username" required minlength="3" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label>Пароль</label>
+        <input type="password" class="form-input" name="password" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label>Отображаемое имя (Ник)</label>
+        <input type="text" class="form-input" name="nickname" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Создать аккаунт</button>
+      <div class="error-msg" id="registerError"></div>
+    </form>
+  </div>
+
+  <!-- Main App -->
+  <div id="appScreen" class="hidden">
+    <div class="app-header">
+      <div class="user-info">
+        <img src="" alt="Avatar" class="avatar" id="userAvatar">
+        <div class="user-details">
+          <span class="user-nickname" id="userNickname">—</span>
+          <span class="user-role" id="userRole">user</span>
+        </div>
+      </div>
+      <button class="btn btn-secondary" id="editProfileBtn" style="width: auto; padding: 8px 16px;">Редактировать профиль</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+      <h3 style="color: var(--warning); margin-bottom: 8px;">🛡️ Панель администратора</h3>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">Управление отзывами и пользователями</p>
+      <div class="admin-stats">
+        <div class="stat-box">
+          <div class="stat-value" id="totalReviews">0</div>
+          <div class="stat-label">Всего отзывов</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="pinnedReviews">0</div>
+          <div class="stat-label">Закреплено</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-form-card">
+      <h3 style="margin-bottom: 16px;">Оставить отзыв</h3>
+      <form id="reviewForm">
+        <div class="stars" id="starContainer">
+          <span class="star" data-value="1">★</span>
+          <span class="star" data-value="2">★</span>
+          <span class="star" data-value="3">★</span>
+          <span class="star" data-value="4">★</span>
+          <span class="star" data-value="5">★</span>
+        </div>
+        <input type="hidden" name="rating" id="ratingInput" value="5">
+        <div class="form-group">
+          <input type="text" class="form-input" name="title" placeholder="Заголовок отзыва" required>
+        </div>
+        <div class="form-group">
+          <textarea class="textarea" name="text" placeholder="Расскажите о вашем опыте использования..." required minlength="10"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Опубликовать отзыв</button>
+      </form>
+    </div>
+
+    <div id="reviewsList">
+      <div style="text-align: center; padding: 40px; color: var(--text-tertiary);">Загрузка отзывов...</div>
+    </div>
+  </div>
+</main>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal">
+    <h3>Редактировать профиль</h3>
+    <form id="profileForm">
+      <div class="form-group">
+        <label>Отображаемое имя</label>
+        <input type="text" class="form-input" name="nickname" id="editNickname" required>
+      </div>
+      <div class="form-group">
+        <label>URL аватарки</label>
+        <input type="url" class="form-input" name="avatarUrl" id="editAvatarUrl" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label>Или загрузить файл</label>
+        <input type="file" class="form-input" name="avatarFile" accept="image/*">
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 20px;">
+        <button type="button" class="btn btn-secondary" id="closeProfileModal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = '/api/reviews';
+let token = localStorage.getItem('reviews_token');
+let currentUser = null;
+let reviews = [];
+
+// --- Helpers ---
+const $ = id => document.getElementById(id);
+const formatDate = iso => new Date(iso).toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+
+async function apiCall(endpoint, options = {}) {
+  const headers = { ...options.headers };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+  
+  const res = await fetch(`${API}${endpoint}`, { ...options, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
+  return data;
+}
+
+// --- Auth ---
+function showAuth() {
+  $('authScreen').classList.remove('hidden');
+  $('appScreen').classList.add('hidden');
+  $('logoutBtn').style.display = 'none';
+}
+
+function showApp() {
+  $('authScreen').classList.add('hidden');
+  $('appScreen').classList.remove('hidden');
+  $('logoutBtn').style.display = 'inline-flex';
+  $('userNickname').textContent = currentUser.nickname;
+  $('userRole').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Пользователь';
+  $('userRole').className = `user-role ${currentUser.role === 'admin' ? 'admin' : ''}`;
+  $('userAvatar').src = currentUser.avatar || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2386868B"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+  
+  if (currentUser.role === 'admin') {
+    $('adminPanel').classList.add('active');
+  }
+  loadReviews();
+}
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await apiCall('/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd)) });
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('reviews_token', token);
+    showApp();
+  } catch (err) {
+    $('loginError').textContent = err.message;
+    $('loginError').style.display = 'block';
+  }
+});
+
+$('registerForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await apiCall('/auth/register', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd)) });
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('reviews_token', token);
+    showApp();
+  } catch (err) {
+    $('registerError').textContent = err.message;
+    $('registerError').style.display = 'block';
+  }
+});
+
+$('logoutBtn').addEventListener('click', async () => {
+  try { await apiCall('/auth/logout', { method: 'POST' }); } catch(e) {}
+  token = null;
+  currentUser = null;
+  localStorage.removeItem('reviews_token');
+  showAuth();
+});
+
+// --- Tabs ---
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    if (tab.dataset.tab === 'login') {
+      $('loginForm').classList.remove('hidden');
+      $('registerForm').classList.add('hidden');
+    } else {
+      $('loginForm').classList.add('hidden');
+      $('registerForm').classList.remove('hidden');
+    }
+  });
+});
+
+// --- Reviews ---
+async function loadReviews() {
+  try {
+    const data = await apiCall('/');
+    reviews = data.reviews;
+    renderReviews();
+    if (currentUser.role === 'admin') {
+      $('totalReviews').textContent = reviews.length;
+      $('pinnedReviews').textContent = reviews.filter(r => r.isPinned).length;
+    }
+  } catch (err) {
+    $('reviewsList').innerHTML = `<div style="text-align:center;color:var(--danger)">${err.message}</div>`;
+  }
+}
+
+function renderReviews() {
+  if (reviews.length === 0) {
+    $('reviewsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary)">Пока нет отзывов. Будьте первым!</div>';
+    return;
+  }
+
+  $('reviewsList').innerHTML = reviews.map(r => {
+    const isAdmin = currentUser?.role === 'admin';
+    const isAuthor = currentUser?.id === r.userId;
+    return `
+    <div class="review-card ${r.isPinned ? 'pinned' : ''}" data-id="${r.id}">
+      ${isAdmin ? `
+      <div class="admin-actions">
+        <button class="icon-btn" onclick="togglePin('${r.id}')" title="${r.isPinned ? 'Открепить' : 'Закрепить'}">📌</button>
+        <button class="icon-btn danger" onclick="deleteReview('${r.id}')" title="Удалить">🗑</button>
+        <button class="icon-btn" onclick="showUserInfo('${r.userId}')" title="Инфо о пользователе">👁</button>
+      </div>` : ''}
+      <div class="review-header">
+        <div class="review-author">
+          <img src="${r.userAvatar || 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2386868B\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'}" alt="">
+          <div class="review-meta">
+            <span class="review-nickname">${r.userNickname}</span>
+            <span class="review-date">${formatDate(r.createdAt)}</span>
+          </div>
+        </div>
+        <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
+      </div>
+      ${r.title ? `<div class="review-title">${r.title}</div>` : ''}
+      <div class="review-text">${r.text}</div>
+      <div class="review-actions">
+        <button class="action-btn" onclick="likeReview('${r.id}')">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+          ${r.likes || 0}
+        </button>
+      </div>
+    </div>
+  `}).join('');
+}
+
+$('reviewForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  try {
+    await apiCall('/', { method: 'POST', body: JSON.stringify(data) });
+    e.target.reset();
+    document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+    document.querySelector('.star[data-value="5"]').classList.add('active');
+    $('ratingInput').value = 5;
+    loadReviews();
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// Stars logic
+document.querySelectorAll('.star').forEach(star => {
+  star.addEventListener('click', () => {
+    const val = parseInt(star.dataset.value);
+    $('ratingInput').value = val;
+    document.querySelectorAll('.star').forEach((s, i) => {
+      s.classList.toggle('active', i < val);
+    });
+  });
+});
+// Init stars
+document.querySelector('.star[data-value="5"]').classList.add('active');
+
+// --- Actions ---
+window.likeReview = async id => {
+  try {
+    await apiCall(`/${id}/like`, { method: 'POST' });
+    loadReviews();
+  } catch (err) { alert(err.message); }
+};
+
+window.togglePin = async id => {
+  try {
+    await apiCall(`/${id}/pin`, { method: 'POST' });
+    loadReviews();
+  } catch (err) { alert(err.message); }
+};
+
+window.deleteReview = async id => {
+  if (!confirm('Удалить этот отзыв безвозвратно?')) return;
+  try {
+    await apiCall(`/${id}`, { method: 'DELETE' });
+    loadReviews();
+  } catch (err) { alert(err.message); }
+};
+
+window.showUserInfo = async userId => {
+  try {
+    const data = await apiCall(`/users/${userId}/info`);
+    alert(`Пользователь: ${data.user.nickname} (@${data.user.username})\nРоль: ${data.user.role}\nОтзывов: ${data.stats.reviewsCount}\nПоследний IP: ${data.stats.lastIp}\nUser-Agent: ${data.stats.lastUa}\n\nДля бана используйте консоль или отдельный интерфейс.`);
+  } catch (err) { alert(err.message); }
+};
+
+// --- Profile ---
+$('editProfileBtn').addEventListener('click', () => {
+  $('editNickname').value = currentUser.nickname;
+  $('editAvatarUrl').value = currentUser.avatar || '';
+  $('profileModal').classList.add('active');
+});
+
+$('closeProfileModal').addEventListener('click', () => $('profileModal').classList.remove('active'));
+
+$('profileForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  try {
+    const data = await apiCall('/me', { method: 'PUT', body: fd });
+    currentUser = data.user;
+    $('profileModal').classList.remove('active');
+    showApp();
+  } catch (err) { alert(err.message); }
+});
+
+// --- Init ---
+(async () => {
+  if (token) {
+    try {
+      currentUser = await apiCall('/me');
+      showApp();
+    } catch (e) {
+      localStorage.removeItem('reviews_token');
+      showAuth();
+    }
+  } else {
+    showAuth();
+  }
+})();
+</script>
+</body>
+</html>
