@@ -960,20 +960,50 @@ html, body {
 (function() {
     'use strict';
 
-    // ---------- State ----------
+    // ============================================
+    // State Management
+    // ============================================
+    
+    /**
+     * Глобальное состояние приложения
+     * @namespace
+     */
     const State = {
+        /** @type {string} Токен администратора */
         token: localStorage.getItem('admin_token') || '',
+        
+        /** @type {string} Текущая активная секция */
         currentSection: 'sites',
+        
+        /** @type {Array<Object>} Список проектов */
         sites: [],
-        changelog: [],
+        
+        /** @type {string} Содержимое changelog */
+        changelog: '',
+        
+        /** @type {Array|null} Конфигурация статусов */
         statusConfig: null,
+        
+        /** @type {Array|null} Конфигурация API */
         apiConfig: null,
+        
+        /** @type {Array|null} Конфигурация FAQ */
         faqConfig: null,
+        
+        /** @type {string} Сырое содержимое для редактирования */
         rawContent: '',
+        
+        /** @type {string} Поисковый запрос */
         searchQuery: '',
+        
+        /** @type {boolean} Флаг несохраненных изменений */
         dirty: false
     };
 
+    /**
+     * Категории проектов
+     * @constant {Object<string, string>}
+     */
     const CATEGORIES = {
         tools: 'Инструменты',
         dev: 'Для разработчиков',
@@ -985,930 +1015,1241 @@ html, body {
         other: 'Другое'
     };
 
+    /**
+     * Сокращение для document.getElementById
+     * @param {string} id - ID элемента
+     * @returns {HTMLElement|null}
+     */
     const $ = (id) => document.getElementById(id);
 
-// ---------- DOWNLOADER MODULE ----------
+    // ============================================
+    // DOWNLOADER MODULE
+    // ============================================
 
-// ========== CONSTANTS ==========
-const DownloaderConfig = {
-    PAGE_LIMIT: 20,
-    SEARCH_DEBOUNCE_MS: 300,
-    MAX_FILE_SIZE: 100 * 1024 * 1024, // 100 MB
-    ENDPOINTS: {
-        list:   '/api/downloader/list',
-        upload: '/api/downloader/',
-        item:   (hash) => `/api/downloader/${hash}`,
-        public: (hash) => `${window.location.origin}/downloader/${hash}`
-    }
-};
-
-const Icons = {
-    lock:     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>',
-    upload:   '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>',
-    refresh:  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>',
-    search:   '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>',
-    close:    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
-    folder:   '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
-    link:     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>',
-    download: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>',
-    trash:    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>',
-    copy:     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>'
-};
-
-// ========== UTILITIES ==========
-function svgIcon(name, size = 16) {
-    return `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:${size}px;height:${size}px;">${Icons[name] || ''}</svg>`;
-}
-
-function debounce(fn, delay) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(null, args), delay);
+    // ---------- Configuration ----------
+    
+    /**
+     * Конфигурация модуля загрузчика файлов
+     * @namespace
+     */
+    const DownloaderConfig = {
+        /** @type {number} Количество файлов на странице */
+        PAGE_LIMIT: 20,
+        
+        /** @type {number} Задержка поиска в мс */
+        SEARCH_DEBOUNCE_MS: 300,
+        
+        /** @type {number} Максимальный размер файла (100 МБ) */
+        MAX_FILE_SIZE: 100 * 1024 * 1024,
+        
+        /**
+         * API endpoints
+         * @type {Object}
+         */
+        ENDPOINTS: {
+            /** @type {string} Список файлов */
+            list: '/api/downloader/list',
+            
+            /** @type {string} Загрузка файла */
+            upload: '/api/downloader/',
+            
+            /**
+             * Конкретный файл
+             * @param {string} hash - SHA-256 хеш файла
+             * @returns {string} URL endpoint
+             */
+            item: (hash) => `/api/downloader/${hash}`,
+            
+            /**
+             * Публичная ссылка на файл
+             * @param {string} hash - SHA-256 хеш файла
+             * @returns {string} Публичный URL
+             */
+            public: (hash) => `${window.location.origin}/downloader/${hash}`
+        }
     };
-}
 
-function escapeHtml(str) {
-    if (str == null) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+    /**
+     * SVG иконки для UI
+     * @namespace
+     */
+    const Icons = {
+        lock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>',
+        upload: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>',
+        refresh: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>',
+        search: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>',
+        close: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+        folder: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
+        link: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>',
+        download: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>',
+        trash: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>',
+        copy: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>'
+    };
 
-// ========== STATE ==========
-const DownloaderState = {
-    files: [],
-    total: 0,
-    page: 1,
-    totalPages: 1,
-    search: '',
-    isLoading: false,
-    isUploading: false
-};
-
-// ========== LOAD FILES ==========
-async function loadFiles(page = 1) {
-    if (DownloaderState.isLoading) return;
-    DownloaderState.isLoading = true;
-
-    $('content').innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            <div>Загрузка файлов...</div>
-        </div>`;
-    $('pageTitle').textContent = 'Файлы';
-    $('topbarActions').innerHTML = '';
-
-    try {
-        const data = await apiRequest(
-            `${DownloaderConfig.ENDPOINTS.list}?page=${page}&limit=${DownloaderConfig.PAGE_LIMIT}`
-        );
-
-        Object.assign(DownloaderState, {
-            files: data.files || [],
-            total: data.total || 0,
-            page: data.page || 1,
-            totalPages: data.totalPages || 1,
-            isLoading: false
-        });
-        renderFiles();
-    } catch (err) {
-        DownloaderState.isLoading = false;
-        renderFilesError(err);
+    // ---------- Utilities ----------
+    
+    /**
+     * Создание SVG иконки
+     * @param {string} name - Название иконки
+     * @param {number} size - Размер в пикселях
+     * @returns {string} HTML строка SVG
+     */
+    function svgIcon(name, size = 16) {
+        return `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:${size}px;height:${size}px;">${Icons[name] || ''}</svg>`;
     }
-}
 
-function renderFilesError(err) {
-    if (err.message === 'UNAUTHORIZED') {
+    /**
+     * Debounce функция для оптимизации частых вызовов
+     * @param {Function} fn - Функция для вызова
+     * @param {number} delay - Задержка в мс
+     * @returns {Function} Debounced функция
+     */
+    function debounce(fn, delay) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn.apply(null, args), delay);
+        };
+    }
+
+    /**
+     * Экранирование HTML-сущностей
+     * @param {string|null|undefined} str - Исходная строка
+     * @returns {string} Экранированная строка
+     */
+    function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // ---------- State ----------
+    
+    /**
+     * Состояние модуля загрузчика
+     * @namespace
+     */
+    const DownloaderState = {
+        /** @type {Array<Object>} Список файлов */
+        files: [],
+        
+        /** @type {number} Общее количество файлов */
+        total: 0,
+        
+        /** @type {number} Текущая страница */
+        page: 1,
+        
+        /** @type {number} Всего страниц */
+        totalPages: 1,
+        
+        /** @type {string} Поисковый запрос */
+        search: '',
+        
+        /** @type {boolean} Флаг загрузки */
+        isLoading: false,
+        
+        /** @type {boolean} Флаг загрузки файла */
+        isUploading: false
+    };
+
+    // ---------- File Loading ----------
+    
+    /**
+     * Загрузка списка файлов с сервера
+     * @param {number} page - Номер страницы
+     * @returns {Promise<void>}
+     */
+    async function loadFiles(page = 1) {
+        if (DownloaderState.isLoading) return;
+        DownloaderState.isLoading = true;
+
         $('content').innerHTML = `
-            <div class="empty-state">
-                ${svgIcon('lock', 48)}
-                <h3>Требуется авторизация</h3>
-                <p>Неверный или отсутствует токен администратора.</p>
-                <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>Загрузка файлов...</div>
             </div>`;
-        document.getElementById('enterTokenBtn')?.addEventListener('click', promptToken);
-        return;
+        $('pageTitle').textContent = 'Файлы';
+        $('topbarActions').innerHTML = '';
+
+        try {
+            const data = await apiRequest(
+                `${DownloaderConfig.ENDPOINTS.list}?page=${page}&limit=${DownloaderConfig.PAGE_LIMIT}`
+            );
+
+            Object.assign(DownloaderState, {
+                files: data.files || [],
+                total: data.total || 0,
+                page: data.page || 1,
+                totalPages: data.totalPages || 1,
+                isLoading: false
+            });
+            renderFiles();
+        } catch (err) {
+            DownloaderState.isLoading = false;
+            renderFilesError(err);
+        }
     }
 
-    const isNetwork = !navigator.onLine || err.name === 'TypeError';
-    $('content').innerHTML = `
-        <div class="empty-state">
-            <h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3>
-            <p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : escapeHtml(err.message)}</p>
-            <button class="btn btn-primary" id="retryBtn">Повторить</button>
-        </div>`;
-    document.getElementById('retryBtn')?.addEventListener('click', () => loadFiles(DownloaderState.page));
-}
-
-// ========== RENDER ==========
-function renderFiles() {
-    renderTopbar();
-    renderContent();
-    bindGlobalEvents();
-}
-
-function renderTopbar() {
-    $('filesCount').textContent = DownloaderState.total;
-    $('topbarActions').innerHTML = `
-        <button class="btn btn-primary" id="uploadFileBtn" ${DownloaderState.isUploading ? 'disabled' : ''}>
-            ${svgIcon('upload')} Загрузить файл
-        </button>
-        <button class="btn btn-secondary" id="refreshFilesBtn" ${DownloaderState.isLoading ? 'disabled' : ''}>
-            ${svgIcon('refresh')} Обновить
-        </button>
-        <div class="search-box" style="margin-left:auto; position:relative;">
-            ${svgIcon('search')}
-            <input type="text" id="fileSearchInput" placeholder="Поиск по имени..."
-                   value="${escapeHtml(DownloaderState.search)}"
-                   ${DownloaderState.isLoading ? 'disabled' : ''}>
-            ${DownloaderState.search ? `
-                <button class="btn btn-ghost btn-icon" id="clearFileSearchBtn"
-                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);"
-                        title="Очистить">${svgIcon('close')}</button>` : ''}
-        </div>`;
-}
-
-function renderContent() {
-    $('content').innerHTML = `
-        <div class="drop-zone" id="dropZone">
-            <div class="sites-grid" id="filesGrid"></div>
-        </div>
-        ${renderPagination()}`;
-
-    renderFilesList();
-}
-
-function renderPagination() {
-    if (DownloaderState.totalPages <= 1) return '';
-    return `
-        <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px;">
-            <button class="btn btn-secondary" id="prevPageBtn" ${DownloaderState.page <= 1 ? 'disabled' : ''}>
-                ← Назад
-            </button>
-            <span style="color:var(--text-secondary); font-size:0.9rem;">
-                Страница ${DownloaderState.page} из ${DownloaderState.totalPages}
-                (всего ${DownloaderState.total})
-            </span>
-            <button class="btn btn-secondary" id="nextPageBtn"
-                    ${DownloaderState.page >= DownloaderState.totalPages ? 'disabled' : ''}>
-                Вперёд →
-            </button>
-        </div>`;
-}
-
-function renderFilesList() {
-    const grid = document.getElementById('filesGrid');
-    const filtered = filterFiles();
-
-    if (filtered.length === 0) {
-        grid.innerHTML = renderEmptyState();
-        document.getElementById('uploadEmptyBtn')?.addEventListener('click', triggerFileUpload);
-        return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    filtered.forEach(file => fragment.appendChild(createFileCard(file)));
-    grid.appendChild(fragment);
-}
-
-function filterFiles() {
-    if (!DownloaderState.search) return DownloaderState.files;
-    const q = DownloaderState.search.toLowerCase();
-    return DownloaderState.files.filter(f => (f.name || '').toLowerCase().includes(q));
-}
-
-function renderEmptyState() {
-    const hasSearch = Boolean(DownloaderState.search);
-    return `
-        <div class="empty-state">
-            ${svgIcon('folder', 48)}
-            <h3>Нет файлов</h3>
-            <p>${hasSearch ? 'Ничего не найдено по вашему запросу.' : 'Загрузите первый файл или перетащите его сюда.'}</p>
-            ${!hasSearch ? '<button class="btn btn-primary" id="uploadEmptyBtn">Загрузить файл</button>' : ''}
-        </div>`;
-}
-
-// ========== FILE CARD ==========
-function createFileCard(file) {
-    const card = document.createElement('div');
-    card.className = 'site-card';
-    card.dataset.hash = file.hash;
-    card.innerHTML = `
-        <div class="site-card-header">
-            <div class="site-card-title" style="flex:1;">
-                <input type="text" class="file-name-input"
-                       value="${escapeHtml(file.name)}"
-                       data-hash="${file.hash}"
-                       data-original="${escapeHtml(file.name)}"
-                       placeholder="Имя файла"
-                       maxlength="255">
-            </div>
-            <div class="site-card-actions">
-                <button class="btn btn-ghost btn-icon" data-action="copy-link" data-hash="${file.hash}"
-                        title="Копировать ссылку">${svgIcon('link')}</button>
-                <a href="/downloader/${file.hash}" class="btn btn-ghost btn-icon"
-                   title="Скачать" target="_blank" rel="noopener">${svgIcon('download')}</a>
-                <button class="btn btn-ghost btn-icon" data-action="delete"
-                        data-hash="${file.hash}" data-name="${escapeHtml(file.name)}"
-                        title="Удалить">${svgIcon('trash')}</button>
-            </div>
-        </div>
-        <div class="site-card-body">
-            <div class="field-row">
-                <div class="field">
-                    <label>Размер</label>
-                    <div style="color:var(--text-primary); font-size:0.9rem;">${escapeHtml(file.sizeFormatted)}</div>
-                </div>
-                <div class="field">
-                    <label>Тип</label>
-                    <div style="color:var(--text-primary); font-size:0.85rem;">${escapeHtml(file.contentType)}</div>
-                </div>
-            </div>
-            <div class="field">
-                <label>Хеш (SHA-256)</label>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <code style="font-size:0.8rem; color:var(--text-secondary); word-break:break-all;">
-                        ${escapeHtml(file.hash)}
-                    </code>
-                    <button class="btn btn-ghost btn-icon" data-action="copy-hash" data-hash="${file.hash}"
-                            title="Копировать хеш" style="flex-shrink:0;">${svgIcon('copy', 14)}</button>
-                </div>
-            </div>
-            <div class="field-row">
-                <div class="field">
-                    <label>Загрузок</label>
-                    <div style="color:var(--text-primary);">${file.downloads ?? 0}</div>
-                </div>
-                <div class="field">
-                    <label>Загружен</label>
-                    <div style="color:var(--text-primary); font-size:0.85rem;">
-                        ${new Date(file.uploadedAt).toLocaleString('ru-RU')}
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    return card;
-}
-
-// ========== EVENT BINDING ==========
-function bindGlobalEvents() {
-    document.getElementById('uploadFileBtn')?.addEventListener('click', triggerFileUpload);
-    document.getElementById('refreshFilesBtn')?.addEventListener('click', () => loadFiles(DownloaderState.page));
-    document.getElementById('prevPageBtn')?.addEventListener('click', () => {
-        if (DownloaderState.page > 1) loadFiles(DownloaderState.page - 1);
-    });
-    document.getElementById('nextPageBtn')?.addEventListener('click', () => {
-        if (DownloaderState.page < DownloaderState.totalPages) loadFiles(DownloaderState.page + 1);
-    });
-
-    bindSearch();
-    bindGridDelegation();
-    bindDropZone();
-}
-
-function bindSearch() {
-    const input = document.getElementById('fileSearchInput');
-    if (!input) return;
-
-    const debouncedSearch = debounce((value) => {
-        DownloaderState.search = value;
-        renderFilesList();
-        const current = document.getElementById('fileSearchInput');
-        if (current) {
-            current.focus();
-            current.setSelectionRange(value.length, value.length);
-        }
-    }, DownloaderConfig.SEARCH_DEBOUNCE_MS);
-
-    input.addEventListener('input', (e) => debouncedSearch(e.target.value));
-    document.getElementById('clearFileSearchBtn')?.addEventListener('click', () => {
-        DownloaderState.search = '';
-        renderFiles();
-    });
-}
-
-function bindGridDelegation() {
-    const grid = document.getElementById('filesGrid');
-    if (!grid) return;
-
-    // Click delegation for action buttons
-    grid.addEventListener('click', (e) => {
-        const btn = e.target.closest('[data-action]');
-        if (!btn) return;
-        const action = btn.dataset.action;
-        const hash = btn.dataset.hash;
-
-        if (action === 'copy-link') {
-            copyToClipboard(DownloaderConfig.ENDPOINTS.public(hash));
-            showToast('Ссылка скопирована', 'info', 1500);
-        } else if (action === 'copy-hash') {
-            copyToClipboard(hash);
-            showToast('Хеш скопирован', 'info', 1500);
-        } else if (action === 'delete') {
-            const name = btn.dataset.name;
-            confirmDelete(hash, name);
-        }
-    });
-
-    // Rename on Enter / Escape / blur
-    grid.addEventListener('keydown', (e) => {
-        if (e.target.classList.contains('file-name-input') && e.key === 'Enter') {
-            e.preventDefault();
-            e.target.blur();
-        }
-        if (e.target.classList.contains('file-name-input') && e.key === 'Escape') {
-            e.target.value = e.target.dataset.original;
-            e.target.blur();
-        }
-    });
-
-    grid.addEventListener('blur', (e) => {
-        if (!e.target.classList.contains('file-name-input')) return;
-        const newName = e.target.value.trim();
-        const original = e.target.dataset.original;
-        const hash = e.target.dataset.hash;
-        if (!newName) {
-            e.target.value = original;
+    /**
+     * Отображение ошибки загрузки файлов
+     * @param {Error} err - Объект ошибки
+     */
+    function renderFilesError(err) {
+        if (err.message === 'UNAUTHORIZED') {
+            $('content').innerHTML = `
+                <div class="empty-state">
+                    ${svgIcon('lock', 48)}
+                    <h3>Требуется авторизация</h3>
+                    <p>Неверный или отсутствует токен администратора.</p>
+                    <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
+                </div>`;
+            document.getElementById('enterTokenBtn')?.addEventListener('click', promptToken);
             return;
         }
-        if (newName === original) return;
-        handleRename(hash, newName, e.target);
-    }, true);
-}
 
-async function handleRename(hash, newName, inputEl) {
-    if (newName.length > 255) {
-        showToast('Имя файла слишком длинное', 'error');
-        inputEl.value = inputEl.dataset.original;
-        return;
-    }
-    try {
-        await renameFile(hash, newName);
-        const file = DownloaderState.files.find(f => f.hash === hash);
-        if (file) file.name = newName;
-        inputEl.dataset.original = newName;
-        showToast('Имя обновлено', 'success');
-    } catch (err) {
-        inputEl.value = inputEl.dataset.original;
-        showToast(err.message || 'Не удалось переименовать', 'error');
-    }
-}
-
-function confirmDelete(hash, name) {
-    showModal(
-        'Удалить файл?',
-        `Файл «${name}» будет удалён без возможности восстановления.`,
-        async () => {
-            try {
-                await deleteFile(hash);
-                showToast('Файл удалён', 'success');
-                await loadFiles(DownloaderState.page);
-            } catch (err) {
-                showToast(err.message || 'Ошибка удаления', 'error');
-            }
-        }
-    );
-}
-
-// ========== DRAG & DROP ==========
-function bindDropZone() {
-    const zone = document.getElementById('dropZone');
-    if (!zone) return;
-
-    ['dragenter', 'dragover'].forEach(evt =>
-        zone.addEventListener(evt, (e) => {
-            e.preventDefault();
-            zone.classList.add('drop-zone-active');
-        })
-    );
-    ['dragleave', 'drop'].forEach(evt =>
-        zone.addEventListener(evt, (e) => {
-            e.preventDefault();
-            zone.classList.remove('drop-zone-active');
-        })
-    );
-    zone.addEventListener('drop', (e) => {
-        const files = e.dataTransfer?.files;
-        if (files?.length) uploadFile(files[0]);
-    });
-}
-
-// ========== FILE UPLOAD ==========
-function triggerFileUpload() {
-    if (DownloaderState.isUploading) return;
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = false;
-    input.onchange = () => {
-        const file = input.files?.[0];
-        if (file) uploadFile(file);
-    };
-    input.click();
-}
-
-async function uploadFile(file) {
-    if (DownloaderState.isUploading) return;
-    if (file.size > 100 * 1024 * 1024) {
-        showToast('Файл слишком большой (макс. 100 МБ)', 'error');
-        return;
-    }
-
-    DownloaderState.isUploading = true;
-    renderTopbar();
-    showToast(`Загрузка «${file.name}»...`, 'info', 0);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        // Используем отдельный endpoint для загрузки
-        const res = await fetch('/api/downloader-upload', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${State.token}` },
-            body: formData
-        });
-
-        if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || `Ошибка ${res.status}`);
-        }
-
-        const data = await res.json();
-        showToast(data.existed ? 'Файл уже существует' : `Файл «${file.name}» загружен`, 'success');
-        await loadFiles(1);
-    } catch (err) {
-        if (err.message === 'UNAUTHORIZED') {
-            showToast('Ошибка доступа. Проверьте токен.', 'error');
-        } else {
-            showToast(err.message || 'Не удалось загрузить файл', 'error');
-        }
-    } finally {
-        DownloaderState.isUploading = false;
-        renderTopbar();
-    }
-}
-
-// ========== API METHODS ==========
-async function renameFile(hash, newName) {
-    return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), {
-        method: 'PATCH',
-        body: JSON.stringify({ name: newName })
-    });
-}
-
-async function deleteFile(hash) {
-    return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), { method: 'DELETE' });
-}
-
-function copyToClipboard(text) {
-    if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
-    } else {
-        fallbackCopy(text);
-    }
-    
-    function fallbackCopy(value) {
-        const ta = document.createElement('textarea');
-        ta.value = value;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        try { 
-            document.execCommand('copy'); 
-        } catch (_) {}
-        document.body.removeChild(ta);
-    }
-}
-
-
-// ---------- REDIRECTS MODULE ----------
-
-// ========== CONFIGURATION ==========
-const RedirectsConfig = {
-    SEARCH_DEBOUNCE_MS: 300,
-    SLUG_PATTERN: /^[a-z0-9_-]{2,32}$/,
-    SLUG_MAX_LENGTH: 32,
-    DESC_MAX_LENGTH: 200,
-    ENDPOINTS: {
-        list:  '/api/redirects/admin',
-        item:  (slug) => `/api/redirects/admin/${slug}`,
-        short: (slug) => `${window.location.origin}/r/${slug}`
-    },
-    MESSAGES: {
-        slugInvalid: 'Slug: 2-32 символов (a-z, 0-9, -, _)',
-        urlInvalid:  'Некорректный URL',
-        duplicate:   (slug) => `Редирект "/${slug}" уже существует`,
-        empty:       'Нет редиректов',
-        notFound:    'Ничего не найдено',
-        createHint:  'Создайте первый редирект'
-    }
-};
-
-// ========== STATE ==========
-const RedirectsState = {
-    list: [],
-    search: '',
-    isLoading: false,
-    isCreating: false
-};
-
-// ========== LOAD ==========
-async function loadRedirects() {
-    if (RedirectsState.isLoading) return;
-    RedirectsState.isLoading = true;
-
-    $('content').innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            <div>Загрузка редиректов...</div>
-        </div>`;
-    $('pageTitle').textContent = 'Редиректы';
-    $('topbarActions').innerHTML = '';
-
-    try {
-        const data = await apiRequest(RedirectsConfig.ENDPOINTS.list);
-        RedirectsState.list = data.redirects || [];
-        $('redirectsCount').textContent = RedirectsState.list.length;
-        RedirectsState.isLoading = false;
-        renderRedirects();
-    } catch (err) {
-        RedirectsState.isLoading = false;
-        renderRedirectsError(err);
-    }
-}
-
-function renderRedirectsError(err) {
-    if (err.message === 'UNAUTHORIZED') {
+        const isNetwork = !navigator.onLine || err.name === 'TypeError';
         $('content').innerHTML = `
             <div class="empty-state">
-                ${svgIcon('lock', 48)}
-                <h3>Требуется авторизация</h3>
-                <p>Неверный или отсутствует токен администратора.</p>
-                <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
+                <h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3>
+                <p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : escapeHtml(err.message)}</p>
+                <button class="btn btn-primary" id="retryBtn">Повторить</button>
             </div>`;
-        document.getElementById('enterTokenBtn')?.addEventListener('click', promptToken);
-        return;
+        document.getElementById('retryBtn')?.addEventListener('click', () => loadFiles(DownloaderState.page));
     }
 
-    const isNetwork = !navigator.onLine || err.name === 'TypeError';
-    $('content').innerHTML = `
-        <div class="empty-state">
-            <h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3>
-            <p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : escapeHtml(err.message)}</p>
-            <button class="btn btn-primary" id="retryBtn">Повторить</button>
-        </div>`;
-    document.getElementById('retryBtn')?.addEventListener('click', loadRedirects);
-}
-
-// ========== RENDER ==========
-function renderRedirects() {
-    renderRedirectsTopbar();
-    renderRedirectsContent();
-    bindRedirectsGlobalEvents();
-}
-
-function renderRedirectsTopbar() {
-    $('topbarActions').innerHTML = `
-        <button class="btn btn-primary" id="addRedirectBtn" ${RedirectsState.isCreating ? 'disabled' : ''}>
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Новый редирект
-        </button>
-        <button class="btn btn-secondary" id="refreshRedirectsBtn" ${RedirectsState.isLoading ? 'disabled' : ''}>
-            ${svgIcon('refresh')} Обновить
-        </button>
-        <div class="search-box" style="margin-left:auto; position:relative;">
-            ${svgIcon('search')}
-            <input type="text" id="redirectSearchInput" placeholder="Поиск по slug или URL..."
-                   value="${escapeHtml(RedirectsState.search)}"
-                   ${RedirectsState.isLoading ? 'disabled' : ''}>
-            ${RedirectsState.search ? `
-                <button class="btn btn-ghost btn-icon" id="clearRedirectSearchBtn"
-                        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);"
-                        title="Очистить">${svgIcon('close')}</button>` : ''}
-        </div>`;
-}
-
-function renderRedirectsContent() {
-    $('content').innerHTML = `
-        <div id="redirectsGrid" style="display:flex; flex-direction:column; gap:16px; margin-top:20px;"></div>`;
-
-    const grid = document.getElementById('redirectsGrid');
-    grid.appendChild(createRedirectFormCard());
-
-    const filtered = filterRedirects();
-    if (filtered.length === 0) {
-        grid.appendChild(createRedirectsEmptyState());
-        return;
+    // ---------- Rendering ----------
+    
+    /**
+     * Полный рендеринг модуля файлов
+     */
+    function renderFiles() {
+        renderTopbar();
+        renderContent();
+        bindGlobalEvents();
     }
 
-    const fragment = document.createDocumentFragment();
-    filtered.forEach(redirect => fragment.appendChild(createRedirectCard(redirect)));
-    grid.appendChild(fragment);
-}
-
-function filterRedirects() {
-    if (!RedirectsState.search) return RedirectsState.list;
-    const q = RedirectsState.search.toLowerCase();
-    return RedirectsState.list.filter(r =>
-        (r.slug || '').toLowerCase().includes(q) ||
-        (r.url || '').toLowerCase().includes(q) ||
-        (r.description || '').toLowerCase().includes(q)
-    );
-}
-
-function createRedirectsEmptyState() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'empty-state';
-    wrapper.style.padding = '40px 20px';
-    const hasSearch = Boolean(RedirectsState.search);
-    wrapper.innerHTML = `
-        <h3>${RedirectsConfig.MESSAGES.empty}</h3>
-        <p>${hasSearch ? RedirectsConfig.MESSAGES.notFound : RedirectsConfig.MESSAGES.createHint}</p>`;
-    return wrapper;
-}
-
-// ========== FORM CARD ==========
-function createRedirectFormCard() {
-    const card = document.createElement('div');
-    card.className = 'site-card';
-    card.style.opacity = '0.85';
-    card.innerHTML = `
-        <div class="site-card-header">
-            <div class="site-card-title" style="flex:1;">
-                <input type="text" class="new-slug-input"
-                       placeholder="slug (например: my-link)"
-                       maxlength="${RedirectsConfig.SLUG_MAX_LENGTH}"
-                       pattern="[a-z0-9_-]+">
-            </div>
-        </div>
-        <div class="site-card-body">
-            <div class="field">
-                <label>URL назначения</label>
-                <input type="url" class="new-url-input" placeholder="https://example.com">
-            </div>
-            <div class="field">
-                <label>Описание (необязательно)</label>
-                <input type="text" class="new-desc-input"
-                       placeholder="Краткое описание"
-                       maxlength="${RedirectsConfig.DESC_MAX_LENGTH}">
-            </div>
-        </div>
-        <div class="card-footer">
-            <span style="font-size:0.8rem; color:var(--text-tertiary);">Новый редирект</span>
-            <button class="btn btn-primary" data-action="create-redirect"
-                    style="padding:8px 16px; font-size:0.85rem;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                Создать
+    /**
+     * Рендеринг верхней панели с действиями
+     */
+    function renderTopbar() {
+        $('filesCount').textContent = DownloaderState.total;
+        $('topbarActions').innerHTML = `
+            <button class="btn btn-primary" id="uploadFileBtn" ${DownloaderState.isUploading ? 'disabled' : ''}>
+                ${svgIcon('upload')} Загрузить файл
             </button>
-        </div>`;
-    return card;
-}
+            <button class="btn btn-secondary" id="refreshFilesBtn" ${DownloaderState.isLoading ? 'disabled' : ''}>
+                ${svgIcon('refresh')} Обновить
+            </button>
+            <div class="search-box" style="margin-left:auto; position:relative;">
+                ${svgIcon('search')}
+                <input type="text" id="fileSearchInput" placeholder="Поиск по имени..."
+                       value="${escapeHtml(DownloaderState.search)}"
+                       ${DownloaderState.isLoading ? 'disabled' : ''}>
+                ${DownloaderState.search ? `
+                    <button class="btn btn-ghost btn-icon" id="clearFileSearchBtn"
+                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);"
+                            title="Очистить">${svgIcon('close')}</button>` : ''}
+            </div>`;
+    }
 
-// ========== REDIRECT CARD ==========
-function createRedirectCard(redirect) {
-    const card = document.createElement('div');
-    card.className = 'site-card';
-    card.dataset.slug = redirect.slug;
+    /**
+     * Рендеринг основного содержимого
+     */
+    function renderContent() {
+        $('content').innerHTML = `
+            <div class="drop-zone" id="dropZone">
+                <div class="sites-grid" id="filesGrid"></div>
+            </div>
+            ${renderPagination()}`;
 
-    const shortUrl = RedirectsConfig.ENDPOINTS.short(redirect.slug);
+        renderFilesList();
+    }
 
-    card.innerHTML = `
-        <div class="site-card-header">
-            <div class="site-card-title" style="flex:1;">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <code style="font-weight:600; font-size:1rem;">/${escapeHtml(redirect.slug)}</code>
-                    <a href="${shortUrl}" target="_blank" rel="noopener"
-                       class="url-preview" style="font-size:0.8rem; color:var(--accent);">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                             style="width:12px;height:12px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                        </svg>
-                        ${escapeHtml(shortUrl)}
-                    </a>
+    /**
+     * Рендеринг пагинации
+     * @returns {string} HTML пагинации или пустая строка
+     */
+    function renderPagination() {
+        if (DownloaderState.totalPages <= 1) return '';
+        return `
+            <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px;">
+                <button class="btn btn-secondary" id="prevPageBtn" ${DownloaderState.page <= 1 ? 'disabled' : ''}>
+                    ← Назад
+                </button>
+                <span style="color:var(--text-secondary); font-size:0.9rem;">
+                    Страница ${DownloaderState.page} из ${DownloaderState.totalPages}
+                    (всего ${DownloaderState.total})
+                </span>
+                <button class="btn btn-secondary" id="nextPageBtn"
+                        ${DownloaderState.page >= DownloaderState.totalPages ? 'disabled' : ''}>
+                    Вперёд →
+                </button>
+            </div>`;
+    }
+
+    /**
+     * Рендеринг списка файлов
+     */
+    function renderFilesList() {
+        const grid = document.getElementById('filesGrid');
+        const filtered = filterFiles();
+
+        if (filtered.length === 0) {
+            grid.innerHTML = renderEmptyState();
+            document.getElementById('uploadEmptyBtn')?.addEventListener('click', triggerFileUpload);
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        filtered.forEach(file => fragment.appendChild(createFileCard(file)));
+        grid.appendChild(fragment);
+    }
+
+    /**
+     * Фильтрация файлов по поисковому запросу
+     * @returns {Array<Object>} Отфильтрованный список файлов
+     */
+    function filterFiles() {
+        if (!DownloaderState.search) return DownloaderState.files;
+        const q = DownloaderState.search.toLowerCase();
+        return DownloaderState.files.filter(f => (f.name || '').toLowerCase().includes(q));
+    }
+
+    /**
+     * Рендеринг пустого состояния
+     * @returns {string} HTML пустого состояния
+     */
+    function renderEmptyState() {
+        const hasSearch = Boolean(DownloaderState.search);
+        return `
+            <div class="empty-state">
+                ${svgIcon('folder', 48)}
+                <h3>Нет файлов</h3>
+                <p>${hasSearch ? 'Ничего не найдено по вашему запросу.' : 'Загрузите первый файл или перетащите его сюда.'}</p>
+                ${!hasSearch ? '<button class="btn btn-primary" id="uploadEmptyBtn">Загрузить файл</button>' : ''}
+            </div>`;
+    }
+
+    // ---------- File Card ----------
+    
+    /**
+     * Создание карточки файла
+     * @param {Object} file - Данные файла
+     * @returns {HTMLElement} DOM элемент карточки
+     */
+    function createFileCard(file) {
+        const card = document.createElement('div');
+        card.className = 'site-card';
+        card.dataset.hash = file.hash;
+        card.innerHTML = `
+            <div class="site-card-header">
+                <div class="site-card-title" style="flex:1;">
+                    <input type="text" class="file-name-input"
+                           value="${escapeHtml(file.name)}"
+                           data-hash="${file.hash}"
+                           data-original="${escapeHtml(file.name)}"
+                           placeholder="Имя файла"
+                           maxlength="255">
+                </div>
+                <div class="site-card-actions">
+                    <button class="btn btn-ghost btn-icon" data-action="copy-link" data-hash="${file.hash}"
+                            title="Копировать ссылку">${svgIcon('link')}</button>
+                    <a href="/downloader/${file.hash}" class="btn btn-ghost btn-icon"
+                       title="Скачать" target="_blank" rel="noopener">${svgIcon('download')}</a>
+                    <button class="btn btn-ghost btn-icon" data-action="delete"
+                            data-hash="${file.hash}" data-name="${escapeHtml(file.name)}"
+                            title="Удалить">${svgIcon('trash')}</button>
                 </div>
             </div>
-            <div class="site-card-actions">
-                <button class="btn btn-ghost btn-icon" data-action="copy-short-url"
-                        data-url="${escapeHtml(shortUrl)}" title="Копировать короткую ссылку">
-                    ${svgIcon('link')}
-                </button>
-                <button class="btn btn-ghost btn-icon" data-action="delete-redirect"
-                        data-slug="${escapeHtml(redirect.slug)}" title="Удалить">
-                    ${svgIcon('trash')}
-                </button>
+            <div class="site-card-body">
+                <div class="field-row">
+                    <div class="field">
+                        <label>Размер</label>
+                        <div style="color:var(--text-primary); font-size:0.9rem;">${escapeHtml(file.sizeFormatted)}</div>
+                    </div>
+                    <div class="field">
+                        <label>Тип</label>
+                        <div style="color:var(--text-primary); font-size:0.85rem;">${escapeHtml(file.contentType)}</div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Хеш (SHA-256)</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <code style="font-size:0.8rem; color:var(--text-secondary); word-break:break-all;">
+                            ${escapeHtml(file.hash)}
+                        </code>
+                        <button class="btn btn-ghost btn-icon" data-action="copy-hash" data-hash="${file.hash}"
+                                title="Копировать хеш" style="flex-shrink:0;">${svgIcon('copy', 14)}</button>
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Загрузок</label>
+                        <div style="color:var(--text-primary);">${file.downloads ?? 0}</div>
+                    </div>
+                    <div class="field">
+                        <label>Загружен</label>
+                        <div style="color:var(--text-primary); font-size:0.85rem;">
+                            ${new Date(file.uploadedAt).toLocaleString('ru-RU')}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        return card;
+    }
+
+    // ---------- Event Binding ----------
+    
+    /**
+     * Привязка глобальных событий модуля файлов
+     */
+    function bindGlobalEvents() {
+        document.getElementById('uploadFileBtn')?.addEventListener('click', triggerFileUpload);
+        document.getElementById('refreshFilesBtn')?.addEventListener('click', () => loadFiles(DownloaderState.page));
+        document.getElementById('prevPageBtn')?.addEventListener('click', () => {
+            if (DownloaderState.page > 1) loadFiles(DownloaderState.page - 1);
+        });
+        document.getElementById('nextPageBtn')?.addEventListener('click', () => {
+            if (DownloaderState.page < DownloaderState.totalPages) loadFiles(DownloaderState.page + 1);
+        });
+
+        bindSearch();
+        bindGridDelegation();
+        bindDropZone();
+    }
+
+    /**
+     * Привязка событий поиска
+     */
+    function bindSearch() {
+        const input = document.getElementById('fileSearchInput');
+        if (!input) return;
+
+        const debouncedSearch = debounce((value) => {
+            DownloaderState.search = value;
+            renderFilesList();
+            const current = document.getElementById('fileSearchInput');
+            if (current) {
+                current.focus();
+                current.setSelectionRange(value.length, value.length);
+            }
+        }, DownloaderConfig.SEARCH_DEBOUNCE_MS);
+
+        input.addEventListener('input', (e) => debouncedSearch(e.target.value));
+        document.getElementById('clearFileSearchBtn')?.addEventListener('click', () => {
+            DownloaderState.search = '';
+            renderFiles();
+        });
+    }
+
+    /**
+     * Привязка событий через делегирование для сетки файлов
+     */
+    function bindGridDelegation() {
+        const grid = document.getElementById('filesGrid');
+        if (!grid) return;
+
+        // Делегирование кликов для кнопок действий
+        grid.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const hash = btn.dataset.hash;
+
+            if (action === 'copy-link') {
+                copyToClipboard(DownloaderConfig.ENDPOINTS.public(hash));
+                showToast('Ссылка скопирована', 'info', 1500);
+            } else if (action === 'copy-hash') {
+                copyToClipboard(hash);
+                showToast('Хеш скопирован', 'info', 1500);
+            } else if (action === 'delete') {
+                const name = btn.dataset.name;
+                confirmDelete(hash, name);
+            }
+        });
+
+        // Переименование по Enter / Escape / blur
+        grid.addEventListener('keydown', (e) => {
+            if (e.target.classList.contains('file-name-input') && e.key === 'Enter') {
+                e.preventDefault();
+                e.target.blur();
+            }
+            if (e.target.classList.contains('file-name-input') && e.key === 'Escape') {
+                e.target.value = e.target.dataset.original;
+                e.target.blur();
+            }
+        });
+
+        grid.addEventListener('blur', (e) => {
+            if (!e.target.classList.contains('file-name-input')) return;
+            const newName = e.target.value.trim();
+            const original = e.target.dataset.original;
+            const hash = e.target.dataset.hash;
+            if (!newName) {
+                e.target.value = original;
+                return;
+            }
+            if (newName === original) return;
+            handleRename(hash, newName, e.target);
+        }, true);
+    }
+
+    /**
+     * Обработка переименования файла
+     * @param {string} hash - Хеш файла
+     * @param {string} newName - Новое имя
+     * @param {HTMLInputElement} inputEl - Элемент ввода
+     * @returns {Promise<void>}
+     */
+    async function handleRename(hash, newName, inputEl) {
+        if (newName.length > 255) {
+            showToast('Имя файла слишком длинное', 'error');
+            inputEl.value = inputEl.dataset.original;
+            return;
+        }
+        try {
+            await renameFile(hash, newName);
+            const file = DownloaderState.files.find(f => f.hash === hash);
+            if (file) file.name = newName;
+            inputEl.dataset.original = newName;
+            showToast('Имя обновлено', 'success');
+        } catch (err) {
+            inputEl.value = inputEl.dataset.original;
+            showToast(err.message || 'Не удалось переименовать', 'error');
+        }
+    }
+
+    /**
+     * Подтверждение удаления файла
+     * @param {string} hash - Хеш файла
+     * @param {string} name - Имя файла
+     */
+    function confirmDelete(hash, name) {
+        showModal(
+            'Удалить файл?',
+            `Файл «${name}» будет удалён без возможности восстановления.`,
+            async () => {
+                try {
+                    await deleteFile(hash);
+                    showToast('Файл удалён', 'success');
+                    await loadFiles(DownloaderState.page);
+                } catch (err) {
+                    showToast(err.message || 'Ошибка удаления', 'error');
+                }
+            }
+        );
+    }
+
+    // ---------- Drag & Drop ----------
+    
+    /**
+     * Привязка событий drag & drop для зоны загрузки
+     */
+    function bindDropZone() {
+        const zone = document.getElementById('dropZone');
+        if (!zone) return;
+
+        ['dragenter', 'dragover'].forEach(evt =>
+            zone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                zone.classList.add('drop-zone-active');
+            })
+        );
+        ['dragleave', 'drop'].forEach(evt =>
+            zone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                zone.classList.remove('drop-zone-active');
+            })
+        );
+        zone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer?.files;
+            if (files?.length) uploadFile(files[0]);
+        });
+    }
+
+    // ---------- File Upload ----------
+    
+    /**
+     * Триггер выбора файла через input
+     */
+    function triggerFileUpload() {
+        if (DownloaderState.isUploading) return;
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.multiple = false;
+        input.onchange = () => {
+            const file = input.files?.[0];
+            if (file) uploadFile(file);
+        };
+        input.click();
+    }
+
+    /**
+     * Загрузка файла на сервер
+     * @param {File} file - Файл для загрузки
+     * @returns {Promise<void>}
+     */
+    async function uploadFile(file) {
+        if (DownloaderState.isUploading) return;
+        if (file.size > DownloaderConfig.MAX_FILE_SIZE) {
+            showToast('Файл слишком большой (макс. 100 МБ)', 'error');
+            return;
+        }
+
+        DownloaderState.isUploading = true;
+        renderTopbar();
+        showToast(`Загрузка «${file.name}»...`, 'info', 0);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Используем отдельный endpoint для загрузки
+            const res = await fetch('/api/downloader-upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${State.token}` },
+                body: formData
+            });
+
+            if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || `Ошибка ${res.status}`);
+            }
+
+            const data = await res.json();
+            showToast(data.existed ? 'Файл уже существует' : `Файл «${file.name}» загружен`, 'success');
+            await loadFiles(1);
+        } catch (err) {
+            if (err.message === 'UNAUTHORIZED') {
+                showToast('Ошибка доступа. Проверьте токен.', 'error');
+            } else {
+                showToast(err.message || 'Не удалось загрузить файл', 'error');
+            }
+        } finally {
+            DownloaderState.isUploading = false;
+            renderTopbar();
+        }
+    }
+
+    // ---------- API Methods ----------
+    
+    /**
+     * Переименование файла
+     * @param {string} hash - Хеш файла
+     * @param {string} newName - Новое имя
+     * @returns {Promise<Object>}
+     */
+    async function renameFile(hash, newName) {
+        return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), {
+            method: 'PATCH',
+            body: JSON.stringify({ name: newName })
+        });
+    }
+
+    /**
+     * Удаление файла
+     * @param {string} hash - Хеш файла
+     * @returns {Promise<Object>}
+     */
+    async function deleteFile(hash) {
+        return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), { method: 'DELETE' });
+    }
+
+    /**
+     * Копирование текста в буфер обмена
+     * @param {string} text - Текст для копирования
+     */
+    function copyToClipboard(text) {
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+        
+        /**
+         * Fallback для старых браузеров
+         * @param {string} value - Текст для копирования
+         */
+        function fallbackCopy(value) {
+            const ta = document.createElement('textarea');
+            ta.value = value;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { 
+                document.execCommand('copy'); 
+            } catch (_) {}
+            document.body.removeChild(ta);
+        }
+    }
+
+    // ============================================
+    // REDIRECTS MODULE
+    // ============================================
+
+    // ---------- Configuration ----------
+    
+    /**
+     * Конфигурация модуля редиректов
+     * @namespace
+     */
+    const RedirectsConfig = {
+        /** @type {number} Задержка поиска в мс */
+        SEARCH_DEBOUNCE_MS: 300,
+        
+        /** @type {RegExp} Паттерн для валидации slug */
+        SLUG_PATTERN: /^[a-z0-9_-]{2,32}$/,
+        
+        /** @type {number} Максимальная длина slug */
+        SLUG_MAX_LENGTH: 32,
+        
+        /** @type {number} Максимальная длина описания */
+        DESC_MAX_LENGTH: 200,
+        
+        /**
+         * API endpoints
+         * @type {Object}
+         */
+        ENDPOINTS: {
+            /** @type {string} Список редиректов */
+            list: '/api/redirects/admin',
+            
+            /**
+             * Конкретный редирект
+             * @param {string} slug - Slug редиректа
+             * @returns {string} URL endpoint
+             */
+            item: (slug) => `/api/redirects/admin/${slug}`,
+            
+            /**
+             * Короткая ссылка
+             * @param {string} slug - Slug редиректа
+             * @returns {string} Публичный URL
+             */
+            short: (slug) => `${window.location.origin}/r/${slug}`
+        },
+        
+        /**
+         * Сообщения для UI
+         * @type {Object}
+         */
+        MESSAGES: {
+            slugInvalid: 'Slug: 2-32 символов (a-z, 0-9, -, _)',
+            urlInvalid: 'Некорректный URL',
+            /**
+             * Сообщение о дубликате
+             * @param {string} slug - Slug редиректа
+             * @returns {string} Сообщение
+             */
+            duplicate: (slug) => `Редирект "/${slug}" уже существует`,
+            empty: 'Нет редиректов',
+            notFound: 'Ничего не найдено',
+            createHint: 'Создайте первый редирект'
+        }
+    };
+
+    // ---------- State ----------
+    
+    /**
+     * Состояние модуля редиректов
+     * @namespace
+     */
+    const RedirectsState = {
+        /** @type {Array<Object>} Список редиректов */
+        list: [],
+        
+        /** @type {string} Поисковый запрос */
+        search: '',
+        
+        /** @type {boolean} Флаг загрузки */
+        isLoading: false,
+        
+        /** @type {boolean} Флаг создания */
+        isCreating: false
+    };
+
+    // ---------- Loading ----------
+    
+    /**
+     * Загрузка списка редиректов
+     * @returns {Promise<void>}
+     */
+    async function loadRedirects() {
+        if (RedirectsState.isLoading) return;
+        RedirectsState.isLoading = true;
+
+        $('content').innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>Загрузка редиректов...</div>
+            </div>`;
+        $('pageTitle').textContent = 'Редиректы';
+        $('topbarActions').innerHTML = '';
+
+        try {
+            const data = await apiRequest(RedirectsConfig.ENDPOINTS.list);
+            RedirectsState.list = data.redirects || [];
+            $('redirectsCount').textContent = RedirectsState.list.length;
+            RedirectsState.isLoading = false;
+            renderRedirects();
+        } catch (err) {
+            RedirectsState.isLoading = false;
+            renderRedirectsError(err);
+        }
+    }
+
+    /**
+     * Отображение ошибки загрузки редиректов
+     * @param {Error} err - Объект ошибки
+     */
+    function renderRedirectsError(err) {
+        if (err.message === 'UNAUTHORIZED') {
+            $('content').innerHTML = `
+                <div class="empty-state">
+                    ${svgIcon('lock', 48)}
+                    <h3>Требуется авторизация</h3>
+                    <p>Неверный или отсутствует токен администратора.</p>
+                    <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
+                </div>`;
+            document.getElementById('enterTokenBtn')?.addEventListener('click', promptToken);
+            return;
+        }
+
+        const isNetwork = !navigator.onLine || err.name === 'TypeError';
+        $('content').innerHTML = `
+            <div class="empty-state">
+                <h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3>
+                <p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : escapeHtml(err.message)}</p>
+                <button class="btn btn-primary" id="retryBtn">Повторить</button>
+            </div>`;
+        document.getElementById('retryBtn')?.addEventListener('click', loadRedirects);
+    }
+
+    // ---------- Rendering ----------
+    
+    /**
+     * Полный рендеринг модуля редиректов
+     */
+    function renderRedirects() {
+        renderRedirectsTopbar();
+        renderRedirectsContent();
+        bindRedirectsGlobalEvents();
+    }
+
+    /**
+     * Рендеринг верхней панели редиректов
+     */
+    function renderRedirectsTopbar() {
+        $('topbarActions').innerHTML = `
+            <button class="btn btn-primary" id="addRedirectBtn" ${RedirectsState.isCreating ? 'disabled' : ''}>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Новый редирект
+            </button>
+            <button class="btn btn-secondary" id="refreshRedirectsBtn" ${RedirectsState.isLoading ? 'disabled' : ''}>
+                ${svgIcon('refresh')} Обновить
+            </button>
+            <div class="search-box" style="margin-left:auto; position:relative;">
+                ${svgIcon('search')}
+                <input type="text" id="redirectSearchInput" placeholder="Поиск по slug или URL..."
+                       value="${escapeHtml(RedirectsState.search)}"
+                       ${RedirectsState.isLoading ? 'disabled' : ''}>
+                ${RedirectsState.search ? `
+                    <button class="btn btn-ghost btn-icon" id="clearRedirectSearchBtn"
+                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);"
+                            title="Очистить">${svgIcon('close')}</button>` : ''}
+            </div>`;
+    }
+
+    /**
+     * Рендеринг содержимого редиректов
+     */
+    function renderRedirectsContent() {
+        $('content').innerHTML = `
+            <div id="redirectsGrid" style="display:flex; flex-direction:column; gap:16px; margin-top:20px;"></div>`;
+
+        const grid = document.getElementById('redirectsGrid');
+        grid.appendChild(createRedirectFormCard());
+
+        const filtered = filterRedirects();
+        if (filtered.length === 0) {
+            grid.appendChild(createRedirectsEmptyState());
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        filtered.forEach(redirect => fragment.appendChild(createRedirectCard(redirect)));
+        grid.appendChild(fragment);
+    }
+
+    /**
+     * Фильтрация редиректов по поисковому запросу
+     * @returns {Array<Object>} Отфильтрованный список
+     */
+    function filterRedirects() {
+        if (!RedirectsState.search) return RedirectsState.list;
+        const q = RedirectsState.search.toLowerCase();
+        return RedirectsState.list.filter(r =>
+            (r.slug || '').toLowerCase().includes(q) ||
+            (r.url || '').toLowerCase().includes(q) ||
+            (r.description || '').toLowerCase().includes(q)
+        );
+    }
+
+    /**
+     * Создание пустого состояния для редиректов
+     * @returns {HTMLElement} DOM элемент
+     */
+    function createRedirectsEmptyState() {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'empty-state';
+        wrapper.style.padding = '40px 20px';
+        const hasSearch = Boolean(RedirectsState.search);
+        wrapper.innerHTML = `
+            <h3>${RedirectsConfig.MESSAGES.empty}</h3>
+            <p>${hasSearch ? RedirectsConfig.MESSAGES.notFound : RedirectsConfig.MESSAGES.createHint}</p>`;
+        return wrapper;
+    }
+
+    // ---------- Form Card ----------
+    
+    /**
+     * Создание формы для нового редиректа
+     * @returns {HTMLElement} DOM элемент формы
+     */
+    function createRedirectFormCard() {
+        const card = document.createElement('div');
+        card.className = 'site-card';
+        card.style.opacity = '0.85';
+        card.innerHTML = `
+            <div class="site-card-header">
+                <div class="site-card-title" style="flex:1;">
+                    <input type="text" class="new-slug-input"
+                           placeholder="slug (например: my-link)"
+                           maxlength="${RedirectsConfig.SLUG_MAX_LENGTH}"
+                           pattern="[a-z0-9_-]+">
+                </div>
             </div>
-        </div>
-        <div class="site-card-body">
-            <div class="field">
-                <label>URL назначения</label>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="word-break:break-all; flex:1;">${escapeHtml(redirect.url)}</span>
-                    <button class="btn btn-ghost btn-icon" data-action="copy-url"
-                            data-url="${escapeHtml(redirect.url)}" title="Копировать URL">
-                        ${svgIcon('copy', 14)}
+            <div class="site-card-body">
+                <div class="field">
+                    <label>URL назначения</label>
+                    <input type="url" class="new-url-input" placeholder="https://example.com">
+                </div>
+                <div class="field">
+                    <label>Описание (необязательно)</label>
+                    <input type="text" class="new-desc-input"
+                           placeholder="Краткое описание"
+                           maxlength="${RedirectsConfig.DESC_MAX_LENGTH}">
+                </div>
+            </div>
+            <div class="card-footer">
+                <span style="font-size:0.8rem; color:var(--text-tertiary);">Новый редирект</span>
+                <button class="btn btn-primary" data-action="create-redirect"
+                        style="padding:8px 16px; font-size:0.85rem;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Создать
+                </button>
+            </div>`;
+        return card;
+    }
+
+    // ---------- Redirect Card ----------
+    
+    /**
+     * Создание карточки редиректа
+     * @param {Object} redirect - Данные редиректа
+     * @returns {HTMLElement} DOM элемент карточки
+     */
+    function createRedirectCard(redirect) {
+        const card = document.createElement('div');
+        card.className = 'site-card';
+        card.dataset.slug = redirect.slug;
+
+        const shortUrl = RedirectsConfig.ENDPOINTS.short(redirect.slug);
+
+        card.innerHTML = `
+            <div class="site-card-header">
+                <div class="site-card-title" style="flex:1;">
+                    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <code style="font-weight:600; font-size:1rem;">/${escapeHtml(redirect.slug)}</code>
+                        <a href="${shortUrl}" target="_blank" rel="noopener"
+                           class="url-preview" style="font-size:0.8rem; color:var(--accent);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                 style="width:12px;height:12px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            ${escapeHtml(shortUrl)}
+                        </a>
+                    </div>
+                </div>
+                <div class="site-card-actions">
+                    <button class="btn btn-ghost btn-icon" data-action="copy-short-url"
+                            data-url="${escapeHtml(shortUrl)}" title="Копировать короткую ссылку">
+                        ${svgIcon('link')}
+                    </button>
+                    <button class="btn btn-ghost btn-icon" data-action="delete-redirect"
+                            data-slug="${escapeHtml(redirect.slug)}" title="Удалить">
+                        ${svgIcon('trash')}
                     </button>
                 </div>
             </div>
-            ${redirect.description ? `
+            <div class="site-card-body">
                 <div class="field">
-                    <label>Описание</label>
-                    <div style="color:var(--text-secondary);">${escapeHtml(redirect.description)}</div>
-                </div>` : ''}
-            <div class="field-row">
-                <div class="field">
-                    <label>Переходов</label>
-                    <div style="color:var(--text-primary); font-weight:600;" class="redirect-clicks">
-                        ${redirect.clicks ?? 0}
+                    <label>URL назначения</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="word-break:break-all; flex:1;">${escapeHtml(redirect.url)}</span>
+                        <button class="btn btn-ghost btn-icon" data-action="copy-url"
+                                data-url="${escapeHtml(redirect.url)}" title="Копировать URL">
+                            ${svgIcon('copy', 14)}
+                        </button>
                     </div>
                 </div>
-                <div class="field">
-                    <label>Последний переход</label>
-                    <div style="font-size:0.85rem;">
-                        ${redirect.lastClickedAt
-                            ? new Date(redirect.lastClickedAt).toLocaleString('ru-RU')
-                            : '—'}
+                ${redirect.description ? `
+                    <div class="field">
+                        <label>Описание</label>
+                        <div style="color:var(--text-secondary);">${escapeHtml(redirect.description)}</div>
+                    </div>` : ''}
+                <div class="field-row">
+                    <div class="field">
+                        <label>Переходов</label>
+                        <div style="color:var(--text-primary); font-weight:600;" class="redirect-clicks">
+                            ${redirect.clicks ?? 0}
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Последний переход</label>
+                        <div style="font-size:0.85rem;">
+                            ${redirect.lastClickedAt
+                                ? new Date(redirect.lastClickedAt).toLocaleString('ru-RU')
+                                : '—'}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="field-row">
-                <div class="field">
-                    <label>Создан</label>
-                    <div style="font-size:0.85rem;">
-                        ${new Date(redirect.createdAt).toLocaleString('ru-RU')}
+                <div class="field-row">
+                    <div class="field">
+                        <label>Создан</label>
+                        <div style="font-size:0.85rem;">
+                            ${new Date(redirect.createdAt).toLocaleString('ru-RU')}
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Статус</label>
+                        <div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+                            <span style="width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 6px var(--success);"></span>
+                            Активен
+                        </div>
                     </div>
                 </div>
-                <div class="field">
-                    <label>Статус</label>
-                    <div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;">
-                        <span style="width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 6px var(--success);"></span>
-                        Активен
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    return card;
-}
-
-// ========== EVENT BINDING ==========
-function bindRedirectsGlobalEvents() {
-    document.getElementById('addRedirectBtn')?.addEventListener('click', () => {
-        document.querySelector('.new-slug-input')?.focus();
-    });
-    document.getElementById('refreshRedirectsBtn')?.addEventListener('click', loadRedirects);
-
-    bindRedirectsSearch();
-    bindRedirectsGridDelegation();
-}
-
-function bindRedirectsSearch() {
-    const input = document.getElementById('redirectSearchInput');
-    if (!input) return;
-
-    const debouncedSearch = debounce((value) => {
-        RedirectsState.search = value;
-        renderRedirectsContent();
-        const current = document.getElementById('redirectSearchInput');
-        if (current) {
-            current.focus();
-            current.setSelectionRange(value.length, value.length);
-        }
-    }, RedirectsConfig.SEARCH_DEBOUNCE_MS);
-
-    input.addEventListener('input', (e) => debouncedSearch(e.target.value));
-    document.getElementById('clearRedirectSearchBtn')?.addEventListener('click', () => {
-        RedirectsState.search = '';
-        renderRedirects();
-    });
-}
-
-function bindRedirectsGridDelegation() {
-    const grid = document.getElementById('redirectsGrid');
-    if (!grid) return;
-
-    // Click delegation
-    grid.addEventListener('click', async (e) => {
-        const actionBtn = e.target.closest('[data-action]');
-        if (!actionBtn) return;
-        const action = actionBtn.dataset.action;
-
-        if (action === 'create-redirect') {
-            await handleCreateRedirect();
-        } else if (action === 'delete-redirect') {
-            const slug = actionBtn.dataset.slug;
-            confirmDeleteRedirect(slug);
-        } else if (action === 'copy-short-url' || action === 'copy-url') {
-            const url = actionBtn.dataset.url;
-            copyToClipboard(url);
-            showToast('Ссылка скопирована', 'info', 1500);
-        }
-    });
-
-    // Enter to submit form
-    grid.addEventListener('keydown', (e) => {
-        if (e.key !== 'Enter') return;
-        const isInForm = e.target.closest('.new-slug-input, .new-url-input, .new-desc-input');
-        if (!isInForm) return;
-        e.preventDefault();
-        handleCreateRedirect();
-    });
-}
-
-// ========== CREATE / DELETE ==========
-async function handleCreateRedirect() {
-    if (RedirectsState.isCreating) return;
-
-    const slugInput = document.querySelector('.new-slug-input');
-    const urlInput  = document.querySelector('.new-url-input');
-    const descInput = document.querySelector('.new-desc-input');
-    if (!slugInput || !urlInput) return;
-
-    const slug = slugInput.value.trim().toLowerCase();
-    const url  = urlInput.value.trim();
-    const description = descInput?.value.trim() || '';
-
-    if (!RedirectsConfig.SLUG_PATTERN.test(slug)) {
-        showToast(RedirectsConfig.MESSAGES.slugInvalid, 'error');
-        slugInput.focus();
-        return;
-    }
-    if (!isValidUrl(url)) {
-        showToast(RedirectsConfig.MESSAGES.urlInvalid, 'error');
-        urlInput.focus();
-        return;
-    }
-    if (RedirectsState.list.some(r => r.slug === slug)) {
-        showToast(RedirectsConfig.MESSAGES.duplicate(slug), 'error');
-        slugInput.focus();
-        return;
+            </div>`;
+        return card;
     }
 
-    RedirectsState.isCreating = true;
-    try {
-        await createRedirect(slug, url, description);
-        slugInput.value = '';
-        urlInput.value = '';
-        if (descInput) descInput.value = '';
-        showToast(`Редирект "/${slug}" создан`, 'success');
-        await loadRedirects();
-    } catch (err) {
-        showToast(err.message || 'Не удалось создать редирект', 'error');
-    } finally {
-        RedirectsState.isCreating = false;
-    }
-}
+    // ---------- Event Binding ----------
+    
+    /**
+     * Привязка глобальных событий редиректов
+     */
+    function bindRedirectsGlobalEvents() {
+        document.getElementById('addRedirectBtn')?.addEventListener('click', () => {
+            document.querySelector('.new-slug-input')?.focus();
+        });
+        document.getElementById('refreshRedirectsBtn')?.addEventListener('click', loadRedirects);
 
-function confirmDeleteRedirect(slug) {
-    showModal(
-        'Удалить редирект?',
-        `Редирект "/${slug}" будет удалён безвозвратно.`,
-        async () => {
-            try {
-                await deleteRedirect(slug);
-                showToast('Редирект удалён', 'success');
-                await loadRedirects();
-            } catch (err) {
-                showToast(err.message || 'Ошибка удаления', 'error');
+        bindRedirectsSearch();
+        bindRedirectsGridDelegation();
+    }
+
+    /**
+     * Привязка событий поиска редиректов
+     */
+    function bindRedirectsSearch() {
+        const input = document.getElementById('redirectSearchInput');
+        if (!input) return;
+
+        const debouncedSearch = debounce((value) => {
+            RedirectsState.search = value;
+            renderRedirectsContent();
+            const current = document.getElementById('redirectSearchInput');
+            if (current) {
+                current.focus();
+                current.setSelectionRange(value.length, value.length);
             }
-        }
-    );
-}
+        }, RedirectsConfig.SEARCH_DEBOUNCE_MS);
 
-// ========== API ==========
-async function createRedirect(slug, url, description) {
-    return apiRequest(RedirectsConfig.ENDPOINTS.list, {
-        method: 'POST',
-        body: JSON.stringify({ slug, url, description })
-    });
-}
-
-async function deleteRedirect(slug) {
-    return apiRequest(RedirectsConfig.ENDPOINTS.item(slug), { method: 'DELETE' });
-}
-
-// ========== VALIDATION ==========
-function isValidUrl(string) {
-    try {
-        const url = new URL(string);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch (_) {
-        return false;
+        input.addEventListener('input', (e) => debouncedSearch(e.target.value));
+        document.getElementById('clearRedirectSearchBtn')?.addEventListener('click', () => {
+            RedirectsState.search = '';
+            renderRedirects();
+        });
     }
-}
 
+    /**
+     * Привязка событий через делегирование для сетки редиректов
+     */
+    function bindRedirectsGridDelegation() {
+        const grid = document.getElementById('redirectsGrid');
+        if (!grid) return;
 
+        // Делегирование кликов
+        grid.addEventListener('click', async (e) => {
+            const actionBtn = e.target.closest('[data-action]');
+            if (!actionBtn) return;
+            const action = actionBtn.dataset.action;
 
-    // ---------- Toast ----------
+            if (action === 'create-redirect') {
+                await handleCreateRedirect();
+            } else if (action === 'delete-redirect') {
+                const slug = actionBtn.dataset.slug;
+                confirmDeleteRedirect(slug);
+            } else if (action === 'copy-short-url' || action === 'copy-url') {
+                const url = actionBtn.dataset.url;
+                copyToClipboard(url);
+                showToast('Ссылка скопирована', 'info', 1500);
+            }
+        });
+
+        // Enter для отправки формы
+        grid.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            const isInForm = e.target.closest('.new-slug-input, .new-url-input, .new-desc-input');
+            if (!isInForm) return;
+            e.preventDefault();
+            handleCreateRedirect();
+        });
+    }
+
+    // ---------- Create / Delete ----------
+    
+    /**
+     * Обработка создания нового редиректа
+     * @returns {Promise<void>}
+     */
+    async function handleCreateRedirect() {
+        if (RedirectsState.isCreating) return;
+
+        const slugInput = document.querySelector('.new-slug-input');
+        const urlInput = document.querySelector('.new-url-input');
+        const descInput = document.querySelector('.new-desc-input');
+        if (!slugInput || !urlInput) return;
+
+        const slug = slugInput.value.trim().toLowerCase();
+        const url = urlInput.value.trim();
+        const description = descInput?.value.trim() || '';
+
+        if (!RedirectsConfig.SLUG_PATTERN.test(slug)) {
+            showToast(RedirectsConfig.MESSAGES.slugInvalid, 'error');
+            slugInput.focus();
+            return;
+        }
+        if (!isValidUrl(url)) {
+            showToast(RedirectsConfig.MESSAGES.urlInvalid, 'error');
+            urlInput.focus();
+            return;
+        }
+        if (RedirectsState.list.some(r => r.slug === slug)) {
+            showToast(RedirectsConfig.MESSAGES.duplicate(slug), 'error');
+            slugInput.focus();
+            return;
+        }
+
+        RedirectsState.isCreating = true;
+        try {
+            await createRedirect(slug, url, description);
+            slugInput.value = '';
+            urlInput.value = '';
+            if (descInput) descInput.value = '';
+            showToast(`Редирект "/${slug}" создан`, 'success');
+            await loadRedirects();
+        } catch (err) {
+            showToast(err.message || 'Не удалось создать редирект', 'error');
+        } finally {
+            RedirectsState.isCreating = false;
+        }
+    }
+
+    /**
+     * Подтверждение удаления редиректа
+     * @param {string} slug - Slug редиректа
+     */
+    function confirmDeleteRedirect(slug) {
+        showModal(
+            'Удалить редирект?',
+            `Редирект "/${slug}" будет удалён безвозвратно.`,
+            async () => {
+                try {
+                    await deleteRedirect(slug);
+                    showToast('Редирект удалён', 'success');
+                    await loadRedirects();
+                } catch (err) {
+                    showToast(err.message || 'Ошибка удаления', 'error');
+                }
+            }
+        );
+    }
+
+    // ---------- API ----------
+    
+    /**
+     * Создание нового редиректа
+     * @param {string} slug - Slug редиректа
+     * @param {string} url - URL назначения
+     * @param {string} description - Описание
+     * @returns {Promise<Object>}
+     */
+    async function createRedirect(slug, url, description) {
+        return apiRequest(RedirectsConfig.ENDPOINTS.list, {
+            method: 'POST',
+            body: JSON.stringify({ slug, url, description })
+        });
+    }
+
+    /**
+     * Удаление редиректа
+     * @param {string} slug - Slug редиректа
+     * @returns {Promise<Object>}
+     */
+    async function deleteRedirect(slug) {
+        return apiRequest(RedirectsConfig.ENDPOINTS.item(slug), { method: 'DELETE' });
+    }
+
+    // ---------- Validation ----------
+    
+    /**
+     * Валидация URL
+     * @param {string} string - URL для проверки
+     * @returns {boolean} true если URL валиден
+     */
+    function isValidUrl(string) {
+        try {
+            const url = new URL(string);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch (_) {
+            return false;
+        }
+    }
+
+    // ============================================
+    // UI COMPONENTS
+    // ============================================
+
+    // ---------- Toast Notifications ----------
+    
+    /**
+     * Показ toast-уведомления
+     * @param {string} message - Текст уведомления
+     * @param {string} type - Тип: 'success' | 'error' | 'info'
+     * @param {number} duration - Длительность показа в мс
+     */
     function showToast(message, type = 'info', duration = 3000) {
         const icons = {
             success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
@@ -1926,9 +2267,17 @@ function isValidUrl(string) {
         }, duration);
     }
 
-    // ---------- Modal ----------
+    // ---------- Modal Dialog ----------
+    
+    /** @type {Function|null} Callback для модального окна */
     let modalCallback = null;
 
+    /**
+     * Показ модального окна подтверждения
+     * @param {string} title - Заголовок
+     * @param {string} text - Текст
+     * @param {Function} onConfirm - Callback при подтверждении
+     */
     function showModal(title, text, onConfirm) {
         $('modalTitle').textContent = title;
         $('modalText').textContent = text;
@@ -1936,6 +2285,9 @@ function isValidUrl(string) {
         modalCallback = onConfirm;
     }
 
+    /**
+     * Закрытие модального окна
+     */
     function closeModal() {
         $('modalOverlay').classList.remove('visible');
         modalCallback = null;
@@ -1950,48 +2302,66 @@ function isValidUrl(string) {
         if (e.target === $('modalOverlay')) closeModal();
     });
 
-    // ---------- API ----------
-    async function apiRequest(url, options = {}) {
-    // Критическая проверка: токен не должен содержать кириллицу или быть пустым
-    if (!State.token || State.token === 'Токен не введён' || State.token.trim() === '') {
-        throw new Error('UNAUTHORIZED');
-    }
-
-    // Дополнительная проверка: токен должен содержать только ASCII-символы
-    if (/[^\x00-\x7F]/.test(State.token)) {
-        console.error('Токен содержит недопустимые символы (кириллица или спецсимволы)');
-        throw new Error('UNAUTHORIZED');
-    }
-
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
+    // ============================================
+    // API COMMUNICATION
+    // ============================================
     
-    headers['Authorization'] = `Bearer ${State.token}`;
-
-    try {
-        const res = await fetch(url, { ...options, headers });
-        if (res.status === 401 || res.status === 403) {
+    /**
+     * Выполнение API запроса с авторизацией
+     * @param {string} url - URL endpoint
+     * @param {Object} options - Опции fetch
+     * @returns {Promise<Object>} Ответ сервера
+     * @throws {Error} Если токен невалиден или запрос не удался
+     */
+    async function apiRequest(url, options = {}) {
+        // Критическая проверка: токен не должен содержать кириллицу или быть пустым
+        if (!State.token || State.token === 'Токен не введён' || State.token.trim() === '') {
             throw new Error('UNAUTHORIZED');
         }
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.error || `HTTP ${res.status}`);
+
+        // Дополнительная проверка: токен должен содержать только ASCII-символы
+        if (/[^\x00-\x7F]/.test(State.token)) {
+            console.error('Токен содержит недопустимые символы (кириллица или спецсимволы)');
+            throw new Error('UNAUTHORIZED');
         }
-        return await res.json();
-    } catch (err) {
-        if (err.message === 'UNAUTHORIZED') {
+
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        
+        headers['Authorization'] = `Bearer ${State.token}`;
+
+        try {
+            const res = await fetch(url, { ...options, headers });
+            if (res.status === 401 || res.status === 403) {
+                throw new Error('UNAUTHORIZED');
+            }
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || `HTTP ${res.status}`);
+            }
+            return await res.json();
+        } catch (err) {
+            if (err.message === 'UNAUTHORIZED') {
+                throw err;
+            }
+            if (err.message.includes('Failed to fetch')) {
+                throw new Error('Ошибка сети. Проверьте подключение.');
+            }
             throw err;
         }
-        if (err.message.includes('Failed to fetch')) {
-            throw new Error('Ошибка сети. Проверьте подключение.');
-        }
-        throw err;
     }
-}
 
-        // Обработчик ошибок с восстановлением токена
+    // ============================================
+    // NAVIGATION & SECTIONS
+    // ============================================
+    
+    /**
+     * Загрузка секции с обработкой ошибок
+     * @param {string} section - Название секции
+     * @returns {Promise<void>}
+     */
     async function loadSection(section) {
         $('content').innerHTML = '<div class="loading"><div class="spinner"></div><div>Загрузка...</div></div>';
         try {
@@ -2052,53 +2422,79 @@ function isValidUrl(string) {
         }
     }
 
+    // ============================================
+    // SITES MODULE
+    // ============================================
+
     // ---------- Parser ----------
+    
+    /**
+     * Парсинг содержимого в список проектов
+     * @param {string} content - Сырое содержимое
+     * @returns {Array<Object>} Список проектов
+     */
     function parseSaites(content) {
-    if (!content || typeof content !== 'string') return [];
-    const blocks = content.split('::').filter(b => b && b.trim());
-    const sites = [];
-    const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
+        if (!content || typeof content !== 'string') return [];
+        const blocks = content.split('::').filter(b => b && b.trim());
+        const sites = [];
+        const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
 
-    for (const block of blocks) {
-        const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
-        if (lines.length < 3) continue;
-        const clean = (str) => {
-            let s = str.split('@:')[0].trim();
-            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-                s = s.slice(1, -1);
+        for (const block of blocks) {
+            const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length < 3) continue;
+            
+            /**
+             * Очистка строки от служебных символов
+             * @param {string} str - Исходная строка
+             * @returns {string} Очищенная строка
+             */
+            const clean = (str) => {
+                let s = str.split('@:')[0].trim();
+                if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+                    s = s.slice(1, -1);
+                }
+                return s.trim();
+            };
+            
+            const title = clean(lines[0]);
+            let url = clean(lines[1]);
+            const desc = clean(lines[2]);
+
+            // Читаем категорию из 4-й строки
+            let category = 'other';
+            if (lines.length >= 4) {
+                const rawCat = clean(lines[3]).toLowerCase();
+                if (VALID_CATEGORIES.includes(rawCat)) {
+                    category = rawCat;
+                }
             }
-            return s.trim();
-        };
-        const title = clean(lines[0]);
-        let url = clean(lines[1]);
-        const desc = clean(lines[2]);
 
-        // Читаем категорию из 4-й строки
-        let category = 'other';
-        if (lines.length >= 4) {
-            const rawCat = clean(lines[3]).toLowerCase();
-            if (VALID_CATEGORIES.includes(rawCat)) {
-                category = rawCat;
+            if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+            if (title && url && desc) {
+                sites.push({ title, url, desc, category });
             }
         }
-
-        if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-        if (title && url && desc) {
-            sites.push({ title, url, desc, category });
-        }
+        return sites;
     }
-    return sites;
-}
 
+    /**
+     * Сериализация списка проектов в строку
+     * @param {Array<Object>} sites - Список проектов
+     * @returns {string} Сериализованная строка
+     */
     function serializeSaites(sites) {
-    return sites.map(s => {
-        const url = s.url.replace(/^https?:\/\//i, '');
-        const category = s.category || 'other';
-        return `${s.title}\n${url}\n${s.desc}\n${category}`;
-    }).join('\n::\n');
-}
+        return sites.map(s => {
+            const url = s.url.replace(/^https?:\/\//i, '');
+            const category = s.category || 'other';
+            return `${s.title}\n${url}\n${s.desc}\n${category}`;
+        }).join('\n::\n');
+    }
 
-    // ---------- Render: Sites ----------
+    // ---------- Rendering ----------
+    
+    /**
+     * Рендеринг модуля проектов
+     */
     function renderSites() {
         $('pageTitle').textContent = 'Проекты';
         $('sitesCount').textContent = State.sites.length;
@@ -2202,6 +2598,12 @@ function isValidUrl(string) {
         bindDragAndDrop();
     }
 
+    /**
+     * Создание карточки проекта
+     * @param {Object} site - Данные проекта
+     * @param {number} index - Индекс в массиве
+     * @returns {HTMLElement} DOM элемент карточки
+     */
     function createSiteCard(site, index) {
         const card = document.createElement('div');
         card.className = 'site-card';
@@ -2265,7 +2667,7 @@ function isValidUrl(string) {
             </div>
         `;
 
-        // Bind inputs
+        // Привязка событий ввода
         card.querySelector('.site-title-input').addEventListener('input', (e) => {
             State.sites[index].title = e.target.value;
             markDirty();
@@ -2289,7 +2691,7 @@ function isValidUrl(string) {
             markDirty();
         });
 
-        // Actions
+        // Действия
         card.querySelector('[data-action="delete"]').addEventListener('click', () => {
             showModal('Удалить проект?', `Проект "${State.sites[index].title}" будет удалён. Это действие нельзя отменить.`, () => {
                 State.sites.splice(index, 1);
@@ -2310,6 +2712,9 @@ function isValidUrl(string) {
         return card;
     }
 
+    /**
+     * Привязка событий поиска и добавления
+     */
     function bindSearchAndAdd() {
         const searchInput = $('searchInput');
         if (searchInput) {
@@ -2337,6 +2742,9 @@ function isValidUrl(string) {
         if (addBtn2) addBtn2.addEventListener('click', addSite);
     }
 
+    /**
+     * Привязка событий экспорта CSV
+     */
     function bindExportCsv() {
         const btn = $('exportCsvBtn');
         if (btn) {
@@ -2344,6 +2752,9 @@ function isValidUrl(string) {
         }
     }
 
+    /**
+     * Экспорт проектов в CSV
+     */
     function exportCsv() {
         const rows = [['Название', 'URL', 'Описание', 'Категория']];
         State.sites.forEach(s => rows.push([s.title, s.url, s.desc, CATEGORIES[s.category] || s.category]));
@@ -2356,6 +2767,9 @@ function isValidUrl(string) {
         showToast('Экспортировано в CSV', 'success');
     }
 
+    /**
+     * Добавление нового проекта
+     */
     function addSite() {
         State.sites.push({
             title: 'Новый проект',
@@ -2371,40 +2785,51 @@ function isValidUrl(string) {
         showToast('Добавлен новый проект', 'info');
     }
 
+    /**
+     * Пометка состояния как измененного
+     */
     function markDirty() {
         State.dirty = true;
         const saveBtn = $('saveBtn');
         if (saveBtn) saveBtn.disabled = false;
     }
 
+    /**
+     * Сохранение списка проектов
+     * @returns {Promise<void>}
+     */
     async function saveSites() {
-    const invalid = State.sites.filter(s => !s.title.trim() || !s.url.trim() || !s.desc.trim());
-    if (invalid.length > 0) {
-        showToast(`Заполните все поля в ${invalid.length} проект(ах)`, 'error');
-        return;
-    }
+        const invalid = State.sites.filter(s => !s.title.trim() || !s.url.trim() || !s.desc.trim());
+        if (invalid.length > 0) {
+            showToast(`Заполните все поля в ${invalid.length} проект(ах)`, 'error');
+            return;
+        }
 
-    const content = serializeSaites(State.sites);
-    try {
-        await apiRequest('/api/admin/save', {
-            method: 'POST',
-            body: JSON.stringify({ content })  // ← передаём именно строку
-        });
-        State.dirty = false;
-        State.rawContent = content;
-        renderSites();
-        showToast(`Сохранено ${State.sites.length} проектов`, 'success');
-    } catch (err) {
-        if (err.message === 'UNAUTHORIZED') {
-            showToast('Ошибка доступа. Проверьте токен.', 'error');
-            promptToken();
-        } else {
-            showToast(err.message, 'error');
+        const content = serializeSaites(State.sites);
+        try {
+            await apiRequest('/api/admin/save', {
+                method: 'POST',
+                body: JSON.stringify({ content })
+            });
+            State.dirty = false;
+            State.rawContent = content;
+            renderSites();
+            showToast(`Сохранено ${State.sites.length} проектов`, 'success');
+        } catch (err) {
+            if (err.message === 'UNAUTHORIZED') {
+                showToast('Ошибка доступа. Проверьте токен.', 'error');
+                promptToken();
+            } else {
+                showToast(err.message, 'error');
+            }
         }
     }
-}
 
     // ---------- Drag & Drop ----------
+    
+    /**
+     * Привязка событий drag & drop для сортировки проектов
+     */
     function bindDragAndDrop() {
         const cards = document.querySelectorAll('.site-card');
         let dragIndex = null;
@@ -2446,22 +2871,35 @@ function isValidUrl(string) {
         });
     }
 
-        // ---------- Render: Changelog ----------
+    // ============================================
+    // CHANGELOG MODULE
+    // ============================================
+
+    /**
+     * Типы изменений в changelog
+     * @constant {Object<string, Object>}
+     */
     const CHANGE_TYPES = {
-        feat:      { label: 'FEAT',      color: '#30D158', bg: 'rgba(48, 209, 88, 0.15)' },
-        fix:       { label: 'FIX',       color: '#FF453A', bg: 'rgba(255, 69, 58, 0.15)' },
-        breaking:  { label: 'BREAKING',  color: '#FF9F0A', bg: 'rgba(255, 159, 10, 0.15)' },
-        perf:      { label: 'PERF',      color: '#0A84FF', bg: 'rgba(10, 132, 255, 0.15)' },
-        docs:      { label: 'DOCS',      color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.15)' },
-        refactor:  { label: 'REFACTOR',  color: '#5E5CE6', bg: 'rgba(94, 92, 230, 0.15)' },
-        chore:     { label: 'CHORE',     color: '#98989D', bg: 'rgba(152, 152, 157, 0.15)' },
-        security:  { label: 'SECURITY',  color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.2)' },
-        default:   { label: 'NOTE',      color: '#98989D', bg: 'rgba(152, 152, 157, 0.12)' }
+        feat: { label: 'FEAT', color: '#30D158', bg: 'rgba(48, 209, 88, 0.15)' },
+        fix: { label: 'FIX', color: '#FF453A', bg: 'rgba(255, 69, 58, 0.15)' },
+        breaking: { label: 'BREAKING', color: '#FF9F0A', bg: 'rgba(255, 159, 10, 0.15)' },
+        perf: { label: 'PERF', color: '#0A84FF', bg: 'rgba(10, 132, 255, 0.15)' },
+        docs: { label: 'DOCS', color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.15)' },
+        refactor: { label: 'REFACTOR', color: '#5E5CE6', bg: 'rgba(94, 92, 230, 0.15)' },
+        chore: { label: 'CHORE', color: '#98989D', bg: 'rgba(152, 152, 157, 0.15)' },
+        security: { label: 'SECURITY', color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.2)' },
+        default: { label: 'NOTE', color: '#98989D', bg: 'rgba(152, 152, 157, 0.12)' }
     };
 
+    /** @type {number|null} Индекс перетаскиваемой версии */
     let _changelogVersionDragIdx = null;
+    
+    /** @type {Object|null} Данные перетаскиваемого изменения */
     let _changelogChangeDragData = null;
 
+    /**
+     * Рендеринг модуля changelog
+     */
     function renderChangelog() {
         $('pageTitle').textContent = 'Changelog';
         $('topbarActions').innerHTML = `
@@ -2566,6 +3004,12 @@ function isValidUrl(string) {
         attachChangelogDelegation();
     }
 
+    /**
+     * Рендеринг карточки версии
+     * @param {HTMLElement} card - DOM элемент карточки
+     * @param {Object} version - Данные версии
+     * @param {number} vIdx - Индекс версии
+     */
     function renderVersionCard(card, version, vIdx) {
         const typeOptions = Object.entries(CHANGE_TYPES)
             .map(([k, v]) => `<option value="${k}">${v.label}</option>`)
@@ -2606,6 +3050,13 @@ function isValidUrl(string) {
         `;
     }
 
+    /**
+     * Рендеринг элемента изменения
+     * @param {Object} change - Данные изменения
+     * @param {number} cIdx - Индекс изменения
+     * @param {string} typeOptions - HTML опций для select
+     * @returns {string} HTML элемента
+     */
     function renderChangeItem(change, cIdx, typeOptions) {
         const meta = CHANGE_TYPES[change.type] || CHANGE_TYPES.default;
         const options = Object.entries(CHANGE_TYPES)
@@ -2634,10 +3085,13 @@ function isValidUrl(string) {
         `;
     }
 
+    /**
+     * Привязка событий через делегирование для changelog
+     */
     function attachChangelogDelegation() {
         const list = $('changelogList');
 
-        // Event delegation: инпуты не теряют фокус при перерисовке
+        // Делегирование событий: инпуты не теряют фокус при перерисовке
         list.addEventListener('input', (e) => {
             const card = e.target.closest('.changelog-card');
             if (!card) return;
@@ -2796,6 +3250,9 @@ function isValidUrl(string) {
         });
     }
 
+    /**
+     * Сохранение changelog в состояние
+     */
     function persistChangelog() {
         State.changelog = serializeChangelog(State._changelogParsed);
         State.dirty = true;
@@ -2803,6 +3260,12 @@ function isValidUrl(string) {
         if (saveBtn) saveBtn.disabled = false;
     }
 
+    /**
+     * Склонение слов
+     * @param {number} n - Число
+     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
+     * @returns {string} Правильная форма
+     */
     function declension(n, forms) {
         const abs = Math.abs(n) % 100;
         const last = abs % 10;
@@ -2812,6 +3275,11 @@ function isValidUrl(string) {
         return forms[2];
     }
 
+    /**
+     * Парсинг changelog из строки
+     * @param {string} content - Сырое содержимое
+     * @returns {Array<Object>} Список версий
+     */
     function parseChangelog(content) {
         if (!content || typeof content !== 'string') return [];
         const blocks = content.split('::').filter(b => b?.trim());
@@ -2844,6 +3312,11 @@ function isValidUrl(string) {
         }).filter(v => v && (v.version || v.changes.length > 0));
     }
 
+    /**
+     * Сериализация changelog в строку
+     * @param {Array<Object>} parsed - Список версий
+     * @returns {string} Сериализованная строка
+     */
     function serializeChangelog(parsed) {
         return parsed.map(v => {
             const header = v.date ? `${v.version} | ${v.date}` : v.version;
@@ -2852,6 +3325,10 @@ function isValidUrl(string) {
         }).join('\n::\n');
     }
 
+    /**
+     * Сохранение changelog
+     * @returns {Promise<void>}
+     */
     async function saveChangelog() {
         const parsed = State._changelogParsed || [];
         // Валидация: проверяем пустые версии без изменений
@@ -2870,6 +3347,10 @@ function isValidUrl(string) {
         await doSaveChangelog();
     }
 
+    /**
+     * Выполнение сохранения changelog
+     * @returns {Promise<void>}
+     */
     async function doSaveChangelog() {
         try {
             State.changelog = serializeChangelog(State._changelogParsed);
@@ -2891,7 +3372,15 @@ function isValidUrl(string) {
         }
     }
 
-    // ---------- Render: JSON Editor ----------
+    // ============================================
+    // JSON EDITOR MODULE
+    // ============================================
+    
+    /**
+     * Рендеринг JSON редактора
+     * @param {string} section - Название секции
+     * @param {Array} data - Данные для редактирования
+     */
     function renderJsonEditor(section, data) {
         const titles = { status: 'Status Config', api: 'API Config', faq: 'FAQ Config' };
         const endpoints = {
@@ -2987,7 +3476,13 @@ function isValidUrl(string) {
         });
     }
 
-    // ---------- Navigation ----------
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    
+    /**
+     * Привязка событий навигации
+     */
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -2997,7 +3492,13 @@ function isValidUrl(string) {
         });
     });
 
-    // ---------- Token ----------
+    // ============================================
+    // TOKEN MANAGEMENT
+    // ============================================
+    
+    /**
+     * Обновление статуса токена в UI
+     */
     function updateTokenStatus() {
         if (State.token) {
             $('tokenDot').className = 'token-dot';
@@ -3008,6 +3509,9 @@ function isValidUrl(string) {
         }
     }
 
+    /**
+     * Запрос токена у пользователя
+     */
     function promptToken() {
         const token = prompt('Введите Admin Token:');
         if (token !== null) {
@@ -3020,7 +3524,15 @@ function isValidUrl(string) {
 
     $('tokenStatus').addEventListener('click', promptToken);
 
-    // ---------- Utils ----------
+    // ============================================
+    // UTILITIES
+    // ============================================
+    
+    /**
+     * Экранирование HTML-сущностей (дубликат для совместимости)
+     * @param {string|null|undefined} str - Исходная строка
+     * @returns {string} Экранированная строка
+     */
     function escapeHtml(str) {
         if (!str) return '';
         return String(str)
@@ -3031,7 +3543,13 @@ function isValidUrl(string) {
             .replace(/'/g, '&#39;');
     }
 
-    // ---------- Init ----------
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    
+    /**
+     * Инициализация приложения
+     */
     updateTokenStatus();
     if (!State.token) {
         $('content').innerHTML = `
@@ -3048,6 +3566,9 @@ function isValidUrl(string) {
         loadSection('sites');
     }
 
+    /**
+     * Предупреждение при попытке закрытия с несохраненными изменениями
+     */
     window.addEventListener('beforeunload', (e) => {
         if (State.dirty) {
             e.preventDefault();
@@ -3058,4 +3579,3 @@ function isValidUrl(string) {
 </script>
 </body>
 </html>
-
