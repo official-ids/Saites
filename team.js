@@ -86,7 +86,7 @@ const CONFIG = {
     /** @type {number} Максимальная длина контакта */
     MAX_CONTACT_LENGTH: 100,
 
-    /** @type {number} Таймаут для Telegram API (мс) */
+    /** @type {number} Таймаут для Telegram API (мс) - уменьшен для скорости */
     TELEGRAM_API_TIMEOUT: 10000,
 
     /** @type {number} Rate limit: запросов в минуту */
@@ -432,7 +432,7 @@ async function getAuditLog(limit = 50) {
 }
 
 // ============================================
-// Утилиты: Telegram Bot API
+// Утилиты: Telegram Bot API (упрощенная версия без retry)
 // ============================================
 
 /**
@@ -517,13 +517,12 @@ async function sendTelegramMessage(text, replyMarkup = null, chatId = null) {
 /**
  * Редактирование сообщения в Telegram
  * ВАЖНО: если исходное сообщение содержало inline-кнопки,
- * нужно явно передать reply_markup: {} чтобы убрать их,
- * иначе Telegram вернёт ошибку "message can't be edited"
+ * нужно явно передать reply_markup: {} чтобы убрать их
  * 
  * @param {number|string} chatId - ID чата
  * @param {number} messageId - ID сообщения
  * @param {string} text - Новый текст
- * @param {Object|null} [replyMarkup] - Новая inline клавиатура (null или {} для удаления)
+ * @param {Object|null} [replyMarkup] - Новая inline клавиатура
  * @returns {Promise<Object|null>}
  */
 async function editTelegramMessage(chatId, messageId, text, replyMarkup = {}) {
@@ -534,7 +533,6 @@ async function editTelegramMessage(chatId, messageId, text, replyMarkup = {}) {
         parse_mode: 'HTML'
     };
 
-    // Передаём reply_markup (по умолчанию {} — убирает кнопки)
     body.reply_markup = replyMarkup;
 
     return await callTelegramApi('editMessageText', body);
@@ -548,11 +546,10 @@ async function editTelegramMessage(chatId, messageId, text, replyMarkup = {}) {
  * @returns {Promise<void>}
  */
 async function editTelegramMessageSafe(chatId, messageId, text) {
-    // Пытаемся отредактировать
     const result = await editTelegramMessage(chatId, messageId, text, {});
     
     if (!result) {
-        // Fallback: отправляем новое сообщение
+        console.warn(`[Bot] Edit failed for message ${messageId}, sending new message`);
         await sendTelegramMessage(text, null, chatId);
     }
 }
@@ -589,7 +586,7 @@ function createApplicationKeyboard(code) {
             ],
             [
                 {
-                    text: '📋 Открыть заявку',
+                    text: ' Открыть заявку',
                     url: `${BASE_URL}/team?p=code`
                 }
             ]
@@ -818,12 +815,11 @@ async function handleApproveCommand(chatId, messageId, code) {
     if (result.success) {
         const text =
             `✅ <b>Заявка одобрена!</b>\n\n` +
-            `🔑 <b>Код:</b> <code>${code}</code>\n` +
-            `👤 <b>Логин:</b> <code>${result.login}</code>\n` +
+            ` <b>Код:</b> <code>${code}</code>\n` +
+            ` <b>Логин:</b> <code>${result.login}</code>\n` +
             `🔐 <b>Пароль:</b> <code>${result.password}</code>\n\n` +
             `⚠️ Передайте эти данные пользователю.`;
         
-        // reply_markup: {} — убирает кнопки "Одобрить/Отклонить"
         await editTelegramMessageSafe(chatId, messageId, text);
         console.log(`[Bot] Approved successfully: ${code} → ${result.login}`);
     } else {
@@ -843,7 +839,7 @@ async function handleApproveCommand(chatId, messageId, code) {
 async function handleRejectCommand(chatId, messageId, code) {
     if (!code) {
         await sendTelegramMessage(
-            '❌ Укажите код. Пример: <code>/reject ABC123</code>',
+            ' Укажите код. Пример: <code>/reject ABC123</code>',
             null,
             chatId
         );
@@ -865,7 +861,7 @@ async function handleRejectCommand(chatId, messageId, code) {
     
     if (result.success) {
         await editTelegramMessageSafe(chatId, messageId,
-            `🚫 <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`);
+            ` <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`);
         console.log(`[Bot] Rejected successfully: ${code}`);
     } else {
         await editTelegramMessageSafe(chatId, messageId,
@@ -920,7 +916,7 @@ async function handleInfoCommand(chatId, code) {
     };
 
     const text = 
-        `📋 <b>Информация о заявке</b>\n\n` +
+        ` <b>Информация о заявке</b>\n\n` +
         `<b>Код:</b> <code>${app.code}</code>\n` +
         `<b>Статус:</b> ${statusEmoji[app.status]} ${statusText[app.status]}\n` +
         `<b>ФИО:</b> ${app.fullName}\n` +
@@ -982,7 +978,7 @@ async function handleListCommand(chatId) {
     try {
         const codes = await kv.smembers(K.APPLICATIONS_INDEX);
         if (!codes || codes.length === 0) {
-            await sendTelegramMessage('📭 Заявок пока нет.', null, chatId);
+            await sendTelegramMessage(' Заявок пока нет.', null, chatId);
             return;
         }
 
@@ -1035,7 +1031,7 @@ async function handleListCommand(chatId) {
 // ============================================
 
 /**
- * Обработка callback от inline-кнопки (оптимизированная)
+ * Обработка callback от inline-кнопки
  * @param {Object} callbackQuery - Callback query объект
  */
 async function handleCallbackQuery(callbackQuery) {
@@ -1045,14 +1041,17 @@ async function handleCallbackQuery(callbackQuery) {
 
     console.log(`[Bot] Callback: ${data} from chat ${chatId}`);
 
+    // СНАЧАЛА отвечаем на callback_query (убирает "часики" в Telegram)
+    try {
+        await answerCallbackQuery(callbackQuery.id, '⏳ Обрабатываю...');
+    } catch (err) {
+        console.error('[Bot] answerCallbackQuery failed:', err.message);
+    }
+
     // Парсинг действия
     const separatorIndex = data.indexOf('_');
     if (separatorIndex === -1) {
-        // Параллельно отвечаем на callback и редактируем сообщение
-        await Promise.all([
-            answerCallbackQuery(callbackQuery.id, '❌ Неизвестное действие'),
-            editTelegramMessageSafe(chatId, messageId, '❌ Неизвестное действие')
-        ]);
+        await editTelegramMessageSafe(chatId, messageId, '❌ Неизвестное действие');
         return;
     }
 
@@ -1061,46 +1060,34 @@ async function handleCallbackQuery(callbackQuery) {
 
     console.log(`[Bot] Action: ${action}, code: ${code}`);
 
-    // СНАЧАЛА быстро отвечаем на callback (убирает "часики")
-    answerCallbackQuery(callbackQuery.id, '⏳ Обрабатываю...').catch(err => {
-        console.warn('[Bot] answerCallbackQuery failed:', err.message);
-    });
-
-    // Выполняем действие
+    // Выполняем действие с обработкой ошибок
     try {
-        let result;
-        let successText;
-        let errorText;
-
         if (action === 'approve') {
-            result = await approveApplication(code);
+            const result = await approveApplication(code);
             if (result.success) {
-                successText =
+                const text =
                     `✅ <b>Заявка одобрена!</b>\n\n` +
                     `🔑 <b>Код:</b> <code>${code}</code>\n` +
                     `👤 <b>Логин:</b> <code>${result.login}</code>\n` +
                     `🔐 <b>Пароль:</b> <code>${result.password}</code>\n\n` +
                     `⚠️ Передайте эти данные пользователю.`;
+                await editTelegramMessageSafe(chatId, messageId, text);
             } else {
-                errorText = `❌ <b>Ошибка одобрения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`;
+                await editTelegramMessageSafe(chatId, messageId,
+                    `❌ <b>Ошибка одобрения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`);
             }
         } else if (action === 'reject') {
-            result = await rejectApplication(code);
+            const result = await rejectApplication(code);
             if (result.success) {
-                successText = `🚫 <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`;
+                await editTelegramMessageSafe(chatId, messageId,
+                    ` <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`);
             } else {
-                errorText = `❌ <b>Ошибка отклонения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`;
+                await editTelegramMessageSafe(chatId, messageId,
+                    ` <b>Ошибка отклонения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`);
             }
         } else {
             await editTelegramMessageSafe(chatId, messageId, '❌ Неизвестное действие');
-            return;
         }
-
-        // Редактируем сообщение
-        const finalText = successText || errorText;
-        await editTelegramMessageSafe(chatId, messageId, finalText);
-
-        console.log(`[Bot] Action completed: ${action} for ${code}`);
     } catch (err) {
         console.error('[Bot] Action failed:', err);
         await editTelegramMessageSafe(chatId, messageId,
@@ -1323,7 +1310,7 @@ router.post('/apply', rateLimitMiddleware, async (req, res) => {
 
         // Уведомление в Telegram с inline-кнопками
         const notificationText =
-            `<b>📝 Новая заявка в команду</b>\n\n` +
+            `<b> Новая заявка в команду</b>\n\n` +
             `<b>Код:</b> <code>${code}</code>\n` +
             `<b>ФИО:</b> ${application.fullName}\n` +
             `<b>Возраст:</b> ${application.age}\n` +
