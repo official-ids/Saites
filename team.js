@@ -87,7 +87,7 @@ const CONFIG = {
     MAX_CONTACT_LENGTH: 100,
 
     /** @type {number} Таймаут для Telegram API (мс) */
-    TELEGRAM_API_TIMEOUT: 15000
+    TELEGRAM_API_TIMEOUT: 30000
 };
 
 /**
@@ -283,46 +283,81 @@ function isValidPhone(phone) {
 const TELEGRAM_API_BASE = 'https://api.telegram.org/bot';
 
 /**
- * Выполнение запроса к Telegram Bot API с таймаутом
- * @param {string} method - Метод API (sendMessage, editMessageText и т.д.)
+ * Выполнение запроса к Telegram Bot API с retry
+ * @param {string} method - Метод API
  * @param {Object} body - Тело запроса
- * @returns {Promise<Object|null>} Ответ API или null при ошибке
+ * @param {number} maxRetries - Максимальное количество попыток
+ * @returns {Promise<Object|null>}
  */
-async function callTelegramApi(method, body) {
+async function callTelegramApi(method, body, maxRetries = 2) {
     if (!TELEGRAM_BOT_TOKEN) {
         console.warn('[Telegram] Bot token not configured');
         return null;
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.TELEGRAM_API_TIMEOUT);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), CONFIG.TELEGRAM_API_TIMEOUT);
 
-    try {
-        const response = await fetch(`${TELEGRAM_API_BASE}${TELEGRAM_BOT_TOKEN}/${method}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-            signal: controller.signal
-        });
+        try {
+            console.log(`[Telegram] ${method} attempt ${attempt}/${maxRetries}`);
+            
+            const response = await fetch(
+                `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                    signal: controller.signal
+                }
+            );
 
-        clearTimeout(timeoutId);
+            clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error(`[Telegram] ${method} failed:`, errorData);
-            return null;
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error(`[Telegram] ${method} failed:`, errorData);
+                
+                // Если ошибка 400 (Bad Request) — не повторяем
+                if (response.status === 400) {
+                    return null;
+                }
+                
+                // Для других ошибок — повторяем
+                if (attempt < maxRetries) {
+                    console.log(`[Telegram] Retrying in 2 seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    continue;
+                }
+                
+                return null;
+            }
+
+            const data = await response.json();
+            console.log(`[Telegram] ${method} success`);
+            return data;
+            
+        } catch (err) {
+            clearTimeout(timeoutId);
+            
+            if (err.name === 'AbortError') {
+                console.error(`[Telegram] ${method} timeout after ${CONFIG.TELEGRAM_API_TIMEOUT}ms (attempt ${attempt}/${maxRetries})`);
+            } else {
+                console.error(`[Telegram] ${method} error:`, err.message);
+            }
+            
+            // Если это последняя попытка — выходим
+            if (attempt >= maxRetries) {
+                return null;
+            }
+            
+            // Ждём перед повторной попыткой
+            console.log(`[Telegram] Retrying in 2 seconds...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
-
-        return await response.json();
-    } catch (err) {
-        clearTimeout(timeoutId);
-        if (err.name === 'AbortError') {
-            console.error(`[Telegram] ${method} timeout after ${CONFIG.TELEGRAM_API_TIMEOUT}ms`);
-        } else {
-            console.error(`[Telegram] ${method} error:`, err.message);
-        }
-        return null;
     }
+    
+    return null;
 }
 
 /**
