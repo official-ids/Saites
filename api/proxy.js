@@ -56,6 +56,7 @@ const MODULE_PATHS = {
     NEWS: '../news',
     SUPPORT: '../support',
     DOWNLOADER: '../downloader',
+    TEAM: '../team',
     REDIRECTS: '../redirects'
 };
 
@@ -78,6 +79,11 @@ const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
  * Роутер для управления редиректами
  */
 const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
+
+/**
+ * Роутер для заявок на работу
+ */
+const teamRouter = require(MODULE_PATHS.TEAM);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1196,6 +1202,7 @@ app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
+app.use('/api/team', teamRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader

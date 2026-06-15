@@ -19,10 +19,6 @@
     "api/downloader-upload.js": {
       "maxDuration": 120,
       "memory": 1024
-    },
-    "api/team.js": {
-      "maxDuration": 60,
-      "memory": 512
     }
 },
 
