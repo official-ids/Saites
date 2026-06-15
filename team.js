@@ -354,13 +354,17 @@ async function sendTelegramMessage(text, replyMarkup = null, chatId = null) {
 
 /**
  * Редактирование сообщения в Telegram
+ * ВАЖНО: если исходное сообщение содержало inline-кнопки,
+ * нужно явно передать reply_markup: {} чтобы убрать их,
+ * иначе Telegram вернёт ошибку "message can't be edited"
+ * 
  * @param {number|string} chatId - ID чата
  * @param {number} messageId - ID сообщения
  * @param {string} text - Новый текст
- * @param {Object} [replyMarkup] - Новая inline клавиатура
+ * @param {Object|null} [replyMarkup] - Новая inline клавиатура (null или {} для удаления)
  * @returns {Promise<Object|null>}
  */
-async function editTelegramMessage(chatId, messageId, text, replyMarkup = null) {
+async function editTelegramMessage(chatId, messageId, text, replyMarkup = {}) {
     const body = {
         chat_id: chatId,
         message_id: messageId,
@@ -368,24 +372,26 @@ async function editTelegramMessage(chatId, messageId, text, replyMarkup = null) 
         parse_mode: 'HTML'
     };
 
-    if (replyMarkup) {
-        body.reply_markup = replyMarkup;
-    }
+    // Передаём reply_markup (по умолчанию {} — убирает кнопки)
+    body.reply_markup = replyMarkup;
 
     return await callTelegramApi('editMessageText', body);
 }
 
 /**
- * Безопасное редактирование сообщения с fallback на отправку нового
+ * Безопасное редактирование сообщения с fallback
  * @param {number|string} chatId - ID чата
  * @param {number} messageId - ID сообщения
  * @param {string} text - Новый текст
  * @returns {Promise<void>}
  */
 async function editTelegramMessageSafe(chatId, messageId, text) {
-    const result = await editTelegramMessage(chatId, messageId, text);
+    // Пытаемся отредактировать (reply_markup: {} убирает кнопки)
+    const result = await editTelegramMessage(chatId, messageId, text, {});
+    
     if (!result) {
-        console.warn('[Telegram] Edit failed, sending new message');
+        console.warn(`[Bot] Edit failed for message ${messageId}, sending new message`);
+        // Fallback: отправляем новое сообщение
         await sendTelegramMessage(text, null, chatId);
     }
 }
@@ -532,9 +538,6 @@ async function rejectApplication(code) {
 
 /**
  * Обработка команды /approve (текстовая команда)
- * @param {number|string} chatId - ID чата
- * @param {number} messageId - ID сообщения
- * @param {string} code - Код заявки
  */
 async function handleApproveCommand(chatId, messageId, code) {
     if (!code) {
@@ -546,7 +549,10 @@ async function handleApproveCommand(chatId, messageId, code) {
         return;
     }
 
+    console.log(`[Bot] Processing approve for code: ${code}`);
+    
     const result = await approveApplication(code);
+    
     if (result.success) {
         const text =
             `✅ <b>Заявка одобрена!</b>\n\n` +
@@ -554,18 +560,23 @@ async function handleApproveCommand(chatId, messageId, code) {
             `👤 <b>Логин:</b> <code>${result.login}</code>\n` +
             `🔐 <b>Пароль:</b> <code>${result.password}</code>\n\n` +
             `⚠️ Передайте эти данные пользователю.`;
+        
+        // reply_markup: {} — убирает кнопки "Одобрить/Отклонить"
         await editTelegramMessageSafe(chatId, messageId, text);
+        console.log(`[Bot] Approved successfully: ${code} → ${result.login}`);
     } else {
-        await editTelegramMessageSafe(chatId, messageId,
-            `❌ <b>Ошибка</b>: ${result.error}`);
+        const text =
+            `❌ <b>Ошибка одобрения</b>\n\n` +
+            `🔑 <b>Код:</b> <code>${code}</code>\n` +
+            `⚠️ <b>Причина:</b> ${result.error}`;
+        
+        await editTelegramMessageSafe(chatId, messageId, text);
+        console.log(`[Bot] Approve failed: ${code} — ${result.error}`);
     }
 }
 
 /**
  * Обработка команды /reject (текстовая команда)
- * @param {number|string} chatId - ID чата
- * @param {number} messageId - ID сообщения
- * @param {string} code - Код заявки
  */
 async function handleRejectCommand(chatId, messageId, code) {
     if (!code) {
@@ -577,13 +588,18 @@ async function handleRejectCommand(chatId, messageId, code) {
         return;
     }
 
+    console.log(`[Bot] Processing reject for code: ${code}`);
+    
     const result = await rejectApplication(code);
+    
     if (result.success) {
         await editTelegramMessageSafe(chatId, messageId,
             `🚫 <b>Заявка отклонена</b>\n\nКод: <code>${code}</code>`);
+        console.log(`[Bot] Rejected successfully: ${code}`);
     } else {
         await editTelegramMessageSafe(chatId, messageId,
-            `❌ <b>Ошибка</b>: ${result.error}`);
+            `❌ <b>Ошибка отклонения</b>\n\nКод: <code>${code}</code>\nПричина: ${result.error}`);
+        console.log(`[Bot] Reject failed: ${code} — ${result.error}`);
     }
 }
 
