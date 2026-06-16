@@ -531,54 +531,54 @@ class SitemapGeneratorService {
     }
     
     async processIndexFile(fileInfo) {
+    try {
+        const relativePath = fileInfo.relativePath;
+        
+        // Преобразование пути в URL
+        let url = this.convertPathToUrl(relativePath);
+        
+        // Чтение HTML файла для извлечения метаданных
+        let metadata = {};
+        let fileModified = null;
+        
         try {
-            const relativePath = fileInfo.relativePath;
+            const htmlContent = await this.fileSystem.readFile(fileInfo.path);
+            metadata = await this.htmlParser.extractMetadata(htmlContent);
             
-            // Преобразование пути в URL
-            let url = this.convertPathToUrl(relativePath);
-            
-            // Чтение HTML файла для извлечения метаданных
-            let metadata = {};
-            let fileModified = null;
-            
-            try {
-                const htmlContent = await this.fileSystem.readFile(fileInfo.path);
-                metadata = await this.htmlParser.extractMetadata(htmlContent);
-                
-                // Проверка на noindex
-                if (this.htmlParser.hasNoIndex(htmlContent)) {
-                    await this.logger.debug(`Page marked as noindex, skipping: ${url}`);
-                    return null;
-                }
-                
-                // Получение информации о файле
-                const fileInfo = await this.fileSystem.getFileInfo(fileInfo.path);
-                if (fileInfo && fileInfo.modified) {
-                    fileModified = fileInfo.modified.toISOString().split('T')[0];
-                }
-            } catch (err) {
-                await this.logger.warn(`Failed to read HTML file: ${fileInfo.path}`, { error: err.message });
+            // Проверка на noindex
+            if (this.htmlParser.hasNoIndex(htmlContent)) {
+                await this.logger.debug(`Page marked as noindex, skipping: ${url}`);
+                return null;
             }
             
-            // Определение приоритета и частоты изменений
-            const priority = this.determinePriority(url);
-            const changefreq = this.determineChangefreq(url);
-            
-            // Использование lastmod из метаданных или из даты модификации файла
-            const lastmod = metadata.lastModified || fileModified || new Date().toISOString().split('T')[0];
-            
-            return {
-                url: url,
-                lastmod: lastmod,
-                changefreq: changefreq,
-                priority: priority,
-                metadata: metadata
-            };
+            // Получение информации о файле (переименовано в fileStats)
+            const fileStats = await this.fileSystem.getFileInfo(fileInfo.path);
+            if (fileStats && fileStats.modified) {
+                fileModified = fileStats.modified.toISOString().split('T')[0];
+            }
         } catch (err) {
-            await this.logger.error(`Failed to process index file: ${fileInfo.path}`, { error: err.message });
-            return null;
+            await this.logger.warn(`Failed to read HTML file: ${fileInfo.path}`, { error: err.message });
         }
+        
+        // Определение приоритета и частоты изменений
+        const priority = this.determinePriority(url);
+        const changefreq = this.determineChangefreq(url);
+        
+        // Использование lastmod из метаданных или из даты модификации файла
+        const lastmod = metadata.lastModified || fileModified || new Date().toISOString().split('T')[0];
+        
+        return {
+            url: url,
+            lastmod: lastmod,
+            changefreq: changefreq,
+            priority: priority,
+            metadata: metadata
+        };
+    } catch (err) {
+        await this.logger.error(`Failed to process index file: ${fileInfo.path}`, { error: err.message });
+        return null;
     }
+}
     
     convertPathToUrl(relativePath) {
         // Убираем index.html из пути
