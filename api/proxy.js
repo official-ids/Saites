@@ -6,6 +6,8 @@
 // Node.js Core Modules
 // -----------------------------
 
+const { createGenerator, createExpressMiddleware } = require('../sitemap-generator');
+
 /**
  * Работа с файловой системой (асинхронный API)
  */
@@ -56,9 +58,14 @@ const MODULE_PATHS = {
     NEWS: '../news',
     SUPPORT: '../support',
     DOWNLOADER: '../downloader',
-    REDIRECTS: '../redirects',
-    REVIEWS: '../reviews'
+    REDIRECTS: '../redirects'
 };
+
+// Создание генератора
+const generator = createGenerator({
+    DOMAIN: 'oris-flax.vercel.app',
+    LOG_LEVEL: 'info'
+});
 
 /**
  * Роутер для работы с новостями
@@ -79,11 +86,6 @@ const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
  * Роутер для управления редиректами
  */
 const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
-
-/**
- * Роутер для отзовых
- */
-const reviewsRouter = require(MODULE_PATHS.REVIEWS);
 
 
 // -----------------------------
@@ -1203,7 +1205,6 @@ app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
-app.use('/api/reviews', reviewsRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
@@ -1326,6 +1327,17 @@ class DynamicPageService {
 
 // Инициализация сервиса
 const dynamicPageService = new DynamicPageService();
+
+// -----------------------------
+// Route Handlers: Generator
+// -----------------------------
+app.get('/api/admin/generate-sitemap', async (req, res) => {
+    const result = await generator.generate({
+        forceRegenerate: true,
+        clearCache: true
+    });
+    res.json(result);
+});
 
 // -----------------------------
 // Route Handlers: Downloader
