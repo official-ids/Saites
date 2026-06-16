@@ -4,11 +4,7 @@
   "description": "",
   "main": "proxy.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "generate-sitemap": "node sitemap-generator.js generate",
-    "generate-sitemap:force": "node sitemap-generator.js generate --force --clear-cache",
-    "validate-sitemap": "node sitemap-generator.js validate",
-    "build": "npm run generate-sitemap"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
