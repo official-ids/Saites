@@ -6,7 +6,6 @@
 // Node.js Core Modules
 // -----------------------------
 
-const { createGenerator, createExpressMiddleware } = require('../sitemap-generator');
 
 /**
  * Работа с файловой системой (асинхронный API)
@@ -60,12 +59,6 @@ const MODULE_PATHS = {
     DOWNLOADER: '../downloader',
     REDIRECTS: '../redirects'
 };
-
-// Создание генератора
-const generator = createGenerator({
-    DOMAIN: 'oris-flax.vercel.app',
-    LOG_LEVEL: 'info'
-});
 
 /**
  * Роутер для работы с новостями
@@ -1327,17 +1320,6 @@ class DynamicPageService {
 
 // Инициализация сервиса
 const dynamicPageService = new DynamicPageService();
-
-// -----------------------------
-// Route Handlers: Generator
-// -----------------------------
-app.get('/api/admin/generate-sitemap', async (req, res) => {
-    const result = await generator.generate({
-        forceRegenerate: true,
-        clearCache: true
-    });
-    res.json(result);
-});
 
 // -----------------------------
 // Route Handlers: Downloader
