@@ -14,36 +14,44 @@
   --bg-body: #000000; --bg-card: #1C1C1E; --bg-elevated: #2C2C2E;
   --text-primary: #F5F5F7; --text-secondary: #86868B; --text-tertiary: #636366;
   --accent: #0A84FF; --accent-hover: #409CFF; --danger: #FF453A; --success: #30D158; --warning: #FF9F0A;
-  --border: rgba(255, 255, 255, 0.08); --radius-lg: 18px; --radius-md: 12px;
+  --border: rgba(255, 255, 255, 0.08); --border-strong: rgba(255, 255, 255, 0.18);
+  --radius-lg: 18px; --radius-md: 12px; --radius-sm: 8px;
   --font-stack: 'Inter', -apple-system, sans-serif;
+  --mono-stack: 'SF Mono', 'Menlo', monospace;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-stack); line-height: 1.5; min-height: 100vh; }
 
+/* Header */
 .header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.72); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); height: 56px; }
 .header-inner { max-width: 980px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; justify-content: space-between; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; }
 .logo svg { width: 22px; height: 22px; color: var(--accent); }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 
+/* Layout */
 .layout { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
 
-/* Auth Screen */
-.auth-container { max-width: 400px; margin: 60px auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+/* Auth */
+.auth-container { max-width: 420px; margin: 60px auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
 .auth-tabs { display: flex; gap: 4px; background: var(--bg-elevated); padding: 4px; border-radius: 99px; margin-bottom: 24px; }
-.auth-tab { flex: 1; padding: 8px; border: none; background: transparent; color: var(--text-secondary); border-radius: 99px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+.auth-tab { flex: 1; padding: 8px; border: none; background: transparent; color: var(--text-secondary); border-radius: 99px; cursor: pointer; font-weight: 500; transition: 0.2s; font-family: inherit; }
 .auth-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
 .form-input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 14px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; }
 .form-input:focus { outline: none; border-color: var(--accent); }
-.btn { width: 100%; padding: 12px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.form-help { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 6px; }
+.btn { padding: 12px 20px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-primary { background: var(--accent); color: white; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--border-strong); }
 .btn-danger { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
+.btn-full { width: 100%; }
 .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 12px; text-align: center; display: none; }
 
-/* Main App */
+/* App Header */
 .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; flex-wrap: wrap; gap: 16px; }
 .user-info { display: flex; align-items: center; gap: 12px; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-elevated); object-fit: cover; border: 1px solid var(--border); }
@@ -51,51 +59,116 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 .user-nickname { font-weight: 600; font-size: 0.95rem; }
 .user-role { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
 .user-role.admin { color: var(--warning); }
+.user-level { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 600; margin-left: 6px; }
+.level-newbie { background: rgba(134,134,139,0.15); color: var(--text-secondary); }
+.level-active { background: rgba(10,132,255,0.15); color: var(--accent); }
+.level-expert { background: rgba(48,209,88,0.15); color: var(--success); }
+.level-master { background: rgba(255,159,10,0.15); color: var(--warning); }
+
+/* Admin Panel */
+.admin-panel { background: rgba(255, 159, 10, 0.05); border: 1px solid rgba(255, 159, 10, 0.2); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px; }
+.admin-panel h3 { color: var(--warning); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.admin-tabs { display: flex; gap: 4px; margin-top: 16px; border-bottom: 1px solid var(--border); }
+.admin-tab { padding: 8px 16px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-family: inherit; font-size: 0.88rem; border-bottom: 2px solid transparent; transition: 0.2s; }
+.admin-tab.active { color: var(--warning); border-bottom-color: var(--warning); }
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+.stat-box { background: var(--bg-elevated); padding: 14px; border-radius: var(--radius-sm); text-align: center; border: 1px solid var(--border); }
+.stat-value { font-size: 1.4rem; font-weight: 700; color: var(--text-primary); }
+.stat-label { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+.admin-section { margin-top: 20px; display: none; }
+.admin-section.active { display: block; }
+
+/* Filters */
+.filters-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+.filter-chip { padding: 6px 14px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 99px; color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; transition: 0.2s; font-family: inherit; }
+.filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+.search-input { flex: 1; min-width: 200px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px; border-radius: 99px; font-family: inherit; font-size: 0.88rem; }
+.search-input:focus { outline: none; border-color: var(--accent); }
 
 /* Review Form */
 .review-form-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px; }
 .stars { display: flex; gap: 4px; margin-bottom: 12px; }
-.star { cursor: pointer; color: var(--text-tertiary); font-size: 1.5rem; transition: 0.2s; }
-.star.active { color: var(--warning); }
-.textarea { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 12px; border-radius: var(--radius-md); font-family: inherit; min-height: 100px; resize: vertical; }
+.star { cursor: pointer; color: var(--text-tertiary); font-size: 1.8rem; transition: 0.15s; user-select: none; }
+.star:hover, .star.active { color: var(--warning); transform: scale(1.1); }
+.textarea { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 12px; border-radius: var(--radius-md); font-family: inherit; min-height: 100px; resize: vertical; font-size: 0.95rem; }
 .textarea:focus { outline: none; border-color: var(--accent); }
 
 /* Reviews List */
 .review-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; position: relative; transition: 0.2s; }
+.review-card:hover { border-color: var(--border-strong); }
 .review-card.pinned { border-color: var(--warning); background: rgba(255, 159, 10, 0.03); }
-.review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-.review-author { display: flex; align-items: center; gap: 10px; }
-.review-author img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-.review-meta { display: flex; flex-direction: column; }
-.review-nickname { font-weight: 600; font-size: 0.9rem; }
+.review-card.reported { opacity: 0.6; }
+.review-card.edited::after { content: '(изменено)'; font-size: 0.75rem; color: var(--text-tertiary); font-style: italic; margin-left: 8px; }
+.review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px; }
+.review-author { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.review-author img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.review-meta { display: flex; flex-direction: column; min-width: 0; }
+.review-nickname { font-weight: 600; font-size: 0.92rem; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .review-date { font-size: 0.75rem; color: var(--text-tertiary); }
-.review-rating { color: var(--warning); font-weight: 600; font-size: 0.9rem; }
+.review-rating { color: var(--warning); font-weight: 600; font-size: 0.95rem; white-space: nowrap; }
 .review-title { font-weight: 600; font-size: 1.05rem; margin-bottom: 8px; }
-.review-text { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
-.review-actions { display: flex; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
-.action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; transition: 0.2s; }
-.action-btn:hover { color: var(--text-primary); }
+.review-text { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; }
+.review-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.action-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; transition: 0.2s; font-family: inherit; padding: 4px 8px; border-radius: var(--radius-sm); }
+.action-btn:hover { color: var(--text-primary); background: rgba(142,142,147,0.1); }
 .action-btn.liked { color: var(--danger); }
-.admin-actions { position: absolute; top: 16px; right: 16px; display: flex; gap: 8px; }
-.icon-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-.icon-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
-.icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+.action-btn svg { width: 16px; height: 16px; }
 
-/* Profile Modal */
+/* Reply */
+.review-reply { margin-top: 12px; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-sm); border-left: 3px solid var(--accent); }
+.review-reply.admin-reply { border-left-color: var(--warning); }
+.reply-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.82rem; }
+.reply-author { font-weight: 600; color: var(--text-primary); }
+.reply-author.admin { color: var(--warning); }
+.reply-date { color: var(--text-tertiary); font-size: 0.75rem; }
+.reply-badge { background: rgba(255,159,10,0.15); color: var(--warning); padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 600; }
+.reply-text { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+
+/* Admin actions */
+.admin-actions { position: absolute; top: 16px; right: 16px; display: flex; gap: 6px; }
+.icon-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+.icon-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.icon-btn.danger:hover { color: var(--danger); border-color: var(--danger); }
+.icon-btn svg { width: 16px; height: 16px; }
+
+/* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
 .modal-overlay.active { display: flex; }
-.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; max-width: 450px; width: 100%; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
 .modal h3 { margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+.modal-actions .btn { flex: 1; }
 
-/* Admin Panel */
-.admin-panel { background: rgba(255, 159, 10, 0.05); border: 1px solid rgba(255, 159, 10, 0.2); border-radius: var(--radius-md); padding: 16px; margin-bottom: 24px; display: none; }
-.admin-panel.active { display: block; }
-.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
-.stat-box { background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-sm); text-align: center; }
-.stat-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
-.stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+/* Toast */
+.toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-card); padding: 12px 20px; border-radius: 99px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid var(--border); font-size: 0.9rem; font-weight: 500; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 300; display: flex; align-items: center; gap: 8px; max-width: 90%; }
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+.toast.success { color: var(--success); }
+.toast.error { color: var(--danger); }
+.toast.info { color: var(--accent); }
+
+/* Admin table */
+.admin-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.admin-table th, .admin-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.admin-table th { color: var(--text-secondary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+.admin-table tr:hover { background: rgba(142,142,147,0.05); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
+.badge-admin { background: rgba(255,159,10,0.15); color: var(--warning); }
+.badge-user { background: rgba(134,134,139,0.15); color: var(--text-secondary); }
+.badge-banned { background: rgba(255,69,58,0.15); color: var(--danger); }
+.badge-active { background: rgba(48,209,88,0.15); color: var(--success); }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-tertiary); }
+.empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { color: var(--text-primary); margin-bottom: 8px; }
 
 .hidden { display: none !important; }
+
+@media (max-width: 640px) {
+  .layout { padding: 20px 16px 80px; }
+  .admin-stats { grid-template-columns: repeat(2, 1fr); }
+  .review-header { flex-direction: column; }
+  .admin-actions { position: static; margin-bottom: 12px; }
+}
 </style>
 </head>
 <body>
@@ -106,46 +179,63 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       <span>Oris Reviews</span>
     </a>
-    <button class="btn btn-secondary" id="logoutBtn" style="width: auto; padding: 8px 16px; display: none;">Выйти</button>
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="logoutBtn" style="padding: 8px 16px; display: none;">Выйти</button>
+    </div>
   </div>
 </header>
 
 <main class="layout">
   <!-- Auth Screen -->
   <div id="authScreen" class="auth-container">
+    <h2 style="margin-bottom: 8px; text-align: center;">Добро пожаловать</h2>
+    <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">Поделитесь своим опытом использования платформы</p>
+    
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login">Вход</button>
       <button class="auth-tab" data-tab="register">Регистрация</button>
+      <button class="auth-tab" data-tab="admin">Админ</button>
     </div>
     
     <form id="loginForm">
       <div class="form-group">
         <label>Имя пользователя</label>
-        <input type="text" class="form-input" name="username" required>
+        <input type="text" class="form-input" name="username" required autocomplete="username">
       </div>
       <div class="form-group">
         <label>Пароль</label>
-        <input type="password" class="form-input" name="password" required>
+        <input type="password" class="form-input" name="password" required autocomplete="current-password">
       </div>
-      <button type="submit" class="btn btn-primary">Войти</button>
+      <button type="submit" class="btn btn-primary btn-full">Войти</button>
       <div class="error-msg" id="loginError"></div>
     </form>
 
     <form id="registerForm" class="hidden">
       <div class="form-group">
         <label>Имя пользователя (логин)</label>
-        <input type="text" class="form-input" name="username" required minlength="3" maxlength="20">
+        <input type="text" class="form-input" name="username" required minlength="3" maxlength="20" autocomplete="username">
+        <div class="form-help">Латинские буквы, цифры. 3-20 символов</div>
       </div>
       <div class="form-group">
         <label>Пароль</label>
-        <input type="password" class="form-input" name="password" required minlength="6">
+        <input type="password" class="form-input" name="password" required minlength="6" autocomplete="new-password">
       </div>
       <div class="form-group">
         <label>Отображаемое имя (Ник)</label>
-        <input type="text" class="form-input" name="nickname" required>
+        <input type="text" class="form-input" name="nickname" required maxlength="30">
       </div>
-      <button type="submit" class="btn btn-primary">Создать аккаунт</button>
+      <button type="submit" class="btn btn-primary btn-full">Создать аккаунт</button>
       <div class="error-msg" id="registerError"></div>
+    </form>
+
+    <form id="adminForm" class="hidden">
+      <div class="form-group">
+        <label>Admin Token</label>
+        <input type="password" class="form-input" name="adminToken" required>
+        <div class="form-help">Секретный токен для входа как администратор</div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Войти как администратор</button>
+      <div class="error-msg" id="adminError"></div>
     </form>
   </div>
 
@@ -159,24 +249,64 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
           <span class="user-role" id="userRole">user</span>
         </div>
       </div>
-      <button class="btn btn-secondary" id="editProfileBtn" style="width: auto; padding: 8px 16px;">Редактировать профиль</button>
+      <button class="btn btn-secondary" id="editProfileBtn" style="padding: 8px 16px;">Редактировать профиль</button>
     </div>
 
+    <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanel">
-      <h3 style="color: var(--warning); margin-bottom: 8px;">🛡️ Панель администратора</h3>
-      <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 12px;">Управление отзывами и пользователями</p>
+      <h3>
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Панель администратора
+      </h3>
+      <p style="font-size: 0.88rem; color: var(--text-secondary);">Управление отзывами, пользователями и модерацией</p>
+      
       <div class="admin-stats">
         <div class="stat-box">
-          <div class="stat-value" id="totalReviews">0</div>
-          <div class="stat-label">Всего отзывов</div>
+          <div class="stat-value" id="statUsers">0</div>
+          <div class="stat-label">Пользователей</div>
         </div>
         <div class="stat-box">
-          <div class="stat-value" id="pinnedReviews">0</div>
-          <div class="stat-label">Закреплено</div>
+          <div class="stat-value" id="statReviews">0</div>
+          <div class="stat-label">Отзывов</div>
         </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statAvgRating">0.0</div>
+          <div class="stat-label">Средний рейтинг</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statLikes">0</div>
+          <div class="stat-label">Лайков</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statReports">0</div>
+          <div class="stat-label">Жалоб</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="statBanned">0</div>
+          <div class="stat-label">Забанено</div>
+        </div>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-admin-tab="reports">Жалобы</button>
+        <button class="admin-tab" data-admin-tab="users">Пользователи</button>
+        <button class="admin-tab" data-admin-tab="audit">Audit Log</button>
+      </div>
+
+      <div class="admin-section active" id="adminReports">
+        <div id="reportsList" style="margin-top: 16px;"></div>
+      </div>
+
+      <div class="admin-section" id="adminUsers">
+        <div id="usersList" style="margin-top: 16px;"></div>
+      </div>
+
+      <div class="admin-section" id="adminAudit">
+        <div id="auditList" style="margin-top: 16px; font-family: var(--mono-stack); font-size: 0.82rem;"></div>
       </div>
     </div>
 
+    <!-- Review Form -->
     <div class="review-form-card">
       <h3 style="margin-bottom: 16px;">Оставить отзыв</h3>
       <form id="reviewForm">
@@ -189,17 +319,30 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
         </div>
         <input type="hidden" name="rating" id="ratingInput" value="5">
         <div class="form-group">
-          <input type="text" class="form-input" name="title" placeholder="Заголовок отзыва" required>
+          <input type="text" class="form-input" name="title" placeholder="Заголовок отзыва" required maxlength="100">
         </div>
         <div class="form-group">
-          <textarea class="textarea" name="text" placeholder="Расскажите о вашем опыте использования..." required minlength="10"></textarea>
+          <textarea class="textarea" name="text" placeholder="Расскажите о вашем опыте использования..." required minlength="10" maxlength="2000"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Опубликовать отзыв</button>
+        <button type="submit" class="btn btn-primary btn-full">Опубликовать отзыв</button>
       </form>
     </div>
 
+    <!-- Filters -->
+    <div class="filters-bar">
+      <input type="text" class="search-input" id="searchInput" placeholder="Поиск по отзывам...">
+      <button class="filter-chip active" data-sort="newest">Новые</button>
+      <button class="filter-chip" data-sort="oldest">Старые</button>
+      <button class="filter-chip" data-sort="rating-high">Лучшие</button>
+      <button class="filter-chip" data-sort="rating-low">Худшие</button>
+      <button class="filter-chip" data-sort="popular">Популярные</button>
+    </div>
+
     <div id="reviewsList">
-      <div style="text-align: center; padding: 40px; color: var(--text-tertiary);">Загрузка отзывов...</div>
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <h3>Загрузка отзывов...</h3>
+      </div>
     </div>
   </div>
 </main>
@@ -211,7 +354,7 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
     <form id="profileForm">
       <div class="form-group">
         <label>Отображаемое имя</label>
-        <input type="text" class="form-input" name="nickname" id="editNickname" required>
+        <input type="text" class="form-input" name="nickname" id="editNickname" required maxlength="30">
       </div>
       <div class="form-group">
         <label>URL аватарки</label>
@@ -220,8 +363,9 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
       <div class="form-group">
         <label>Или загрузить файл</label>
         <input type="file" class="form-input" name="avatarFile" accept="image/*">
+        <div class="form-help">Максимум 5 МБ. JPG, PNG, GIF, WebP</div>
       </div>
-      <div style="display: flex; gap: 8px; margin-top: 20px;">
+      <div class="modal-actions">
         <button type="button" class="btn btn-secondary" id="closeProfileModal">Отмена</button>
         <button type="submit" class="btn btn-primary">Сохранить</button>
       </div>
@@ -229,28 +373,221 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
   </div>
 </div>
 
+<!-- Edit Review Modal -->
+<div class="modal-overlay" id="editReviewModal">
+  <div class="modal">
+    <h3>Редактировать отзыв</h3>
+    <form id="editReviewForm">
+      <input type="hidden" id="editReviewId">
+      <div class="form-group">
+        <label>Заголовок</label>
+        <input type="text" class="form-input" id="editReviewTitle" required maxlength="100">
+      </div>
+      <div class="form-group">
+        <label>Текст отзыва</label>
+        <textarea class="textarea" id="editReviewText" required minlength="10" maxlength="2000"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="closeEditReviewModal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <h3>Пожаловаться на отзыв</h3>
+    <form id="reportForm">
+      <input type="hidden" id="reportReviewId">
+      <div class="form-group">
+        <label>Причина жалобы</label>
+        <select class="form-input" id="reportReason" required>
+          <option value="">Выберите причину...</option>
+          <option value="spam">Спам</option>
+          <option value="offensive">Оскорбление</option>
+          <option value="false">Ложная информация</option>
+          <option value="offtopic">Не по теме</option>
+          <option value="other">Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Комментарий (опционально)</label>
+        <textarea class="textarea" id="reportComment" maxlength="500" style="min-height: 80px;"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="closeReportModal">Отмена</button>
+        <button type="submit" class="btn btn-danger">Отправить жалобу</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reply Modal -->
+<div class="modal-overlay" id="replyModal">
+  <div class="modal">
+    <h3>Ответить на отзыв</h3>
+    <form id="replyForm">
+      <input type="hidden" id="replyReviewId">
+      <div class="form-group">
+        <label>Ваш ответ</label>
+        <textarea class="textarea" id="replyText" required minlength="5" maxlength="1000" placeholder="Напишите ответ..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="closeReplyModal">Отмена</button>
+        <button type="submit" class="btn btn-primary">Отправить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- User Info Modal -->
+<div class="modal-overlay" id="userInfoModal">
+  <div class="modal">
+    <h3>Информация о пользователе</h3>
+    <div id="userInfoContent"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" id="closeUserInfoModal">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
-const API = '/api/reviews';
-let token = localStorage.getItem('reviews_token');
-let currentUser = null;
-let reviews = [];
+(function() {
+'use strict';
 
-// --- Helpers ---
+// ============================================
+// Configuration
+// ============================================
+const CONFIG = {
+  API_BASE: '/api/reviews',
+  STORAGE_KEY: 'reviews_token',
+  DEFAULT_AVATAR: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%232C2C2E"/><text x="50" y="60" text-anchor="middle" font-family="Inter,sans-serif" font-size="40" font-weight="600" fill="%2386868B">?</text></svg>')
+};
+
+// ============================================
+// State
+// ============================================
+const State = {
+  token: localStorage.getItem(CONFIG.STORAGE_KEY),
+  user: null,
+  reviews: [],
+  reports: [],
+  users: [],
+  auditLog: [],
+  stats: null,
+  currentSort: 'newest',
+  searchQuery: '',
+  editingReviewId: null
+};
+
+// ============================================
+// Utilities
+// ============================================
 const $ = id => document.getElementById(id);
-const formatDate = iso => new Date(iso).toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
 
-async function apiCall(endpoint, options = {}) {
-  const headers = { ...options.headers };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
-  
-  const res = await fetch(`${API}${endpoint}`, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
-  return data;
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
-// --- Auth ---
+function formatDate(iso) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'только что';
+  if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+  if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function toast(message, type = 'info') {
+  const t = $('toast');
+  t.textContent = message;
+  t.className = `toast ${type} visible`;
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => t.classList.remove('visible'), 3000);
+}
+
+function getUserLevel(reviewCount) {
+  if (reviewCount >= 20) return { name: 'Мастер', cls: 'level-master' };
+  if (reviewCount >= 10) return { name: 'Эксперт', cls: 'level-expert' };
+  if (reviewCount >= 3) return { name: 'Активный', cls: 'level-active' };
+  return { name: 'Новичок', cls: 'level-newbie' };
+}
+
+// ============================================
+// API Client
+// ============================================
+const Api = {
+  async call(endpoint, options = {}) {
+    const headers = { ...(options.headers || {}) };
+    if (State.token) headers['Authorization'] = `Bearer ${State.token}`;
+    if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+    
+    const res = await fetch(`${CONFIG.API_BASE}${endpoint}`, { ...options, headers });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) {
+      this.handleAuthError();
+      throw new Error('Сессия истекла');
+    }
+    if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
+    return data;
+  },
+
+  handleAuthError() {
+    State.token = null;
+    State.user = null;
+    localStorage.removeItem(CONFIG.STORAGE_KEY);
+    showAuth();
+  },
+
+  // Auth
+  login: (data) => Api.call('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  register: (data) => Api.call('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+  adminLogin: (token) => Api.call('/auth/admin', { method: 'POST', body: JSON.stringify({ adminToken: token }) }),
+  logout: () => Api.call('/auth/logout', { method: 'POST' }),
+  me: () => Api.call('/me'),
+
+  // Profile
+  updateProfile: (fd) => Api.call('/me', { method: 'PUT', body: fd }),
+  changePassword: (data) => Api.call('/me/password', { method: 'POST', body: JSON.stringify(data) }),
+
+  // Reviews
+  getReviews: () => Api.call('/'),
+  createReview: (data) => Api.call('/', { method: 'POST', body: JSON.stringify(data) }),
+  updateReview: (id, data) => Api.call(`/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteReview: (id) => Api.call(`/${id}`, { method: 'DELETE' }),
+  likeReview: (id) => Api.call(`/${id}/like`, { method: 'POST' }),
+
+  // Reports
+  reportReview: (id, data) => Api.call(`/${id}/report`, { method: 'POST', body: JSON.stringify(data) }),
+  getReports: () => Api.call('/admin/reports'),
+  resolveReport: (id, action) => Api.call(`/admin/reports/${id}`, { method: 'POST', body: JSON.stringify({ action }) }),
+
+  // Replies
+  replyToReview: (id, text) => Api.call(`/${id}/reply`, { method: 'POST', body: JSON.stringify({ text }) }),
+
+  // Admin
+  pinReview: (id) => Api.call(`/admin/${id}/pin`, { method: 'POST' }),
+  banUser: (id, data) => Api.call(`/admin/users/${id}/ban`, { method: 'POST', body: JSON.stringify(data) }),
+  unbanUser: (id) => Api.call(`/admin/users/${id}/ban`, { method: 'DELETE' }),
+  getUserInfo: (id) => Api.call(`/admin/users/${id}/info`),
+  getUsers: () => Api.call('/admin/users'),
+  getStats: () => Api.call('/admin/stats'),
+  getAuditLog: () => Api.call('/admin/audit')
+};
+
+// ============================================
+// Auth UI
+// ============================================
 function showAuth() {
   $('authScreen').classList.remove('hidden');
   $('appScreen').classList.add('hidden');
@@ -261,187 +598,458 @@ function showApp() {
   $('authScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
   $('logoutBtn').style.display = 'inline-flex';
-  $('userNickname').textContent = currentUser.nickname;
-  $('userRole').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Пользователь';
-  $('userRole').className = `user-role ${currentUser.role === 'admin' ? 'admin' : ''}`;
-  $('userAvatar').src = currentUser.avatar || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2386868B"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
   
-  if (currentUser.role === 'admin') {
-    $('adminPanel').classList.add('active');
+  $('userNickname').innerHTML = escapeHtml(State.user.nickname) + 
+    (State.user.role === 'admin' ? ' <span class="user-level" style="background:rgba(255,159,10,0.15);color:var(--warning);">Admin</span>' : '');
+  $('userRole').textContent = State.user.role === 'admin' ? 'Администратор' : 'Пользователь';
+  $('userRole').className = `user-role ${State.user.role === 'admin' ? 'admin' : ''}`;
+  $('userAvatar').src = State.user.avatar || CONFIG.DEFAULT_AVATAR;
+  
+  if (State.user.role === 'admin') {
+    $('adminPanel').classList.remove('hidden');
+    loadAdminData();
+  } else {
+    $('adminPanel').classList.add('hidden');
   }
+  
   loadReviews();
 }
 
+// Auth tabs
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    $('loginForm').classList.add('hidden');
+    $('registerForm').classList.add('hidden');
+    $('adminForm').classList.add('hidden');
+    $(`${tab.dataset.tab}Form`).classList.remove('hidden');
+  });
+});
+
+// Login
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const fd = new FormData(e.target);
   try {
-    const data = await apiCall('/auth/login', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd)) });
-    token = data.token;
-    currentUser = data.user;
-    localStorage.setItem('reviews_token', token);
+    const data = await Api.login(Object.fromEntries(fd));
+    State.token = data.token;
+    State.user = data.user;
+    localStorage.setItem(CONFIG.STORAGE_KEY, State.token);
     showApp();
+    toast('Добро пожаловать!', 'success');
   } catch (err) {
     $('loginError').textContent = err.message;
     $('loginError').style.display = 'block';
   }
 });
 
+// Register
 $('registerForm').addEventListener('submit', async e => {
   e.preventDefault();
   const fd = new FormData(e.target);
   try {
-    const data = await apiCall('/auth/register', { method: 'POST', body: JSON.stringify(Object.fromEntries(fd)) });
-    token = data.token;
-    currentUser = data.user;
-    localStorage.setItem('reviews_token', token);
+    const data = await Api.register(Object.fromEntries(fd));
+    State.token = data.token;
+    State.user = data.user;
+    localStorage.setItem(CONFIG.STORAGE_KEY, State.token);
     showApp();
+    toast('Аккаунт создан!', 'success');
   } catch (err) {
     $('registerError').textContent = err.message;
     $('registerError').style.display = 'block';
   }
 });
 
+// Admin login
+$('adminForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const token = e.target.adminToken.value;
+  try {
+    const data = await Api.adminLogin(token);
+    State.token = data.token;
+    State.user = data.user;
+    localStorage.setItem(CONFIG.STORAGE_KEY, State.token);
+    showApp();
+    toast('Вход выполнен как администратор', 'success');
+  } catch (err) {
+    $('adminError').textContent = err.message;
+    $('adminError').style.display = 'block';
+  }
+});
+
+// Logout
 $('logoutBtn').addEventListener('click', async () => {
-  try { await apiCall('/auth/logout', { method: 'POST' }); } catch(e) {}
-  token = null;
-  currentUser = null;
-  localStorage.removeItem('reviews_token');
+  try { await Api.logout(); } catch(e) {}
+  State.token = null;
+  State.user = null;
+  localStorage.removeItem(CONFIG.STORAGE_KEY);
   showAuth();
+  toast('Вы вышли из аккаунта', 'info');
 });
 
-// --- Tabs ---
-document.querySelectorAll('.auth-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    if (tab.dataset.tab === 'login') {
-      $('loginForm').classList.remove('hidden');
-      $('registerForm').classList.add('hidden');
-    } else {
-      $('loginForm').classList.add('hidden');
-      $('registerForm').classList.remove('hidden');
-    }
-  });
-});
-
-// --- Reviews ---
+// ============================================
+// Reviews
+// ============================================
 async function loadReviews() {
   try {
-    const data = await apiCall('/');
-    reviews = data.reviews;
+    const data = await Api.getReviews();
+    State.reviews = data.reviews || [];
     renderReviews();
-    if (currentUser.role === 'admin') {
-      $('totalReviews').textContent = reviews.length;
-      $('pinnedReviews').textContent = reviews.filter(r => r.isPinned).length;
-    }
   } catch (err) {
-    $('reviewsList').innerHTML = `<div style="text-align:center;color:var(--danger)">${err.message}</div>`;
+    $('reviewsList').innerHTML = `<div class="empty-state"><h3>Ошибка</h3><p>${escapeHtml(err.message)}</p></div>`;
   }
 }
 
+function getFilteredReviews() {
+  let reviews = [...State.reviews];
+  
+  // Поиск
+  if (State.searchQuery) {
+    const q = State.searchQuery.toLowerCase();
+    reviews = reviews.filter(r => 
+      (r.title || '').toLowerCase().includes(q) ||
+      (r.text || '').toLowerCase().includes(q) ||
+      (r.userNickname || '').toLowerCase().includes(q)
+    );
+  }
+  
+  // Сортировка
+  switch (State.currentSort) {
+    case 'oldest':
+      reviews.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      break;
+    case 'rating-high':
+      reviews.sort((a, b) => b.rating - a.rating);
+      break;
+    case 'rating-low':
+      reviews.sort((a, b) => a.rating - b.rating);
+      break;
+    case 'popular':
+      reviews.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+      break;
+    default: // newest
+      reviews.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+  }
+  
+  return reviews;
+}
+
 function renderReviews() {
+  const reviews = getFilteredReviews();
+  
   if (reviews.length === 0) {
-    $('reviewsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-tertiary)">Пока нет отзывов. Будьте первым!</div>';
+    $('reviewsList').innerHTML = `
+      <div class="empty-state">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <h3>${State.searchQuery ? 'Ничего не найдено' : 'Пока нет отзывов'}</h3>
+        <p>${State.searchQuery ? 'Попробуйте изменить запрос' : 'Будьте первым, кто оставит отзыв!'}</p>
+      </div>`;
     return;
   }
 
-  $('reviewsList').innerHTML = reviews.map(r => {
-    const isAdmin = currentUser?.role === 'admin';
-    const isAuthor = currentUser?.id === r.userId;
-    return `
-    <div class="review-card ${r.isPinned ? 'pinned' : ''}" data-id="${r.id}">
-      ${isAdmin ? `
-      <div class="admin-actions">
-        <button class="icon-btn" onclick="togglePin('${r.id}')" title="${r.isPinned ? 'Открепить' : 'Закрепить'}">📌</button>
-        <button class="icon-btn danger" onclick="deleteReview('${r.id}')" title="Удалить">🗑</button>
-        <button class="icon-btn" onclick="showUserInfo('${r.userId}')" title="Инфо о пользователе">👁</button>
-      </div>` : ''}
+  $('reviewsList').innerHTML = reviews.map(renderReviewCard).join('');
+}
+
+function renderReviewCard(r) {
+  const isAdmin = State.user?.role === 'admin';
+  const isAuthor = State.user?.id === r.userId;
+  const hasLiked = r.likedBy?.includes(State.user?.id);
+  const hasReported = r.reportedBy?.includes(State.user?.id);
+  const level = getUserLevel(r.userReviewCount || 0);
+  
+  const avatarSrc = r.userAvatar || `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#2C2C2E"/><text x="50" y="62" text-anchor="middle" font-family="Inter,sans-serif" font-size="36" font-weight="600" fill="#86868B">${escapeHtml((r.userNickname || '?')[0].toUpperCase())}</text></svg>`)}`;
+
+  const replyHtml = r.reply ? `
+    <div class="review-reply ${r.reply.isAdmin ? 'admin-reply' : ''}">
+      <div class="reply-header">
+        <span class="reply-author ${r.reply.isAdmin ? 'admin' : ''}">${escapeHtml(r.reply.authorName)}</span>
+        ${r.reply.isAdmin ? '<span class="reply-badge">Ответ команды</span>' : ''}
+        <span class="reply-date">${formatDate(r.reply.createdAt)}</span>
+      </div>
+      <div class="reply-text">${escapeHtml(r.reply.text)}</div>
+    </div>
+  ` : '';
+
+  const adminActionsHtml = isAdmin ? `
+    <div class="admin-actions">
+      <button class="icon-btn" onclick="window.togglePin('${r.id}')" title="${r.isPinned ? 'Открепить' : 'Закрепить'}">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+      </button>
+      ${!r.reply ? `<button class="icon-btn" onclick="window.openReplyModal('${r.id}')" title="Ответить">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      </button>` : ''}
+      <button class="icon-btn" onclick="window.showUserInfo('${r.userId}')" title="Информация о пользователе">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+      </button>
+      <button class="icon-btn danger" onclick="window.deleteReview('${r.id}')" title="Удалить">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+  ` : '';
+
+  const authorActionsHtml = isAuthor && !isAdmin ? `
+    <div class="admin-actions">
+      <button class="icon-btn" onclick="window.openEditReview('${r.id}')" title="Редактировать">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </button>
+      <button class="icon-btn danger" onclick="window.deleteReview('${r.id}')" title="Удалить">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+  ` : '';
+
+  return `
+    <div class="review-card ${r.isPinned ? 'pinned' : ''} ${r.isEdited ? 'edited' : ''} ${r.reportsCount > 0 && isAdmin ? 'reported' : ''}" data-id="${r.id}">
+      ${adminActionsHtml}
+      ${authorActionsHtml}
       <div class="review-header">
         <div class="review-author">
-          <img src="${r.userAvatar || 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2386868B\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\'/></svg>'}" alt="">
+          <img src="${avatarSrc}" alt="">
           <div class="review-meta">
-            <span class="review-nickname">${r.userNickname}</span>
+            <span class="review-nickname">
+              ${escapeHtml(r.userNickname)}
+              <span class="user-level ${level.cls}">${level.name}</span>
+              ${r.userRole === 'admin' ? '<span class="user-level" style="background:rgba(255,159,10,0.15);color:var(--warning);">Admin</span>' : ''}
+            </span>
             <span class="review-date">${formatDate(r.createdAt)}</span>
           </div>
         </div>
         <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
       </div>
-      ${r.title ? `<div class="review-title">${r.title}</div>` : ''}
-      <div class="review-text">${r.text}</div>
+      ${r.title ? `<div class="review-title">${escapeHtml(r.title)}</div>` : ''}
+      <div class="review-text">${escapeHtml(r.text)}</div>
+      ${replyHtml}
       <div class="review-actions">
-        <button class="action-btn" onclick="likeReview('${r.id}')">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+        <button class="action-btn ${hasLiked ? 'liked' : ''}" onclick="window.likeReview('${r.id}')">
+          <svg fill="${hasLiked ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
           ${r.likes || 0}
         </button>
+        ${!isAuthor && !hasReported ? `
+          <button class="action-btn" onclick="window.openReportModal('${r.id}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+            Пожаловаться
+          </button>
+        ` : ''}
       </div>
     </div>
-  `}).join('');
+  `;
 }
 
+// Review form
 $('reviewForm').addEventListener('submit', async e => {
   e.preventDefault();
   const fd = new FormData(e.target);
   const data = Object.fromEntries(fd);
   try {
-    await apiCall('/', { method: 'POST', body: JSON.stringify(data) });
+    await Api.createReview(data);
     e.target.reset();
     document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
     document.querySelector('.star[data-value="5"]').classList.add('active');
     $('ratingInput').value = 5;
     loadReviews();
+    if (State.user.role === 'admin') loadAdminData();
+    toast('Отзыв опубликован!', 'success');
   } catch (err) {
-    alert(err.message);
+    toast(err.message, 'error');
   }
 });
 
-// Stars logic
+// Stars
 document.querySelectorAll('.star').forEach(star => {
   star.addEventListener('click', () => {
     const val = parseInt(star.dataset.value);
     $('ratingInput').value = val;
-    document.querySelectorAll('.star').forEach((s, i) => {
-      s.classList.toggle('active', i < val);
-    });
+    document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('active', i < val));
   });
 });
-// Init stars
 document.querySelector('.star[data-value="5"]').classList.add('active');
 
-// --- Actions ---
+// Filters
+document.querySelectorAll('[data-sort]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('[data-sort]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    State.currentSort = chip.dataset.sort;
+    renderReviews();
+  });
+});
+
+$('searchInput').addEventListener('input', (e) => {
+  State.searchQuery = e.target.value;
+  renderReviews();
+});
+
+// ============================================
+// Actions (global)
+// ============================================
 window.likeReview = async id => {
   try {
-    await apiCall(`/${id}/like`, { method: 'POST' });
+    await Api.likeReview(id);
     loadReviews();
-  } catch (err) { alert(err.message); }
+  } catch (err) { toast(err.message, 'error'); }
 };
 
 window.togglePin = async id => {
   try {
-    await apiCall(`/${id}/pin`, { method: 'POST' });
+    await Api.pinReview(id);
     loadReviews();
-  } catch (err) { alert(err.message); }
+    toast('Статус закреплённого отзыва изменён', 'success');
+  } catch (err) { toast(err.message, 'error'); }
 };
 
 window.deleteReview = async id => {
   if (!confirm('Удалить этот отзыв безвозвратно?')) return;
   try {
-    await apiCall(`/${id}`, { method: 'DELETE' });
+    await Api.deleteReview(id);
     loadReviews();
-  } catch (err) { alert(err.message); }
+    if (State.user.role === 'admin') loadAdminData();
+    toast('Отзыв удалён', 'success');
+  } catch (err) { toast(err.message, 'error'); }
 };
+
+window.openEditReview = id => {
+  const review = State.reviews.find(r => r.id === id);
+  if (!review) return;
+  $('editReviewId').value = id;
+  $('editReviewTitle').value = review.title || '';
+  $('editReviewText').value = review.text;
+  $('editReviewModal').classList.add('active');
+};
+
+$('closeEditReviewModal').addEventListener('click', () => $('editReviewModal').classList.remove('active'));
+
+$('editReviewForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('editReviewId').value;
+  try {
+    await Api.updateReview(id, {
+      title: $('editReviewTitle').value,
+      text: $('editReviewText').value
+    });
+    $('editReviewModal').classList.remove('active');
+    loadReviews();
+    toast('Отзыв обновлён', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+});
+
+window.openReportModal = id => {
+  $('reportReviewId').value = id;
+  $('reportReason').value = '';
+  $('reportComment').value = '';
+  $('reportModal').classList.add('active');
+};
+
+$('closeReportModal').addEventListener('click', () => $('reportModal').classList.remove('active'));
+
+$('reportForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('reportReviewId').value;
+  try {
+    await Api.reportReview(id, {
+      reason: $('reportReason').value,
+      comment: $('reportComment').value
+    });
+    $('reportModal').classList.remove('active');
+    toast('Жалоба отправлена', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+});
+
+window.openReplyModal = id => {
+  $('replyReviewId').value = id;
+  $('replyText').value = '';
+  $('replyModal').classList.add('active');
+};
+
+$('closeReplyModal').addEventListener('click', () => $('replyModal').classList.remove('active'));
+
+$('replyForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = $('replyReviewId').value;
+  try {
+    await Api.replyToReview(id, $('replyText').value);
+    $('replyModal').classList.remove('active');
+    loadReviews();
+    toast('Ответ отправлен', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+});  // ← ИСПРАВЛЕНО: добавлена закрывающая скобка )
 
 window.showUserInfo = async userId => {
   try {
-    const data = await apiCall(`/users/${userId}/info`);
-    alert(`Пользователь: ${data.user.nickname} (@${data.user.username})\nРоль: ${data.user.role}\nОтзывов: ${data.stats.reviewsCount}\nПоследний IP: ${data.stats.lastIp}\nUser-Agent: ${data.stats.lastUa}\n\nДля бана используйте консоль или отдельный интерфейс.`);
-  } catch (err) { alert(err.message); }
+    const data = await Api.getUserInfo(userId);
+    const u = data.user;
+    const s = data.stats;
+    const isBanned = data.isBanned;
+    
+    $('userInfoContent').innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <img src="${u.avatar || CONFIG.DEFAULT_AVATAR}" style="width: 56px; height: 56px; border-radius: 50%;">
+        <div>
+          <div style="font-weight: 600; font-size: 1.05rem;">${escapeHtml(u.nickname)}</div>
+          <div style="color: var(--text-secondary); font-size: 0.85rem;">@${escapeHtml(u.username)}</div>
+          <span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span>
+          ${isBanned ? '<span class="badge badge-banned">Забанен</span>' : '<span class="badge badge-active">Активен</span>'}
+        </div>
+      </div>
+      <div style="background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.88rem;">
+          <div><span style="color: var(--text-secondary);">Отзывов:</span> <strong>${s.reviewsCount}</strong></div>
+          <div><span style="color: var(--text-secondary);">Лайков получено:</span> <strong>${s.totalLikesReceived}</strong></div>
+          <div><span style="color: var(--text-secondary);">Средний рейтинг:</span> <strong>${s.avgRating.toFixed(1)} ★</strong></div>
+          <div><span style="color: var(--text-secondary);">Жалоб:</span> <strong>${s.reportsCount}</strong></div>
+        </div>
+      </div>
+      <div style="background: var(--bg-elevated); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px; font-family: var(--mono-stack); font-size: 0.82rem;">
+        <div style="margin-bottom: 6px;"><span style="color: var(--text-secondary);">Последний IP:</span> ${escapeHtml(s.lastIp || 'Неизвестно')}</div>
+        <div><span style="color: var(--text-secondary);">User-Agent:</span> <span style="word-break: break-all;">${escapeHtml(s.lastUa || 'Неизвестно')}</span></div>
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-tertiary); margin-bottom: 16px;">
+        Зарегистрирован: ${formatDate(u.createdAt)}
+      </div>
+      ${!isBanned && u.role !== 'admin' ? `
+        <button class="btn btn-danger btn-full" onclick="window.banUser('${u.id}')">Забанить пользователя</button>
+      ` : ''}
+      ${isBanned ? `
+        <button class="btn btn-primary btn-full" onclick="window.unbanUser('${u.id}')">Разбанить пользователя</button>
+      ` : ''}
+    `;
+    $('userInfoModal').classList.add('active');
+  } catch (err) { toast(err.message, 'error'); }
 };
 
-// --- Profile ---
+$('closeUserInfoModal').addEventListener('click', () => $('userInfoModal').classList.remove('active'));
+
+window.banUser = async userId => {
+  const reason = prompt('Причина бана:');
+  if (reason === null) return;
+  try {
+    await Api.banUser(userId, { reason: reason || 'Нарушение правил' });
+    $('userInfoModal').classList.remove('active');
+    loadAdminData();
+    toast('Пользователь забанен', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+window.unbanUser = async userId => {
+  if (!confirm('Разбанить этого пользователя?')) return;
+  try {
+    await Api.unbanUser(userId);
+    $('userInfoModal').classList.remove('active');
+    loadAdminData();
+    toast('Пользователь разбанен', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+// ============================================
+// Profile
+// ============================================
 $('editProfileBtn').addEventListener('click', () => {
-  $('editNickname').value = currentUser.nickname;
-  $('editAvatarUrl').value = currentUser.avatar || '';
+  $('editNickname').value = State.user.nickname;
+  $('editAvatarUrl').value = State.user.avatar || '';
   $('profileModal').classList.add('active');
 });
 
@@ -451,26 +1059,173 @@ $('profileForm').addEventListener('submit', async e => {
   e.preventDefault();
   const fd = new FormData(e.target);
   try {
-    const data = await apiCall('/me', { method: 'PUT', body: fd });
-    currentUser = data.user;
+    const data = await Api.updateProfile(fd);
+    State.user = data.user;
     $('profileModal').classList.remove('active');
     showApp();
-  } catch (err) { alert(err.message); }
+    toast('Профиль обновлён', 'success');
+  } catch (err) { toast(err.message, 'error'); }
 });
 
-// --- Init ---
+// ============================================
+// Admin Panel
+// ============================================
+document.querySelectorAll('[data-admin-tab]').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('[data-admin-tab]').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    $(`admin${tab.dataset.adminTab.charAt(0).toUpperCase() + tab.dataset.adminTab.slice(1)}`).classList.add('active');
+  });
+});
+
+async function loadAdminData() {
+  try {
+    const [stats, reports, users, audit] = await Promise.all([
+      Api.getStats(),
+      Api.getReports(),
+      Api.getUsers(),
+      Api.getAuditLog()
+    ]);
+    State.stats = stats;
+    State.reports = reports.reports || [];
+    State.users = users.users || [];
+    State.auditLog = audit.logs || [];
+    renderAdminStats();
+    renderReports();
+    renderUsers();
+    renderAuditLog();
+  } catch (err) {
+    console.error('Admin data load error:', err);
+  }
+}
+
+function renderAdminStats() {
+  if (!State.stats) return;
+  $('statUsers').textContent = State.stats.totalUsers;
+  $('statReviews').textContent = State.stats.totalReviews;
+  $('statAvgRating').textContent = State.stats.avgRating.toFixed(1);
+  $('statLikes').textContent = State.stats.totalLikes;
+  $('statReports').textContent = State.stats.pendingReports;
+  $('statBanned').textContent = State.stats.bannedUsers;
+}
+
+function renderReports() {
+  if (State.reports.length === 0) {
+    $('reportsList').innerHTML = '<div class="empty-state"><p>Нет активных жалоб</p></div>';
+    return;
+  }
+  
+  $('reportsList').innerHTML = State.reports.map(r => `
+    <div style="background: var(--bg-elevated); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 10px; border-left: 3px solid var(--danger);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; font-size: 0.9rem;">Жалоба на отзыв от ${escapeHtml(r.reviewAuthorName)}</div>
+          <div style="font-size: 0.78rem; color: var(--text-tertiary);">${formatDate(r.createdAt)} · Причина: ${escapeHtml(r.reason)}</div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;" onclick="window.resolveReport('${r.id}', 'dismiss')">Отклонить</button>
+          <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.82rem;" onclick="window.resolveReport('${r.id}', 'delete')">Удалить отзыв</button>
+        </div>
+      </div>
+      ${r.comment ? `<div style="font-size: 0.88rem; color: var(--text-secondary); padding: 8px; background: var(--bg-card); border-radius: var(--radius-sm);">${escapeHtml(r.comment)}</div>` : ''}
+      <details style="margin-top: 8px;">
+        <summary style="font-size: 0.82rem; color: var(--text-tertiary); cursor: pointer;">Показать отзыв</summary>
+        <div style="margin-top: 8px; padding: 10px; background: var(--bg-card); border-radius: var(--radius-sm); font-size: 0.88rem;">
+          <strong>${escapeHtml(r.reviewTitle || '(без заголовка)')}</strong>
+          <div style="margin-top: 4px;">${escapeHtml(r.reviewText)}</div>
+        </div>
+      </details>
+    </div>
+  `).join('');
+}
+
+window.resolveReport = async (id, action) => {
+  try {
+    await Api.resolveReport(id, action);
+    loadAdminData();
+    loadReviews();
+    toast(action === 'delete' ? 'Отзыв удалён' : 'Жалоба отклонена', 'success');
+  } catch (err) { toast(err.message, 'error'); }
+};
+
+function renderUsers() {
+  if (State.users.length === 0) {
+    $('usersList').innerHTML = '<div class="empty-state"><p>Нет пользователей</p></div>';
+    return;
+  }
+  
+  $('usersList').innerHTML = `
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Пользователь</th>
+          <th>Роль</th>
+          <th>Отзывов</th>
+          <th>Статус</th>
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${State.users.map(u => `
+          <tr>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <img src="${u.avatar || CONFIG.DEFAULT_AVATAR}" style="width: 28px; height: 28px; border-radius: 50%;">
+                <div>
+                  <div style="font-weight: 600;">${escapeHtml(u.nickname)}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-tertiary);">@${escapeHtml(u.username)}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-user'}">${u.role}</span></td>
+            <td>${u.reviewsCount || 0}</td>
+            <td>${u.isBanned ? '<span class="badge badge-banned">Забанен</span>' : '<span class="badge badge-active">Активен</span>'}</td>
+            <td>
+              <button class="icon-btn" onclick="window.showUserInfo('${u.id}')" title="Подробнее">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderAuditLog() {
+  if (State.auditLog.length === 0) {
+    $('auditList').innerHTML = '<div class="empty-state"><p>Нет записей</p></div>';
+    return;
+  }
+  
+  $('auditList').innerHTML = State.auditLog.slice(0, 50).map(log => `
+    <div style="padding: 8px; border-bottom: 1px solid var(--border);">
+      <span style="color: var(--text-tertiary);">${formatDate(log.timestamp)}</span> · 
+      <span style="color: var(--accent);">${escapeHtml(log.action)}</span>
+      ${log.target ? ` → <span style="color: var(--warning);">${escapeHtml(log.target)}</span>` : ''}
+      ${log.details ? `<div style="font-size: 0.78rem; color: var(--text-tertiary); margin-top: 2px;">${escapeHtml(log.details)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ============================================
+// Init
+// ============================================
 (async () => {
-  if (token) {
+  if (State.token) {
     try {
-      currentUser = await apiCall('/me');
+      State.user = await Api.me();
       showApp();
     } catch (e) {
-      localStorage.removeItem('reviews_token');
+      localStorage.removeItem(CONFIG.STORAGE_KEY);
       showAuth();
     }
   } else {
     showAuth();
   }
+})();
+
 })();
 </script>
 </body>
