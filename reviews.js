@@ -1,3 +1,7 @@
+// ============================================
+// Reviews API - Express Router
+// ============================================
+
 const express = require('express');
 const crypto = require('crypto');
 const multer = require('multer');
@@ -5,131 +9,238 @@ const { kv } = require('@vercel/kv');
 const { put } = require('@vercel/blob');
 
 const router = express.Router();
-const upload = multer({ 
-  storage: multer.memoryStorage(), 
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Только изображения'));
-  }
-});
 
 // ============================================
 // Configuration
 // ============================================
-const CONFIG = {
-  ADMIN_TOKEN: process.env.ADMIN_TOKEN,
-  SESSION_TTL: 60 * 60 * 24 * 30, // 30 days
-  PASSWORD_ITERATIONS: 100000,
-  PASSWORD_KEY_LENGTH: 64,
-  PASSWORD_SALT_BYTES: 16,
-  RATE_LIMIT_WINDOW: 60 * 1000,
-  RATE_LIMIT_MAX_REGISTRATION: 5,
-  RATE_LIMIT_MAX_REVIEWS: 10,
-  TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
-  TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID
+
+const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+const DAYS_PER_MONTH = 30;
+const MILLISECONDS_PER_SECOND = 1000;
+
+const CONFIG = Object.freeze({
+  security: Object.freeze({
+    ADMIN_TOKEN: process.env.ADMIN_TOKEN,
+    PASSWORD_ITERATIONS: 100000,
+    PASSWORD_KEY_LENGTH: 64,
+    PASSWORD_SALT_BYTES: 16,
+    SESSION_TTL_SECONDS: SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY * DAYS_PER_MONTH,
+  }),
+  rateLimit: Object.freeze({
+    WINDOW_MILLISECONDS: SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND,
+    MAX_REGISTRATION_REQUESTS: 5,
+    MAX_REVIEWS_REQUESTS: 10,
+  }),
+  telegram: Object.freeze({
+    BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+    CHAT_ID: process.env.TELEGRAM_CHAT_ID,
+  }),
+});
+
+const validateEnvironment = () => {
+  const requiredVariables = [
+    { name: 'ADMIN_TOKEN', value: CONFIG.security.ADMIN_TOKEN },
+    { name: 'TELEGRAM_BOT_TOKEN', value: CONFIG.telegram.BOT_TOKEN },
+    { name: 'TELEGRAM_CHAT_ID', value: CONFIG.telegram.CHAT_ID },
+  ];
+
+  const missingVariables = requiredVariables
+    .filter(({ value }) => !value)
+    .map(({ name }) => name);
+
+  if (missingVariables.length > 0) {
+    throw new Error(
+      `[Configuration] FATAL: Missing required environment variables: ${missingVariables.join(', ')}`
+    );
+  }
 };
 
-if (!CONFIG.ADMIN_TOKEN) {
-  console.warn('[Reviews] WARNING: ADMIN_TOKEN not set');
-}
+validateEnvironment();
 
 // ============================================
 // KV Keys
 // ============================================
-const K = {
-  USER: (id) => `reviews:user:${id}`,
-  USERS_INDEX: 'reviews:users:index',
-  USER_BY_USERNAME: (username) => `reviews:user:by_username:${username.toLowerCase()}`,
-  REVIEW: (id) => `reviews:review:${id}`,
-  REVIEWS_INDEX: 'reviews:reviews:index',
-  SESSION: (token) => `reviews:session:${token}`,
-  BAN: (userId) => `reviews:ban:${userId}`,
-  REPORT: (id) => `reviews:report:${id}`,
-  REPORTS_INDEX: 'reviews:reports:index',
-  AUDIT: (id) => `reviews:audit:${id}`,
-  AUDIT_INDEX: 'reviews:audit:index',
-  RATE_LIMIT: (key) => `reviews:ratelimit:${key}`
+
+const APP_PREFIX = 'reviews';
+
+const normalize = (value) => {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new Error('[KV Keys] Identifier must be a non-empty string');
+  }
+  return value.toLowerCase().trim();
 };
+
+const K = Object.freeze({
+  user: Object.freeze({
+    byId: (id) => `${APP_PREFIX}:user:${normalize(id)}`,
+    byUsername: (username) => `${APP_PREFIX}:user:by_username:${normalize(username)}`,
+    index: `${APP_PREFIX}:users:index`,
+  }),
+  review: Object.freeze({
+    byId: (id) => `${APP_PREFIX}:review:${normalize(id)}`,
+    index: `${APP_PREFIX}:reviews:index`,
+  }),
+  session: Object.freeze({
+    byToken: (token) => `${APP_PREFIX}:session:${normalize(token)}`,
+  }),
+  moderation: Object.freeze({
+    ban: (userId) => `${APP_PREFIX}:ban:${normalize(userId)}`,
+    report: (id) => `${APP_PREFIX}:report:${normalize(id)}`,
+    reportsIndex: `${APP_PREFIX}:reports:index`,
+  }),
+  audit: Object.freeze({
+    byId: (id) => `${APP_PREFIX}:audit:${normalize(id)}`,
+    index: `${APP_PREFIX}:audit:index`,
+  }),
+  rateLimit: Object.freeze({
+    byKey: (key) => `${APP_PREFIX}:ratelimit:${normalize(key)}`,
+  }),
+  admin: Object.freeze({
+    id: `${APP_PREFIX}:admin_id`,
+  }),
+});
+
+// ============================================
+// Constants
+// ============================================
+
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+const ID_BYTES = 8;
+const TOKEN_BYTES = 32;
+const AUDIT_TTL_DAYS = 90;
+
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
+
+const MIN_PASSWORD_LENGTH = 6;
+const MIN_NICKNAME_LENGTH = 2;
+const MAX_NICKNAME_LENGTH = 30;
+const ADMIN_USERNAME = 'admin';
+const ADMIN_NICKNAME = 'Администратор';
+
+const MIN_REVIEW_TEXT_LENGTH = 10;
+const MAX_REVIEW_TEXT_LENGTH = 2000;
+const MAX_REVIEW_TITLE_LENGTH = 100;
+const MIN_REPLY_LENGTH = 5;
+const MAX_REPLY_LENGTH = 1000;
+const MIN_RATING = 1;
+const MAX_RATING = 5;
+
+const AUDIT_LOG_LIMIT = 100;
+
+// ============================================
+// Multer Configuration
+// ============================================
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE_BYTES },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Недопустимый тип файла. Разрешены только: ${ALLOWED_MIME_TYPES.join(', ')}.`));
+    }
+  },
+});
 
 // ============================================
 // Utilities
 // ============================================
 
-/**
- * Генерация уникального ID
- * @returns {string}
- */
 function generateId() {
-  return crypto.randomBytes(8).toString('hex');
+  return crypto.randomBytes(ID_BYTES).toString('hex');
 }
 
-/**
- * Генерация токена сессии
- * @returns {string}
- */
 function generateToken() {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(TOKEN_BYTES).toString('hex');
 }
 
-/**
- * Хеширование пароля с солью (PBKDF2)
- * @param {string} password
- * @returns {Promise<string>} Формат salt:hash
- */
 async function hashPassword(password) {
-  const salt = crypto.randomBytes(CONFIG.PASSWORD_SALT_BYTES).toString('hex');
-  return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, salt, CONFIG.PASSWORD_ITERATIONS, CONFIG.PASSWORD_KEY_LENGTH, 'sha512', (err, key) => {
-      if (err) reject(err);
-      else resolve(`${salt}:${key.toString('hex')}`);
-    });
-  });
-}
+  if (typeof password !== 'string' || password.trim() === '') {
+    throw new Error('[Utilities] Password must be a non-empty string');
+  }
 
-/**
- * Проверка пароля
- * @param {string} password
- * @param {string} stored - salt:hash
- * @returns {Promise<boolean>}
- */
-async function verifyPassword(password, stored) {
-  if (!stored || !stored.includes(':')) return false;
-  const [salt, originalHash] = stored.split(':');
-  return new Promise((resolve) => {
-    crypto.pbkdf2(password, salt, CONFIG.PASSWORD_ITERATIONS, CONFIG.PASSWORD_KEY_LENGTH, 'sha512', (err, key) => {
-      if (err) return resolve(false);
-      try {
-        resolve(crypto.timingSafeEqual(Buffer.from(key.toString('hex'), 'hex'), Buffer.from(originalHash, 'hex')));
-      } catch {
-        resolve(false);
-      }
-    });
-  });
-}
-
-/**
- * Проверка rate limit
- * @param {string} key
- * @param {number} max
- * @returns {Promise<boolean>} true если разрешено
- */
-async function checkRateLimit(key, max) {
-  const rlKey = K.RATE_LIMIT(key);
-  const data = await kv.hgetall(rlKey);
-  const now = Date.now();
+  const salt = crypto.randomBytes(CONFIG.security.PASSWORD_SALT_BYTES).toString('hex');
   
-  if (!data || !data.count) {
-    await kv.hset(rlKey, { count: '1', resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW) });
-    await kv.expire(rlKey, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
-    return true;
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(
+      password,
+      salt,
+      CONFIG.security.PASSWORD_ITERATIONS,
+      CONFIG.security.PASSWORD_KEY_LENGTH,
+      'sha512',
+      (err, key) => {
+        if (err) reject(err);
+        else resolve(`${salt}:${key.toString('hex')}`);
+      }
+    );
+  });
+}
+
+async function verifyPassword(password, stored) {
+  if (typeof password !== 'string' || typeof stored !== 'string') {
+    throw new Error('[Utilities] Password and stored hash must be strings');
+  }
+
+  if (!stored.includes(':')) return false;
+  
+  const [salt, originalHash] = stored.split(':');
+  
+  return new Promise((resolve) => {
+    crypto.pbkdf2(
+      password,
+      salt,
+      CONFIG.security.PASSWORD_ITERATIONS,
+      CONFIG.security.PASSWORD_KEY_LENGTH,
+      'sha512',
+      (err, key) => {
+        if (err) return resolve(false);
+        
+        try {
+          const computedHash = key.toString('hex');
+          const computedBuffer = Buffer.from(computedHash, 'hex');
+          const originalBuffer = Buffer.from(originalHash, 'hex');
+          
+          resolve(crypto.timingSafeEqual(computedBuffer, originalBuffer));
+        } catch {
+          resolve(false);
+        }
+      }
+    );
+  });
+}
+
+async function initializeRateLimitCounter(rlKey, resetAt) {
+  const ttlSeconds = Math.ceil(CONFIG.rateLimit.WINDOW_MILLISECONDS / 1000);
+  
+  await kv.hset(rlKey, {
+    count: '1',
+    resetAt: String(resetAt)
+  });
+  await kv.expire(rlKey, ttlSeconds);
+}
+
+async function checkRateLimit(key, max) {
+  if (typeof key !== 'string' || key.trim() === '') {
+    throw new Error('[Utilities] Rate limit key must be a non-empty string');
   }
   
-  const resetAt = parseInt(data.resetAt, 10);
-  if (now > resetAt) {
-    await kv.del(rlKey);
-    await kv.hset(rlKey, { count: '1', resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW) });
-    await kv.expire(rlKey, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
+  if (typeof max !== 'number' || max < 1) {
+    throw new Error('[Utilities] Rate limit max must be a positive number');
+  }
+
+  const rlKey = K.rateLimit.byKey(key);
+  const data = await kv.hgetall(rlKey);
+  const now = Date.now();
+  const resetAt = now + CONFIG.rateLimit.WINDOW_MILLISECONDS;
+  
+  if (!data || !data.count || now > parseInt(data.resetAt, 10)) {
+    if (data) await kv.del(rlKey);
+    await initializeRateLimitCounter(rlKey, resetAt);
     return true;
   }
   
@@ -140,15 +251,18 @@ async function checkRateLimit(key, max) {
   return true;
 }
 
-/**
- * Запись в audit log
- * @param {string} action
- * @param {string} userId
- * @param {string} target
- * @param {string} details
- */
 async function auditLog(action, userId, target = '', details = '') {
+  if (typeof action !== 'string' || action.trim() === '') {
+    throw new Error('[Utilities] Audit action must be a non-empty string');
+  }
+  
+  if (typeof userId !== 'string' || userId.trim() === '') {
+    throw new Error('[Utilities] User ID must be a non-empty string');
+  }
+
   const id = generateId();
+  const ttlSeconds = AUDIT_TTL_DAYS * 24 * 60 * 60;
+  
   const record = {
     id,
     action,
@@ -157,73 +271,280 @@ async function auditLog(action, userId, target = '', details = '') {
     details,
     timestamp: new Date().toISOString()
   };
-  await kv.hset(K.AUDIT(id), record);
-  await kv.sadd(K.AUDIT_INDEX, id);
-  await kv.expire(K.AUDIT(id), 60 * 60 * 24 * 90); // 90 дней
+  
+  await kv.hset(K.audit.byId(id), record);
+  await kv.sadd(K.audit.index, id);
+  await kv.expire(K.audit.byId(id), ttlSeconds);
 }
 
-/**
- * Отправка уведомления в Telegram
- * @param {string} text
- */
 async function sendTelegramNotification(text) {
-  if (!CONFIG.TELEGRAM_BOT_TOKEN || !CONFIG.TELEGRAM_CHAT_ID) return;
+  if (typeof text !== 'string' || text.trim() === '') {
+    throw new Error('[Utilities] Notification text must be a non-empty string');
+  }
+
   try {
-    await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CONFIG.TELEGRAM_CHAT_ID,
-        text,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      })
-    });
+    const response = await fetch(
+      `https://api.telegram.org/bot${CONFIG.telegram.BOT_TOKEN}/sendMessage`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CONFIG.telegram.CHAT_ID,
+          text,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true
+        })
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        `[Utilities] Telegram API error: ${response.status} ${response.statusText}`
+      );
+    }
   } catch (err) {
-    console.error('[Reviews] Telegram notification error:', err.message);
+    console.error('[Utilities] Telegram notification error:', err.message);
   }
 }
 
-/**
- * Валидация username
- * @param {string} username
- * @returns {boolean}
- */
 function isValidUsername(username) {
-  return /^[a-zA-Z0-9_]{3,20}$/.test(username);
+  if (typeof username !== 'string') {
+    throw new Error('[Utilities] Username must be a string');
+  }
+  
+  return USERNAME_PATTERN.test(username);
+}
+
+// ============================================
+// Helper Functions
+// ============================================
+
+function createSessionObject(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    nickname: user.nickname,
+    avatar: user.avatar
+  };
+}
+
+function formatAuthResponse(token, user) {
+  return {
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      nickname: user.nickname,
+      role: user.role,
+      avatar: user.avatar
+    }
+  };
+}
+
+function formatUserResponse(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    nickname: user.nickname,
+    role: user.role,
+    avatar: user.avatar
+  };
+}
+
+async function getUserById(userId) {
+  return await kv.get(K.user.byId(userId));
+}
+
+async function getReviewById(reviewId) {
+  return await kv.get(K.review.byId(reviewId));
+}
+
+async function getAllReviewIds() {
+  return await kv.smembers(K.review.index);
+}
+
+async function getAllReviews() {
+  const reviewIds = await getAllReviewIds();
+  const reviews = [];
+  
+  for (const id of reviewIds) {
+    const review = await getReviewById(id);
+    if (review) {
+      const user = await getUserById(review.userId);
+      if (user) {
+        review.userNickname = user.nickname;
+        review.userAvatar = user.avatar;
+        review.userRole = user.role;
+      }
+      reviews.push(review);
+    }
+  }
+  
+  return reviews;
+}
+
+async function getUserReviewsCount(userId) {
+  const reviewIds = await getAllReviewIds();
+  let count = 0;
+  
+  for (const id of reviewIds) {
+    const review = await getReviewById(id);
+    if (review && review.userId === userId) {
+      count++;
+    }
+  }
+  
+  return count;
+}
+
+function validateRegistrationData({ username, password, nickname }) {
+  if (!username || typeof username !== 'string' || !isValidUsername(username)) {
+    return { 
+      valid: false, 
+      error: 'Имя пользователя: 3-20 символов (латиница, цифры, _)' 
+    };
+  }
+  
+  if (!password || typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    return { 
+      valid: false, 
+      error: `Пароль: минимум ${MIN_PASSWORD_LENGTH} символов` 
+    };
+  }
+  
+  if (!nickname || typeof nickname !== 'string' || 
+      nickname.trim().length < MIN_NICKNAME_LENGTH || 
+      nickname.length > MAX_NICKNAME_LENGTH) {
+    return { 
+      valid: false, 
+      error: `Ник: ${MIN_NICKNAME_LENGTH}-${MAX_NICKNAME_LENGTH} символов` 
+    };
+  }
+  
+  return { valid: true };
+}
+
+function validateReviewData({ rating, title, text }) {
+  const ratingNum = parseInt(rating);
+  
+  if (!rating || isNaN(ratingNum) || ratingNum < MIN_RATING || ratingNum > MAX_RATING) {
+    return { 
+      valid: false, 
+      error: `Оценка от ${MIN_RATING} до ${MAX_RATING}` 
+    };
+  }
+  
+  if (!text || typeof text !== 'string' || text.trim().length < MIN_REVIEW_TEXT_LENGTH) {
+    return { 
+      valid: false, 
+      error: `Текст отзыва: мин. ${MIN_REVIEW_TEXT_LENGTH} символов` 
+    };
+  }
+  
+  if (text.length > MAX_REVIEW_TEXT_LENGTH) {
+    return { 
+      valid: false, 
+      error: `Текст отзыва: макс. ${MAX_REVIEW_TEXT_LENGTH} символов` 
+    };
+  }
+  
+  if (title && title.length > MAX_REVIEW_TITLE_LENGTH) {
+    return { 
+      valid: false, 
+      error: `Заголовок: макс. ${MAX_REVIEW_TITLE_LENGTH} символов` 
+    };
+  }
+  
+  return { valid: true, rating: ratingNum };
 }
 
 // ============================================
 // Middleware
 // ============================================
 
-/**
- * Обязательная авторизация
- */
 async function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Требуется авторизация' });
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || typeof authHeader !== 'string') {
+      console.warn('[Auth] Missing authorization header');
+      return res.status(401).json({ 
+        error: 'Требуется авторизация',
+        code: 'AUTH_HEADER_MISSING'
+      });
+    }
+    
+    if (!authHeader.startsWith('Bearer ')) {
+      console.warn('[Auth] Invalid authorization scheme');
+      return res.status(401).json({ 
+        error: 'Неверный формат авторизации. Используйте Bearer token',
+        code: 'AUTH_SCHEME_INVALID'
+      });
+    }
+    
+    const token = authHeader.slice(7).trim();
+    
+    if (!token) {
+      console.warn('[Auth] Empty bearer token');
+      return res.status(401).json({ 
+        error: 'Токен авторизации пуст',
+        code: 'AUTH_TOKEN_EMPTY'
+      });
+    }
+    
+    const session = await kv.get(K.session.byToken(token));
+    
+    if (!session) {
+      console.warn('[Auth] Invalid or expired session token');
+      return res.status(401).json({ 
+        error: 'Сессия истекла или недействительна',
+        code: 'SESSION_EXPIRED'
+      });
+    }
+    
+    const banInfo = await kv.get(K.moderation.ban(session.id));
+    
+    if (banInfo) {
+      console.warn(`[Auth] Banned user attempted access: ${session.id}`);
+      return res.status(403).json({ 
+        error: `Аккаунт заблокирован: ${banInfo.reason || 'Не указана причина'}`,
+        code: 'ACCOUNT_BANNED',
+        bannedAt: banInfo.timestamp,
+        reason: banInfo.reason
+      });
+    }
+    
+    req.user = session;
+    req.authToken = token;
+    
+    next();
+  } catch (err) {
+    console.error('[Auth] Authorization middleware error:', err.message);
+    return res.status(500).json({ 
+      error: 'Внутренняя ошибка сервера при проверке авторизации',
+      code: 'AUTH_INTERNAL_ERROR'
+    });
   }
-  const token = authHeader.split(' ')[1];
-  const session = await kv.get(K.SESSION(token));
-  if (!session) return res.status(401).json({ error: 'Сессия истекла' });
-  
-  const isBanned = await kv.get(K.BAN(session.id));
-  if (isBanned) return res.status(403).json({ error: 'Аккаунт заблокирован: ' + isBanned.reason });
-
-  req.user = session;
-  req.authToken = token;
-  next();
 }
 
-/**
- * Требуются права администратора
- */
 function requireAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Требуются права администратора' });
+  if (!req.user) {
+    console.warn('[Admin] requireAdmin called without authentication');
+    return res.status(401).json({ 
+      error: 'Требуется авторизация',
+      code: 'AUTH_REQUIRED'
+    });
   }
+  
+  if (req.user.role !== 'admin') {
+    console.warn(`[Admin] Non-admin user attempted admin action: ${req.user.id}`);
+    return res.status(403).json({ 
+      error: 'Требуются права администратора',
+      code: 'INSUFFICIENT_PRIVILEGES'
+    });
+  }
+  
   next();
 }
 
@@ -231,39 +552,46 @@ function requireAdmin(req, res, next) {
 // Auth Routes
 // ============================================
 
-/**
- * POST /auth/register — регистрация пользователя
- */
 router.post('/auth/register', async (req, res) => {
   try {
-    // Rate limit
     const ip = req.ip;
-    if (!await checkRateLimit(`reg:${ip}`, CONFIG.RATE_LIMIT_MAX_REGISTRATION)) {
-      return res.status(429).json({ error: 'Слишком много попыток регистрации. Попробуйте позже.' });
+    const rateLimitKey = `reg:${ip}`;
+    
+    if (!await checkRateLimit(rateLimitKey, CONFIG.rateLimit.MAX_REGISTRATION_REQUESTS)) {
+      console.warn(`[Auth/Register] Rate limit exceeded for IP: ${ip}`);
+      return res.status(429).json({ 
+        error: 'Слишком много попыток регистрации. Попробуйте позже.',
+        code: 'RATE_LIMIT_EXCEEDED'
+      });
     }
 
     const { username, password, nickname } = req.body;
     
-    if (!username || !isValidUsername(username)) {
-      return res.status(400).json({ error: 'Имя пользователя: 3-20 символов (латиница, цифры, _)' });
-    }
-    if (!password || password.length < 6) {
-      return res.status(400).json({ error: 'Пароль: минимум 6 символов' });
-    }
-    if (!nickname || nickname.trim().length < 2 || nickname.length > 30) {
-      return res.status(400).json({ error: 'Ник: 2-30 символов' });
+    const validation = validateRegistrationData({ username, password, nickname });
+    if (!validation.valid) {
+      return res.status(400).json({ 
+        error: validation.error,
+        code: 'VALIDATION_ERROR'
+      });
     }
 
-    // Проверка уникальности
-    const existingId = await kv.get(K.USER_BY_USERNAME(username.toLowerCase()));
-    if (existingId) return res.status(409).json({ error: 'Имя пользователя занято' });
+    const normalizedUsername = username.toLowerCase().trim();
+    
+    const existingId = await kv.get(K.user.byUsername(normalizedUsername));
+    if (existingId) {
+      console.warn(`[Auth/Register] Username already taken: ${normalizedUsername}`);
+      return res.status(409).json({ 
+        error: 'Имя пользователя занято',
+        code: 'USERNAME_TAKEN'
+      });
+    }
 
     const userId = generateId();
     const passwordHash = await hashPassword(password);
     
     const user = {
       id: userId,
-      username: username.toLowerCase(),
+      username: normalizedUsername,
       nickname: nickname.trim(),
       passwordHash,
       role: 'user',
@@ -271,264 +599,340 @@ router.post('/auth/register', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    // Сохранение
-    await kv.set(K.USER(userId), user);
-    await kv.set(K.USER_BY_USERNAME(username.toLowerCase()), userId);
-    await kv.sadd(K.USERS_INDEX, userId);
+    await kv.set(K.user.byId(userId), user);
+    await kv.set(K.user.byUsername(normalizedUsername), userId);
+    await kv.sadd(K.user.index, userId);
 
-    // Создание сессии
     const token = generateToken();
-    const session = { 
-      id: user.id, 
-      username: user.username, 
-      role: user.role, 
-      nickname: user.nickname, 
-      avatar: user.avatar 
-    };
-    await kv.set(K.SESSION(token), session, { ex: CONFIG.SESSION_TTL });
+    const session = createSessionObject(user);
+    await kv.set(K.session.byToken(token), session, { 
+      ex: CONFIG.security.SESSION_TTL_SECONDS 
+    });
 
-    // Telegram уведомление
+    await auditLog('user_registered', userId, '', `Username: ${normalizedUsername}`);
+    
     await sendTelegramNotification(
       `👤 <b>Новая регистрация</b>\n\n` +
-      `Ник: ${nickname}\n` +
-      `Username: @${username}\n` +
+      `Ник: ${nickname.trim()}\n` +
+      `Username: @${normalizedUsername}\n` +
       `ID: <code>${userId}</code>`
     );
 
-    res.json({ 
-      token, 
-      user: { 
-        id: user.id, 
-        username: user.username, 
-        nickname: user.nickname, 
-        role: user.role, 
-        avatar: user.avatar 
-      } 
-    });
+    console.log(`[Auth/Register] New user registered: ${userId} (${normalizedUsername})`);
+
+    res.status(201).json(formatAuthResponse(token, user));
   } catch (err) {
-    console.error('[reviews/register]', err);
-    res.status(500).json({ error: 'Ошибка сервера' });
+    console.error('[Auth/Register] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при регистрации',
+      code: 'REGISTRATION_ERROR'
+    });
   }
 });
 
-/**
- * POST /auth/login — вход пользователя
- */
 router.post('/auth/login', async (req, res) => {
   try {
+    const ip = req.ip;
+    const rateLimitKey = `login:${ip}`;
+    
+    if (!await checkRateLimit(rateLimitKey, CONFIG.rateLimit.MAX_REVIEWS_REQUESTS)) {
+      console.warn(`[Auth/Login] Rate limit exceeded for IP: ${ip}`);
+      return res.status(429).json({ 
+        error: 'Слишком много попыток входа. Попробуйте позже.',
+        code: 'RATE_LIMIT_EXCEEDED'
+      });
+    }
+
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Укажите логин и пароль' });
+    
+    if (!username || typeof username !== 'string' || 
+        !password || typeof password !== 'string') {
+      return res.status(400).json({ 
+        error: 'Укажите логин и пароль',
+        code: 'MISSING_CREDENTIALS'
+      });
     }
 
-    const userId = await kv.get(K.USER_BY_USERNAME(username.toLowerCase()));
-    if (!userId) return res.status(401).json({ error: 'Неверный логин или пароль' });
+    const normalizedUsername = username.toLowerCase().trim();
+    const userId = await kv.get(K.user.byUsername(normalizedUsername));
+    
+    if (!userId) {
+      console.warn(`[Auth/Login] User not found: ${normalizedUsername}`);
+      return res.status(401).json({ 
+        error: 'Неверный логин или пароль',
+        code: 'INVALID_CREDENTIALS'
+      });
+    }
 
-    const user = await kv.get(K.USER(userId));
+    const user = await kv.get(K.user.byId(userId));
+    
     if (!user || !await verifyPassword(password, user.passwordHash)) {
-      return res.status(401).json({ error: 'Неверный логин или пароль' });
+      console.warn(`[Auth/Login] Invalid password for user: ${userId}`);
+      return res.status(401).json({ 
+        error: 'Неверный логин или пароль',
+        code: 'INVALID_CREDENTIALS'
+      });
     }
 
-    const isBanned = await kv.get(K.BAN(userId));
-    if (isBanned) return res.status(403).json({ error: 'Аккаунт заблокирован: ' + isBanned.reason });
+    const banInfo = await kv.get(K.moderation.ban(userId));
+    if (banInfo) {
+      console.warn(`[Auth/Login] Banned user attempted login: ${userId}`);
+      return res.status(403).json({ 
+        error: `Аккаунт заблокирован: ${banInfo.reason || 'Не указана причина'}`,
+        code: 'ACCOUNT_BANNED',
+        bannedAt: banInfo.timestamp,
+        reason: banInfo.reason
+      });
+    }
 
     const token = generateToken();
-    const session = { 
-      id: user.id, 
-      username: user.username, 
-      role: user.role, 
-      nickname: user.nickname, 
-      avatar: user.avatar 
-    };
-    await kv.set(K.SESSION(token), session, { ex: CONFIG.SESSION_TTL });
-
-    res.json({ 
-      token, 
-      user: { 
-        id: user.id, 
-        username: user.username, 
-        nickname: user.nickname, 
-        role: user.role, 
-        avatar: user.avatar 
-      } 
+    const session = createSessionObject(user);
+    await kv.set(K.session.byToken(token), session, { 
+      ex: CONFIG.security.SESSION_TTL_SECONDS 
     });
+
+    await auditLog('user_login', userId);
+    console.log(`[Auth/Login] User logged in: ${userId} (${normalizedUsername})`);
+
+    res.json(formatAuthResponse(token, user));
   } catch (err) {
-    console.error('[reviews/login]', err);
-    res.status(500).json({ error: 'Ошибка сервера' });
+    console.error('[Auth/Login] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при входе',
+      code: 'LOGIN_ERROR'
+    });
   }
 });
 
-/**
- * POST /auth/admin — вход администратора через ADMIN_TOKEN
- */
 router.post('/auth/admin', async (req, res) => {
   try {
     const { adminToken } = req.body;
-    if (!CONFIG.ADMIN_TOKEN || !adminToken) {
-      return res.status(400).json({ error: 'Admin token не настроен' });
+    
+    if (!CONFIG.security.ADMIN_TOKEN || !adminToken) {
+      return res.status(400).json({ 
+        error: 'Admin token не настроен или не предоставлен',
+        code: 'ADMIN_TOKEN_MISSING'
+      });
     }
 
-    // Timing-safe сравнение
-    const isValid = adminToken.length === CONFIG.ADMIN_TOKEN.length &&
-      crypto.timingSafeEqual(Buffer.from(adminToken), Buffer.from(CONFIG.ADMIN_TOKEN));
+    if (typeof adminToken !== 'string') {
+      return res.status(400).json({ 
+        error: 'Admin token должен быть строкой',
+        code: 'INVALID_TOKEN_TYPE'
+      });
+    }
+
+    const tokenBuffer = Buffer.from(adminToken);
+    const configBuffer = Buffer.from(CONFIG.security.ADMIN_TOKEN);
+    
+    const isValid = tokenBuffer.length === configBuffer.length &&
+      crypto.timingSafeEqual(tokenBuffer, configBuffer);
     
     if (!isValid) {
-      return res.status(403).json({ error: 'Неверный admin token' });
+      console.warn('[Auth/Admin] Invalid admin token attempt');
+      await auditLog('admin_login_failed', '', '', 'Invalid admin token');
+      return res.status(403).json({ 
+        error: 'Неверный admin token',
+        code: 'INVALID_ADMIN_TOKEN'
+      });
     }
 
-    // Поиск или создание админ-аккаунта
-    let adminId = await kv.get('reviews:admin_id');
+    let adminId = await kv.get(K.admin.id);
     let user;
     
     if (adminId) {
-      user = await kv.get(K.USER(adminId));
+      user = await kv.get(K.user.byId(adminId));
     }
     
     if (!user) {
-      // Создаём админ-аккаунт
       adminId = generateId();
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      
       user = {
         id: adminId,
-        username: 'admin',
-        nickname: 'Администратор',
-        passwordHash: await hashPassword(crypto.randomBytes(32).toString('hex')), // случайный пароль
+        username: ADMIN_USERNAME,
+        nickname: ADMIN_NICKNAME,
+        passwordHash: await hashPassword(randomPassword),
         role: 'admin',
         avatar: null,
         createdAt: new Date().toISOString()
       };
-      await kv.set(K.USER(adminId), user);
-      await kv.set(K.USER_BY_USERNAME('admin'), adminId);
-      await kv.sadd(K.USERS_INDEX, adminId);
-      await kv.set('reviews:admin_id', adminId);
+      
+      await kv.set(K.user.byId(adminId), user);
+      await kv.set(K.user.byUsername(ADMIN_USERNAME), adminId);
+      await kv.sadd(K.user.index, adminId);
+      await kv.set(K.admin.id, adminId);
       
       await auditLog('admin_account_created', adminId, '', 'Автоматическое создание при первом входе');
+      console.log(`[Auth/Admin] Admin account created: ${adminId}`);
     }
 
     const token = generateToken();
-    const session = { 
-      id: user.id, 
-      username: user.username, 
-      role: user.role, 
-      nickname: user.nickname, 
-      avatar: user.avatar 
-    };
-    await kv.set(K.SESSION(token), session, { ex: CONFIG.SESSION_TTL });
+    const session = createSessionObject(user);
+    await kv.set(K.session.byToken(token), session, { 
+      ex: CONFIG.security.SESSION_TTL_SECONDS 
+    });
 
     await auditLog('admin_login', user.id);
+    console.log(`[Auth/Admin] Admin logged in: ${user.id}`);
 
-    res.json({ 
-      token, 
-      user: { 
-        id: user.id, 
-        username: user.username, 
-        nickname: user.nickname, 
-        role: user.role, 
-        avatar: user.avatar 
-      } 
-    });
+    res.json(formatAuthResponse(token, user));
   } catch (err) {
-    console.error('[reviews/admin]', err);
-    res.status(500).json({ error: 'Ошибка сервера' });
+    console.error('[Auth/Admin] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при входе администратора',
+      code: 'ADMIN_LOGIN_ERROR'
+    });
   }
 });
 
-/**
- * POST /auth/logout — выход
- */
 router.post('/auth/logout', requireAuth, async (req, res) => {
-  await kv.del(K.SESSION(req.authToken));
-  res.json({ success: true });
+  try {
+    await kv.del(K.session.byToken(req.authToken));
+    await auditLog('user_logout', req.user.id);
+    console.log(`[Auth/Logout] User logged out: ${req.user.id}`);
+    
+    res.json({ 
+      success: true,
+      message: 'Выход выполнен успешно'
+    });
+  } catch (err) {
+    console.error('[Auth/Logout] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при выходе',
+      code: 'LOGOUT_ERROR'
+    });
+  }
 });
 
 // ============================================
 // User Profile Routes
 // ============================================
 
-/**
- * GET /me — получение профиля
- */
 router.get('/me', requireAuth, async (req, res) => {
-  const user = await kv.get(K.USER(req.user.id));
-  if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
-  res.json({ 
-    id: user.id, 
-    username: user.username, 
-    nickname: user.nickname, 
-    role: user.role, 
-    avatar: user.avatar 
-  });
-});
-
-/**
- * PUT /me — обновление профиля
- */
-router.put('/me', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
-    const { nickname, avatarUrl } = req.body;
-    const user = await kv.get(K.USER(req.user.id));
-    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
-    
-    let newAvatar = user.avatar;
-    if (req.file) {
-      const ext = req.file.originalname.match(/\.[a-z0-9]+$/i)?.[0] || '.jpg';
-      const blob = await put(`reviews/avatars/${req.user.id}${ext}`, req.file.buffer, { access: 'public' });
-      newAvatar = blob.url;
-    } else if (avatarUrl) {
-      newAvatar = avatarUrl;
+    const user = await getUserById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'Пользователь не найден',
+        code: 'USER_NOT_FOUND'
+      });
     }
-
-    if (nickname && nickname.trim().length >= 2 && nickname.length <= 30) {
-      user.nickname = nickname.trim();
-    }
-    user.avatar = newAvatar;
     
-    await kv.set(K.USER(req.user.id), user);
-    
-    // Обновляем сессию
-    const session = await kv.get(K.SESSION(req.authToken));
-    session.nickname = user.nickname;
-    session.avatar = user.avatar;
-    await kv.set(K.SESSION(req.authToken), session);
-
-    res.json({ 
-      success: true, 
-      user: { 
-        id: user.id, 
-        username: user.username, 
-        nickname: user.nickname, 
-        role: user.role, 
-        avatar: user.avatar 
-      } 
-    });
+    res.json(formatUserResponse(user));
   } catch (err) {
-    console.error('[reviews/profile]', err);
-    res.status(500).json({ error: 'Ошибка обновления профиля' });
+    console.error('[Profile/Get] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при получении профиля',
+      code: 'PROFILE_GET_ERROR'
+    });
   }
 });
 
-/**
- * POST /me/password — смена пароля
- */
+router.put('/me', requireAuth, upload.single('avatar'), async (req, res) => {
+  try {
+    const { nickname, avatarUrl } = req.body;
+    const user = await getUserById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'Пользователь не найден',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    let newAvatar = user.avatar;
+    
+    if (req.file) {
+      const ext = req.file.originalname.match(/\.[a-z0-9]+$/i)?.[0] || '.jpg';
+      const blob = await put(`reviews/avatars/${req.user.id}${ext}`, req.file.buffer, { 
+        access: 'public' 
+      });
+      newAvatar = blob.url;
+    } else if (avatarUrl && typeof avatarUrl === 'string') {
+      newAvatar = avatarUrl;
+    }
+
+    if (nickname && typeof nickname === 'string') {
+      const trimmedNickname = nickname.trim();
+      if (trimmedNickname.length >= MIN_NICKNAME_LENGTH && 
+          trimmedNickname.length <= MAX_NICKNAME_LENGTH) {
+        user.nickname = trimmedNickname;
+      }
+    }
+    
+    user.avatar = newAvatar;
+    
+    await kv.set(K.user.byId(req.user.id), user);
+    
+    const session = await kv.get(K.session.byToken(req.authToken));
+    if (session) {
+      session.nickname = user.nickname;
+      session.avatar = user.avatar;
+      await kv.set(K.session.byToken(req.authToken), session);
+    }
+
+    await auditLog('profile_updated', user.id);
+    console.log(`[Profile/Update] User profile updated: ${user.id}`);
+
+    res.json({ 
+      success: true, 
+      user: formatUserResponse(user)
+    });
+  } catch (err) {
+    console.error('[Profile/Update] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка обновления профиля',
+      code: 'PROFILE_UPDATE_ERROR'
+    });
+  }
+});
+
 router.post('/me/password', requireAuth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ error: 'Новый пароль: минимум 6 символов' });
+    
+    if (!newPassword || typeof newPassword !== 'string' || 
+        newPassword.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({ 
+        error: `Новый пароль: минимум ${MIN_PASSWORD_LENGTH} символов`,
+        code: 'INVALID_NEW_PASSWORD'
+      });
     }
 
-    const user = await kv.get(K.USER(req.user.id));
+    const user = await getUserById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'Пользователь не найден',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
     if (!await verifyPassword(currentPassword, user.passwordHash)) {
-      return res.status(401).json({ error: 'Неверный текущий пароль' });
+      console.warn(`[Profile/Password] Invalid current password for user: ${user.id}`);
+      return res.status(401).json({ 
+        error: 'Неверный текущий пароль',
+        code: 'INVALID_CURRENT_PASSWORD'
+      });
     }
 
     user.passwordHash = await hashPassword(newPassword);
-    await kv.set(K.USER(req.user.id), user);
+    await kv.set(K.user.byId(req.user.id), user);
 
     await auditLog('password_changed', user.id);
+    console.log(`[Profile/Password] Password changed for user: ${user.id}`);
 
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      message: 'Пароль успешно изменен'
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка смены пароля' });
+    console.error('[Profile/Password] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка смены пароля',
+      code: 'PASSWORD_CHANGE_ERROR'
+    });
   }
 });
 
@@ -536,72 +940,47 @@ router.post('/me/password', requireAuth, async (req, res) => {
 // Review Routes
 // ============================================
 
-/**
- * GET / — список всех отзывов
- */
 router.get('/', async (req, res) => {
   try {
-    const reviewIds = await kv.smembers(K.REVIEWS_INDEX);
-    const reviews = [];
-    
-    for (const id of reviewIds) {
-      const review = await kv.get(K.REVIEW(id));
-      if (review) {
-        // Добавляем информацию о пользователе
-        const user = await kv.get(K.USER(review.userId));
-        if (user) {
-          review.userNickname = user.nickname;
-          review.userAvatar = user.avatar;
-          review.userRole = user.role;
-          // Подсчёт отзывов пользователя
-          const userReviews = reviews.filter(r => r.userId === user.id).length + 
-            (await kv.smembers(K.REVIEWS_INDEX)).filter(async rid => {
-              const r = await kv.get(K.REVIEW(rid));
-              return r && r.userId === user.id;
-            }).length;
-          review.userReviewCount = userReviews;
-        }
-        reviews.push(review);
-      }
-    }
-    
+    const reviews = await getAllReviews();
     res.json({ reviews });
   } catch (err) {
-    console.error('[reviews/list]', err);
-    res.status(500).json({ error: 'Ошибка загрузки отзывов' });
+    console.error('[Reviews/List] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка загрузки отзывов',
+      code: 'REVIEWS_LIST_ERROR'
+    });
   }
 });
 
-/**
- * POST / — создание отзыва
- */
 router.post('/', requireAuth, async (req, res) => {
   try {
-    // Rate limit
-    if (!await checkRateLimit(`review:${req.user.id}`, CONFIG.RATE_LIMIT_MAX_REVIEWS)) {
-      return res.status(429).json({ error: 'Слишком много отзывов. Попробуйте позже.' });
+    const rateLimitKey = `review:${req.user.id}`;
+    
+    if (!await checkRateLimit(rateLimitKey, CONFIG.rateLimit.MAX_REVIEWS_REQUESTS)) {
+      console.warn(`[Reviews/Create] Rate limit exceeded for user: ${req.user.id}`);
+      return res.status(429).json({ 
+        error: 'Слишком много отзывов. Попробуйте позже.',
+        code: 'RATE_LIMIT_EXCEEDED'
+      });
     }
 
     const { rating, title, text } = req.body;
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Оценка от 1 до 5' });
-    }
-    if (!text || text.trim().length < 10) {
-      return res.status(400).json({ error: 'Текст отзыва: мин. 10 символов' });
-    }
-    if (text.length > 2000) {
-      return res.status(400).json({ error: 'Текст отзыва: макс. 2000 символов' });
-    }
-    if (title && title.length > 100) {
-      return res.status(400).json({ error: 'Заголовок: макс. 100 символов' });
+    
+    const validation = validateReviewData({ rating, title, text });
+    if (!validation.valid) {
+      return res.status(400).json({ 
+        error: validation.error,
+        code: 'VALIDATION_ERROR'
+      });
     }
 
     const reviewId = generateId();
     const review = {
       id: reviewId,
       userId: req.user.id,
-      rating: parseInt(rating),
-      title: title ? title.trim() : '',
+      rating: validation.rating,
+      title: title ? title.trim().substring(0, MAX_REVIEW_TITLE_LENGTH) : '',
       text: text.trim(),
       likes: 0,
       likedBy: [],
@@ -615,10 +994,11 @@ router.post('/', requireAuth, async (req, res) => {
       userAgent: req.headers['user-agent']
     };
 
-    await kv.set(K.REVIEW(reviewId), review);
-    await kv.sadd(K.REVIEWS_INDEX, reviewId);
+    await kv.set(K.review.byId(reviewId), review);
+    await kv.sadd(K.review.index, reviewId);
 
-    // Telegram уведомление
+    await auditLog('review_created', req.user.id, reviewId);
+
     await sendTelegramNotification(
       `⭐ <b>Новый отзыв</b> (${'★'.repeat(review.rating)})\n\n` +
       `<b>${review.title || '(без заголовка)'}</b>\n` +
@@ -626,97 +1006,164 @@ router.post('/', requireAuth, async (req, res) => {
       `Автор: ${req.user.nickname}`
     );
 
-    res.json({ success: true, review });
+    console.log(`[Reviews/Create] New review created: ${reviewId} by user ${req.user.id}`);
+
+    res.status(201).json({ 
+      success: true, 
+      review 
+    });
   } catch (err) {
-    console.error('[reviews/create]', err);
-    res.status(500).json({ error: 'Ошибка создания отзыва' });
+    console.error('[Reviews/Create] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка создания отзыва',
+      code: 'REVIEW_CREATE_ERROR'
+    });
   }
 });
 
-/**
- * PUT /:id — редактирование отзыва (только автор)
- */
 router.put('/:id', requireAuth, async (req, res) => {
   try {
-    const review = await kv.get(K.REVIEW(req.params.id));
-    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
+    const review = await getReviewById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ 
+        error: 'Отзыв не найден',
+        code: 'REVIEW_NOT_FOUND'
+      });
+    }
+    
     if (review.userId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Нет прав на редактирование' });
+      console.warn(`[Reviews/Update] Unauthorized edit attempt by user ${req.user.id} on review ${req.params.id}`);
+      return res.status(403).json({ 
+        error: 'Нет прав на редактирование',
+        code: 'INSUFFICIENT_PRIVILEGES'
+      });
     }
 
     const { title, text } = req.body;
-    if (text && text.trim().length < 10) {
-      return res.status(400).json({ error: 'Текст отзыва: мин. 10 символов' });
+    
+    if (text !== undefined) {
+      if (typeof text !== 'string' || text.trim().length < MIN_REVIEW_TEXT_LENGTH) {
+        return res.status(400).json({ 
+          error: `Текст отзыва: мин. ${MIN_REVIEW_TEXT_LENGTH} символов`,
+          code: 'TEXT_TOO_SHORT'
+        });
+      }
+      if (text.length > MAX_REVIEW_TEXT_LENGTH) {
+        return res.status(400).json({ 
+          error: `Текст отзыва: макс. ${MAX_REVIEW_TEXT_LENGTH} символов`,
+          code: 'TEXT_TOO_LONG'
+        });
+      }
+      review.text = text.trim();
     }
-    if (text && text.length > 2000) {
-      return res.status(400).json({ error: 'Текст отзыва: макс. 2000 символов' });
+    
+    if (title !== undefined) {
+      if (typeof title === 'string') {
+        review.title = title.trim().substring(0, MAX_REVIEW_TITLE_LENGTH);
+      }
     }
-
-    if (title !== undefined) review.title = title.trim().substring(0, 100);
-    if (text !== undefined) review.text = text.trim();
+    
     review.isEdited = true;
     review.editedAt = new Date().toISOString();
 
-    await kv.set(K.REVIEW(req.params.id), review);
+    await kv.set(K.review.byId(req.params.id), review);
 
-    res.json({ success: true, review });
+    await auditLog('review_updated', req.user.id, review.id);
+    console.log(`[Reviews/Update] Review updated: ${review.id} by user ${req.user.id}`);
+
+    res.json({ 
+      success: true, 
+      review 
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка обновления' });
+    console.error('[Reviews/Update] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка обновления отзыва',
+      code: 'REVIEW_UPDATE_ERROR'
+    });
   }
 });
 
-/**
- * POST /:id/like — лайк отзыва (1 лайк на пользователя)
- */
 router.post('/:id/like', requireAuth, async (req, res) => {
   try {
-    const review = await kv.get(K.REVIEW(req.params.id));
-    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
+    const review = await getReviewById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ 
+        error: 'Отзыв не найден',
+        code: 'REVIEW_NOT_FOUND'
+      });
+    }
     
     review.likedBy = review.likedBy || [];
     const idx = review.likedBy.indexOf(req.user.id);
     
     if (idx >= 0) {
-      // Убираем лайк
       review.likedBy.splice(idx, 1);
       review.likes = Math.max(0, (review.likes || 1) - 1);
     } else {
-      // Добавляем лайк
       review.likedBy.push(req.user.id);
       review.likes = (review.likes || 0) + 1;
     }
     
-    await kv.set(K.REVIEW(req.params.id), review);
-    res.json({ likes: review.likes, liked: idx < 0 });
+    await kv.set(K.review.byId(req.params.id), review);
+    
+    console.log(`[Reviews/Like] Review ${req.params.id} ${idx >= 0 ? 'unliked' : 'liked'} by user ${req.user.id}`);
+    
+    res.json({ 
+      likes: review.likes, 
+      liked: idx < 0 
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Reviews/Like] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при постановке лайка',
+      code: 'REVIEW_LIKE_ERROR'
+    });
   }
 });
 
-/**
- * POST /:id/report — жалоба на отзыв
- */
 router.post('/:id/report', requireAuth, async (req, res) => {
   try {
-    const review = await kv.get(K.REVIEW(req.params.id));
-    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
+    const review = await getReviewById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ 
+        error: 'Отзыв не найден',
+        code: 'REVIEW_NOT_FOUND'
+      });
+    }
+    
     if (review.userId === req.user.id) {
-      return res.status(400).json({ error: 'Нельзя пожаловаться на свой отзыв' });
+      return res.status(400).json({ 
+        error: 'Нельзя пожаловаться на свой отзыв',
+        code: 'SELF_REPORT_NOT_ALLOWED'
+      });
     }
 
     review.reportedBy = review.reportedBy || [];
+    
     if (review.reportedBy.includes(req.user.id)) {
-      return res.status(400).json({ error: 'Вы уже жаловались на этот отзыв' });
+      return res.status(400).json({ 
+        error: 'Вы уже жаловались на этот отзыв',
+        code: 'ALREADY_REPORTED'
+      });
     }
 
     const { reason, comment } = req.body;
-    if (!reason) return res.status(400).json({ error: 'Укажите причину жалобы' });
+    
+    if (!reason || typeof reason !== 'string') {
+      return res.status(400).json({ 
+        error: 'Укажите причину жалобы',
+        code: 'MISSING_REASON'
+      });
+    }
 
     review.reportedBy.push(req.user.id);
     review.reportsCount = (review.reportsCount || 0) + 1;
-    await kv.set(K.REVIEW(req.params.id), review);
+    await kv.set(K.review.byId(req.params.id), review);
 
-    // Создаём запись жалобы
     const reportId = generateId();
     const report = {
       id: reportId,
@@ -731,10 +1178,12 @@ router.post('/:id/report', requireAuth, async (req, res) => {
       status: 'pending',
       createdAt: new Date().toISOString()
     };
-    await kv.set(K.REPORT(reportId), report);
-    await kv.sadd(K.REPORTS_INDEX, reportId);
+    
+    await kv.set(K.moderation.report(reportId), report);
+    await kv.sadd(K.moderation.reportsIndex, reportId);
 
-    // Telegram уведомление
+    await auditLog('review_reported', req.user.id, review.id, `Причина: ${reason}`);
+
     await sendTelegramNotification(
       `🚨 <b>Новая жалоба</b>\n\n` +
       `Причина: ${reason}\n` +
@@ -742,26 +1191,46 @@ router.post('/:id/report', requireAuth, async (req, res) => {
       `На отзыв: ${review.title || review.text.substring(0, 100)}`
     );
 
-    res.json({ success: true });
+    console.log(`[Reviews/Report] Review ${review.id} reported by user ${req.user.id}`);
+
+    res.json({ 
+      success: true,
+      reportId 
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Reviews/Report] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при отправке жалобы',
+      code: 'REVIEW_REPORT_ERROR'
+    });
   }
 });
 
-/**
- * POST /:id/reply — ответ на отзыв (только админ)
- */
 router.post('/:id/reply', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const review = await kv.get(K.REVIEW(req.params.id));
-    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
+    const review = await getReviewById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ 
+        error: 'Отзыв не найден',
+        code: 'REVIEW_NOT_FOUND'
+      });
+    }
 
     const { text } = req.body;
-    if (!text || text.trim().length < 5) {
-      return res.status(400).json({ error: 'Ответ: мин. 5 символов' });
+    
+    if (!text || typeof text !== 'string' || text.trim().length < MIN_REPLY_LENGTH) {
+      return res.status(400).json({ 
+        error: `Ответ: мин. ${MIN_REPLY_LENGTH} символов`,
+        code: 'REPLY_TOO_SHORT'
+      });
     }
-    if (text.length > 1000) {
-      return res.status(400).json({ error: 'Ответ: макс. 1000 символов' });
+    
+    if (text.length > MAX_REPLY_LENGTH) {
+      return res.status(400).json({ 
+        error: `Ответ: макс. ${MAX_REPLY_LENGTH} символов`,
+        code: 'REPLY_TOO_LONG'
+      });
     }
 
     review.reply = {
@@ -772,12 +1241,64 @@ router.post('/:id/reply', requireAuth, requireAdmin, async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    await kv.set(K.REVIEW(req.params.id), review);
+    await kv.set(K.review.byId(req.params.id), review);
+    
     await auditLog('review_replied', req.user.id, review.id);
+    console.log(`[Reviews/Reply] Review ${review.id} replied by admin ${req.user.id}`);
 
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      reply: review.reply
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Reviews/Reply] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при создании ответа',
+      code: 'REVIEW_REPLY_ERROR'
+    });
+  }
+});
+
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    const review = await getReviewById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ 
+        error: 'Отзыв не найден',
+        code: 'REVIEW_NOT_FOUND'
+      });
+    }
+    
+    if (review.userId !== req.user.id && req.user.role !== 'admin') {
+      console.warn(`[Reviews/Delete] Unauthorized delete attempt by user ${req.user.id} on review ${req.params.id}`);
+      return res.status(403).json({ 
+        error: 'Нет прав на удаление',
+        code: 'INSUFFICIENT_PRIVILEGES'
+      });
+    }
+
+    await kv.del(K.review.byId(req.params.id));
+    await kv.srem(K.review.index, req.params.id);
+
+    if (req.user.role === 'admin') {
+      await auditLog('review_deleted', req.user.id, review.id, `Автор: ${review.userId}`);
+      console.log(`[Reviews/Delete] Review ${req.params.id} deleted by admin ${req.user.id}`);
+    } else {
+      await auditLog('review_deleted_by_author', req.user.id, review.id);
+      console.log(`[Reviews/Delete] Review ${req.params.id} deleted by author ${req.user.id}`);
+    }
+
+    res.json({ 
+      success: true,
+      message: 'Отзыв успешно удален'
+    });
+  } catch (err) {
+    console.error('[Reviews/Delete] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка удаления отзыва',
+      code: 'REVIEW_DELETE_ERROR'
+    });
   }
 });
 
@@ -785,58 +1306,41 @@ router.post('/:id/reply', requireAuth, requireAdmin, async (req, res) => {
 // Admin Routes
 // ============================================
 
-/**
- * DELETE /:id — удаление отзыва (админ или автор)
- */
-router.delete('/:id', requireAuth, async (req, res) => {
-  try {
-    const review = await kv.get(K.REVIEW(req.params.id));
-    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
-    
-    if (review.userId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Нет прав' });
-    }
-
-    await kv.del(K.REVIEW(req.params.id));
-    await kv.srem(K.REVIEWS_INDEX, req.params.id);
-
-    if (req.user.role === 'admin') {
-      await auditLog('review_deleted', req.user.id, review.id, `Автор: ${review.userId}`);
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Ошибка удаления' });
-  }
-});
-
-/**
- * POST /admin/:id/pin — закрепить/открепить отзыв
- */
 router.post('/admin/:id/pin', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const review = await kv.get(K.REVIEW(req.params.id));
-    if (!review) return res.status(404).json({ error: 'Отзыв не найден' });
+    const review = await getReviewById(req.params.id);
+    
+    if (!review) {
+      return res.status(404).json({ 
+        error: 'Отзыв не найден',
+        code: 'REVIEW_NOT_FOUND'
+      });
+    }
     
     review.isPinned = !review.isPinned;
-    await kv.set(K.REVIEW(req.params.id), review);
+    await kv.set(K.review.byId(req.params.id), review);
     
     await auditLog('review_pinned', req.user.id, review.id, review.isPinned ? 'pinned' : 'unpinned');
+    console.log(`[Admin/Pin] Review ${review.id} ${review.isPinned ? 'pinned' : 'unpinned'} by admin ${req.user.id}`);
 
-    res.json({ success: true, isPinned: review.isPinned });
+    res.json({ 
+      success: true, 
+      isPinned: review.isPinned 
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Pin] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при закреплении отзыва',
+      code: 'REVIEW_PIN_ERROR'
+    });
   }
 });
 
-/**
- * GET /admin/stats — статистика
- */
 router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const userIds = await kv.smembers(K.USERS_INDEX);
-    const reviewIds = await kv.smembers(K.REVIEWS_INDEX);
-    const reportIds = await kv.smembers(K.REPORTS_INDEX);
+    const userIds = await kv.smembers(K.user.index);
+    const reviewIds = await getAllReviewIds();
+    const reportIds = await kv.smembers(K.moderation.reportsIndex);
 
     let totalLikes = 0;
     let totalRating = 0;
@@ -845,15 +1349,15 @@ router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
     let pendingReports = 0;
 
     for (const id of reviewIds) {
-      const review = await kv.get(K.REVIEW(id));
+      const review = await getReviewById(id);
       if (review) {
         totalLikes += review.likes || 0;
         totalRating += review.rating || 0;
         reviewsCount++;
+        
         if ((review.reportsCount || 0) > 0) {
-          // Проверяем статус жалоб
           for (const rid of reportIds) {
-            const report = await kv.get(K.REPORT(rid));
+            const report = await kv.get(K.moderation.report(rid));
             if (report && report.reviewId === id && report.status === 'pending') {
               pendingReports++;
               break;
@@ -864,9 +1368,9 @@ router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
     }
 
     for (const id of userIds) {
-      const user = await kv.get(K.USER(id));
+      const user = await getUserById(id);
       if (user) {
-        const isBanned = await kv.get(K.BAN(id));
+        const isBanned = await kv.get(K.moderation.ban(id));
         if (isBanned) bannedCount++;
       }
     }
@@ -880,79 +1384,97 @@ router.get('/admin/stats', requireAuth, requireAdmin, async (req, res) => {
       bannedUsers: bannedCount
     });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Stats] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при получении статистики',
+      code: 'STATS_ERROR'
+    });
   }
 });
 
-/**
- * GET /admin/reports — список жалоб
- */
 router.get('/admin/reports', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const reportIds = await kv.smembers(K.REPORTS_INDEX);
+    const reportIds = await kv.smembers(K.moderation.reportsIndex);
     const reports = [];
     
     for (const id of reportIds) {
-      const report = await kv.get(K.REPORT(id));
+      const report = await kv.get(K.moderation.report(id));
       if (report && report.status === 'pending') {
         reports.push(report);
       }
     }
     
     reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
     res.json({ reports });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Reports] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при получении списка жалоб',
+      code: 'REPORTS_LIST_ERROR'
+    });
   }
 });
 
-/**
- * POST /admin/reports/:id — обработка жалобы
- */
 router.post('/admin/reports/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const report = await kv.get(K.REPORT(req.params.id));
-    if (!report) return res.status(404).json({ error: 'Жалоба не найдена' });
+    const report = await kv.get(K.moderation.report(req.params.id));
+    
+    if (!report) {
+      return res.status(404).json({ 
+        error: 'Жалоба не найдена',
+        code: 'REPORT_NOT_FOUND'
+      });
+    }
 
-    const { action } = req.body; // 'dismiss' или 'delete'
+    const { action } = req.body;
+    
+    if (!action || !['dismiss', 'delete'].includes(action)) {
+      return res.status(400).json({ 
+        error: 'Действие должно быть "dismiss" или "delete"',
+        code: 'INVALID_ACTION'
+      });
+    }
     
     if (action === 'delete') {
-      await kv.del(K.REVIEW(report.reviewId));
-      await kv.srem(K.REVIEWS_INDEX, report.reviewId);
+      await kv.del(K.review.byId(report.reviewId));
+      await kv.srem(K.review.index, report.reviewId);
       await auditLog('review_deleted_by_report', req.user.id, report.reviewId, `Жалоба: ${report.id}`);
+      console.log(`[Admin/Reports] Review ${report.reviewId} deleted due to report ${report.id}`);
     }
     
     report.status = action === 'delete' ? 'resolved_deleted' : 'resolved_dismissed';
     report.resolvedAt = new Date().toISOString();
     report.resolvedBy = req.user.id;
-    await kv.set(K.REPORT(report.id), report);
+    await kv.set(K.moderation.report(report.id), report);
 
     await auditLog('report_resolved', req.user.id, report.id, action);
+    console.log(`[Admin/Reports] Report ${report.id} resolved with action: ${action}`);
 
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      status: report.status
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Reports] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при обработке жалобы',
+      code: 'REPORT_RESOLVE_ERROR'
+    });
   }
 });
 
-/**
- * GET /admin/users — список пользователей
- */
 router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const userIds = await kv.smembers(K.USERS_INDEX);
+    const userIds = await kv.smembers(K.user.index);
     const users = [];
     
     for (const id of userIds) {
-      const user = await kv.get(K.USER(id));
+      const user = await getUserById(id);
       if (user) {
-        const isBanned = await kv.get(K.BAN(id));
-        const reviewIds = await kv.smembers(K.REVIEWS_INDEX);
-        let reviewsCount = 0;
-        for (const rid of reviewIds) {
-          const review = await kv.get(K.REVIEW(rid));
-          if (review && review.userId === id) reviewsCount++;
-        }
+        const isBanned = await kv.get(K.moderation.ban(id));
+        const reviewsCount = await getUserReviewsCount(id);
+        
         users.push({
           id: user.id,
           username: user.username,
@@ -967,21 +1489,29 @@ router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
     }
     
     users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
     res.json({ users });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Users] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при получении списка пользователей',
+      code: 'USERS_LIST_ERROR'
+    });
   }
 });
 
-/**
- * GET /admin/users/:id/info — детальная информация о пользователе
- */
 router.get('/admin/users/:id/info', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const user = await kv.get(K.USER(req.params.id));
-    if (!user) return res.status(404).json({ error: 'Пользователь не найден' });
+    const user = await getUserById(req.params.id);
     
-    const reviewIds = await kv.smembers(K.REVIEWS_INDEX);
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'Пользователь не найден',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    const reviewIds = await getAllReviewIds();
     let userReviews = 0;
     let totalLikesReceived = 0;
     let totalRating = 0;
@@ -990,7 +1520,7 @@ router.get('/admin/users/:id/info', requireAuth, requireAdmin, async (req, res) 
     let lastUa = 'Неизвестно';
 
     for (const id of reviewIds) {
-      const review = await kv.get(K.REVIEW(id));
+      const review = await getReviewById(id);
       if (review && review.userId === user.id) {
         userReviews++;
         totalLikesReceived += review.likes || 0;
@@ -1001,17 +1531,10 @@ router.get('/admin/users/:id/info', requireAuth, requireAdmin, async (req, res) 
       }
     }
 
-    const isBanned = await kv.get(K.BAN(user.id));
+    const isBanned = await kv.get(K.moderation.ban(user.id));
 
     res.json({ 
-      user: { 
-        id: user.id, 
-        username: user.username, 
-        nickname: user.nickname, 
-        role: user.role, 
-        avatar: user.avatar,
-        createdAt: user.createdAt 
-      },
+      user: formatUserResponse(user),
       stats: { 
         reviewsCount: userReviews, 
         totalLikesReceived, 
@@ -1024,62 +1547,90 @@ router.get('/admin/users/:id/info', requireAuth, requireAdmin, async (req, res) 
       banInfo: isBanned
     });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/UserInfo] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при получении информации о пользователе',
+      code: 'USER_INFO_ERROR'
+    });
   }
 });
 
-/**
- * POST /admin/users/:id/ban — бан пользователя
- */
 router.post('/admin/users/:id/ban', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { reason } = req.body;
+    
     const banInfo = { 
       reason: reason || 'Нарушение правил', 
       date: new Date().toISOString(),
       bannedBy: req.user.id
     };
-    await kv.set(K.BAN(req.params.id), banInfo);
     
-    await auditLog('user_banned', req.user.id, req.params.id, reason);
+    await kv.set(K.moderation.ban(req.params.id), banInfo);
+    
+    await auditLog('user_banned', req.user.id, req.params.id, reason || 'Нарушение правил');
+    console.log(`[Admin/Ban] User ${req.params.id} banned by admin ${req.user.id}`);
 
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      message: 'Пользователь заблокирован',
+      banInfo
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка бана' });
+    console.error('[Admin/Ban] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка блокировки пользователя',
+      code: 'USER_BAN_ERROR'
+    });
   }
 });
 
-/**
- * DELETE /admin/users/:id/ban — разбан пользователя
- */
 router.delete('/admin/users/:id/ban', requireAuth, requireAdmin, async (req, res) => {
   try {
-    await kv.del(K.BAN(req.params.id));
+    await kv.del(K.moderation.ban(req.params.id));
+    
     await auditLog('user_unbanned', req.user.id, req.params.id);
-    res.json({ success: true });
+    console.log(`[Admin/Unban] User ${req.params.id} unbanned by admin ${req.user.id}`);
+    
+    res.json({ 
+      success: true,
+      message: 'Пользователь разблокирован'
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Unban] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка разблокировки пользователя',
+      code: 'USER_UNBAN_ERROR'
+    });
   }
 });
 
-/**
- * GET /admin/audit — audit log
- */
 router.get('/admin/audit', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const logIds = await kv.smembers(K.AUDIT_INDEX);
+    const logIds = await kv.smembers(K.audit.index);
     const logs = [];
     
     for (const id of logIds) {
-      const log = await kv.get(K.AUDIT(id));
+      const log = await kv.get(K.audit.byId(id));
       if (log) logs.push(log);
     }
     
     logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    res.json({ logs: logs.slice(0, 100) });
+    
+    res.json({ 
+      logs: logs.slice(0, AUDIT_LOG_LIMIT),
+      total: logs.length
+    });
   } catch (err) {
-    res.status(500).json({ error: 'Ошибка' });
+    console.error('[Admin/Audit] Error:', err.message);
+    res.status(500).json({ 
+      error: 'Ошибка при получении журнала аудита',
+      code: 'AUDIT_LOG_ERROR'
+    });
   }
 });
+
+// ============================================
+// Export
+// ============================================
 
 module.exports = router;

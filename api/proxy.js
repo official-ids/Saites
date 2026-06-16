@@ -81,7 +81,7 @@ const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
 const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
 
 /**
- * Роутер для управления редиректами
+ * Роутер для отзовых
  */
 const reviewsRouter = require(MODULE_PATHS.REVIEWS);
 
