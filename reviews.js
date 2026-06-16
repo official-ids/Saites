@@ -257,14 +257,13 @@ async function checkRateLimit(key, max) {
  * @param {string} [userId='system'] - ID пользователя или 'system' для системных событий
  * @param {string} [target=''] - ID целевого объекта (опционально)
  * @param {string} [details=''] - Дополнительная информация (опционально)
- * @throws {Error} Если обязательные параметры невалидны
  */
 async function auditLog(action, userId = 'system', target = '', details = '') {
   if (typeof action !== 'string' || action.trim() === '') {
     throw new Error('[Utilities] Audit action must be a non-empty string');
   }
   
-  // Разрешаем пустой userId для системных событий
+  // Нормализация userId: если пустой или не строка, используем 'system'
   const normalizedUserId = (typeof userId === 'string' && userId.trim() !== '') 
     ? userId.trim() 
     : 'system';
@@ -276,14 +275,19 @@ async function auditLog(action, userId = 'system', target = '', details = '') {
     id,
     action,
     userId: normalizedUserId,
-    target,
-    details,
+    target: target || '',
+    details: details || '',
     timestamp: new Date().toISOString()
   };
   
-  await kv.hset(K.audit.byId(id), record);
-  await kv.sadd(K.audit.index, id);
-  await kv.expire(K.audit.byId(id), ttlSeconds);
+  try {
+    await kv.hset(K.audit.byId(id), record);
+    await kv.sadd(K.audit.index, id);
+    await kv.expire(K.audit.byId(id), ttlSeconds);
+  } catch (err) {
+    console.error('[Audit] Failed to write audit log:', err.message);
+    // Не прерываем выполнение, если audit log не записался
+  }
 }
 
 async function sendTelegramNotification(text) {
@@ -563,11 +567,13 @@ function requireAdmin(req, res, next) {
 
 router.post('/auth/register', async (req, res) => {
   try {
+    console.log('[Auth/Register] Registration attempt from IP:', req.ip);
+    
     const ip = req.ip;
     const rateLimitKey = `reg:${ip}`;
     
     if (!await checkRateLimit(rateLimitKey, CONFIG.rateLimit.MAX_REGISTRATION_REQUESTS)) {
-      console.warn(`[Auth/Register] Rate limit exceeded for IP: ${ip}`);
+      console.warn('[Auth/Register] Rate limit exceeded for IP:', ip);
       return res.status(429).json({ 
         error: 'Слишком много попыток регистрации. Попробуйте позже.',
         code: 'RATE_LIMIT_EXCEEDED'
@@ -575,9 +581,15 @@ router.post('/auth/register', async (req, res) => {
     }
 
     const { username, password, nickname } = req.body;
+    console.log('[Auth/Register] Received data:', { 
+      username: username ? 'present' : 'missing',
+      password: password ? 'present' : 'missing',
+      nickname: nickname ? 'present' : 'missing'
+    });
     
     const validation = validateRegistrationData({ username, password, nickname });
     if (!validation.valid) {
+      console.warn('[Auth/Register] Validation failed:', validation.error);
       return res.status(400).json({ 
         error: validation.error,
         code: 'VALIDATION_ERROR'
@@ -585,10 +597,11 @@ router.post('/auth/register', async (req, res) => {
     }
 
     const normalizedUsername = username.toLowerCase().trim();
+    console.log('[Auth/Register] Normalized username:', normalizedUsername);
     
     const existingId = await kv.get(K.user.byUsername(normalizedUsername));
     if (existingId) {
-      console.warn(`[Auth/Register] Username already taken: ${normalizedUsername}`);
+      console.warn('[Auth/Register] Username already taken:', normalizedUsername);
       return res.status(409).json({ 
         error: 'Имя пользователя занято',
         code: 'USERNAME_TAKEN'
@@ -627,14 +640,16 @@ router.post('/auth/register', async (req, res) => {
       `ID: <code>${userId}</code>`
     );
 
-    console.log(`[Auth/Register] New user registered: ${userId} (${normalizedUsername})`);
+    console.log('[Auth/Register] User registered successfully:', userId);
 
     res.status(201).json(formatAuthResponse(token, user));
   } catch (err) {
     console.error('[Auth/Register] Error:', err.message);
+    console.error('[Auth/Register] Stack:', err.stack);
     res.status(500).json({ 
       error: 'Ошибка сервера при регистрации',
-      code: 'REGISTRATION_ERROR'
+      code: 'REGISTRATION_ERROR',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 });
@@ -715,16 +730,28 @@ router.post('/auth/login', async (req, res) => {
 
 router.post('/auth/admin', async (req, res) => {
   try {
+    console.log('[Auth/Admin] Admin login attempt from IP:', req.ip);
+    
     const { adminToken } = req.body;
     
-    if (!CONFIG.security.ADMIN_TOKEN || !adminToken) {
+    if (!CONFIG.security.ADMIN_TOKEN) {
+      console.error('[Auth/Admin] ADMIN_TOKEN not configured in environment');
+      return res.status(500).json({ 
+        error: 'Admin token не настроен на сервере',
+        code: 'ADMIN_TOKEN_NOT_CONFIGURED'
+      });
+    }
+    
+    if (!adminToken) {
+      console.warn('[Auth/Admin] Missing admin token in request');
       return res.status(400).json({ 
-        error: 'Admin token не настроен или не предоставлен',
+        error: 'Admin token не предоставлен',
         code: 'ADMIN_TOKEN_MISSING'
       });
     }
 
     if (typeof adminToken !== 'string') {
+      console.warn('[Auth/Admin] Invalid admin token type:', typeof adminToken);
       return res.status(400).json({ 
         error: 'Admin token должен быть строкой',
         code: 'INVALID_TOKEN_TYPE'
@@ -738,22 +765,29 @@ router.post('/auth/admin', async (req, res) => {
       crypto.timingSafeEqual(tokenBuffer, configBuffer);
     
     if (!isValid) {
-      console.warn('[Auth/Admin] Invalid admin token attempt');
-      await auditLog('admin_login_failed', 'system', '', 'Invalid admin token');
+      console.warn('[Auth/Admin] Invalid admin token attempt from IP:', req.ip);
+      await auditLog('admin_login_failed', 'system', req.ip, 'Invalid admin token');
       return res.status(403).json({ 
         error: 'Неверный admin token',
         code: 'INVALID_ADMIN_TOKEN'
       });
     }
 
+    console.log('[Auth/Admin] Valid admin token, checking for existing admin account');
+    
     let adminId = await kv.get(K.admin.id);
     let user;
     
     if (adminId) {
+      console.log('[Auth/Admin] Found existing admin ID:', adminId);
       user = await kv.get(K.user.byId(adminId));
+      if (!user) {
+        console.warn('[Auth/Admin] Admin ID exists but user not found, will create new');
+      }
     }
     
     if (!user) {
+      console.log('[Auth/Admin] Creating new admin account');
       adminId = generateId();
       const randomPassword = crypto.randomBytes(32).toString('hex');
       
@@ -773,7 +807,7 @@ router.post('/auth/admin', async (req, res) => {
       await kv.set(K.admin.id, adminId);
       
       await auditLog('admin_account_created', adminId, '', 'Автоматическое создание при первом входе');
-      console.log(`[Auth/Admin] Admin account created: ${adminId}`);
+      console.log('[Auth/Admin] Admin account created:', adminId);
     }
 
     const token = generateToken();
@@ -783,14 +817,16 @@ router.post('/auth/admin', async (req, res) => {
     });
 
     await auditLog('admin_login', user.id);
-    console.log(`[Auth/Admin] Admin logged in: ${user.id}`);
+    console.log('[Auth/Admin] Admin logged in successfully:', user.id);
 
     res.json(formatAuthResponse(token, user));
   } catch (err) {
     console.error('[Auth/Admin] Error:', err.message);
+    console.error('[Auth/Admin] Stack:', err.stack);
     res.status(500).json({ 
       error: 'Ошибка сервера при входе администратора',
-      code: 'ADMIN_LOGIN_ERROR'
+      code: 'ADMIN_LOGIN_ERROR',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 });
