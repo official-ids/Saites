@@ -251,14 +251,23 @@ async function checkRateLimit(key, max) {
   return true;
 }
 
-async function auditLog(action, userId, target = '', details = '') {
+/**
+ * Запись в audit log с автоматическим TTL
+ * @param {string} action - Тип действия (create, update, delete, ban, etc.)
+ * @param {string} [userId='system'] - ID пользователя или 'system' для системных событий
+ * @param {string} [target=''] - ID целевого объекта (опционально)
+ * @param {string} [details=''] - Дополнительная информация (опционально)
+ * @throws {Error} Если обязательные параметры невалидны
+ */
+async function auditLog(action, userId = 'system', target = '', details = '') {
   if (typeof action !== 'string' || action.trim() === '') {
     throw new Error('[Utilities] Audit action must be a non-empty string');
   }
   
-  if (typeof userId !== 'string' || userId.trim() === '') {
-    throw new Error('[Utilities] User ID must be a non-empty string');
-  }
+  // Разрешаем пустой userId для системных событий
+  const normalizedUserId = (typeof userId === 'string' && userId.trim() !== '') 
+    ? userId.trim() 
+    : 'system';
 
   const id = generateId();
   const ttlSeconds = AUDIT_TTL_DAYS * 24 * 60 * 60;
@@ -266,7 +275,7 @@ async function auditLog(action, userId, target = '', details = '') {
   const record = {
     id,
     action,
-    userId,
+    userId: normalizedUserId,
     target,
     details,
     timestamp: new Date().toISOString()
@@ -730,7 +739,7 @@ router.post('/auth/admin', async (req, res) => {
     
     if (!isValid) {
       console.warn('[Auth/Admin] Invalid admin token attempt');
-      await auditLog('admin_login_failed', '', '', 'Invalid admin token');
+      await auditLog('admin_login_failed', 'system', '', 'Invalid admin token');
       return res.status(403).json({ 
         error: 'Неверный admin token',
         code: 'INVALID_ADMIN_TOKEN'

@@ -114,6 +114,18 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 .action-btn.liked { color: var(--danger); }
 .action-btn svg { width: 16px; height: 16px; }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Reply */
 .review-reply { margin-top: 12px; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-sm); border-left: 3px solid var(--accent); }
 .review-reply.admin-reply { border-left-color: var(--warning); }
@@ -189,55 +201,130 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
   <!-- Auth Screen -->
   <div id="authScreen" class="auth-container">
     <h2 style="margin-bottom: 8px; text-align: center;">Добро пожаловать</h2>
-    <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">Поделитесь своим опытом использования платформы</p>
+    <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">
+      Поделитесь своим опытом использования платформы
+    </p>
     
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-tab="login">Вход</button>
-      <button class="auth-tab" data-tab="register">Регистрация</button>
-      <button class="auth-tab" data-tab="admin">Админ</button>
+    <div class="auth-tabs" role="tablist" aria-label="Методы авторизации">
+      <button class="auth-tab active" data-tab="login" role="tab" aria-selected="true" aria-controls="loginForm">
+        Вход
+      </button>
+      <button class="auth-tab" data-tab="register" role="tab" aria-selected="false" aria-controls="registerForm">
+        Регистрация
+      </button>
+      <button class="auth-tab" data-tab="admin" role="tab" aria-selected="false" aria-controls="adminForm">
+        Админ
+      </button>
     </div>
     
-    <form id="loginForm">
+    <form id="loginForm" role="tabpanel" aria-labelledby="loginTab" novalidate>
       <div class="form-group">
-        <label>Имя пользователя</label>
-        <input type="text" class="form-input" name="username" required autocomplete="username">
+        <label for="loginUsername">Имя пользователя</label>
+        <input 
+          type="text" 
+          id="loginUsername"
+          class="form-input" 
+          name="username" 
+          required 
+          autocomplete="username"
+          aria-required="true"
+        >
       </div>
       <div class="form-group">
-        <label>Пароль</label>
-        <input type="password" class="form-input" name="password" required autocomplete="current-password">
+        <label for="loginPassword">Пароль</label>
+        <input 
+          type="password" 
+          id="loginPassword"
+          class="form-input" 
+          name="password" 
+          required 
+          autocomplete="current-password"
+          aria-required="true"
+        >
       </div>
       <button type="submit" class="btn btn-primary btn-full">Войти</button>
-      <div class="error-msg" id="loginError"></div>
+      <div class="error-msg" id="loginError" role="alert" aria-live="polite"></div>
     </form>
 
-    <form id="registerForm" class="hidden">
+    <form id="registerForm" class="hidden" role="tabpanel" aria-labelledby="registerTab" novalidate>
       <div class="form-group">
-        <label>Имя пользователя (логин)</label>
-        <input type="text" class="form-input" name="username" required minlength="3" maxlength="20" autocomplete="username">
-        <div class="form-help">Латинские буквы, цифры. 3-20 символов</div>
+        <label for="registerUsername">Имя пользователя (логин)</label>
+        <input 
+          type="text" 
+          id="registerUsername"
+          class="form-input" 
+          name="username" 
+          required 
+          minlength="3" 
+          maxlength="20" 
+          autocomplete="username"
+          aria-required="true"
+          aria-describedby="registerUsernameHelp"
+        >
+        <div class="form-help" id="registerUsernameHelp">Латинские буквы, цифры. 3-20 символов</div>
       </div>
       <div class="form-group">
-        <label>Пароль</label>
-        <input type="password" class="form-input" name="password" required minlength="6" autocomplete="new-password">
+        <label for="registerPassword">Пароль</label>
+        <input 
+          type="password" 
+          id="registerPassword"
+          class="form-input" 
+          name="password" 
+          required 
+          minlength="6" 
+          autocomplete="new-password"
+          aria-required="true"
+        >
       </div>
       <div class="form-group">
-        <label>Отображаемое имя (Ник)</label>
-        <input type="text" class="form-input" name="nickname" required maxlength="30">
+        <label for="registerNickname">Отображаемое имя (Ник)</label>
+        <input 
+          type="text" 
+          id="registerNickname"
+          class="form-input" 
+          name="nickname" 
+          required 
+          maxlength="30"
+          aria-required="true"
+        >
       </div>
       <button type="submit" class="btn btn-primary btn-full">Создать аккаунт</button>
-      <div class="error-msg" id="registerError"></div>
+      <div class="error-msg" id="registerError" role="alert" aria-live="polite"></div>
     </form>
 
-    <form id="adminForm" class="hidden">
+    <form id="adminForm" class="hidden" role="tabpanel" aria-labelledby="adminTab" novalidate>
+      <!-- Скрытое поле username для соответствия стандартам доступности -->
+      <label for="adminUsername" class="sr-only">Имя пользователя</label>
+      <input 
+        type="text" 
+        id="adminUsername"
+        class="sr-only"
+        name="username" 
+        value="admin" 
+        autocomplete="username"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+      
       <div class="form-group">
-        <label>Admin Token</label>
-        <input type="password" class="form-input" name="adminToken" required autocomplete="current-password">
-        <div class="form-help">Секретный токен для входа как администратор</div>
+        <label for="adminToken">Admin Token</label>
+        <input 
+          type="password" 
+          id="adminToken"
+          class="form-input" 
+          name="adminToken" 
+          required 
+          autocomplete="current-password"
+          aria-required="true"
+          aria-describedby="adminTokenHelp"
+        >
+        <div class="form-help" id="adminTokenHelp">Секретный токен для входа как администратор</div>
       </div>
       <button type="submit" class="btn btn-primary btn-full">Войти как администратор</button>
-      <div class="error-msg" id="adminError"></div>
+      <div class="error-msg" id="adminError" role="alert" aria-live="polite"></div>
     </form>
   </div>
+</main>
 
   <!-- Main App -->
   <div id="appScreen" class="hidden">
