@@ -28,8 +28,8 @@ const CONFIG = {
     PROTOCOL: 'https',
     
     // Пути
-    PUBLIC_DIR: path.join(__dirname, '..', 'public'),
-    OUTPUT_DIR: path.join(__dirname, '..', 'public'),
+    PUBLIC_DIR: path.join(__dirname, 'public'),
+    OUTPUT_DIR: path.join(__dirname, 'public'),
     
     // Имена файлов
     SITEMAP_FILENAME: 'sitemap.xml',
@@ -65,7 +65,7 @@ const CONFIG = {
     
     // Логирование
     LOG_LEVEL: process.env.LOG_LEVEL || 'info', // debug, info, warn, error
-    LOG_FILE: path.join(__dirname, '..', 'logs', 'sitemap-generator.log'),
+    LOG_FILE: path.join(__dirname, 'logs', 'sitemap-generator.log'),
     
     // Кэширование
     CACHE_TTL: 300000, // 5 минут
