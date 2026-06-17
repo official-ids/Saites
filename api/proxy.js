@@ -57,7 +57,8 @@ const MODULE_PATHS = {
     NEWS: '../news',
     SUPPORT: '../support',
     DOWNLOADER: '../downloader',
-    REDIRECTS: '../redirects'
+    REDIRECTS: '../redirects',
+    NOTIFICATIONS: '../notifications'
 };
 
 /**
@@ -80,6 +81,10 @@ const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
  */
 const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
 
+/**
+ * Роутер для уведомлений
+ */
+const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -589,6 +594,10 @@ const CSP_CLOUDFLARE = "https://cdnjs.cloudflare.com";
 const CSP_GOOGLE_FONTS = "https://fonts.googleapis.com";
 const CSP_GOOGLE_FONTS_STATIC = "https://fonts.gstatic.com";
 
+// Notifications
+const CSP_FIREFOX = "https://push.services.mozilla.com";
+const CSP_GOOGLE_notifications = "https://fcm.googleapis.com";
+
 // YouTube resources
 const CSP_YOUTUBE_THUMBNAILS = "https://i.ytimg.com";
 const CSP_YOUTUBE_CHANNEL = "https://yt3.ggpht.com";
@@ -670,6 +679,8 @@ const CSP_DIRECTIVES = {
     ],
     
     connectSrc: [
+        CSP_FIREFOX,
+        CSP_GOOGLE_notifications,
         CSP_SELF,
         CSP_GITHUB_API,
         CSP_YOUTUBE_API,
@@ -1198,6 +1209,7 @@ app.use('/go', redirectsRouter);
 app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
+app.use('/api/notifications', notificationsRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader

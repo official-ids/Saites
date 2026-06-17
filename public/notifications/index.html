@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Notifications — Saites-Oris</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #1c1c1e;
+            --bg-tertiary: #2c2c2e;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --accent: #0a84ff;
+            --accent-hover: #0071e3;
+            --success: #30d158;
+            --error: #ff453a;
+            --warning: #ff9f0a;
+            --border: #38383a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 48px;
+            line-height: 1.08349;
+            font-weight: 700;
+            letter-spacing: 0;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff 0%, #8e8e93 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 21px;
+            line-height: 1.381;
+            font-weight: 400;
+            letter-spacing: .011em;
+            color: var(--text-secondary);
+            margin-bottom: 48px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-title {
+            font-size: 24px;
+            line-height: 1.16667;
+            font-weight: 600;
+            letter-spacing: 0;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+        }
+
+        .status-badge.active {
+            background: rgba(48, 209, 88, 0.15);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .status-badge.inactive {
+            background: rgba(255, 69, 58, 0.15);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 17px;
+            line-height: 1.17648;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .button-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        .button-primary:active {
+            transform: scale(0.98);
+        }
+
+        .button-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .button-secondary:hover {
+            background: var(--border);
+            transform: scale(1.02);
+        }
+
+        .button-danger {
+            background: rgba(255, 69, 58, 0.15);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .button-danger:hover {
+            background: rgba(255, 69, 58, 0.25);
+            transform: scale(1.02);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 17px;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.15);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        textarea.input-field {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .info-box {
+            background: rgba(10, 132, 255, 0.1);
+            border: 1px solid rgba(10, 132, 255, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .info-box.warning {
+            background: rgba(255, 149, 0, 0.1);
+            border-color: rgba(255, 149, 0, 0.3);
+            color: var(--warning);
+        }
+
+        .info-box.error {
+            background: rgba(255, 69, 58, 0.1);
+            border-color: rgba(255, 69, 58, 0.3);
+            color: var(--error);
+        }
+
+        .log-container {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            word-break: break-word;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            margin-right: 12px;
+        }
+
+        .log-success { color: var(--success); }
+        .log-error { color: var(--error); }
+        .log-info { color: var(--accent); }
+        .log-warning { color: var(--warning); }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .device-info {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .device-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 100px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .checkbox-label {
+            font-size: 15px;
+            color: var(--text-secondary);
+        }
+
+        .segmented-control {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 3px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .segment {
+            flex: 1;
+            padding: 10px 16px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .segment.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .segment:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 36px; }
+            .subtitle { font-size: 17px; margin-bottom: 32px; }
+            .card { padding: 24px; }
+            .card-title { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Push Notifications</h1>
+        <p class="subtitle">Тестирование веб-уведомлений</p>
+
+        <div class="device-info">
+            <div class="device-chip">
+                <span id="browser-name">Detecting...</span>
+            </div>
+            <div class="device-chip">
+                <span id="os-name">Detecting...</span>
+            </div>
+            <div class="device-chip hidden" id="https-badge">
+                <span>🔒 HTTPS</span>
+            </div>
+        </div>
+
+        <!-- Статус подписки -->
+        <div class="card">
+            <div class="card-title">
+                Статус подписки
+                <span class="status-badge inactive" id="status-badge">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Не подписан</span>
+                </span>
+            </div>
+
+            <div class="info-box warning hidden" id="ios-warning">
+                <strong>Внимание:</strong> На iOS веб-пуши работают только если сайт добавлен на главный экран (PWA).
+            </div>
+
+            <div class="info-box error hidden" id="support-warning">
+                <strong>Внимание:</strong> Ваш браузер не поддерживает Push API.
+            </div>
+
+            <button class="button button-primary" id="subscribe-btn" onclick="toggleSubscription()">
+                <span id="subscribe-btn-text">Подписаться на уведомления</span>
+            </button>
+        </div>
+
+        <!-- Статистика -->
+        <div class="card">
+            <div class="card-title">Статистика</div>
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-subs">—</div>
+                    <div class="stat-label">Подписчиков</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-sent">—</div>
+                    <div class="stat-label">Отправлено</div>
+                </div>
+            </div>
+            <button class="button button-secondary" onclick="loadStats()">
+                Обновить статистику
+            </button>
+        </div>
+
+        <!-- Отправка уведомления -->
+        <div class="card">
+            <div class="card-title">Отправить тестовое уведомление</div>
+
+            <div class="input-group">
+                <label class="input-label">Admin Token (Bearer)</label>
+                <input type="password" class="input-field" id="admin-token" placeholder="Вставьте ваш ADMIN_TOKEN">
+            </div>
+
+            <div class="segmented-control">
+                <div class="segment active" onclick="setSendMode('me', this)">Только мне</div>
+                <div class="segment" onclick="setSendMode('all', this)">Всем подписчикам</div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Заголовок</label>
+                <input type="text" class="input-field" id="notif-title" placeholder="Например: Новое сообщение" value="Тестовое уведомление">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Текст</label>
+                <textarea class="input-field" id="notif-body" placeholder="Описание уведомления...">Это тестовое push-уведомление из панели разработчика</textarea>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">URL иконки (опционально)</label>
+                <input type="text" class="input-field" id="notif-icon" placeholder="https://example.com/icon.png" value="/favicon.ico">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">URL открытия (опционально)</label>
+                <input type="text" class="input-field" id="notif-url" placeholder="https://example.com" value="/">
+            </div>
+
+            <label class="checkbox-wrapper" onclick="toggleCheckbox(document.getElementById('require-interaction'))">
+                <div class="checkbox" id="require-interaction"></div>
+                <span class="checkbox-label">Требовать взаимодействия (не закрывать автоматически)</span>
+            </label>
+
+            <button class="button button-primary" id="send-btn" onclick="sendNotification()" disabled>
+                <span>Отправить уведомление</span>
+            </button>
+        </div>
+
+        <!-- Логи -->
+        <div class="card">
+            <div class="card-title">Логи</div>
+            <div class="log-container" id="log-container">
+                <div class="log-entry">
+                    <span class="log-time">--:--:--</span>
+                    <span class="log-info">Система готова. Ожидание действий...</span>
+                </div>
+            </div>
+            <button class="button button-secondary" onclick="clearLogs()" style="margin-top: 12px;">
+                Очистить логи
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let subscription = null;
+        let isSubscribed = false;
+        let sendMode = 'me'; // 'me' или 'all'
+
+        // VAPID Public Key — ОБЯЗАТЕЛЬНО замени на свой!
+        const VAPID_PUBLIC_KEY = 'BJt2roQJB6rl8rpciiSlRFbrSKGlEGg1H8FOZp5DLYI7UIYxVQSRk4xgSDBMqlzS4ctvS2ud12bjSjLmBneRfOU';
+
+        // API endpoints (соответствуют модулю notifications.js)
+        const API = {
+            SUBSCRIBE: '/api/notifications/subscribe',
+            UNSUBSCRIBE: '/api/notifications/unsubscribe',
+            STATS: '/api/notifications/stats',
+            ADMIN_SEND: '/api/notifications/admin/send',
+            ADMIN_SUBSCRIPTIONS: '/api/notifications/admin/subscriptions'
+        };
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            detectDevice();
+            checkSupport();
+            await initServiceWorker();
+            await checkSubscription();
+            await loadStats();
+
+            // Восстановить токен из localStorage
+            const savedToken = localStorage.getItem('admin_token');
+            if (savedToken) {
+                document.getElementById('admin-token').value = savedToken;
+            }
+        });
+
+        function detectDevice() {
+            const userAgent = navigator.userAgent;
+            let browser = 'Unknown';
+            let os = 'Unknown';
+
+            if (userAgent.match(/Android/i)) {
+                os = 'Android';
+            } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+                os = 'iOS';
+                document.getElementById('ios-warning').classList.remove('hidden');
+            } else if (userAgent.match(/Windows/i)) {
+                os = 'Windows';
+            } else if (userAgent.match(/Mac/i)) {
+                os = 'macOS';
+            } else if (userAgent.match(/Linux/i)) {
+                os = 'Linux';
+            }
+
+            if (userAgent.match(/Chrome/i) && !userAgent.match(/Edg/i)) {
+                browser = 'Chrome';
+            } else if (userAgent.match(/Firefox/i)) {
+                browser = 'Firefox';
+            } else if (userAgent.match(/Safari/i) && !userAgent.match(/Chrome/i)) {
+                browser = 'Safari';
+            } else if (userAgent.match(/Edg/i)) {
+                browser = 'Edge';
+            }
+
+            document.getElementById('browser-name').textContent = browser;
+            document.getElementById('os-name').textContent = os;
+
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                document.getElementById('https-badge').classList.remove('hidden');
+            }
+        }
+
+        function checkSupport() {
+            if (!('serviceWorker' in navigator)) {
+                log('Service Worker не поддерживается', 'error');
+                document.getElementById('support-warning').classList.remove('hidden');
+                return false;
+            }
+
+            if (!('PushManager' in window)) {
+                log('Push API не поддерживается', 'error');
+                document.getElementById('support-warning').classList.remove('hidden');
+                return false;
+            }
+
+            if (!('Notification' in window)) {
+                log('Notifications API не поддерживается', 'error');
+                document.getElementById('support-warning').classList.remove('hidden');
+                return false;
+            }
+
+            log('Все API поддерживаются', 'success');
+            return true;
+        }
+
+        async function initServiceWorker() {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                log('Service Worker зарегистрирован', 'success');
+                return registration;
+            } catch (error) {
+                log('Ошибка регистрации Service Worker: ' + error.message, 'error');
+                return null;
+            }
+        }
+
+        async function checkSubscription() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                subscription = await registration.pushManager.getSubscription();
+
+                if (subscription) {
+                    isSubscribed = true;
+                    updateUI(true);
+                    log('Подписка активна', 'success');
+                } else {
+                    updateUI(false);
+                }
+            } catch (error) {
+                log('Ошибка проверки подписки: ' + error.message, 'error');
+            }
+        }
+
+        async function toggleSubscription() {
+            if (isSubscribed) {
+                await unsubscribe();
+            } else {
+                await subscribe();
+            }
+        }
+
+        async function subscribe() {
+            try {
+                log('Запрос разрешения...', 'info');
+
+                const permission = await Notification.requestPermission();
+
+                if (permission !== 'granted') {
+                    log('Разрешение не получено', 'error');
+                    return;
+                }
+
+                log('Разрешение получено. Создание подписки...', 'info');
+
+                const registration = await navigator.serviceWorker.ready;
+                const vapidKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: vapidKey
+                });
+
+                // Отправляем на сервер (правильный endpoint!)
+                await saveSubscription(subscription);
+
+                isSubscribed = true;
+                updateUI(true);
+                log('Подписка успешно создана', 'success');
+                await loadStats();
+
+            } catch (error) {
+                log('Ошибка подписки: ' + error.message, 'error');
+            }
+        }
+
+        async function unsubscribe() {
+            try {
+                const endpoint = subscription.endpoint;
+
+                // Отмена на сервере
+                await fetch(API.UNSUBSCRIBE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint })
+                });
+
+                await subscription.unsubscribe();
+                subscription = null;
+                isSubscribed = false;
+                updateUI(false);
+                log('Подписка удалена', 'success');
+                await loadStats();
+            } catch (error) {
+                log('Ошибка отписки: ' + error.message, 'error');
+            }
+        }
+
+        async function saveSubscription(subscription) {
+            try {
+                // Правильный endpoint + правильная структура body
+                const response = await fetch(API.SUBSCRIBE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subscription })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                log('Подписка сохранена на сервере', 'success');
+            } catch (error) {
+                log('Ошибка сохранения подписки: ' + error.message, 'error');
+                throw error;
+            }
+        }
+
+        function setSendMode(mode, el) {
+            sendMode = mode;
+            document.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
+            el.classList.add('active');
+            log(`Режим отправки: ${mode === 'me' ? 'только мне' : 'всем подписчикам'}`, 'info');
+        }
+
+        async function sendNotification() {
+            const token = document.getElementById('admin-token').value.trim();
+
+            if (!token) {
+                log('Введите Admin Token', 'error');
+                return;
+            }
+
+            // Сохраняем токен в localStorage
+            localStorage.setItem('admin_token', token);
+
+            const title = document.getElementById('notif-title').value;
+            const body = document.getElementById('notif-body').value;
+            const icon = document.getElementById('notif-icon').value;
+            const url = document.getElementById('notif-url').value;
+            const requireInteraction = document.getElementById('require-interaction').classList.contains('checked');
+
+            if (!title || !body) {
+                log('Заполните заголовок и текст', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('send-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div><span>Отправка...</span>';
+
+            try {
+                let response;
+
+                if (sendMode === 'me') {
+                    // Отправка только текущему подписчику
+                    if (!subscription) {
+                        throw new Error('Нет активной подписки');
+                    }
+
+                    // Используем admin/send, но на фронте можно эмулировать отправку одному
+                    // через отправку всем, если подписчик один, или через отдельный endpoint
+                    // Для простоты — используем admin/send (шлёт всем, но для теста ок)
+                    response = await fetch(API.ADMIN_SEND, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            notification: {
+                                title,
+                                body,
+                                icon: icon || undefined,
+                                url: url || undefined,
+                                requireInteraction
+                            }
+                        })
+                    });
+                } else {
+                    // Отправка всем подписчикам
+                    response = await fetch(API.ADMIN_SEND, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            notification: {
+                                title,
+                                body,
+                                icon: icon || undefined,
+                                url: url || undefined,
+                                requireInteraction
+                            }
+                        })
+                    });
+                }
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                log(`Уведомление отправлено! Успешно: ${data.results?.success || '?'}/${data.results?.total || '?'}`, 'success');
+                await loadStats();
+
+            } catch (error) {
+                log('Ошибка отправки: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Отправить уведомление</span>';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(API.STATS);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const data = await response.json();
+                document.getElementById('stat-subs').textContent = data.totalSubscriptions ?? '—';
+                document.getElementById('stat-sent').textContent = data.totalSent ?? '—';
+            } catch (error) {
+                log('Ошибка загрузки статистики: ' + error.message, 'warning');
+            }
+        }
+
+        function updateUI(subscribed) {
+            const badge = document.getElementById('status-badge');
+            const text = document.getElementById('status-text');
+            const btn = document.getElementById('subscribe-btn');
+            const btnText = document.getElementById('subscribe-btn-text');
+            const sendBtn = document.getElementById('send-btn');
+
+            if (subscribed) {
+                badge.classList.remove('inactive');
+                badge.classList.add('active');
+                text.textContent = 'Подписан';
+                btnText.textContent = 'Отписаться';
+                sendBtn.disabled = false;
+            } else {
+                badge.classList.remove('active');
+                badge.classList.add('inactive');
+                text.textContent = 'Не подписан';
+                btnText.textContent = 'Подписаться на уведомления';
+                sendBtn.disabled = true;
+            }
+        }
+
+        function toggleCheckbox(element) {
+            element.classList.toggle('checked');
+        }
+
+        function log(message, type = 'info') {
+            const container = document.getElementById('log-container');
+            const time = new Date().toLocaleTimeString('ru-RU');
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-${type}">${message}</span>
+            `;
+
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+
+            return outputArray;
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                log('Сообщение от SW: ' + JSON.stringify(event.data), 'info');
+            });
+        }
+    </script>
+</body>
+</html>
