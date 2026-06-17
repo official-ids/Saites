@@ -696,7 +696,10 @@ const CSP_DIRECTIVES = {
         CSP_GLITCH_HTTPS,
         CSP_GLITCH_WSS,
         CSP_VERCEL_BLOB,
-        CSP_VERCEL_PUBLIC_BLOB
+        CSP_VERCEL_PUBLIC_BLOB,
+        'https://fcm.googleapis.com/fcm/send',
+        'https://android.googleapis.com',    // Android GCM
+        'https://push.apple.com' 
     ],
     
     objectSrc: [CSP_NONE],
