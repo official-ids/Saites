@@ -331,10 +331,19 @@ async function checkRateLimit(key, windowMs, max) {
 // ============================================
 /**
 Проверка валидности URL
+Принимает как абсолютные (https://...), так и относительные (/path) URL
 @param {string} string - URL для проверки
-@returns {boolean} true если URL валиден (http или https)
+@returns {boolean} true если URL валиден
 */
 function isValidUrl(string) {
+    if (!string || typeof string !== 'string') return false;
+    
+    // Относительные пути (начинаются с /) — валидны
+    if (string.startsWith('/')) {
+        return true;
+    }
+    
+    // Абсолютные URL
     try {
         const url = new URL(string);
         return url.protocol === 'http:' || url.protocol === 'https:';
