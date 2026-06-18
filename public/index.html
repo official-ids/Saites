@@ -6,6 +6,7 @@
     <meta name="description" content="Oris Projects - Каталог проектов команды Oris.">
     <meta name="theme-color" content="#ffffff">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 
     <title>Oris · Projects</title>
     
@@ -38,8 +39,24 @@
             --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
+        :root[data-theme="dark"] {
+            --bg-body: #000000;
+            --bg-card: #1C1C1E;
+            --bg-elevated: #2C2C2E;
+            --text-primary: #F5F5F7;
+            --text-secondary: #86868B;
+            --text-tertiary: #636366;
+            --accent: #0A84FF;
+            --accent-hover: #409CFF;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.12);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
         @media (prefers-color-scheme: dark) {
-            :root {
+            :root:not([data-theme]) {
                 --bg-body: #000000;
                 --bg-card: #1C1C1E;
                 --bg-elevated: #2C2C2E;
@@ -471,6 +488,28 @@
             font-size: 0.75rem;
             color: var(--text-tertiary);
             font-weight: 500;
+        }
+
+        .card-footer-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-details {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 999px;
+            transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .card-details:hover {
+            color: var(--accent);
+            border-color: var(--accent);
         }
 
         /* --- Status --- */
@@ -1147,6 +1186,23 @@
             } catch {
                 return '';
             }
+        },
+
+        /**
+         * Стабильный слаг проекта из его URL (последний сегмент пути или хост).
+         *
+         * @param {string} url - URL проекта
+         * @returns {string} - Слаг для страницы /p/:slug или ''
+         */
+        slug(url) {
+            try {
+                const parsed = new URL(url, window.location.origin);
+                const seg = parsed.pathname.split('/').filter(Boolean).pop();
+                if (seg) return encodeURIComponent(seg.toLowerCase());
+                return encodeURIComponent(parsed.hostname.replace(/^www\./, ''));
+            } catch {
+                return '';
+            }
         }
     };
 
@@ -1517,10 +1573,12 @@
             const category = site.category || CONFIG.DEFAULT_CATEGORY;
             const meta = CATEGORY_META[category] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY];
             const domain = Security.getDomain(site.url);
+            const slug = Security.slug(site.url);
 
             const card = document.createElement('a');
             card.className = 'card';
             card.href = safeUrl;
+            if (slug) card.dataset.slug = slug;
             card.target = '_blank';
             card.rel = 'noopener noreferrer';
             
@@ -1557,7 +1615,10 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${OPEN_ICON}"/>
                         </svg>
                     </span>
-                    ${domain ? `<span class="card-domain">${Security.escapeHtml(domain)}</span>` : ''}
+                    <div class="card-footer-right">
+                        ${slug ? `<span class="card-details" data-slug="${slug}" role="button" tabindex="0">Подробнее</span>` : ''}
+                        ${domain ? `<span class="card-domain">${Security.escapeHtml(domain)}</span>` : ''}
+                    </div>
                 </div>
             `;
             
@@ -1644,6 +1705,27 @@
      */
     function startApp() {
         App.init();
+
+        // Переход на детальную страницу проекта по клику «Подробнее».
+        const goToDetails = (target) => {
+            const el = target.closest('.card-details');
+            if (!el) return false;
+            const slug = el.dataset.slug;
+            if (slug) window.location.href = `/p/${slug}`;
+            return true;
+        };
+        document.addEventListener('click', (event) => {
+            if (goToDetails(event.target)) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('card-details')) {
+                event.preventDefault();
+                goToDetails(event.target);
+            }
+        });
     }
 
     // Запуск после загрузки DOM
@@ -1654,5 +1736,6 @@
     }
 })();
 </script>
+<script src="/theme.js" defer></script>
 </body>
 </html>
