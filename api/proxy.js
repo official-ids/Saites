@@ -46,6 +46,18 @@ const morgan = require('morgan');
  */
 const { kv } = require('@vercel/kv');
 
+/**
+ * waitUntil из @vercel/functions продлевает жизнь serverless-функции до
+ * завершения фоновой задачи. Вне Vercel-рантайма пакет/контекст может
+ * отсутствовать, поэтому подключаем его защищённо.
+ */
+let vercelWaitUntil = null;
+try {
+    ({ waitUntil: vercelWaitUntil } = require('@vercel/functions'));
+} catch (_) {
+    vercelWaitUntil = null;
+}
+
 // -----------------------------
 // Internal Application Modules
 // -----------------------------
@@ -3518,6 +3530,26 @@ async function recordSnapshot(snapshot) {
 }
 
 /**
+ * Запускает фоновую задачу так, чтобы она надёжно завершилась.
+ * На Vercel передаёт промис в waitUntil (функция не «замораживается» до
+ * завершения записи). Вне Vercel-контекста промис просто остаётся работать
+ * в живущем процессе. Ошибки гасятся, чтобы не уронить запрос.
+ *
+ * @param {Promise<unknown>} promise - Фоновая задача
+ */
+function scheduleBackground(promise) {
+    const safe = Promise.resolve(promise).catch(err =>
+        console.error('[status] background task failed:', err && err.message));
+    if (typeof vercelWaitUntil === 'function') {
+        try {
+            vercelWaitUntil(safe);
+        } catch (_) {
+            // Нет активного контекста запроса — промис уже выполняется.
+        }
+    }
+}
+
+/**
  * Подсчёт процента аптайма по снимкам за указанное окно.
  *
  * @param {Array<Object>} snapshots - Список снимков
@@ -3582,9 +3614,7 @@ app.get('/api/status-history', async (req, res, next) => {
             // запросы не запускали дублирующий «лавинный» сбор.
             await kv.set(STATUS_LAST_CHECK_KEY, Date.now());
             const baseUrl = resolveBaseUrl(req);
-            performStatusChecks(baseUrl)
-                .then(recordSnapshot)
-                .catch(err => console.error('[status] lazy record failed:', err.message));
+            scheduleBackground(performStatusChecks(baseUrl).then(recordSnapshot));
         }
 
         const limit = Math.min(parseInt(req.query.limit, 10) || 120, STATUS_MONITOR.MAX_SNAPSHOTS);
