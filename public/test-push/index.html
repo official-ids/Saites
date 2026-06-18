@@ -101,10 +101,10 @@
 
         async function sendTest() {
             try {
-                if (!ADMIN_TOKEN || ADMIN_TOKEN === 'ry23bcf28') {
-                    log('️ Сначала вставь ADMIN_TOKEN в код!', 'err');
-                    return;
-                }
+                if (!ADMIN_TOKEN) {
+    log('️ ADMIN_TOKEN не задан!', 'err');
+    return;
+}
 
                 log('Отправляем тестовое уведомление...', 'info');
                 
