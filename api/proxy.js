@@ -3352,6 +3352,266 @@ app.get('/api/api-config', async (req, res, next) => {
 });
 
 // -----------------------------
+// API Routes: Server-side Uptime Monitoring (KV)
+// -----------------------------
+
+/**
+ * Ключ KV для хранения истории снимков мониторинга
+ * @constant {string}
+ */
+const STATUS_HISTORY_KEY = 'status:history';
+
+/**
+ * Ключ KV для метки времени последней записи (троттлинг)
+ * @constant {string}
+ */
+const STATUS_LAST_CHECK_KEY = 'status:last_check';
+
+/**
+ * Параметры серверного мониторинга
+ * @constant {Object}
+ */
+const STATUS_MONITOR = {
+    /** Максимальное число хранимых снимков */
+    MAX_SNAPSHOTS: 1000,
+    /** Срок хранения снимков (мс) — 30 дней */
+    RETENTION_MS: 30 * 24 * 60 * 60 * 1000,
+    /** Минимальный интервал между «ленивыми» записями (мс) — 5 минут */
+    MIN_RECORD_INTERVAL_MS: 5 * 60 * 1000,
+    /** Таймаут по умолчанию для одной проверки (мс) */
+    DEFAULT_TIMEOUT: 5000
+};
+
+/**
+ * Определение базового URL текущего деплоя из запроса или окружения.
+ *
+ * @param {express.Request} [req] - HTTP-запрос (опционально)
+ * @returns {string} Базовый URL без завершающего слэша
+ */
+function resolveBaseUrl(req) {
+    if (req) {
+        const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.headers['x-forwarded-host'] || req.get('host');
+        if (host) return `${proto}://${host}`;
+    }
+    if (process.env.STATUS_BASE_URL) return process.env.STATUS_BASE_URL.replace(/\/$/, '');
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+    return `http://localhost:${PORT}`;
+}
+
+/**
+ * Серверная проверка одного сервиса по его конфигурации.
+ *
+ * @param {string} baseUrl - Базовый URL деплоя
+ * @param {Object} service - Описание сервиса из status-config
+ * @returns {Promise<Object>} Результат проверки { id, status, latency, statusCode, error }
+ */
+async function checkServiceServerSide(baseUrl, service) {
+    const check = service.check || {};
+    const timeout = check.timeout || STATUS_MONITOR.DEFAULT_TIMEOUT;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    const start = Date.now();
+
+    const finish = (extra) => {
+        clearTimeout(timer);
+        return { id: service.id, latency: Date.now() - start, statusCode: '—', error: null, ...extra };
+    };
+
+    try {
+        if (check.type === 'external' && check.url) {
+            await fetch(check.url, { method: 'GET', signal: controller.signal, redirect: 'manual' });
+            return finish({ status: 'operational' });
+        }
+
+        let path = check.path || '/';
+        let expected = check.expectedStatuses || [200];
+        if (check.type === 'custom' && check.name === 'checkKV') {
+            path = '/api/news/posts';
+            expected = [200];
+        }
+
+        const options = {
+            method: check.method || 'GET',
+            signal: controller.signal,
+            redirect: 'manual',
+            headers: { 'X-Status-Check': '1' }
+        };
+        if (check.body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = check.body;
+        }
+
+        const response = await fetch(`${baseUrl}${path}`, options);
+        const ok = expected.includes(response.status);
+        return finish({
+            status: ok ? 'operational' : 'outage',
+            statusCode: response.status,
+            error: ok ? null : `Unexpected status ${response.status} (expected ${expected.join('|')})`
+        });
+    } catch (err) {
+        const aborted = err && err.name === 'AbortError';
+        return finish({
+            status: aborted ? 'degraded' : 'outage',
+            error: aborted ? `Timeout after ${timeout}ms` : (err.message || 'Connection failed')
+        });
+    }
+}
+
+/**
+ * Выполнение полного цикла проверок и формирование снимка.
+ *
+ * @param {string} baseUrl - Базовый URL деплоя
+ * @returns {Promise<Object>} Снимок мониторинга
+ */
+async function performStatusChecks(baseUrl) {
+    let services = await kv.get(STATUS_CONFIG_KEY);
+    if (!Array.isArray(services) || services.length === 0) services = DEFAULT_STATUS_CONFIG;
+
+    const results = await Promise.all(services.map(s => checkServiceServerSide(baseUrl, s)));
+
+    const operational = results.filter(r => r.status === 'operational').length;
+    const latencies = results.map(r => r.latency || 0);
+    const avgLatency = results.length
+        ? Math.round(latencies.reduce((a, b) => a + b, 0) / results.length)
+        : 0;
+
+    let overall = 'operational';
+    if (results.some(r => r.status === 'outage')) overall = 'outage';
+    else if (results.some(r => r.status === 'degraded')) overall = 'degraded';
+
+    const perService = {};
+    for (const r of results) {
+        perService[r.id] = { status: r.status, latency: r.latency, statusCode: r.statusCode, error: r.error };
+    }
+
+    return {
+        timestamp: Date.now(),
+        status: overall,
+        operational,
+        total: results.length,
+        avgLatency,
+        services: perService
+    };
+}
+
+/**
+ * Сохранение снимка в KV с обрезкой по размеру и сроку хранения.
+ *
+ * @param {Object} snapshot - Снимок мониторинга
+ * @returns {Promise<void>}
+ */
+async function recordSnapshot(snapshot) {
+    let history = await kv.get(STATUS_HISTORY_KEY);
+    if (!Array.isArray(history)) history = [];
+
+    history.push(snapshot);
+
+    const cutoff = Date.now() - STATUS_MONITOR.RETENTION_MS;
+    history = history.filter(s => s && s.timestamp >= cutoff);
+    if (history.length > STATUS_MONITOR.MAX_SNAPSHOTS) {
+        history = history.slice(-STATUS_MONITOR.MAX_SNAPSHOTS);
+    }
+
+    await kv.set(STATUS_HISTORY_KEY, history);
+    await kv.set(STATUS_LAST_CHECK_KEY, snapshot.timestamp);
+}
+
+/**
+ * Подсчёт процента аптайма по снимкам за указанное окно.
+ *
+ * @param {Array<Object>} snapshots - Список снимков
+ * @param {number} windowMs - Размер окна (мс)
+ * @param {string|null} [serviceId] - ID сервиса или null для общего аптайма
+ * @returns {number|null} Процент аптайма (0-100) или null если нет данных
+ */
+function computeUptime(snapshots, windowMs, serviceId) {
+    const cutoff = Date.now() - windowMs;
+    const inWindow = snapshots.filter(s => s.timestamp >= cutoff);
+    if (inWindow.length === 0) return null;
+
+    let ok = 0;
+    for (const snap of inWindow) {
+        const status = serviceId
+            ? (snap.services && snap.services[serviceId] && snap.services[serviceId].status)
+            : snap.status;
+        if (status === 'operational') ok++;
+    }
+    return Math.round((ok / inWindow.length) * 1000) / 10;
+}
+
+const STATUS_WINDOWS = {
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000
+};
+
+/**
+ * Эндпоинт записи проверки. Вызывается Vercel Cron или вручную.
+ * Троттлится: повторный вызов в пределах MIN_RECORD_INTERVAL_MS пропускается.
+ */
+app.get('/api/status-check', async (req, res, next) => {
+    try {
+        const force = req.query.force === '1';
+        const lastCheck = await kv.get(STATUS_LAST_CHECK_KEY);
+        if (!force && lastCheck && (Date.now() - lastCheck) < STATUS_MONITOR.MIN_RECORD_INTERVAL_MS) {
+            return res.json({ recorded: false, reason: 'throttled', lastCheck });
+        }
+
+        const snapshot = await performStatusChecks(resolveBaseUrl(req));
+        await recordSnapshot(snapshot);
+        res.json({ recorded: true, snapshot });
+    } catch (err) { next(err); }
+});
+
+/**
+ * Публичный эндпоинт истории аптайма для страницы /status.
+ * Возвращает снимки, агрегаты аптайма (24h/7d/30d) и метку последней проверки.
+ * При устаревших данных запускает «ленивую» фоновую запись снимка.
+ */
+app.get('/api/status-history', async (req, res, next) => {
+    try {
+        let history = await kv.get(STATUS_HISTORY_KEY);
+        if (!Array.isArray(history)) history = [];
+
+        const lastCheck = await kv.get(STATUS_LAST_CHECK_KEY);
+        const stale = !lastCheck || (Date.now() - lastCheck) >= STATUS_MONITOR.MIN_RECORD_INTERVAL_MS;
+
+        if (stale) {
+            // Оптимистично помечаем время проверки, чтобы конкурентные
+            // запросы не запускали дублирующий «лавинный» сбор.
+            await kv.set(STATUS_LAST_CHECK_KEY, Date.now());
+            const baseUrl = resolveBaseUrl(req);
+            performStatusChecks(baseUrl)
+                .then(recordSnapshot)
+                .catch(err => console.error('[status] lazy record failed:', err.message));
+        }
+
+        const limit = Math.min(parseInt(req.query.limit, 10) || 120, STATUS_MONITOR.MAX_SNAPSHOTS);
+        const snapshots = history.slice(-limit);
+
+        const overall = {};
+        for (const [key, ms] of Object.entries(STATUS_WINDOWS)) {
+            overall[key] = computeUptime(history, ms, null);
+        }
+
+        const serviceIds = new Set();
+        for (const snap of history) {
+            if (snap.services) Object.keys(snap.services).forEach(id => serviceIds.add(id));
+        }
+        const services = {};
+        for (const id of serviceIds) {
+            services[id] = {};
+            for (const [key, ms] of Object.entries(STATUS_WINDOWS)) {
+                services[id][key] = computeUptime(history, ms, id);
+            }
+        }
+
+        res.json({ lastCheck: lastCheck || null, uptime: overall, services, snapshots });
+    } catch (err) { next(err); }
+});
+
+// -----------------------------
 // API Routes: FAQ (Help Center)
 // -----------------------------
 const FAQ_CONFIG_KEY = 'admin:faq_config';
