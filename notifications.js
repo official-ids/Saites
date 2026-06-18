@@ -2028,4 +2028,4 @@ module.exports.PushSender = PushSender;
 module.exports.ChannelManager = ChannelManager;
 module.exports.ServiceKeyManager = ServiceKeyManager;
 module.exports.logger = logger;
-module.exports.CONFIG = CONFIG;
+module.exports.CONFIG = CONFIG; 
