@@ -297,6 +297,80 @@
             color: var(--text-primary);
         }
 
+        .toolbar-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .news-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .news-search svg {
+            position: absolute;
+            left: 12px;
+            width: 16px;
+            height: 16px;
+            color: var(--text-tertiary);
+            pointer-events: none;
+        }
+
+        .news-search-input {
+            width: 220px;
+            max-width: 60vw;
+            padding: 8px 32px 8px 36px;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .news-search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        .news-search-clear {
+            position: absolute;
+            right: 10px;
+            width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .news-search.has-value .news-search-clear {
+            display: flex;
+        }
+
+        .results-count {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-family: var(--mono-stack);
+        }
+
+        .results-count.hidden {
+            display: none;
+        }
+
         /* ===========================
            Buttons
            =========================== */
@@ -1746,13 +1820,28 @@ Level Badges
                 <button class="filter-tab" data-filter="favorites">Избранное</button>
                 <button class="filter-tab" data-filter="mine">Мои</button>
             </div>
-            <button class="btn btn-secondary" id="refreshBtn">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Обновить
-            </button>
+            <div class="toolbar-controls">
+                <div class="news-search" id="newsSearch">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" class="news-search-input" id="searchInput" placeholder="Поиск по постам..." maxlength="100" autocomplete="off" spellcheck="false">
+                    <button class="news-search-clear" id="searchClear" title="Очистить" aria-label="Очистить поиск">&times;</button>
+                </div>
+                <div class="filter-tabs" id="sortTabs">
+                    <button class="filter-tab active" data-sort="newest">Новые</button>
+                    <button class="filter-tab" data-sort="popular">Популярные</button>
+                </div>
+                <button class="btn btn-secondary" id="refreshBtn">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Обновить
+                </button>
+            </div>
         </div>
+
+        <div class="results-count hidden" id="resultsCount"></div>
 
         <div id="postsFeed" class="posts-feed">
             <div class="spinner"></div>
@@ -2081,6 +2170,12 @@ JavaScript (клиентская логика)
         
         /** @type {string} Текущий фильтр постов: 'all' | 'favorites' | 'mine' */
         currentFilter: 'all',
+
+        /** @type {string} Поисковый запрос по постам */
+        searchQuery: '',
+
+        /** @type {string} Сортировка постов: 'newest' | 'popular' */
+        sortBy: 'newest',
         
         /** @type {string|null} ID поста в модальном окне комментариев */
         currentPostId: null,
@@ -2491,8 +2586,13 @@ JavaScript (клиентская логика)
          * Получение списка постов
          * @returns {Promise<Object>} - Список постов
          */
-        async getPosts() {
-            return this.request(API.POSTS.LIST);
+        async getPosts({ q = '', sort = 'newest', limit } = {}) {
+            const params = new URLSearchParams();
+            if (q) params.set('q', q);
+            if (sort && sort !== 'newest') params.set('sort', sort);
+            if (limit) params.set('limit', String(limit));
+            const qs = params.toString();
+            return this.request(qs ? `${API.POSTS.LIST}?${qs}` : API.POSTS.LIST);
         },
 
         /**
@@ -3088,7 +3188,11 @@ JavaScript (клиентская логика)
         feed.innerHTML = '<div class="spinner"></div>';
 
         try {
-            const data = await ApiClient.getPosts();
+            const data = await ApiClient.getPosts({
+                q: State.searchQuery,
+                sort: State.sortBy,
+                limit: State.searchQuery ? 100 : undefined
+            });
             State.posts = data.posts || [];
             renderPosts();
         } catch (err) {
@@ -3106,6 +3210,51 @@ JavaScript (клиентская логика)
     }
 
     let renderPostsRafId = null;
+
+    /**
+     * Обновление строки счётчика результатов (показывается только при поиске)
+     * @param {number} count - Количество видимых постов
+     */
+    function updateResultsCount(count) {
+        const el = document.getElementById('resultsCount');
+        if (!el) return;
+        if (!State.searchQuery) {
+            el.classList.add('hidden');
+            el.textContent = '';
+            return;
+        }
+        const word = count === 1 ? 'результат' : (count >= 2 && count <= 4 ? 'результата' : 'результатов');
+        el.textContent = `Найдено: ${count} ${word} по запросу «${State.searchQuery}»`;
+        el.classList.remove('hidden');
+    }
+
+    /**
+     * HTML пустого состояния ленты с учётом текущего поиска/фильтра
+     * @returns {string} - HTML
+     */
+    function renderEmptyState() {
+        let title = 'Пока нет постов';
+        let text = 'Новые публикации появятся здесь';
+        if (State.searchQuery) {
+            title = 'Ничего не найдено';
+            text = `По запросу «${Security.safeText(State.searchQuery)}» постов нет. Попробуйте другой запрос.`;
+        } else if (State.currentFilter === 'favorites') {
+            title = 'Нет избранных постов';
+            text = 'Добавляйте посты в избранное, чтобы они появились здесь';
+        } else if (State.currentFilter === 'mine') {
+            title = 'Здесь пока пусто';
+            text = 'Ваши публикации появятся здесь';
+        }
+        return `
+            <div class="empty-state">
+                <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
+                </svg>
+                <div class="empty-state-title">${title}</div>
+                <div class="empty-state-text">${text}</div>
+            </div>
+        `;
+    }
     
     /**
      * Рендеринг постов
@@ -3126,22 +3275,21 @@ JavaScript (клиентская логика)
         }
 
         // Сортировка
+        const popularity = (p) => (p.likes || 0) + (p.commentsCount || 0);
         posts.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
+            if (State.sortBy === 'popular') {
+                const diff = popularity(b) - popularity(a);
+                if (diff !== 0) return diff;
+            }
             return new Date(b.createdAt) - new Date(a.createdAt);
         });
 
+        updateResultsCount(posts.length);
+
         if (posts.length === 0) {
-            feed.innerHTML = `
-                <div class="empty-state">
-                    <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path>
-                    </svg>
-                    <div class="empty-state-title">${State.currentFilter === 'favorites' ? 'Нет избранных постов' : 'Пока нет постов'}</div>
-                    <div class="empty-state-text">${State.currentFilter === 'favorites' ? 'Добавляйте посты в избранное, чтобы они появились здесь' : 'Новые публикации появятся здесь'}</div>
-                </div>
-            `;
+            feed.innerHTML = renderEmptyState();
             return;
         }
 
@@ -4288,6 +4436,56 @@ JavaScript (клиентская логика)
                 State.currentFilter = tab.dataset.filter;
                 renderPosts();
             });
+        });
+
+        // Сортировка постов
+        document.querySelectorAll('#sortTabs .filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                if (tab.dataset.sort === State.sortBy) return;
+                document.querySelectorAll('#sortTabs .filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                State.sortBy = tab.dataset.sort;
+                loadPosts();
+            });
+        });
+
+        // Поиск по постам
+        const searchInput = document.getElementById('searchInput');
+        const searchWrap = document.getElementById('newsSearch');
+        const searchClear = document.getElementById('searchClear');
+        let searchTimer = null;
+
+        const applySearch = (value) => {
+            const trimmed = value.trim();
+            if (trimmed === State.searchQuery) return;
+            State.searchQuery = trimmed;
+            loadPosts();
+        };
+
+        searchInput.addEventListener('input', () => {
+            searchWrap.classList.toggle('has-value', searchInput.value.length > 0);
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => applySearch(searchInput.value), 300);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimer);
+                applySearch(searchInput.value);
+            } else if (e.key === 'Escape') {
+                searchInput.value = '';
+                searchWrap.classList.remove('has-value');
+                clearTimeout(searchTimer);
+                applySearch('');
+            }
+        });
+
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchWrap.classList.remove('has-value');
+            searchInput.focus();
+            clearTimeout(searchTimer);
+            applySearch('');
         });
 
         document.getElementById('refreshBtn').addEventListener('click', async () => {
