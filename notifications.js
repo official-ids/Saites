@@ -333,7 +333,7 @@ class Security {
 }
 
 // ============================================
-// ██████  RATE LIMITING
+// ██████  RATE LIMITING (ИСПРАВЛЕНО)
 // ============================================
 
 async function checkRateLimit(key, windowMs, max) {
@@ -341,11 +341,14 @@ async function checkRateLimit(key, windowMs, max) {
         const current = await kv.get(key);
         const now = Date.now();
         
+        // Если ключа нет или окно истекло — создаём новый
         if (!current || now > current.resetAt) {
-            await kv.set(key, { count: 1, resetAt: now + windowMs }, { ex: Math.ceil(windowMs / 1000) });
+            const data = { count: 1, resetAt: now + windowMs };
+            await kv.set(key, data, { ex: Math.ceil(windowMs / 1000) });
             return { allowed: true, remaining: max - 1 };
         }
         
+        // Если лимит исчерпан — отказываем
         if (current.count >= max) {
             return { 
                 allowed: false, 
@@ -354,11 +357,14 @@ async function checkRateLimit(key, windowMs, max) {
             };
         }
         
-        await kv.hincrby(key, 'count', 1);
-        return { allowed: true, remaining: max - current.count - 1 };
+        // Увеличиваем счётчик (через set, не hincrby!)
+        current.count += 1;
+        const ttl = Math.ceil((current.resetAt - now) / 1000);
+        await kv.set(key, current, { ex: Math.max(ttl, 1) });
+        return { allowed: true, remaining: max - current.count };
     } catch (err) {
-        logger.error('Rate limit KV error', { error: err.message, key });
-        return { allowed: true, remaining: max };
+        logger.error('Rate limit error', { error: err.message, key });
+        return { allowed: true, remaining: max }; // fail-open
     }
 }
 
@@ -1012,16 +1018,10 @@ router.post('/subscribe', publicRateLimiter, async (req, res) => {
             return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: validation.error });
         }
 
-        // Проверка существования
-        const existing = await kv.get(K.SUBSCRIPTION(subscription.endpoint));
-        if (existing) {
-            return res.status(CONFIG.HTTP.CONFLICT).json({ error: 'Subscription already exists' });
-        }
-
         // Валидация каналов
         const channelsToSubscribe = Array.isArray(channels) && channels.length > 0 
             ? channels 
-            : ['news']; // По умолчанию только news
+            : ['news'];
         
         for (const chId of channelsToSubscribe) {
             if (!Validator.isValidChannelId(chId)) {
@@ -1035,11 +1035,9 @@ router.post('/subscribe', publicRateLimiter, async (req, res) => {
                     error: `Channel not found: ${chId}` 
                 });
             }
-            // Публичные каналы — без ограничений
-            // Приватные каналы требуют дополнительной авторизации
             if (!channel.public) {
                 return res.status(CONFIG.HTTP.FORBIDDEN).json({ 
-                    error: `Channel "${chId}" is private and requires authorization` 
+                    error: `Channel "${chId}" is private` 
                 });
             }
         }
@@ -1050,7 +1048,38 @@ router.post('/subscribe', publicRateLimiter, async (req, res) => {
             });
         }
 
-        // Сохранение подписки
+        // Проверяем существующую подписку
+        const existing = await kv.get(K.SUBSCRIPTION(subscription.endpoint));
+        
+        if (existing) {
+            // Подписка уже есть — обновляем каналы!
+            const currentChannels = existing.channels || [];
+            const newChannels = [...new Set([...currentChannels, ...channelsToSubscribe])];
+            
+            existing.channels = newChannels;
+            if (userId) existing.userId = Security.sanitizeInput(userId);
+            
+            await kv.set(K.SUBSCRIPTION(subscription.endpoint), existing);
+            
+            // Добавляем в новые каналы
+            for (const chId of channelsToSubscribe) {
+                await kv.sadd(K.CHANNEL_INDEX(chId), subscription.endpoint);
+            }
+            
+            logger.logSubscription('updated', {
+                endpoint: subscription.endpoint,
+                channels: newChannels,
+                ip: req.clientIp
+            });
+
+            return res.json({ 
+                success: true,
+                message: 'Subscription updated',
+                channels: newChannels
+            });
+        }
+
+        // Новая подписка
         const subscriptionData = {
             endpoint: subscription.endpoint,
             keys: subscription.keys,
@@ -1064,16 +1093,15 @@ router.post('/subscribe', publicRateLimiter, async (req, res) => {
         await kv.set(K.SUBSCRIPTION(subscription.endpoint), subscriptionData);
         await kv.sadd(K.SUBSCRIPTIONS_INDEX, subscription.endpoint);
 
-        // Подписываем на каналы
+        // Добавляем в каналы
         for (const chId of channelsToSubscribe) {
-            await ChannelManager.subscribe(chId, subscription.endpoint);
+            await kv.sadd(K.CHANNEL_INDEX(chId), subscription.endpoint);
         }
 
         logger.logSubscription('created', {
             endpoint: subscription.endpoint,
             channels: channelsToSubscribe,
-            ip: req.clientIp,
-            userAgent: req.headers['user-agent']
+            ip: req.clientIp
         });
 
         res.status(CONFIG.HTTP.CREATED).json({ 
