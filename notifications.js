@@ -1749,10 +1749,6 @@ router.get('/admin/stats', verifyAdminToken, async (req, res) => {
 // ██████  НАПОМИНАНИЯ (REMINDERS)
 // ============================================
 
-/**
-POST /reminders — создать напоминание
-Body: { endpoint, title, body?, triggerAt }
-*/
 router.post('/reminders', publicRateLimiter, async (req, res) => {
     try {
         const { endpoint, title, body, triggerAt } = req.body;
@@ -1782,11 +1778,10 @@ router.post('/reminders', publicRateLimiter, async (req, res) => {
             return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'triggerAt must be in the future' });
         }
 
-        // Проверка что endpoint подписан
         const subExists = await kv.get(K.SUBSCRIPTION(endpoint));
         if (!subExists) {
             return res.status(CONFIG.HTTP.BAD_REQUEST).json({ 
-                error: 'Endpoint not subscribed. Subscribe to push notifications first.' 
+                error: 'Endpoint not subscribed' 
             });
         }
 
@@ -1805,8 +1800,7 @@ router.post('/reminders', publicRateLimiter, async (req, res) => {
 
         logger.info('Reminder created', { 
             id: reminder.id, 
-            triggerAt: reminder.triggerAt,
-            title: reminder.title.substring(0, 50)
+            triggerAt: reminder.triggerAt
         });
 
         res.status(CONFIG.HTTP.CREATED).json({ 
@@ -1823,10 +1817,6 @@ router.post('/reminders', publicRateLimiter, async (req, res) => {
     }
 });
 
-/**
-GET /reminders — список напоминаний пользователя
-Query: { endpoint }
-*/
 router.get('/reminders', async (req, res) => {
     try {
         const { endpoint } = req.query;
@@ -1855,9 +1845,6 @@ router.get('/reminders', async (req, res) => {
     }
 });
 
-/**
-DELETE /reminders/:id — удалить напоминание
-*/
 router.delete('/reminders/:id', publicRateLimiter, async (req, res) => {
     try {
         const { id } = req.params;
@@ -1868,7 +1855,6 @@ router.delete('/reminders/:id', publicRateLimiter, async (req, res) => {
             return res.status(CONFIG.HTTP.NOT_FOUND).json({ error: 'Reminder not found' });
         }
 
-        // Проверка что endpoint совпадает (защита от удаления чужих)
         if (endpoint && reminder.endpoint !== endpoint) {
             return res.status(CONFIG.HTTP.FORBIDDEN).json({ error: 'Access denied' });
         }
@@ -1884,11 +1870,6 @@ router.delete('/reminders/:id', publicRateLimiter, async (req, res) => {
     }
 });
 
-/**
-POST /reminders/check — проверить и отправить сработавшие напоминания
-Вызывается фронтом при загрузке страницы и cron'ом
-Body: { endpoint? } — если указан, только для этого endpoint
-*/
 router.post('/reminders/check', async (req, res) => {
     try {
         const { endpoint } = req.body || {};
@@ -1906,17 +1887,14 @@ router.post('/reminders/check', async (req, res) => {
             const reminder = await kv.get(`push:reminder:${id}`);
             if (!reminder) continue;
 
-            // Фильтр по endpoint если указан
             if (endpoint && reminder.endpoint !== endpoint) continue;
 
             const triggerTime = new Date(reminder.triggerAt).getTime();
-            if (triggerTime > now) continue; // ещё не время
+            if (triggerTime > now) continue;
 
             try {
-                // Отправляем push
                 const subscriptionData = await kv.get(K.SUBSCRIPTION(reminder.endpoint));
                 if (!subscriptionData) {
-                    // Подписка удалена — удаляем напоминание
                     await kv.del(`push:reminder:${id}`);
                     await kv.srem('push:reminders:index', id);
                     continue;
@@ -1942,7 +1920,6 @@ router.post('/reminders/check', async (req, res) => {
 
                 await webpush.sendNotification(subscription, payload);
 
-                // Обновляем статус
                 reminder.status = 'sent';
                 reminder.sentAt = new Date().toISOString();
                 await kv.set(`push:reminder:${id}`, reminder);
@@ -1962,7 +1939,6 @@ router.post('/reminders/check', async (req, res) => {
             } catch (err) {
                 errors.push({ id, error: err.message });
 
-                // Если подписка недействительна — удаляем
                 if (err.statusCode === 410 || err.statusCode === 404) {
                     await kv.del(`push:reminder:${id}`).catch(() => {});
                     await kv.srem('push:reminders:index', id).catch(() => {});
@@ -1981,9 +1957,6 @@ router.post('/reminders/check', async (req, res) => {
     }
 });
 
-/**
-GET /reminders/stats — статистика напоминаний (публичная)
-*/
 router.get('/reminders/stats', async (req, res) => {
     try {
         const ids = await kv.smembers('push:reminders:index');
