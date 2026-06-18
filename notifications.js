@@ -1870,6 +1870,10 @@ router.delete('/reminders/:id', publicRateLimiter, async (req, res) => {
     }
 });
 
+/**
+POST /reminders/check — проверить и отправить сработавшие напоминания
+С защитой от повторной отправки через атомарный флаг "sending"
+*/
 router.post('/reminders/check', async (req, res) => {
     try {
         const { endpoint } = req.body || {};
@@ -1882,19 +1886,51 @@ router.post('/reminders/check', async (req, res) => {
 
         const sent = [];
         const errors = [];
+        const skipped = [];
 
         for (const id of ids) {
             const reminder = await kv.get(`push:reminder:${id}`);
-            if (!reminder) continue;
+            if (!reminder) {
+                // Битая запись — удаляем
+                await kv.srem('push:reminders:index', id).catch(() => {});
+                continue;
+            }
 
+            // Фильтр по endpoint если указан
             if (endpoint && reminder.endpoint !== endpoint) continue;
 
             const triggerTime = new Date(reminder.triggerAt).getTime();
+            
+            // Ещё не время
             if (triggerTime > now) continue;
+
+            // ✅ ЗАЩИТА: уже отправлено — пропускаем
+            if (reminder.status === 'sent') {
+                continue;
+            }
+
+            // ✅ ЗАЩИТА: сейчас отправляется другим процессом — пропускаем
+            if (reminder.status === 'sending') {
+                // Если зависло больше 2 минут — сбрасываем
+                if (reminder.sendingAt && (now - new Date(reminder.sendingAt).getTime()) > 2 * 60 * 1000) {
+                    reminder.status = 'pending';
+                    delete reminder.sendingAt;
+                    await kv.set(`push:reminder:${id}`, reminder);
+                } else {
+                    skipped.push({ id, reason: 'already sending' });
+                    continue;
+                }
+            }
+
+            // ✅ АТОМАРНО: помечаем как "отправляется"
+            reminder.status = 'sending';
+            reminder.sendingAt = new Date().toISOString();
+            await kv.set(`push:reminder:${id}`, reminder);
 
             try {
                 const subscriptionData = await kv.get(K.SUBSCRIPTION(reminder.endpoint));
                 if (!subscriptionData) {
+                    // Подписка удалена — удаляем напоминание
                     await kv.del(`push:reminder:${id}`);
                     await kv.srem('push:reminders:index', id);
                     continue;
@@ -1920,8 +1956,10 @@ router.post('/reminders/check', async (req, res) => {
 
                 await webpush.sendNotification(subscription, payload);
 
+                // ✅ Успех — помечаем как отправленное
                 reminder.status = 'sent';
                 reminder.sentAt = new Date().toISOString();
+                delete reminder.sendingAt;
                 await kv.set(`push:reminder:${id}`, reminder);
 
                 sent.push({
@@ -1937,8 +1975,22 @@ router.post('/reminders/check', async (req, res) => {
                 });
 
             } catch (err) {
-                errors.push({ id, error: err.message });
+                // ❌ Ошибка — возвращаем статус pending для повторной попытки
+                reminder.status = 'pending';
+                delete reminder.sendingAt;
+                reminder.retryCount = (reminder.retryCount || 0) + 1;
+                reminder.lastError = err.message;
+                
+                // Если слишком много попыток — помечаем как failed
+                if (reminder.retryCount >= 3) {
+                    reminder.status = 'failed';
+                }
+                
+                await kv.set(`push:reminder:${id}`, reminder);
+                
+                errors.push({ id, error: err.message, statusCode: err.statusCode });
 
+                // Если подписка недействительна — удаляем
                 if (err.statusCode === 410 || err.statusCode === 404) {
                     await kv.del(`push:reminder:${id}`).catch(() => {});
                     await kv.srem('push:reminders:index', id).catch(() => {});
@@ -1949,11 +2001,58 @@ router.post('/reminders/check', async (req, res) => {
         res.json({ 
             sent, 
             errors,
+            skipped,
             total: sent.length
         });
     } catch (err) {
         logger.error('POST /reminders/check error', { error: err.message });
         res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error checking reminders' });
+    }
+});
+
+/**
+POST /reminders/cleanup — удалить старые напоминания (старше 7 дней)
+*/
+router.post('/reminders/cleanup', async (req, res) => {
+    try {
+        const ids = await kv.smembers('push:reminders:index');
+        if (!ids || ids.length === 0) {
+            return res.json({ cleaned: 0 });
+        }
+
+        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        let cleaned = 0;
+
+        for (const id of ids) {
+            const reminder = await kv.get(`push:reminder:${id}`);
+            if (!reminder) {
+                await kv.srem('push:reminders:index', id).catch(() => {});
+                cleaned++;
+                continue;
+            }
+
+            const triggerTime = new Date(reminder.triggerAt).getTime();
+            
+            // Удаляем если:
+            // 1. Отправлено и прошло больше 7 дней
+            // 2. Провалено и прошло больше 7 дней  
+            // 3. Время триггера было больше 30 дней назад (даже если pending)
+            if (
+                (reminder.status === 'sent' && triggerTime < sevenDaysAgo) ||
+                (reminder.status === 'failed' && triggerTime < sevenDaysAgo) ||
+                (triggerTime < Date.now() - 30 * 24 * 60 * 60 * 1000)
+            ) {
+                await kv.del(`push:reminder:${id}`);
+                await kv.srem('push:reminders:index', id);
+                cleaned++;
+            }
+        }
+
+        logger.info('Reminders cleanup', { cleaned });
+        res.json({ success: true, cleaned });
+    } catch (err) {
+        logger.error('POST /reminders/cleanup error', { error: err.message });
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error cleaning reminders' });
     }
 });
 
