@@ -561,42 +561,99 @@
 
 <script>
     const API_BASE = '/api/notifications';
+    const STORAGE_KEY = 'oris_reminders_state';
+    const SYNC_CHANNEL = 'oris_reminders_sync';
+    
     let userEndpoint = null;
     let reminders = [];
     let checkInterval = null;
     let isChecking = false;
     let lastCheckTime = 0;
-    const CHECK_DEBOUNCE = 5000; // 5 секунд между проверками
+    let nextReminderTime = null;
+    
+    const CHECK_DEBOUNCE = 10000; // 10 секунд минимум между проверками
+    const MIN_CHECK_INTERVAL = 30000; // 30 секунд минимум
+    const MAX_CHECK_INTERVAL = 300000; // 5 минут максимум
+    
+    // Синхронизация между вкладками
+    const bc = ('BroadcastChannel' in window) ? new BroadcastChannel(SYNC_CHANNEL) : null;
+
+    // ============================================
+    // СОХРАНЕНИЕ СОСТОЯНИЯ
+    // ============================================
+    
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                lastCheckTime,
+                endpoint: userEndpoint,
+                timestamp: Date.now()
+            }));
+        } catch (e) {}
+    }
+    
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+    }
 
     // ============================================
     // ИНИЦИАЛИЗАЦИЯ
     // ============================================
     
     document.addEventListener('DOMContentLoaded', async () => {
-        // Установить минимальную дату = сегодня
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('r-date').min = today;
 
-        // Установить время по умолчанию = +30 мин
         const now = new Date();
         now.setMinutes(now.getMinutes() + 30);
         document.getElementById('r-time').value = now.toTimeString().slice(0, 5);
 
-        // Валидация времени в реальном времени
         setupRealTimeValidation();
+        
+        // Загружаем предыдущее состояние
+        const savedState = loadState();
+        if (savedState && savedState.lastCheckTime) {
+            lastCheckTime = savedState.lastCheckTime;
+        }
 
-        // Инициализация push и загрузка напоминаний
         await initPush();
         await loadReminders();
-
-        // Запуск автопроверки каждые 30 секунд
-        startAutoCheck();
-
-        // Обработка visibility change - проверка при возврате на вкладку
+        
+        startSmartCheck();
+        
+        // Проверка при возврате на вкладку
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden) {
-                checkRemindersSilent();
+                // Проверяем только если прошло больше 15 секунд
+                if (Date.now() - lastCheckTime > 15000) {
+                    checkRemindersSilent();
+                }
             }
+        });
+        
+        // Синхронизация между вкладками
+        if (bc) {
+            bc.onmessage = (event) => {
+                if (event.data.type === 'reminders_updated') {
+                    loadReminders();
+                } else if (event.data.type === 'reminder_sent') {
+                    // Другая вкладка уже отправила — просто обновляем список
+                    loadReminders();
+                }
+            };
+        }
+        
+        // Очистка при закрытии
+        window.addEventListener('beforeunload', () => {
+            saveState();
+            stopSmartCheck();
+            if (bc) bc.close();
         });
     });
 
@@ -606,7 +663,6 @@
 
     async function initPush() {
         try {
-            // Проверка поддержки push
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                 showBanner('Ваш браузер не поддерживает push-уведомления');
                 return;
@@ -627,13 +683,12 @@
             userEndpoint = sub.endpoint;
             document.getElementById('subscribe-banner').classList.add('hidden');
             
-            // Проверка статуса уведомлений
             if (Notification.permission === 'denied') {
-                showBanner('Уведомления заблокированы. Разрешите их в настройках браузера');
+                showBanner('Уведомления заблокированы в настройках браузера');
             }
         } catch (err) {
             console.error('Push init error:', err);
-            showBanner('Ошибка инициализации push: ' + err.message);
+            showBanner('Ошибка инициализации: ' + err.message);
         }
     }
 
@@ -651,28 +706,20 @@
         try {
             const perm = await Notification.requestPermission();
             if (perm !== 'granted') {
-                showToast('Разрешение на уведомления отклонено', 'error');
-                showBanner('Разрешите уведомления в настройках браузера');
+                showToast('Разрешение отклонено', 'error');
                 return;
             }
 
-            showToast('Получение ключей...', 'info');
             const keyRes = await fetch(`${API_BASE}/vapid-public-key`);
-            
-            if (!keyRes.ok) {
-                throw new Error('Не удалось получить VAPID ключ');
-            }
+            if (!keyRes.ok) throw new Error('Не удалось получить VAPID ключ');
             
             const { publicKey } = await keyRes.json();
-
-            showToast('Подписка на уведомления...', 'info');
             const reg = await navigator.serviceWorker.ready;
             const sub = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(publicKey)
             });
 
-            showToast('Сохранение подписки...', 'info');
             const subRes = await fetch(`${API_BASE}/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -684,17 +731,14 @@
 
             if (!subRes.ok) {
                 const data = await subRes.json();
-                throw new Error(data.error || 'Ошибка сохранения подписки');
+                throw new Error(data.error || 'Ошибка сохранения');
             }
 
             userEndpoint = sub.endpoint;
             document.getElementById('subscribe-banner').classList.add('hidden');
             showToast('Уведомления включены', 'success');
-            
-            // Перезагрузка напоминаний
             await loadReminders();
         } catch (err) {
-            console.error('Subscribe error:', err);
             showToast('Ошибка: ' + err.message, 'error');
         }
     }
@@ -722,7 +766,6 @@
         const body = document.getElementById('r-body').value.trim();
         const date = document.getElementById('r-date').value;
         const time = document.getElementById('r-time').value;
-        const repeat = document.getElementById('r-repeat')?.value || 'none';
 
         if (!title || !date || !time) {
             showToast('Заполните обязательные поля', 'error');
@@ -738,7 +781,6 @@
         }
 
         const btn = document.getElementById('create-btn');
-        const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'Создание...';
 
@@ -750,30 +792,27 @@
                     endpoint: userEndpoint,
                     title,
                     body: body || title,
-                    triggerAt,
-                    repeat: repeat !== 'none' ? repeat : null
+                    triggerAt
                 })
             });
 
             const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Ошибка создания');
-            }
+            if (!res.ok) throw new Error(data.error || 'Ошибка создания');
 
             showToast('Напоминание создано', 'success');
-
-            // Очистка формы
             document.getElementById('r-title').value = '';
             document.getElementById('r-body').value = '';
 
             await loadReminders();
+            
+            // Уведомляем другие вкладки
+            if (bc) bc.postMessage({ type: 'reminders_updated' });
+            
         } catch (err) {
-            console.error('Create reminder error:', err);
             showToast(err.message, 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = originalText;
+            btn.textContent = 'Создать напоминание';
         }
     }
 
@@ -793,43 +832,27 @@
             return;
         }
 
-        // Показать индикатор загрузки
-        showLoading(true);
-
         try {
             const res = await fetch(`${API_BASE}/reminders?endpoint=${encodeURIComponent(userEndpoint)}`);
-            
-            if (!res.ok) {
-                throw new Error('Не удалось загрузить напоминания');
-            }
-            
             const data = await res.json();
             reminders = data.reminders || [];
-
             renderReminders();
+            updateNextReminderTime();
         } catch (err) {
             console.error('Load reminders error:', err);
-            showToast('Ошибка загрузки: ' + err.message, 'error');
-            
-            // Показать ошибку в списке
-            document.getElementById('active-list').innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-title">Ошибка загрузки</div>
-                    <div class="empty-state-desc">${escapeHtml(err.message)}</div>
-                    <button class="btn btn-secondary btn-sm" onclick="loadReminders()" style="margin-top: 12px;">
-                        Повторить
-                    </button>
-                </div>
-            `;
-        } finally {
-            showLoading(false);
         }
     }
 
-    function showLoading(show) {
-        const loader = document.getElementById('loading-indicator');
-        if (loader) {
-            loader.style.display = show ? 'flex' : 'none';
+    function updateNextReminderTime() {
+        const now = Date.now();
+        const active = reminders
+            .filter(r => new Date(r.triggerAt).getTime() > now)
+            .sort((a, b) => new Date(a.triggerAt) - new Date(b.triggerAt));
+        
+        if (active.length > 0) {
+            nextReminderTime = new Date(active[0].triggerAt).getTime();
+        } else {
+            nextReminderTime = null;
         }
     }
 
@@ -838,15 +861,12 @@
         const active = reminders.filter(r => new Date(r.triggerAt).getTime() > now);
         const past = reminders.filter(r => new Date(r.triggerAt).getTime() <= now);
 
-        // Сортировка
         active.sort((a, b) => new Date(a.triggerAt) - new Date(b.triggerAt));
         past.sort((a, b) => new Date(b.triggerAt) - new Date(a.triggerAt));
 
-        // Обновление счётчиков
         document.getElementById('count-active').textContent = active.length;
         document.getElementById('count-past').textContent = past.length;
 
-        // Рендер активных с группировкой по датам
         const activeList = document.getElementById('active-list');
         if (active.length === 0) {
             activeList.innerHTML = `
@@ -859,7 +879,6 @@
             activeList.innerHTML = renderGroupedByDate(active, false);
         }
 
-        // Рендер прошедших
         const pastList = document.getElementById('past-list');
         if (past.length === 0) {
             pastList.innerHTML = `
@@ -871,14 +890,6 @@
         } else {
             pastList.innerHTML = renderGroupedByDate(past, true);
         }
-
-        // Анимация появления
-        requestAnimationFrame(() => {
-            document.querySelectorAll('.reminder-item').forEach((item, index) => {
-                item.style.animationDelay = `${index * 0.05}s`;
-                item.classList.add('animate-in');
-            });
-        });
     }
 
     function renderGroupedByDate(items, isPast) {
@@ -887,15 +898,13 @@
         items.forEach(r => {
             const date = new Date(r.triggerAt);
             const dateKey = date.toDateString();
-            if (!groups[dateKey]) {
-                groups[dateKey] = [];
-            }
+            if (!groups[dateKey]) groups[dateKey] = [];
             groups[dateKey].push(r);
         });
 
         let html = '';
         
-        Object.entries(groups).forEach(([dateKey, reminders]) => {
+        Object.entries(groups).forEach(([dateKey, groupReminders]) => {
             const date = new Date(dateKey);
             const today = new Date();
             const tomorrow = new Date(today);
@@ -917,7 +926,7 @@
             html += `
                 <div class="date-group">
                     <div class="date-group-header">${dateLabel}</div>
-                    ${reminders.map(r => renderReminderItem(r, isPast)).join('')}
+                    ${groupReminders.map(r => renderReminderItem(r, isPast)).join('')}
                 </div>
             `;
         });
@@ -936,22 +945,24 @@
 
         if (isPast) {
             statusClass = 'sent';
-            statusText = 'Отправлено';
+            statusText = r.status === 'sent' ? 'Отправлено' : 'Просрочено';
+        } else if (r.status === 'sending') {
+            statusClass = 'pending';
+            statusText = 'Отправка...';
+        } else if (diff < 5 * 60 * 1000) {
+            statusClass = 'pending';
+            statusText = 'Менее 5 мин';
         } else if (diff < 30 * 60 * 1000) {
             statusClass = 'pending';
             statusText = 'Скоро';
         }
 
         const timeLeft = !isPast ? getTimeLeft(diff) : '';
-        const repeatIcon = r.repeat ? `<span class="repeat-icon" title="Повторяется">↻</span>` : '';
 
         return `
             <div class="reminder-item ${isPast ? 'past' : (statusClass === 'pending' ? 'soon' : '')}" data-id="${r.id}">
                 <div class="reminder-content">
-                    <div class="reminder-title">
-                        ${escapeHtml(r.title)}
-                        ${repeatIcon}
-                    </div>
+                    <div class="reminder-title">${escapeHtml(r.title)}</div>
                     ${r.body && r.body !== r.title ? `<div class="reminder-body">${escapeHtml(r.body)}</div>` : ''}
                     <div class="reminder-meta">
                         <span>${formatDateTime(triggerDate)}</span>
@@ -960,20 +971,7 @@
                     </div>
                 </div>
                 <div class="reminder-actions">
-                    ${!isPast ? `
-                        <button class="btn btn-ghost btn-sm" onclick="editReminder('${r.id}')" title="Редактировать">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                        </button>
-                        <button class="btn btn-ghost btn-sm" onclick="deleteReminder('${r.id}')" title="Удалить">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                            </svg>
-                        </button>
-                    ` : ''}
+                    ${!isPast ? `<button class="btn btn-ghost btn-sm" onclick="deleteReminder('${r.id}')">Удалить</button>` : ''}
                 </div>
             </div>
         `;
@@ -981,6 +979,7 @@
 
     function getTimeLeft(diff) {
         if (diff <= 0) return 'Сейчас';
+        if (diff <= 60000) return 'Менее минуты';
         const minutes = Math.floor(diff / 60000);
         const hours = Math.floor(minutes / 60);
         const days = Math.floor(hours / 24);
@@ -1000,47 +999,14 @@
     }
 
     // ============================================
-    // РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ
+    // УДАЛЕНИЕ
     // ============================================
 
-    function editReminder(id) {
-        const reminder = reminders.find(r => r.id === id);
-        if (!reminder) return;
-
-        // Заполнить форму данными напоминания
-        document.getElementById('r-title').value = reminder.title;
-        document.getElementById('r-body').value = reminder.body || '';
-        
-        const triggerDate = new Date(reminder.triggerAt);
-        document.getElementById('r-date').value = triggerDate.toISOString().split('T')[0];
-        document.getElementById('r-time').value = triggerDate.toTimeString().slice(0, 5);
-
-        if (reminder.repeat) {
-            const repeatSelect = document.getElementById('r-repeat');
-            if (repeatSelect) repeatSelect.value = reminder.repeat;
-        }
-
-        // Удалить старое напоминание
-        deleteReminder(id, false);
-
-        // Прокрутить к форме
-        document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
-        
-        showToast('Измените данные и создайте новое напоминание', 'info');
-    }
-
-    async function deleteReminder(id, showConfirm = true) {
-        if (showConfirm && !confirm('Удалить напоминание?')) return;
-
-        // Анимация удаления
-        const item = document.querySelector(`[data-id="${id}"]`);
-        if (item) {
-            item.classList.add('removing');
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
+    async function deleteReminder(id) {
+        if (!confirm('Удалить напоминание?')) return;
 
         try {
-            const res = await fetch(`${API_BASE}/reminders/${id}`, {
+            const res = await fetch(`${API_BASE}/reminders/${id}?endpoint=${encodeURIComponent(userEndpoint)}`, {
                 method: 'DELETE'
             });
 
@@ -1049,29 +1015,56 @@
                 throw new Error(data.error || 'Ошибка удаления');
             }
 
-            if (showConfirm) {
-                showToast('Напоминание удалено', 'success');
-            }
-            
+            showToast('Напоминание удалено', 'success');
             await loadReminders();
+            
+            if (bc) bc.postMessage({ type: 'reminders_updated' });
         } catch (err) {
-            console.error('Delete reminder error:', err);
             showToast(err.message, 'error');
         }
     }
 
     // ============================================
-    // ПРОВЕРКА НАПОМИНАНИЙ
+    // УМНАЯ ПРОВЕРКА НАПОМИНАНИЙ
     // ============================================
 
-    function startAutoCheck() {
-        // Проверка каждые 30 секунд
-        checkInterval = setInterval(() => {
-            checkRemindersSilent();
-        }, 30000);
+    function getSmartInterval() {
+        // Если нет активных напоминаний — проверяем раз в 5 минут
+        if (!nextReminderTime) return MAX_CHECK_INTERVAL;
+        
+        const now = Date.now();
+        const timeUntilNext = nextReminderTime - now;
+        
+        // Если напоминание через 2 минуты или меньше — проверяем каждые 15 секунд
+        if (timeUntilNext <= 2 * 60 * 1000) return 15000;
+        
+        // Если через 5 минут — каждые 30 секунд
+        if (timeUntilNext <= 5 * 60 * 1000) return 30000;
+        
+        // Если через 15 минут — каждую минуту
+        if (timeUntilNext <= 15 * 60 * 1000) return 60000;
+        
+        // Иначе — раз в 2 минуты
+        return 120000;
     }
 
-    function stopAutoCheck() {
+    function startSmartCheck() {
+        stopSmartCheck();
+        
+        const interval = getSmartInterval();
+        
+        checkInterval = setInterval(async () => {
+            await checkRemindersSilent();
+            
+            // Пересчитываем интервал после каждой проверки
+            const newInterval = getSmartInterval();
+            if (newInterval !== interval) {
+                startSmartCheck(); // перезапуск с новым интервалом
+            }
+        }, interval);
+    }
+
+    function stopSmartCheck() {
         if (checkInterval) {
             clearInterval(checkInterval);
             checkInterval = null;
@@ -1079,13 +1072,25 @@
     }
 
     async function checkRemindersSilent() {
+        // Защита от параллельных вызовов
         if (isChecking) return;
+        if (!userEndpoint) return;
         
+        // Debounce
         const now = Date.now();
         if (now - lastCheckTime < CHECK_DEBOUNCE) return;
         
+        // Проверяем, есть ли вообще смысл проверять
+        // Если ближайшее напоминание через 30+ секунд — не спешим
+        if (nextReminderTime && nextReminderTime - now > 30000) {
+            // Но всё равно проверяем на всякий случай (вдруг время изменилось)
+            // Просто реже
+            if (now - lastCheckTime < MIN_CHECK_INTERVAL) return;
+        }
+        
         isChecking = true;
         lastCheckTime = now;
+        saveState();
 
         try {
             const res = await fetch(`${API_BASE}/reminders/check`, {
@@ -1094,13 +1099,24 @@
                 body: JSON.stringify({ endpoint: userEndpoint })
             });
 
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
             const data = await res.json();
 
             if (data.sent && data.sent.length > 0) {
-                // Звуковое уведомление если страница активна
+                // Уведомляем другие вкладки что мы уже отправили
+                if (bc) bc.postMessage({ type: 'reminder_sent', count: data.sent.length });
+                
                 if (!document.hidden) {
                     playNotificationSound();
                     showToast(`Отправлено: ${data.sent.length}`, 'success');
+                    
+                    // Дублируем через Notification API если push не дойдёт
+                    data.sent.forEach(r => {
+                        showLocalNotification(r.title, r.body || r.title);
+                    });
                 }
                 
                 await loadReminders();
@@ -1113,18 +1129,21 @@
     }
 
     async function checkReminders() {
-        const btn = event.target;
-        const originalText = btn.textContent;
+        const btn = event?.target;
+        const originalText = btn ? btn.textContent : '';
         
-        // Debounce
         const now = Date.now();
         if (now - lastCheckTime < CHECK_DEBOUNCE) {
             showToast('Подождите перед следующей проверкой', 'warning');
             return;
         }
         
-        btn.disabled = true;
-        btn.textContent = 'Проверка...';
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Проверка...';
+        }
+
+        isChecking = true;
         lastCheckTime = now;
 
         try {
@@ -1139,37 +1158,81 @@
             if (data.sent && data.sent.length > 0) {
                 playNotificationSound();
                 showToast(`Отправлено: ${data.sent.length}`, 'success');
+                
+                data.sent.forEach(r => {
+                    showLocalNotification(r.title, r.body || r.title);
+                });
+                
+                if (bc) bc.postMessage({ type: 'reminder_sent', count: data.sent.length });
             } else {
                 showToast('Нет сработавших напоминаний', 'info');
             }
 
             await loadReminders();
         } catch (err) {
-            console.error('Check reminders error:', err);
             showToast('Ошибка проверки', 'error');
         } finally {
-            btn.disabled = false;
-            btn.textContent = originalText;
+            isChecking = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+    }
+
+    // ============================================
+    // ЛОКАЛЬНЫЕ УВЕДОМЛЕНИЯ (FALLBACK)
+    // ============================================
+
+    function showLocalNotification(title, body) {
+        // Проверяем разрешение
+        if (Notification.permission !== 'granted') return;
+        
+        try {
+            const notification = new Notification(title, {
+                body: body,
+                icon: '/favicon.ico',
+                badge: '/favicon.ico',
+                tag: `local-${Date.now()}`,
+                requireInteraction: false,
+                silent: false
+            });
+            
+            notification.onclick = () => {
+                window.focus();
+                notification.close();
+            };
+            
+            // Автозакрытие через 8 секунд
+            setTimeout(() => {
+                try { notification.close(); } catch (e) {}
+            }, 8000);
+        } catch (err) {
+            console.warn('Local notification failed:', err);
         }
     }
 
     function playNotificationSound() {
-        // Простой звуковой сигнал
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Два коротких сигнала
+            oscillator.frequency.value = 880;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + 0.2);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.35);
+        } catch (e) {}
     }
 
     // ============================================
@@ -1180,12 +1243,8 @@
         const now = new Date();
         now.setMinutes(now.getMinutes() + minutes);
 
-        const dateStr = now.toISOString().split('T')[0];
-        const timeStr = now.toTimeString().slice(0, 5);
-
-        document.getElementById('r-date').value = dateStr;
-        document.getElementById('r-time').value = timeStr;
-
+        document.getElementById('r-date').value = now.toISOString().split('T')[0];
+        document.getElementById('r-time').value = now.toTimeString().slice(0, 5);
         document.getElementById('r-title').focus();
     }
 
@@ -1219,10 +1278,6 @@
         }, 3000);
     }
 
-    // ============================================
-    // ВАЛИДАЦИЯ В РЕАЛЬНОМ ВРЕМЕНИ
-    // ============================================
-
     function setupRealTimeValidation() {
         const dateInput = document.getElementById('r-date');
         const timeInput = document.getElementById('r-time');
@@ -1238,7 +1293,6 @@
             
             if (triggerAt <= now) {
                 timeInput.setCustomValidity('Время должно быть в будущем');
-                timeInput.reportValidity();
             } else {
                 timeInput.setCustomValidity('');
             }
@@ -1247,14 +1301,6 @@
         dateInput.addEventListener('change', validateDateTime);
         timeInput.addEventListener('change', validateDateTime);
     }
-
-    // ============================================
-    // ОЧИСТКА ПРИ ЗАКРЫТИИ
-    // ============================================
-
-    window.addEventListener('beforeunload', () => {
-        stopAutoCheck();
-    });
 </script>
 </body>
 </html>
