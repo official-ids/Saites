@@ -25,7 +25,7 @@
   "regions": ["fra1"],
 
   "crons": [
-    { "path": "/api/status-check", "schedule": "*/5 * * * *" }
+    { "path": "/api/status-check", "schedule": "0 6 * * *" }
   ],
 
   "headers": [
