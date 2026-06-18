@@ -59,5 +59,11 @@
     { "source": "/r/:slug", "destination": "/api/redirects/:slug", "permanent": false },
     { "source": "/downloader", "destination": "/admin", "permanent": false },
     { "source": "/index.html", "destination": "/", "permanent": true }
+  ],
+  "crons": [
+    {
+      "path": "/api/notifications/reminders/check",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

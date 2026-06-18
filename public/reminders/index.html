@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Напоминания — Oris</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --bg-tertiary: #e8e8ed;
+            --text-primary: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-tertiary: #86868b;
+            --border: #d2d2d7;
+            --border-light: #e5e5ea;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --success: #34c759;
+            --warning: #ff9f0a;
+            --danger: #ff3b30;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            border-bottom: 1px solid var(--border-light);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 400;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover { background: rgba(0, 113, 227, 0.08); }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .card {
+            background: var(--bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-light);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .form-label .required { color: var(--danger); }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-family: inherit;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+        .btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); }
+
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #d63228; }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--accent);
+            padding: 6px 12px;
+        }
+        .btn-ghost:hover:not(:disabled) { background: rgba(0, 113, 227, 0.08); }
+
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .reminder-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .reminder-item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            transition: all 0.2s;
+            gap: 16px;
+        }
+
+        .reminder-item:hover { border-color: var(--border); }
+
+        .reminder-item.past {
+            opacity: 0.6;
+            border-left: 3px solid var(--text-tertiary);
+        }
+
+        .reminder-item.soon {
+            border-left: 3px solid var(--warning);
+        }
+
+        .reminder-content { flex: 1; min-width: 0; }
+
+        .reminder-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .reminder-body {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+
+        .reminder-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            flex-wrap: wrap;
+        }
+
+        .reminder-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-title {
+            font-size: 15px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-desc { font-size: 13px; }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-light);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 32px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 14px 20px;
+            background: var(--bg);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.warning { border-left: 3px solid var(--warning); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .subscribe-banner {
+            background: linear-gradient(135deg, #0071e3 0%, #00c7ff 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .subscribe-banner-text h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .subscribe-banner-text p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .subscribe-banner .btn {
+            background: #fff;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .subscribe-banner .btn:hover { background: #f0f0f0; }
+
+        .hidden { display: none !important; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-badge.active {
+            background: rgba(52, 199, 89, 0.12);
+            color: var(--success);
+        }
+
+        .status-badge.pending {
+            background: rgba(255, 159, 10, 0.12);
+            color: var(--warning);
+        }
+
+        .status-badge.sent {
+            background: rgba(142, 142, 147, 0.12);
+            color: var(--text-tertiary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border-light);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab:hover { color: var(--text-primary); }
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.2s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .count-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-left">
+            <a href="/" class="back-btn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Назад
+            </a>
+            <div>
+                <h1 class="header-title">Напоминания</h1>
+                <div class="header-subtitle">Push-уведомления по расписанию</div>
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" onclick="checkReminders()">Проверить сейчас</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Banner если не подписан -->
+        <div id="subscribe-banner" class="subscribe-banner hidden">
+            <div class="subscribe-banner-text">
+                <h3>Включите уведомления</h3>
+                <p>Чтобы получать напоминания, нужно разрешить push-уведомления в браузере</p>
+            </div>
+            <button class="btn" onclick="subscribePush()">Включить</button>
+        </div>
+
+        <!-- Форма создания -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">Новое напоминание</div>
+                    <div class="card-subtitle">Мы отправим уведомление в указанное время</div>
+                </div>
+            </div>
+
+            <form id="reminder-form" onsubmit="createReminder(event)">
+                <div class="form-group">
+                    <label class="form-label">Заголовок <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="r-title" maxlength="100" required placeholder="Например: Встреча с клиентом">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-textarea" id="r-body" maxlength="300" placeholder="Детали напоминания (необязательно)"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Дата <span class="required">*</span></label>
+                        <input type="date" class="form-input" id="r-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Время <span class="required">*</span></label>
+                        <input type="time" class="form-input" id="r-time" required>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary" id="create-btn">Создать напоминание</button>
+                    <button type="button" class="btn btn-secondary" onclick="setQuickTime(15)">+15 мин</button>
+                    <button type="button" class="btn btn-secondary" onclick="setQuickTime(60)">+1 час</button>
+                    <button type="button" class="btn btn-secondary" onclick="setQuickTime(1440)">+1 день</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="active" onclick="switchTab('active')">
+                Активные <span class="count-badge" id="count-active">0</span>
+            </button>
+            <button class="tab" data-tab="past" onclick="switchTab('past')">
+                Прошедшие <span class="count-badge" id="count-past">0</span>
+            </button>
+        </div>
+
+        <!-- Active reminders -->
+        <div class="tab-content active" id="tab-active">
+            <div class="card" style="padding: 0; border: none; box-shadow: none; background: transparent;">
+                <div class="reminder-list" id="active-list">
+                    <div class="loading"><div class="spinner"></div>Загрузка...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Past reminders -->
+        <div class="tab-content" id="tab-past">
+            <div class="card" style="padding: 0; border: none; box-shadow: none; background: transparent;">
+                <div class="reminder-list" id="past-list">
+                    <div class="loading"><div class="spinner"></div>Загрузка...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        const API_BASE = '/api/notifications';
+        let userEndpoint = null;
+        let reminders = [];
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Установить минимальную дату = сегодня
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('r-date').min = today;
+
+            // Установить время по умолчанию = +30 мин
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30);
+            document.getElementById('r-time').value = now.toTimeString().slice(0, 5);
+
+            await initPush();
+            await loadReminders();
+        });
+
+        async function initPush() {
+            try {
+                const reg = await navigator.serviceWorker.getRegistration();
+                if (!reg) {
+                    showBanner();
+                    return;
+                }
+
+                const sub = await reg.pushManager.getSubscription();
+                if (!sub) {
+                    showBanner();
+                    return;
+                }
+
+                userEndpoint = sub.endpoint;
+                document.getElementById('subscribe-banner').classList.add('hidden');
+            } catch (err) {
+                console.error('Push init error:', err);
+                showBanner();
+            }
+        }
+
+        function showBanner() {
+            document.getElementById('subscribe-banner').classList.remove('hidden');
+        }
+
+        async function subscribePush() {
+            try {
+                const perm = await Notification.requestPermission();
+                if (perm !== 'granted') {
+                    showToast('Разрешение на уведомления отклонено', 'error');
+                    return;
+                }
+
+                const keyRes = await fetch(`${API_BASE}/vapid-public-key`);
+                const { publicKey } = await keyRes.json();
+
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+
+                await fetch(`${API_BASE}/subscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subscription: sub,
+                        channels: ['alerts']
+                    })
+                });
+
+                userEndpoint = sub.endpoint;
+                document.getElementById('subscribe-banner').classList.add('hidden');
+                showToast('Уведомления включены', 'success');
+            } catch (err) {
+                showToast('Ошибка: ' + err.message, 'error');
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+        }
+
+        async function createReminder(event) {
+            event.preventDefault();
+
+            if (!userEndpoint) {
+                showToast('Сначала включите уведомления', 'error');
+                return;
+            }
+
+            const title = document.getElementById('r-title').value.trim();
+            const body = document.getElementById('r-body').value.trim();
+            const date = document.getElementById('r-date').value;
+            const time = document.getElementById('r-time').value;
+
+            if (!title || !date || !time) {
+                showToast('Заполните обязательные поля', 'error');
+                return;
+            }
+
+            const triggerAt = new Date(`${date}T${time}:00`).toISOString();
+            const triggerTime = new Date(triggerAt).getTime();
+
+            if (triggerTime <= Date.now()) {
+                showToast('Время должно быть в будущем', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('create-btn');
+            btn.disabled = true;
+            btn.textContent = 'Создание...';
+
+            try {
+                const res = await fetch(`${API_BASE}/reminders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: userEndpoint,
+                        title,
+                        body: body || title,
+                        triggerAt
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Ошибка создания');
+                }
+
+                showToast('Напоминание создано', 'success');
+
+                // Очистка формы
+                document.getElementById('r-title').value = '';
+                document.getElementById('r-body').value = '';
+
+                await loadReminders();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Создать напоминание';
+            }
+        }
+
+        async function loadReminders() {
+            if (!userEndpoint) {
+                document.getElementById('active-list').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-title">Включите уведомления</div>
+                        <div class="empty-state-desc">Напоминания будут привязаны к вашему браузеру</div>
+                    </div>
+                `;
+                document.getElementById('past-list').innerHTML = '';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/reminders?endpoint=${encodeURIComponent(userEndpoint)}`);
+                const data = await res.json();
+                reminders = data.reminders || [];
+
+                renderReminders();
+            } catch (err) {
+                console.error('Load reminders error:', err);
+            }
+        }
+
+        function renderReminders() {
+            const now = Date.now();
+            const active = reminders.filter(r => new Date(r.triggerAt).getTime() > now);
+            const past = reminders.filter(r => new Date(r.triggerAt).getTime() <= now);
+
+            // Сортировка
+            active.sort((a, b) => new Date(a.triggerAt) - new Date(b.triggerAt));
+            past.sort((a, b) => new Date(b.triggerAt) - new Date(a.triggerAt));
+
+            document.getElementById('count-active').textContent = active.length;
+            document.getElementById('count-past').textContent = past.length;
+
+            // Active
+            const activeList = document.getElementById('active-list');
+            if (active.length === 0) {
+                activeList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-title">Нет активных напоминаний</div>
+                        <div class="empty-state-desc">Создайте первое напоминание выше</div>
+                    </div>
+                `;
+            } else {
+                activeList.innerHTML = active.map(r => renderReminderItem(r, false)).join('');
+            }
+
+            // Past
+            const pastList = document.getElementById('past-list');
+            if (past.length === 0) {
+                pastList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-title">История пуста</div>
+                        <div class="empty-state-desc">Здесь будут отображаться сработавшие напоминания</div>
+                    </div>
+                `;
+            } else {
+                pastList.innerHTML = past.map(r => renderReminderItem(r, true)).join('');
+            }
+        }
+
+        function renderReminderItem(r, isPast) {
+            const triggerDate = new Date(r.triggerAt);
+            const now = Date.now();
+            const triggerTime = triggerDate.getTime();
+            const diff = triggerTime - now;
+
+            let statusClass = 'active';
+            let statusText = 'Активно';
+
+            if (isPast) {
+                statusClass = 'sent';
+                statusText = 'Отправлено';
+            } else if (diff < 30 * 60 * 1000) {
+                statusClass = 'pending';
+                statusText = 'Скоро';
+            }
+
+            const timeLeft = !isPast ? getTimeLeft(diff) : '';
+
+            return `
+                <div class="reminder-item ${isPast ? 'past' : (statusClass === 'pending' ? 'soon' : '')}">
+                    <div class="reminder-content">
+                        <div class="reminder-title">${escapeHtml(r.title)}</div>
+                        ${r.body && r.body !== r.title ? `<div class="reminder-body">${escapeHtml(r.body)}</div>` : ''}
+                        <div class="reminder-meta">
+                            <span>${formatDateTime(triggerDate)}</span>
+                            ${timeLeft ? `<span>${timeLeft}</span>` : ''}
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                    <div class="reminder-actions">
+                        ${!isPast ? `<button class="btn btn-ghost btn-sm" onclick="deleteReminder('${r.id}')">Удалить</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getTimeLeft(diff) {
+            if (diff <= 0) return 'Сейчас';
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (days > 0) return `через ${days} дн. ${hours % 24} ч.`;
+            if (hours > 0) return `через ${hours} ч. ${minutes % 60} мин.`;
+            return `через ${minutes} мин.`;
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        async function deleteReminder(id) {
+            if (!confirm('Удалить напоминание?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/reminders/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Ошибка удаления');
+                }
+
+                showToast('Напоминание удалено', 'success');
+                await loadReminders();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function checkReminders() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Проверка...';
+
+            try {
+                const res = await fetch(`${API_BASE}/reminders/check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ endpoint: userEndpoint })
+                });
+
+                const data = await res.json();
+
+                if (data.sent && data.sent.length > 0) {
+                    showToast(`Отправлено: ${data.sent.length}`, 'success');
+                } else {
+                    showToast('Нет сработавших напоминаний', 'success');
+                }
+
+                await loadReminders();
+            } catch (err) {
+                showToast('Ошибка проверки', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        function setQuickTime(minutes) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + minutes);
+
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().slice(0, 5);
+
+            document.getElementById('r-date').value = dateStr;
+            document.getElementById('r-time').value = timeStr;
+
+            document.getElementById('r-title').focus();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById(`tab-${tab}`).classList.add('active');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1746,6 +1746,271 @@ router.get('/admin/stats', verifyAdminToken, async (req, res) => {
 });
 
 // ============================================
+// ██████  НАПОМИНАНИЯ (REMINDERS)
+// ============================================
+
+/**
+POST /reminders — создать напоминание
+Body: { endpoint, title, body?, triggerAt }
+*/
+router.post('/reminders', publicRateLimiter, async (req, res) => {
+    try {
+        const { endpoint, title, body, triggerAt } = req.body;
+
+        if (!endpoint || typeof endpoint !== 'string') {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'Endpoint required' });
+        }
+
+        if (!title || typeof title !== 'string' || title.trim().length === 0) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'Title required' });
+        }
+
+        if (title.length > 100) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'Title too long (max 100)' });
+        }
+
+        if (!triggerAt) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'triggerAt required' });
+        }
+
+        const triggerTime = new Date(triggerAt).getTime();
+        if (isNaN(triggerTime)) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'Invalid triggerAt date' });
+        }
+
+        if (triggerTime <= Date.now()) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: 'triggerAt must be in the future' });
+        }
+
+        // Проверка что endpoint подписан
+        const subExists = await kv.get(K.SUBSCRIPTION(endpoint));
+        if (!subExists) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ 
+                error: 'Endpoint not subscribed. Subscribe to push notifications first.' 
+            });
+        }
+
+        const reminder = {
+            id: crypto.randomUUID(),
+            endpoint,
+            title: title.trim(),
+            body: (body || title).trim().substring(0, 300),
+            triggerAt: new Date(triggerTime).toISOString(),
+            createdAt: new Date().toISOString(),
+            status: 'pending'
+        };
+
+        await kv.set(`push:reminder:${reminder.id}`, reminder);
+        await kv.sadd('push:reminders:index', reminder.id);
+
+        logger.info('Reminder created', { 
+            id: reminder.id, 
+            triggerAt: reminder.triggerAt,
+            title: reminder.title.substring(0, 50)
+        });
+
+        res.status(CONFIG.HTTP.CREATED).json({ 
+            success: true, 
+            reminder: {
+                id: reminder.id,
+                title: reminder.title,
+                triggerAt: reminder.triggerAt
+            }
+        });
+    } catch (err) {
+        logger.error('POST /reminders error', { error: err.message });
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error creating reminder' });
+    }
+});
+
+/**
+GET /reminders — список напоминаний пользователя
+Query: { endpoint }
+*/
+router.get('/reminders', async (req, res) => {
+    try {
+        const { endpoint } = req.query;
+
+        if (!endpoint) {
+            return res.json({ reminders: [] });
+        }
+
+        const ids = await kv.smembers('push:reminders:index');
+        if (!ids || ids.length === 0) {
+            return res.json({ reminders: [] });
+        }
+
+        const reminders = [];
+        for (const id of ids) {
+            const r = await kv.get(`push:reminder:${id}`);
+            if (r && r.endpoint === endpoint) {
+                reminders.push(r);
+            }
+        }
+
+        res.json({ reminders });
+    } catch (err) {
+        logger.error('GET /reminders error', { error: err.message });
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error loading reminders' });
+    }
+});
+
+/**
+DELETE /reminders/:id — удалить напоминание
+*/
+router.delete('/reminders/:id', publicRateLimiter, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { endpoint } = req.query;
+
+        const reminder = await kv.get(`push:reminder:${id}`);
+        if (!reminder) {
+            return res.status(CONFIG.HTTP.NOT_FOUND).json({ error: 'Reminder not found' });
+        }
+
+        // Проверка что endpoint совпадает (защита от удаления чужих)
+        if (endpoint && reminder.endpoint !== endpoint) {
+            return res.status(CONFIG.HTTP.FORBIDDEN).json({ error: 'Access denied' });
+        }
+
+        await kv.del(`push:reminder:${id}`);
+        await kv.srem('push:reminders:index', id);
+
+        logger.info('Reminder deleted', { id });
+        res.json({ success: true });
+    } catch (err) {
+        logger.error('DELETE /reminders/:id error', { error: err.message });
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error deleting reminder' });
+    }
+});
+
+/**
+POST /reminders/check — проверить и отправить сработавшие напоминания
+Вызывается фронтом при загрузке страницы и cron'ом
+Body: { endpoint? } — если указан, только для этого endpoint
+*/
+router.post('/reminders/check', async (req, res) => {
+    try {
+        const { endpoint } = req.body || {};
+        const now = Date.now();
+        const ids = await kv.smembers('push:reminders:index');
+
+        if (!ids || ids.length === 0) {
+            return res.json({ sent: [], total: 0 });
+        }
+
+        const sent = [];
+        const errors = [];
+
+        for (const id of ids) {
+            const reminder = await kv.get(`push:reminder:${id}`);
+            if (!reminder) continue;
+
+            // Фильтр по endpoint если указан
+            if (endpoint && reminder.endpoint !== endpoint) continue;
+
+            const triggerTime = new Date(reminder.triggerAt).getTime();
+            if (triggerTime > now) continue; // ещё не время
+
+            try {
+                // Отправляем push
+                const subscriptionData = await kv.get(K.SUBSCRIPTION(reminder.endpoint));
+                if (!subscriptionData) {
+                    // Подписка удалена — удаляем напоминание
+                    await kv.del(`push:reminder:${id}`);
+                    await kv.srem('push:reminders:index', id);
+                    continue;
+                }
+
+                const subscription = {
+                    endpoint: subscriptionData.endpoint,
+                    keys: subscriptionData.keys
+                };
+
+                const payload = JSON.stringify({
+                    title: `Напоминание: ${reminder.title}`,
+                    body: reminder.body,
+                    icon: '/favicon.ico',
+                    data: {
+                        url: '/reminders',
+                        reminderId: reminder.id,
+                        timestamp: now
+                    },
+                    tag: `reminder-${reminder.id}`,
+                    requireInteraction: true
+                });
+
+                await webpush.sendNotification(subscription, payload);
+
+                // Обновляем статус
+                reminder.status = 'sent';
+                reminder.sentAt = new Date().toISOString();
+                await kv.set(`push:reminder:${id}`, reminder);
+
+                sent.push({
+                    id: reminder.id,
+                    title: reminder.title,
+                    triggerAt: reminder.triggerAt,
+                    sentAt: reminder.sentAt
+                });
+
+                logger.info('Reminder sent', { 
+                    id: reminder.id, 
+                    title: reminder.title.substring(0, 50) 
+                });
+
+            } catch (err) {
+                errors.push({ id, error: err.message });
+
+                // Если подписка недействительна — удаляем
+                if (err.statusCode === 410 || err.statusCode === 404) {
+                    await kv.del(`push:reminder:${id}`).catch(() => {});
+                    await kv.srem('push:reminders:index', id).catch(() => {});
+                }
+            }
+        }
+
+        res.json({ 
+            sent, 
+            errors,
+            total: sent.length
+        });
+    } catch (err) {
+        logger.error('POST /reminders/check error', { error: err.message });
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error checking reminders' });
+    }
+});
+
+/**
+GET /reminders/stats — статистика напоминаний (публичная)
+*/
+router.get('/reminders/stats', async (req, res) => {
+    try {
+        const ids = await kv.smembers('push:reminders:index');
+        if (!ids || ids.length === 0) {
+            return res.json({ total: 0, pending: 0, sent: 0 });
+        }
+
+        let pending = 0;
+        let sent = 0;
+        const now = Date.now();
+
+        for (const id of ids) {
+            const r = await kv.get(`push:reminder:${id}`);
+            if (!r) continue;
+            if (r.status === 'sent') sent++;
+            else if (new Date(r.triggerAt).getTime() <= now) sent++;
+            else pending++;
+        }
+
+        res.json({ total: ids.length, pending, sent });
+    } catch (err) {
+        logger.error('GET /reminders/stats error', { error: err.message });
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: 'Error getting stats' });
+    }
+});
+
+// ============================================
 // ██████  ИНИЦИАЛИЗАЦИЯ
 // ============================================
 
