@@ -55,7 +55,8 @@
 
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/proxy" },
-    { "source": "/downloader/:hash", "destination": "/api/proxy" }
+    { "source": "/downloader/:hash", "destination": "/api/proxy" },
+    { "source": "/p/:slug", "destination": "/p" }
   ],
 
   "redirects": [
