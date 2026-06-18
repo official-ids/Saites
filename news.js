@@ -1007,17 +1007,36 @@ router.get('/posts', optionalAuth, async (req, res) => {
         );
         const page = Math.max(parseInt(req.query.page) || 1, 1);
 
+        const query = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+        const sort = req.query.sort === 'popular' ? 'popular' : 'newest';
+
         const postIds = await kv.smembers(K.POSTS_INDEX);
         if (!postIds || postIds.length === 0) {
-            return res.json({ posts: [], total: 0, page, limit });
+            return res.json({ posts: [], total: 0, page, limit, query, sort });
         }
 
         const keys = postIds.map(id => K.POST(id));
         const postsData = await kvService.mgetChunked(keys);
 
-        const validPosts = postsData
-            .filter(p => p && p.id)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        let validPosts = postsData.filter(p => p && p.id);
+
+        if (query) {
+            validPosts = validPosts.filter(p => {
+                const haystack = `${p.title || ''} ${p.content || ''} ${p.authorName || ''}`.toLowerCase();
+                return haystack.includes(query);
+            });
+        }
+
+        const popularity = (p) => (p.likes || 0) + (p.commentsCount || 0);
+        validPosts.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            if (sort === 'popular') {
+                const diff = popularity(b) - popularity(a);
+                if (diff !== 0) return diff;
+            }
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
 
         const total = validPosts.length;
         const startIndex = (page - 1) * limit;
@@ -1031,7 +1050,7 @@ router.get('/posts', optionalAuth, async (req, res) => {
             if (enriched) posts.push(enriched);
         }
 
-        return res.json({ posts, total, page, limit });
+        return res.json({ posts, total, page, limit, query, sort });
     } catch (err) {
         console.error('[news/posts GET]', err);
         return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.POSTS_LOAD_ERROR });
