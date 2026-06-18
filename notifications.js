@@ -341,14 +341,11 @@ async function checkRateLimit(key, windowMs, max) {
         const current = await kv.get(key);
         const now = Date.now();
         
-        // Если ключа нет или окно истекло — создаём новый
         if (!current || now > current.resetAt) {
-            const data = { count: 1, resetAt: now + windowMs };
-            await kv.set(key, data, { ex: Math.ceil(windowMs / 1000) });
+            await kv.set(key, { count: 1, resetAt: now + windowMs }, { ex: Math.ceil(windowMs / 1000) });
             return { allowed: true, remaining: max - 1 };
         }
         
-        // Если лимит исчерпан — отказываем
         if (current.count >= max) {
             return { 
                 allowed: false, 
@@ -357,14 +354,14 @@ async function checkRateLimit(key, windowMs, max) {
             };
         }
         
-        // Увеличиваем счётчик (через set, не hincrby!)
+        // ИСПРАВЛЕНО: используем set вместо hincrby
         current.count += 1;
         const ttl = Math.ceil((current.resetAt - now) / 1000);
         await kv.set(key, current, { ex: Math.max(ttl, 1) });
         return { allowed: true, remaining: max - current.count };
     } catch (err) {
-        logger.error('Rate limit error', { error: err.message, key });
-        return { allowed: true, remaining: max }; // fail-open
+        logger.error('Rate limit KV error', { error: err.message, key });
+        return { allowed: true, remaining: max };
     }
 }
 
@@ -1048,36 +1045,33 @@ router.post('/subscribe', publicRateLimiter, async (req, res) => {
             });
         }
 
-        // Проверяем существующую подписку
-        const existing = await kv.get(K.SUBSCRIPTION(subscription.endpoint));
-        
-        if (existing) {
-            // Подписка уже есть — обновляем каналы!
-            const currentChannels = existing.channels || [];
-            const newChannels = [...new Set([...currentChannels, ...channelsToSubscribe])];
-            
-            existing.channels = newChannels;
-            if (userId) existing.userId = Security.sanitizeInput(userId);
-            
-            await kv.set(K.SUBSCRIPTION(subscription.endpoint), existing);
-            
-            // Добавляем в новые каналы
-            for (const chId of channelsToSubscribe) {
-                await kv.sadd(K.CHANNEL_INDEX(chId), subscription.endpoint);
-            }
-            
-            logger.logSubscription('updated', {
-                endpoint: subscription.endpoint,
-                channels: newChannels,
-                ip: req.clientIp
-            });
+        // Проверка существования
+const existing = await kv.get(K.SUBSCRIPTION(subscription.endpoint));
+if (existing) {
+    // Обновляем каналы
+    const currentChannels = existing.channels || [];
+    const newChannels = [...new Set([...currentChannels, ...channelsToSubscribe])];
+    existing.channels = newChannels;
+    if (userId) existing.userId = Security.sanitizeInput(userId);
+    
+    await kv.set(K.SUBSCRIPTION(subscription.endpoint), existing);
+    
+    for (const chId of channelsToSubscribe) {
+        await ChannelManager.subscribe(chId, subscription.endpoint);
+    }
+    
+    logger.logSubscription('updated', {
+        endpoint: subscription.endpoint,
+        channels: newChannels,
+        ip: req.clientIp
+    });
 
-            return res.json({ 
-                success: true,
-                message: 'Subscription updated',
-                channels: newChannels
-            });
-        }
+    return res.json({ 
+        success: true,
+        message: 'Subscription updated',
+        channels: newChannels
+    });
+}
 
         // Новая подписка
         const subscriptionData = {
