@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "@vercel/blob": "^0.23.0",
+    "@vercel/functions": "^3.6.3",
     "@vercel/kv": "^2.0.0",
     "busboy": "^1.6.0",
     "dotenv": "^17.4.2",

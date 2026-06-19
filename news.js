@@ -117,7 +117,13 @@ const CONTENT_LIMITS = {
     POSTS_PAGE_MAX: 100,
     
     /** @type {number} Количество постов по умолчанию на странице */
-    POSTS_PAGE_DEFAULT: 20
+    POSTS_PAGE_DEFAULT: 20,
+
+    /** @type {number} Количество постов в RSS-ленте */
+    RSS_ITEMS: 30,
+
+    /** @type {number} Максимальная длина описания записи в RSS */
+    RSS_DESCRIPTION_MAX: 500
 };
 
 /**
@@ -776,6 +782,53 @@ function sanitizeUser(user) {
 }
 
 /**
+ * Экранирование спецсимволов для безопасной вставки в XML/RSS.
+ *
+ * @param {string} value - Исходная строка
+ * @returns {string} Экранированная строка
+ */
+function escapeXml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+/**
+ * Формирование краткого описания поста для RSS:
+ * убирает базовую Markdown-разметку, схлопывает пробелы и обрезает по длине.
+ *
+ * @param {string} content - Содержание поста (Markdown)
+ * @returns {string} Текстовое описание
+ */
+function buildRssDescription(content) {
+    const text = String(content || '')
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/`([^`]*)`/g, '$1')
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/[#>*_~-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (text.length <= CONTENT_LIMITS.RSS_DESCRIPTION_MAX) return text;
+    return text.slice(0, CONTENT_LIMITS.RSS_DESCRIPTION_MAX).trimEnd() + '…';
+}
+
+/**
+ * Определение базового URL сайта по заголовкам запроса (учитывает прокси Vercel).
+ *
+ * @param {express.Request} req - HTTP запрос
+ * @returns {string} Базовый URL вида https://host
+ */
+function resolveSiteBaseUrl(req) {
+    const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim();
+    const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+    return host ? `${proto}://${host}` : '';
+}
+
+/**
  * Валидация заголовка поста
  * 
  * @param {string} title - Заголовок
@@ -1007,17 +1060,36 @@ router.get('/posts', optionalAuth, async (req, res) => {
         );
         const page = Math.max(parseInt(req.query.page) || 1, 1);
 
+        const query = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
+        const sort = req.query.sort === 'popular' ? 'popular' : 'newest';
+
         const postIds = await kv.smembers(K.POSTS_INDEX);
         if (!postIds || postIds.length === 0) {
-            return res.json({ posts: [], total: 0, page, limit });
+            return res.json({ posts: [], total: 0, page, limit, query, sort });
         }
 
         const keys = postIds.map(id => K.POST(id));
         const postsData = await kvService.mgetChunked(keys);
 
-        const validPosts = postsData
-            .filter(p => p && p.id)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        let validPosts = postsData.filter(p => p && p.id);
+
+        if (query) {
+            validPosts = validPosts.filter(p => {
+                const haystack = `${p.title || ''} ${p.content || ''} ${p.authorName || ''}`.toLowerCase();
+                return haystack.includes(query);
+            });
+        }
+
+        const popularity = (p) => (p.likes || 0) + (p.commentsCount || 0);
+        validPosts.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            if (sort === 'popular') {
+                const diff = popularity(b) - popularity(a);
+                if (diff !== 0) return diff;
+            }
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
 
         const total = validPosts.length;
         const startIndex = (page - 1) * limit;
@@ -1031,10 +1103,73 @@ router.get('/posts', optionalAuth, async (req, res) => {
             if (enriched) posts.push(enriched);
         }
 
-        return res.json({ posts, total, page, limit });
+        return res.json({ posts, total, page, limit, query, sort });
     } catch (err) {
         console.error('[news/posts GET]', err);
         return res.status(HTTP_STATUS.SERVER_ERROR).json({ error: ERROR_MESSAGES.POSTS_LOAD_ERROR });
+    }
+});
+
+/**
+ * GET /rss — RSS 2.0 лента последних постов.
+ * Отдаёт валидный XML для агрегаторов: заголовок, ссылку на пост,
+ * автора, дату публикации и краткое описание.
+ *
+ * @param {express.Request} req - HTTP запрос
+ * @param {express.Response} res - HTTP ответ
+ */
+router.get('/rss', async (req, res) => {
+    try {
+        const baseUrl = resolveSiteBaseUrl(req) || 'https://oris-flax.vercel.app';
+
+        const postIds = await kv.smembers(K.POSTS_INDEX);
+        let posts = [];
+        if (postIds && postIds.length > 0) {
+            const keys = postIds.map(id => K.POST(id));
+            const postsData = await kvService.mgetChunked(keys);
+            posts = postsData
+                .filter(p => p && p.id)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, CONTENT_LIMITS.RSS_ITEMS);
+        }
+
+        const items = posts.map(p => {
+            const link = `${baseUrl}/news?shared=${p.id}`;
+            const pubDate = new Date(p.createdAt || Date.now()).toUTCString();
+            return [
+                '        <item>',
+                `            <title>${escapeXml(p.title || 'Без названия')}</title>`,
+                `            <link>${escapeXml(link)}</link>`,
+                `            <guid isPermaLink="true">${escapeXml(link)}</guid>`,
+                `            <dc:creator>${escapeXml(p.authorName || 'Oris')}</dc:creator>`,
+                `            <pubDate>${pubDate}</pubDate>`,
+                `            <description>${escapeXml(buildRssDescription(p.content))}</description>`,
+                '        </item>'
+            ].join('\n');
+        }).join('\n');
+
+        const feedUrl = `${baseUrl}/api/news/rss`;
+        const xml = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">',
+            '    <channel>',
+            '        <title>Новости Oris</title>',
+            `        <link>${escapeXml(`${baseUrl}/news`)}</link>`,
+            `        <atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml" />`,
+            '        <description>Обновления, релизы и технические статьи от команды разработки.</description>',
+            '        <language>ru</language>',
+            `        <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`,
+            items,
+            '    </channel>',
+            '</rss>'
+        ].filter(Boolean).join('\n');
+
+        res.set('Content-Type', 'application/rss+xml; charset=utf-8');
+        res.set('Cache-Control', 'public, max-age=300');
+        return res.send(xml);
+    } catch (err) {
+        console.error('[news/rss GET]', err);
+        return res.status(HTTP_STATUS.SERVER_ERROR).send('Failed to generate RSS feed');
     }
 });
 

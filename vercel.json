@@ -24,6 +24,10 @@
 
   "regions": ["fra1"],
 
+  "crons": [
+    { "path": "/api/status-check", "schedule": "0 6 * * *" }
+  ],
+
   "headers": [
     {
       "source": "/(.*)",
@@ -51,7 +55,8 @@
 
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/proxy" },
-    { "source": "/downloader/:hash", "destination": "/api/proxy" }
+    { "source": "/downloader/:hash", "destination": "/api/proxy" },
+    { "source": "/p/:slug", "destination": "/p" }
   ],
 
   "redirects": [
