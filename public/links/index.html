@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Короткие ссылки Oris — вставьте длинную ссылку и получите короткую.">
+    <meta name="theme-color" content="#ffffff">
+    <script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+
+    <title>Короткие ссылки · Oris</title>
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #F5F5F7;
+            --bg-card: #FFFFFF;
+            --bg-elevated: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #6E6E73;
+            --text-tertiary: #AEAEB2;
+            --accent: #0071E3;
+            --accent-hover: #0077ED;
+            --success: #34C759;
+            --danger: #FF3B30;
+            --border-light: rgba(0, 0, 0, 0.06);
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+        }
+
+        :root[data-theme="dark"] {
+            --bg-body: #000000;
+            --bg-card: #1C1C1E;
+            --bg-elevated: #2C2C2E;
+            --text-primary: #F5F5F7;
+            --text-secondary: #86868B;
+            --text-tertiary: #636366;
+            --accent: #0A84FF;
+            --accent-hover: #409CFF;
+            --success: #30D158;
+            --danger: #FF453A;
+            --border-light: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.12);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme]) {
+                --bg-body: #000000;
+                --bg-card: #1C1C1E;
+                --bg-elevated: #2C2C2E;
+                --text-primary: #F5F5F7;
+                --text-secondary: #86868B;
+                --text-tertiary: #636366;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --success: #30D158;
+                --danger: #FF453A;
+                --border-light: rgba(255, 255, 255, 0.08);
+                --border: rgba(255, 255, 255, 0.12);
+                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+                --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+        .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0; }
+
+        .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 700; font-size: 1.1rem; }
+        .brand svg { width: 26px; height: 26px; color: var(--accent); }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+            padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px;
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .back-link:hover { color: var(--accent); border-color: var(--accent); }
+        .back-link svg { width: 16px; height: 16px; }
+
+        main { padding: 12px 0 96px; }
+
+        .page-head { margin-bottom: 28px; }
+        .page-head h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+        .page-head p { color: var(--text-secondary); margin-top: 6px; font-size: 0.98rem; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+            padding: 24px; margin-bottom: 22px;
+        }
+
+        .field { margin-bottom: 16px; }
+        .field:last-child { margin-bottom: 0; }
+        .field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .field .hint { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 6px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+        input[type="text"], input[type="url"] {
+            width: 100%; padding: 12px 14px; font-size: 0.95rem; font-family: inherit;
+            color: var(--text-primary); background: var(--bg-elevated);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease; outline: none;
+        }
+        input::placeholder { color: var(--text-tertiary); }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+        .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 20px; font-size: 0.95rem; font-weight: 600; font-family: inherit;
+            border: none; border-radius: var(--radius-sm); cursor: pointer;
+            transition: background 0.2s ease, opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+        .btn svg { width: 16px; height: 16px; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-block { width: 100%; margin-top: 4px; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); padding: 8px 12px; }
+        .btn-ghost:hover { color: var(--accent); border-color: var(--accent); }
+        .btn-ghost.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+        .msg { margin-top: 14px; padding: 11px 14px; border-radius: var(--radius-sm); font-size: 0.88rem; display: none; }
+        .msg.show { display: block; }
+        .msg.error { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+
+        .result { margin-top: 16px; padding: 16px; border: 1px dashed var(--accent); border-radius: var(--radius-md); background: color-mix(in srgb, var(--accent) 6%, transparent); display: none; }
+        .result.show { display: block; }
+        .result .lbl { font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; }
+        .result-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .result-row a { font-weight: 600; color: var(--accent); text-decoration: none; word-break: break-all; }
+        .result-row a:hover { text-decoration: underline; }
+
+        .section-title { display: flex; align-items: center; justify-content: space-between; margin: 4px 4px 14px; gap: 12px; }
+        .section-title h2 { font-size: 1.05rem; font-weight: 700; }
+        .section-title button { font-size: 0.8rem; }
+
+        .links-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+        .link-item {
+            display: flex; align-items: center; gap: 14px;
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: var(--radius-md); padding: 14px 16px;
+        }
+        .link-main { flex: 1; min-width: 0; }
+        .link-short { font-weight: 600; font-size: 0.95rem; }
+        .link-short a { color: var(--accent); text-decoration: none; }
+        .link-short a:hover { text-decoration: underline; }
+        .link-target { font-size: 0.82rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+        .link-meta { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 4px; }
+        .link-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        .empty { text-align: center; color: var(--text-secondary); padding: 30px 16px; font-size: 0.92rem; }
+
+        @media (max-width: 520px) {
+            .page-head h1 { font-size: 1.6rem; }
+            .link-item { flex-direction: column; align-items: stretch; }
+            .link-actions { justify-content: flex-end; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="topbar">
+            <a class="brand" href="/">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Oris
+            </a>
+            <a class="back-link" href="/">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                К проектам
+            </a>
+        </div>
+
+        <main>
+            <div class="page-head">
+                <h1>Короткие ссылки</h1>
+                <p>Вставьте длинную ссылку и получите короткую вида <span class="mono">/r/abc123</span>. Без регистрации и без токена.</p>
+            </div>
+
+            <div class="card">
+                <form id="createForm">
+                    <div class="field">
+                        <label for="url">Длинная ссылка</label>
+                        <input type="url" id="url" placeholder="https://example.com/very/long/path?with=params" autocomplete="off" required>
+                    </div>
+                    <div class="field">
+                        <label for="slug">Короткий код (необязательно)</label>
+                        <input type="text" id="slug" class="mono" placeholder="оставьте пустым для авто-генерации" autocomplete="off">
+                        <div class="hint">2–32 символа: латиница, цифры, дефис и подчёркивание (a-z, 0-9, -, _).</div>
+                    </div>
+                    <div class="field">
+                        <label for="desc">Описание (необязательно)</label>
+                        <input type="text" id="desc" placeholder="Для чего эта ссылка" autocomplete="off" maxlength="200">
+                    </div>
+                    <button class="btn btn-primary btn-block" id="submitBtn" type="submit">Создать ссылку</button>
+                    <div class="msg" id="formMsg"></div>
+                    <div class="result" id="result">
+                        <div class="lbl">Короткая ссылка готова</div>
+                        <div class="result-row">
+                            <a id="resultLink" href="#" target="_blank" rel="noopener"></a>
+                            <button class="btn btn-ghost" type="button" id="resultCopy">Копировать</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="section-title">
+                <h2>Недавно созданные</h2>
+                <button class="btn btn-ghost" type="button" id="clearBtn" style="display:none;">Очистить список</button>
+            </div>
+            <ul class="links-list" id="linksList"></ul>
+            <div class="empty" id="listEmpty">Здесь появятся созданные вами ссылки (хранятся только в этом браузере).</div>
+        </main>
+    </div>
+
+    <script>
+        const API = {
+            create: '/api/redirects/public',
+            short: (slug) => window.location.origin + '/r/' + slug
+        };
+        const SLUG_RE = /^[a-z0-9_-]{2,32}$/;
+        const STORE_KEY = 'oris_links_recent';
+
+        const $ = (id) => document.getElementById(id);
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function loadRecent() {
+            try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { return []; }
+        }
+        function saveRecent(list) {
+            try { localStorage.setItem(STORE_KEY, JSON.stringify(list.slice(0, 50))); } catch (e) {}
+        }
+
+        function showMsg(text) {
+            const el = $('formMsg');
+            el.textContent = text;
+            el.className = 'msg show error';
+        }
+        function clearMsg() { $('formMsg').className = 'msg'; }
+
+        async function copyText(text, btn) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text; document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); } catch (_) {}
+                document.body.removeChild(ta);
+            }
+            if (btn) { const old = btn.textContent; btn.textContent = 'Скопировано'; setTimeout(() => { btn.textContent = old; }, 1400); }
+        }
+
+        function renderRecent() {
+            const list = loadRecent();
+            const ul = $('linksList');
+            const empty = $('listEmpty');
+            $('clearBtn').style.display = list.length ? 'inline-flex' : 'none';
+            if (!list.length) {
+                ul.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            ul.innerHTML = list.map((r) => {
+                const short = API.short(r.slug);
+                return '<li class="link-item">' +
+                    '<div class="link-main">' +
+                        '<div class="link-short"><a href="' + escapeHtml(short) + '" target="_blank" rel="noopener">/r/' + escapeHtml(r.slug) + '</a></div>' +
+                        '<div class="link-target" title="' + escapeHtml(r.url) + '">' + escapeHtml(r.url) + '</div>' +
+                        (r.description ? '<div class="link-meta">' + escapeHtml(r.description) + '</div>' : '') +
+                    '</div>' +
+                    '<div class="link-actions">' +
+                        '<button class="btn btn-ghost" data-copy="' + escapeHtml(short) + '">Копировать</button>' +
+                    '</div>' +
+                '</li>';
+            }).join('');
+        }
+
+        async function createLink(payload) {
+            const res = await fetch(API.create, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json().catch(() => ({}));
+            return { status: res.status, data };
+        }
+
+        function init() {
+            renderRecent();
+
+            $('createForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                clearMsg();
+                $('result').className = 'result';
+
+                const url = $('url').value.trim();
+                const slug = $('slug').value.trim().toLowerCase();
+                const description = $('desc').value.trim();
+
+                if (!/^https?:\/\//i.test(url)) { showMsg('Введите корректный HTTP/HTTPS URL.'); return; }
+                if (slug && !SLUG_RE.test(slug)) { showMsg('Код: 2–32 символа (a-z, 0-9, -, _).'); return; }
+
+                const btn = $('submitBtn');
+                btn.disabled = true;
+                btn.textContent = 'Создаём…';
+                try {
+                    const payload = { url };
+                    if (slug) payload.slug = slug;
+                    if (description) payload.description = description;
+                    const { status, data } = await createLink(payload);
+
+                    if (status === 201 && data.redirect) {
+                        const r = data.redirect;
+                        const short = API.short(r.slug);
+                        const link = $('resultLink');
+                        link.href = short; link.textContent = short;
+                        $('result').className = 'result show';
+                        $('resultCopy').onclick = () => copyText(short, $('resultCopy'));
+
+                        const list = loadRecent();
+                        list.unshift({ slug: r.slug, url: r.url, description: r.description || '' });
+                        saveRecent(list);
+                        renderRecent();
+
+                        $('url').value = ''; $('slug').value = ''; $('desc').value = '';
+                    } else if (status === 409) {
+                        showMsg('Такой код уже занят. Выберите другой.');
+                    } else if (status === 429) {
+                        const sec = data.retryAfter ? ' Попробуйте через ' + data.retryAfter + ' с.' : '';
+                        showMsg('Слишком много запросов.' + sec);
+                    } else {
+                        showMsg(data.error || 'Не удалось создать ссылку.');
+                    }
+                } catch (err) {
+                    showMsg('Ошибка сети. Попробуйте ещё раз.');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Создать ссылку';
+                }
+            });
+
+            $('linksList').addEventListener('click', (e) => {
+                const copyBtn = e.target.closest('[data-copy]');
+                if (copyBtn) copyText(copyBtn.getAttribute('data-copy'), copyBtn);
+            });
+
+            $('clearBtn').addEventListener('click', () => {
+                saveRecent([]);
+                renderRecent();
+            });
+        }
+
+        init();
+    </script>
+    <script src="/theme.js" defer></script>
+</body>
+</html>

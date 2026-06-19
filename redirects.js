@@ -159,6 +159,13 @@ const K = {
      * @returns {string} Ключ KV
      */
     RATE_LIMIT: (ip) => `rl:redirect:pub:${ip}`,
+
+    /**
+     * Ключ для rate limiting публичного создания коротких ссылок
+     * @param {string} ip - IP адрес клиента
+     * @returns {string} Ключ KV
+     */
+    PUBLIC_CREATE_RATE_LIMIT: (ip) => `rl:redirect:create:${ip}`,
     
     /**
      * Ключ для rate limiting админских операций
@@ -746,6 +753,113 @@ router.post('/admin/:slug/reset-stats', verifyAdminToken, async (req, res) => {
 // ============================================
 // Публичный эндпоинт
 // ============================================
+
+/**
+ * Параметры публичного создания коротких ссылок
+ * @constant {Object}
+ */
+const PUBLIC_CREATE = {
+    /** @type {number} Окно времени в миллисекундах (1 минута) */
+    WINDOW: 60 * 1000,
+    /** @type {number} Максимум создаваемых ссылок в окне на IP */
+    MAX: 10,
+    /** @type {number} Длина авто-генерируемого slug */
+    SLUG_LENGTH: 7,
+    /** @type {number} Максимум попыток подобрать свободный авто-slug */
+    MAX_GEN_ATTEMPTS: 6
+};
+
+/**
+ * Генерация случайного slug из латиницы и цифр
+ * @returns {string} Сгенерированный slug
+ */
+function generateSlug() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < PUBLIC_CREATE.SLUG_LENGTH; i++) {
+        result += chars[crypto.randomInt(0, chars.length)];
+    }
+    return result;
+}
+
+/**
+ * POST /public — публичное создание короткой ссылки без админ-токена
+ * Защищено rate limiting по IP. slug опционален (генерируется автоматически).
+ * Создание разрешено всем, но просмотр списка и удаление остаются под админ-токеном.
+ * 
+ * @param {express.Request} req - HTTP запрос с { url, slug?, description? }
+ * @param {express.Response} res - HTTP ответ
+ */
+router.post('/public', async (req, res) => {
+    try {
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+
+        const rateLimit = await checkRateLimit(
+            K.PUBLIC_CREATE_RATE_LIMIT(ip),
+            PUBLIC_CREATE.WINDOW,
+            PUBLIC_CREATE.MAX
+        );
+        if (!rateLimit.allowed) {
+            return res.status(CONFIG.HTTP.TOO_MANY).json({
+                error: ERROR_MESSAGES.TOO_MANY_REQUESTS,
+                retryAfter: rateLimit.retryAfter
+            });
+        }
+
+        const { url, slug, description } = req.body || {};
+
+        const urlValidation = validateUrl(url);
+        if (!urlValidation.valid) {
+            return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: urlValidation.error });
+        }
+
+        let normalizedSlug;
+        if (slug) {
+            const slugValidation = validateSlug(slug);
+            if (!slugValidation.valid) {
+                return res.status(CONFIG.HTTP.BAD_REQUEST).json({ error: slugValidation.error });
+            }
+            normalizedSlug = slugValidation.normalized;
+            const existing = await kv.hgetall(K.REDIRECT(normalizedSlug));
+            if (existing && existing.slug) {
+                return res.status(CONFIG.HTTP.CONFLICT).json({ error: ERROR_MESSAGES.REDIRECT_EXISTS });
+            }
+        } else {
+            normalizedSlug = null;
+            for (let attempt = 0; attempt < PUBLIC_CREATE.MAX_GEN_ATTEMPTS; attempt++) {
+                const candidate = generateSlug();
+                const existing = await kv.hgetall(K.REDIRECT(candidate));
+                if (!existing || !existing.slug) { normalizedSlug = candidate; break; }
+            }
+            if (!normalizedSlug) {
+                return res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: ERROR_MESSAGES.CREATE_ERROR });
+            }
+        }
+
+        const now = new Date().toISOString();
+        const redirectData = {
+            slug: normalizedSlug,
+            url: urlValidation.normalized,
+            description: description ? String(description).slice(0, CONFIG.VALIDATION.DESC_MAX_LENGTH) : '',
+            clicks: '0',
+            createdAt: now,
+            lastClickedAt: ''
+        };
+
+        await kv.hset(K.REDIRECT(normalizedSlug), redirectData);
+        await kv.sadd(K.REDIRECTS_INDEX, normalizedSlug);
+        invalidateCache(normalizedSlug);
+
+        res.status(CONFIG.HTTP.CREATED).json({
+            success: true,
+            redirect: { ...redirectData, clicks: 0 }
+        });
+
+    } catch (err) {
+        console.error('[redirects POST public]', err);
+        res.status(CONFIG.HTTP.SERVER_ERROR).json({ error: ERROR_MESSAGES.CREATE_ERROR });
+    }
+});
 
 /**
  * GET /:slug — публичный переход по редиректу

@@ -146,6 +146,41 @@ body {
     display: flex; justify-content: space-between;
     font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--mono-stack);
 }
+.uptime-windows {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-top: 20px;
+}
+.uptime-window {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 16px; text-align: center;
+}
+.uptime-window-label {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px;
+}
+.uptime-window-value {
+    font-size: 1.5rem; font-weight: 700; font-family: var(--mono-stack);
+    letter-spacing: -0.02em; color: var(--success);
+}
+.uptime-window-value.degraded { color: var(--warning); }
+.uptime-window-value.outage { color: var(--danger); }
+.uptime-window-value.unknown { color: var(--text-tertiary); }
+.uptime-source {
+    font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--mono-stack);
+    margin-top: 12px; text-align: right;
+}
+.service-uptime {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--text-secondary); font-family: var(--mono-stack);
+}
+.service-uptime-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: var(--text-tertiary);
+}
+.service-uptime-dot.operational { background: var(--success); }
+.service-uptime-dot.degraded { background: var(--warning); }
+.service-uptime-dot.outage { background: var(--danger); }
 .day-tooltip {
     position: absolute; bottom: calc(100% + 8px); left: 50%;
     transform: translateX(-50%);
@@ -352,14 +387,29 @@ body {
 
     <section class="uptime-section">
         <div class="uptime-header">
-            <div class="uptime-title">История проверок (эта сессия)</div>
+            <div class="uptime-title">История доступности (серверный мониторинг)</div>
             <div class="uptime-percentage" id="uptimePercentage">—</div>
         </div>
         <div class="uptime-bar" id="uptimeBar"></div>
         <div class="uptime-labels">
-            <span id="uptimeStart">Начало сессии</span>
+            <span id="uptimeStart">Начало периода</span>
             <span>Сейчас</span>
         </div>
+        <div class="uptime-windows">
+            <div class="uptime-window">
+                <div class="uptime-window-label">24 часа</div>
+                <div class="uptime-window-value unknown" id="uptime24h">—</div>
+            </div>
+            <div class="uptime-window">
+                <div class="uptime-window-label">7 дней</div>
+                <div class="uptime-window-value unknown" id="uptime7d">—</div>
+            </div>
+            <div class="uptime-window">
+                <div class="uptime-window-label">30 дней</div>
+                <div class="uptime-window-value unknown" id="uptime30d">—</div>
+            </div>
+        </div>
+        <div class="uptime-source" id="uptimeSource">Нет данных мониторинга</div>
     </section>
 
     <section>
@@ -428,6 +478,9 @@ body {
         
         /** @type {string} API endpoint для загрузки конфигурации */
         STATUS_CONFIG_ENDPOINT: '/api/status-config',
+
+        /** @type {string} API endpoint серверной истории аптайма */
+        STATUS_HISTORY_ENDPOINT: '/api/status-history',
         
         /** @type {string} ID контейнера сетки сервисов */
         SERVICES_GRID_ID: 'servicesGrid',
@@ -521,8 +574,8 @@ body {
         /** @type {number|null} ID интервала автообновления */
         refreshInterval: null,
         
-        /** @type {Array<Object>} История проверок */
-        checkHistory: []
+        /** @type {Object} Серверная история аптайма */
+        serverHistory: { snapshots: [], uptime: {}, services: {}, lastCheck: null }
     };
 
     /**
@@ -845,6 +898,11 @@ body {
               })
             : '—';
 
+        const svcUptime = State.serverHistory.services[service.id];
+        const uptime30d = svcUptime && (svcUptime['30d'] !== null && svcUptime['30d'] !== undefined)
+            ? `${svcUptime['30d'].toFixed(1)}% за 30 дней`
+            : 'Аптайм: накопление данных';
+
         return `
             <div class="service-card" data-service="${service.id}">
                 <div class="service-header">
@@ -875,6 +933,10 @@ body {
                         <div class="metric-label">Checked</div>
                         <div class="metric-value">${checkedTime}</div>
                     </div>
+                </div>
+                <div class="service-uptime">
+                    <span class="service-uptime-dot ${status}"></span>
+                    <span>${Security.escapeHtml(uptime30d)}</span>
                 </div>
                 ${renderServiceError(result?.error)}
             </div>
@@ -1050,65 +1112,132 @@ body {
     // ============================================
     
     /**
-     * Создание HTML для одного элемента uptime bar
+     * Создание HTML для одного элемента uptime bar (снимок мониторинга)
      * 
-     * @param {Object} check - Данные проверки
-     * @param {number} index - Индекс в видимом списке
-     * @param {number} totalVisible - Всего видимых элементов
+     * @param {Object} snap - Снимок мониторинга
+     * @param {number} number - Порядковый номер снимка
      * @returns {string} HTML элемента
      */
-    function renderUptimeDay(check, index, totalVisible) {
-        const time = new Date(check.timestamp).toLocaleTimeString('ru-RU', { 
+    function renderUptimeDay(snap, number) {
+        const time = new Date(snap.timestamp).toLocaleString('ru-RU', { 
+            day: '2-digit',
+            month: '2-digit',
             hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
+            minute: '2-digit'
         });
         
-        const checkNumber = State.checkHistory.length - totalVisible + index + 1;
-        
         return `
-            <div class="uptime-day ${check.status}">
+            <div class="uptime-day ${snap.status}">
                 <div class="day-tooltip">
-                    <div>Check #${checkNumber}</div>
+                    <div>Снимок #${number}</div>
                     <div>${time}</div>
-                    <div>${check.operational}/${check.total} ok · ${check.avgLatency}ms</div>
+                    <div>${snap.operational}/${snap.total} ok · ${snap.avgLatency}ms</div>
                 </div>
             </div>
         `;
     }
 
     /**
-     * Рендеринг полосы uptime
+     * Форматирование процента аптайма с CSS-классом
+     * 
+     * @param {number|null} value - Процент (0-100) или null
+     * @returns {Object} { text, cls }
+     */
+    function formatUptimeValue(value) {
+        if (value === null || value === undefined) return { text: '—', cls: 'unknown' };
+        let cls = 'operational';
+        if (value < 99) cls = 'degraded';
+        if (value < 95) cls = 'outage';
+        return { text: `${value.toFixed(1)}%`, cls: `uptime-window-value ${cls}` };
+    }
+
+    /**
+     * Рендеринг агрегатов аптайма за окна 24h/7d/30d
+     */
+    function renderUptimeWindows() {
+        const uptime = State.serverHistory.uptime || {};
+        const map = { '24h': 'uptime24h', '7d': 'uptime7d', '30d': 'uptime30d' };
+
+        Object.entries(map).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const { text, cls } = formatUptimeValue(uptime[key]);
+            el.textContent = text;
+            el.className = cls;
+        });
+
+        const source = document.getElementById('uptimeSource');
+        const lastCheck = State.serverHistory.lastCheck;
+        const count = State.serverHistory.snapshots.length;
+        if (lastCheck) {
+            const t = new Date(lastCheck).toLocaleString('ru-RU', {
+                day: '2-digit', month: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            source.textContent = `Снимков: ${count} · последняя запись: ${t}`;
+        } else {
+            source.textContent = 'Сбор данных мониторинга начат — снимки появятся в ближайшие минуты';
+        }
+    }
+
+    /**
+     * Рендеринг полосы uptime на основе серверных снимков
      */
     function renderUptimeBar() {
         const bar = document.getElementById(CONFIG.UPTIME_BAR_ID);
         const percentage = document.getElementById(CONFIG.UPTIME_PERCENTAGE_ID);
         const startLabel = document.getElementById(CONFIG.UPTIME_START_ID);
 
-        if (State.checkHistory.length === 0) {
+        const snapshots = State.serverHistory.snapshots || [];
+
+        if (snapshots.length === 0) {
             bar.innerHTML = '<div class="uptime-day unknown" style="flex: 1;"></div>';
             percentage.textContent = '—';
+            startLabel.textContent = 'Нет данных';
             return;
         }
 
-        // Подсчет uptime
-        const successful = State.checkHistory.filter(h => h.status === STATUS.OPERATIONAL).length;
-        const total = State.checkHistory.length;
-        const uptimePercent = ((successful / total) * 100).toFixed(1);
+        const successful = snapshots.filter(s => s.status === STATUS.OPERATIONAL).length;
+        const uptimePercent = ((successful / snapshots.length) * 100).toFixed(1);
         percentage.textContent = `${uptimePercent}%`;
 
-        // Начальная метка
-        const firstCheck = new Date(State.checkHistory[0].timestamp);
-        startLabel.textContent = firstCheck.toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        const visible = snapshots.slice(-CONFIG.UPTIME_BAR_VISIBLE_COUNT);
+        const startIndex = snapshots.length - visible.length;
+
+        const firstCheck = new Date(visible[0].timestamp);
+        startLabel.textContent = firstCheck.toLocaleString('ru-RU', { 
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         });
 
-        // Видимые элементы
-        const visible = State.checkHistory.slice(-CONFIG.UPTIME_BAR_VISIBLE_COUNT);
         bar.innerHTML = visible
-            .map((check, idx) => renderUptimeDay(check, idx, visible.length))
+            .map((snap, idx) => renderUptimeDay(snap, startIndex + idx + 1))
             .join('');
+    }
+
+    /**
+     * Загрузка серверной истории аптайма
+     * 
+     * @returns {Promise<void>}
+     */
+    async function loadServerHistory() {
+        try {
+            const response = await fetch(CONFIG.STATUS_HISTORY_ENDPOINT, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            State.serverHistory = {
+                snapshots: Array.isArray(data.snapshots) ? data.snapshots : [],
+                uptime: data.uptime || {},
+                services: data.services || {},
+                lastCheck: data.lastCheck || null
+            };
+        } catch (error) {
+            console.error('[Status] Failed to load uptime history:', error);
+        }
+
+        renderUptimeBar();
+        renderUptimeWindows();
+        renderServices();
     }
 
     /**
@@ -1156,38 +1285,8 @@ body {
     }
 
     /**
-     * Добавление результата в историю проверок
-     * 
-     * @param {Array<Object>} results - Результаты всех проверок
-     */
-    function addToCheckHistory(results) {
-        const operational = results.filter(r => r.status === STATUS.OPERATIONAL).length;
-        const avgLatency = Math.round(results.reduce((sum, r) => sum + (r.latency || 0), 0) / results.length);
-        const allOperational = results.every(r => r.status === STATUS.OPERATIONAL);
-
-        let status = STATUS.OPERATIONAL;
-        if (results.some(r => r.status === STATUS.OUTAGE)) {
-            status = STATUS.OUTAGE;
-        } else if (results.some(r => r.status === STATUS.DEGRADED)) {
-            status = STATUS.DEGRADED;
-        }
-
-        State.checkHistory.push({
-            timestamp: Date.now(),
-            status,
-            operational,
-            total: results.length,
-            avgLatency
-        });
-
-        // Ограничение размера истории
-        if (State.checkHistory.length > CONFIG.MAX_HISTORY_SIZE) {
-            State.checkHistory = State.checkHistory.slice(-CONFIG.MAX_HISTORY_SIZE);
-        }
-    }
-
-    /**
-     * Запуск всех проверок сервисов
+     * Запуск всех проверок сервисов (живая проверка из браузера).
+     * История аптайма хранится на сервере и подгружается отдельно.
      * 
      * @returns {Promise<void>}
      */
@@ -1205,14 +1304,11 @@ body {
         // Выполнение всех проверок параллельно
         await Promise.all(SERVICES.map(service => executeServiceCheck(service)));
 
-        // Добавление в историю
-        const results = Object.values(State.services);
-        addToCheckHistory(results);
-
-        // Финальное обновление UI
-        renderUptimeBar();
         renderIncidents();
         updateLastUpdated();
+
+        // Подгрузка серверной истории (триггерит «ленивую» запись снимка)
+        loadServerHistory();
     }
 
     // ============================================
@@ -1412,10 +1508,14 @@ body {
         // Первоначальный рендеринг
         renderServices();
         renderUptimeBar();
+        renderUptimeWindows();
         renderIncidents();
         renderOverallStatus();
 
-        // Запуск проверок
+        // Загрузка серверной истории аптайма
+        loadServerHistory();
+
+        // Запуск живых проверок
         runAllChecks();
         startAutoRefresh();
 

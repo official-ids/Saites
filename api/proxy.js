@@ -46,6 +46,18 @@ const morgan = require('morgan');
  */
 const { kv } = require('@vercel/kv');
 
+/**
+ * waitUntil из @vercel/functions продлевает жизнь serverless-функции до
+ * завершения фоновой задачи. Вне Vercel-рантайма пакет/контекст может
+ * отсутствовать, поэтому подключаем его защищённо.
+ */
+let vercelWaitUntil = null;
+try {
+    ({ waitUntil: vercelWaitUntil } = require('@vercel/functions'));
+} catch (_) {
+    vercelWaitUntil = null;
+}
+
 // -----------------------------
 // Internal Application Modules
 // -----------------------------
@@ -3058,8 +3070,10 @@ const DEFAULT_API_CONFIG = [
                 path: '/api/news/posts',
                 desc: 'Список постов',
                 auth: 'optional',
-                details: 'Возвращает посты, отсортированные по дате (новые сверху). Поддерживает пагинацию. Для аутентифицированных пользователей добавляются флаги isLiked/isFavorited.',
+                details: 'Возвращает посты с пагинацией. Поддерживает поиск (q) по заголовку, тексту и автору и сортировку (sort): newest — по дате (новые сверху, по умолчанию), popular — по сумме лайков и комментариев. Закреплённые посты всегда вверху. Для аутентифицированных пользователей добавляются флаги isLiked/isFavorited.',
                 params: [
+                    { name: 'q', type: 'string', required: false, desc: 'Поиск по заголовку, тексту и автору (регистронезависимо)' },
+                    { name: 'sort', type: 'string', required: false, desc: 'Сортировка: newest (по умолчанию) или popular' },
                     { name: 'page', type: 'number', required: false, desc: 'Номер страницы (по умолчанию 1)' },
                     { name: 'limit', type: 'number', required: false, desc: 'Постов на странице (макс. 100, по умолчанию 20)' }
                 ],
@@ -3154,6 +3168,14 @@ const DEFAULT_API_CONFIG = [
                 auth: 'admin',
                 details: 'Переключает статус закрепления. Закреплённые посты отображаются вверху ленты.',
                 response: `{ "isPinned": true }`
+            },
+            {
+                method: 'GET',
+                path: '/api/news/rss',
+                desc: 'RSS-лента новостей',
+                auth: null,
+                details: 'Возвращает последние посты в формате RSS 2.0 (application/rss+xml): заголовок, ссылку на пост, автора, дату публикации и краткое описание. Используется агрегаторами и автодискавери на странице /news.',
+                response: `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"> ... </rss>`
             }
         ]
     },
@@ -3296,6 +3318,550 @@ const DEFAULT_API_CONFIG = [
 }`
             }
         ]
+    },
+    {
+        "id": "notifications",
+        "title": "Push-уведомления",
+        "source": "notifications.js",
+        "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9\"/>",
+        "iconColor": "#AF52DE",
+        "description": "Система веб-push уведомлений на базе VAPID (Web Push API). Поддерживает публичные и приватные каналы, подписки браузеров, пакетную рассылку и доступ для внешних сервисов по ключу <code>svc_*</code> (заголовок <code>X-API-Key</code>).",
+        "endpoints": [
+            {
+                "method": "GET",
+                "path": "/api/notifications/vapid-public-key",
+                "desc": "Публичный VAPID-ключ",
+                "auth": null,
+                "details": "Возвращает публичный VAPID-ключ, необходимый браузеру для оформления push-подписки (PushManager.subscribe).",
+                "response": "{\n  \"publicKey\": \"BPx...base64url\"\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/notifications/channels",
+                "desc": "Список публичных каналов",
+                "auth": null,
+                "details": "Возвращает доступные для подписки публичные каналы (например, news, support). Приватные каналы в выдачу не попадают.",
+                "response": "{\n  \"channels\": [\n    { \"id\": \"news\", \"name\": \"Новости\", \"public\": true }\n  ],\n  \"total\": 1\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/subscribe",
+                "desc": "Подписка на каналы",
+                "auth": null,
+                "details": "Сохраняет push-подписку браузера и привязывает её к одному или нескольким публичным каналам. Повторный вызов с тем же endpoint обновляет список каналов. По умолчанию подписывает на канал news.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "type": "object",
+                        "required": true,
+                        "desc": "Объект PushSubscription { endpoint, keys: { p256dh, auth } }"
+                    },
+                    {
+                        "name": "channels",
+                        "type": "string[]",
+                        "required": false,
+                        "desc": "ID каналов для подписки (по умолчанию ['news'])"
+                    },
+                    {
+                        "name": "userId",
+                        "type": "string",
+                        "required": false,
+                        "desc": "Необязательная привязка к пользователю"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"message\": \"Subscription saved\",\n  \"channels\": [\"news\"]\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/unsubscribe",
+                "desc": "Отписка",
+                "auth": null,
+                "details": "Отписывает браузер от указанных каналов. Если каналы не переданы, подписка удаляется полностью.",
+                "params": [
+                    {
+                        "name": "endpoint",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Endpoint push-подписки"
+                    },
+                    {
+                        "name": "channels",
+                        "type": "string[]",
+                        "required": false,
+                        "desc": "Каналы для отписки (пусто = удалить подписку целиком)"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"message\": \"Unsubscribed\"\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/subscribe-private",
+                "desc": "Подписка на приватный канал",
+                "auth": "user",
+                "details": "Подписка на приватный канал. Требует пользовательский токен (userToken) для авторизации доступа к каналу.",
+                "params": [
+                    {
+                        "name": "subscription",
+                        "type": "object",
+                        "required": true,
+                        "desc": "Объект PushSubscription"
+                    },
+                    {
+                        "name": "channelId",
+                        "type": "string",
+                        "required": true,
+                        "desc": "ID приватного канала"
+                    },
+                    {
+                        "name": "userToken",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Токен пользователя для доступа к каналу"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"message\": \"Subscribed to private channel \\\"...\\\"\"\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/notifications/stats",
+                "desc": "Публичная статистика",
+                "auth": null,
+                "details": "Возвращает агрегированную статистику: общее число подписок, число отправленных уведомлений и разбивку подписчиков по каналам.",
+                "response": "{\n  \"totalSubscriptions\": 42,\n  \"totalSent\": 1337,\n  \"channels\": {\n    \"news\": { \"name\": \"Новости\", \"subscribers\": 42, \"public\": true }\n  },\n  \"timestamp\": \"2026-06-18T16:00:00.000Z\"\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/api/send",
+                "desc": "Отправка в канал (сервис)",
+                "auth": "user",
+                "details": "Отправляет push-уведомление всем подписчикам канала. Требует сервисный ключ в заголовке X-API-Key (формат svc_*).",
+                "params": [
+                    {
+                        "name": "X-API-Key",
+                        "type": "header",
+                        "required": true,
+                        "desc": "Сервисный ключ доступа (svc_*)"
+                    },
+                    {
+                        "name": "channel",
+                        "type": "string",
+                        "required": true,
+                        "desc": "ID канала-получателя"
+                    },
+                    {
+                        "name": "notification",
+                        "type": "object",
+                        "required": true,
+                        "desc": "{ title, body, icon?, url?, data? }"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"serviceId\": \"svc-123\",\n  \"channel\": \"news\",\n  \"results\": { \"total\": 42, \"sent\": 40, \"failed\": 2 }\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/api/send-batch",
+                "desc": "Пакетная отправка (сервис)",
+                "auth": "user",
+                "details": "Отправляет несколько уведомлений в разные каналы за один запрос. Требует сервисный ключ X-API-Key.",
+                "params": [
+                    {
+                        "name": "X-API-Key",
+                        "type": "header",
+                        "required": true,
+                        "desc": "Сервисный ключ доступа (svc_*)"
+                    },
+                    {
+                        "name": "messages",
+                        "type": "object[]",
+                        "required": true,
+                        "desc": "Массив { channel, notification }"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"results\": [ { \"channel\": \"news\", \"sent\": 40 } ]\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/api/send-to-user",
+                "desc": "Отправка пользователю (сервис)",
+                "auth": "user",
+                "details": "Отправляет push-уведомление всем подпискам конкретного пользователя по userId. Требует сервисный ключ X-API-Key.",
+                "params": [
+                    {
+                        "name": "X-API-Key",
+                        "type": "header",
+                        "required": true,
+                        "desc": "Сервисный ключ доступа (svc_*)"
+                    },
+                    {
+                        "name": "userId",
+                        "type": "string",
+                        "required": true,
+                        "desc": "ID пользователя-получателя"
+                    },
+                    {
+                        "name": "notification",
+                        "type": "object",
+                        "required": true,
+                        "desc": "{ title, body, icon?, url?, data? }"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"userId\": \"1001\",\n  \"results\": { \"total\": 2, \"sent\": 2 }\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/admin/send",
+                "desc": "Ручная отправка (админ)",
+                "auth": "admin",
+                "details": "Ручная отправка уведомления в канал из админ-панели. Требует ADMIN_TOKEN.",
+                "params": [
+                    {
+                        "name": "channel",
+                        "type": "string",
+                        "required": true,
+                        "desc": "ID канала"
+                    },
+                    {
+                        "name": "notification",
+                        "type": "object",
+                        "required": true,
+                        "desc": "{ title, body, icon?, url? }"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"results\": { \"sent\": 40, \"failed\": 0 }\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/notifications/admin/subscriptions",
+                "desc": "Список подписок (админ)",
+                "auth": "admin",
+                "details": "Возвращает все push-подписки с метаданными (каналы, userAgent, дата создания). Требует ADMIN_TOKEN.",
+                "response": "{\n  \"subscriptions\": [ { \"endpoint\": \"https://...\", \"channels\": [\"news\"] } ],\n  \"total\": 42\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/admin/services",
+                "desc": "Выпуск сервисного ключа (админ)",
+                "auth": "admin",
+                "details": "Создаёт сервисный API-ключ (svc_*) для внешней интеграции. Ключ показывается один раз. Требует ADMIN_TOKEN.",
+                "params": [
+                    {
+                        "name": "name",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Имя сервиса"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"apiKey\": \"svc_xxxxxxxx\",\n  \"serviceId\": \"...\"\n}"
+            }
+        ]
+    },
+    {
+        "id": "notifications-reminders",
+        "title": "Напоминания (Reminders)",
+        "source": "notifications.js",
+        "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z\"/>",
+        "iconColor": "#34C759",
+        "description": "Подсистема напоминаний поверх push-уведомлений: пользователь создаёт напоминание на время, а сервер при наступлении срока рассылает push на его подписки.",
+        "endpoints": [
+            {
+                "method": "POST",
+                "path": "/api/notifications/reminders",
+                "desc": "Создать напоминание",
+                "auth": null,
+                "details": "Создаёт напоминание с текстом и временем срабатывания, привязанное к подписке/пользователю.",
+                "params": [
+                    {
+                        "name": "title",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Текст напоминания"
+                    },
+                    {
+                        "name": "remindAt",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Время срабатывания (ISO 8601)"
+                    },
+                    {
+                        "name": "endpoint",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Endpoint push-подписки получателя"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"reminder\": { \"id\": \"...\", \"remindAt\": \"...\" }\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/notifications/reminders",
+                "desc": "Список напоминаний",
+                "auth": null,
+                "details": "Возвращает напоминания (с фильтрацией по endpoint/пользователю).",
+                "response": "{\n  \"reminders\": [ { \"id\": \"...\", \"title\": \"...\", \"remindAt\": \"...\" } ]\n}"
+            },
+            {
+                "method": "DELETE",
+                "path": "/api/notifications/reminders/:id",
+                "desc": "Удалить напоминание",
+                "auth": null,
+                "details": "Удаляет напоминание по идентификатору.",
+                "response": "{\n  \"success\": true\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/notifications/reminders/check",
+                "desc": "Проверка и рассылка",
+                "auth": null,
+                "details": "Служебный вызов (cron): находит наступившие напоминания и отправляет push, помечая их выполненными.",
+                "response": "{\n  \"success\": true,\n  \"sent\": 3\n}"
+            }
+        ]
+    },
+    {
+        "id": "downloader",
+        "title": "Файлообменник (Downloader)",
+        "source": "downloader.js",
+        "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4\"/>",
+        "iconColor": "#0071E3",
+        "description": "Сервис хранения и раздачи файлов через Vercel Blob с дедупликацией по SHA-256. Публичное скачивание по хэшу; загрузка и управление — только для администратора.",
+        "endpoints": [
+            {
+                "method": "GET",
+                "path": "/api/downloader/health",
+                "desc": "Проверка работоспособности",
+                "auth": null,
+                "details": "Возвращает состояние сервиса и аптайм процесса. Используется мониторингом.",
+                "response": "{\n  \"status\": \"healthy\",\n  \"timestamp\": \"2026-06-18T16:00:00.000Z\",\n  \"uptime\": 1234.5\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/downloader/info/:hash",
+                "desc": "Метаданные файла",
+                "auth": null,
+                "details": "Возвращает метаданные файла по SHA-256 хэшу (имя, размер, тип, число скачиваний). Хэш проверяется на валидность.",
+                "response": "{\n  \"hash\": \"a1b2...\",\n  \"name\": \"file.pdf\",\n  \"size\": 123456,\n  \"contentType\": \"application/pdf\",\n  \"downloads\": 12\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/downloader/:hash",
+                "desc": "Скачать файл",
+                "auth": null,
+                "details": "Отдаёт файл по SHA-256 хэшу и инкрементирует счётчик скачиваний.",
+                "response": "Бинарный поток файла (Content-Disposition: attachment)"
+            },
+            {
+                "method": "POST",
+                "path": "/api/downloader/",
+                "desc": "Загрузить файл (админ)",
+                "auth": "admin",
+                "details": "Принимает multipart/form-data с одним файлом, проверяет MIME-тип, сохраняет в Vercel Blob с дедупликацией по хэшу. Требует ADMIN_TOKEN.",
+                "params": [
+                    {
+                        "name": "file",
+                        "type": "file",
+                        "required": true,
+                        "desc": "Загружаемый файл (multipart/form-data)"
+                    }
+                ],
+                "response": "{\n  \"hash\": \"a1b2...\",\n  \"url\": \"/downloader/a1b2...\",\n  \"name\": \"file.pdf\",\n  \"size\": 123456\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/downloader/list",
+                "desc": "Список файлов (админ)",
+                "auth": "admin",
+                "details": "Возвращает список всех загруженных файлов с метаданными. Требует ADMIN_TOKEN.",
+                "response": "{\n  \"files\": [ { \"hash\": \"...\", \"name\": \"...\", \"size\": 123 } ],\n  \"total\": 1\n}"
+            },
+            {
+                "method": "DELETE",
+                "path": "/api/downloader/:hash",
+                "desc": "Удалить файл (админ)",
+                "auth": "admin",
+                "details": "Удаляет файл из Vercel Blob и его метаданные по хэшу. Требует ADMIN_TOKEN.",
+                "response": "{\n  \"success\": true\n}"
+            }
+        ]
+    },
+    {
+        "id": "redirects",
+        "title": "Короткие ссылки (Redirects)",
+        "source": "redirects.js",
+        "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5m6.656-1.828a4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5\"/>",
+        "iconColor": "#FF9F0A",
+        "description": "Управление короткими ссылками и редиректами с подсчётом кликов. Переход по слагу — публичный; создание и управление ссылками — только для администратора.",
+        "endpoints": [
+            {
+                "method": "GET",
+                "path": "/go/:slug",
+                "desc": "Переход по короткой ссылке",
+                "auth": null,
+                "details": "Выполняет редирект (302) на целевой URL по слагу и увеличивает счётчик кликов. Также доступно как /api/redirects/:slug.",
+                "response": "302 Redirect → целевой URL"
+            },
+            {
+                "method": "GET",
+                "path": "/api/redirects/stats/:slug",
+                "desc": "Статистика кликов",
+                "auth": null,
+                "details": "Возвращает статистику по короткой ссылке: целевой URL, количество переходов, дату создания.",
+                "response": "{\n  \"slug\": \"ch\",\n  \"target\": \"https://...\",\n  \"clicks\": 128\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/redirects/admin",
+                "desc": "Создать/обновить ссылку (админ)",
+                "auth": "admin",
+                "details": "Создаёт новую короткую ссылку или обновляет существующую. Требует ADMIN_TOKEN.",
+                "params": [
+                    {
+                        "name": "slug",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Короткий идентификатор ссылки"
+                    },
+                    {
+                        "name": "target",
+                        "type": "string",
+                        "required": true,
+                        "desc": "Целевой URL"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"slug\": \"ch\"\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/redirects/admin",
+                "desc": "Список ссылок (админ)",
+                "auth": "admin",
+                "details": "Возвращает все короткие ссылки с их статистикой. Требует ADMIN_TOKEN.",
+                "response": "{\n  \"links\": [ { \"slug\": \"ch\", \"target\": \"https://...\", \"clicks\": 128 } ]\n}"
+            },
+            {
+                "method": "DELETE",
+                "path": "/api/redirects/admin/:slug",
+                "desc": "Удалить ссылку (админ)",
+                "auth": "admin",
+                "details": "Удаляет короткую ссылку и её статистику. Требует ADMIN_TOKEN.",
+                "response": "{\n  \"success\": true\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/redirects/admin/:slug/reset-stats",
+                "desc": "Сбросить статистику (админ)",
+                "auth": "admin",
+                "details": "Обнуляет счётчик кликов короткой ссылки. Требует ADMIN_TOKEN.",
+                "response": "{\n  \"success\": true\n}"
+            }
+        ]
+    },
+    {
+        "id": "call",
+        "title": "Видеозвонки (Call)",
+        "source": "proxy.js",
+        "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z\"/>",
+        "iconColor": "#34C759",
+        "description": "Сигнализация для P2P видеозвонков на базе PeerJS (WebRTC). Сервер управляет временными комнатами; сам медиапоток идёт напрямую между участниками.",
+        "endpoints": [
+            {
+                "method": "POST",
+                "path": "/api/call/room",
+                "desc": "Создать комнату",
+                "auth": null,
+                "details": "Создаёт временную комнату с уникальным ID и сроком жизни. Возвращает roomId и время истечения.",
+                "response": "{\n  \"roomId\": \"abc123\",\n  \"expiresAt\": 1781800000000\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/call/check/:id",
+                "desc": "Проверить комнату",
+                "auth": null,
+                "details": "Проверяет, существует ли комната с указанным ID и не истекла ли она.",
+                "response": "{\n  \"exists\": true,\n  \"roomId\": \"abc123\",\n  \"createdAt\": 1781790000000\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/call/join",
+                "desc": "Войти в комнату",
+                "auth": null,
+                "details": "Регистрирует участника в комнате. Возвращает актуальное число участников.",
+                "params": [
+                    {
+                        "name": "roomId",
+                        "type": "string",
+                        "required": true,
+                        "desc": "ID комнаты"
+                    }
+                ],
+                "response": "{\n  \"success\": true,\n  \"participants\": 2\n}"
+            },
+            {
+                "method": "POST",
+                "path": "/api/call/leave",
+                "desc": "Выйти из комнаты",
+                "auth": null,
+                "details": "Отмечает выход участника из комнаты.",
+                "params": [
+                    {
+                        "name": "roomId",
+                        "type": "string",
+                        "required": true,
+                        "desc": "ID комнаты"
+                    }
+                ],
+                "response": "{\n  \"success\": true\n}"
+            }
+        ]
+    },
+    {
+        "id": "status-monitor",
+        "title": "Мониторинг статуса · API",
+        "source": "proxy.js",
+        "icon": "<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 12h4l3 8 4-16 3 8h4\"/>",
+        "iconColor": "#FF3B30",
+        "description": "Серверный мониторинг доступности сервисов с постоянной историей в Vercel KV. Снимки собираются по расписанию (Vercel Cron) и при заходах на страницу /status; агрегаты аптайма считаются за 24ч/7д/30д.",
+        "endpoints": [
+            {
+                "method": "GET",
+                "path": "/api/status-config",
+                "desc": "Конфигурация сервисов",
+                "auth": null,
+                "details": "Возвращает список отслеживаемых сервисов с их проверками (метод, путь, ожидаемые коды).",
+                "response": "[ { \"id\": \"website\", \"name\": \"Website Frontend\", \"check\": { \"method\": \"GET\", \"path\": \"/\" } } ]"
+            },
+            {
+                "method": "GET",
+                "path": "/api/status-check",
+                "desc": "Запустить проверку и записать снимок",
+                "auth": null,
+                "details": "Пингует все сервисы и записывает снимок в KV. По умолчанию срабатывает не чаще раза в 5 минут; ?force=1 игнорирует троттлинг. Дёргается Vercel Cron.",
+                "params": [
+                    {
+                        "name": "force",
+                        "type": "query",
+                        "required": false,
+                        "desc": "force=1 — записать снимок, игнорируя троттлинг"
+                    }
+                ],
+                "response": "{\n  \"recorded\": true,\n  \"snapshot\": { \"timestamp\": 1781800000000, \"services\": [] }\n}"
+            },
+            {
+                "method": "GET",
+                "path": "/api/status-history",
+                "desc": "История и аптайм",
+                "auth": null,
+                "details": "Возвращает снимки и агрегаты аптайма за 24ч/7д/30д (общий и по каждому сервису). При устаревших данных запускает фоновую запись снимка (через waitUntil).",
+                "params": [
+                    {
+                        "name": "limit",
+                        "type": "query",
+                        "required": false,
+                        "desc": "Сколько последних снимков вернуть (по умолчанию 120)"
+                    }
+                ],
+                "response": "{\n  \"snapshots\": [],\n  \"uptime\": { \"24h\": 100, \"7d\": 99.8, \"30d\": 99.5 },\n  \"lastCheck\": 1781800000000\n}"
+            }
+        ]
     }
 ];
 
@@ -3348,6 +3914,284 @@ app.get('/api/api-config', async (req, res, next) => {
         let config = await kv.get(API_CONFIG_KEY);
         if (!config) config = DEFAULT_API_CONFIG;
         res.json(config);
+    } catch (err) { next(err); }
+});
+
+// -----------------------------
+// API Routes: Server-side Uptime Monitoring (KV)
+// -----------------------------
+
+/**
+ * Ключ KV для хранения истории снимков мониторинга
+ * @constant {string}
+ */
+const STATUS_HISTORY_KEY = 'status:history';
+
+/**
+ * Ключ KV для метки времени последней записи (троттлинг)
+ * @constant {string}
+ */
+const STATUS_LAST_CHECK_KEY = 'status:last_check';
+
+/**
+ * Параметры серверного мониторинга
+ * @constant {Object}
+ */
+const STATUS_MONITOR = {
+    /** Максимальное число хранимых снимков */
+    MAX_SNAPSHOTS: 1000,
+    /** Срок хранения снимков (мс) — 30 дней */
+    RETENTION_MS: 30 * 24 * 60 * 60 * 1000,
+    /** Минимальный интервал между «ленивыми» записями (мс) — 5 минут */
+    MIN_RECORD_INTERVAL_MS: 5 * 60 * 1000,
+    /** Таймаут по умолчанию для одной проверки (мс) */
+    DEFAULT_TIMEOUT: 5000
+};
+
+/**
+ * Определение базового URL текущего деплоя из запроса или окружения.
+ *
+ * @param {express.Request} [req] - HTTP-запрос (опционально)
+ * @returns {string} Базовый URL без завершающего слэша
+ */
+function resolveBaseUrl(req) {
+    if (req) {
+        const proto = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.headers['x-forwarded-host'] || req.get('host');
+        if (host) return `${proto}://${host}`;
+    }
+    if (process.env.STATUS_BASE_URL) return process.env.STATUS_BASE_URL.replace(/\/$/, '');
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+    return `http://localhost:${PORT}`;
+}
+
+/**
+ * Серверная проверка одного сервиса по его конфигурации.
+ *
+ * @param {string} baseUrl - Базовый URL деплоя
+ * @param {Object} service - Описание сервиса из status-config
+ * @returns {Promise<Object>} Результат проверки { id, status, latency, statusCode, error }
+ */
+async function checkServiceServerSide(baseUrl, service) {
+    const check = service.check || {};
+    const timeout = check.timeout || STATUS_MONITOR.DEFAULT_TIMEOUT;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    const start = Date.now();
+
+    const finish = (extra) => {
+        clearTimeout(timer);
+        return { id: service.id, latency: Date.now() - start, statusCode: '—', error: null, ...extra };
+    };
+
+    try {
+        if (check.type === 'external' && check.url) {
+            await fetch(check.url, { method: 'GET', signal: controller.signal, redirect: 'manual' });
+            return finish({ status: 'operational' });
+        }
+
+        let path = check.path || '/';
+        let expected = check.expectedStatuses || [200];
+        if (check.type === 'custom' && check.name === 'checkKV') {
+            path = '/api/news/posts';
+            expected = [200];
+        }
+
+        const options = {
+            method: check.method || 'GET',
+            signal: controller.signal,
+            redirect: 'manual',
+            headers: { 'X-Status-Check': '1' }
+        };
+        if (check.body) {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = check.body;
+        }
+
+        const response = await fetch(`${baseUrl}${path}`, options);
+        const ok = expected.includes(response.status);
+        return finish({
+            status: ok ? 'operational' : 'outage',
+            statusCode: response.status,
+            error: ok ? null : `Unexpected status ${response.status} (expected ${expected.join('|')})`
+        });
+    } catch (err) {
+        const aborted = err && err.name === 'AbortError';
+        return finish({
+            status: aborted ? 'degraded' : 'outage',
+            error: aborted ? `Timeout after ${timeout}ms` : (err.message || 'Connection failed')
+        });
+    }
+}
+
+/**
+ * Выполнение полного цикла проверок и формирование снимка.
+ *
+ * @param {string} baseUrl - Базовый URL деплоя
+ * @returns {Promise<Object>} Снимок мониторинга
+ */
+async function performStatusChecks(baseUrl) {
+    let services = await kv.get(STATUS_CONFIG_KEY);
+    if (!Array.isArray(services) || services.length === 0) services = DEFAULT_STATUS_CONFIG;
+
+    const results = await Promise.all(services.map(s => checkServiceServerSide(baseUrl, s)));
+
+    const operational = results.filter(r => r.status === 'operational').length;
+    const latencies = results.map(r => r.latency || 0);
+    const avgLatency = results.length
+        ? Math.round(latencies.reduce((a, b) => a + b, 0) / results.length)
+        : 0;
+
+    let overall = 'operational';
+    if (results.some(r => r.status === 'outage')) overall = 'outage';
+    else if (results.some(r => r.status === 'degraded')) overall = 'degraded';
+
+    const perService = {};
+    for (const r of results) {
+        perService[r.id] = { status: r.status, latency: r.latency, statusCode: r.statusCode, error: r.error };
+    }
+
+    return {
+        timestamp: Date.now(),
+        status: overall,
+        operational,
+        total: results.length,
+        avgLatency,
+        services: perService
+    };
+}
+
+/**
+ * Сохранение снимка в KV с обрезкой по размеру и сроку хранения.
+ *
+ * @param {Object} snapshot - Снимок мониторинга
+ * @returns {Promise<void>}
+ */
+async function recordSnapshot(snapshot) {
+    let history = await kv.get(STATUS_HISTORY_KEY);
+    if (!Array.isArray(history)) history = [];
+
+    history.push(snapshot);
+
+    const cutoff = Date.now() - STATUS_MONITOR.RETENTION_MS;
+    history = history.filter(s => s && s.timestamp >= cutoff);
+    if (history.length > STATUS_MONITOR.MAX_SNAPSHOTS) {
+        history = history.slice(-STATUS_MONITOR.MAX_SNAPSHOTS);
+    }
+
+    await kv.set(STATUS_HISTORY_KEY, history);
+    await kv.set(STATUS_LAST_CHECK_KEY, snapshot.timestamp);
+}
+
+/**
+ * Запускает фоновую задачу так, чтобы она надёжно завершилась.
+ * На Vercel передаёт промис в waitUntil (функция не «замораживается» до
+ * завершения записи). Вне Vercel-контекста промис просто остаётся работать
+ * в живущем процессе. Ошибки гасятся, чтобы не уронить запрос.
+ *
+ * @param {Promise<unknown>} promise - Фоновая задача
+ */
+function scheduleBackground(promise) {
+    const safe = Promise.resolve(promise).catch(err =>
+        console.error('[status] background task failed:', err && err.message));
+    if (typeof vercelWaitUntil === 'function') {
+        try {
+            vercelWaitUntil(safe);
+        } catch (_) {
+            // Нет активного контекста запроса — промис уже выполняется.
+        }
+    }
+}
+
+/**
+ * Подсчёт процента аптайма по снимкам за указанное окно.
+ *
+ * @param {Array<Object>} snapshots - Список снимков
+ * @param {number} windowMs - Размер окна (мс)
+ * @param {string|null} [serviceId] - ID сервиса или null для общего аптайма
+ * @returns {number|null} Процент аптайма (0-100) или null если нет данных
+ */
+function computeUptime(snapshots, windowMs, serviceId) {
+    const cutoff = Date.now() - windowMs;
+    const inWindow = snapshots.filter(s => s.timestamp >= cutoff);
+    if (inWindow.length === 0) return null;
+
+    let ok = 0;
+    for (const snap of inWindow) {
+        const status = serviceId
+            ? (snap.services && snap.services[serviceId] && snap.services[serviceId].status)
+            : snap.status;
+        if (status === 'operational') ok++;
+    }
+    return Math.round((ok / inWindow.length) * 1000) / 10;
+}
+
+const STATUS_WINDOWS = {
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000
+};
+
+/**
+ * Эндпоинт записи проверки. Вызывается Vercel Cron или вручную.
+ * Троттлится: повторный вызов в пределах MIN_RECORD_INTERVAL_MS пропускается.
+ */
+app.get('/api/status-check', async (req, res, next) => {
+    try {
+        const force = req.query.force === '1';
+        const lastCheck = await kv.get(STATUS_LAST_CHECK_KEY);
+        if (!force && lastCheck && (Date.now() - lastCheck) < STATUS_MONITOR.MIN_RECORD_INTERVAL_MS) {
+            return res.json({ recorded: false, reason: 'throttled', lastCheck });
+        }
+
+        const snapshot = await performStatusChecks(resolveBaseUrl(req));
+        await recordSnapshot(snapshot);
+        res.json({ recorded: true, snapshot });
+    } catch (err) { next(err); }
+});
+
+/**
+ * Публичный эндпоинт истории аптайма для страницы /status.
+ * Возвращает снимки, агрегаты аптайма (24h/7d/30d) и метку последней проверки.
+ * При устаревших данных запускает «ленивую» фоновую запись снимка.
+ */
+app.get('/api/status-history', async (req, res, next) => {
+    try {
+        let history = await kv.get(STATUS_HISTORY_KEY);
+        if (!Array.isArray(history)) history = [];
+
+        const lastCheck = await kv.get(STATUS_LAST_CHECK_KEY);
+        const stale = !lastCheck || (Date.now() - lastCheck) >= STATUS_MONITOR.MIN_RECORD_INTERVAL_MS;
+
+        if (stale) {
+            // Оптимистично помечаем время проверки, чтобы конкурентные
+            // запросы не запускали дублирующий «лавинный» сбор.
+            await kv.set(STATUS_LAST_CHECK_KEY, Date.now());
+            const baseUrl = resolveBaseUrl(req);
+            scheduleBackground(performStatusChecks(baseUrl).then(recordSnapshot));
+        }
+
+        const limit = Math.min(parseInt(req.query.limit, 10) || 120, STATUS_MONITOR.MAX_SNAPSHOTS);
+        const snapshots = history.slice(-limit);
+
+        const overall = {};
+        for (const [key, ms] of Object.entries(STATUS_WINDOWS)) {
+            overall[key] = computeUptime(history, ms, null);
+        }
+
+        const serviceIds = new Set();
+        for (const snap of history) {
+            if (snap.services) Object.keys(snap.services).forEach(id => serviceIds.add(id));
+        }
+        const services = {};
+        for (const id of serviceIds) {
+            services[id] = {};
+            for (const [key, ms] of Object.entries(STATUS_WINDOWS)) {
+                services[id][key] = computeUptime(history, ms, id);
+            }
+        }
+
+        res.json({ lastCheck: lastCheck || null, uptime: overall, services, snapshots });
     } catch (err) { next(err); }
 });
 
