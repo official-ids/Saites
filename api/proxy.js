@@ -70,7 +70,8 @@ const MODULE_PATHS = {
     SUPPORT: '../support',
     DOWNLOADER: '../downloader',
     REDIRECTS: '../redirects',
-    NOTIFICATIONS: '../notifications'
+    NOTIFICATIONS: '../notifications',
+    ROBLOX: '../roblox'
 };
 
 /**
@@ -97,6 +98,11 @@ const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
  * Роутер для уведомлений
  */
 const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
+
+/**
+ * Роутер для уведомлений
+ */
+const robloxRouter = require(MODULE_PATHS.ROBLOX);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1225,6 +1231,7 @@ app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/roblox', robloxRouter);  // ← ДОБАВЬ
 
 // -----------------------------
 // Dynamic Page: Downloader

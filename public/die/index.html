@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database of Sin — Roblox Blacklist</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-tertiary: #141414;
+            --bg-card: #0f0f0f;
+            --text-primary: #f5f5f7;
+            --text-secondary: #a1a1a6;
+            --text-tertiary: #6e6e73;
+            --border: #1f1f23;
+            --border-light: #2a2a2e;
+            --accent: #ff3b30;
+            --accent-hover: #ff453a;
+            --accent-dim: rgba(255, 59, 48, 0.12);
+            --success: #30d158;
+            --warning: #ff9f0a;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.8);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 500px;
+            background: radial-gradient(ellipse at top, rgba(255, 59, 48, 0.08), transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo-mark {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), #8b0000);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.3);
+        }
+
+        .logo-mark svg {
+            width: 18px;
+            height: 18px;
+            color: #fff;
+        }
+
+        .logo-text {
+            font-size: 17px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .logo-text span {
+            color: var(--text-tertiary);
+            font-weight: 400;
+            margin-left: 6px;
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Hero */
+        .hero {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 32px 60px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 24px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            margin-bottom: 20px;
+            background: linear-gradient(180deg, #fff 0%, #888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero-subtitle {
+            font-size: 19px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            letter-spacing: -0.01em;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Form */
+        .form-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 60px;
+            box-shadow: var(--shadow-md);
+            animation: fadeInUp 1.2s ease;
+        }
+
+        .form-header {
+            margin-bottom: 28px;
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .form-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.01em;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 90px;
+            font-family: inherit;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+
+        .form-hint.error {
+            color: var(--accent);
+        }
+
+        .form-hint.success {
+            color: var(--success);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: inherit;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(255, 59, 48, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-light);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--bg-tertiary);
+            border-color: var(--text-tertiary);
+        }
+
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Preview card */
+        .preview-card {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .preview-card.visible {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .preview-header {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+        }
+
+        .preview-content {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .preview-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-light);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .preview-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .preview-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .preview-username {
+            font-size: 13px;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .preview-reason {
+            font-size: 13px;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            line-clamp: 2;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        /* List section */
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .list-count {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            background: var(--bg-tertiary);
+            padding: 4px 12px;
+            border-radius: 100px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-state-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .empty-state-desc {
+            font-size: 14px;
+        }
+
+        /* Grid */
+        .entries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .entries-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Entry card */
+        .entry-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: all 0.3s;
+            animation: cardAppear 0.5s ease backwards;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .entry-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .entry-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .entry-card:hover::before {
+            opacity: 1;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .entry-top {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .entry-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .entry-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .entry-avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            color: var(--text-tertiary);
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .entry-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .entry-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+
+        .entry-name {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .entry-username {
+            font-size: 13px;
+            color: var(--accent);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 4px;
+        }
+
+        .entry-meta {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .entry-meta-dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+        }
+
+        .entry-reason {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            border-left: 2px solid var(--accent);
+            word-break: break-word;
+        }
+
+        .entry-footer {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .entry-reporter {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .entry-link {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            transition: color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .entry-link:hover {
+            color: var(--accent);
+        }
+
+        .entry-link svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 32px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 14px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            font-size: 14px;
+            font-weight: 500;
+            animation: toastIn 0.3s ease;
+            max-width: 400px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--accent); }
+        .toast.info { border-left: 3px solid var(--text-tertiary); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Loading */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        /* Footer */
+        .footer {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 32px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer a:hover {
+            color: var(--accent);
+        }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            .header-inner { padding: 14px 20px; }
+            .hero { padding: 60px 20px 40px; }
+            .container { padding: 0 20px 60px; }
+            .form-card { padding: 24px; }
+            .header-stats { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="logo">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    Database of Sin
+                    <span>Roblox</span>
+                </div>
+            </a>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-dot"></div>
+                    <span id="header-total">— записей</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-badge">Public blacklist</div>
+        <h1>Database of Sin</h1>
+        <p class="hero-subtitle">
+            Общий реестр токсичных игроков Roblox. Добавляйте ники — аватарки подтягиваются автоматически из официальной базы.
+        </p>
+    </section>
+
+    <div class="container">
+
+        <!-- Форма -->
+        <div class="form-card">
+            <div class="form-header">
+                <h2 class="form-title">Добавить в реестр</h2>
+                <p class="form-subtitle">Укажите точный никнейм игрока Roblox и причину</p>
+            </div>
+
+            <form id="add-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="input-username">Никнейм</label>
+                        <input type="text" id="input-username" class="form-input"
+                               placeholder="например, SAMURAY_DEV7"
+                               maxlength="30" required autocomplete="off">
+                        <div class="form-hint" id="username-hint">Точный username из Roblox</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="input-reporter">Ваш ник (необязательно)</label>
+                        <input type="text" id="input-reporter" class="form-input"
+                               placeholder="anonymous"
+                               maxlength="30" autocomplete="off">
+                    </div>
+
+                    <div class="form-group full">
+                        <label class="form-label" for="input-reason">Причина</label>
+                        <textarea id="input-reason" class="form-textarea"
+                                  placeholder="Опишите, что сделал игрок: читерил, оскорблял, токсичил..."
+                                  maxlength="300" required></textarea>
+                        <div class="form-hint"><span id="reason-count">0</span> / 300</div>
+                    </div>
+                </div>
+
+                <div class="preview-card" id="preview">
+                    <div class="preview-header">Предпросмотр записи</div>
+                    <div class="preview-content">
+                        <div class="preview-avatar">
+                            <img id="preview-avatar" src="" alt="">
+                        </div>
+                        <div class="preview-info">
+                            <div class="preview-name" id="preview-name">—</div>
+                            <div class="preview-username" id="preview-username">@—</div>
+                            <div class="preview-reason" id="preview-reason">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="submit-btn">
+                        Добавить в реестр
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        Сбросить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Список -->
+        <div class="list-header">
+            <h2 class="list-title">Зафиксированные цели</h2>
+            <div class="list-count" id="list-count">0 записей</div>
+        </div>
+
+        <div id="entries-container">
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <div>Загрузка реестра...</div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p>
+            Данные подтягиваются из официального Roblox API.
+            Проект создан сообществом игроков.
+            <a href="/">На главную</a>
+        </p>
+    </footer>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        const API_BASE = '/api/roblox';
+        let searchTimeout = null;
+        let currentPreview = null;
+
+        // ============================================
+        // INIT
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEntries();
+            setupForm();
+        });
+
+        // ============================================
+        // FORM
+        // ============================================
+
+        function setupForm() {
+            const form = document.getElementById('add-form');
+            const usernameInput = document.getElementById('input-username');
+            const reasonInput = document.getElementById('input-reason');
+
+            // Поиск пользователя при вводе ника
+            usernameInput.addEventListener('input', (e) => {
+                const value = e.target.value.trim();
+
+                if (searchTimeout) clearTimeout(searchTimeout);
+
+                if (value.length < 3) {
+                    hidePreview();
+                    setHint('username-hint', 'Точный username из Roblox', '');
+                    return;
+                }
+
+                setHint('username-hint', 'Поиск...', 'info');
+
+                searchTimeout = setTimeout(() => searchUser(value), 500);
+            });
+
+            // Счётчик символов причины
+            reasonInput.addEventListener('input', (e) => {
+                document.getElementById('reason-count').textContent = e.target.value.length;
+                updatePreview();
+            });
+
+            form.addEventListener('submit', handleSubmit);
+        }
+
+        async function searchUser(username) {
+            try {
+                const res = await fetch(`${API_BASE}/search?username=${encodeURIComponent(username)}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    setHint('username-hint', data.error || 'Пользователь не найден', 'error');
+                    hidePreview();
+                    return;
+                }
+
+                setHint('username-hint', `Найден: ${data.displayName} (ID: ${data.id})`, 'success');
+
+                currentPreview = {
+                    username: data.username,
+                    displayName: data.displayName,
+                    avatarUrl: data.avatarUrl,
+                    robloxId: data.id
+                };
+
+                updatePreview();
+            } catch (err) {
+                setHint('username-hint', 'Ошибка поиска', 'error');
+                hidePreview();
+            }
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('preview');
+            const reason = document.getElementById('input-reason').value.trim();
+
+            if (!currentPreview) {
+                hidePreview();
+                return;
+            }
+
+            document.getElementById('preview-name').textContent = currentPreview.displayName;
+            document.getElementById('preview-username').textContent = '@' + currentPreview.username;
+            document.getElementById('preview-reason').textContent = reason || '—';
+
+            const avatarImg = document.getElementById('preview-avatar');
+            if (currentPreview.avatarUrl) {
+                avatarImg.src = currentPreview.avatarUrl;
+                avatarImg.style.display = 'block';
+            } else {
+                avatarImg.style.display = 'none';
+            }
+
+            preview.classList.add('visible');
+        }
+
+        function hidePreview() {
+            document.getElementById('preview').classList.remove('visible');
+        }
+
+        function setHint(id, text, type) {
+            const hint = document.getElementById(id);
+            hint.textContent = text;
+            hint.className = 'form-hint' + (type ? ' ' + type : '');
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('submit-btn');
+            const username = document.getElementById('input-username').value.trim();
+            const reason = document.getElementById('input-reason').value.trim();
+            const reporter = document.getElementById('input-reporter').value.trim();
+
+            if (!username || !reason) {
+                showToast('Заполните все обязательные поля', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.classList.add('btn-loading');
+
+            try {
+                const res = await fetch(`${API_BASE}/die`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, reason, reporter: reporter || undefined })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Ошибка добавления');
+                }
+
+                showToast(`Запись добавлена: @${data.entry.username}`, 'success');
+                resetForm();
+                loadEntries();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('btn-loading');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('add-form').reset();
+            document.getElementById('reason-count').textContent = '0';
+            setHint('username-hint', 'Точный username из Roblox', '');
+            hidePreview();
+            currentPreview = null;
+        }
+
+        // ============================================
+        // ENTRIES LIST
+        // ============================================
+
+        async function loadEntries() {
+            try {
+                const res = await fetch(`${API_BASE}/die`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error('Failed to load');
+
+                document.getElementById('header-total').textContent = `${data.total} записей`;
+                document.getElementById('list-count').textContent = `${data.total} записей`;
+
+                renderEntries(data.entries);
+            } catch (err) {
+                document.getElementById('entries-container').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        </div>
+                        <div class="empty-state-title">Ошибка загрузки</div>
+                        <div class="empty-state-desc">${err.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderEntries(entries) {
+            const container = document.getElementById('entries-container');
+
+            if (!entries || entries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="empty-state-title">Реестр пуст</div>
+                        <div class="empty-state-desc">Станьте первым, кто добавит запись</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="entries-grid">
+                    ${entries.map((entry, i) => renderEntry(entry, i)).join('')}
+                </div>
+            `;
+        }
+
+        function renderEntry(entry, index) {
+            const date = new Date(entry.addedAt);
+            const timeAgo = getTimeAgo(date);
+            const initial = (entry.displayName || entry.username || '?')[0].toUpperCase();
+            const profileUrl = `https://www.roblox.com/users/${entry.robloxId}/profile`;
+
+            const avatarHTML = entry.avatarUrl
+                ? `<img src="${entry.avatarUrl}" alt="${entry.username}" loading="lazy">`
+                : `<div class="entry-avatar-placeholder">${initial}</div>`;
+
+            return `
+                <article class="entry-card" style="animation-delay: ${index * 0.05}s">
+                    <div class="entry-top">
+                        <div class="entry-avatar">
+                            ${avatarHTML}
+                        </div>
+                        <div class="entry-main">
+                            <div class="entry-name-row">
+                                <div class="entry-name">${escapeHtml(entry.displayName || entry.username)}</div>
+                            </div>
+                            <div class="entry-username">@${escapeHtml(entry.username)}</div>
+                            <div class="entry-meta">
+                                <span>ID: ${entry.robloxId}</span>
+                                <span class="entry-meta-dot"></span>
+                                <span>${timeAgo}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="entry-reason">${escapeHtml(entry.reason)}</div>
+                    <div class="entry-footer">
+                        <div class="entry-reporter">
+                            <span>Добавил:</span>
+                            <strong>${escapeHtml(entry.reporter || 'anonymous')}</strong>
+                        </div>
+                        <a href="${profileUrl}" target="_blank" rel="noopener" class="entry-link">
+                            Профиль
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M7 17L17 7M17 7H7M17 7V17"/>
+                            </svg>
+                        </a>
+                    </div>
+                </article>
+            `;
+        }
+
+        // ============================================
+        // UTILS
+        // ============================================
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+            if (seconds < 60) return 'только что';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)} мин назад`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)} ч назад`;
+            if (seconds < 2592000) return `${Math.floor(seconds / 86400)} дн назад`;
+
+            return date.toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
