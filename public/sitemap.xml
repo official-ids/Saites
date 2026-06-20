@@ -6,6 +6,12 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+    <url>
+    <loc>https://oris-flax.vercel.app/qr</loc>
+    <lastmod>2026-06-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
   <url>
     <loc>https://oris-flax.vercel.app/658234</loc>
     <lastmod>2026-06-18</lastmod>
