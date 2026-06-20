@@ -1,0 +1,70 @@
+# ============================================
+# ROBOTS.TXT
+# Универсальный файл для всех поисковых систем
+# ============================================
+
+# Правила для всех поисковых ботов (Google, Bing, Yahoo и др.)
+User-agent: *
+Allow: /
+
+# Запрет индексации API
+Disallow: /api/
+Disallow: /api/*
+
+# Запрет индексации JavaScript файлов
+Disallow: /*.js
+Disallow: /*.js?
+
+# Запрет индексации JSON файлов
+Disallow: /*.json
+Disallow: /*.json?
+
+# Запрет индексации CSS файлов
+Disallow: /*.css
+Disallow: /*.css?
+
+# Запрет индексации изображений
+Disallow: /*.png
+Disallow: /*.jpg
+Disallow: /*.jpeg
+Disallow: /*.gif
+Disallow: /*.svg
+Disallow: /*.ico
+Disallow: /*.webp
+Disallow: /*.bmp
+Disallow: /*.tiff
+
+# Запрет индексации шрифтов
+Disallow: /*.woff
+Disallow: /*.woff2
+Disallow: /*.ttf
+Disallow: /*.eot
+Disallow: /*.otf
+
+# Запрет индексации служебных директорий
+Disallow: /_next/
+Disallow: /_vercel/
+Disallow: /node_modules/
+
+# Правила специально для Yandex
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /api/*
+Disallow: /*.js
+Disallow: /*.json
+Disallow: /*.css
+Disallow: /*.png
+Disallow: /*.jpg
+Disallow: /*.jpeg
+Disallow: /*.gif
+Disallow: /*.svg
+Disallow: /*.ico
+Disallow: /*.webp
+Disallow: /*.woff
+Disallow: /*.woff2
+Clean-param: utm_source&utm_medium&utm_campaign
+Clean-param: fbclid&gclid
+
+# Карта сайта
+Sitemap: https://oris-flax.vercel.app/sitemap.xml
