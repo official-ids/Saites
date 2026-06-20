@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор QR-кодов — Oris</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%);
+            color: #1d1d1f;
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-top: 20px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            line-height: 1.08349;
+            font-weight: 600;
+            letter-spacing: 0.002em;
+            margin-bottom: 12px;
+            color: #1d1d1f;
+        }
+
+        .header .category {
+            font-size: 14px;
+            line-height: 1.28581;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            color: #86868b;
+            text-transform: uppercase;
+        }
+
+        .header .description {
+            font-size: 21px;
+            line-height: 1.381;
+            font-weight: 400;
+            letter-spacing: 0.011em;
+            color: #86868b;
+            max-width: 600px;
+            margin: 20px auto 0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .header .description {
+                font-size: 17px;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 18px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            line-height: 1.33337;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            color: #86868b;
+            margin-bottom: 8px;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 17px;
+            line-height: 1.29412;
+            font-family: inherit;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            color: #1d1d1f;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #0071e3;
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+        }
+
+        .input-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            font-size: 14px;
+            line-height: 1.28581;
+            font-weight: 400;
+            border-radius: 8px;
+            background: rgba(118, 118, 128, 0.12);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #1d1d1f;
+        }
+
+        .tab:hover {
+            background: rgba(118, 118, 128, 0.2);
+        }
+
+        .tab.active {
+            background: #0071e3;
+            color: white;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .color-inputs {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .color-picker {
+            flex: 1;
+        }
+
+        .color-picker input[type="color"] {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            padding: 4px;
+        }
+
+        .qr-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            text-align: center;
+        }
+
+        .qr-placeholder {
+            color: #86868b;
+            font-size: 17px;
+            line-height: 1.29412;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        #qrcode img,
+        #qrcode canvas {
+            display: block;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 14px;
+            line-height: 1.28581;
+            font-weight: 400;
+            border-radius: 980px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #0071e3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0077ed;
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: rgba(118, 118, 128, 0.12);
+            color: #1d1d1f;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(118, 118, 128, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .features {
+            margin-top: 60px;
+        }
+
+        .features h2 {
+            font-size: 32px;
+            line-height: 1.125;
+            font-weight: 600;
+            letter-spacing: 0.004em;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #1d1d1f;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .feature h3 {
+            font-size: 19px;
+            line-height: 1.21053;
+            font-weight: 600;
+            letter-spacing: 0.009em;
+            margin-bottom: 8px;
+            color: #1d1d1f;
+        }
+
+        .feature p {
+            font-size: 14px;
+            line-height: 1.28581;
+            color: #86868b;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Генератор QR-кодов</h1>
+            <div class="category">Инструменты</div>
+            <p class="description">Создавайте QR-коды за секунды. Без регистрации, без серверов. Прямо в вашем браузере.</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <div class="tabs">
+                    <button class="tab active" data-type="url">URL</button>
+                    <button class="tab" data-type="text">Текст</button>
+                    <button class="tab" data-type="email">Email</button>
+                    <button class="tab" data-type="phone">Телефон</button>
+                </div>
+
+                <div id="url-input" class="input-content">
+                    <div class="input-group">
+                        <label>Веб-адрес</label>
+                        <input type="url" id="urlValue" placeholder="https://example.com" value="">
+                    </div>
+                </div>
+
+                <div id="text-input" class="input-content hidden">
+                    <div class="input-group">
+                        <label>Текст</label>
+                        <textarea id="textValue" placeholder="Введите текст..."></textarea>
+                    </div>
+                </div>
+
+                <div id="email-input" class="input-content hidden">
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" id="emailValue" placeholder="example@mail.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Тема</label>
+                        <input type="text" id="emailSubject" placeholder="Тема письма">
+                    </div>
+                    <div class="input-group">
+                        <label>Текст</label>
+                        <textarea id="emailBody" placeholder="Текст письма"></textarea>
+                    </div>
+                </div>
+
+                <div id="phone-input" class="input-content hidden">
+                    <div class="input-group">
+                        <label>Номер телефона</label>
+                        <input type="tel" id="phoneValue" placeholder="+7 (999) 123-45-67">
+                    </div>
+                </div>
+
+                <div class="options-grid">
+                    <div class="input-group">
+                        <label>Размер</label>
+                        <select id="qrSize">
+                            <option value="200">200 x 200</option>
+                            <option value="300" selected>300 x 300</option>
+                            <option value="400">400 x 400</option>
+                            <option value="500">500 x 500</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Отступы</label>
+                        <select id="qrMargin">
+                            <option value="2" selected>Стандарт</option>
+                            <option value="4">Большие</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Цвета</label>
+                    <div class="color-inputs">
+                        <div class="color-picker">
+                            <input type="color" id="colorDark" value="#000000">
+                        </div>
+                        <div class="color-picker">
+                            <input type="color" id="colorLight" value="#ffffff">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" id="generateBtn">Сгенерировать</button>
+                    <button class="btn btn-secondary" id="downloadPng">Скачать PNG</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="qr-preview">
+                    <div id="qrcode"></div>
+                    <div id="placeholder" class="qr-placeholder">
+                        QR-код появится здесь
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="features">
+            <h2>Возможности</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <h3>Мгновенная генерация</h3>
+                    <p>Создание QR-кода происходит прямо в браузере без отправки данных на сервер</p>
+                </div>
+                <div class="feature">
+                    <h3>Несколько форматов</h3>
+                    <p>Поддержка URL, текста, email и телефонных номеров для любых задач</p>
+                </div>
+                <div class="feature">
+                    <h3>Настройка дизайна</h3>
+                    <p>Изменяйте размер, цвета и отступы под ваши потребности</p>
+                </div>
+                <div class="feature">
+                    <h3>Экспорт в PNG</h3>
+                    <p>Скачивайте в удобном формате для печати или веб-использования</p>
+                </div>
+                <div class="feature">
+                    <h3>Приватность</h3>
+                    <p>Ваши данные никогда не покидают устройство. Полная безопасность</p>
+                </div>
+                <div class="feature">
+                    <h3>Адаптивность</h3>
+                    <p>Работает на всех устройствах: iPhone, iPad, Mac и Windows</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        let currentQR = null;
+        let currentType = 'url';
+
+        const tabs = document.querySelectorAll('.tab');
+        const inputContents = document.querySelectorAll('.input-content');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadPngBtn = document.getElementById('downloadPng');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const placeholder = document.getElementById('placeholder');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                inputContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`${tab.dataset.type}-input`).classList.remove('hidden');
+                
+                currentType = tab.dataset.type;
+                generateQR();
+            });
+        });
+
+        function getContent() {
+            switch(currentType) {
+                case 'url':
+                    return document.getElementById('urlValue').value;
+                case 'text':
+                    return document.getElementById('textValue').value;
+                case 'email':
+                    const email = document.getElementById('emailValue').value;
+                    const subject = document.getElementById('emailSubject').value;
+                    const body = document.getElementById('emailBody').value;
+                    if (!email) return '';
+                    return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                case 'phone':
+                    const phone = document.getElementById('phoneValue').value;
+                    return phone ? `tel:${phone.replace(/\s/g, '')}` : '';
+                default:
+                    return '';
+            }
+        }
+
+        function generateQR() {
+            const content = getContent();
+            const size = parseInt(document.getElementById('qrSize').value);
+            const colorDark = document.getElementById('colorDark').value;
+            const colorLight = document.getElementById('colorLight').value;
+
+            if (!content) {
+                qrcodeDiv.innerHTML = '';
+                placeholder.style.display = 'block';
+                currentQR = null;
+                return;
+            }
+
+            qrcodeDiv.innerHTML = '';
+            placeholder.style.display = 'none';
+            
+            currentQR = new QRCode(qrcodeDiv, {
+                text: content,
+                width: size,
+                height: size,
+                colorDark: colorDark,
+                colorLight: colorLight,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function downloadPNG() {
+            if (!currentQR) return;
+            
+            const img = qrcodeDiv.querySelector('img');
+            if (!img) return;
+            
+            const link = document.createElement('a');
+            link.download = `qrcode-${Date.now()}.png`;
+            link.href = img.src;
+            link.click();
+        }
+
+        generateBtn.addEventListener('click', generateQR);
+        downloadPngBtn.addEventListener('click', downloadPNG);
+
+        document.querySelectorAll('input, textarea, select').forEach(input => {
+            input.addEventListener('input', () => {
+                setTimeout(generateQR, 300);
+            });
+        });
+
+        generateQR();
+    </script>
+</body>
+</html>
