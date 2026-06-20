@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Генератор CSS-градиентов — линейные, радиальные и конические градиенты с экспортом кода">
+<meta name="theme-color" content="#000000">
+<title>Gradient Studio · Oris Design</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --purple: #BF5AF2;
+    --pink: #FF375F;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --header-h: 56px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+
+.header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.logo svg {
+    width: 22px;
+    height: 22px;
+    color: var(--accent);
+}
+
+.logo-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.logo-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: linear-gradient(135deg, var(--purple) 0%, var(--pink) 100%);
+    color: white;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    padding: 8px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: rgba(142, 142, 147, 0.12);
+    color: var(--text-primary);
+}
+
+.nav-link.active {
+    background: var(--accent);
+    color: white;
+}
+
+/* Layout */
+.layout {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+}
+
+/* Preview Card */
+.preview-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.preview-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+    background: #3A3A3C;
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+}
+
+.icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.preview-area {
+    flex: 1;
+    min-height: 400px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.preview-area::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.03) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.03) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.03) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.preview-area.show-grid::after {
+    opacity: 1;
+}
+
+.preview-label {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: var(--mono-stack);
+    z-index: 5;
+}
+
+/* Code Output */
+.code-output {
+    background: var(--bg-subtle);
+    border-top: 1px solid var(--border);
+    padding: 16px 20px;
+    font-family: var(--mono-stack);
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    position: relative;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.code-output .keyword {
+    color: var(--pink);
+}
+
+.code-output .value {
+    color: var(--success);
+}
+
+.code-output .unit {
+    color: var(--warning);
+}
+
+.copy-code-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.copy-code-btn:hover {
+    background: #3A3A3C;
+    color: var(--text-primary);
+}
+
+.copy-code-btn.copied {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.copy-code-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Controls Panel */
+.controls-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: fit-content;
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    z-index: 2;
+}
+
+.control-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.control-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+}
+
+/* Type Selector */
+.type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    background: var(--bg-subtle);
+    padding: 4px;
+    border-radius: var(--radius-md);
+}
+
+.type-btn {
+    padding: 10px 8px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.type-btn:hover {
+    color: var(--text-primary);
+}
+
+.type-btn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.type-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Angle Control */
+.angle-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.angle-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--bg-elevated);
+    border-radius: 2px;
+    outline: none;
+}
+
+.angle-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(10, 132, 255, 0.4);
+    transition: transform 0.15s;
+}
+
+.angle-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.angle-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.angle-value {
+    font-family: var(--mono-stack);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    min-width: 42px;
+    text-align: right;
+}
+
+.angle-wheel {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.angle-wheel::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 50%;
+    background: var(--accent);
+    transform-origin: 50% 100%;
+    transform: translate(-50%, -100%) rotate(var(--angle, 0deg));
+    border-radius: 1px;
+    transition: transform 0.1s;
+}
+
+.angle-wheel::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Color Stops */
+.color-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.color-stop {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-subtle);
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.color-picker-wrap {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--border-strong);
+}
+
+.color-picker-wrap input[type="color"] {
+    position: absolute;
+    inset: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    border: none;
+    cursor: pointer;
+    background: transparent;
+}
+
+.color-hex {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--mono-stack);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    min-width: 0;
+}
+
+.color-hex:focus {
+    outline: none;
+}
+
+.color-position {
+    width: 52px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--mono-stack);
+    font-size: 0.78rem;
+    text-align: right;
+}
+
+.color-position:focus {
+    outline: none;
+    color: var(--text-primary);
+}
+
+.remove-stop {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    transition: all 0.15s;
+}
+
+.remove-stop:hover {
+    color: var(--danger);
+    background: rgba(255, 69, 58, 0.1);
+}
+
+.remove-stop svg {
+    width: 14px;
+    height: 14px;
+}
+
+.add-stop-btn {
+    background: transparent;
+    border: 1px dashed var(--border-strong);
+    color: var(--text-secondary);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.add-stop-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(10, 132, 255, 0.05);
+}
+
+.add-stop-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Action Buttons */
+.action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-btn:hover {
+    background: #3A3A3C;
+    border-color: var(--border-strong);
+}
+
+.action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.action-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.action-btn.primary:hover {
+    background: var(--accent-hover);
+}
+
+/* Presets Section */
+.presets-section {
+    margin-top: 24px;
+    grid-column: 1 / -1;
+}
+
+.section-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.section-title .count {
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+
+.presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.preset-card {
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.preset-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+}
+
+.preset-card .preset-name {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.preset-card:hover .preset-name {
+    opacity: 1;
+}
+
+.saved-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    background: var(--bg-card);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 300;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--success);
+}
+
+.toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.toast svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+        padding: 20px 16px 40px;
+    }
+    
+    .controls-panel {
+        position: static;
+    }
+    
+    .preview-area {
+        min-height: 300px;
+    }
+    
+    .presets-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="logo-text">Gradient Studio</span>
+            <span class="logo-badge">Design</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/design" class="nav-link active">Design</a>
+        </nav>
+    </div>
+</header>
+
+<main class="layout">
+
+    <!-- Preview -->
+    <section class="preview-card">
+        <div class="preview-header">
+            <span class="preview-title">Превью</span>
+            <div class="preview-actions">
+                <button class="icon-btn" id="gridToggle" title="Показать сетку">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                </button>
+                <button class="icon-btn" id="fullscreenBtn" title="Полный экран">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="preview-area" id="previewArea">
+            <span class="preview-label" id="previewLabel">linear-gradient</span>
+        </div>
+        <div class="code-output" id="codeOutput">
+            <button class="copy-code-btn" id="copyCodeBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <span>Copy</span>
+            </button>
+            <code id="codeText"></code>
+        </div>
+    </section>
+
+    <!-- Controls -->
+    <aside class="controls-panel">
+
+        <div class="control-section">
+            <div class="control-label">Тип градиента</div>
+            <div class="type-selector">
+                <button class="type-btn active" data-type="linear">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17L17 7"/></svg>
+                    Линейный
+                </button>
+                <button class="type-btn" data-type="radial">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke-width="2"/></svg>
+                    Радиальный
+                </button>
+                <button class="type-btn" data-type="conic">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg>
+                    Конический
+                </button>
+            </div>
+        </div>
+
+        <div class="control-section" id="angleSection">
+            <div class="control-label">Угол</div>
+            <div class="angle-control">
+                <div class="angle-wheel" id="angleWheel"></div>
+                <input type="range" class="angle-slider" id="angleSlider" min="0" max="360" value="135">
+                <span class="angle-value" id="angleValue">135°</span>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <div class="control-label">Цветовые точки</div>
+            <div class="color-stops" id="colorStops"></div>
+            <button class="add-stop-btn" id="addStopBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Добавить цвет
+            </button>
+        </div>
+
+        <div class="control-section">
+            <div class="action-row">
+                <button class="action-btn" id="randomBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Случайный
+                </button>
+                <button class="action-btn primary" id="saveBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                    Сохранить
+                </button>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- Presets -->
+    <section class="presets-section">
+        <h2 class="section-title">
+            Популярные градиенты
+        </h2>
+        <div class="presets-grid" id="presetsGrid"></div>
+    </section>
+
+    <!-- Saved -->
+    <section class="presets-section">
+        <h2 class="section-title">
+            Сохранённые
+            <span class="count" id="savedCount">0</span>
+        </h2>
+        <div class="presets-grid" id="savedGrid"></div>
+    </section>
+
+</main>
+
+<div class="toast" id="toast">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <span id="toastText">Скопировано</span>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // ============================================
+    // State
+    // ============================================
+    const State = {
+        type: 'linear',
+        angle: 135,
+        stops: [
+            { color: '#BF5AF2', position: 0 },
+            { color: '#FF375F', position: 100 }
+        ],
+        saved: JSON.parse(localStorage.getItem('oris_gradients') || '[]')
+    };
+
+    // ============================================
+    // Presets
+    // ============================================
+    const PRESETS = [
+        { name: 'Sunset', type: 'linear', angle: 135, stops: [{ color: '#FF6B6B', position: 0 }, { color: '#FFA500', position: 50 }, { color: '#FFD93D', position: 100 }] },
+        { name: 'Ocean', type: 'linear', angle: 135, stops: [{ color: '#0077B6', position: 0 }, { color: '#00B4D8', position: 50 }, { color: '#90E0EF', position: 100 }] },
+        { name: 'Aurora', type: 'linear', angle: 45, stops: [{ color: '#00C9FF', position: 0 }, { color: '#92FE9D', position: 100 }] },
+        { name: 'Cosmic', type: 'linear', angle: 135, stops: [{ color: '#BF5AF2', position: 0 }, { color: '#FF375F', position: 100 }] },
+        { name: 'Forest', type: 'linear', angle: 135, stops: [{ color: '#134E5E', position: 0 }, { color: '#71B280', position: 100 }] },
+        { name: 'Lavender', type: 'linear', angle: 135, stops: [{ color: '#A18CD1', position: 0 }, { color: '#FBC2EB', position: 100 }] },
+        { name: 'Peach', type: 'linear', angle: 135, stops: [{ color: '#FAD0C4', position: 0 }, { color: '#FFD1FF', position: 100 }] },
+        { name: 'Midnight', type: 'linear', angle: 135, stops: [{ color: '#232526', position: 0 }, { color: '#414345', position: 100 }] },
+        { name: 'Fire', type: 'linear', angle: 135, stops: [{ color: '#FF416C', position: 0 }, { color: '#FF4B2B', position: 100 }] },
+        { name: 'Mint', type: 'linear', angle: 135, stops: [{ color: '#00B09B', position: 0 }, { color: '#96C93D', position: 100 }] },
+        { name: 'Royal', type: 'radial', angle: 0, stops: [{ color: '#5B247A', position: 0 }, { color: '#1BCEDF', position: 100 }] },
+        { name: 'Neon', type: 'conic', angle: 0, stops: [{ color: '#FF0080', position: 0 }, { color: '#7928CA', position: 50 }, { color: '#FF0080', position: 100 }] }
+    ];
+
+    // ============================================
+    // DOM
+    // ============================================
+    const $ = id => document.getElementById(id);
+    const previewArea = $('previewArea');
+    const previewLabel = $('previewLabel');
+    const codeText = $('codeText');
+    const colorStopsEl = $('colorStops');
+    const angleSlider = $('angleSlider');
+    const angleValue = $('angleValue');
+    const angleWheel = $('angleWheel');
+    const angleSection = $('angleSection');
+
+    // ============================================
+    // Gradient generation
+    // ============================================
+    function generateCSS() {
+        const stopsStr = State.stops
+            .slice()
+            .sort((a, b) => a.position - b.position)
+            .map(s => `${s.color} ${s.position}%`)
+            .join(', ');
+
+        if (State.type === 'linear') {
+            return `linear-gradient(${State.angle}deg, ${stopsStr})`;
+        } else if (State.type === 'radial') {
+            return `radial-gradient(circle at center, ${stopsStr})`;
+        } else {
+            return `conic-gradient(from ${State.angle}deg at 50% 50%, ${stopsStr})`;
+        }
+    }
+
+    function updatePreview() {
+        const css = generateCSS();
+        previewArea.style.background = css;
+        previewLabel.textContent = State.type + '-gradient';
+
+        // Syntax-highlighted code
+        const stopsStr = State.stops
+            .slice()
+            .sort((a, b) => a.position - b.position)
+            .map(s => `<span class="value">${s.color}</span> <span class="unit">${s.position}%</span>`)
+            .join(', ');
+
+        let code = '';
+        if (State.type === 'linear') {
+            code = `<span class="keyword">background</span>: <span class="value">linear-gradient</span>(<span class="unit">${State.angle}deg</span>, ${stopsStr});`;
+        } else if (State.type === 'radial') {
+            code = `<span class="keyword">background</span>: <span class="value">radial-gradient</span>(circle at center, ${stopsStr});`;
+        } else {
+            code = `<span class="keyword">background</span>: <span class="value">conic-gradient</span>(from <span class="unit">${State.angle}deg</span> at 50% 50%, ${stopsStr});`;
+        }
+        codeText.innerHTML = code;
+
+        // Update angle wheel
+        angleWheel.style.setProperty('--angle', State.angle + 'deg');
+    }
+
+    // ============================================
+    // Color stops UI
+    // ============================================
+    function renderColorStops() {
+        colorStopsEl.innerHTML = '';
+        State.stops.forEach((stop, idx) => {
+            const row = document.createElement('div');
+            row.className = 'color-stop';
+            row.innerHTML = `
+                <div class="color-picker-wrap">
+                    <input type="color" value="${stop.color}" data-idx="${idx}" data-field="color">
+                </div>
+                <input type="text" class="color-hex" value="${stop.color.toUpperCase()}" data-idx="${idx}" data-field="hex" maxlength="7" spellcheck="false">
+                <input type="number" class="color-position" value="${stop.position}" data-idx="${idx}" data-field="position" min="0" max="100" step="1">
+                <span style="color: var(--text-tertiary); font-size: 0.75rem;">%</span>
+                ${State.stops.length > 2 ? `
+                    <button class="remove-stop" data-idx="${idx}" title="Удалить">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                ` : ''}
+            `;
+            colorStopsEl.appendChild(row);
+        });
+
+        // Bind events
+        colorStopsEl.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', handleStopChange);
+        });
+        colorStopsEl.querySelectorAll('.remove-stop').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                State.stops.splice(idx, 1);
+                renderColorStops();
+                updatePreview();
+            });
+        });
+    }
+
+    function handleStopChange(e) {
+        const idx = parseInt(e.target.dataset.idx);
+        const field = e.target.dataset.field;
+        const value = e.target.value;
+
+        if (field === 'color') {
+            State.stops[idx].color = value;
+            // Sync hex input
+            const hexInput = colorStopsEl.querySelector(`input[data-idx="${idx}"][data-field="hex"]`);
+            if (hexInput) hexInput.value = value.toUpperCase();
+        } else if (field === 'hex') {
+            if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+                State.stops[idx].color = value;
+                const colorInput = colorStopsEl.querySelector(`input[data-idx="${idx}"][data-field="color"]`);
+                if (colorInput) colorInput.value = value;
+            }
+        } else if (field === 'position') {
+            const pos = Math.max(0, Math.min(100, parseInt(value) || 0));
+            State.stops[idx].position = pos;
+        }
+        updatePreview();
+    }
+
+    // ============================================
+    // Type selector
+    // ============================================
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            State.type = btn.dataset.type;
+            angleSection.style.display = State.type === 'radial' ? 'none' : 'flex';
+            updatePreview();
+        });
+    });
+
+    // ============================================
+    // Angle controls
+    // ============================================
+    angleSlider.addEventListener('input', () => {
+        State.angle = parseInt(angleSlider.value);
+        angleValue.textContent = State.angle + '°';
+        updatePreview();
+    });
+
+    // Angle wheel drag
+    let wheelDragging = false;
+    function updateAngleFromMouse(e) {
+        const rect = angleWheel.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = e.clientX - cx;
+        const dy = e.clientY - cy;
+        let angle = Math.round(Math.atan2(dy, dx) * 180 / Math.PI + 90);
+        if (angle < 0) angle += 360;
+        State.angle = angle;
+        angleSlider.value = angle;
+        angleValue.textContent = angle + '°';
+        updatePreview();
+    }
+    angleWheel.addEventListener('mousedown', (e) => { wheelDragging = true; updateAngleFromMouse(e); });
+    document.addEventListener('mousemove', (e) => { if (wheelDragging) updateAngleFromMouse(e); });
+    document.addEventListener('mouseup', () => { wheelDragging = false; });
+
+    // ============================================
+    // Add stop
+    // ============================================
+    $('addStopBtn').addEventListener('click', () => {
+        if (State.stops.length >= 8) {
+            showToast('Максимум 8 цветов', 'error');
+            return;
+        }
+        // Insert between two middle stops
+        const sorted = State.stops.slice().sort((a, b) => a.position - b.position);
+        const midIdx = Math.floor(sorted.length / 2);
+        const pos1 = sorted[midIdx - 1]?.position ?? 0;
+        const pos2 = sorted[midIdx]?.position ?? 100;
+        const newPos = Math.round((pos1 + pos2) / 2);
+        const newColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        State.stops.push({ color: newColor, position: newPos });
+        renderColorStops();
+        updatePreview();
+    });
+
+    // ============================================
+    // Random
+    // ============================================
+    $('randomBtn').addEventListener('click', () => {
+        const count = 2 + Math.floor(Math.random() * 2);
+        State.stops = [];
+        for (let i = 0; i < count; i++) {
+            State.stops.push({
+                color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+                position: Math.round(i * 100 / (count - 1))
+            });
+        }
+        State.angle = Math.floor(Math.random() * 360);
+        angleSlider.value = State.angle;
+        angleValue.textContent = State.angle + '°';
+        renderColorStops();
+        updatePreview();
+    });
+
+    // ============================================
+    // Save
+    // ============================================
+    $('saveBtn').addEventListener('click', () => {
+        const name = prompt('Название градиента:', 'My Gradient');
+        if (!name) return;
+        State.saved.unshift({
+            name: name.trim(),
+            type: State.type,
+            angle: State.angle,
+            stops: JSON.parse(JSON.stringify(State.stops)),
+            createdAt: Date.now()
+        });
+        if (State.saved.length > 20) State.saved = State.saved.slice(0, 20);
+        localStorage.setItem('oris_gradients', JSON.stringify(State.saved));
+        renderSaved();
+        showToast('Градиент сохранён');
+    });
+
+    // ============================================
+    // Presets
+    // ============================================
+    function renderPresets() {
+        const grid = $('presetsGrid');
+        grid.innerHTML = PRESETS.map((p, i) => {
+            const css = buildGradientCSS(p);
+            return `<div class="preset-card" data-preset="${i}" style="background: ${css}">
+                <div class="preset-name">${p.name}</div>
+            </div>`;
+        }).join('');
+        grid.querySelectorAll('.preset-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const p = PRESETS[parseInt(card.dataset.preset)];
+                State.type = p.type;
+                State.angle = p.angle;
+                State.stops = JSON.parse(JSON.stringify(p.stops));
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === p.type));
+                angleSlider.value = p.angle;
+                angleValue.textContent = p.angle + '°';
+                angleSection.style.display = p.type === 'radial' ? 'none' : 'flex';
+                renderColorStops();
+                updatePreview();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    }
+
+    function renderSaved() {
+        const grid = $('savedGrid');
+        $('savedCount').textContent = State.saved.length;
+        if (State.saved.length === 0) {
+            grid.innerHTML = '<div class="saved-empty" style="grid-column: 1/-1;">Нажмите «Сохранить», чтобы добавить градиент в избранное</div>';
+            return;
+        }
+        grid.innerHTML = State.saved.map((p, i) => {
+            const css = buildGradientCSS(p);
+            return `<div class="preset-card" data-saved="${i}" style="background: ${css}">
+                <div class="preset-name">${p.name}</div>
+            </div>`;
+        }).join('');
+        grid.querySelectorAll('.preset-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                    // Delete on shift-click
+                    if (confirm('Удалить этот градиент?')) {
+                        State.saved.splice(parseInt(card.dataset.saved), 1);
+                        localStorage.setItem('oris_gradients', JSON.stringify(State.saved));
+                        renderSaved();
+                    }
+                    return;
+                }
+                const p = State.saved[parseInt(card.dataset.saved)];
+                State.type = p.type;
+                State.angle = p.angle;
+                State.stops = JSON.parse(JSON.stringify(p.stops));
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === p.type));
+                angleSlider.value = p.angle;
+                angleValue.textContent = p.angle + '°';
+                angleSection.style.display = p.type === 'radial' ? 'none' : 'flex';
+                renderColorStops();
+                updatePreview();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    }
+
+    function buildGradientCSS(p) {
+        const stopsStr = p.stops.slice().sort((a, b) => a.position - b.position).map(s => `${s.color} ${s.position}%`).join(', ');
+        if (p.type === 'linear') return `linear-gradient(${p.angle}deg, ${stopsStr})`;
+        if (p.type === 'radial') return `radial-gradient(circle at center, ${stopsStr})`;
+        return `conic-gradient(from ${p.angle}deg at 50% 50%, ${stopsStr})`;
+    }
+
+    // ============================================
+    // Copy
+    // ============================================
+    $('copyCodeBtn').addEventListener('click', async () => {
+        const plainCSS = generateCSS();
+        const fullCode = `background: ${plainCSS};`;
+        try {
+            await navigator.clipboard.writeText(fullCode);
+            const btn = $('copyCodeBtn');
+            btn.classList.add('copied');
+            btn.querySelector('span').textContent = 'Copied';
+            showToast('CSS скопирован в буфер');
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.querySelector('span').textContent = 'Copy';
+            }, 2000);
+        } catch (err) {
+            showToast('Ошибка копирования', 'error');
+        }
+    });
+
+    // Grid toggle
+    $('gridToggle').addEventListener('click', (e) => {
+        previewArea.classList.toggle('show-grid');
+        e.currentTarget.classList.toggle('active');
+    });
+
+    // Fullscreen
+    $('fullscreenBtn').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            previewArea.requestFullscreen?.();
+        } else {
+            document.exitFullscreen?.();
+        }
+    });
+
+    // ============================================
+    // Toast
+    // ============================================
+    function showToast(text, type = 'success') {
+        const t = $('toast');
+        $('toastText').textContent = text;
+        t.style.color = type === 'error' ? 'var(--danger)' : 'var(--success)';
+        t.classList.add('visible');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove('visible'), 2500);
+    }
+
+    // ============================================
+    // Init
+    // ============================================
+    renderColorStops();
+    renderPresets();
+    renderSaved();
+    updatePreview();
+
+})();
+</script>
+
+</body>
+</html>
+
