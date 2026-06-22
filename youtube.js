@@ -6,6 +6,7 @@ const router = express.Router();
 
 const CONFIG = {
     COBALT_API: 'https://api.cobalt.tools',
+    YOUTUBE_OEMBED: 'https://www.youtube.com/oembed',
     RATE_LIMIT_WINDOW: 60 * 1000,
     RATE_LIMIT_MAX: 30,
     CACHE_TTL: 5 * 60 * 1000
@@ -35,6 +36,27 @@ function extractVideoId(url) {
     if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
     
     return null;
+}
+
+// Получение метаданных через YouTube oEmbed
+async function getVideoMetadata(videoId) {
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+    const oembedUrl = `${CONFIG.YOUTUBE_OEMBED}?url=${encodeURIComponent(url)}&format=json`;
+    
+    const response = await fetch(oembedUrl);
+    
+    if (!response.ok) {
+        throw new Error('Failed to get video metadata');
+    }
+    
+    const data = await response.json();
+    
+    return {
+        videoId,
+        title: data.title || 'Unknown',
+        author: data.author_name || 'Unknown',
+        thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`
+    };
 }
 
 // Получение ссылки на скачивание через Cobalt API
@@ -118,6 +140,9 @@ router.get('/info/:videoId', async (req, res) => {
             return res.status(400).json({ error: 'Invalid video ID' });
         }
         
+        // Получаем метаданные видео
+        const metadata = await getVideoMetadata(videoId);
+        
         // Получаем ссылки для разных форматов
         const formats = [
             { label: 'MP4 1080p', quality: '1080', type: 'video' },
@@ -146,7 +171,10 @@ router.get('/info/:videoId', async (req, res) => {
         }
         
         res.json({
-            videoId,
+            videoId: metadata.videoId,
+            title: metadata.title,
+            author: metadata.author,
+            thumbnail: metadata.thumbnail,
             formats: downloadLinks
         });
         
