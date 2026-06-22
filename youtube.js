@@ -212,34 +212,37 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
     
     const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
     
+    // Правильный body для Cobalt API v10+
     const requestBody = {
         url: youtubeUrl,
-        downloadMode: format === 'mp3' || format === 'm4a' || format === 'ogg' ? 'audio' : 'auto',
+        downloadMode: (format === 'mp3' || format === 'ogg' || format === 'wav' || format === 'opus') ? 'audio' : 'auto',
         filenameStyle: 'pretty',
-        youtubeVideoQuality: quality
+        videoQuality: quality, // Правильное имя параметра!
+        youtubeVideoCodec: 'h264' // Для совместимости с mp4
     };
     
-    if (format === 'mp3' || format === 'm4a' || format === 'ogg') {
+    // Для аудио — audioFormat + audioBitrate
+    if (format === 'mp3' || format === 'ogg' || format === 'wav' || format === 'opus') {
         requestBody.audioFormat = format;
-        if (quality && CONFIG.AUDIO_QUALITIES.includes(quality)) {
-            requestBody.audioBitrate = quality;
-        }
-    } else {
-        requestBody.videoQuality = quality;
+        requestBody.audioBitrate = quality; // 320, 256, 128, 96, 64
     }
     
     const headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (compatible; YouTubeDownloader/1.0)'
+        'Content-Type': 'application/json'
     };
     
     if (CONFIG.COBALT_API_KEY) {
         headers['Authorization'] = `Api-Key ${CONFIG.COBALT_API_KEY}`;
     }
     
+    // Endpoint теперь POST / (корень), а не /api/json
+    const apiUrl = CONFIG.COBALT_API.endsWith('/') 
+        ? CONFIG.COBALT_API 
+        : CONFIG.COBALT_API + '/';
+    
     const response = await fetchWithRetry(
-        CONFIG.COBALT_API,
+        apiUrl,
         {
             method: 'POST',
             headers,
@@ -257,26 +260,27 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
         throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: Invalid JSON response`);
     }
     
-    console.log('[Cobalt] Response status:', data.status, 'for', videoId, format, quality);
+    console.log('[Cobalt] Response:', data.status, 'for', videoId, format, quality);
     
     if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
             throw new Error(ERROR_MESSAGES.API_KEY_MISSING);
         }
         if (response.status === 400) {
-            throw new Error(`${ERROR_MESSAGES.DOWNLOAD_FAILED}: ${data.text || 'Bad request'}`);
+            const errorMsg = data.error?.code || data.error?.message || 'Bad request';
+            throw new Error(`${ERROR_MESSAGES.DOWNLOAD_FAILED}: ${errorMsg}`);
         }
         throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: ${response.status}`);
     }
     
-    if (data.status === 'error' || data.status === 'rate-limit') {
-        const errorMsg = data.error?.code || data.text || ERROR_MESSAGES.DOWNLOAD_FAILED;
-        throw new Error(errorMsg);
+    // Обработка статусов ответа
+    if (data.status === 'error') {
+        const errorMsg = data.error?.code || 'Unknown error';
+        throw new Error(`${ERROR_MESSAGES.DOWNLOAD_FAILED}: ${errorMsg}`);
     }
     
-    // Cobalt может вернуть picker (список вариантов) или прямую ссылку
+    // status: 'tunnel', 'redirect', 'picker'
     if (data.status === 'picker' && Array.isArray(data.picker) && data.picker.length > 0) {
-        // Берём первый вариант или ищем подходящий
         const item = data.picker[0];
         return {
             url: item.url,
@@ -287,7 +291,7 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
         };
     }
     
-    if (data.status === 'redirect' || data.status === 'stream') {
+    if (data.status === 'tunnel' || data.status === 'redirect') {
         if (!data.url) {
             throw new Error(ERROR_MESSAGES.NO_LINK_AVAILABLE);
         }
@@ -296,8 +300,7 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
             url: data.url,
             filename: data.filename || `video.${format}`,
             format: format,
-            quality: quality,
-            filenamePattern: data.filenamePattern
+            quality: quality
         };
     }
     
