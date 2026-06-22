@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Загрузка видео и аудио с YouTube — быстро, бесплатно и без регистрации">
+<meta name="theme-color" content="#000000">
+<title>YouTube Downloader · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #FF0000;
+    --accent-hover: #CC0000;
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --header-h: 56px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-stack); line-height: 1.5; min-height: 100vh; }
+
+.header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.72); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); height: var(--header-h); }
+.header-inner { max-width: 980px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; letter-spacing: -0.02em; }
+.logo svg { width: 22px; height: 22px; color: var(--accent); }
+.nav-links { display: flex; gap: 8px; }
+.nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-link.active { background: var(--accent); color: white; }
+
+.layout { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+
+.hero { text-align: center; margin-bottom: 40px; }
+.hero h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 12px; }
+.hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 560px; margin: 0 auto; }
+
+/* Input Section */
+.input-section { max-width: 640px; margin: 0 auto 40px; }
+.url-input-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
+.url-input { flex: 1; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); padding: 14px 18px; border-radius: var(--radius-md); font-family: inherit; font-size: 1rem; transition: 0.2s; }
+.url-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,0,0,0.15); }
+.url-input::placeholder { color: var(--text-tertiary); }
+.btn { padding: 14px 24px; border-radius: var(--radius-md); border: none; font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; user-select: none; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.hint { font-size: 0.82rem; color: var(--text-tertiary); text-align: center; }
+
+/* Result Card */
+.result-card { max-width: 640px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; display: none; }
+.result-card.visible { display: block; }
+.thumbnail-wrap { position: relative; width: 100%; aspect-ratio: 16/9; background: var(--bg-elevated); overflow: hidden; }
+.thumbnail-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.video-info { padding: 20px; }
+.video-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+.video-meta { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; }
+.format-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.format-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 12px 14px; border-radius: var(--radius-sm); cursor: pointer; transition: 0.2s; text-align: left; font-family: inherit; text-decoration: none; display: block; }
+.format-btn:hover { border-color: var(--accent); background: rgba(255,0,0,0.05); }
+.format-label { font-size: 0.88rem; font-weight: 600; display: block; margin-bottom: 2px; }
+.format-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+/* Error */
+.error-msg { max-width: 640px; margin: 0 auto; padding: 16px 20px; background: rgba(255,69,58,0.1); border: 1px solid rgba(255,69,58,0.3); border-radius: var(--radius-md); color: var(--danger); font-size: 0.9rem; display: none; text-align: center; }
+.error-msg.visible { display: block; }
+
+/* Loading */
+.loading { max-width: 640px; margin: 0 auto; text-align: center; padding: 40px; color: var(--text-secondary); display: none; }
+.loading.visible { display: block; }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Features */
+.features { max-width: 640px; margin: 48px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.feature { text-align: center; padding: 20px; }
+.feature-icon { width: 40px; height: 40px; margin: 0 auto 12px; background: var(--bg-elevated); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: var(--accent); }
+.feature-icon svg { width: 20px; height: 20px; }
+.feature-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+.feature-desc { font-size: 0.82rem; color: var(--text-secondary); }
+
+.footer { max-width: 980px; margin: 0 auto; padding: 32px 24px; border-top: 1px solid var(--border); text-align: center; color: var(--text-tertiary); font-size: 0.82rem; }
+.footer a { color: var(--accent); text-decoration: none; }
+
+@media (max-width: 640px) {
+    .hero h1 { font-size: 1.8rem; }
+    .url-input-wrap { flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .format-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Oris YT</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="/news" class="nav-link">News</a>
+            <a href="/changelog" class="nav-link">Changelog</a>
+            <a href="/youtube" class="nav-link active">YouTube</a>
+        </nav>
+    </div>
+</header>
+
+<main class="layout">
+    <section class="hero">
+        <h1>YouTube Downloader</h1>
+        <p>Скачивайте видео и аудио с YouTube в высоком качестве. Без регистрации, без рекламы, полностью бесплатно.</p>
+    </section>
+
+    <div class="input-section">
+        <div class="url-input-wrap">
+            <input type="text" class="url-input" id="urlInput" placeholder="Вставьте ссылку на YouTube видео..." autocomplete="off">
+            <button class="btn btn-primary" id="fetchBtn">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                Найти
+            </button>
+        </div>
+        <div class="hint">Поддерживаются ссылки youtube.com, youtu.be и shorts</div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Получение информации о видео...</div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="result-card" id="resultCard">
+        <div class="thumbnail-wrap">
+            <img id="thumbImg" src="" alt="Thumbnail">
+        </div>
+        <div class="video-info">
+            <div class="video-title" id="videoTitle"></div>
+            <div class="video-meta" id="videoMeta"></div>
+            <div class="format-grid" id="formatGrid"></div>
+        </div>
+    </div>
+
+    <section class="features">
+        <div class="feature">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            </div>
+            <div class="feature-title">MP4 и MP3</div>
+            <div class="feature-desc">Видео до 4K и аудио до 320kbps</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div class="feature-title">Мгновенно</div>
+            <div class="feature-desc">Обработка за несколько секунд</div>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <div class="feature-title">Безопасно</div>
+            <div class="feature-desc">Никаких данных не сохраняется</div>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    Oris Platform · YouTube Downloader · v1.0 · 
+    <a href="/changelog">Changelog</a>
+</footer>
+
+<script>
+(function() {
+    'use strict';
+
+    const $ = id => document.getElementById(id);
+    
+    // API endpoint для backend
+    const API_BASE = '/youtube';
+    
+    // Извлекаем ID видео из различных форматов ссылок
+    function extractVideoId(url) {
+        if (!url) return null;
+        url = url.trim();
+        
+        // youtu.be/ID
+        let m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+        if (m) return m[1];
+        
+        // youtube.com/watch?v=ID
+        m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+        if (m) return m[1];
+        
+        // youtube.com/shorts/ID
+        m = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
+        if (m) return m[1];
+        
+        // youtube.com/embed/ID
+        m = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
+        if (m) return m[1];
+        
+        // Просто ID (если пользователь вставил только ID)
+        if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+        
+        return null;
+    }
+
+    function formatDuration(seconds) {
+        if (!seconds) return '';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        return `${m}:${String(s).padStart(2,'0')}`;
+    }
+
+    async function fetchVideoInfo(videoId) {
+        // Используем наш backend API
+        const res = await fetch(`${API_BASE}/info/${videoId}`);
+        
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({ error: 'Не удалось получить информацию о видео' }));
+            throw new Error(error.error || 'Не удалось получить информацию о видео');
+        }
+        
+        const data = await res.json();
+        
+        return {
+            videoId: data.videoId,
+            title: data.title || 'Unknown',
+            author: data.author || 'Unknown',
+            duration: data.duration,
+            thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+            formats: data.formats || []
+        };
+    }
+
+    function renderResult(info) {
+        $('thumbImg').src = info.thumbnail;
+        $('videoTitle').textContent = info.title;
+        
+        const durationText = info.duration ? formatDuration(info.duration) : '';
+        $('videoMeta').textContent = `${info.author}${durationText ? ' · ' + durationText : ''}`;
+        
+        // Генерируем кнопки для каждого формата
+        const formatsHtml = info.formats.map(f => {
+            const downloadUrl = `${API_BASE}/download/${info.videoId}/${f.type === 'audio' ? 'mp3' : 'mp4'}/${f.quality}`;
+            return `
+                <a href="${downloadUrl}" target="_blank" rel="noopener" class="format-btn">
+                    <span class="format-label">${f.label}</span>
+                    <span class="format-desc">${f.type === 'audio' ? 'Аудио' : 'Видео'}</span>
+                </a>
+            `;
+        }).join('');
+        
+        $('formatGrid').innerHTML = formatsHtml || '<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Форматы не найдены</div>';
+        
+        $('resultCard').classList.add('visible');
+    }
+
+    function showError(msg) {
+        $('errorMsg').textContent = msg;
+        $('errorMsg').classList.add('visible');
+        $('resultCard').classList.remove('visible');
+    }
+
+    function hideError() {
+        $('errorMsg').classList.remove('visible');
+    }
+
+    async function handleFetch() {
+        const url = $('urlInput').value.trim();
+        const videoId = extractVideoId(url);
+        
+        if (!videoId) {
+            showError('Неверная ссылка. Вставьте корректную ссылку на YouTube видео.');
+            return;
+        }
+        
+        hideError();
+        $('resultCard').classList.remove('visible');
+        $('loading').classList.add('visible');
+        $('fetchBtn').disabled = true;
+        
+        try {
+            const info = await fetchVideoInfo(videoId);
+            renderResult(info);
+        } catch (err) {
+            showError(err.message || 'Ошибка при получении информации о видео');
+        } finally {
+            $('loading').classList.remove('visible');
+            $('fetchBtn').disabled = false;
+        }
+    }
+
+    $('fetchBtn').addEventListener('click', handleFetch);
+    $('urlInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') handleFetch();
+    });
+
+    // Автозаполнение из URL параметра ?v=VIDEO_ID
+    const params = new URLSearchParams(window.location.search);
+    const vParam = params.get('v');
+    if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) {
+        $('urlInput').value = `https://www.youtube.com/watch?v=${vParam}`;
+        handleFetch();
+    }
+})();
+</script>
+
+</body>
+</html>
