@@ -320,43 +320,46 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 
     // Получение информации о видео
     async function fetchVideoInfo(videoId) {
-        const res = await fetchWithRetry(`${API_BASE}/info/${videoId}`);
+    const res = await fetchWithRetry(`${API_BASE}/info/${videoId}`);
+    
+    if (!res.ok) {
+        let errorMessage = ERROR_MESSAGES.UNKNOWN;
         
-        if (!res.ok) {
-            let errorMessage = ERROR_MESSAGES.UNKNOWN;
+        try {
+            const error = await res.json();
             
-            try {
-                const error = await res.json();
-                
-                if (res.status === 404) {
-                    errorMessage = ERROR_MESSAGES.VIDEO_NOT_FOUND;
-                } else if (res.status === 429) {
-                    errorMessage = ERROR_MESSAGES.RATE_LIMIT;
-                } else if (res.status >= 500) {
-                    errorMessage = ERROR_MESSAGES.SERVER_ERROR;
-                } else if (error.error) {
-                    errorMessage = error.error;
-                }
-            } catch (e) {
-                console.error('[FetchVideoInfo] Failed to parse error:', e);
+            if (res.status === 404) {
+                errorMessage = ERROR_MESSAGES.VIDEO_NOT_FOUND;
+            } else if (res.status === 429) {
+                errorMessage = ERROR_MESSAGES.RATE_LIMIT;
+            } else if (res.status >= 500) {
+                errorMessage = ERROR_MESSAGES.SERVER_ERROR;
+            } else if (error.error) {
+                errorMessage = error.error;
             }
-            
-            throw new Error(errorMessage);
+        } catch (e) {
+            console.error('[FetchVideoInfo] Failed to parse error:', e);
         }
         
-        const data = await res.json();
-        
-        return {
-            videoId: data.videoId || videoId,
-            title: data.title || 'Unknown',
-            author: data.author || 'Unknown',
-            authorUrl: data.authorUrl,
-            duration: data.duration,
-            thumbnail: data.thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-            formats: data.formats || [],
-            provider: data.provider || 'YouTube'
-        };
+        throw new Error(errorMessage);
     }
+    
+    const response = await res.json();
+    
+    // Backend возвращает { success: true, data: {...} }
+    const data = response.data || response;
+    
+    return {
+        videoId: data.videoId || videoId,
+        title: data.title || 'Unknown',
+        author: data.author || 'Unknown',
+        authorUrl: data.authorUrl,
+        duration: data.duration,
+        thumbnail: data.thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+        formats: data.formats || [],
+        provider: data.provider || 'YouTube'
+    };
+}
 
     // Рендер результата
     function renderResult(info) {
