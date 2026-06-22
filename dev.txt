@@ -1,7 +1,0 @@
-[MODULE]
-name: Express Middleware Kit
-desc: Набор из 15 проверенных middlewares для Express.js (rate-limit, cors, helmet config)
-type: module
-lang: JavaScript
-url: https://github.com/official-ids/oris-middleware-kit
-tags: backend, security, express
