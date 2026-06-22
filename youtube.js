@@ -173,14 +173,18 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
     const requestBody = {
         url: youtubeUrl,
         downloadMode: format === 'mp3' ? 'audio' : 'auto',
-        audioFormat: 'mp3',
         videoQuality: quality,
-        filenameStyle: 'pretty',
-        youtubeVideoQuality: quality
+        audioFormat: format === 'mp3' ? 'mp3' : undefined,
+        filenameStyle: 'pretty'
     };
     
+    // Удаляем undefined значения
+    Object.keys(requestBody).forEach(key => 
+        requestBody[key] === undefined && delete requestBody[key]
+    );
+    
     const response = await fetchWithRetry(
-        `${CONFIG.COBALT_API}/`,
+        CONFIG.COBALT_API,
         {
             method: 'POST',
             headers: {
