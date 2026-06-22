@@ -71,7 +71,8 @@ const MODULE_PATHS = {
     DOWNLOADER: '../downloader',
     REDIRECTS: '../redirects',
     NOTIFICATIONS: '../notifications',
-    ROBLOX: '../roblox'
+    ROBLOX: '../roblox',
+    YOUTUBE: '../youtube'
 };
 
 /**
@@ -100,9 +101,14 @@ const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
 const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
 
 /**
- * Роутер для уведомлений
+ * Роутер для roblox
  */
 const robloxRouter = require(MODULE_PATHS.ROBLOX);
+
+/**
+ * Роутер для youtube
+ */
+const youtubeRouter = require(MODULE_PATHS.YOUTUBE);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1231,7 +1237,8 @@ app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
 app.use('/api/notifications', notificationsRouter);
-app.use('/api/roblox', robloxRouter);  // ← ДОБАВЬ
+app.use('/api/roblox', robloxRouter);
+app.use('/api/youtube', youtubeRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
