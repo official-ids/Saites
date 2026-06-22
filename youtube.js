@@ -7,7 +7,7 @@ const router = express.Router();
 
 const CONFIG = {
     // API
-    COBALT_API: process.env.COBALT_API || 'https://api.cobalt.tools/api/json',
+    COBALT_API: process.env.COBALT_API || 'https://api.cobalt.tools/',
     COBALT_API_KEY: process.env.COBALT_API_KEY || '',
     YOUTUBE_OEMBED: 'https://www.youtube.com/oembed',
     
