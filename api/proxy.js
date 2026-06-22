@@ -5100,6 +5100,119 @@ class GlobalErrorHandlerService {
 // Инициализация сервиса
 const globalErrorHandlerService = new GlobalErrorHandlerService();
 
+
+// -----------------------------
+// API Routes: Dev Resources
+// -----------------------------
+const DEV_FILE = process.env.DEV_FILE || path.join(__dirname, '..', 'dev.txt');
+let devCache = { data: [], timestamp: 0 };
+
+/**
+ * Парсер dev.txt
+ * Поддерживает блоки [MODULE], [SCRIPT], [FILE] разделенные ::
+ */
+function parseDevResources(content) {
+    if (typeof content !== 'string') return [];
+    
+    const blocks = content.split('::').filter(b => b?.trim());
+    const resources = [];
+
+    for (const block of blocks) {
+        const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+        const resource = {};
+        
+        // Определение типа из первой строки
+        const typeMatch = lines[0]?.match(/^\[(\w+)\]$/);
+        if (!typeMatch) continue;
+        
+        resource.type = typeMatch[1].toLowerCase();
+        
+        // Парсинг ключ-значение
+        for (let i = 1; i < lines.length; i++) {
+            const colonIndex = lines[i].indexOf(':');
+            if (colonIndex > -1) {
+                const key = lines[i].slice(0, colonIndex).trim().toLowerCase();
+                const value = lines[i].slice(colonIndex + 1).trim();
+                
+                // Преобразование массивов
+                if (key === 'tags') {
+                    resource[key] = value.split(',').map(t => t.trim()).filter(Boolean);
+                } else {
+                    resource[key] = value;
+                }
+            }
+        }
+        
+        // Валидация обязательных полей
+        if (resource.name && resource.desc && resource.url) {
+            resources.push({
+                id: crypto.createHash('md5').update(resource.name).digest('hex').slice(0, 8),
+                ...resource,
+                lang: resource.lang || 'Unknown',
+                tags: resource.tags || [],
+                private: resource.private === 'true'
+            });
+        }
+    }
+    
+    return resources.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+}
+
+async function loadDevResources() {
+    const now = Date.now();
+    if (devCache.data.length > 0 && (now - devCache.timestamp) < CACHE_TTL) {
+        return devCache.data;
+    }
+
+    try {
+        const { content } = await fetchFileContent(DEV_FILE, 'dev.txt');
+        const data = parseDevResources(content);
+        devCache = { data, timestamp: now };
+        console.log(`[Cache] Dev resources updated: ${data.length} loaded`);
+        return data;
+    } catch (err) {
+        console.error('[loadDevResources] Failed:', err.message);
+        if (devCache.data.length > 0) return devCache.data;
+        throw err;
+    }
+}
+
+// Публичный эндпоинт
+app.get('/api/dev-resources', async (req, res, next) => {
+    try {
+        const allResources = await loadDevResources();
+        // Фильтрация приватных ресурсов для неавторизованных пользователей
+        const isAuthed = req.headers.authorization?.startsWith('Bearer ');
+        const resources = isAuthed 
+            ? allResources 
+            : allResources.filter(r => !r.private);
+            
+        res.json(resources);
+    } catch (err) { next(err); }
+});
+
+// Админские эндпоинты
+app.get('/api/admin/dev-config', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = await fetchFileContent(DEV_FILE, 'dev.txt');
+        res.json({ content });
+    } catch (err) { next(err); }
+});
+
+app.post('/api/admin/dev-config/save', verifyAdminToken, async (req, res, next) => {
+    try {
+        const { content } = req.body;
+        if (typeof content !== 'string') return res.status(400).json({ error: 'Invalid content' });
+        
+        await handleSave(req, res, next, DEV_FILE, 'dev.txt', null, 'chore: update dev.txt via admin');
+    } catch (err) { next(err); }
+});
+
+// Страница /dev
+app.get('/dev', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'dev', 'index.html'));
+});
+
 // -----------------------------
 // Error Handling Middleware
 // -----------------------------

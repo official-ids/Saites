@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Oris Dev — Инструменты и ресурсы для разработчиков">
+<meta name="theme-color" content="#ffffff">
+<title>Oris · Dev</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Используем те же переменные, что и на главной странице */
+:root {
+    --bg-body: #F5F5F7; --bg-card: #FFFFFF; --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73; --accent: #0071E3; --border-light: rgba(0,0,0,0.06);
+    --radius-lg: 20px; --radius-md: 14px;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-body: #000000; --bg-card: #1C1C1E; --text-primary: #F5F5F7;
+        --text-secondary: #86868B; --accent: #0A84FF; --border-light: rgba(255,255,255,0.08);
+    }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg-body); color: var(--text-primary); font-family: 'Inter', sans-serif; line-height: 1.5; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+header { text-align: center; padding: 60px 24px 30px; }
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+.subtitle { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+/* Toolbar */
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin: 30px 0; gap: 16px; flex-wrap: wrap; }
+.search-box input { background: var(--bg-card); border: 1px solid var(--border-light); padding: 10px 16px; border-radius: 99px; width: 100%; max-width: 300px; font-family: inherit; }
+.filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.filter-chip { padding: 8px 14px; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 99px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+.filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 80px; }
+.card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 24px; transition: transform 0.3s, box-shadow 0.3s; display: flex; flex-direction: column; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+.card-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+.card-icon { width: 40px; height: 40px; background: rgba(0,113,227,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0; }
+.card-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
+.card-desc { color: var(--text-secondary); font-size: 0.9rem; flex-grow: 1; margin-bottom: 16px; line-clamp: 3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border-light); }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { font-size: 0.72rem; padding: 3px 8px; background: var(--bg-body); border-radius: 6px; font-weight: 600; }
+.action-btn { padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 99px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.action-btn:hover { opacity: 0.9; }
+
+/* Status */
+.loading { text-align: center; padding: 60px; color: var(--text-secondary); }
+.empty { text-align: center; padding: 60px; grid-column: 1/-1; }
+
+@media (max-width: 768px) { .grid { grid-template-columns: 1fr; } .toolbar { flex-direction: column; align-items: stretch; } .search-box input { max-width: 100%; } }
+</style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <h1>Oris Dev</h1>
+        <p class="subtitle">Централизованный репозиторий инструментов, скриптов и ресурсов для разработчиков платформы Oris.</p>
+    </div>
+</header>
+
+<main class="container">
+    <div class="toolbar">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Поиск по названию или тегам...">
+        </div>
+        <div class="filters" id="typeFilters">
+            <button class="filter-chip active" data-type="all">Все</button>
+            <button class="filter-chip" data-type="module">Модули</button>
+            <button class="filter-chip" data-type="script">Скрипты</button>
+            <button class="filter-chip" data-type="file">Файлы</button>
+        </div>
+    </div>
+
+    <div class="grid" id="resourcesGrid">
+        <div class="loading">Загрузка ресурсов...</div>
+    </div>
+</main>
+
+<script>
+(async () => {
+    const state = { resources: [], filterType: 'all', searchQuery: '' };
+    
+    const icons = {
+        module: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>',
+        script: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+        file: '<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'
+    };
+
+    const render = () => {
+        const grid = document.getElementById('resourcesGrid');
+        const filtered = state.resources.filter(r => {
+            const matchType = state.filterType === 'all' || r.type === state.filterType;
+            const q = state.searchQuery.toLowerCase();
+            const matchSearch = !q || r.name.toLowerCase().includes(q) || (r.tags || []).some(t => t.toLowerCase().includes(q));
+            return matchType && matchSearch;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="empty"><h3>Ничего не найдено</h3><p>Попробуйте изменить фильтры или поисковый запрос</p></div>`;
+            return;
+        }
+
+        grid.innerHTML = filtered.map(r => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">${icons[r.type] || icons.file}</div>
+                    <div style="flex:1">
+                        <div class="card-title">${r.name}</div>
+                        <div class="badges" style="margin-top:6px">
+                            <span class="badge">${r.lang}</span>
+                            ${r.size ? `<span class="badge">${r.size}</span>` : ''}
+                            ${(r.tags||[]).slice(0,3).map(t => `<span class="badge">${t}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-desc">${r.desc}</div>
+                <div class="card-footer">
+                    <div class="badges"></div>
+                    <button class="action-btn" onclick="window.open('${r.url}', '_blank')">Открыть</button>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    // Загрузка данных
+    try {
+        const res = await fetch('/api/dev-resources');
+        state.resources = await res.json();
+    } catch (e) {
+        document.getElementById('resourcesGrid').innerHTML = `<div class="empty"><h3>Ошибка загрузки</h3><p>Не удалось получить список ресурсов</p></div>`;
+        return;
+    }
+
+    // Обработчики событий
+    document.getElementById('searchInput').addEventListener('input', e => {
+        state.searchQuery = e.target.value;
+        render();
+    });
+
+    document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.filterType = btn.dataset.type;
+            render();
+        });
+    });
+
+    render();
+})();
+</script>
+</body>
+</html>
