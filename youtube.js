@@ -1,45 +1,79 @@
 const express = require('express');
 const crypto = require('crypto');
 const { kv } = require('@vercel/kv');
+const { PassThrough } = require('stream');
 
 const router = express.Router();
 
 const CONFIG = {
-    COBALT_API: process.env.COBALT_API || 'https://cobalt-api.kwiatekmiki.com',
-    COBALT_API_KEY: process.env.COBALT_API_KEY || null,
+    // API
+    COBALT_API: process.env.COBALT_API || 'https://api.cobalt.tools/api/json',
+    COBALT_API_KEY: process.env.COBALT_API_KEY || '',
     YOUTUBE_OEMBED: 'https://www.youtube.com/oembed',
+    
+    // Rate limiting
     RATE_LIMIT_WINDOW: 60 * 1000,
     RATE_LIMIT_MAX: 30,
+    
+    // Кэш
     CACHE_TTL: 5 * 60 * 1000,
-    REQUEST_TIMEOUT: 15000,
+    
+    // Таймауты
+    REQUEST_TIMEOUT: 30000,
+    DOWNLOAD_TIMEOUT: 120000, // 2 минуты на загрузку файла
+    
+    // Валидация
     MAX_URL_LENGTH: 2048,
-    RETRY_ATTEMPTS: 2,
+    MAX_FILE_SIZE: 500 * 1024 * 1024, // 500MB лимит
+    
+    // Retry
+    RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000,
-    VIDEO_QUALITIES: ['1080', '720', '480', '360'],
-    AUDIO_QUALITIES: ['320', '256', '192', '128'],
-    SUPPORTED_FORMATS: ['mp4', 'mp3', 'webm']
+    
+    // Качества
+    VIDEO_QUALITIES: ['2160', '1440', '1080', '720', '480', '360', '240', '144'],
+    AUDIO_QUALITIES: ['320', '256', '192', '128', '96', '64'],
+    SUPPORTED_FORMATS: ['mp4', 'mp3', 'webm', 'm4a', 'ogg'],
+    
+    // Content-Type маппинг
+    MIME_TYPES: {
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+        'mp3': 'audio/mpeg',
+        'm4a': 'audio/mp4',
+        'ogg': 'audio/ogg'
+    }
 };
+
+const INVIDIOUS_INSTANCES = [
+    'https://invidious.snopyta.org',
+    'https://invidious.kavin.rocks',
+    'https://vid.puffyan.us'
+];
 
 const ERROR_MESSAGES = {
     INVALID_URL: 'Invalid YouTube URL',
-    VIDEO_NOT_FOUND: 'Video not found',
+    VIDEO_NOT_FOUND: 'Video not found or private',
     DOWNLOAD_FAILED: 'Download failed',
-    TOO_MANY_REQUESTS: 'Too many requests',
+    TOO_MANY_REQUESTS: 'Too many requests, please try again later',
     SERVER_ERROR: 'Internal server error',
     TIMEOUT: 'Request timeout',
     INVALID_VIDEO_ID: 'Invalid video ID',
     INVALID_FORMAT: 'Invalid format',
     INVALID_QUALITY: 'Invalid quality',
     API_UNAVAILABLE: 'External API unavailable',
-    API_KEY_MISSING: 'Cobalt API key is not configured'
+    API_KEY_MISSING: 'Cobalt API key is not configured',
+    FILE_TOO_LARGE: 'File size exceeds limit',
+    STREAM_ERROR: 'Stream error during download',
+    NO_LINK_AVAILABLE: 'No download link available for this format/quality'
 };
 
 const VIDEO_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
 
-// Утилита для задержки
+// ============ УТИЛИТЫ ============
+
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Утилита для fetch с таймаутом
 const fetchWithTimeout = async (url, options = {}, timeout = CONFIG.REQUEST_TIMEOUT) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -60,7 +94,6 @@ const fetchWithTimeout = async (url, options = {}, timeout = CONFIG.REQUEST_TIME
     }
 };
 
-// Утилита для fetch с retry
 const fetchWithRetry = async (url, options = {}, attempts = CONFIG.RETRY_ATTEMPTS) => {
     let lastError;
     
@@ -69,10 +102,10 @@ const fetchWithRetry = async (url, options = {}, attempts = CONFIG.RETRY_ATTEMPT
             return await fetchWithTimeout(url, options);
         } catch (error) {
             lastError = error;
-            console.warn(`[Fetch] Attempt ${i + 1} failed for ${url}:`, error.message);
+            console.warn(`[Fetch] Attempt ${i + 1}/${attempts + 1} failed for ${url}:`, error.message);
             
             if (i < attempts) {
-                await sleep(CONFIG.RETRY_DELAY * (i + 1));
+                await sleep(CONFIG.RETRY_DELAY * Math.pow(2, i)); // Exponential backoff
             }
         }
     }
@@ -80,7 +113,8 @@ const fetchWithRetry = async (url, options = {}, attempts = CONFIG.RETRY_ATTEMPT
     throw lastError;
 };
 
-// Извлечение videoId из URL
+// ============ ВАЛИДАЦИЯ ============
+
 function extractVideoId(url) {
     if (!url || typeof url !== 'string') return null;
     if (url.length > CONFIG.MAX_URL_LENGTH) return null;
@@ -92,7 +126,8 @@ function extractVideoId(url) {
         /[?&]v=([a-zA-Z0-9_-]{11})/,
         /shorts\/([a-zA-Z0-9_-]{11})/,
         /embed\/([a-zA-Z0-9_-]{11})/,
-        /live\/([a-zA-Z0-9_-]{11})/
+        /live\/([a-zA-Z0-9_-]{11})/,
+        /music\.youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/
     ];
     
     for (const pattern of patterns) {
@@ -105,23 +140,21 @@ function extractVideoId(url) {
     return null;
 }
 
-// Валидация videoId
 function isValidVideoId(videoId) {
     return VIDEO_ID_REGEX.test(videoId);
 }
 
-// Валидация формата
 function isValidFormat(format) {
-    return CONFIG.SUPPORTED_FORMATS.includes(format);
+    return CONFIG.SUPPORTED_FORMATS.includes(format.toLowerCase());
 }
 
-// Валидация качества
 function isValidQuality(quality, type = 'video') {
     const qualities = type === 'audio' ? CONFIG.AUDIO_QUALITIES : CONFIG.VIDEO_QUALITIES;
     return qualities.includes(quality);
 }
 
-// Получение метаданных через YouTube oEmbed с кэшированием
+// ============ МЕТАДАННЫЕ ============
+
 async function getVideoMetadata(videoId) {
     const cacheKey = `meta:${videoId}`;
     
@@ -142,7 +175,7 @@ async function getVideoMetadata(videoId) {
     const response = await fetchWithRetry(oembedUrl, { method: 'GET' });
     
     if (!response.ok) {
-        if (response.status === 404) {
+        if (response.status === 404 || response.status === 401) {
             throw new Error(ERROR_MESSAGES.VIDEO_NOT_FOUND);
         }
         throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: ${response.status}`);
@@ -156,6 +189,7 @@ async function getVideoMetadata(videoId) {
         author: data.author_name || 'Unknown',
         authorUrl: data.author_url,
         thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        thumbnailMaxRes: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
         provider: data.provider_name || 'YouTube'
     };
     
@@ -169,30 +203,35 @@ async function getVideoMetadata(videoId) {
     return metadata;
 }
 
-// Получение ссылки на скачивание через Cobalt API
+// ============ COBALT API ============
+
 async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
-    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    
-    // Правильный body для Cobalt API
-    const requestBody = {
-        url: youtubeUrl,
-        downloadMode: format === 'mp3' ? 'audio' : 'auto',
-        filenameStyle: 'pretty'
-    };
-    
-    // Для аудио — audioFormat + audioBitrate
-    if (format === 'mp3') {
-        requestBody.audioFormat = 'mp3';
-        requestBody.audioBitrate = quality; // 320, 256, 192
-    } else {
-        // Для видео — videoQuality
-        requestBody.videoQuality = quality; // 1080, 720, 480, 360
+    if (!CONFIG.COBALT_API) {
+        throw new Error('Cobalt API URL is not configured');
     }
     
-    // Заголовки с авторизацией
+    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    
+    const requestBody = {
+        url: youtubeUrl,
+        downloadMode: format === 'mp3' || format === 'm4a' || format === 'ogg' ? 'audio' : 'auto',
+        filenameStyle: 'pretty',
+        youtubeVideoQuality: quality
+    };
+    
+    if (format === 'mp3' || format === 'm4a' || format === 'ogg') {
+        requestBody.audioFormat = format;
+        if (quality && CONFIG.AUDIO_QUALITIES.includes(quality)) {
+            requestBody.audioBitrate = quality;
+        }
+    } else {
+        requestBody.videoQuality = quality;
+    }
+    
     const headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; YouTubeDownloader/1.0)'
     };
     
     if (CONFIG.COBALT_API_KEY) {
@@ -208,120 +247,271 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
         }
     );
     
-    // Логируем полный ответ для отладки
     const responseText = await response.text();
     let data;
     
     try {
         data = JSON.parse(responseText);
     } catch (e) {
-        console.error('[Cobalt] Failed to parse response:', responseText);
+        console.error('[Cobalt] Failed to parse response:', responseText.substring(0, 500));
         throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: Invalid JSON response`);
     }
     
-    console.log('[Cobalt] Response:', JSON.stringify(data, null, 2));
+    console.log('[Cobalt] Response status:', data.status, 'for', videoId, format, quality);
     
     if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
             throw new Error(ERROR_MESSAGES.API_KEY_MISSING);
+        }
+        if (response.status === 400) {
+            throw new Error(`${ERROR_MESSAGES.DOWNLOAD_FAILED}: ${data.text || 'Bad request'}`);
         }
         throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: ${response.status}`);
     }
     
-    if (data.status === 'error') {
+    if (data.status === 'error' || data.status === 'rate-limit') {
         const errorMsg = data.error?.code || data.text || ERROR_MESSAGES.DOWNLOAD_FAILED;
         throw new Error(errorMsg);
     }
     
-    if (!data.url) {
-        throw new Error(ERROR_MESSAGES.DOWNLOAD_FAILED);
+    // Cobalt может вернуть picker (список вариантов) или прямую ссылку
+    if (data.status === 'picker' && Array.isArray(data.picker) && data.picker.length > 0) {
+        // Берём первый вариант или ищем подходящий
+        const item = data.picker[0];
+        return {
+            url: item.url,
+            filename: data.filename || `video.${format}`,
+            format: format,
+            quality: quality,
+            thumb: data.thumb
+        };
     }
     
-    return {
-        url: data.url,
-        filename: data.filename,
-        format: format,
-        quality: quality
-    };
+    if (data.status === 'redirect' || data.status === 'stream') {
+        if (!data.url) {
+            throw new Error(ERROR_MESSAGES.NO_LINK_AVAILABLE);
+        }
+        
+        return {
+            url: data.url,
+            filename: data.filename || `video.${format}`,
+            format: format,
+            quality: quality,
+            filenamePattern: data.filenamePattern
+        };
+    }
+    
+    if (data.url) {
+        return {
+            url: data.url,
+            filename: data.filename || `video.${format}`,
+            format: format,
+            quality: quality
+        };
+    }
+    
+    throw new Error(ERROR_MESSAGES.NO_LINK_AVAILABLE);
 }
 
-// Rate limiting с атомарным счётчиком
+// ============ RATE LIMITING ============
+
 async function checkRateLimit(ip) {
     const key = `rl:youtube:${ip}`;
     const now = Date.now();
+    const windowSeconds = Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000);
     
     try {
-        // Используем атомарный incr
-        const count = await kv.incr(key);
+        // Используем Redis pipeline для атомарности
+        const multi = kv.multi();
+        multi.incr(key);
+        multi.ttl(key);
+        const results = await multi.exec();
         
-        // Если это первый запрос — устанавливаем TTL
-        if (count === 1) {
-            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
-            await kv.hset(key, { 
-                resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW),
-                createdAt: String(now)
-            });
+        let count = results[0];
+        let ttl = results[1];
+        
+        // Если ключ только что создан
+        if (count === 1 || ttl === -1) {
+            await kv.expire(key, windowSeconds);
+            ttl = windowSeconds;
         }
         
-        // Получаем resetAt
-        const resetAtStr = await kv.hget(key, 'resetAt');
-        const resetAt = resetAtStr ? parseInt(resetAtStr, 10) : now + CONFIG.RATE_LIMIT_WINDOW;
-        
-        // Если окно истекло — сбрасываем
-        if (now > resetAt) {
-            await kv.del(key);
-            await kv.incr(key);
-            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
-            await kv.hset(key, { 
-                resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW),
-                createdAt: String(now)
-            });
-            
-            return { 
-                allowed: true, 
-                remaining: CONFIG.RATE_LIMIT_MAX - 1,
-                resetAt: now + CONFIG.RATE_LIMIT_WINDOW
-            };
-        }
+        const resetAt = now + (ttl * 1000);
         
         if (count > CONFIG.RATE_LIMIT_MAX) {
             return { 
                 allowed: false, 
-                retryAfter: Math.ceil((resetAt - now) / 1000),
+                retryAfter: ttl,
                 remaining: 0,
-                resetAt
+                resetAt,
+                limit: CONFIG.RATE_LIMIT_MAX
             };
         }
         
         return { 
             allowed: true, 
             remaining: CONFIG.RATE_LIMIT_MAX - count,
-            resetAt
+            resetAt,
+            limit: CONFIG.RATE_LIMIT_MAX
         };
     } catch (error) {
-        console.error('[RateLimit] KV error:', error);
+        console.error('[RateLimit] KV error:', error.message);
+        // При ошибке KV — пропускаем (fail-open)
         return { 
             allowed: true, 
             remaining: CONFIG.RATE_LIMIT_MAX,
+            resetAt: now + CONFIG.RATE_LIMIT_WINDOW,
+            limit: CONFIG.RATE_LIMIT_MAX,
             error: true
         };
     }
 }
 
-// Middleware для логирования запросов
+// ============ ПРОКСИРОВАНИЕ ФАЙЛА (РЕАЛЬНАЯ ЗАГРУЗКА) ============
+
+async function proxyDownload(res, downloadLink, metadata, format, quality, ip) {
+    const startTime = Date.now();
+    const mimeType = CONFIG.MIME_TYPES[format] || 'application/octet-stream';
+    
+    // Формируем имя файла
+    const safeTitle = (metadata.title || 'video')
+        .replace(/[<>:"/\\|?*]/g, '_')
+        .replace(/\s+/g, '_')
+        .substring(0, 100);
+    const filename = `${safeTitle}_${quality}p.${format}`;
+    
+    console.log(`[Proxy] Starting download: ${filename} from ${downloadLink.url}`);
+    
+    try {
+        // Запрашиваем файл с Cobalt с таймаутом на загрузку
+        const fileResponse = await fetchWithTimeout(
+            downloadLink.url,
+            {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; YouTubeDownloader/1.0)',
+                    'Accept': '*/*'
+                }
+            },
+            CONFIG.DOWNLOAD_TIMEOUT
+        );
+        
+        if (!fileResponse.ok) {
+            throw new Error(`Upstream returned ${fileResponse.status}`);
+        }
+        
+        const contentLength = fileResponse.headers.get('content-length');
+        const totalBytes = contentLength ? parseInt(contentLength, 10) : null;
+        
+        // Проверка размера
+        if (totalBytes && totalBytes > CONFIG.MAX_FILE_SIZE) {
+            throw new Error(ERROR_MESSAGES.FILE_TOO_LARGE);
+        }
+        
+        // Устанавливаем заголовки ответа
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+        res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-Download-Filename', encodeURIComponent(filename));
+        res.setHeader('X-Video-Id', metadata.videoId);
+        res.setHeader('X-Video-Title', encodeURIComponent(metadata.title));
+        res.setHeader('X-Quality', quality);
+        res.setHeader('X-Format', format);
+        
+        if (totalBytes) {
+            res.setHeader('Content-Length', totalBytes);
+        }
+        
+        // Создаём стрим
+        if (!fileResponse.body) {
+            throw new Error('No response body from upstream');
+        }
+        
+        // Используем PassThrough для контроля стрима
+        const passThrough = new PassThrough();
+        let downloadedBytes = 0;
+        let lastProgressLog = 0;
+        
+        // Обработка данных для трекинга прогресса
+        fileResponse.body.on('data', (chunk) => {
+            downloadedBytes += chunk.length;
+            
+            // Логируем прогресс каждые 10MB или каждые 5 секунд
+            const now = Date.now();
+            if (downloadedBytes % (10 * 1024 * 1024) < chunk.length || now - lastProgressLog > 5000) {
+                const progress = totalBytes ? ((downloadedBytes / totalBytes) * 100).toFixed(1) : 'unknown';
+                const speed = (downloadedBytes / ((now - startTime) / 1000) / 1024 / 1024).toFixed(2);
+                console.log(`[Proxy] Progress: ${progress}% (${(downloadedBytes / 1024 / 1024).toFixed(2)} MB) at ${speed} MB/s`);
+                lastProgressLog = now;
+            }
+            
+            // Проверка лимита размера в реальном времени
+            if (downloadedBytes > CONFIG.MAX_FILE_SIZE) {
+                fileResponse.body.destroy();
+                passThrough.destroy(new Error(ERROR_MESSAGES.FILE_TOO_LARGE));
+                return;
+            }
+        });
+        
+        fileResponse.body.on('error', (err) => {
+            console.error('[Proxy] Stream error:', err.message);
+            passThrough.destroy(err);
+        });
+        
+        fileResponse.body.pipe(passThrough);
+        
+        // Обработка ошибок клиента
+        res.on('error', (err) => {
+            console.error('[Proxy] Client response error:', err.message);
+            fileResponse.body.destroy();
+        });
+        
+        res.on('close', () => {
+            const duration = Date.now() - startTime;
+            const speed = (downloadedBytes / (duration / 1000) / 1024 / 1024).toFixed(2);
+            console.log(`[Proxy] Completed: ${filename} — ${(downloadedBytes / 1024 / 1024).toFixed(2)} MB in ${duration}ms (${speed} MB/s)`);
+        });
+        
+        // Стримим ответ
+        passThrough.pipe(res);
+        
+    } catch (error) {
+        console.error('[Proxy] Download error:', error.message);
+        
+        // Если заголовки ещё не отправлены — отдаём JSON ошибку
+        if (!res.headersSent) {
+            res.status(502).json({
+                success: false,
+                error: error.message || ERROR_MESSAGES.DOWNLOAD_FAILED
+            });
+        } else {
+            // Если уже стримим — прерываем
+            res.destroy(error);
+        }
+    }
+}
+
+// ============ MIDDLEWARE ============
+
 router.use((req, res, next) => {
     const start = Date.now();
-    console.log(`[Request] ${req.method} ${req.path}`);
+    const requestId = crypto.randomBytes(4).toString('hex');
+    req.requestId = requestId;
+    
+    console.log(`[Request ${requestId}] ${req.method} ${req.path} from ${req.ip}`);
     
     res.on('finish', () => {
         const duration = Date.now() - start;
-        console.log(`[Response] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
+        console.log(`[Response ${requestId}] ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
     });
     
     next();
 });
 
-// GET /info/:videoId — получение информации и ссылок
+// ============ ROUTES ============
+
+// GET /info/:videoId — только метаданные + список доступных форматов (без ссылок!)
 router.get('/info/:videoId', async (req, res) => {
     try {
         const { videoId } = req.params;
@@ -337,40 +527,23 @@ router.get('/info/:videoId', async (req, res) => {
         
         const metadata = await getVideoMetadata(videoId);
         
+        // Возвращаем только список доступных форматов, ссылки получаются отдельно
         const formats = [
-            { label: 'MP4 1080p', quality: '1080', type: 'video', format: 'mp4' },
-            { label: 'MP4 720p', quality: '720', type: 'video', format: 'mp4' },
-            { label: 'MP4 480p', quality: '480', type: 'video', format: 'mp4' },
-            { label: 'MP4 360p', quality: '360', type: 'video', format: 'mp4' },
-            { label: 'MP3 320kbps', quality: '320', type: 'audio', format: 'mp3' },
-            { label: 'MP3 256kbps', quality: '256', type: 'audio', format: 'mp3' },
-            { label: 'MP3 192kbps', quality: '192', type: 'audio', format: 'mp3' }
+            // Видео
+            ...CONFIG.VIDEO_QUALITIES.map(q => ({
+                type: 'video',
+                format: 'mp4',
+                quality: q,
+                label: `MP4 ${q}p`
+            })),
+            // Аудио
+            ...CONFIG.AUDIO_QUALITIES.map(q => ({
+                type: 'audio',
+                format: 'mp3',
+                quality: q,
+                label: `MP3 ${q}kbps`
+            }))
         ];
-        
-        const downloadLinks = [];
-        
-        for (const format of formats) {
-            try {
-                const link = await getDownloadLink(videoId, format.format, format.quality);
-                downloadLinks.push({
-                    label: format.label,
-                    type: format.type,
-                    format: format.format,
-                    quality: format.quality,
-                    url: link.url,
-                    filename: link.filename
-                });
-            } catch (err) {
-                console.warn(`[Info] Failed to get ${format.label}:`, err.message);
-                downloadLinks.push({
-                    label: format.label,
-                    type: format.type,
-                    format: format.format,
-                    quality: format.quality,
-                    error: err.message
-                });
-            }
-        }
         
         res.json({
             success: true,
@@ -380,13 +553,15 @@ router.get('/info/:videoId', async (req, res) => {
                 author: metadata.author,
                 authorUrl: metadata.authorUrl,
                 thumbnail: metadata.thumbnail,
+                thumbnailMaxRes: metadata.thumbnailMaxRes,
                 provider: metadata.provider,
-                formats: downloadLinks
+                formats,
+                downloadEndpoint: `/download/${videoId}/{format}/{quality}`
             }
         });
         
     } catch (err) {
-        console.error('[Info] Error:', err);
+        console.error('[Info] Error:', err.message);
         
         const statusCode = err.message.includes('not found') ? 404 : 500;
         res.status(statusCode).json({ 
@@ -396,31 +571,81 @@ router.get('/info/:videoId', async (req, res) => {
     }
 });
 
-// GET /download/:videoId/:format/:quality — редирект на файл
+// GET /link/:videoId/:format/:quality — получение временной ссылки (без загрузки)
+router.get('/link/:videoId/:format/:quality', async (req, res) => {
+    try {
+        const { videoId, format, quality } = req.params;
+        
+        if (!isValidVideoId(videoId)) {
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_VIDEO_ID });
+        }
+        
+        if (!isValidFormat(format)) {
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_FORMAT });
+        }
+        
+        const qualityType = (format === 'mp3' || format === 'm4a' || format === 'ogg') ? 'audio' : 'video';
+        if (!isValidQuality(quality, qualityType)) {
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_QUALITY });
+        }
+        
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        const rateLimit = await checkRateLimit(ip);
+        
+        if (!rateLimit.allowed) {
+            return res.status(429)
+                .set('Retry-After', String(rateLimit.retryAfter))
+                .json({ 
+                    success: false,
+                    error: ERROR_MESSAGES.TOO_MANY_REQUESTS,
+                    retryAfter: rateLimit.retryAfter
+                });
+        }
+        
+        const link = await getDownloadLink(videoId, format, quality);
+        
+        res.json({
+            success: true,
+            data: {
+                url: link.url,
+                filename: link.filename,
+                format: link.format,
+                quality: link.quality,
+                expiresAt: Date.now() + (10 * 60 * 1000) // ~10 минут
+            }
+        });
+        
+    } catch (err) {
+        console.error('[Link] Error:', err.message);
+        
+        let statusCode = 500;
+        if (err.message.includes('timeout')) statusCode = 504;
+        else if (err.message.includes('not found')) statusCode = 404;
+        else if (err.message.includes('API key')) statusCode = 503;
+        
+        res.status(statusCode).json({ 
+            success: false,
+            error: err.message || ERROR_MESSAGES.DOWNLOAD_FAILED 
+        });
+    }
+});
+
+// GET /download/:videoId/:format/:quality — РЕАЛЬНАЯ ЗАГРУЗКА через сервер
 router.get('/download/:videoId/:format/:quality', async (req, res) => {
     try {
         const { videoId, format, quality } = req.params;
         
         if (!isValidVideoId(videoId)) {
-            return res.status(400).json({ 
-                success: false,
-                error: ERROR_MESSAGES.INVALID_VIDEO_ID 
-            });
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_VIDEO_ID });
         }
         
         if (!isValidFormat(format)) {
-            return res.status(400).json({ 
-                success: false,
-                error: ERROR_MESSAGES.INVALID_FORMAT 
-            });
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_FORMAT });
         }
         
-        const qualityType = format === 'mp3' ? 'audio' : 'video';
+        const qualityType = (format === 'mp3' || format === 'm4a' || format === 'ogg') ? 'audio' : 'video';
         if (!isValidQuality(quality, qualityType)) {
-            return res.status(400).json({ 
-                success: false,
-                error: ERROR_MESSAGES.INVALID_QUALITY 
-            });
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_QUALITY });
         }
         
         const ip = req.ip || req.connection.remoteAddress || 'unknown';
@@ -438,43 +663,126 @@ router.get('/download/:videoId/:format/:quality', async (req, res) => {
         
         console.log(`[Download] Request for ${videoId} in ${format} ${quality}`);
         
+        // Получаем метаданные для имени файла
+        const metadata = await getVideoMetadata(videoId);
+        
+        // Получаем ссылку на файл
         const link = await getDownloadLink(videoId, format, quality);
         
+        // Устанавливаем rate limit заголовки
+        res.setHeader('X-RateLimit-Limit', String(rateLimit.limit));
         res.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
         res.setHeader('X-RateLimit-Reset', String(Math.ceil(rateLimit.resetAt / 1000)));
         
-        res.redirect(302, link.url);
+        // РЕАЛЬНАЯ ЗАГРУЗКА — проксируем файл через сервер
+        await proxyDownload(res, link, metadata, format, quality, ip);
         
     } catch (err) {
-        console.error('[Download] Error:', err);
+        console.error('[Download] Error:', err.message);
         
         let statusCode = 500;
         let errorMessage = err.message || ERROR_MESSAGES.DOWNLOAD_FAILED;
         
-        if (err.message.includes('timeout')) {
-            statusCode = 504;
-        } else if (err.message.includes('not found')) {
-            statusCode = 404;
-        } else if (err.message.includes('API key')) {
-            statusCode = 503;
+        if (err.message.includes('timeout')) statusCode = 504;
+        else if (err.message.includes('not found') || err.message.includes('404')) statusCode = 404;
+        else if (err.message.includes('API key')) statusCode = 503;
+        else if (err.message.includes('size')) statusCode = 413;
+        
+        if (!res.headersSent) {
+            res.status(statusCode).json({ 
+                success: false,
+                error: errorMessage 
+            });
+        }
+    }
+});
+
+// GET /stream/:videoId/:format/:quality — то же что и download, но inline (для плеера)
+router.get('/stream/:videoId/:format/:quality', async (req, res) => {
+    try {
+        const { videoId, format, quality } = req.params;
+        
+        if (!isValidVideoId(videoId) || !isValidFormat(format)) {
+            return res.status(400).json({ success: false, error: 'Invalid parameters' });
         }
         
-        res.status(statusCode).json({ 
-            success: false,
-            error: errorMessage 
-        });
+        const qualityType = (format === 'mp3' || format === 'm4a' || format === 'ogg') ? 'audio' : 'video';
+        if (!isValidQuality(quality, qualityType)) {
+            return res.status(400).json({ success: false, error: ERROR_MESSAGES.INVALID_QUALITY });
+        }
+        
+        const ip = req.ip || req.connection.remoteAddress || 'unknown';
+        const rateLimit = await checkRateLimit(ip);
+        
+        if (!rateLimit.allowed) {
+            return res.status(429).json({ success: false, error: ERROR_MESSAGES.TOO_MANY_REQUESTS });
+        }
+        
+        const metadata = await getVideoMetadata(videoId);
+        const link = await getDownloadLink(videoId, format, quality);
+        
+        const mimeType = CONFIG.MIME_TYPES[format] || 'application/octet-stream';
+        
+        const fileResponse = await fetchWithTimeout(
+            link.url,
+            { method: 'GET' },
+            CONFIG.DOWNLOAD_TIMEOUT
+        );
+        
+        if (!fileResponse.ok) {
+            throw new Error(`Upstream returned ${fileResponse.status}`);
+        }
+        
+        // Inline — для воспроизведения в браузере
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(metadata.title)}.${format}"`);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        
+        const contentLength = fileResponse.headers.get('content-length');
+        if (contentLength) {
+            res.setHeader('Content-Length', contentLength);
+        }
+        
+        fileResponse.body.pipe(res);
+        
+    } catch (err) {
+        console.error('[Stream] Error:', err.message);
+        if (!res.headersSent) {
+            res.status(502).json({ success: false, error: err.message });
+        }
     }
 });
 
 // GET /health — проверка работоспособности
-router.get('/health', (req, res) => {
+router.get('/health', async (req, res) => {
+    let kvStatus = 'unknown';
+    try {
+        await kv.set('health:check', Date.now(), { px: 10000 });
+        const val = await kv.get('health:check');
+        kvStatus = val ? 'ok' : 'error';
+    } catch (e) {
+        kvStatus = 'error: ' + e.message;
+    }
+    
     res.json({
         success: true,
         data: {
             status: 'ok',
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
-            cobaltApiKeyConfigured: !!CONFIG.COBALT_API_KEY
+            memory: process.memoryUsage(),
+            services: {
+                kv: kvStatus,
+                cobaltApi: !!CONFIG.COBALT_API,
+                cobaltApiKey: !!CONFIG.COBALT_API_KEY
+            },
+            config: {
+                maxFileSize: CONFIG.MAX_FILE_SIZE,
+                downloadTimeout: CONFIG.DOWNLOAD_TIMEOUT,
+                rateLimitMax: CONFIG.RATE_LIMIT_MAX,
+                rateLimitWindow: CONFIG.RATE_LIMIT_WINDOW
+            }
         }
     });
 });
@@ -482,10 +790,13 @@ router.get('/health', (req, res) => {
 // Error handling middleware
 router.use((err, req, res, next) => {
     console.error('[Router] Unhandled error:', err);
-    res.status(500).json({ 
-        success: false,
-        error: ERROR_MESSAGES.SERVER_ERROR 
-    });
+    
+    if (!res.headersSent) {
+        res.status(500).json({ 
+            success: false,
+            error: ERROR_MESSAGES.SERVER_ERROR 
+        });
+    }
 });
 
 module.exports = router;
