@@ -5,7 +5,8 @@ const { kv } = require('@vercel/kv');
 const router = express.Router();
 
 const CONFIG = {
-    COBALT_API: 'https://api.cobalt.tools',
+    COBALT_API: process.env.COBALT_API || 'https://cobalt-api.kwiatekmiki.com',
+    COBALT_API_KEY: process.env.COBALT_API_KEY || null,
     YOUTUBE_OEMBED: 'https://www.youtube.com/oembed',
     RATE_LIMIT_WINDOW: 60 * 1000,
     RATE_LIMIT_MAX: 30,
@@ -29,7 +30,8 @@ const ERROR_MESSAGES = {
     INVALID_VIDEO_ID: 'Invalid video ID',
     INVALID_FORMAT: 'Invalid format',
     INVALID_QUALITY: 'Invalid quality',
-    API_UNAVAILABLE: 'External API unavailable'
+    API_UNAVAILABLE: 'External API unavailable',
+    API_KEY_MISSING: 'Cobalt API key is not configured'
 };
 
 const VIDEO_ID_REGEX = /^[a-zA-Z0-9_-]{11}$/;
@@ -126,8 +128,9 @@ async function getVideoMetadata(videoId) {
     try {
         const cached = await kv.get(cacheKey);
         if (cached) {
+            const parsed = typeof cached === 'string' ? JSON.parse(cached) : cached;
             console.log(`[Metadata] Cache hit for ${videoId}`);
-            return cached;
+            return parsed;
         }
     } catch (error) {
         console.warn('[Metadata] Cache read error:', error.message);
@@ -152,7 +155,7 @@ async function getVideoMetadata(videoId) {
         title: data.title || 'Unknown',
         author: data.author_name || 'Unknown',
         authorUrl: data.author_url,
-        thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+        thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
         provider: data.provider_name || 'YouTube'
     };
     
@@ -170,36 +173,60 @@ async function getVideoMetadata(videoId) {
 async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
     const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
     
+    // Правильный body для Cobalt API
     const requestBody = {
         url: youtubeUrl,
         downloadMode: format === 'mp3' ? 'audio' : 'auto',
-        videoQuality: quality,
-        audioFormat: format === 'mp3' ? 'mp3' : undefined,
         filenameStyle: 'pretty'
     };
     
-    // Удаляем undefined значения
-    Object.keys(requestBody).forEach(key => 
-        requestBody[key] === undefined && delete requestBody[key]
-    );
+    // Для аудио — audioFormat + audioBitrate
+    if (format === 'mp3') {
+        requestBody.audioFormat = 'mp3';
+        requestBody.audioBitrate = quality; // 320, 256, 192
+    } else {
+        // Для видео — videoQuality
+        requestBody.videoQuality = quality; // 1080, 720, 480, 360
+    }
+    
+    // Заголовки с авторизацией
+    const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    };
+    
+    if (CONFIG.COBALT_API_KEY) {
+        headers['Authorization'] = `Api-Key ${CONFIG.COBALT_API_KEY}`;
+    }
     
     const response = await fetchWithRetry(
         CONFIG.COBALT_API,
         {
             method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
+            headers,
             body: JSON.stringify(requestBody)
         }
     );
     
-    if (!response.ok) {
-        throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: ${response.status}`);
+    // Логируем полный ответ для отладки
+    const responseText = await response.text();
+    let data;
+    
+    try {
+        data = JSON.parse(responseText);
+    } catch (e) {
+        console.error('[Cobalt] Failed to parse response:', responseText);
+        throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: Invalid JSON response`);
     }
     
-    const data = await response.json();
+    console.log('[Cobalt] Response:', JSON.stringify(data, null, 2));
+    
+    if (!response.ok) {
+        if (response.status === 401) {
+            throw new Error(ERROR_MESSAGES.API_KEY_MISSING);
+        }
+        throw new Error(`${ERROR_MESSAGES.API_UNAVAILABLE}: ${response.status}`);
+    }
     
     if (data.status === 'error') {
         const errorMsg = data.error?.code || data.text || ERROR_MESSAGES.DOWNLOAD_FAILED;
@@ -218,39 +245,37 @@ async function getDownloadLink(videoId, format = 'mp4', quality = '1080') {
     };
 }
 
-// Rate limiting с улучшенной логикой
+// Rate limiting с атомарным счётчиком
 async function checkRateLimit(ip) {
     const key = `rl:youtube:${ip}`;
     const now = Date.now();
     
     try {
-        const data = await kv.hgetall(key);
+        // Используем атомарный incr
+        const count = await kv.incr(key);
         
-        if (!data || !data.count) {
+        // Если это первый запрос — устанавливаем TTL
+        if (count === 1) {
+            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
             await kv.hset(key, { 
-                count: '1', 
                 resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW),
                 createdAt: String(now)
             });
-            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
-            
-            return { 
-                allowed: true, 
-                remaining: CONFIG.RATE_LIMIT_MAX - 1,
-                resetAt: now + CONFIG.RATE_LIMIT_WINDOW
-            };
         }
         
-        const resetAt = parseInt(data.resetAt, 10);
+        // Получаем resetAt
+        const resetAtStr = await kv.hget(key, 'resetAt');
+        const resetAt = resetAtStr ? parseInt(resetAtStr, 10) : now + CONFIG.RATE_LIMIT_WINDOW;
         
+        // Если окно истекло — сбрасываем
         if (now > resetAt) {
             await kv.del(key);
+            await kv.incr(key);
+            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
             await kv.hset(key, { 
-                count: '1', 
                 resetAt: String(now + CONFIG.RATE_LIMIT_WINDOW),
                 createdAt: String(now)
             });
-            await kv.expire(key, Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000));
             
             return { 
                 allowed: true, 
@@ -259,9 +284,7 @@ async function checkRateLimit(ip) {
             };
         }
         
-        const count = parseInt(data.count, 10);
-        
-        if (count >= CONFIG.RATE_LIMIT_MAX) {
+        if (count > CONFIG.RATE_LIMIT_MAX) {
             return { 
                 allowed: false, 
                 retryAfter: Math.ceil((resetAt - now) / 1000),
@@ -270,11 +293,9 @@ async function checkRateLimit(ip) {
             };
         }
         
-        await kv.hincrby(key, 'count', 1);
-        
         return { 
             allowed: true, 
-            remaining: CONFIG.RATE_LIMIT_MAX - count - 1,
+            remaining: CONFIG.RATE_LIMIT_MAX - count,
             resetAt
         };
     } catch (error) {
@@ -434,6 +455,8 @@ router.get('/download/:videoId/:format/:quality', async (req, res) => {
             statusCode = 504;
         } else if (err.message.includes('not found')) {
             statusCode = 404;
+        } else if (err.message.includes('API key')) {
+            statusCode = 503;
         }
         
         res.status(statusCode).json({ 
@@ -450,7 +473,8 @@ router.get('/health', (req, res) => {
         data: {
             status: 'ok',
             timestamp: new Date().toISOString(),
-            uptime: process.uptime()
+            uptime: process.uptime(),
+            cobaltApiKeyConfigured: !!CONFIG.COBALT_API_KEY
         }
     });
 });
