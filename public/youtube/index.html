@@ -363,72 +363,64 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 
     // Рендер результата
     function renderResult(info) {
-        const thumbImg = $('thumbImg');
-        if (thumbImg) {
-            thumbImg.src = info.thumbnail;
-            thumbImg.alt = info.title;
-            thumbImg.onerror = () => {
-                thumbImg.src = `https://i.ytimg.com/vi/${info.videoId}/hqdefault.jpg`;
-            };
-        }
-        
-        const videoTitle = $('videoTitle');
-        if (videoTitle) {
-            videoTitle.textContent = info.title;
-            videoTitle.title = info.title;
-        }
-        
-        const durationText = info.duration ? formatDuration(info.duration) : '';
-        const videoMeta = $('videoMeta');
-        if (videoMeta) {
-            const metaText = `${info.author}${durationText ? ' · ' + durationText : ''}`;
-            videoMeta.textContent = metaText;
-            videoMeta.title = metaText;
-        }
-        
-        // Генерируем кнопки для каждого формата
-        const formatsHtml = info.formats.map(f => {
-            if (f.error) {
-                return `
-                    <div class="format-btn format-btn-error" title="${f.error}">
-                        <span class="format-label">${f.label}</span>
-                        <span class="format-desc">Недоступно</span>
-                    </div>
-                `;
-            }
-            
-            const downloadUrl = `${API_BASE}/download/${info.videoId}/${f.format || (f.type === 'audio' ? 'mp3' : 'mp4')}/${f.quality}`;
-            const icon = f.type === 'audio' ? '🎵' : '🎬';
-            
-            return `
-                <a href="${downloadUrl}" target="_blank" rel="noopener" class="format-btn" data-format="${f.format}" data-quality="${f.quality}">
-                    <span class="format-icon">${icon}</span>
-                    <span class="format-label">${f.label}</span>
-                    <span class="format-desc">${f.type === 'audio' ? 'Аудио' : 'Видео'}</span>
-                </a>
-            `;
-        }).join('');
-        
-        const formatGrid = $('formatGrid');
-        if (formatGrid) {
-            formatGrid.innerHTML = formatsHtml || '<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">Форматы не найдены</div>';
-        }
-        
-        const resultCard = $('resultCard');
-        if (resultCard) {
-            resultCard.classList.add('visible');
-            
-            // Прокрутка к результату
-            setTimeout(() => {
-                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
-        }
-        
-        // Сохраняем в историю
-        saveToHistory(info);
-        
-        console.log('[RenderResult] Success:', info.videoId);
+    const thumbImg = $('thumbImg');
+    if (thumbImg) {
+        thumbImg.src = info.thumbnail;
+        thumbImg.alt = info.title;
+        thumbImg.onerror = () => {
+            thumbImg.src = `https://i.ytimg.com/vi/${info.videoId}/hqdefault.jpg`;
+        };
     }
+    
+    const videoTitle = $('videoTitle');
+    if (videoTitle) {
+        videoTitle.textContent = info.title;
+        videoTitle.title = info.title;
+    }
+    
+    const durationText = info.duration ? formatDuration(info.duration) : '';
+    const videoMeta = $('videoMeta');
+    if (videoMeta) {
+        const metaText = `${info.author}${durationText ? ' · ' + durationText : ''}`;
+        videoMeta.textContent = metaText;
+        videoMeta.title = metaText;
+    }
+    
+    // Фильтруем только успешные форматы
+    const availableFormats = info.formats.filter(f => !f.error);
+    
+    // Генерируем кнопки для каждого формата
+    const formatsHtml = availableFormats.map(f => {
+        const downloadUrl = `${API_BASE}/download/${info.videoId}/${f.format || (f.type === 'audio' ? 'mp3' : 'mp4')}/${f.quality}`;
+        const icon = f.type === 'audio' ? '🎵' : '🎬';
+        
+        return `
+            <a href="${downloadUrl}" target="_blank" rel="noopener" class="format-btn" data-format="${f.format}" data-quality="${f.quality}">
+                <span class="format-icon">${icon}</span>
+                <span class="format-label">${f.label}</span>
+                <span class="format-desc">${f.type === 'audio' ? 'Аудио' : 'Видео'}</span>
+            </a>
+        `;
+    }).join('');
+    
+    const formatGrid = $('formatGrid');
+    if (formatGrid) {
+        formatGrid.innerHTML = formatsHtml || '<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">Доступные форматы не найдены. Попробуйте другое видео.</div>';
+    }
+    
+    const resultCard = $('resultCard');
+    if (resultCard) {
+        resultCard.classList.add('visible');
+        
+        setTimeout(() => {
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+    
+    saveToHistory(info);
+    
+    console.log('[RenderResult] Success:', info.videoId, 'Available formats:', availableFormats.length);
+}
 
     // Показ ошибки
     function showError(msg, details = null) {
