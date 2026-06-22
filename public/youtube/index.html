@@ -200,132 +200,479 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
     // API endpoint для backend
     const API_BASE = '/api/youtube';
     
+    // Конфигурация
+    const CONFIG = {
+        MAX_URL_LENGTH: 2048,
+        REQUEST_TIMEOUT: 30000,
+        RETRY_ATTEMPTS: 2,
+        RETRY_DELAY: 1000,
+        DEBOUNCE_DELAY: 300,
+        MAX_HISTORY_ITEMS: 10
+    };
+
+    // Сообщения об ошибках
+    const ERROR_MESSAGES = {
+        INVALID_URL: 'Неверная ссылка. Вставьте корректную ссылку на YouTube видео.',
+        VIDEO_NOT_FOUND: 'Видео не найдено или недоступно.',
+        NETWORK_ERROR: 'Ошибка сети. Проверьте подключение к интернету.',
+        TIMEOUT: 'Превышено время ожидания ответа от сервера.',
+        SERVER_ERROR: 'Ошибка сервера. Попробуйте позже.',
+        RATE_LIMIT: 'Слишком много запросов. Подождите немного.',
+        UNKNOWN: 'Произошла неизвестная ошибка.'
+    };
+
+    // Утилита для задержки
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Утилита для debounce
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return (...args) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func(...args), delay);
+        };
+    };
+
+    // Утилита для fetch с таймаутом
+    const fetchWithTimeout = async (url, options = {}, timeout = CONFIG.REQUEST_TIMEOUT) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error(ERROR_MESSAGES.TIMEOUT);
+            }
+            throw error;
+        }
+    };
+
+    // Утилита для fetch с retry
+    const fetchWithRetry = async (url, options = {}, attempts = CONFIG.RETRY_ATTEMPTS) => {
+        let lastError;
+        
+        for (let i = 0; i <= attempts; i++) {
+            try {
+                return await fetchWithTimeout(url, options);
+            } catch (error) {
+                lastError = error;
+                console.warn(`[Fetch] Attempt ${i + 1} failed:`, error.message);
+                
+                if (i < attempts) {
+                    await sleep(CONFIG.RETRY_DELAY * (i + 1));
+                }
+            }
+        }
+        
+        throw lastError;
+    };
+
     // Извлекаем ID видео из различных форматов ссылок
     function extractVideoId(url) {
-        if (!url) return null;
+        if (!url || typeof url !== 'string') return null;
+        if (url.length > CONFIG.MAX_URL_LENGTH) return null;
+        
         url = url.trim();
         
-        // youtu.be/ID
-        let m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-        if (m) return m[1];
+        const patterns = [
+            /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+            /[?&]v=([a-zA-Z0-9_-]{11})/,
+            /shorts\/([a-zA-Z0-9_-]{11})/,
+            /embed\/([a-zA-Z0-9_-]{11})/,
+            /live\/([a-zA-Z0-9_-]{11})/
+        ];
         
-        // youtube.com/watch?v=ID
-        m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-        if (m) return m[1];
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match && match[1]) return match[1];
+        }
         
-        // youtube.com/shorts/ID
-        m = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
-        if (m) return m[1];
-        
-        // youtube.com/embed/ID
-        m = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
-        if (m) return m[1];
-        
-        // Просто ID (если пользователь вставил только ID)
         if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
         
         return null;
     }
 
+    // Валидация URL
+    function isValidYouTubeUrl(url) {
+        return extractVideoId(url) !== null;
+    }
+
+    // Форматирование длительности
     function formatDuration(seconds) {
-        if (!seconds) return '';
+        if (!seconds || typeof seconds !== 'number') return '';
+        
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
-        if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        const s = Math.floor(seconds % 60);
+        
+        if (h > 0) {
+            return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
         return `${m}:${String(s).padStart(2,'0')}`;
     }
 
+    // Получение информации о видео
     async function fetchVideoInfo(videoId) {
-        // Используем наш backend API
-        const res = await fetch(`${API_BASE}/info/${videoId}`);
+        const res = await fetchWithRetry(`${API_BASE}/info/${videoId}`);
         
         if (!res.ok) {
-            const error = await res.json().catch(() => ({ error: 'Не удалось получить информацию о видео' }));
-            throw new Error(error.error || 'Не удалось получить информацию о видео');
+            let errorMessage = ERROR_MESSAGES.UNKNOWN;
+            
+            try {
+                const error = await res.json();
+                
+                if (res.status === 404) {
+                    errorMessage = ERROR_MESSAGES.VIDEO_NOT_FOUND;
+                } else if (res.status === 429) {
+                    errorMessage = ERROR_MESSAGES.RATE_LIMIT;
+                } else if (res.status >= 500) {
+                    errorMessage = ERROR_MESSAGES.SERVER_ERROR;
+                } else if (error.error) {
+                    errorMessage = error.error;
+                }
+            } catch (e) {
+                console.error('[FetchVideoInfo] Failed to parse error:', e);
+            }
+            
+            throw new Error(errorMessage);
         }
         
         const data = await res.json();
         
         return {
-            videoId: data.videoId,
+            videoId: data.videoId || videoId,
             title: data.title || 'Unknown',
             author: data.author || 'Unknown',
+            authorUrl: data.authorUrl,
             duration: data.duration,
-            thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-            formats: data.formats || []
+            thumbnail: data.thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+            formats: data.formats || [],
+            provider: data.provider || 'YouTube'
         };
     }
 
+    // Рендер результата
     function renderResult(info) {
-        $('thumbImg').src = info.thumbnail;
-        $('videoTitle').textContent = info.title;
+        const thumbImg = $('thumbImg');
+        if (thumbImg) {
+            thumbImg.src = info.thumbnail;
+            thumbImg.alt = info.title;
+            thumbImg.onerror = () => {
+                thumbImg.src = `https://i.ytimg.com/vi/${info.videoId}/hqdefault.jpg`;
+            };
+        }
+        
+        const videoTitle = $('videoTitle');
+        if (videoTitle) {
+            videoTitle.textContent = info.title;
+            videoTitle.title = info.title;
+        }
         
         const durationText = info.duration ? formatDuration(info.duration) : '';
-        $('videoMeta').textContent = `${info.author}${durationText ? ' · ' + durationText : ''}`;
+        const videoMeta = $('videoMeta');
+        if (videoMeta) {
+            const metaText = `${info.author}${durationText ? ' · ' + durationText : ''}`;
+            videoMeta.textContent = metaText;
+            videoMeta.title = metaText;
+        }
         
         // Генерируем кнопки для каждого формата
         const formatsHtml = info.formats.map(f => {
-            const downloadUrl = `${API_BASE}/download/${info.videoId}/${f.type === 'audio' ? 'mp3' : 'mp4'}/${f.quality}`;
+            if (f.error) {
+                return `
+                    <div class="format-btn format-btn-error" title="${f.error}">
+                        <span class="format-label">${f.label}</span>
+                        <span class="format-desc">Недоступно</span>
+                    </div>
+                `;
+            }
+            
+            const downloadUrl = `${API_BASE}/download/${info.videoId}/${f.format || (f.type === 'audio' ? 'mp3' : 'mp4')}/${f.quality}`;
+            const icon = f.type === 'audio' ? '🎵' : '🎬';
+            
             return `
-                <a href="${downloadUrl}" target="_blank" rel="noopener" class="format-btn">
+                <a href="${downloadUrl}" target="_blank" rel="noopener" class="format-btn" data-format="${f.format}" data-quality="${f.quality}">
+                    <span class="format-icon">${icon}</span>
                     <span class="format-label">${f.label}</span>
                     <span class="format-desc">${f.type === 'audio' ? 'Аудио' : 'Видео'}</span>
                 </a>
             `;
         }).join('');
         
-        $('formatGrid').innerHTML = formatsHtml || '<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Форматы не найдены</div>';
+        const formatGrid = $('formatGrid');
+        if (formatGrid) {
+            formatGrid.innerHTML = formatsHtml || '<div style="color: var(--text-secondary); text-align: center; grid-column: 1/-1; padding: 2rem;">Форматы не найдены</div>';
+        }
         
-        $('resultCard').classList.add('visible');
+        const resultCard = $('resultCard');
+        if (resultCard) {
+            resultCard.classList.add('visible');
+            
+            // Прокрутка к результату
+            setTimeout(() => {
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+        
+        // Сохраняем в историю
+        saveToHistory(info);
+        
+        console.log('[RenderResult] Success:', info.videoId);
     }
 
-    function showError(msg) {
-        $('errorMsg').textContent = msg;
-        $('errorMsg').classList.add('visible');
-        $('resultCard').classList.remove('visible');
+    // Показ ошибки
+    function showError(msg, details = null) {
+        const errorMsg = $('errorMsg');
+        if (errorMsg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('visible');
+            
+            if (details) {
+                console.error('[Error]', msg, details);
+            }
+        }
+        
+        const resultCard = $('resultCard');
+        if (resultCard) {
+            resultCard.classList.remove('visible');
+        }
     }
 
+    // Скрытие ошибки
     function hideError() {
-        $('errorMsg').classList.remove('visible');
+        const errorMsg = $('errorMsg');
+        if (errorMsg) {
+            errorMsg.classList.remove('visible');
+        }
     }
 
+    // Обработка загрузки
     async function handleFetch() {
-        const url = $('urlInput').value.trim();
+        const urlInput = $('urlInput');
+        const url = urlInput ? urlInput.value.trim() : '';
         const videoId = extractVideoId(url);
         
         if (!videoId) {
-            showError('Неверная ссылка. Вставьте корректную ссылку на YouTube видео.');
+            showError(ERROR_MESSAGES.INVALID_URL);
+            if (urlInput) {
+                urlInput.focus();
+                urlInput.select();
+            }
             return;
         }
         
         hideError();
-        $('resultCard').classList.remove('visible');
-        $('loading').classList.add('visible');
-        $('fetchBtn').disabled = true;
+        
+        const resultCard = $('resultCard');
+        if (resultCard) {
+            resultCard.classList.remove('visible');
+        }
+        
+        const loading = $('loading');
+        if (loading) {
+            loading.classList.add('visible');
+        }
+        
+        const fetchBtn = $('fetchBtn');
+        if (fetchBtn) {
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = 'Загрузка...';
+        }
         
         try {
             const info = await fetchVideoInfo(videoId);
             renderResult(info);
         } catch (err) {
-            showError(err.message || 'Ошибка при получении информации о видео');
+            console.error('[HandleFetch] Error:', err);
+            
+            let errorMessage = ERROR_MESSAGES.UNKNOWN;
+            
+            if (err.message.includes('timeout')) {
+                errorMessage = ERROR_MESSAGES.TIMEOUT;
+            } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                errorMessage = ERROR_MESSAGES.NETWORK_ERROR;
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            showError(errorMessage, err);
         } finally {
-            $('loading').classList.remove('visible');
-            $('fetchBtn').disabled = false;
+            if (loading) {
+                loading.classList.remove('visible');
+            }
+            if (fetchBtn) {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = 'Получить';
+            }
         }
     }
 
-    $('fetchBtn').addEventListener('click', handleFetch);
-    $('urlInput').addEventListener('keydown', e => {
-        if (e.key === 'Enter') handleFetch();
-    });
+    // Сохранение в историю
+    function saveToHistory(info) {
+        try {
+            const history = JSON.parse(localStorage.getItem('youtube_history') || '[]');
+            
+            const existingIndex = history.findIndex(item => item.videoId === info.videoId);
+            if (existingIndex !== -1) {
+                history.splice(existingIndex, 1);
+            }
+            
+            history.unshift({
+                videoId: info.videoId,
+                title: info.title,
+                author: info.author,
+                thumbnail: info.thumbnail,
+                timestamp: Date.now()
+            });
+            
+            while (history.length > CONFIG.MAX_HISTORY_ITEMS) {
+                history.pop();
+            }
+            
+            localStorage.setItem('youtube_history', JSON.stringify(history));
+        } catch (error) {
+            console.warn('[SaveHistory] Failed:', error);
+        }
+    }
 
-    // Автозаполнение из URL параметра ?v=VIDEO_ID
-    const params = new URLSearchParams(window.location.search);
-    const vParam = params.get('v');
-    if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) {
-        $('urlInput').value = `https://www.youtube.com/watch?v=${vParam}`;
-        handleFetch();
+    // Загрузка истории
+    function loadHistory() {
+        try {
+            const history = JSON.parse(localStorage.getItem('youtube_history') || '[]');
+            const historyContainer = $('historyContainer');
+            
+            if (!historyContainer || history.length === 0) return;
+            
+            const historyHtml = history.map(item => `
+                <div class="history-item" data-video-id="${item.videoId}" title="${item.title}">
+                    <img src="${item.thumbnail}" alt="${item.title}" class="history-thumb">
+                    <div class="history-info">
+                        <div class="history-title">${item.title}</div>
+                        <div class="history-author">${item.author}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            historyContainer.innerHTML = historyHtml;
+            
+            // Обработчики кликов на элементы истории
+            historyContainer.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const videoId = item.dataset.videoId;
+                    const urlInput = $('urlInput');
+                    if (urlInput) {
+                        urlInput.value = `https://www.youtube.com/watch?v=${videoId}`;
+                        handleFetch();
+                    }
+                });
+            });
+        } catch (error) {
+            console.warn('[LoadHistory] Failed:', error);
+        }
+    }
+
+    // Поддержка drag & drop
+    function setupDragAndDrop() {
+        const urlInput = $('urlInput');
+        if (!urlInput) return;
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            urlInput.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            urlInput.addEventListener(eventName, () => {
+                urlInput.classList.add('drag-over');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            urlInput.addEventListener(eventName, () => {
+                urlInput.classList.remove('drag-over');
+            }, false);
+        });
+        
+        urlInput.addEventListener('drop', (e) => {
+            const text = e.dataTransfer.getData('text');
+            if (text && isValidYouTubeUrl(text)) {
+                urlInput.value = text;
+                handleFetch();
+            }
+        }, false);
+    }
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Инициализация
+    function init() {
+        const fetchBtn = $('fetchBtn');
+        const urlInput = $('urlInput');
+        
+        if (fetchBtn) {
+            fetchBtn.addEventListener('click', handleFetch);
+        }
+        
+        if (urlInput) {
+            urlInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleFetch();
+                }
+            });
+            
+            // Автоочистка при фокусе
+            urlInput.addEventListener('focus', () => {
+                if (urlInput.value === 'Вставьте ссылку на YouTube видео') {
+                    urlInput.value = '';
+                }
+            });
+        }
+        
+        // Поддержка drag & drop
+        setupDragAndDrop();
+        
+        // Загрузка истории
+        loadHistory();
+        
+        // Автозаполнение из URL параметра ?v=VIDEO_ID
+        const params = new URLSearchParams(window.location.search);
+        const vParam = params.get('v');
+        
+        if (vParam && /^[a-zA-Z0-9_-]{11}$/.test(vParam)) {
+            if (urlInput) {
+                urlInput.value = `https://www.youtube.com/watch?v=${vParam}`;
+            }
+            setTimeout(handleFetch, 100);
+        }
+        
+        // Поддержка URL параметра ?url=FULL_URL
+        const urlParam = params.get('url');
+        if (urlParam && isValidYouTubeUrl(urlParam)) {
+            if (urlInput) {
+                urlInput.value = urlParam;
+            }
+            setTimeout(handleFetch, 100);
+        }
+        
+        console.log('[YouTube Downloader] Initialized');
+    }
+
+    // Запуск после загрузки DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 })();
 </script>
