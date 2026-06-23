@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Безопасность устройств — Смартфоны, ПК, умный дом, IoT</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); }
+  .gradient-text { background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15); }
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse-indigo { 0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); } }
+  .pulse-indigo { animation: pulse-indigo 2s infinite; }
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  .device-tab.active { background: linear-gradient(135deg, #0ea5e9, #6366f1); color: white; }
+  .device-tab.active svg { color: white; }
+  
+  .threat-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .threat-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1.5s ease-out;
+  }
+  
+  .icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .action-step { position: relative; padding-left: 3rem; }
+  .action-step::before { content: counter(step); counter-increment: step; position: absolute; left: 0; top: 0; width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #0ea5e9, #6366f1); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
+  .steps-container { counter-reset: step; }
+  
+  .circuit-bg {
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.08) 0%, transparent 40%);
+  }
+  
+  .device-card { transition: all 0.3s; }
+  .device-card.active { border-color: #6366f1; background: linear-gradient(135deg, #eef2ff, #f0f9ff); }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-lg z-50 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+      </div>
+      <span class="font-bold text-xl">DeviceShield</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#devices" class="hover:text-indigo-600 transition">Устройства</a>
+      <a href="#smart-home" class="hover:text-indigo-600 transition">Умный дом</a>
+      <a href="#old-devices" class="hover:text-indigo-600 transition">Старые устройства</a>
+      <a href="#backup" class="hover:text-indigo-600 transition">Бэкапы</a>
+      <a href="#quiz" class="hover:text-indigo-600 transition">Тест</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-6 circuit-bg relative overflow-hidden">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative">
+    <div class="fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-6">
+        <span class="w-2 h-2 bg-indigo-500 rounded-full pulse-indigo"></span>
+        У вас 5+ подключённых устройств? Вы в зоне риска
+      </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+        Безопасность <span class="gradient-text">устройств</span>
+      </h1>
+      <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+        Смартфоны, ноутбуки, роутеры, умные колонки, камеры — каждое устройство может стать точкой входа для злоумышленников. Полный гид по защите всей вашей цифровой экосистемы.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#devices" class="px-8 py-4 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2">
+          Изучить угрозы
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+        <a href="#quiz" class="px-8 py-4 bg-white border-2 border-slate-200 rounded-xl font-semibold hover:border-indigo-400 transition">
+          Пройти тест
+        </a>
+      </div>
+      <div class="mt-10 flex gap-8">
+        <div><div class="text-3xl font-bold gradient-text">5</div><div class="text-sm text-slate-500">типов устройств</div></div>
+        <div><div class="text-3xl font-bold gradient-text">25+</div><div class="text-sm text-slate-500">угроз</div></div>
+        <div><div class="text-3xl font-bold gradient-text">15</div><div class="text-sm text-slate-500">правил защиты</div></div>
+      </div>
+    </div>
+    
+    <div class="fade-in">
+      <!-- Визуализация устройств -->
+      <div class="relative bg-white rounded-3xl p-8 shadow-2xl border border-slate-200">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="aspect-square rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center shadow-lg">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="aspect-square rounded-2xl bg-gradient-to-br from-cyan-400 to-sky-500 flex items-center justify-center shadow-lg">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+          </div>
+          <div class="aspect-square rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </div>
+          <div class="aspect-square rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+          </div>
+          <div class="aspect-square rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-lg">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-sm font-semibold">Все устройства под защитой</span>
+          </div>
+          <span class="text-xs font-bold text-indigo-600">6 / 6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Статистика -->
+<section class="py-12 px-6 bg-white border-y border-slate-200">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">12.5</div>
+      <div class="text-sm text-slate-500 mt-2">устройств в среднем в семье</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">70%</div>
+      <div class="text-sm text-slate-500 mt-2">IoT-устройств не обновляются</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">43%</div>
+      <div class="text-sm text-slate-500 mt-2">атак идут через умный дом</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">30 сек</div>
+      <div class="text-sm text-slate-500 mt-2">взлом роутера со стандартным паролем</div>
+    </div>
+  </div>
+</section>
+
+<!-- Угрозы по типам устройств -->
+<section id="devices" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-4">УГРОЗЫ ПО ТИПАМ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Каждое устройство — потенциальная уязвимость</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Выберите тип устройства и узнайте, какие угрозы ему грозят и как защититься</p>
+    </div>
+    
+    <!-- Табы устройств -->
+    <div class="flex flex-wrap gap-3 justify-center mb-10" id="deviceTabs"></div>
+    
+    <!-- Контент устройства -->
+    <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200" id="deviceContent"></div>
+  </div>
+</section>
+
+<!-- Умный дом -->
+<section id="smart-home" class="py-20 px-6 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">УМНЫЙ ДОМ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Безопасность умного дома</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Камеры, колонки, розетки, замки — всё это может быть взломано. Вот как защититься</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="smartHomeGrid"></div>
+  </div>
+</section>
+
+<!-- Старые устройства -->
+<section id="old-devices" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">СТАРЫЕ УСТРОЙСТВА</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Как правильно избавиться от старого устройства</h2>
+      <p class="text-slate-600 text-lg">Простого сброса недостаточно — данные можно восстановить. Вот правильный алгоритм</p>
+    </div>
+    
+    <div class="bg-white rounded-3xl p-8 md:p-12 shadow-xl steps-container space-y-8" id="wipeSteps"></div>
+    
+    <div class="mt-10 grid md:grid-cols-2 gap-6">
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-emerald-200">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="icon-box bg-emerald-500">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-emerald-700">Можно продать/подарить</h3>
+        </div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>После полного стирания данных</li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>С заводскими настройками</li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Без привязки к аккаунтам</li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>С извлечённой SIM и SD-картой</li>
+        </ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="icon-box bg-red-500">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-red-700">Нельзя просто выбросить</h3>
+        </div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>Данные можно восстановить</li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>Вред для экологии</li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>Передаёте данные незнакомцам</li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>Риск шантажа и кражи личности</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Резервное копирование -->
+<section id="backup" class="py-20 px-6 bg-white">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">РЕЗЕРВНЫЕ КОПИИ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Стратегия бэкапа 3-2-1</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Золотой стандарт резервного копирования, который спасёт ваши данные в любой ситуации</p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6 mb-10">
+      <div class="bg-gradient-to-br from-sky-50 to-indigo-50 rounded-2xl p-6 border-2 border-sky-200">
+        <div class="text-5xl font-extrabold gradient-text mb-2">3</div>
+        <h3 class="text-xl font-bold mb-2">копии данных</h3>
+        <p class="text-slate-600 text-sm">Одна основная и минимум две резервных. Если одна потеряна — есть запасные.</p>
+      </div>
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-200">
+        <div class="text-5xl font-extrabold gradient-text mb-2">2</div>
+        <h3 class="text-xl font-bold mb-2">разных носителя</h3>
+        <p class="text-slate-600 text-sm">Например, внешний диск + облако. Разные типы хранения защищают от разных угроз.</p>
+      </div>
+      <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200">
+        <div class="text-5xl font-extrabold gradient-text mb-2">1</div>
+        <h3 class="text-xl font-bold mb-2">вне дома</h3>
+        <p class="text-slate-600 text-sm">Облако или диск у родственников. Защита от пожара, кражи, стихийных бедствий.</p>
+      </div>
+    </div>
+    
+    <div class="bg-slate-900 rounded-3xl p-6 md:p-10 text-white">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+        <svg class="w-7 h-7 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+        Что обязательно сохранять
+      </h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span class="font-bold">Критически важно</span>
+          </div>
+          <ul class="text-sm text-slate-300 space-y-1">
+            <li>— Семейные фото и видео</li>
+            <li>— Документы (паспорта, договоры)</li>
+            <li>— Пароли и 2FA-коды</li>
+            <li>— Рабочие проекты</li>
+          </ul>
+        </div>
+        <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/></svg>
+            <span class="font-bold">Желательно</span>
+          </div>
+          <ul class="text-sm text-slate-300 space-y-1">
+            <li>— Переписки в мессенджерах</li>
+            <li>— Контакты и календарь</li>
+            <li>— Закладки браузера</li>
+            <li>— Настройки приложений</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Тест -->
+<section id="quiz" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-4">ТЕСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Насколько защищены ваши устройства?</h2>
+      <p class="text-slate-600 text-lg">10 вопросов, которые выявят уязвимости в вашей защите</p>
+    </div>
+    <div class="bg-gradient-to-br from-sky-50 to-indigo-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <div class="flex justify-between items-center mb-6">
+        <div class="text-sm font-semibold text-slate-500">Вопрос <span id="qNum">1</span> из <span id="qTotal">10</span></div>
+        <div class="text-sm font-semibold text-indigo-600">Счёт: <span id="score">0</span></div>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-2 mb-8"><div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width:10%"></div></div>
+      
+      <div id="quizCard">
+        <div class="bg-white rounded-2xl p-5 mb-6 border-l-4 border-indigo-500">
+          <div class="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-2" id="qCategory">Категория</div>
+          <h3 class="text-xl md:text-2xl font-bold" id="qText">Текст вопроса</h3>
+        </div>
+        <div class="space-y-3" id="answersContainer"></div>
+      </div>
+
+      <div id="quizResult" class="hidden text-center py-8">
+        <div class="mb-4" id="resultIcon"></div>
+        <h3 class="text-3xl font-bold mb-2" id="resultTitle">Результат</h3>
+        <p class="text-slate-600 mb-6" id="resultText">Описание</p>
+        <button onclick="restartQuiz()" class="px-8 py-3 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">Пройти ещё раз</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Настройки по платформам -->
+<section class="py-20 px-6 bg-white">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-cyan-100 text-cyan-700 rounded-full text-sm font-semibold mb-4">НАСТРОЙКИ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Настройте защиту на каждом устройстве</h2>
+      <p class="text-slate-600 text-lg">Конкретные шаги для каждой платформы</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6" id="platformsGrid"></div>
+  </div>
+</section>
+
+<!-- Чек-лист -->
+<section class="py-20 px-6 bg-slate-50">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">ЧЕК-ЛИСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Проверьте все свои устройства</h2>
+      <p class="text-slate-600 text-lg">Пройдитесь по этому списку — это займёт около часа, но спасёт от больших проблем</p>
+    </div>
+    <div class="bg-white rounded-3xl p-8 shadow-lg" id="checklistContainer"></div>
+    <div class="mt-6 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-2xl p-6 text-white text-center">
+      <div class="text-3xl font-bold"><span id="checkCount">0</span> / <span id="checkTotal">0</span></div>
+      <div class="text-white/90 text-sm">пунктов выполнено</div>
+      <div class="text-xs text-white/70 mt-1" id="checkStatus">Начните отмечать пункты</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6">
+  <div class="max-w-5xl mx-auto gradient-bg rounded-3xl p-12 md:p-16 text-white text-center relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Защитите всю свою цифровую жизнь</h2>
+      <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Каждое устройство — это дверь в вашу цифровую жизнь. Запертыми должны быть все.</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="#quiz" class="px-8 py-4 bg-white text-indigo-700 rounded-xl font-bold shadow-lg hover:shadow-xl transition">Пройти тест</a>
+        <a href="#devices" class="px-8 py-4 bg-white/20 backdrop-blur border-2 border-white/40 rounded-xl font-bold hover:bg-white/30 transition">Изучить угрозы</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-400 py-12 px-6">
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-2 mb-4">
+      <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">DeviceShield</span>
+    </div>
+    <p class="text-sm mb-4">Образовательный проект о безопасности всех ваших устройств</p>
+    <p class="text-xs text-slate-500">© 2026 DeviceShield. Все материалы носят информационный характер.</p>
+  </div>
+</footer>
+
+<script>
+// Типы устройств
+const devices = [
+  {
+    id: 'smartphone',
+    name: 'Смартфон',
+    icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>',
+    color: 'from-sky-500 to-indigo-500',
+    threats: [
+      { name: 'Шпионские приложения', level: 90, desc: 'Скрытые программы, которые следят за вами, читают сообщения, записывают звонки' },
+      { name: 'Кража при физическом доступе', level: 75, desc: 'Если телефон не заблокирован — злоумышленник получит доступ ко всем данным' },
+      { name: 'Фишинг через SMS и мессенджеры', level: 85, desc: 'Поддельные ссылки, ведущие на фишинговые сайты банков и сервисов' },
+      { name: 'Публичный Wi-Fi', level: 70, desc: 'Перехват данных в открытых сетях кафе, аэропортов, отелей' }
+    ],
+    protection: [
+      'Включите блокировку экрана (PIN/биометрия)',
+      'Обновляйте ОС и приложения регулярно',
+      'Устанавливайте приложения только из официальных магазинов',
+      'Проверяйте разрешения приложений',
+      'Используйте VPN в публичных сетях',
+      'Включите шифрование устройства'
+    ]
+  },
+  {
+    id: 'laptop',
+    name: 'Ноутбук / ПК',
+    icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+    color: 'from-indigo-500 to-purple-600',
+    threats: [
+      { name: 'Вирусы и трояны', level: 95, desc: 'Вредоносное ПО, крадущее пароли, банковские данные, личные файлы' },
+      { name: 'Ransomware (шифровальщики)', level: 80, desc: 'Шифруют все файлы и требуют выкуп за расшифровку' },
+      { name: 'Фишинговые сайты', level: 90, desc: 'Поддельные сайты банков, почты, соцсетей для кражи учётных данных' },
+      { name: 'Утечки через браузер', level: 75, desc: 'Расширения-шпионы, трекеры, утечки cookies' }
+    ],
+    protection: [
+      'Установите антивирус и включите автообновления',
+      'Используйте менеджер паролей',
+      'Включите двухфакторную аутентификацию везде',
+      'Делайте регулярные бэкапы (стратегия 3-2-1)',
+      'Шифруйте диск (BitLocker / FileVault)',
+      'Используйте блокировщик рекламы (uBlock Origin)'
+    ]
+  },
+  {
+    id: 'router',
+    name: 'Роутер',
+    icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>',
+    color: 'from-cyan-500 to-sky-500',
+    threats: [
+      { name: 'Взлом через стандартный пароль', level: 95, desc: '90% роутеров работают с заводским паролем — взлом за 30 секунд' },
+      { name: 'DNS-спуфинг', level: 70, desc: 'Подмена DNS-серверов для перенаправления на фишинговые сайты' },
+      { name: 'Перехват всего трафика', level: 85, desc: 'Если роутер взломан — злоумышленник видит весь ваш интернет-трафик' },
+      { name: 'Устаревшая прошивка', level: 80, desc: 'Необновлённые роутеры содержат известные уязвимости' }
+    ],
+    protection: [
+      'Смените пароль админки роутера сразу после покупки',
+      'Используйте WPA3 или минимум WPA2',
+      'Обновляйте прошивку регулярно',
+      'Отключите WPS и удалённое управление',
+      'Смените имя сети (SSID) на нейтральное',
+      'Настройте гостевую сеть для гостей и IoT-устройств'
+    ]
+  },
+  {
+    id: 'iot',
+    name: 'Умный дом',
+    icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+    color: 'from-emerald-500 to-teal-500',
+    threats: [
+      { name: 'Взлом камер видеонаблюдения', level: 90, desc: 'Злоумышленники получают доступ к камерам и наблюдают за вашей жизнью' },
+      { name: 'Умные колонки как прослушка', level: 75, desc: 'Через колонки можно слушать разговоры, даже когда устройство «спит»' },
+      { name: 'Атаки на умные замки', level: 70, desc: 'Взлом электронных замков даёт физический доступ к дому' },
+      { name: 'DDoS через IoT', level: 65, desc: 'Ваши устройства могут использовать для атак на другие сайты' }
+    ],
+    protection: [
+      'Меняйте заводские пароли на всех IoT-устройствах',
+      'Изолируйте IoT в отдельной Wi-Fi сети',
+      'Отключайте микрофоны и камеры, когда не используете',
+      'Заклеивайте камеры ноутбуков и телефонов',
+      'Регулярно обновляйте прошивки устройств',
+      'Отключайте неиспользуемые функции (удалённый доступ, UPnP)'
+    ]
+  },
+  {
+    id: 'wearable',
+    name: 'Носимые устройства',
+    icon: '<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+    color: 'from-amber-500 to-orange-500',
+    threats: [
+      { name: 'Утечка медицинских данных', level: 80, desc: 'Фитнес-трекеры собирают данные о здоровье, сне, пульсе — всё это можно украсть' },
+      { name: 'Отслеживание геолокации', level: 85, desc: 'Умные часы постоянно передают ваше местоположение' },
+      { name: 'Перехват уведомлений', level: 70, desc: 'Через часы можно читать SMS, коды 2FA, личные сообщения' },
+      { name: 'Слабая защита Bluetooth', level: 65, desc: 'Многие носимые устройства имеют уязвимости в Bluetooth-протоколе' }
+    ],
+    protection: [
+      'Настройте приватность в приложениях-компаньонах',
+      'Отключите геолокацию, когда не нужна',
+      'Скройте содержимое уведомлений на экране часов',
+      'Используйте PIN-код на умных часах',
+      'Регулярно обновляйте прошивку',
+      'Отключайте Bluetooth, когда не используете'
+    ]
+  }
+];
+
+let currentDevice = 'smartphone';
+
+const deviceTabs = document.getElementById('deviceTabs');
+devices.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = `device-tab flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition ${d.id === currentDevice ? 'active' : 'bg-white border-2 border-slate-200 hover:border-indigo-400'}`;
+  btn.innerHTML = `<span class="w-5 h-5">${d.icon}</span>${d.name}`;
+  btn.onclick = () => {
+    currentDevice = d.id;
+    document.querySelectorAll('.device-tab').forEach(t => {
+      t.classList.remove('active');
+      t.classList.add('bg-white', 'border-2', 'border-slate-200');
+    });
+    btn.classList.add('active');
+    btn.classList.remove('bg-white', 'border-2', 'border-slate-200');
+    renderDeviceContent();
+  };
+  deviceTabs.appendChild(btn);
+});
+
+function renderDeviceContent() {
+  const device = devices.find(d => d.id === currentDevice);
+  const container = document.getElementById('deviceContent');
+  container.innerHTML = `
+    <div class="flex items-center gap-4 mb-8">
+      <div class="icon-box bg-gradient-to-br ${device.color} shadow-lg">
+        <span class="w-7 h-7 text-white">${device.icon}</span>
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold">${device.name}</h3>
+        <p class="text-slate-600 text-sm">Главные угрозы и способы защиты</p>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="font-bold text-lg mb-4 flex items-center gap-2 text-red-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Главные угрозы
+        </h4>
+        <div class="space-y-4">
+          ${device.threats.map(t => `
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <div class="flex justify-between items-center mb-2">
+                <span class="font-semibold text-sm">${t.name}</span>
+                <span class="text-xs font-bold text-slate-500">${t.level}%</span>
+              </div>
+              <p class="text-xs text-slate-600 mb-2">${t.desc}</p>
+              <div class="threat-bar">
+                <div class="threat-fill bg-gradient-to-r ${t.level >= 85 ? 'from-red-500 to-rose-500' : t.level >= 70 ? 'from-amber-500 to-orange-500' : 'from-yellow-500 to-amber-500'}" style="width: 0%" data-width="${t.level}%"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      
+      <div>
+        <h4 class="font-bold text-lg mb-4 flex items-center gap-2 text-emerald-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Как защититься
+        </h4>
+        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border-2 border-emerald-200">
+          <ul class="space-y-3">
+            ${device.protection.map(p => `
+              <li class="flex items-start gap-3 text-sm">
+                <svg class="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>${p}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Анимация баров
+  setTimeout(() => {
+    container.querySelectorAll('.threat-fill').forEach(bar => {
+      bar.style.width = bar.dataset.width;
+    });
+  }, 100);
+}
+
+renderDeviceContent();
+
+// Умный дом
+const smartHomeDevices = [
+  {
+    name: 'Умные камеры',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>',
+    color: 'from-sky-500 to-indigo-500',
+    risks: ['Взлом и наблюдение за вами', 'Утечка видеозаписей', 'Использование в DDoS-атаках'],
+    tips: ['Меняйте заводской пароль', 'Отключайте удалённый доступ, если не нужен', 'Закрывайте камеру, когда не используете']
+  },
+  {
+    name: 'Умные колонки',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>',
+    color: 'from-purple-500 to-pink-500',
+    risks: ['Постоянное прослушивание', 'Сбор данных о привычках', 'Голосовые команды от посторонних'],
+    tips: ['Отключайте микрофон кнопкой, когда не используете', 'Настройте распознавание голоса владельца', 'Удаляйте историю голосовых команд']
+  },
+  {
+    name: 'Умные замки',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+    color: 'from-amber-500 to-orange-500',
+    risks: ['Взлом через Bluetooth', 'Перехват кодов открытия', 'Физический доступ к дому'],
+    tips: ['Используйте двухфакторную аутентификацию', 'Регулярно меняйте коды доступа', 'Имейте резервный механический ключ']
+  },
+  {
+    name: 'Умные розетки',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+    color: 'from-emerald-500 to-teal-500',
+    risks: ['Вход в вашу сеть', 'Использование в ботнете', 'Управление вашей техникой'],
+    tips: ['Подключайте через гостевую сеть', 'Отключайте неиспользуемые функции', 'Обновляйте прошивку']
+  },
+  {
+    name: 'Умные лампочки',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>',
+    color: 'from-yellow-500 to-amber-500',
+    risks: ['Сбор данных о присутствии', 'Взлом через протокол Zigbee', 'Использование как маяк'],
+    tips: ['Настройте расписания, а не удалённое управление', 'Используйте локальный хаб, а не облако', 'Обновляйте прошивку']
+  },
+  {
+    name: 'Умные пылесосы',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+    color: 'from-rose-500 to-pink-500',
+    risks: ['Карта вашего дома в облаке', 'Камеры в некоторых моделях', 'Доступ к домашней сети'],
+    tips: ['Отключайте облачную синхронизацию карт', 'Используйте локальное управление', 'Очищайте историю уборки']
+  }
+];
+
+const smartHomeGrid = document.getElementById('smartHomeGrid');
+smartHomeDevices.forEach(d => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="icon-box bg-gradient-to-br ${d.color} shadow-lg mb-4">${d.icon}</div>
+    <h3 class="font-bold text-lg mb-3">${d.name}</h3>
+    <div class="mb-4">
+      <div class="text-xs font-bold text-red-600 mb-2">УГРОЗЫ</div>
+      <ul class="space-y-1">
+        ${d.risks.map(r => `<li class="text-xs text-slate-600 flex items-start gap-2"><span class="text-red-500">●</span>${r}</li>`).join('')}
+      </ul>
+    </div>
+    <div>
+      <div class="text-xs font-bold text-emerald-600 mb-2">ЗАЩИТА</div>
+      <ul class="space-y-1">
+        ${d.tips.map(t => `<li class="text-xs text-slate-600 flex items-start gap-2"><span class="text-emerald-500">●</span>${t}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+  smartHomeGrid.appendChild(div);
+});
+
+// Шаги удаления данных
+const wipeSteps = [
+  { title: 'Сделайте полный бэкап', desc: 'Сохраните все важные данные: фото, контакты, документы. Используйте облако или внешний диск.' },
+  { title: 'Выйдите из всех аккаунтов', desc: 'Отвяжите устройство от iCloud, Google, Samsung, Microsoft. Это критично для активационной блокировки.' },
+  { title: 'Извлеките SIM и карту памяти', desc: 'Физически удалите SIM-карту и microSD. Они не стираются при сбросе.' },
+  { title: 'Зашифруйте устройство (если возможно)', desc: 'На Android: Настройки → Безопасность → Шифрование. Это усложнит восстановление данных.' },
+  { title: 'Выполните полный сброс', desc: 'Android: Настройки → Система → Сброс → Удалить все данные. iOS: Настройки → Основные → Перенос или сброс → Стереть контент.' },
+  { title: 'Для ПК: используйте специальные утилиты', desc: 'DBAN, Eraser, CCleaner Drive Wiper — перезаписывают диск несколькими проходами. Для SSD — Secure Erase.' },
+  { title: 'Проверьте результат', desc: 'Включите устройство — оно должно приветствовать как новое. Убедитесь, что данных нет.' }
+];
+
+const wipeStepsContainer = document.getElementById('wipeSteps');
+wipeSteps.forEach(s => {
+  const div = document.createElement('div');
+  div.className = 'action-step';
+  div.innerHTML = `
+    <h3 class="text-xl font-bold mb-2">${s.title}</h3>
+    <p class="text-slate-600">${s.desc}</p>
+  `;
+  wipeStepsContainer.appendChild(div);
+});
+
+// Платформы
+const platforms = [
+  {
+    name: 'Android',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>',
+    color: 'from-emerald-500 to-teal-500',
+    steps: [
+      'Настройки → Безопасность → Блокировка экрана (PIN/биометрия)',
+      'Play Store → Play Protect → Включить проверку приложений',
+      'Настройки → Google → Безопасность → 2-Step Verification',
+      'Настройки → Конфиденциальность → Диспетчер разрешений',
+      'Настройки → Обновление ПО → Автоматическое обновление'
+    ]
+  },
+  {
+    name: 'iOS',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>',
+    color: 'from-slate-600 to-slate-800',
+    steps: [
+      'Настройки → Face ID / Touch ID и код-пароль',
+      'Настройки → Apple ID → Пароль и безопасность → 2FA',
+      'Настройки → Конфиденциальность → Службы геолокации',
+      'Настройки → Основные → Обновление ПО → Автообновления',
+      'Настройки → App Store → Автоматические загрузки'
+    ]
+  },
+  {
+    name: 'Windows',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+    color: 'from-blue-500 to-indigo-500',
+    steps: [
+      'Параметры → Обновление и безопасность → Центр безопасности Windows',
+      'Включить BitLocker для шифрования диска',
+      'Параметры → Учётные записи → Варианты входа → Windows Hello',
+      'Microsoft Account → Безопасность → Двухэтапная проверка',
+      'Настроить точки восстановления и резервное копирование'
+    ]
+  },
+  {
+    name: 'macOS',
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+    color: 'from-slate-500 to-slate-700',
+    steps: [
+      'Системные настройки → Touch ID и пароль',
+      'Включить FileVault для шифрования диска',
+      'Apple ID → Пароль и безопасность → Двухфакторная аутентификация',
+      'Системные настройки → Защита и безопасность → Фаервол',
+      'Time Machine для автоматического бэкапа'
+    ]
+  }
+];
+
+const platformsGrid = document.getElementById('platformsGrid');
+platforms.forEach(p => {
+  const div = document.createElement('div');
+  div.className = 'bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="flex items-center gap-3 mb-5">
+      <div class="icon-box bg-gradient-to-br ${p.color} shadow-lg">${p.icon}</div>
+      <h3 class="text-xl font-bold">${p.name}</h3>
+    </div>
+    <ol class="space-y-3">
+      ${p.steps.map((s, i) => `
+        <li class="flex items-start gap-3 text-sm">
+          <span class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 font-bold flex items-center justify-center flex-shrink-0 text-xs">${i + 1}</span>
+          <span class="text-slate-700">${s}</span>
+        </li>
+      `).join('')}
+    </ol>
+  `;
+  platformsGrid.appendChild(div);
+});
+
+// Тест
+const quizQuestions = [
+  { category: 'Смартфон', text: 'Какой пароль для блокировки экрана самый надёжный?', answers: [
+    { text: '1234 — быстро и удобно', correct: false, feedback: 'Слишком простой. Взламывается за секунды.' },
+    { text: 'Дата рождения', correct: false, feedback: 'Легко угадать через соцсети.' },
+    { text: 'Случайный 6-значный PIN или биометрия', correct: true, feedback: 'Верно! Случайный PIN + биометрия — оптимальный баланс.' },
+    { text: 'Графический ключ', correct: false, feedback: 'Менее надёжен — следы на экране выдают комбинацию.' }
+  ]},
+  { category: 'Роутер', text: 'Что нужно сделать сразу после покупки роутера?', answers: [
+    { text: 'Подключить и пользоваться', correct: false, feedback: 'Опасно! Заводской пароль взламывается за 30 секунд.' },
+    { text: 'Сменить пароль админки и Wi-Fi', correct: true, feedback: 'Верно! Это первое, что нужно сделать.' },
+    { text: 'Обновить прошивку через год', correct: false, feedback: 'Слишком поздно. Обновлять нужно сразу.' },
+    { text: 'Оставить заводские настройки для стабильности', correct: false, feedback: 'Крайне опасно. Стандартные пароли в открытых базах.' }
+  ]},
+  { category: 'Бэкап', text: 'Что означает стратегия бэкапа 3-2-1?', answers: [
+    { text: '3 бэкапа в месяц, 2 копии, 1 проверка', correct: false, feedback: 'Не совсем так.' },
+    { text: '3 копии данных, на 2 разных носителях, 1 вне дома', correct: true, feedback: 'Верно! Золотой стандарт резервного копирования.' },
+    { text: '3 устройства, 2 аккаунта, 1 пароль', correct: false, feedback: 'Это про другое.' },
+    { text: '3 облака, 2 диска, 1 флешка', correct: false, feedback: 'Не совсем точно. Главное — принципы, а не конкретные носители.' }
+  ]},
+  { category: 'Умный дом', text: 'Как лучше защитить умные камеры?', answers: [
+    { text: 'Оставить заводской пароль — он сложный', correct: false, feedback: 'Опасно! Заводские пароли в открытых базах.' },
+    { text: 'Отключить их от интернета совсем', correct: false, feedback: 'Тогда теряется смысл умной камеры.' },
+    { text: 'Сменить пароль, отключить удалённый доступ, закрывать когда не нужно', correct: true, feedback: 'Верно! Комплексный подход — лучший.' },
+    { text: 'Поставить в каждой комнате', correct: false, feedback: 'Это не защита, а наоборот — больше точек риска.' }
+  ]},
+  { category: 'Старые устройства', text: 'Что нужно сделать перед продажей телефона?', answers: [
+    { text: 'Удалить приложения', correct: false, feedback: 'Недостаточно. Данные можно восстановить.' },
+    { text: 'Сбросить до заводских настроек и выйти из аккаунтов', correct: true, feedback: 'Верно! Но лучше ещё зашифровать перед сбросом.' },
+    { text: 'Просто отдать — новый владелец сам разберётся', correct: false, feedback: 'Опасно! Ваши данные останутся на устройстве.' },
+    { text: 'Сменить обои и удалить фото', correct: false, feedback: 'Поверхностно. Все данные и аккаунты останутся.' }
+  ]},
+  { category: 'ПК', text: 'Что такое ransomware?', answers: [
+    { text: 'Антивирус', correct: false, feedback: 'Нет, это противоположное — защита от ransomware.' },
+    { text: 'Программа-шифровальщик, требующая выкуп', correct: true, feedback: 'Верно! Шифрует файлы и требует биткоины за расшифровку.' },
+    { text: 'Рекламный вирус', correct: false, feedback: 'Нет, это adware. Ransomware гораздо опаснее.' },
+    { text: 'Системная утилита Windows', correct: false, feedback: 'Нет, это вредоносное ПО.' }
+  ]},
+  { category: 'Публичный Wi-Fi', text: 'Что опасно делать в публичном Wi-Fi без VPN?', answers: [
+    { text: 'Читать новости', correct: false, feedback: 'Относительно безопасно, если сайт HTTPS.' },
+    { text: 'Входить в банк и вводить пароли', correct: true, feedback: 'Верно! В публичной сети ваш трафик могут перехватить.' },
+    { text: 'Смотреть YouTube', correct: false, feedback: 'Безопасно, если не вводите личные данные.' },
+    { text: 'Проверять погоду', correct: false, feedback: 'Абсолютно безопасно.' }
+  ]},
+  { category: 'IoT', text: 'Почему IoT-устройства нужно изолировать в отдельной сети?', answers: [
+    { text: 'Чтобы быстрее работали', correct: false, feedback: 'Нет, скорость не изменится.' },
+    { text: 'Если взломают IoT — не получат доступ к главным устройствам', correct: true, feedback: 'Верно! Это ключевая причина изоляции.' },
+    { text: 'Для экономии трафика', correct: false, feedback: 'Не связано с безопасностью.' },
+    { text: 'Чтобы не мешали друг другу', correct: false, feedback: 'Не главная причина.' }
+  ]},
+  { category: 'Обновления', text: 'Почему важно обновлять устройства?', answers: [
+    { text: 'Чтобы были новые функции', correct: false, feedback: 'Это побочный эффект, не главная причина.' },
+    { text: 'Обновления закрывают уязвимости безопасности', correct: true, feedback: 'Верно! Это главная причина — закрытие дыр в защите.' },
+    { text: 'Чтобы не раздражало уведомление', correct: false, feedback: 'Не причина, а следствие.' },
+    { text: 'Обновления не нужны', correct: false, feedback: 'Опасно! Устаревшие устройства — лёгкая цель.' }
+  ]},
+  { category: 'Шифрование', text: 'Что даёт шифрование диска?', answers: [
+    { text: 'Ускоряет работу компьютера', correct: false, feedback: 'Наоборот — немного замедляет.' },
+    { text: 'Без пароля данные невозможно прочитать даже при физическом доступе', correct: true, feedback: 'Верно! Если украдут ноутбук — данные останутся недоступны.' },
+    { text: 'Защищает от вирусов', correct: false, feedback: 'Нет, от вирусов защищает антивирус.' },
+    { text: 'Делает файлы меньше', correct: false, feedback: 'Нет, шифрование не сжимает.' }
+  ]}
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function renderQuestion() {
+  answered = false;
+  const q = quizQuestions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = quizQuestions.length;
+  document.getElementById('progressBar').style.width = ((currentQ + 1) / quizQuestions.length * 100) + '%';
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qText').textContent = q.text;
+  
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left p-4 bg-white hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-400 rounded-xl font-medium transition flex items-center gap-3';
+    btn.innerHTML = `
+      <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold flex-shrink-0">${String.fromCharCode(65 + i)}</span>
+      <span>${a.text}</span>
+    `;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('quizCard').classList.remove('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = quizQuestions[currentQ];
+  const a = q.answers[idx];
+  const isCorrect = a.correct;
+  if (isCorrect) score++;
+  document.getElementById('score').textContent = score;
+  
+  const buttons = document.querySelectorAll('#answersContainer button');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    const ans = q.answers[i];
+    if (ans.correct) {
+      b.className = 'w-full text-left p-4 bg-emerald-100 border-2 border-emerald-500 rounded-xl font-medium flex items-center gap-3';
+    } else if (i === idx) {
+      b.className = 'w-full text-left p-4 bg-red-100 border-2 border-red-500 rounded-xl font-medium flex items-center gap-3';
+    } else {
+      b.className = 'w-full text-left p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-medium flex items-center gap-3 opacity-60';
+    }
+  });
+  
+  const feedback = document.createElement('div');
+  feedback.className = `mt-4 p-4 rounded-xl text-sm ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-800'}`;
+  feedback.innerHTML = `<strong>${isCorrect ? 'Верно!' : 'Неверно.'}</strong> ${a.feedback}`;
+  document.getElementById('answersContainer').appendChild(feedback);
+  
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < quizQuestions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 3000);
+}
+
+function showResult() {
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  const pct = score / quizQuestions.length;
+  let icon, title, text;
+  if (pct >= 0.8) {
+    icon = '<svg class="w-20 h-20 mx-auto text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>';
+    title = `Отлично! ${score}/${quizQuestions.length}`;
+    text = 'Ваши устройства под надёжной защитой! Вы отлично разбираетесь в цифровой безопасности.';
+  } else if (pct >= 0.5) {
+    icon = '<svg class="w-20 h-20 mx-auto text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+    title = `Неплохо: ${score}/${quizQuestions.length}`;
+    text = 'База есть, но некоторые устройства могут быть уязвимы. Изучите разделы выше и настройте защиту.';
+  } else {
+    icon = '<svg class="w-20 h-20 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    title = `${score}/${quizQuestions.length} — нужно учиться`;
+    text = 'Ваши устройства в зоне риска! Обязательно изучите все разделы и настройте защиту.';
+  }
+  document.getElementById('resultIcon').innerHTML = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultText').textContent = text;
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('score').textContent = 0;
+  renderQuestion();
+}
+
+renderQuestion();
+
+// Чек-лист
+const checklist = [
+  'На всех устройствах включена блокировка экрана (PIN/биометрия)',
+  'Сменён заводской пароль роутера',
+  'Wi-Fi использует WPA3 или WPA2',
+  'Включена двухфакторная аутентификация на всех аккаунтах',
+  'Все устройства обновлены до последней версии ОС',
+  'Установлен и обновлён антивирус на ПК',
+  'Включено шифрование диска (BitLocker / FileVault)',
+  'Настроен автоматический бэкап по стратегии 3-2-1',
+  'IoT-устройства изолированы в отдельной сети',
+  'Проверены разрешения всех приложений на смартфоне',
+  'Камеры ноутбуков заклеены или отключены',
+  'Удалены неиспользуемые приложения',
+  'Настроен VPN для публичных сетей',
+  'Старые устройства правильно стёрты перед продажей',
+  'Проверены настройки приватности умных колонок и камер'
+];
+
+const checklistContainer = document.getElementById('checklistContainer');
+document.getElementById('checkTotal').textContent = checklist.length;
+checklist.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition hover:border-indigo-300 bg-white mb-3';
+  div.innerHTML = `
+    <div class="check-icon w-7 h-7 rounded-lg border-2 border-slate-300 flex items-center justify-center flex-shrink-0 transition">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div class="flex-1 pt-0.5"><span class="font-medium text-sm">${item}</span></div>
+  `;
+  div.onclick = () => {
+    const isChecked = div.dataset.checked === 'true';
+    if (isChecked) {
+      div.dataset.checked = 'false';
+      div.style.background = 'white';
+      div.style.borderColor = '#e2e8f0';
+      div.querySelector('.check-icon').style.background = 'transparent';
+      div.querySelector('.check-icon').style.borderColor = '#cbd5e1';
+    } else {
+      div.dataset.checked = 'true';
+      div.style.background = '#eef2ff';
+      div.style.borderColor = '#6366f1';
+      div.querySelector('.check-icon').style.background = '#6366f1';
+      div.querySelector('.check-icon').style.borderColor = '#6366f1';
+    }
+    updateCheckCount();
+  };
+  checklistContainer.appendChild(div);
+});
+
+function updateCheckCount() {
+  const items = document.querySelectorAll('#checklistContainer > div');
+  const filled = Array.from(items).filter(d => d.dataset.checked === 'true').length;
+  document.getElementById('checkCount').textContent = filled;
+  const status = document.getElementById('checkStatus');
+  const pct = filled / items.length;
+  if (pct === 0) status.textContent = 'Начните отмечать пункты';
+  else if (pct < 0.4) status.textContent = 'Есть над чем работать';
+  else if (pct < 0.7) status.textContent = 'Хорошее начало';
+  else if (pct < 1) status.textContent = 'Почти всё настроено';
+  else status.textContent = 'Отличная защита!';
+}
+</script>
+</body>
+</html>
