@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roblox под угрозой блокировки в США</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+            background: #fff;
+            color: #1d1d1f;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: linear-gradient(180deg, #f5f5f7 0%, #fff 100%);
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: clamp(48px, 8vw, 96px);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(24px, 3vw, 32px);
+            font-weight: 400;
+            color: #86868b;
+            max-width: 800px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.4s forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section {
+            padding: 120px 20px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .content-block {
+            margin-bottom: 60px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+
+        .content-text {
+            font-size: clamp(18px, 2vw, 24px);
+            line-height: 1.8;
+            color: #1d1d1f;
+            margin-bottom: 24px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 60px 40px;
+            border-radius: 24px;
+            margin: 80px 0;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        .highlight-title {
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .highlight-text {
+            font-size: clamp(18px, 2vw, 24px);
+            opacity: 0.95;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin: 80px 0;
+        }
+
+        .stat-card {
+            background: #f5f5f7;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .stat-number {
+            font-size: clamp(48px, 6vw, 72px);
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .stat-label {
+            font-size: 18px;
+            color: #86868b;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 60px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out forwards;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -46px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            box-shadow: 0 0 0 4px #fff, 0 0 0 6px #667eea;
+        }
+
+        .timeline-date {
+            font-size: 14px;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .timeline-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .timeline-text {
+            font-size: 18px;
+            color: #6e6e73;
+        }
+
+        .cta-section {
+            background: #000;
+            color: #fff;
+            padding: 120px 20px;
+            text-align: center;
+            margin-top: 120px;
+        }
+
+        .cta-title {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 700;
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.2s forwards;
+        }
+
+        .cta-text {
+            font-size: clamp(18px, 2vw, 24px);
+            opacity: 0.8;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.4s forwards;
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 80px 20px;
+            }
+
+            .highlight-box {
+                padding: 40px 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <h1 class="hero-title">Roblox под угрозой</h1>
+        <p class="hero-subtitle">Популярная игровая платформа может быть заблокирована в США из-за недостаточной защиты детей</p>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Что происходит?</h2>
+        
+        <div class="content-block">
+            <p class="content-text">
+                В декабре 2025 года генеральный прокурор Флориды подал иск к Roblox Corporation, обвинив платформу в недостаточной защите детей от педофилов и других опасностей.
+            </p>
+            <p class="content-text">
+                Иск утверждает, что сервис «сознательно» подвергает несовершеннолетних пользователей риску, не обеспечивая адекватных механизмов безопасности.
+            </p>
+        </div>
+
+        <div class="highlight-box">
+            <h3 class="highlight-title">Главная проблема</h3>
+            <p class="highlight-text">Недостаточная защита детей от опасного контента и контактов с злоумышленниками</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">70+</div>
+                <div class="stat-label">миллионов ежедневных пользователей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">50%</div>
+                <div class="stat-label">пользователей младше 13 лет</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">20+</div>
+                <div class="stat-label">стран уже заблокировали платформу</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Хронология событий</h2>
+        
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-date">Декабрь 2025</div>
+                <h3 class="timeline-title">Иск во Флориде</h3>
+                <p class="timeline-text">Генеральный прокурор Флориды подаёт в суд на Roblox из-за недостаточной защиты детей</p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">2024-2026</div>
+                <h3 class="timeline-title">Волна блокировок</h3>
+                <p class="timeline-text">Roblox заблокирован в России, Китае, Ираке, Турции и других странах по различным причинам</p>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-date">Июнь 2026</div>
+                <h3 class="timeline-title">Попытки разблокировки</h3>
+                <p class="timeline-text">Roblox запускает механизмы возрастных ограничений (Roblox Kids и Roblox Select) для соответствия локальным законам</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Глобальный контекст</h2>
+        
+        <div class="content-block">
+            <p class="content-text">
+                Roblox уже столкнулся с блокировками в более чем 20 странах мира. Основные причины включают защиту детей, распространение запрещённого контента и несоответствие локальным законам.
+            </p>
+            <p class="content-text">
+                В России платформа была заблокирована Роскомнадзором из-за массового распространения запрещённых материалов. В Китае доступ ограничен из-за строгих правил регулирования онлайн-игр.
+            </p>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2 class="cta-title">Будущее Roblox</h2>
+        <p class="cta-text">
+            Платформа обещает внедрить новые механизмы безопасности и возрастные ограничения. От исхода судебных разбирательств в США зависит дальнейшая судьба Roblox на американском рынке.
+        </p>
+    </section>
+</body>
+</html>

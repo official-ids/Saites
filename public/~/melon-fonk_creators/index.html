@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Важная новость — MELONFONK CREATORS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #111111;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #252525;
+            --text-primary: #d9d9d9;
+            --text-muted: #8a8a8a;
+            --accent: #8dbb73;
+            --accent-dim: rgba(141, 187, 115, 0.15);
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding: 80px 20px;
+        }
+
+        .news-container {
+            max-width: 720px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .news-header {
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .news-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.3em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .news-label::before {
+            content: '';
+            width: 24px;
+            height: 1px;
+            background: var(--accent);
+        }
+
+        .news-title {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+
+        .news-date {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+
+        .news-body {
+            margin-bottom: 48px;
+        }
+
+        .news-text {
+            font-size: 18px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+        }
+
+        .news-text-muted {
+            font-size: 18px;
+            line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .news-list {
+            list-style: none;
+            margin: 32px 0;
+            padding-left: 0;
+        }
+
+        .news-list li {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            color: var(--text-primary);
+            padding: 12px 0;
+            padding-left: 28px;
+            position: relative;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .news-list li::before {
+            content: '—';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        .news-list li:last-child {
+            border-bottom: none;
+        }
+
+        .warning-block {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent);
+            padding: 24px 28px;
+            margin: 40px 0;
+        }
+
+        .warning-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-muted);
+        }
+
+        .highlight-block {
+            background: var(--accent-dim);
+            border: 1px solid var(--accent);
+            padding: 28px;
+            margin: 48px 0;
+        }
+
+        .highlight-text {
+            font-size: 17px;
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+
+        .important-section {
+            margin: 60px 0;
+            padding-top: 48px;
+            border-top: 1px solid var(--bg-tertiary);
+        }
+
+        .important-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.3em;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .important-text {
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .reactions-section {
+            margin: 48px 0;
+            padding: 32px;
+            background: var(--bg-secondary);
+        }
+
+        .reaction-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+
+        .reaction-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .reaction-marker {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--accent);
+            font-weight: 600;
+            min-width: 24px;
+        }
+
+        .reaction-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .cta-section {
+            margin-top: 60px;
+            padding: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            text-align: center;
+        }
+
+        .cta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .cta-link {
+            display: inline-block;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 12px 24px;
+            border: 1px solid var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .cta-link:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .footer {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 1px solid var(--bg-tertiary);
+            text-align: center;
+        }
+
+        .footer-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            letter-spacing: 0.1em;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 40px 20px;
+            }
+
+            .news-header {
+                margin-bottom: 40px;
+                padding-bottom: 30px;
+            }
+
+            .warning-block,
+            .highlight-block {
+                padding: 20px;
+            }
+
+            .reactions-section {
+                padding: 24px;
+            }
+
+            .cta-section {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="news-container">
+        <header class="news-header">
+            <div class="news-label">Важная новость</div>
+            <h1 class="news-title">Наша предложка официально вернулась!</h1>
+            <div class="news-date">23.06.2026 / MELONFONK Team</div>
+        </header>
+
+        <div class="news-body">
+            <p class="news-text">
+                Теперь вы снова можете отправлять своё творчество, например:
+            </p>
+
+            <ul class="news-list">
+                <li>Арты</li>
+                <li>Моды</li>
+                <li>Сейвы</li>
+                <li>Обработки</li>
+            </ul>
+
+            <div class="warning-block">
+                <p class="warning-text">
+                    Пожалуйста, не присылайте посторонний контент и не пишите без причины.
+                </p>
+            </div>
+
+            <div class="highlight-block">
+                <p class="highlight-text">
+                    Лучшие работы могут попасть на наш канал и быть опубликованы для всех участников!
+                </p>
+            </div>
+        </div>
+
+        <section class="important-section">
+            <div class="important-label">Очень важно</div>
+            <p class="important-text">
+                Предложка создана исключительно для публикации творчества по Melon Sandbox.
+            </p>
+            <p class="important-text">
+                Пожалуйста, используйте её только по назначению и не отправляйте сообщения, не связанные с игрой.
+            </p>
+        </section>
+
+        <section class="reactions-section">
+            <div class="reaction-item">
+                <span class="reaction-marker">—</span>
+                <span class="reaction-text">Ура! Я так долго этого ждал!</span>
+            </div>
+            <div class="reaction-item">
+                <span class="reaction-marker">—</span>
+                <span class="reaction-text">Разве раньше уже была предложка?</span>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="cta-label">Отправить работу</div>
+            <a href="https://t.me/MelonFonkOfferbot" class="cta-link" target="_blank">
+                @MelonFonkOfferbot
+            </a>
+        </section>
+
+        <footer class="footer">
+            <div class="footer-text">
+                MELONFONK CREATORS / 2026
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
