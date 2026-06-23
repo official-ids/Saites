@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN и шифрование — Полный гид по защите трафика</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #0891b2 0%, #7c3aed 100%); }
+  .gradient-text { background: linear-gradient(135deg, #0891b2 0%, #7c3aed 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(8, 145, 178, 0.15); }
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse-cyan { 0%, 100% { box-shadow: 0 0 0 0 rgba(8, 145, 178, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(8, 145, 178, 0); } }
+  .pulse-cyan { animation: pulse-cyan 2s infinite; }
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  .protocol-tab.active { background: linear-gradient(135deg, #0891b2, #7c3aed); color: white; }
+  .protocol-tab.active svg { color: white; }
+  
+  .myth-card { transition: all 0.3s; cursor: pointer; }
+  .myth-card.revealed { background: linear-gradient(135deg, #ecfdf5, #f0fdfa); border-color: #0891b2; }
+  
+  .icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .tunnel-animation {
+    position: relative;
+    overflow: hidden;
+  }
+  .tunnel-animation::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(8, 145, 178, 0.3), transparent);
+    animation: tunnel 2s infinite;
+  }
+  @keyframes tunnel { 0% { left: -100%; } 100% { left: 100%; } }
+  
+  .action-step { position: relative; padding-left: 3rem; }
+  .action-step::before { content: counter(step); counter-increment: step; position: absolute; left: 0; top: 0; width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #0891b2, #7c3aed); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
+  .steps-container { counter-reset: step; }
+  
+  .network-bg {
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(8, 145, 178, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.08) 0%, transparent 40%);
+  }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-lg z-50 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <span class="font-bold text-xl">CryptoNet</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#what" class="hover:text-cyan-600 transition">Что такое VPN</a>
+      <a href="#when" class="hover:text-cyan-600 transition">Когда нужен</a>
+      <a href="#protocols" class="hover:text-cyan-600 transition">Протоколы</a>
+      <a href="#choose" class="hover:text-cyan-600 transition">Как выбрать</a>
+      <a href="#myths" class="hover:text-cyan-600 transition">Мифы</a>
+      <a href="#quiz" class="hover:text-cyan-600 transition">Тест</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-6 network-bg relative overflow-hidden">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative">
+    <div class="fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-cyan-100 text-cyan-700 rounded-full text-sm font-semibold mb-6">
+        <span class="w-2 h-2 bg-cyan-500 rounded-full pulse-cyan"></span>
+        83% публичных Wi-Fi сетей небезопасны
+      </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+        <span class="gradient-text">VPN</span> и шифрование
+      </h1>
+      <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+        Полный гид по виртуальным частным сетям и шифрованию трафика. Узнайте, как защитить свои данные от слежки, хакеров и цензуры. Разбираемся в протоколах, мифах и выборе сервиса.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#what" class="px-8 py-4 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2">
+          Начать изучение
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+        <a href="#quiz" class="px-8 py-4 bg-white border-2 border-slate-200 rounded-xl font-semibold hover:border-cyan-400 transition">
+          Пройти тест
+        </a>
+      </div>
+      <div class="mt-10 flex gap-8">
+        <div><div class="text-3xl font-bold gradient-text">5</div><div class="text-sm text-slate-500">протоколов VPN</div></div>
+        <div><div class="text-3xl font-bold gradient-text">10</div><div class="text-sm text-slate-500">мифов разобрано</div></div>
+        <div><div class="text-3xl font-bold gradient-text">8</div><div class="text-sm text-slate-500">сценариев использования</div></div>
+      </div>
+    </div>
+    
+    <div class="fade-in">
+      <!-- Визуализация VPN-туннеля -->
+      <div class="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between mb-6">
+          <div class="text-center">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="text-xs font-bold text-slate-500">ВЫ</div>
+          </div>
+          <div class="flex-1 mx-4">
+            <div class="tunnel-animation h-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full relative">
+              <div class="absolute inset-0 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              </div>
+            </div>
+            <div class="text-center text-xs text-cyan-600 font-bold mt-2">ЗАШИФРОВАННЫЙ ТУННЕЛЬ</div>
+          </div>
+          <div class="text-center">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-2 shadow-lg">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div class="text-xs font-bold text-slate-500">СЕРВЕР VPN</div>
+          </div>
+        </div>
+        
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              <span class="text-sm font-medium">IP скрыт</span>
+            </div>
+            <span class="text-xs font-bold text-cyan-600">АКТИВНО</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              <span class="text-sm font-medium">Трафик зашифрован</span>
+            </div>
+            <span class="text-xs font-bold text-cyan-600">AES-256</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              <span class="text-sm font-medium">Локация: Германия</span>
+            </div>
+            <span class="text-xs font-bold text-cyan-600">ПОДКЛЮЧЕНО</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Статистика -->
+<section class="py-12 px-6 bg-white border-y border-slate-200">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">31%</div>
+      <div class="text-sm text-slate-500 mt-2">пользователей интернета используют VPN</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">83%</div>
+      <div class="text-sm text-slate-500 mt-2">публичных Wi-Fi небезопасны</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">2.5 сек</div>
+      <div class="text-sm text-slate-500 mt-2">взлом открытого Wi-Fi</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">142</div>
+      <div class="text-sm text-slate-500 mt-2">страны ограничивают интернет</div>
+    </div>
+  </div>
+</section>
+
+<!-- Что такое VPN -->
+<section id="what" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-cyan-100 text-cyan-700 rounded-full text-sm font-semibold mb-4">ОСНОВЫ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Что такое VPN и как он работает</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Виртуальная частная сеть создаёт защищённый туннель между вашим устройством и интернетом</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-8 mb-12">
+      <div class="bg-white rounded-2xl p-6 border-2 border-red-200">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="icon-box bg-red-500">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-red-700">Без VPN</h3>
+        </div>
+        <div class="space-y-3">
+          <div class="bg-red-50 rounded-xl p-3 border border-red-200">
+            <div class="text-xs font-bold text-red-600 mb-1">ВАШ ПРОВАЙДЕР</div>
+            <div class="text-xs text-slate-600">Видит все сайты, которые вы посещаете</div>
+          </div>
+          <div class="bg-red-50 rounded-xl p-3 border border-red-200">
+            <div class="text-xs font-bold text-red-600 mb-1">АДМИНИСТРАТОР WI-FI</div>
+            <div class="text-xs text-slate-600">Может перехватывать ваши данные</div>
+          </div>
+          <div class="bg-red-50 rounded-xl p-3 border border-red-200">
+            <div class="text-xs font-bold text-red-600 mb-1">ХАКЕРЫ</div>
+            <div class="text-xs text-slate-600">Могут украсть пароли в публичной сети</div>
+          </div>
+          <div class="bg-red-50 rounded-xl p-3 border border-red-200">
+            <div class="text-xs font-bold text-red-600 mb-1">САЙТЫ</div>
+            <div class="text-xs text-slate-600">Видят ваш реальный IP и геолокацию</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-2xl p-6 border-2 border-emerald-200">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="icon-box bg-emerald-500">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-emerald-700">С VPN</h3>
+        </div>
+        <div class="space-y-3">
+          <div class="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+            <div class="text-xs font-bold text-emerald-600 mb-1">ВАШ ПРОВАЙДЕР</div>
+            <div class="text-xs text-slate-600">Видит только подключение к VPN-серверу</div>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+            <div class="text-xs font-bold text-emerald-600 mb-1">АДМИНИСТРАТОР WI-FI</div>
+            <div class="text-xs text-slate-600">Видит только зашифрованный трафик</div>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+            <div class="text-xs font-bold text-emerald-600 mb-1">ХАКЕРЫ</div>
+            <div class="text-xs text-slate-600">Не могут перехватить данные — всё зашифровано</div>
+          </div>
+          <div class="bg-emerald-50 rounded-xl p-3 border border-emerald-200">
+            <div class="text-xs font-bold text-emerald-600 mb-1">САЙТЫ</div>
+            <div class="text-xs text-slate-600">Видят IP VPN-сервера, а не ваш</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-cyan-50 to-purple-50 rounded-3xl p-6 md:p-10 border border-cyan-200">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+        <svg class="w-7 h-7 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Как работает VPN: пошагово
+      </h3>
+      <div class="grid md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-cyan-500 text-white font-bold flex items-center justify-center mb-3">1</div>
+          <h4 class="font-bold text-sm mb-1">Подключение</h4>
+          <p class="text-xs text-slate-600">Вы подключаетесь к VPN-серверу через защищённый протокол</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-cyan-500 text-white font-bold flex items-center justify-center mb-3">2</div>
+          <h4 class="font-bold text-sm mb-1">Шифрование</h4>
+          <p class="text-xs text-slate-600">Весь ваш трафик шифруется алгоритмом AES-256</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-cyan-500 text-white font-bold flex items-center justify-center mb-3">3</div>
+          <h4 class="font-bold text-sm mb-1">Туннель</h4>
+          <p class="text-xs text-slate-600">Зашифрованные данные идут через защищённый туннель</p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm">
+          <div class="w-10 h-10 rounded-full bg-cyan-500 text-white font-bold flex items-center justify-center mb-3">4</div>
+          <h4 class="font-bold text-sm mb-1">Выход в интернет</h4>
+          <p class="text-xs text-slate-600">VPN-сервер расшифровывает и отправляет запрос от своего имени</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Когда нужен VPN -->
+<section id="when" class="py-20 px-6 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">СЦЕНАРИИ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Когда VPN действительно нужен</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">8 ситуаций, когда VPN критически важен для вашей безопасности</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5" id="scenariosGrid"></div>
+  </div>
+</section>
+
+<!-- Протоколы VPN -->
+<section id="protocols" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">ПРОТОКОЛЫ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Протоколы VPN: какой выбрать</h2>
+      <p class="text-slate-600 text-lg">Разные протоколы — разная скорость, безопасность и совместимость</p>
+    </div>
+    
+    <div class="flex flex-wrap gap-3 justify-center mb-10" id="protocolTabs"></div>
+    
+    <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200" id="protocolContent"></div>
+  </div>
+</section>
+
+<!-- Как выбрать VPN -->
+<section id="choose" class="py-20 px-6 bg-white">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">ВЫБОР</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Как выбрать надёжный VPN</h2>
+      <p class="text-slate-600 text-lg">Критерии, которые отличают качественный сервис от пустышки</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-12" id="criteriaGrid"></div>
+    
+    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-3xl p-6 md:p-10 border-2 border-red-200">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3 text-red-700">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        Красные флаги: избегайте этих VPN
+      </h3>
+      <div class="grid md:grid-cols-2 gap-4" id="redFlagsGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Мифы о VPN -->
+<section id="myths" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">МИФЫ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">10 мифов о VPN</h2>
+      <p class="text-slate-600 text-lg">Нажмите на миф, чтобы узнать правду</p>
+    </div>
+    <div class="space-y-3" id="mythsGrid"></div>
+  </div>
+</section>
+
+<!-- Тест -->
+<section id="quiz" class="py-20 px-6 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-4">ТЕСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Нужен ли вам VPN?</h2>
+      <p class="text-slate-600 text-lg">Ответьте на 8 вопросов и узнайте, насколько вам нужен VPN</p>
+    </div>
+    <div class="bg-gradient-to-br from-cyan-50 to-purple-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <div class="flex justify-between items-center mb-6">
+        <div class="text-sm font-semibold text-slate-500">Вопрос <span id="qNum">1</span> из <span id="qTotal">8</span></div>
+        <div class="text-sm font-semibold text-cyan-600">Счёт: <span id="score">0</span></div>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-2 mb-8"><div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width:12.5%"></div></div>
+      
+      <div id="quizCard">
+        <div class="bg-white rounded-2xl p-5 mb-6 border-l-4 border-cyan-500">
+          <div class="text-xs font-bold text-cyan-600 uppercase tracking-wider mb-2" id="qCategory">Категория</div>
+          <h3 class="text-xl md:text-2xl font-bold" id="qText">Текст вопроса</h3>
+        </div>
+        <div class="space-y-3" id="answersContainer"></div>
+      </div>
+
+      <div id="quizResult" class="hidden text-center py-8">
+        <div class="mb-4" id="resultIcon"></div>
+        <h3 class="text-3xl font-bold mb-2" id="resultTitle">Результат</h3>
+        <p class="text-slate-600 mb-6" id="resultText">Описание</p>
+        <button onclick="restartQuiz()" class="px-8 py-3 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">Пройти ещё раз</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Бесплатные vs платные -->
+<section class="py-20 px-6 bg-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">СРАВНЕНИЕ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Бесплатный vs платный VPN</h2>
+      <p class="text-slate-600 text-lg">Почему бесплатный VPN — это обычно плохая идея</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-white rounded-2xl p-6 border-2 border-red-200">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="icon-box bg-red-500">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-red-700">Бесплатный VPN</h3>
+            <div class="text-xs text-slate-500">Скрытая цена — ваши данные</div>
+          </div>
+        </div>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Собирают и продают ваши данные</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Ограниченная скорость и трафик</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Мало серверов — все перегружены</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Слабое шифрование или его нет</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Встраивают рекламу и трекеры</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Нет поддержки и обновлений</span></li>
+        </ul>
+      </div>
+      
+      <div class="bg-white rounded-2xl p-6 border-2 border-emerald-200">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="icon-box bg-emerald-500">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-emerald-700">Платный VPN</h3>
+            <div class="text-xs text-slate-500">От $3 до $13 в месяц</div>
+          </div>
+        </div>
+        <ul class="space-y-2">
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Политика no-log — не хранят данные</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Высокая скорость без ограничений</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Тысячи серверов в разных странах</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Шифрование AES-256 военного уровня</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Kill switch и защита от утечек DNS</span></li>
+          <li class="flex items-start gap-2 text-sm"><svg class="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Техподдержка 24/7 и регулярные обновления</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Чек-лист -->
+<section class="py-20 px-6 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">ЧЕК-ЛИСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Настройте защиту трафика</h2>
+      <p class="text-slate-600 text-lg">Пройдитесь по этому списку для полной защиты вашего интернет-трафика</p>
+    </div>
+    <div class="bg-slate-50 rounded-3xl p-8 shadow-lg" id="checklistContainer"></div>
+    <div class="mt-6 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-2xl p-6 text-white text-center">
+      <div class="text-3xl font-bold"><span id="checkCount">0</span> / <span id="checkTotal">0</span></div>
+      <div class="text-white/90 text-sm">пунктов выполнено</div>
+      <div class="text-xs text-white/70 mt-1" id="checkStatus">Начните отмечать пункты</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6">
+  <div class="max-w-5xl mx-auto gradient-bg rounded-3xl p-12 md:p-16 text-white text-center relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Защитите свой трафик сегодня</h2>
+      <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Каждый день без VPN — это день, когда ваши данные могут быть перехвачены. Не ждите, пока случится беда.</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="#quiz" class="px-8 py-4 bg-white text-cyan-700 rounded-xl font-bold shadow-lg hover:shadow-xl transition">Пройти тест</a>
+        <a href="#choose" class="px-8 py-4 bg-white/20 backdrop-blur border-2 border-white/40 rounded-xl font-bold hover:bg-white/30 transition">Выбрать VPN</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-400 py-12 px-6">
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-2 mb-4">
+      <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">CryptoNet</span>
+    </div>
+    <p class="text-sm mb-4">Образовательный проект о VPN, шифровании и защите интернет-трафика</p>
+    <p class="text-xs text-slate-500">© 2026 CryptoNet. Все материалы носят информационный характер.</p>
+  </div>
+</footer>
+
+<script>
+// Сценарии использования VPN
+const scenarios = [
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>',
+    title: 'Публичный Wi-Fi',
+    desc: 'Кафе, аэропорты, отели — в открытых сетях ваш трафик могут перехватить за секунды',
+    priority: 'КРИТИЧНО',
+    color: 'from-red-500 to-rose-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+    title: 'Онлайн-банкинг',
+    desc: 'При входе в банк или оплате покупок VPN добавляет дополнительный уровень защиты',
+    priority: 'ВАЖНО',
+    color: 'from-orange-500 to-red-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>',
+    title: 'Обход цензуры',
+    desc: 'Доступ к заблокированным сайтам и сервисам в странах с ограничениями интернета',
+    priority: 'КРИТИЧНО',
+    color: 'from-purple-500 to-indigo-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+    title: 'Защита приватности',
+    desc: 'Скрытие IP-адреса от сайтов, рекламных сетей и вашего провайдера',
+    priority: 'ВАЖНО',
+    color: 'from-cyan-500 to-blue-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>',
+    title: 'Путешествия',
+    desc: 'Доступ к домашним сервисам из-за границы и защита данных в роуминге',
+    priority: 'РЕКОМЕНДУЕТСЯ',
+    color: 'from-emerald-500 to-teal-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+    title: 'Торренты и P2P',
+    desc: 'Скрытие IP при скачивании файлов для защиты от претензий правообладателей',
+    priority: 'ВАЖНО',
+    color: 'from-amber-500 to-orange-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+    title: 'Удалённая работа',
+    desc: 'Безопасный доступ к корпоративным ресурсам из любой точки мира',
+    priority: 'КРИТИЧНО',
+    color: 'from-blue-500 to-indigo-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+    title: 'Защита от слежки',
+    desc: 'Противодействие сбору данных рекламными сетями и ISP',
+    priority: 'РЕКОМЕНДУЕТСЯ',
+    color: 'from-pink-500 to-rose-500'
+  }
+];
+
+const scenariosGrid = document.getElementById('scenariosGrid');
+scenarios.forEach(s => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-5 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="icon-box bg-gradient-to-br ${s.color} shadow-lg mb-4">${s.icon}</div>
+    <div class="text-xs font-bold text-slate-400 mb-1">${s.priority}</div>
+    <h3 class="font-bold text-base mb-2">${s.title}</h3>
+    <p class="text-slate-600 text-xs">${s.desc}</p>
+  `;
+  scenariosGrid.appendChild(div);
+});
+
+// Протоколы VPN
+const protocols = [
+  {
+    id: 'wireguard',
+    name: 'WireGuard',
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+    speed: 95,
+    security: 90,
+    compatibility: 80,
+    desc: 'Современный протокол с минимальным кодом. Самый быстрый и эффективный.',
+    pros: ['Очень высокая скорость', 'Современное шифрование', 'Минимальный код — меньше уязвимостей', 'Быстрое переподключение'],
+    cons: ['Относительно новый', 'Не поддерживается старыми устройствами', 'Менее протестирован временем'],
+    best: 'Для повседневного использования, стриминга, игр'
+  },
+  {
+    id: 'openvpn',
+    name: 'OpenVPN',
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+    speed: 70,
+    security: 95,
+    compatibility: 95,
+    desc: 'Золотой стандарт VPN. Открытый код, проверенный временем.',
+    pros: ['Открытый исходный код', 'Отличная безопасность', 'Работает на всех платформах', 'Настраиваемый'],
+    cons: ['Медленнее WireGuard', 'Сложная настройка', 'Требует дополнительное ПО'],
+    best: 'Для максимальной совместимости и безопасности'
+  },
+  {
+    id: 'ikev2',
+    name: 'IKEv2/IPsec',
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>',
+    speed: 85,
+    security: 85,
+    compatibility: 85,
+    desc: 'Отлично работает на мобильных устройствах, быстро переподключается.',
+    pros: ['Быстрое переподключение', 'Отличная работа на мобильных', 'Встроен в iOS и Android', 'Стабильное соединение'],
+    cons: ['Закрытый код (частично)', 'Менее гибок в настройке', 'Может блокироваться файрволами'],
+    best: 'Для мобильных устройств и путешественников'
+  },
+  {
+    id: 'l2tp',
+    name: 'L2TP/IPsec',
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>',
+    speed: 60,
+    security: 70,
+    compatibility: 90,
+    desc: 'Старый протокол, встроен в большинство ОС. Не рекомендуется для новой настройки.',
+    pros: ['Встроен в большинство ОС', 'Хорошая совместимость', 'Не требует дополнительного ПО'],
+    cons: ['Медленный', 'Известные уязвимости', 'Легко блокируется', 'Устаревший'],
+    best: 'Только для совместимости со старыми устройствами'
+  },
+  {
+    id: 'sstp',
+    name: 'SSTP',
+    icon: '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+    speed: 65,
+    security: 80,
+    compatibility: 60,
+    desc: 'Протокол Microsoft. Хорошо обходит файрволы, но только для Windows.',
+    pros: ['Хорошо обходит файрволы', 'Использует порт 443 (HTTPS)', 'Встроен в Windows'],
+    cons: ['Только Windows', 'Закрытый код', 'Медленный', 'Подозрения в бэкдорах'],
+    best: 'Для обхода блокировок в Windows'
+  }
+];
+
+let currentProtocol = 'wireguard';
+
+const protocolTabs = document.getElementById('protocolTabs');
+protocols.forEach(p => {
+  const btn = document.createElement('button');
+  btn.className = `protocol-tab flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition ${p.id === currentProtocol ? 'active' : 'bg-white border-2 border-slate-200 hover:border-cyan-400'}`;
+  btn.innerHTML = `<span class="w-5 h-5">${p.icon}</span>${p.name}`;
+  btn.onclick = () => {
+    currentProtocol = p.id;
+    document.querySelectorAll('.protocol-tab').forEach(t => {
+      t.classList.remove('active');
+      t.classList.add('bg-white', 'border-2', 'border-slate-200');
+    });
+    btn.classList.add('active');
+    btn.classList.remove('bg-white', 'border-2', 'border-slate-200');
+    renderProtocolContent();
+  };
+  protocolTabs.appendChild(btn);
+});
+
+function renderProtocolContent() {
+  const protocol = protocols.find(p => p.id === currentProtocol);
+  const container = document.getElementById('protocolContent');
+  container.innerHTML = `
+    <div class="flex items-center gap-4 mb-6">
+      <div class="icon-box gradient-bg shadow-lg">
+        <span class="w-7 h-7 text-white">${protocol.icon}</span>
+      </div>
+      <div>
+        <h3 class="text-2xl font-bold">${protocol.name}</h3>
+        <p class="text-slate-600 text-sm">${protocol.desc}</p>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-cyan-50 rounded-xl p-4 border border-cyan-200">
+        <div class="text-xs font-bold text-cyan-600 mb-2">СКОРОСТЬ</div>
+        <div class="text-3xl font-bold gradient-text mb-2">${protocol.speed}/100</div>
+        <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-cyan-500 to-blue-500" style="width: ${protocol.speed}%"></div>
+        </div>
+      </div>
+      <div class="bg-purple-50 rounded-xl p-4 border border-purple-200">
+        <div class="text-xs font-bold text-purple-600 mb-2">БЕЗОПАСНОСТЬ</div>
+        <div class="text-3xl font-bold gradient-text mb-2">${protocol.security}/100</div>
+        <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500" style="width: ${protocol.security}%"></div>
+        </div>
+      </div>
+      <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+        <div class="text-xs font-bold text-emerald-600 mb-2">СОВМЕСТИМОСТЬ</div>
+        <div class="text-3xl font-bold gradient-text mb-2">${protocol.compatibility}/100</div>
+        <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500" style="width: ${protocol.compatibility}%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-emerald-50 rounded-xl p-5 border-2 border-emerald-200">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <h4 class="font-bold text-emerald-700">Плюсы</h4>
+        </div>
+        <ul class="space-y-2">
+          ${protocol.pros.map(p => `<li class="flex items-start gap-2 text-sm"><span class="text-emerald-500 mt-0.5">●</span>${p}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="bg-red-50 rounded-xl p-5 border-2 border-red-200">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          <h4 class="font-bold text-red-700">Минусы</h4>
+        </div>
+        <ul class="space-y-2">
+          ${protocol.cons.map(c => `<li class="flex items-start gap-2 text-sm"><span class="text-red-500 mt-0.5">●</span>${c}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+    
+    <div class="mt-6 bg-gradient-to-r from-cyan-50 to-purple-50 rounded-xl p-5 border border-cyan-200">
+      <div class="text-xs font-bold text-cyan-600 mb-1">ЛУЧШЕ ВСЕГО ПОДХОДИТ ДЛЯ</div>
+      <div class="font-bold text-lg">${protocol.best}</div>
+    </div>
+  `;
+}
+
+renderProtocolContent();
+
+// Критерии выбора VPN
+const criteria = [
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+    title: 'Политика no-log',
+    desc: 'VPN не должен хранить логи вашей активности. Ищите независимые аудиты.',
+    color: 'from-cyan-500 to-blue-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+    title: 'Современное шифрование',
+    desc: 'AES-256, ChaCha20. Избегайте устаревших алгоритмов (PPTP, L2TP без IPsec).',
+    color: 'from-purple-500 to-indigo-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+    title: 'Kill Switch',
+    desc: 'Автоматически отключает интернет, если VPN-соединение разорвано.',
+    color: 'from-emerald-500 to-teal-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+    title: 'Много серверов',
+    desc: 'Чем больше серверов в разных странах — тем лучше скорость и выбор локаций.',
+    color: 'from-amber-500 to-orange-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+    title: 'Прозрачность',
+    desc: 'Открытый код, публичные отчёты, информация о владельцах и юрисдикции.',
+    color: 'from-pink-500 to-rose-500'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+    title: 'Поддержка устройств',
+    desc: 'Должен работать на всех ваших устройствах: ПК, телефон, роутер, умный ТВ.',
+    color: 'from-blue-500 to-indigo-500'
+  }
+];
+
+const criteriaGrid = document.getElementById('criteriaGrid');
+criteria.forEach(c => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex items-start gap-4';
+  div.innerHTML = `
+    <div class="icon-box bg-gradient-to-br ${c.color} shadow-lg">${c.icon}</div>
+    <div>
+      <h3 class="font-bold text-lg mb-2">${c.title}</h3>
+      <p class="text-slate-600 text-sm">${c.desc}</p>
+    </div>
+  `;
+  criteriaGrid.appendChild(div);
+});
+
+// Красные флаги
+const redFlags = [
+  'Хранят логи вашей активности',
+  'Зарегистрированы в странах с обязательной выдачей данных',
+  'Нет независимого аудита безопасности',
+  'Используют устаревшие протоколы (PPTP)',
+  'Слишком дёшево или бесплатно — значит, вы продукт',
+  'Нет kill switch и защиты от утечек DNS',
+  'Мало серверов — все перегружены',
+  'Нет техподдержки или только email'
+];
+
+const redFlagsGrid = document.getElementById('redFlagsGrid');
+redFlags.forEach(f => {
+  const div = document.createElement('div');
+  div.className = 'bg-white rounded-xl p-4 border border-red-200 flex items-start gap-3';
+  div.innerHTML = `
+    <svg class="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    <span class="text-sm">${f}</span>
+  `;
+  redFlagsGrid.appendChild(div);
+});
+
+// Мифы
+const myths = [
+  { myth: 'VPN делает вас полностью анонимным', truth: 'VPN скрывает IP и шифрует трафик, но провайдер VPN видит вашу активность. Для полной анонимности нужен Tor + VPN.' },
+  { myth: 'Бесплатные VPN так же хороши, как платные', truth: 'Бесплатные VPN зарабатывают на ваших данных, рекламе или ограничениях. Если продукт бесплатный — вы продукт.' },
+  { myth: 'VPN замедляет интернет в 10 раз', truth: 'Современные протоколы (WireGuard) добавляют всего 5-10% задержки. Иногда VPN даже ускоряет — если провайдер режет скорость.' },
+  { myth: 'VPN нужен только для нелегальных действий', truth: 'VPN используют для защиты в публичных сетях, приватности, обхода цензуры, удалённой работы. Это легальный инструмент.' },
+  { myth: 'Все VPN одинаковые', truth: 'Разница огромная: протоколы, политика логов, юрисдикция, количество серверов. Выбирайте тщательно.' },
+  { myth: 'VPN можно использовать только на компьютере', truth: 'Современные VPN работают на телефонах, планшетах, роутерах, умных ТВ и даже консолях.' },
+  { myth: 'Если я ничего не скрываю, VPN не нужен', truth: 'VPN защищает не от того, что вы скрываете, а от тех, кто хочет украсть ваши данные в публичных сетях.' },
+  { myth: 'VPN блокирует стриминговые сервисы', truth: 'Хорошие VPN имеют специальные серверы для Netflix, YouTube и других сервисов. Проблемы только у дешёвых.' },
+  { myth: 'VPN защищает от вирусов', truth: 'VPN шифрует трафик, но не сканирует файлы. Нужен отдельный антивирус.' },
+  { myth: 'Настроить VPN сложно', truth: 'Современные VPN-сервисы устанавливаются в один клик. Сложная настройка нужна только для self-hosted решений.' }
+];
+
+const mythsGrid = document.getElementById('mythsGrid');
+myths.forEach((m, i) => {
+  const div = document.createElement('div');
+  div.className = 'myth-card bg-white rounded-xl p-5 border-2 border-slate-200';
+  div.innerHTML = `
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 font-bold flex items-center justify-center flex-shrink-0">${i + 1}</div>
+      <div class="flex-1">
+        <div class="font-bold text-base mb-2 line-through decoration-red-500 decoration-2">${m.myth}</div>
+        <div class="text-sm text-slate-600 myth-truth hidden">
+          <span class="font-bold text-cyan-600">Правда:</span> ${m.truth}
+        </div>
+      </div>
+      <svg class="w-5 h-5 text-slate-400 myth-arrow flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+  `;
+  div.onclick = () => {
+    div.classList.toggle('revealed');
+    div.querySelector('.myth-truth').classList.toggle('hidden');
+    const arrow = div.querySelector('.myth-arrow');
+    arrow.style.transform = div.classList.contains('revealed') ? 'rotate(180deg)' : 'rotate(0)';
+  };
+  mythsGrid.appendChild(div);
+});
+
+// Тест
+const quizQuestions = [
+  { category: 'Публичные сети', text: 'Вы подключились к Wi-Fi в кафе. Что самое опасное делать без VPN?', answers: [
+    { text: 'Читать новости', correct: false, feedback: 'Относительно безопасно, если сайт использует HTTPS.' },
+    { text: 'Входить в онлайн-банк', correct: true, feedback: 'Верно! В публичной сети ваш трафик могут перехватить и украсть данные.' },
+    { text: 'Смотреть YouTube', correct: false, feedback: 'Безопасно, если не вводите личные данные.' },
+    { text: 'Проверять погоду', correct: false, feedback: 'Абсолютно безопасно.' }
+  ]},
+  { category: 'Протоколы', text: 'Какой протокол VPN самый быстрый и современный?', answers: [
+    { text: 'PPTP', correct: false, feedback: 'Устаревший и небезопасный протокол.' },
+    { text: 'WireGuard', correct: true, feedback: 'Верно! Самый быстрый и современный протокол с минимальным кодом.' },
+    { text: 'L2TP', correct: false, feedback: 'Старый протокол, медленный и с уязвимостями.' },
+    { text: 'SSTP', correct: false, feedback: 'Только для Windows, не самый быстрый.' }
+  ]},
+  { category: 'Выбор VPN', text: 'Что означает политика no-log?', answers: [
+    { text: 'VPN не хранит логи вашей активности', correct: true, feedback: 'Верно! Это ключевой критерий приватного VPN.' },
+    { text: 'VPN не имеет логов ошибок', correct: false, feedback: 'Нет, речь именно о логах пользовательской активности.' },
+    { text: 'VPN не ведёт статистику', correct: false, feedback: 'Некоторые метрики могут собираться, но не ваша активность.' },
+    { text: 'VPN не работает без интернета', correct: false, feedback: 'Это очевидно и не связано с политикой логов.' }
+  ]},
+  { category: 'Безопасность', text: 'Что такое Kill Switch?', answers: [
+    { text: 'Кнопка удаления VPN', correct: false, feedback: 'Нет, это другая функция.' },
+    { text: 'Автоматическое отключение интернета при обрыве VPN', correct: true, feedback: 'Верно! Защищает от утечки данных, если VPN-соединение разорвано.' },
+    { text: 'Функция удаления истории', correct: false, feedback: 'Нет, это не связано с Kill Switch.' },
+    { text: 'Блокировка всех сайтов', correct: false, feedback: 'Нет, Kill Switch работает иначе.' }
+  ]},
+  { category: 'Мифы', text: 'Правда ли, что VPN делает вас полностью анонимным?', answers: [
+    { text: 'Да, никто не может отследить вашу активность', correct: false, feedback: 'Нет, VPN-провайдер видит вашу активность. Для полной анонимности нужен Tor.' },
+    { text: 'Нет, VPN скрывает IP, но провайдер видит активность', correct: true, feedback: 'Верно! VPN — не панацея для анонимности.' },
+    { text: 'Да, если использовать бесплатный VPN', correct: false, feedback: 'Бесплатные VPN часто сами собирают данные.' },
+    { text: 'Нет, VPN вообще не влияет на анонимность', correct: false, feedback: 'VPN значительно повышает приватность, но не даёт полной анонимности.' }
+  ]},
+  { category: 'Шифрование', text: 'Какое шифрование считается военным стандартом?', answers: [
+    { text: 'AES-128', correct: false, feedback: 'Хорошее, но не военный стандарт.' },
+    { text: 'AES-256', correct: true, feedback: 'Верно! AES-256 используется правительством США для секретных данных.' },
+    { text: 'DES', correct: false, feedback: 'Устаревший и небезопасный алгоритм.' },
+    { text: 'MD5', correct: false, feedback: 'Это хеш-функция, не шифрование. И она взломана.' }
+  ]},
+  { category: 'Бесплатные VPN', text: 'Почему бесплатные VPN обычно плохие?', answers: [
+    { text: 'Они слишком медленные', correct: false, feedback: 'Это следствие, не причина.' },
+    { text: 'Они зарабатывают на ваших данных или рекламе', correct: true, feedback: 'Верно! Если продукт бесплатный — вы продукт.' },
+    { text: 'У них мало серверов', correct: false, feedback: 'Это тоже следствие бизнес-модели.' },
+    { text: 'Они не работают на телефонах', correct: false, feedback: 'Большинство работает, просто плохо.' }
+  ]},
+  { category: 'Использование', text: 'В какой ситуации VPN НЕ обязателен?', answers: [
+    { text: 'Публичный Wi-Fi в аэропорту', correct: false, feedback: 'Обязателен! Публичные сети небезопасны.' },
+    { text: 'Домашний Wi-Fi с WPA3', correct: true, feedback: 'Верно! Дома с надёжным Wi-Fi VPN менее критичен.' },
+    { text: 'Онлайн-банкинг в кафе', correct: false, feedback: 'Крайне обязателен! Защищает финансовые данные.' },
+    { text: 'Работа с корпоративными данными из отеля', correct: false, feedback: 'Обязателен! Защищает корпоративные секреты.' }
+  ]}
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function renderQuestion() {
+  answered = false;
+  const q = quizQuestions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = quizQuestions.length;
+  document.getElementById('progressBar').style.width = ((currentQ + 1) / quizQuestions.length * 100) + '%';
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qText').textContent = q.text;
+  
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left p-4 bg-white hover:bg-cyan-50 border-2 border-slate-200 hover:border-cyan-400 rounded-xl font-medium transition flex items-center gap-3';
+    btn.innerHTML = `
+      <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold flex-shrink-0">${String.fromCharCode(65 + i)}</span>
+      <span>${a.text}</span>
+    `;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('quizCard').classList.remove('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = quizQuestions[currentQ];
+  const a = q.answers[idx];
+  const isCorrect = a.correct;
+  if (isCorrect) score++;
+  document.getElementById('score').textContent = score;
+  
+  const buttons = document.querySelectorAll('#answersContainer button');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    const ans = q.answers[i];
+    if (ans.correct) {
+      b.className = 'w-full text-left p-4 bg-emerald-100 border-2 border-emerald-500 rounded-xl font-medium flex items-center gap-3';
+    } else if (i === idx) {
+      b.className = 'w-full text-left p-4 bg-red-100 border-2 border-red-500 rounded-xl font-medium flex items-center gap-3';
+    } else {
+      b.className = 'w-full text-left p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-medium flex items-center gap-3 opacity-60';
+    }
+  });
+  
+  const feedback = document.createElement('div');
+  feedback.className = `mt-4 p-4 rounded-xl text-sm ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-800'}`;
+  feedback.innerHTML = `<strong>${isCorrect ? 'Верно!' : 'Неверно.'}</strong> ${a.feedback}`;
+  document.getElementById('answersContainer').appendChild(feedback);
+  
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < quizQuestions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 3000);
+}
+
+function showResult() {
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  const pct = score / quizQuestions.length;
+  let icon, title, text;
+  if (pct >= 0.8) {
+    icon = '<svg class="w-20 h-20 mx-auto text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>';
+    title = `Отлично! ${score}/${quizQuestions.length}`;
+    text = 'Вы отлично разбираетесь в VPN и шифровании! Ваш трафик под надёжной защитой.';
+  } else if (pct >= 0.5) {
+    icon = '<svg class="w-20 h-20 mx-auto text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+    title = `Неплохо: ${score}/${quizQuestions.length}`;
+    text = 'База есть, но некоторые аспекты VPN стоит изучить подробнее. Прочитайте разделы выше.';
+  } else {
+    icon = '<svg class="w-20 h-20 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    title = `${score}/${quizQuestions.length} — нужно учиться`;
+    text = 'Ваш трафик в опасности! Обязательно изучите все разделы и настройте защиту.';
+  }
+  document.getElementById('resultIcon').innerHTML = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultText').textContent = text;
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('score').textContent = 0;
+  renderQuestion();
+}
+
+renderQuestion();
+
+// Чек-лист
+const checklist = [
+  'Выбрал надёжный VPN с политикой no-log',
+  'Настроил VPN на всех устройствах',
+  'Включил Kill Switch',
+  'Включил защиту от утечек DNS',
+  'Использую WireGuard или OpenVPN',
+  'Проверил, что VPN не хранит логи (независимый аудит)',
+  'Настроил VPN на роутере для защиты всех устройств',
+  'Включаю VPN при подключении к публичному Wi-Fi',
+  'Использую VPN при онлайн-банкинге',
+  'Проверил скорость VPN — не режет более 20%',
+  'Настроил автоподключение VPN',
+  'Проверил, что VPN работает с нужными сервисами (Netflix, и т.д.)'
+];
+
+const checklistContainer = document.getElementById('checklistContainer');
+document.getElementById('checkTotal').textContent = checklist.length;
+checklist.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition hover:border-cyan-300 bg-white mb-3';
+  div.innerHTML = `
+    <div class="check-icon w-7 h-7 rounded-lg border-2 border-slate-300 flex items-center justify-center flex-shrink-0 transition">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div class="flex-1 pt-0.5"><span class="font-medium text-sm">${item}</span></div>
+  `;
+  div.onclick = () => {
+    const isChecked = div.dataset.checked === 'true';
+    if (isChecked) {
+      div.dataset.checked = 'false';
+      div.style.background = 'white';
+      div.style.borderColor = '#e2e8f0';
+      div.querySelector('.check-icon').style.background = 'transparent';
+      div.querySelector('.check-icon').style.borderColor = '#cbd5e1';
+    } else {
+      div.dataset.checked = 'true';
+      div.style.background = '#ecfeff';
+      div.style.borderColor = '#0891b2';
+      div.querySelector('.check-icon').style.background = '#0891b2';
+      div.querySelector('.check-icon').style.borderColor = '#0891b2';
+    }
+    updateCheckCount();
+  };
+  checklistContainer.appendChild(div);
+});
+
+function updateCheckCount() {
+  const items = document.querySelectorAll('#checklistContainer > div');
+  const filled = Array.from(items).filter(d => d.dataset.checked === 'true').length;
+  document.getElementById('checkCount').textContent = filled;
+  const status = document.getElementById('checkStatus');
+  const pct = filled / items.length;
+  if (pct === 0) status.textContent = 'Начните отмечать пункты';
+  else if (pct < 0.4) status.textContent = 'Есть над чем работать';
+  else if (pct < 0.7) status.textContent = 'Хорошее начало';
+  else if (pct < 1) status.textContent = 'Почти всё настроено';
+  else status.textContent = 'Отличная защита!';
+}
+</script>
+</body>
+</html>
