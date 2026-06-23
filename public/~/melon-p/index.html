@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melan Sandbox — Всё об игре</title>
+    <link href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.woff2" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.woff2" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-900-normal.woff2" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #e63946;
+            --accent-glow: rgba(230, 57, 70, 0.3);
+            --accent-orange: #ff6b35;
+            --text-primary: #f1faee;
+            --text-secondary: #a8a8b3;
+            --text-muted: #6c6c7a;
+            --border: #2a2a3a;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            padding: 0 2rem;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-logo {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--accent);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-logo span {
+            color: var(--text-primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 400;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-burger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .nav-burger span {
+            width: 24px;
+            height: 2px;
+            background: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(230, 57, 70, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255, 107, 53, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(230, 57, 70, 0.04) 0%, transparent 50%);
+        }
+
+        .hero-particles {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticle 8s infinite;
+        }
+
+        @keyframes floatParticle {
+            0% { opacity: 0; transform: translateY(100vh) scale(0); }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { opacity: 0; transform: translateY(-10vh) scale(1); }
+        }
+
+        .hero-content {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(230, 57, 70, 0.1);
+            border: 1px solid rgba(230, 57, 70, 0.3);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .hero-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.5); }
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            animation: fadeInUp 0.8s ease 0.4s both;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.9rem 2rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #c0392b);
+            color: white;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            transform: translateY(-2px);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 4rem;
+            animation: fadeInUp 0.8s ease 0.8s both;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sections */
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1.05rem;
+        }
+
+        /* About Section */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-image {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            aspect-ratio: 16/10;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .about-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .about-image::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(10, 10, 15, 0.5), transparent);
+        }
+
+        .about-text h3 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .about-text p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 1.02rem;
+        }
+
+        .about-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .tag {
+            background: rgba(230, 57, 70, 0.1);
+            border: 1px solid rgba(230, 57, 70, 0.2);
+            color: var(--accent);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(230, 57, 70, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: rgba(230, 57, 70, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.7rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        /* Download Section */
+        .download-section {
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            padding: 4rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(230, 57, 70, 0.08), transparent 70%);
+            pointer-events: none;
+        }
+
+        .download-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .download-info h3 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .download-info p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .download-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .download-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.2rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s;
+        }
+
+        .download-link:hover {
+            border-color: var(--accent);
+            background: rgba(230, 57, 70, 0.05);
+            transform: translateX(4px);
+        }
+
+        .download-link-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(230, 57, 70, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .download-link-text {
+            flex: 1;
+        }
+
+        .download-link-text strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .download-link-text span {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .download-link .arrow {
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .download-link:hover .arrow {
+            color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        .system-req {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .system-req h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .req-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .req-item:last-child {
+            border-bottom: none;
+        }
+
+        .req-item .label {
+            color: var(--text-muted);
+        }
+
+        .req-item .value {
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* Safety Section */
+        .safety-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .safety-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .safety-card.danger {
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+
+        .safety-card.safe {
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+
+        .safety-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .safety-card-header .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .safety-card.danger .icon {
+            background: rgba(231, 76, 60, 0.15);
+        }
+
+        .safety-card.safe .icon {
+            background: rgba(46, 204, 113, 0.15);
+        }
+
+        .safety-card-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .safety-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .safety-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.7rem;
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .safety-list li .check {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .safety-card.danger .check {
+            color: var(--danger);
+        }
+
+        .safety-card.safe .check {
+            color: var(--success);
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(243, 156, 18, 0.1));
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1.2rem;
+        }
+
+        .warning-banner .icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .warning-banner h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--warning);
+        }
+
+        .warning-banner p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+
+        /* FAQ Section */
+        .faq-list {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .faq-item.active {
+            border-color: rgba(230, 57, 70, 0.3);
+        }
+
+        .faq-question {
+            padding: 1.3rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: color 0.3s;
+            user-select: none;
+        }
+
+        .faq-question:hover {
+            color: var(--accent);
+        }
+
+        .faq-question .toggle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(230, 57, 70, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        .faq-item.active .toggle {
+            transform: rotate(45deg);
+            background: var(--accent);
+            color: white;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+        }
+
+        .faq-answer-inner {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .comparison-table td {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(230, 57, 70, 0.03);
+        }
+
+        .badge-safe {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--success);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-warn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer p {
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        footer .disclaimer {
+            margin-top: 1rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        /* Scroll animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--bg-primary);
+                border-bottom: 1px solid var(--border);
+                flex-direction: column;
+                padding: 1.5rem 2rem;
+                gap: 1.2rem;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-burger {
+                display: flex;
+            }
+
+            .about-grid,
+            .download-grid,
+            .safety-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-stats {
+                gap: 1.5rem;
+            }
+
+            .download-section {
+                padding: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                font-size: 0.82rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 0.7rem 1rem;
+            }
+        }
+
+        /* Glow effect for hero image */
+        .glow-border {
+            position: relative;
+        }
+
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-orange), var(--accent));
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: -1;
+        }
+
+        .glow-border:hover::before {
+            opacity: 0.5;
+        }
+
+        /* Animated gradient line */
+        .gradient-line {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--accent-orange), transparent);
+            margin: 0 auto;
+            max-width: 200px;
+            margin-top: 1.5rem;
+            border-radius: 2px;
+        }
+
+        /* Accordion for mobile */
+        .mobile-only {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-only {
+                display: block;
+            }
+            .desktop-only {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">MELAN<span>SANDBOX</span></a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#about">Об игре</a></li>
+                <li><a href="#features">Возможности</a></li>
+                <li><a href="#download">Скачать</a></li>
+                <li><a href="#safety">Безопасность</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+            <div class="nav-burger" id="burger" onclick="toggleMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-particles" id="particles"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                Инди-песочница
+            </div>
+            <h1>MELAN <span class="highlight">SANDBOX</span></h1>
+            <p class="hero-subtitle">Физическая 2D-песочница с реалистичной симуляцией, где вы управляете миром, ставите эксперименты и исследуете границы возможного</p>
+            <div class="hero-actions">
+                <a href="#download" class="btn btn-primary">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Где скачать
+                </a>
+                <a href="#about" class="btn btn-secondary">
+                    Узнать больше →
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-value">2D</div>
+                    <div class="stat-label">Физика</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">100+</div>
+                    <div class="stat-label">Инструментов</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Возможностей</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about">
+        <div class="section-header reveal">
+            <span class="section-tag">Об игре</span>
+            <h2 class="section-title">Что такое Melan Sandbox?</h2>
+            <div class="gradient-line"></div>
+        </div>
+        <div class="about-grid">
+            <div class="about-image glow-border reveal">
+                <img src="https://cdn.akamai.steamstatic.com/steam/apps/2431500/header.jpg" alt="Melan Sandbox" onerror="this.parentElement.innerHTML='<div style=&quot;display:flex;align-items:center;justify-content:center;height:100%;font-size:3rem;color:var(--accent);&quot;>🎮</div>'">
+            </div>
+            <div class="about-text reveal">
+                <h3>Песочница без ограничений</h3>
+                <p>
+                    <strong>Melan Sandbox</strong> — это инди-игра в жанре 2D-песочницы (sandbox), разработанная независимым разработчиком. Игра предоставляет игроку огромный набор инструментов для взаимодействия с физическим миром.
+                </p>
+                <p>
+                    Вы можете размещать объекты, персонажей, оружие, взрывчатку, жидкости и множество других элементов, наблюдая за их взаимодействием в реальном времени. Игра отличается продвинутой физической симуляцией и пиксельной графикой.
+                </p>
+                <p>
+                    Здесь нет целей или заданий — только ваше воображение определяет, что происходит на экране.
+                </p>
+                <div class="about-tags">
+                    <span class="tag">Песочница</span>
+                    <span class="tag">Физика</span>
+                    <span class="tag">2D</span>
+                    <span class="tag">Инди</span>
+                    <span class="tag">Симуляция</span>
+                    <span class="tag">Steam</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <div class="section-header reveal">
+            <span class="section-tag">Возможности</span>
+            <h2 class="section-title">Что можно делать в игре</h2>
+            <p class="section-desc">Огромный арсенал инструментов для экспериментов и творчества</p>
+            <div class="gradient-line"></div>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <div class="feature-icon">🔫</div>
+                <h3>Оружие и инструменты</h3>
+                <p>Десятки видов оружия — от пистолетов и автоматов до ракетниц и лазерных лучей. Каждый инструмент имеет уникальную физику.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">💥</div>
+                <h3>Взрывчатка</h3>
+                <p>Бомбы, мины, динамит, ядерные взрывы — наблюдайте за разрушениями и цепными реакциями в детализированном мире.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">🧪</div>
+                <h3>Химия и жидкости</h3>
+                <p>Различные жидкости, газы и химические вещества взаимодействуют друг с другом. Создавайте реакции и наблюдайте за результатами.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">👤</div>
+                <h3>Персонажи (NPC)</h3>
+                <p>Размещайте персонажей с искусственным интеллектом, которые реагируют на окружающую среду, убегают от опасности и взаимодействуют друг с другом.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">🌍</div>
+                <h3>Редактор мира</h3>
+                <p>Стройте ландшафты, размещайте платформы, стены и структуры. Создавайте свои уникальные сцены и механизмы.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="feature-icon">⚡</div>
+                <h3>Физическая симуляция</h3>
+                <p>Реалистичная физика тканей, жидкостей, частиц и твёрдых тел. Каждый объект ведёт себя предсказуемо и правдоподобно.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download">
+        <div class="section-header reveal">
+            <span class="section-tag">Скачать</span>
+            <h2 class="section-title">Где скачать игру</h2>
+            <p class="section-desc">Используйте только официальные источники для безопасной загрузки</p>
+            <div class="gradient-line"></div>
+        </div>
+        <div class="download-section reveal">
+            <div class="download-grid">
+                <div class="download-info">
+                    <h3>Официальные источники</h3>
+                    <p>Melan Sandbox распространяется через платформу Steam. Это единственный безопасный и легальный способ получить игру.</p>
+                    <div class="download-links">
+                        <a href="https://store.steampowered.com/app/2431500/Melan_Sandbox/" target="_blank" class="download-link">
+                            <div class="download-link-icon">🎮</div>
+                            <div class="download-link-text">
+                                <strong>Steam — Melan Sandbox</strong>
+                                <span>Официальная страница в магазине Steam</span>
+                            </div>
+                            <span class="arrow">→</span>
+                        </a>
+                        <a href="https://store.steampowered.com/search/?term=melan+sandbox" target="_blank" class="download-link">
+                            <div class="download-link-icon">🔍</div>
+                            <div class="download-link-text">
+                                <strong>Поиск в Steam</strong>
+                                <span>Найдите игру через поиск Steam</span>
+                            </div>
+                            <span class="arrow">→</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="system-req">
+                    <h4>💻 Системные требования</h4>
+                    <div class="req-item">
+                        <span class="label">ОС</span>
+                        <span class="value">Windows 10/11</span>
+                    </div>
+                    <div class="req-item">
+                        <span class="label">Процессор</span>
+                        <span class="value">Intel i3 / AMD Ryzen 3</span>
+                    </div>
+                    <div class="req-item">
+                        <span class="label">Оперативная память</span>
+                        <span class="value">4 GB RAM</span>
+                    </div>
+                    <div class="req-item">
+                        <span class="label">Видеокарта</span>
+                        <span class="value">Встроенная GPU</span>
+                    </div>
+                    <div class="req-item">
+                        <span class="label">Место на диске</span>
+                        <span class="value">~500 MB</span>
+                    </div>
+                    <div class="req-item">
+                        <span class="label">Цена</span>
+                        <span class="value" style="color: var(--success);">Бесплатно / Низкая</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safety Section -->
+    <section id="safety">
+        <div class="section-header reveal">
+            <span class="section-tag">Безопасность</span>
+            <h2 class="section-title">Как отличить оригинал от вируса</h2>
+            <p class="section-desc">Подделки и вредоносные версии часто маскируются под популярные игры. Вот как себя защитить.</p>
+            <div class="gradient-line"></div>
+        </div>
+
+        <div class="safety-grid reveal">
+            <div class="safety-card safe">
+                <div class="safety-card-header">
+                    <div class="icon">✅</div>
+                    <h3>Признаки оригинала</h3>
+                </div>
+                <ul class="safety-list">
+                    <li>
+                        <span class="check">✓</span>
+                        <span>Игра скачана через <strong>Steam</strong> (официальный магазин Valve)</span>
+                    </li>
+                    <li>
+                        <span class="check">✓</span>
+                        <span>У игры есть <strong>страница в Steam</strong> с отзывами, скриншотами и описанием</span>
+                    </li>
+                    <li>
+                        <span class="check">✓</span>
+                        <span>Размер установочного файла <strong>соответствует заявленному</strong> (~500 MB)</span>
+                    </li>
+                    <li>
+                        <span class="check">✓</span>
+                        <span>Антивирус <strong>не выдаёт предупреждений</strong> при установке</span>
+                    </li>
+                    <li>
+                        <span class="check">✓</span>
+                        <span>Игра запускается <strong>без дополнительных «активаторов»</strong> и «кряков»</span>
+                    </li>
+                    <li>
+                        <span class="check">✓</span>
+                        <span>В Steam отображается <strong>количество отзывов</strong> и рейтинг</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="safety-card danger">
+                <div class="safety-card-header">
+                    <div class="icon">🚨</div>
+                    <h3>Признаки вируса / подделки</h3>
+                </div>
+                <ul class="safety-list">
+                    <li>
+                        <span class="check">✗</span>
+                        <span>Файл скачан с <strong>неизвестного сайта</strong>, торрента или «бесплатного» источника</span>
+                    </li>
+                    <li>
+                        <span class="check">✗</span>
+                        <span>Установщик требует <strong>отключить антивирус</strong> перед запуском</span>
+                    </li>
+                    <li>
+                        <span class="check">✗</span>
+                        <span>Файл имеет расширение <strong>.exe, .bat, .scr</strong> вместо установщика Steam</span>
+                    </li>
+                    <li>
+                        <span class="check">✗</span>
+                        <span>Размер файла <strong>слишком мал</strong> (несколько МБ вместо сотен)</span>
+                    </li>
+                    <li>
+                        <span class="check">✗</span>
+                        <span>Просит ввести <strong>данные аккаунтов</strong>, номер карты или SMS-код</span>
+                    </li>
+                    <li>
+                        <span class="check">✗</span>
+                        <span>После установки появляются <strong>рекламные окна, расширения браузера</strong></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <table class="comparison-table reveal">
+            <thead>
+                <tr>
+                    <th>Критерий</th>
+                    <th>Оригинал (Steam)</th>
+                    <th>Подделка / Вирус</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Источник загрузки</td>
+                    <td><span class="badge-safe">✓ Steam</span></td>
+                    <td><span class="badge-danger">✗ Сторонние сайты</span></td>
+                </tr>
+                <tr>
+                    <td>Антивирус</td>
+                    <td><span class="badge-safe">✓ Чисто</span></td>
+                    <td><span class="badge-danger">✗ Блокирует</span></td>
+                </tr>
+                <tr>
+                    <td>Размер файла</td>
+                    <td><span class="badge-safe">✓ ~500 MB</span></td>
+                    <td><span class="badge-warn">⚠ Подозрительный</span></td>
+                </tr>
+                <tr>
+                    <td>Отзывы</td>
+                    <td><span class="badge-safe">✓ Есть в Steam</span></td>
+                    <td><span class="badge-danger">✗ Нет отзывов</span></td>
+                </tr>
+                <tr>
+                    <td>Обновления</td>
+                    <td><span class="badge-safe">✓ Автоматические</span></td>
+                    <td><span class="badge-danger">✗ Нет обновлений</span></td>
+                </tr>
+                <tr>
+                    <td>Требует «кряк»</td>
+                    <td><span class="badge-safe">✓ Нет</span></td>
+                    <td><span class="badge-danger">✗ Да</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="warning-banner reveal">
+            <div class="icon">⚠️</div>
+            <div>
+                <h4>Важное предупреждение</h4>
+                <p>Никогда не скачивайте игры с сайтов, которые обещают «бесплатную» версию платной игры. В 90% случаев такие файлы содержат вредоносное ПО: трояны, майнеры, стиллеры паролей. Всегда используйте только официальные магазины — Steam, Epic Games Store и т.д. Если сайт просит «отключить антивирус» — это 100% вирус.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq">
+        <div class="section-header reveal">
+            <span class="section-tag">FAQ</span>
+            <h2 class="section-title">Частые вопросы</h2>
+            <div class="gradient-line"></div>
+        </div>
+        <div class="faq-list reveal">
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Melan Sandbox — бесплатная игра?
+                    <span class="toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Melan Sandbox распространяется через Steam. Актуальную цену можно посмотреть на официальной странице игры в магазине Steam. Иногда разработчик проводит бесплатные раздачи или скидки.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    На каких платформах доступна игра?
+                    <span class="toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Игра доступна на PC через платформу Steam. Поддерживается Windows 10 и выше. Информацию о других платформах можно найти на официальной странице в Steam.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Можно ли играть без интернета?
+                    <span class="toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Да, Melan Sandbox — это одиночная игра, которая не требует постоянного подключения к интернету. После загрузки и установки через Steam вы можете играть в офлайн-режиме.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Что делать, если антивирус ругается на файл?
+                    <span class="toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Если вы скачали игру НЕ из Steam и антивирус блокирует файл — скорее всего, это действительно вирус. Не отключайте антивирус! Удалите файл и скачайте игру из официального источника. Если же Steam-версия вызывает подозрения — проверьте хеш файла или обратитесь в поддержку Steam.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Игра подходит для детей?
+                    <span class="toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Melan Sandbox содержит элементы насилия и экспериментов над персонажами. Рекомендуется ознакомиться с возрастным рейтингом на странице Steam перед покупкой. Игра скорее подходит для подростков и взрослых.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFaq(this)">
+                    Как отличить настоящую страницу в Steam от фейковой?
+                    <span class="toggle">+</span>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Настоящая страница находится на домене <strong>store.steampowered.com</strong>. Обратите внимание на: URL-адрес (должен начинаться с https://store.steampowered.com/app/), наличие отзывов от реальных пользователей, дату выхода, информацию о разработчике. Фейковые сайты часто копируют дизайн Steam, но имеют другой домен.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>Информационная страница о Melan Sandbox. Все права на игру принадлежат её разработчику. Страница создана в ознакомительных целях.</p>
+        <p class="disclaimer">Всегда скачивайте программы и игры только из официальных источников. Берегите свою цифровую безопасность.</p>
+    </footer>
+
+    <script>
+        // Particles
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 8 + 's';
+            particle.style.animationDuration = (6 + Math.random() * 6) + 's';
+            particle.style.width = (2 + Math.random() * 3) + 'px';
+            particle.style.height = particle.style.width;
+            particlesContainer.appendChild(particle);
+        }
+
+        // Navbar scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile menu
+        function toggleMenu() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+
+        // Close mobile menu on link click
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('navLinks').classList.remove('open');
+            });
+        });
+
+        // FAQ toggle
+        function toggleFaq(el) {
+            const item = el.parentElement;
+            const wasActive = item.classList.contains('active');
+            
+            // Close all
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+            
+            // Toggle current
+            if (!wasActive) {
+                item.classList.add('active');
+            }
+        }
+
+        // Scroll reveal
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Stagger animation for feature cards
+        const featureCards = document.querySelectorAll('.feature-card');
+        featureCards.forEach((card, index) => {
+            card.style.transitionDelay = (index * 0.1) + 's';
+        });
+    </script>
+</body>
+</html>
+
