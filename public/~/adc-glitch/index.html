@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remember — Финал The Amazing Digital Circus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #e8e8e8;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: linear-gradient(180deg, #1a0a2e 0%, #0a0a0a 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 107, 157, 0.15) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); }
+            50% { opacity: 0.5; transform: translateX(-50%) scale(1.1); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .episode-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            background: rgba(255, 107, 157, 0.2);
+            border: 1px solid #ff6b9d;
+            color: #ff6b9d;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .hero-title {
+            font-size: clamp(48px, 8vw, 96px);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #ff6b9d 0%, #c06ce8 50%, #6b9fff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 300;
+            color: #b8b8b8;
+            margin-bottom: 16px;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .hero-meta {
+            font-size: 16px;
+            color: #888;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        .section {
+            margin-bottom: 80px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        .section:nth-child(1) { animation-delay: 0.1s; }
+        .section:nth-child(2) { animation-delay: 0.2s; }
+        .section:nth-child(3) { animation-delay: 0.3s; }
+        .section:nth-child(4) { animation-delay: 0.4s; }
+        .section:nth-child(5) { animation-delay: 0.5s; }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 800;
+            margin-bottom: 32px;
+            color: #fff;
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 40px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #c06ce8 100%);
+        }
+
+        .text {
+            font-size: 17px;
+            line-height: 1.9;
+            color: #d0d0d0;
+            margin-bottom: 20px;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.1) 0%, rgba(192, 108, 232, 0.1) 100%);
+            border-left: 4px solid #ff6b9d;
+            padding: 28px 32px;
+            margin: 32px 0;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #e8e8e8;
+        }
+
+        .quote {
+            font-style: italic;
+            color: #ff6b9d;
+            font-weight: 600;
+        }
+
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+
+        .character-card {
+            background: #1a1a1a;
+            padding: 28px;
+            border: 1px solid #2a2a2a;
+            transition: all 0.3s ease;
+        }
+
+        .character-card:hover {
+            border-color: #ff6b9d;
+            transform: translateY(-4px);
+        }
+
+        .character-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ff6b9d;
+            margin-bottom: 8px;
+        }
+
+        .character-real {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .character-desc {
+            font-size: 15px;
+            color: #b8b8b8;
+            line-height: 1.6;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 40px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #c06ce8 50%, #6b9fff 100%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -46px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b9d;
+            box-shadow: 0 0 0 4px #0a0a0a, 0 0 0 6px #ff6b9d;
+        }
+
+        .timeline-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .timeline-text {
+            font-size: 16px;
+            color: #b8b8b8;
+            line-height: 1.7;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 60px 20px;
+            border-top: 1px solid #1a1a1a;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 40px 20px;
+            }
+
+            .character-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .highlight-box {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="hero-content">
+            <div class="episode-badge">Финал сериала</div>
+            <h1 class="hero-title">Remember</h1>
+            <p class="hero-subtitle">Девятая серия The Amazing Digital Circus</p>
+            <p class="hero-meta">Эмоциональный часовой финал, который раскрывает все тайны</p>
+        </div>
+    </section>
+
+    <div class="content">
+        <section class="section">
+            <h2 class="section-title">Отчаяние и шокирующая правда</h2>
+            <p class="text">
+                Сериал начинается с последствий событий 8-й серии. Кейн был случайно удален Кингером, и Цирк начал разрушаться, потеряв свои краски.
+            </p>
+            <p class="text">
+                Персонажи в панике. Джекс, злой и расстроенный, набрасывается на Кингера, который пытается объяснить ситуацию.
+            </p>
+            <div class="highlight-box">
+                Кингер, копаясь в коде Кейна, находит папку с файлами сознаний. Он приходит к шокирующему выводу: <span class="quote">герои — это не настоящие люди, а лишь цифровые копии</span> своих реальных «оригиналов», которые живут своей жизнью в реальном мире.
+            </div>
+            <p class="text">
+                Это осознание становится для всех тяжелым ударом.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Трагическая судьба Джекса</h2>
+            <p class="text">
+                Джекс, не в силах справиться с правдой, изолируется от остальных и в конечном итоге подвергается Абстракции — процессу, при котором цифровой персонаж сходит с ума и теряет свою форму.
+            </p>
+            <p class="text">
+                Помни отказывается его бросать. Она находит абстрагированную форму Джекса и, рискуя собой, проникает в его разум, чтобы попытаться его спасти.
+            </p>
+            <div class="highlight-box">
+                Внутри разума Джекса она оказывается в странном измерении с множеством дверей, за каждой из которых находится гротескная версия Джекса. Пройдя через них, она находит «настоящего» Джекса в пустоте, где он признается: <span class="quote">«Я не хочу уходить»</span>.
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Прошлое Джекса</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h3 class="timeline-title">Дружба с Риббит</h3>
+                    <p class="timeline-text">
+                        Воспоминания показывают, что у Джекса была лучшая подруга Риббит, к которой он испытывал почти романтические чувства.
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <h3 class="timeline-title">Тяжелая жизнь</h3>
+                    <p class="timeline-text">
+                        Он рассказал ей о своей тяжелой жизни: развод родителей, уход отца, конфликты с матерью и жизнь на улице после побега из дома.
+                    </p>
+                </div>
+                <div class="timeline-item">
+                    <h3 class="timeline-title">Трагедия</h3>
+                    <p class="timeline-text">
+                        Испугавшись своей уязвимости, Джекс отрекся от своих слов, назвав все шуткой, и начал жестоко отталкивать Риббит. Он настроил против нее остальных, что в итоге привело к ее Абстракции.
+                    </p>
+                </div>
+            </div>
+            <p class="text">
+                В попытке защитить себя, он превратился в того задиристого и жестокого персонажа, которого мы знали, и начал издеваться над остальными, особенно над Рагатой и Гангл. Это осознание его травмы делает его поведение более понятным.
+            </p>
+            <p class="text">
+                Несмотря на попытку Помни, спасти Джекса от Абстракции не удается. Группа создает для него уютное место в виде шалаша из подушек, где он и остается.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Искупление Кейна</h2>
+            <p class="text">
+                Параллельно с этим мы следуем за Кейном, который не был удален, а оказался в Пустоте. В Пустоте он находит доступ к файлам с данными и узнает правду о том, что персонажи — цифровые копии.
+            </p>
+            <p class="text">
+                Он также осознает, что его контроль над ними был жестоким. Чтобы искупить вину, он жертвует частью своей силы и возвращается в Цирк.
+            </p>
+            <p class="text">
+                Кейн извиняется перед группой и показывает им слайд-шоу, в котором раскрывает, кто они в реальном мире.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Кто они на самом деле</h2>
+            <div class="character-grid">
+                <div class="character-card">
+                    <div class="character-name">Помни</div>
+                    <div class="character-real">Эбигейл Брукс</div>
+                    <div class="character-desc">Работает бухгалтером</div>
+                </div>
+                <div class="character-card">
+                    <div class="character-name">Рагата</div>
+                    <div class="character-real">Сьюзи Акерман</div>
+                    <div class="character-desc">Сбежала от проблем с матерью и счастлива</div>
+                </div>
+                <div class="character-card">
+                    <div class="character-name">Гангл</div>
+                    <div class="character-real">Зои</div>
+                    <div class="character-desc">Бросила работу в фаст-фуде и стала дизайнером</div>
+                </div>
+                <div class="character-card">
+                    <div class="character-name">Зубл</div>
+                    <div class="character-real">Райли</div>
+                    <div class="character-desc">Владеет популярным баром</div>
+                </div>
+                <div class="character-card">
+                    <div class="character-name">Кингер</div>
+                    <div class="character-real">Грант</div>
+                    <div class="character-desc">Счастлив в браке, есть дети</div>
+                </div>
+                <div class="character-card">
+                    <div class="character-name">Джекс</div>
+                    <div class="character-real">Лирой</div>
+                    <div class="character-desc">Смог преодолеть бездомность и нашел стабильную жизнь</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Новая жизнь в Цирке</h2>
+            <p class="text">
+                Узнав, что их оригиналы счастливы и живут своей жизнью, персонажи находят покой. Они принимают себя как цифровых личностей и решают наполнить свою жизнь в Цирке смыслом.
+            </p>
+            <p class="text">
+                Кейн предлагает им совместно перестроить Цирк по их желанию. Группа пишет фреску, чтобы почтить память всех, кто подвергся Абстракции.
+            </p>
+            <div class="highlight-box">
+                Финал показывает их за ужином, но на этот раз Помни не выглядит потерянной и испуганной — она <span class="quote">улыбается, принимая свою новую жизнь и друзей</span>.
+            </div>
+            <p class="text">
+                В сцене после титров мы видим их реальные версии на автобусной остановке, что подтверждает, что они живы и здоровы.
+            </p>
+            <p class="text">
+                Этот финал получился очень эмоциональным и неоднозначным, но в итоге он принес персонажам надежду и закрытие.
+            </p>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>The Amazing Digital Circus / GLITCH Productions / 2026</p>
+    </footer>
+</body>
+</html>
+
