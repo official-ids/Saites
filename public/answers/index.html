@@ -7,9 +7,11 @@
 <meta name="theme-color" content="#000000">
 <title>Ответы · Oris</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/latin-400-normal.css">
 <style>
 :root {
     --bg-body: #000000; --bg-card: #1C1C1E; --bg-elevated: #2C2C2E; --bg-subtle: #0A0A0A;
@@ -19,42 +21,69 @@
     --border: rgba(255, 255, 255, 0.08); --border-strong: rgba(255, 255, 255, 0.15);
     --radius-lg: 18px; --radius-md: 12px; --radius-sm: 8px;
     --font-stack: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
     --header-h: 56px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-stack); line-height: 1.5; min-height: 100vh; }
 
 .header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.72); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); height: var(--header-h); }
-.header-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; }
+.header-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; flex-shrink: 0; }
 .logo svg { width: 22px; height: 22px; color: var(--accent); }
 .nav-links { display: flex; gap: 8px; align-items: center; }
 .nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
 .nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
 
-.layout { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 1fr 280px; gap: 32px; }
+.search-box { flex: 1; max-width: 420px; position: relative; }
+.search-input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 14px 8px 36px; border-radius: 99px; font-family: inherit; font-size: 0.88rem; transition: all 0.2s; }
+.search-input:focus { outline: none; border-color: var(--accent); background: var(--bg-card); }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-tertiary); pointer-events: none; }
 
-/* Sidebar */
-.sidebar { position: sticky; top: calc(var(--header-h) + 24px); align-self: start; }
-.sidebar-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; }
-.sidebar-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 12px; }
+.icon-btn { position: relative; width: 36px; height: 36px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.icon-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn .badge-dot { position: absolute; top: -2px; right: -2px; background: var(--danger); color: white; font-size: 0.65rem; font-weight: 700; min-width: 16px; height: 16px; border-radius: 99px; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid var(--bg-body); }
+
+.layout { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 1fr 300px; gap: 32px; }
+
+.sidebar { position: sticky; top: calc(var(--header-h) + 24px); align-self: start; display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - var(--header-h) - 48px); overflow-y: auto; scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
+.sidebar-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; }
+.sidebar-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.sidebar-title .count { background: var(--bg-elevated); padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; text-transform: none; letter-spacing: 0; }
 .category-list { list-style: none; }
 .category-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; font-size: 0.9rem; color: var(--text-secondary); }
 .category-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
 .category-item.active { background: rgba(10, 132, 255, 0.1); color: var(--accent); font-weight: 500; }
-.category-count { font-size: 0.75rem; color: var(--text-tertiary); font-family: 'SF Mono', monospace; }
+.category-count { font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--mono); }
 
-.user-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-md); }
-.user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; }
+.user-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-md); cursor: pointer; transition: all 0.15s; }
+.user-card:hover { background: var(--bg-card); }
+.user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; flex-shrink: 0; }
 .user-info { flex: 1; min-width: 0; }
 .user-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-rep { font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
 .user-rep svg { width: 12px; height: 12px; color: var(--warning); }
 
-/* Main */
+.badges-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.badge-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 99px; font-size: 0.72rem; color: var(--text-secondary); }
+.badge-chip svg { width: 10px; height: 10px; color: var(--warning); }
+
+.tags-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-chip { padding: 4px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 99px; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+.tag-chip:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.tag-chip.active { background: rgba(10, 132, 255, 0.1); color: var(--accent); border-color: var(--accent); }
+
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat-tile { background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+.stat-tile-value { font-size: 1.1rem; font-weight: 700; font-family: var(--mono); color: var(--text-primary); }
+.stat-tile-label { font-size: 0.68rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
 .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
 .page-title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+.page-subtitle { font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px; }
 .sort-tabs { display: flex; gap: 4px; background: var(--bg-card); padding: 4px; border-radius: 99px; border: 1px solid var(--border); }
 .sort-tab { padding: 6px 14px; border-radius: 99px; border: none; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
 .sort-tab.active { background: var(--accent); color: white; }
@@ -64,48 +93,65 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 .btn svg { width: 16px; height: 16px; }
 .btn-primary { background: var(--accent); color: white; }
 .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
 .btn-secondary:hover { border-color: var(--border-strong); }
-.btn-danger { background: rgba(255,69,58,0.15); color: var(--danger); }
+.btn-danger { background: rgba(255,69,58,0.15); color: var(--danger); border: 1px solid transparent; }
+.btn-danger:hover { border-color: var(--danger); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.btn-sm { padding: 6px 12px; font-size: 0.82rem; }
 
-/* Question list */
 .question-list { display: flex; flex-direction: column; gap: 12px; }
-.question-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; transition: all 0.2s; cursor: pointer; display: grid; grid-template-columns: 80px 1fr; gap: 16px; }
+.question-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; transition: all 0.2s; cursor: pointer; display: grid; grid-template-columns: 90px 1fr; gap: 16px; position: relative; }
 .question-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.question-card.pinned { border-color: var(--warning); background: rgba(255, 159, 10, 0.03); }
+.question-card.pinned::before { content: 'Закреплено'; position: absolute; top: -10px; left: 16px; background: var(--warning); color: #000; font-size: 0.7rem; font-weight: 600; padding: 2px 10px; border-radius: 99px; }
 .question-stats { display: flex; flex-direction: column; gap: 8px; align-items: center; padding-top: 4px; }
-.stat-box { text-align: center; }
-.stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); font-family: 'SF Mono', monospace; }
-.stat-label { font-size: 0.68rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-box { text-align: center; width: 100%; padding: 6px 4px; border-radius: var(--radius-sm); }
+.stat-value { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); font-family: var(--mono); }
+.stat-label { font-size: 0.65rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-box.has-accepted { background: rgba(48, 209, 88, 0.1); }
 .stat-box.has-accepted .stat-value { color: var(--success); }
-.stat-box.has-accepted { background: rgba(48, 209, 88, 0.1); padding: 4px 8px; border-radius: var(--radius-sm); }
+.stat-box.views { background: var(--bg-subtle); }
+.stat-box.views .stat-value { color: var(--text-secondary); font-size: 0.9rem; }
 
 .question-content { min-width: 0; }
 .question-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; line-height: 1.4; color: var(--text-primary); }
 .question-excerpt { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.question-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.question-tag { font-size: 0.72rem; padding: 2px 8px; background: rgba(10, 132, 255, 0.1); color: var(--accent); border-radius: 99px; font-weight: 500; }
 .question-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-tertiary); }
 .category-badge { padding: 3px 10px; background: var(--bg-elevated); border-radius: 99px; color: var(--text-secondary); font-weight: 500; }
 .question-author { display: flex; align-items: center; gap: 6px; }
-.mini-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 0.6rem; font-weight: 700; }
+.mini-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 0.6rem; font-weight: 700; flex-shrink: 0; }
 
-/* Question detail */
 .question-detail { display: none; }
 .question-detail.active { display: block; }
 .back-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 0.88rem; margin-bottom: 16px; padding: 6px 0; }
 .back-btn:hover { color: var(--text-primary); }
 .back-btn svg { width: 16px; height: 16px; }
 
-.detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; margin-bottom: 16px; }
+.detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; margin-bottom: 16px; position: relative; }
+.detail-card.locked { border-color: var(--warning); }
+.lock-banner { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(255, 159, 10, 0.08); border: 1px solid rgba(255, 159, 10, 0.2); border-radius: var(--radius-sm); color: var(--warning); font-size: 0.85rem; margin-bottom: 16px; }
+.lock-banner svg { width: 16px; height: 16px; flex-shrink: 0; }
 .detail-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1.3; }
-.detail-description { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px; white-space: pre-wrap; }
-.vote-block { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.detail-description { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px; white-space: pre-wrap; word-wrap: break-word; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.vote-block { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
 .vote-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.vote-btn:hover { border-color: var(--accent); color: var(--accent); }
+.vote-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.vote-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .vote-btn.active-up { background: rgba(48, 209, 88, 0.15); border-color: var(--success); color: var(--success); }
 .vote-btn.active-down { background: rgba(255, 69, 58, 0.15); border-color: var(--danger); color: var(--danger); }
 .vote-btn svg { width: 16px; height: 16px; }
-.vote-count { font-size: 1.1rem; font-weight: 700; font-family: 'SF Mono', monospace; min-width: 32px; text-align: center; }
+.vote-count { font-size: 1.1rem; font-weight: 700; font-family: var(--mono); min-width: 32px; text-align: center; }
 
-/* Answers */
+.fav-btn { margin-left: auto; }
+.fav-btn svg { width: 16px; height: 16px; }
+.fav-btn.active { color: var(--warning); border-color: var(--warning); background: rgba(255, 159, 10, 0.1); }
+
 .answers-section { margin-top: 24px; }
 .answers-header { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
 .answers-count { background: var(--bg-elevated); padding: 2px 10px; border-radius: 99px; font-size: 0.78rem; color: var(--text-secondary); }
@@ -114,28 +160,47 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 .answer-card.accepted { border-color: var(--success); background: rgba(48, 209, 88, 0.03); }
 .accepted-badge { position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 6px; color: var(--success); font-size: 0.82rem; font-weight: 600; }
 .accepted-badge svg { width: 18px; height: 18px; }
-.answer-text { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; margin-bottom: 12px; }
+.answer-text { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; margin-bottom: 12px; word-wrap: break-word; }
 .answer-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .answer-author { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
-.answer-actions { display: flex; gap: 8px; align-items: center; }
+.answer-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .accept-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 12px; border-radius: 99px; font-family: inherit; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
 .accept-btn:hover { border-color: var(--success); color: var(--success); }
 .accept-btn.accepted { background: rgba(48, 209, 88, 0.15); border-color: var(--success); color: var(--success); }
+.accept-btn svg { width: 14px; height: 14px; }
 
-/* Forms */
+.comments-section { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.comment { padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: 8px; align-items: flex-start; }
+.comment-text { flex: 1; word-wrap: break-word; }
+.comment-author { font-weight: 500; color: var(--text-primary); }
+.comment-time { font-size: 0.75rem; color: var(--text-tertiary); }
+.comment-del { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 2px; opacity: 0; transition: opacity 0.15s; }
+.comment:hover .comment-del { opacity: 1; }
+.comment-del:hover { color: var(--danger); }
+.comment-del svg { width: 12px; height: 12px; }
+.add-comment-btn { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 0.8rem; padding: 6px 0; font-family: inherit; transition: color 0.15s; display: flex; align-items: center; gap: 4px; }
+.add-comment-btn:hover { color: var(--accent); }
+.add-comment-btn svg { width: 12px; height: 12px; }
+.comment-form { display: flex; gap: 8px; margin-top: 8px; }
+.comment-input { flex: 1; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-primary); padding: 6px 10px; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.85rem; resize: none; min-height: 32px; }
+.comment-input:focus { outline: none; border-color: var(--accent); }
+
 .answer-form { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-top: 16px; }
 .form-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
 .form-textarea { width: 100%; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-primary); padding: 12px 14px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; min-height: 120px; resize: vertical; }
 .form-textarea:focus { outline: none; border-color: var(--accent); }
 .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 
-/* Modal */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
 .modal-overlay.active { display: flex; }
 .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
-.modal h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; }
+.modal h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+.modal-close { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; }
+.modal-close:hover { color: var(--text-primary); }
+.modal-close svg { width: 20px; height: 20px; }
 .form-group { margin-bottom: 16px; }
 .form-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-hint { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 4px; text-transform: none; letter-spacing: 0; font-weight: 400; }
 .form-input { width: 100%; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 14px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; }
 .form-input:focus { outline: none; border-color: var(--accent); }
 .category-select { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
@@ -143,35 +208,70 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 .category-option:hover { border-color: var(--border-strong); }
 .category-option.selected { background: rgba(10, 132, 255, 0.1); border-color: var(--accent); color: var(--accent); font-weight: 500; }
 
-/* Auth */
-.auth-screen { max-width: 420px; margin: 80px auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+.tags-input-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-md); min-height: 42px; align-items: center; cursor: text; }
+.tags-input-wrap:focus-within { border-color: var(--accent); }
+.tag-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(10, 132, 255, 0.1); color: var(--accent); border-radius: 99px; font-size: 0.82rem; }
+.tag-pill button { background: none; border: none; color: var(--accent); cursor: pointer; padding: 0; display: flex; }
+.tag-pill button svg { width: 12px; height: 12px; }
+.tags-input { background: none; border: none; color: var(--text-primary); font-family: inherit; font-size: 0.88rem; outline: none; flex: 1; min-width: 80px; padding: 2px 4px; }
+
 .auth-tabs { display: flex; gap: 4px; background: var(--bg-subtle); padding: 4px; border-radius: 99px; margin-bottom: 24px; }
 .auth-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-secondary); border-radius: 99px; cursor: pointer; font-weight: 500; font-family: inherit; }
 .auth-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
 
-/* Empty */
 .empty-state { text-align: center; padding: 60px 24px; color: var(--text-tertiary); }
 .empty-state svg { width: 56px; height: 56px; margin: 0 auto 14px; opacity: 0.5; }
 .empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
 
-/* Toast */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-card); border: 1px solid var(--border); padding: 10px 18px; border-radius: 99px; font-size: 0.88rem; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 300; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-card); border: 1px solid var(--border); padding: 10px 18px; border-radius: 99px; font-size: 0.88rem; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 300; display: flex; align-items: center; gap: 8px; }
+.toast svg { width: 16px; height: 16px; }
 .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.success { color: var(--success); }
 .toast.error { color: var(--danger); }
+.toast.info { color: var(--accent); }
+
+.notif-panel { position: fixed; top: var(--header-h); right: 20px; width: 360px; max-height: 500px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: 0 10px 40px rgba(0,0,0,0.5); z-index: 150; display: none; overflow: hidden; }
+.notif-panel.active { display: block; }
+.notif-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.notif-header h4 { font-size: 0.95rem; font-weight: 600; }
+.notif-list { max-height: 400px; overflow-y: auto; }
+.notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+.notif-item:hover { background: var(--bg-elevated); }
+.notif-item.unread { background: rgba(10, 132, 255, 0.04); }
+.notif-item.unread::before { content: ''; position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+.notif-item { position: relative; padding-left: 22px; }
+.notif-title { font-size: 0.88rem; color: var(--text-primary); margin-bottom: 2px; }
+.notif-time { font-size: 0.75rem; color: var(--text-tertiary); }
+.notif-empty { padding: 30px; text-align: center; color: var(--text-tertiary); font-size: 0.88rem; }
+
+.history-item { padding: 12px; background: var(--bg-subtle); border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 0.85rem; }
+.history-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-tertiary); margin-bottom: 6px; }
+.history-field { color: var(--text-secondary); }
+.history-diff { display: flex; gap: 8px; margin-top: 6px; font-size: 0.8rem; }
+.history-old { color: var(--danger); text-decoration: line-through; }
+.history-new { color: var(--success); }
+
+.profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; flex-shrink: 0; }
+.profile-name { font-size: 1.25rem; font-weight: 700; }
+.profile-bio { font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px; }
+.profile-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
 
 .hidden { display: none !important; }
 
 @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; }
-    .sidebar { position: static; }
+    .sidebar { position: static; max-height: none; }
     .question-card { grid-template-columns: 60px 1fr; padding: 16px; gap: 12px; }
+    .search-box { display: none; }
+    .notif-panel { right: 10px; left: 10px; width: auto; }
 }
 @media (max-width: 640px) {
     .layout { padding: 20px 16px 60px; }
     .page-title { font-size: 1.4rem; }
     .detail-title { font-size: 1.25rem; }
     .main-header { flex-direction: column; align-items: flex-start; }
+    .header-inner { padding: 0 16px; }
 }
 </style>
 </head>
@@ -185,10 +285,15 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             </svg>
             <span>Oris Ответы</span>
         </a>
+        <div class="search-box">
+            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" class="search-input" id="searchInput" placeholder="Поиск вопросов...">
+        </div>
         <nav class="nav-links">
-            <a href="/" class="nav-link">Projects</a>
-            <a href="/news" class="nav-link">News</a>
-            <a href="/answers" class="nav-link active">Answers</a>
+            <button class="icon-btn hidden" id="notifBtn" title="Уведомления">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                <span class="badge-dot hidden" id="notifBadge">0</span>
+            </button>
             <button class="btn btn-secondary" id="authBtn" style="padding: 6px 14px; font-size: 0.85rem;">Войти</button>
         </nav>
     </div>
@@ -196,15 +301,18 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 
 <div class="layout">
     <main>
-        <!-- Questions list -->
         <div id="listView">
             <div class="main-header">
-                <h1 class="page-title">Все вопросы</h1>
+                <div>
+                    <h1 class="page-title" id="pageTitle">Все вопросы</h1>
+                    <div class="page-subtitle" id="pageSubtitle"></div>
+                </div>
                 <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
                     <div class="sort-tabs">
                         <button class="sort-tab active" data-sort="new">Новые</button>
                         <button class="sort-tab" data-sort="hot">Горячие</button>
                         <button class="sort-tab" data-sort="popular">Популярные</button>
+                        <button class="sort-tab" data-sort="views">Просмотры</button>
                         <button class="sort-tab" data-sort="unanswered">Без ответа</button>
                     </div>
                     <button class="btn btn-primary" id="askBtn">
@@ -221,7 +329,6 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             </div>
         </div>
 
-        <!-- Question detail -->
         <div id="detailView" class="question-detail">
             <button class="back-btn" id="backBtn">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
@@ -229,12 +336,20 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             </button>
             <div id="questionDetail"></div>
         </div>
+
+        <div id="profileView" class="question-detail">
+            <button class="back-btn" id="backFromProfile">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Назад
+            </button>
+            <div id="profileContent"></div>
+        </div>
     </main>
 
     <aside class="sidebar">
-        <div class="sidebar-card" id="userCard" style="display:none;">
+        <div class="sidebar-card hidden" id="userCard">
             <div class="sidebar-title">Ваш профиль</div>
-            <div class="user-card">
+            <div class="user-card" id="userCardClick">
                 <div class="user-avatar" id="userAvatar">?</div>
                 <div class="user-info">
                     <div class="user-name" id="userName">—</div>
@@ -244,7 +359,14 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
                     </div>
                 </div>
             </div>
-            <button class="btn btn-secondary" id="logoutBtn" style="width:100%;margin-top:12px;justify-content:center;">Выйти</button>
+            <div class="badges-row" id="userBadges"></div>
+            <div style="display:flex;gap:6px;margin-top:12px;">
+                <button class="btn btn-secondary btn-sm" id="favBtn" style="flex:1;justify-content:center;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L7 21V5z"/></svg>
+                    Избранное
+                </button>
+                <button class="btn btn-secondary btn-sm" id="logoutBtn" style="flex:1;justify-content:center;">Выйти</button>
+            </div>
         </div>
 
         <div class="sidebar-card">
@@ -258,13 +380,29 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
                 <li class="category-item" data-category="other">Другое</li>
             </ul>
         </div>
+
+        <div class="sidebar-card">
+            <div class="sidebar-title">Популярные теги</div>
+            <div class="tags-cloud" id="tagsCloud"></div>
+        </div>
+
+        <div class="sidebar-card">
+            <div class="sidebar-title">Статистика</div>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-tile"><div class="stat-tile-value" id="statQuestions">—</div><div class="stat-tile-label">Вопросов</div></div>
+                <div class="stat-tile"><div class="stat-tile-value" id="statTags">—</div><div class="stat-tile-label">Тегов</div></div>
+            </div>
+        </div>
     </aside>
 </div>
 
 <!-- Ask Question Modal -->
 <div class="modal-overlay" id="askModal">
     <div class="modal">
-        <h3>Задать вопрос</h3>
+        <h3>
+            <span>Задать вопрос</span>
+            <button class="modal-close" onclick="closeAskModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </h3>
         <form id="askForm">
             <div class="form-group">
                 <label class="form-label">Заголовок</label>
@@ -273,6 +411,12 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             <div class="form-group">
                 <label class="form-label">Описание</label>
                 <textarea class="form-input" name="description" rows="5" placeholder="Подробно опишите вашу проблему или вопрос..." style="resize:vertical;min-height:120px;"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Теги <span class="form-hint">(до 5, через Enter)</span></label>
+                <div class="tags-input-wrap" id="tagsInputWrap">
+                    <input type="text" class="tags-input" id="tagsInput" placeholder="javascript, react, css...">
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Категория</label>
@@ -295,6 +439,10 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
 <!-- Auth Modal -->
 <div class="modal-overlay" id="authModal">
     <div class="modal" style="max-width:420px;">
+        <h3>
+            <span>Вход</span>
+            <button class="modal-close" onclick="closeAuthModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </h3>
         <div class="auth-tabs">
             <button class="auth-tab active" data-auth="login">Вход</button>
             <button class="auth-tab" data-auth="register">Регистрация</button>
@@ -325,6 +473,76 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
     </div>
 </div>
 
+<!-- Edit Question Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h3>
+            <span>Редактировать</span>
+            <button class="modal-close" onclick="closeEditModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </h3>
+        <form id="editForm">
+            <div class="form-group">
+                <label class="form-label">Заголовок</label>
+                <input type="text" class="form-input" name="title" required minlength="10" maxlength="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea class="form-input" name="description" rows="5" style="resize:vertical;min-height:120px;"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Теги</label>
+                <div class="tags-input-wrap" id="editTagsWrap">
+                    <input type="text" class="tags-input" id="editTagsInput" placeholder="Добавить тег...">
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+    <div class="modal" style="max-width:480px;">
+        <h3>
+            <span>Пожаловаться</span>
+            <button class="modal-close" onclick="closeReportModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </h3>
+        <form id="reportForm">
+            <div class="form-group">
+                <label class="form-label">Причина жалобы</label>
+                <textarea class="form-input" name="reason" rows="4" required minlength="10" maxlength="500" placeholder="Опишите, почему этот контент нарушает правила..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeReportModal()">Отмена</button>
+                <button type="submit" class="btn btn-danger">Отправить жалобу</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal">
+        <h3>
+            <span>История изменений</span>
+            <button class="modal-close" onclick="closeHistoryModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+        </h3>
+        <div id="historyContent"></div>
+    </div>
+</div>
+
+<!-- Notifications Panel -->
+<div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+        <h4>Уведомления</h4>
+        <button class="btn btn-ghost btn-sm" id="markAllRead">Прочитано</button>
+    </div>
+    <div class="notif-list" id="notifList"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -336,10 +554,41 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
     let currentQuestion = null;
     let currentCategory = 'all';
     let currentSort = 'new';
+    let currentTag = null;
+    let searchQuery = '';
+    let pendingTags = [];
+    let editTags = [];
+    let reportTarget = null;
+    let currentView = 'list';
 
     const CATEGORY_NAMES = { tech: 'Технологии', design: 'Дизайн', programming: 'Программирование', games: 'Игры', other: 'Другое' };
+    const BADGE_NAMES = {
+        FIRST_QUESTION: { name: 'Первый вопрос', color: 'var(--accent)' },
+        FIRST_ANSWER: { name: 'Первый ответ', color: 'var(--purple)' },
+        HELPFUL: { name: 'Полезный', color: 'var(--warning)' },
+        EXPERT: { name: 'Эксперт', color: 'var(--success)' },
+        ACTIVE: { name: 'Активный', color: 'var(--danger)' },
+        POPULAR: { name: 'Популярный', color: 'var(--accent)' }
+    };
 
     const $ = id => document.getElementById(id);
+
+    // --- SVG Icons ---
+    const ICONS = {
+        check: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>',
+        up: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>',
+        down: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>',
+        star: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>',
+        comment: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>',
+        lock: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+        edit: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>',
+        history: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        flag: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>',
+        trash: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
+        eye: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>',
+        pin: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L7 21V5z"/></svg>',
+        badge: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'
+    };
 
     // --- Helpers ---
     function escapeHtml(str) {
@@ -355,17 +604,18 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
         if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
         if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
         if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
-        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
     }
     function showToast(msg, type = 'success') {
         const t = $('toast');
-        t.textContent = msg;
+        const icon = type === 'success' ? ICONS.check : type === 'error' ? ICONS.flag : ICONS.comment;
+        t.innerHTML = icon + '<span>' + escapeHtml(msg) + '</span>';
         t.className = `toast ${type} visible`;
         clearTimeout(showToast._t);
-        showToast._t = setTimeout(() => t.classList.remove('visible'), 2500);
+        showToast._t = setTimeout(() => t.classList.remove('visible'), 2800);
     }
     async function api(endpoint, options = {}) {
-        const headers = { ...options.headers };
+        const headers = { ...(options.headers || {}) };
         if (token) headers['Authorization'] = `Bearer ${token}`;
         if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
         const res = await fetch(`${API}${endpoint}`, { ...options, headers });
@@ -386,20 +636,43 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
     function updateAuthUI() {
         if (currentUser) {
             $('authBtn').textContent = currentUser.nickname;
-            $('authBtn').onclick = () => {};
-            $('userCard').style.display = 'block';
+            $('authBtn').onclick = () => openProfile(currentUser.id);
+            $('userCard').classList.remove('hidden');
+            $('notifBtn').classList.remove('hidden');
             $('userName').textContent = currentUser.nickname;
             $('userAvatar').textContent = currentUser.nickname.charAt(0).toUpperCase();
             $('userRep').textContent = currentUser.reputation || 0;
+            renderUserBadges(currentUser.badges || []);
+            loadNotifications();
         } else {
             $('authBtn').textContent = 'Войти';
             $('authBtn').onclick = openAuthModal;
-            $('userCard').style.display = 'none';
+            $('userCard').classList.add('hidden');
+            $('notifBtn').classList.add('hidden');
         }
+    }
+
+    function renderUserBadges(badges) {
+        const el = $('userBadges');
+        if (!badges || badges.length === 0) { el.innerHTML = ''; return; }
+        el.innerHTML = badges.map(b => {
+            const info = BADGE_NAMES[b.id || b] || { name: b, color: 'var(--text-secondary)' };
+            return `<span class="badge-chip" title="${escapeHtml(info.name)}">${ICONS.badge}<span>${escapeHtml(info.name)}</span></span>`;
+        }).join('');
     }
 
     window.openAuthModal = () => $('authModal').classList.add('active');
     window.closeAuthModal = () => $('authModal').classList.remove('active');
+    window.openAskModal = () => {
+        if (!currentUser) return openAuthModal();
+        pendingTags = [];
+        renderTagsInput('tagsInputWrap', 'tagsInput', pendingTags, () => {});
+        $('askModal').classList.add('active');
+    };
+    window.closeAskModal = () => $('askModal').classList.remove('active');
+    window.closeEditModal = () => $('editModal').classList.remove('active');
+    window.closeReportModal = () => { $('reportModal').classList.remove('active'); reportTarget = null; };
+    window.closeHistoryModal = () => $('historyModal').classList.remove('active');
 
     $('authBtn').addEventListener('click', openAuthModal);
 
@@ -415,7 +688,6 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
                 $('loginForm').classList.add('hidden');
                 $('adminLoginForm').classList.add('hidden');
                 $('toggleAdmin').style.display = 'none';
-                // Auto-register on submit
             }
         });
     });
@@ -436,7 +708,7 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             currentUser = data.session;
             localStorage.setItem('oris_answers_token', token);
             closeAuthModal();
-            updateAuthUI();
+            await refreshMe();
             showToast('Добро пожаловать!');
         } catch (err) { showToast(err.message, 'error'); }
     });
@@ -450,7 +722,7 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             currentUser = data.session;
             localStorage.setItem('oris_answers_token', token);
             closeAuthModal();
-            updateAuthUI();
+            await refreshMe();
             showToast('Вход выполнен');
         } catch (err) { showToast(err.message, 'error'); }
     });
@@ -461,15 +733,108 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
         showToast('Вы вышли');
     });
 
+    async function refreshMe() {
+        if (!token) return;
+        try {
+            currentUser = await api('/me');
+            updateAuthUI();
+        } catch (e) { logout(); }
+    }
+
+    // --- Notifications ---
+    async function loadNotifications() {
+        if (!currentUser) return;
+        try {
+            const [notifs, unread] = await Promise.all([
+                api('/notifications'),
+                api('/notifications/unread-count')
+            ]);
+            renderNotifications(notifs.notifications || []);
+            const badge = $('notifBadge');
+            if (unread.count > 0) {
+                badge.textContent = unread.count > 9 ? '9+' : unread.count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        } catch (e) {}
+    }
+
+    function renderNotifications(notifs) {
+        const el = $('notifList');
+        if (!notifs || notifs.length === 0) {
+            el.innerHTML = '<div class="notif-empty">Нет уведомлений</div>';
+            return;
+        }
+        el.innerHTML = notifs.map(n => {
+            let title = '';
+            if (n.type === 'new_answer') title = `<strong>${escapeHtml(n.data.answerBy)}</strong> ответил на ваш вопрос «${escapeHtml(n.data.questionTitle)}»`;
+            else if (n.type === 'answer_accepted') title = `Ваш ответ принят в «${escapeHtml(n.data.questionTitle)}»`;
+            else if (n.type === 'badge') title = `Вы получили достижение «${escapeHtml(n.data.badge?.name || n.data.badge)}»`;
+            else title = 'Новое уведомление';
+            return `<div class="notif-item ${n.read ? '' : 'unread'}" data-qid="${n.data?.questionId || ''}">
+                <div class="notif-title">${title}</div>
+                <div class="notif-time">${formatDate(n.createdAt)}</div>
+            </div>`;
+        }).join('');
+        el.querySelectorAll('.notif-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const qid = item.dataset.qid;
+                if (qid) {
+                    $('notifPanel').classList.remove('active');
+                    openQuestion(qid);
+                }
+            });
+        });
+    }
+
+    $('notifBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        $('notifPanel').classList.toggle('active');
+    });
+    document.addEventListener('click', (e) => {
+        if (!$('notifPanel').contains(e.target) && !$('notifBtn').contains(e.target)) {
+            $('notifPanel').classList.remove('active');
+        }
+    });
+    $('markAllRead').addEventListener('click', async () => {
+        try {
+            await api('/notifications/read', { method: 'POST' });
+            loadNotifications();
+            showToast('Отмечено');
+        } catch (e) { showToast(e.message, 'error'); }
+    });
+
     // --- Questions list ---
     async function loadQuestions() {
         try {
             const params = new URLSearchParams({ sort: currentSort, limit: 50 });
             if (currentCategory !== 'all') params.set('category', currentCategory);
+            if (currentTag) params.set('tag', currentTag);
+            if (searchQuery) params.set('search', searchQuery);
             const data = await api(`/questions?${params}`);
             renderQuestions(data.questions);
+            updatePageTitle();
         } catch (err) {
             $('questionsList').innerHTML = `<div class="empty-state"><div class="empty-state-title">${escapeHtml(err.message)}</div></div>`;
+        }
+    }
+
+    function updatePageTitle() {
+        const title = $('pageTitle');
+        const sub = $('pageSubtitle');
+        if (currentTag) {
+            title.textContent = `Тег: ${currentTag}`;
+            sub.textContent = '';
+        } else if (currentCategory !== 'all') {
+            title.textContent = CATEGORY_NAMES[currentCategory] || currentCategory;
+            sub.textContent = '';
+        } else if (searchQuery) {
+            title.textContent = `Поиск: «${searchQuery}»`;
+            sub.textContent = '';
+        } else {
+            title.textContent = 'Все вопросы';
+            sub.textContent = '';
         }
     }
 
@@ -484,7 +849,7 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             return;
         }
         $('questionsList').innerHTML = questions.map(q => `
-            <div class="question-card" data-qid="${q.id}">
+            <div class="question-card ${q.isPinned ? 'pinned' : ''}" data-qid="${q.id}">
                 <div class="question-stats">
                     <div class="stat-box">
                         <div class="stat-value">${q.votes || 0}</div>
@@ -494,9 +859,14 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
                         <div class="stat-value">${q.answersCount || 0}</div>
                         <div class="stat-label">ответов</div>
                     </div>
+                    <div class="stat-box views">
+                        <div class="stat-value">${q.views || 0}</div>
+                        <div class="stat-label">просм.</div>
+                    </div>
                 </div>
                 <div class="question-content">
                     <div class="question-title">${escapeHtml(q.title)}</div>
+                    ${q.tags && q.tags.length ? `<div class="question-tags">${q.tags.map(t => `<span class="question-tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
                     ${q.description ? `<div class="question-excerpt">${escapeHtml(q.description)}</div>` : ''}
                     <div class="question-meta">
                         <span class="category-badge">${CATEGORY_NAMES[q.category] || q.category}</span>
@@ -520,48 +890,75 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             const data = await api(`/questions/${qid}`);
             currentQuestion = data.question;
             renderQuestionDetail();
-            $('listView').style.display = 'none';
-            $('detailView').classList.add('active');
+            switchView('detail');
             window.scrollTo(0, 0);
         } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    function switchView(view) {
+        currentView = view;
+        $('listView').style.display = view === 'list' ? 'block' : 'none';
+        $('detailView').classList.toggle('active', view === 'detail');
+        $('profileView').classList.toggle('active', view === 'profile');
     }
 
     function renderQuestionDetail() {
         const q = currentQuestion;
         const isAuthor = currentUser && currentUser.id === q.authorId;
         const isAdmin = currentUser && currentUser.role === 'admin';
-        
+
+        const actions = [];
+        if (isAuthor || isAdmin) {
+            actions.push(`<button class="btn btn-ghost btn-sm" onclick="openEditModal()">${ICONS.edit}<span>Изменить</span></button>`);
+            actions.push(`<button class="btn btn-ghost btn-sm" onclick="toggleLock()">${ICONS.lock}<span>${q.isLocked ? 'Разблок.' : 'Заблок.'}</span></button>`);
+            actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteQuestion()">${ICONS.trash}<span>Удалить</span></button>`);
+        }
+        if (isAdmin) {
+            actions.push(`<button class="btn btn-ghost btn-sm" onclick="togglePin()" style="color:var(--warning);">${ICONS.pin}<span>${q.isPinned ? 'Открепить' : 'Закрепить'}</span></button>`);
+        }
+        if (currentUser && !isAuthor) {
+            actions.push(`<button class="btn btn-ghost btn-sm" onclick="openReport('question','${q.id}')">${ICONS.flag}<span>Жалоба</span></button>`);
+        }
+        actions.push(`<button class="btn btn-ghost btn-sm" onclick="showHistory('question','${q.id}')">${ICONS.history}<span>История</span></button>`);
+
         let html = `
-            <div class="detail-card">
+            <div class="detail-card ${q.isLocked ? 'locked' : ''}">
+                ${q.isLocked ? `<div class="lock-banner">${ICONS.lock}<span>Вопрос заблокирован — новые ответы недоступны</span></div>` : ''}
                 <div class="detail-title">${escapeHtml(q.title)}</div>
                 <div class="question-meta" style="margin-bottom:16px;">
                     <span class="category-badge">${CATEGORY_NAMES[q.category]}</span>
-                    <span class="question-author">
+                    <span class="question-author" style="cursor:pointer;" onclick="openProfile('${q.authorId}')">
                         <span class="mini-avatar">${escapeHtml(q.authorName.charAt(0).toUpperCase())}</span>
                         ${escapeHtml(q.authorName)}
                     </span>
                     <span>${formatDate(q.createdAt)}</span>
+                    <span style="display:flex;align-items:center;gap:4px;">${ICONS.eye} ${q.views || 0}</span>
                 </div>
+                ${q.tags && q.tags.length ? `<div class="detail-tags">${q.tags.map(t => `<span class="question-tag" style="cursor:pointer;" onclick="filterByTag('${escapeHtml(t)}')">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
                 ${q.description ? `<div class="detail-description">${escapeHtml(q.description)}</div>` : ''}
                 <div class="vote-block">
                     <button class="vote-btn ${q.userVote === 'up' ? 'active-up' : ''}" onclick="voteQuestion('up')" ${!currentUser ? 'disabled' : ''}>
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                        ${ICONS.up}
                     </button>
                     <div class="vote-count">${q.votes || 0}</div>
                     <button class="vote-btn ${q.userVote === 'down' ? 'active-down' : ''}" onclick="voteQuestion('down')" ${!currentUser ? 'disabled' : ''}>
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        ${ICONS.down}
                     </button>
-                    ${isAuthor || isAdmin ? `<button class="btn btn-danger" style="margin-left:auto;padding:6px 12px;font-size:0.82rem;" onclick="deleteQuestion()">Удалить</button>` : ''}
+                    <button class="vote-btn fav-btn ${q.isFavorite ? 'active' : ''}" onclick="toggleFavorite()" title="${q.isFavorite ? 'Убрать из избранного' : 'В избранное'}">
+                        ${ICONS.star}
+                    </button>
+                    <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">${actions.join('')}</div>
                 </div>
+                ${renderComments(q.comments || [], 'question', q.id)}
             </div>
 
             <div class="answers-section">
                 <div class="answers-header">
                     Ответы <span class="answers-count">${(q.answers || []).length}</span>
                 </div>
-                ${(q.answers || []).map(a => renderAnswer(a, isAuthor)).join('')}
+                ${(q.answers || []).map(a => renderAnswer(a, isAuthor || isAdmin)).join('')}
                 
-                ${currentUser ? `
+                ${currentUser && !q.isLocked ? `
                 <div class="answer-form">
                     <div class="form-title">Ваш ответ</div>
                     <textarea class="form-textarea" id="answerText" placeholder="Напишите ваш ответ подробно и по существу..."></textarea>
@@ -569,61 +966,111 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
                         <button class="btn btn-primary" onclick="submitAnswer()">Ответить</button>
                     </div>
                 </div>
-                ` : `
+                ` : !q.isLocked ? `
                 <div class="answer-form" style="text-align:center;">
                     <p style="color:var(--text-secondary);margin-bottom:12px;">Войдите, чтобы ответить на вопрос</p>
                     <button class="btn btn-primary" onclick="openAuthModal()">Войти</button>
                 </div>
-                `}
+                ` : ''}
             </div>
         `;
         $('questionDetail').innerHTML = html;
     }
 
-    function renderAnswer(a, isQuestionAuthor) {
+    function renderAnswer(a, canAccept) {
         const isAuthor = currentUser && currentUser.id === a.authorId;
         const isAdmin = currentUser && currentUser.role === 'admin';
+        const actions = [];
+        if (canAccept) {
+            actions.push(`<button class="accept-btn ${a.isAccepted ? 'accepted' : ''}" onclick="acceptAnswer('${a.id}')">${ICONS.check}<span>${a.isAccepted ? 'Принят' : 'Принять'}</span></button>`);
+        }
+        if (currentUser && !isAuthor) {
+            actions.push(`<button class="btn btn-ghost btn-sm" onclick="openReport('answer','${a.id}')" title="Пожаловаться">${ICONS.flag}</button>`);
+        }
+        if (isAuthor || isAdmin) {
+            actions.push(`<button class="btn btn-danger btn-sm" onclick="deleteAnswer('${a.id}')">${ICONS.trash}</button>`);
+        }
+        actions.push(`<button class="btn btn-ghost btn-sm" onclick="showHistory('answer','${a.id}')" title="История">${ICONS.history}</button>`);
+
         return `
             <div class="answer-card ${a.isAccepted ? 'accepted' : ''}">
-                ${a.isAccepted ? `
-                    <div class="accepted-badge">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                        Лучший ответ
-                    </div>
-                ` : ''}
+                ${a.isAccepted ? `<div class="accepted-badge">${ICONS.check}<span>Лучший ответ</span></div>` : ''}
                 <div class="answer-text">${escapeHtml(a.text)}</div>
                 <div class="answer-meta">
                     <div class="answer-author">
                         <span class="mini-avatar">${escapeHtml(a.authorName.charAt(0).toUpperCase())}</span>
-                        <strong>${escapeHtml(a.authorName)}</strong>
+                        <strong style="cursor:pointer;" onclick="openProfile('${a.authorId}')">${escapeHtml(a.authorName)}</strong>
                         <span style="color:var(--text-tertiary);">${formatDate(a.createdAt)}</span>
+                        ${a.editCount ? `<span style="color:var(--text-tertiary);font-size:0.75rem;">(ред. ${a.editCount})</span>` : ''}
                     </div>
                     <div class="answer-actions">
                         <button class="vote-btn" onclick="voteAnswer('${a.id}', 'up')" ${!currentUser ? 'disabled' : ''} style="width:28px;height:28px;">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                            ${ICONS.up.replace('viewBox', 'width="12" height="12" viewBox')}
                         </button>
-                        <span style="font-weight:700;font-family:'SF Mono',monospace;">${a.votes || 0}</span>
+                        <span style="font-weight:700;font-family:var(--mono);">${a.votes || 0}</span>
                         <button class="vote-btn" onclick="voteAnswer('${a.id}', 'down')" ${!currentUser ? 'disabled' : ''} style="width:28px;height:28px;">
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            ${ICONS.down.replace('viewBox', 'width="12" height="12" viewBox')}
                         </button>
-                        ${isQuestionAuthor && !a.isAccepted ? `
-                            <button class="accept-btn" onclick="acceptAnswer('${a.id}')">
-                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                Принять
-                            </button>
-                        ` : ''}
-                        ${isAuthor || isAdmin ? `
-                            <button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="deleteAnswer('${a.id}')">Удалить</button>
-                        ` : ''}
+                        ${actions.join('')}
                     </div>
                 </div>
+                ${renderComments(a.comments || [], 'answer', a.id)}
             </div>
         `;
     }
 
+    function renderComments(comments, type, parentId) {
+        const canAdd = currentUser && !(type === 'question' && currentQuestion?.isLocked);
+        return `
+            <div class="comments-section">
+                ${comments.map(c => `
+                    <div class="comment">
+                        <span class="comment-author" style="cursor:pointer;" onclick="openProfile('${c.authorId}')">${escapeHtml(c.authorName)}</span>
+                        <span class="comment-text">${escapeHtml(c.text)}</span>
+                        <span class="comment-time">${formatDate(c.createdAt)}</span>
+                        ${currentUser && (currentUser.id === c.authorId || currentUser.role === 'admin') ? `<button class="comment-del" onclick="deleteComment('${c.id}')" title="Удалить">${ICONS.trash}</button>` : ''}
+                    </div>
+                `).join('')}
+                ${canAdd ? `<button class="add-comment-btn" onclick="toggleCommentForm('${type}','${parentId}')">${ICONS.comment}<span>Добавить комментарий</span></button>
+                <div class="comment-form hidden" id="cf-${type}-${parentId}">
+                    <textarea class="comment-input" id="ci-${type}-${parentId}" placeholder="Ваш комментарий..." maxlength="500"></textarea>
+                    <button class="btn btn-primary btn-sm" onclick="submitComment('${type}','${parentId}')">Отпр.</button>
+                </div>` : ''}
+            </div>
+        `;
+    }
+
+    window.toggleCommentForm = (type, pid) => {
+        const f = document.getElementById(`cf-${type}-${pid}`);
+        f.classList.toggle('hidden');
+        if (!f.classList.contains('hidden')) {
+            document.getElementById(`ci-${type}-${pid}`).focus();
+        }
+    };
+
+    window.submitComment = async (type, pid) => {
+        const input = document.getElementById(`ci-${type}-${pid}`);
+        const text = input.value.trim();
+        if (!text) return showToast('Комментарий пустой', 'error');
+        try {
+            await api(`/${type === 'question' ? 'questions' : 'answers'}/${pid}/comments`, { method: 'POST', body: JSON.stringify({ text }) });
+            input.value = '';
+            showToast('Комментарий добавлен');
+            openQuestion(currentQuestion.id);
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
+    window.deleteComment = async (cid) => {
+        if (!confirm('Удалить комментарий?')) return;
+        try {
+            await api(`/comments/${cid}`, { method: 'DELETE' });
+            showToast('Удалено');
+            openQuestion(currentQuestion.id);
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
     $('backBtn').addEventListener('click', () => {
-        $('listView').style.display = 'block';
-        $('detailView').classList.remove('active');
+        switchView('list');
         currentQuestion = null;
         loadQuestions();
     });
@@ -683,12 +1130,213 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
         } catch (err) { showToast(err.message, 'error'); }
     };
 
-    // --- Ask question ---
-    window.openAskModal = () => {
+    window.toggleFavorite = async () => {
         if (!currentUser) return openAuthModal();
-        $('askModal').classList.add('active');
+        try {
+            const data = await api(`/questions/${currentQuestion.id}/favorite`, { method: 'POST' });
+            currentQuestion.isFavorite = data.isFavorite;
+            showToast(data.isFavorite ? 'Добавлено в избранное' : 'Убрано из избранного');
+            renderQuestionDetail();
+        } catch (e) { showToast(e.message, 'error'); }
     };
-    window.closeAskModal = () => $('askModal').classList.remove('active');
+
+    window.toggleLock = async () => {
+        try {
+            const data = await api(`/questions/${currentQuestion.id}/lock`, { method: 'POST' });
+            currentQuestion.isLocked = data.isLocked;
+            showToast(data.isLocked ? 'Вопрос заблокирован' : 'Блокировка снята');
+            renderQuestionDetail();
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
+    window.togglePin = async () => {
+        try {
+            const data = await api(`/questions/${currentQuestion.id}/pin`, { method: 'POST' });
+            currentQuestion.isPinned = data.isPinned;
+            showToast(data.isPinned ? 'Закреплено' : 'Откреплено');
+            renderQuestionDetail();
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
+    // --- Edit ---
+    window.openEditModal = () => {
+        if (!currentQuestion) return;
+        const form = $('editForm');
+        form.title.value = currentQuestion.title;
+        form.description.value = currentQuestion.description || '';
+        editTags = [...(currentQuestion.tags || [])];
+        renderTagsInput('editTagsWrap', 'editTagsInput', editTags, () => {});
+        $('editModal').classList.add('active');
+    };
+
+    $('editForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        try {
+            await api(`/questions/${currentQuestion.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    title: fd.get('title'),
+                    description: fd.get('description'),
+                    tags: editTags
+                })
+            });
+            closeEditModal();
+            showToast('Сохранено');
+            openQuestion(currentQuestion.id);
+        } catch (e) { showToast(e.message, 'error'); }
+    });
+
+    // --- Reports ---
+    window.openReport = (type, id) => {
+        if (!currentUser) return openAuthModal();
+        reportTarget = { type, id };
+        $('reportForm').reason.value = '';
+        $('reportModal').classList.add('active');
+    };
+
+    $('reportForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!reportTarget) return;
+        const fd = new FormData(e.target);
+        try {
+            await api('/reports', { method: 'POST', body: JSON.stringify({
+                targetType: reportTarget.type,
+                targetId: reportTarget.id,
+                reason: fd.get('reason')
+            })});
+            closeReportModal();
+            showToast('Жалоба отправлена');
+        } catch (e) { showToast(e.message, 'error'); }
+    });
+
+    // --- History ---
+    window.showHistory = async (type, id) => {
+        try {
+            const data = await api(`/${type === 'question' ? 'questions' : 'answers'}/${id}/history`);
+            const hist = data.history || [];
+            if (hist.length === 0) {
+                $('historyContent').innerHTML = '<div class="empty-state"><div class="empty-state-title">История пуста</div></div>';
+            } else {
+                $('historyContent').innerHTML = hist.map(h => {
+                    const edits = h.edits ? h.edits.map(ed => `
+                        <div class="history-field">
+                            <strong>${ed.field}</strong>
+                            <div class="history-diff">
+                                <span class="history-old">${escapeHtml(String(ed.old || '').slice(0, 100))}</span>
+                                <span>→</span>
+                                <span class="history-new">${escapeHtml(String(ed.new || '').slice(0, 100))}</span>
+                            </div>
+                        </div>
+                    `).join('') : (h.oldText ? `
+                        <div class="history-diff">
+                            <span class="history-old">${escapeHtml(h.oldText.slice(0, 100))}</span>
+                            <span>→</span>
+                            <span class="history-new">${escapeHtml(h.newText.slice(0, 100))}</span>
+                        </div>
+                    ` : '');
+                    return `<div class="history-item">
+                        <div class="history-meta">
+                            <span>${formatDate(h.editedAt)}</span>
+                            <span>by ${escapeHtml(h.editedBy)}</span>
+                        </div>
+                        ${edits}
+                    </div>`;
+                }).join('');
+            }
+            $('historyModal').classList.add('active');
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
+    // --- Profile ---
+    window.openProfile = async (userId) => {
+        if (!userId) return;
+        try {
+            const data = await api(`/users/${userId}/profile`);
+            renderProfile(data);
+            switchView('profile');
+            window.scrollTo(0, 0);
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
+    function renderProfile(p) {
+        const isMe = currentUser && currentUser.id === p.userId;
+        $('profileContent').innerHTML = `
+            <div class="detail-card">
+                <div class="profile-header">
+                    <div class="profile-avatar">${(p.nickname || '?').charAt(0).toUpperCase()}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div class="profile-name">${escapeHtml(p.nickname || 'Пользователь')}</div>
+                        ${p.bio ? `<div class="profile-bio">${escapeHtml(p.bio)}</div>` : ''}
+                    </div>
+                    ${isMe ? `<button class="btn btn-ghost btn-sm" onclick="editProfile()">${ICONS.edit}<span>Изменить</span></button>` : ''}
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-tile"><div class="stat-tile-value">${p.reputation || 0}</div><div class="stat-tile-label">Репутация</div></div>
+                    <div class="stat-tile"><div class="stat-tile-value">${p.stats?.questionsCount || 0}</div><div class="stat-tile-label">Вопросов</div></div>
+                    <div class="stat-tile"><div class="stat-tile-value">${p.stats?.answersCount || 0}</div><div class="stat-tile-label">Ответов</div></div>
+                </div>
+                ${p.badges && p.badges.length ? `<div style="margin-top:16px;"><div class="sidebar-title">Достижения</div><div class="badges-row">${p.badges.map(b => `<span class="badge-chip">${ICONS.badge}<span>${escapeHtml(b.name || b)}</span></span>`).join('')}</div></div>` : ''}
+            </div>
+            ${p.recentQuestions && p.recentQuestions.length ? `
+                <div class="sidebar-title" style="margin:20px 0 12px;">Последние вопросы</div>
+                <div class="question-list">
+                    ${p.recentQuestions.map(q => `
+                        <div class="question-card" onclick="openQuestion('${q.id}')">
+                            <div class="question-stats">
+                                <div class="stat-box"><div class="stat-value">${q.votes || 0}</div><div class="stat-label">голосов</div></div>
+                                <div class="stat-box ${q.hasAccepted ? 'has-accepted' : ''}"><div class="stat-value">${q.answersCount || 0}</div><div class="stat-label">ответов</div></div>
+                            </div>
+                            <div class="question-content">
+                                <div class="question-title">${escapeHtml(q.title)}</div>
+                                <div class="question-meta">
+                                    <span class="category-badge">${CATEGORY_NAMES[q.category]}</span>
+                                    <span>${formatDate(q.createdAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    }
+
+    window.editProfile = async () => {
+        const newNick = prompt('Новое имя (2-30 символов):', currentUser.nickname);
+        if (newNick === null) return;
+        const newBio = prompt('О себе (до 500 символов):', currentUser.bio || '');
+        if (newBio === null) return;
+        try {
+            await api('/me', { method: 'PUT', body: JSON.stringify({ nickname: newNick, bio: newBio }) });
+            await refreshMe();
+            showToast('Профиль обновлён');
+            openProfile(currentUser.id);
+        } catch (e) { showToast(e.message, 'error'); }
+    };
+
+    $('backFromProfile').addEventListener('click', () => {
+        if (currentQuestion) switchView('detail');
+        else switchView('list');
+    });
+
+    $('userCardClick').addEventListener('click', () => {
+        if (currentUser) openProfile(currentUser.id);
+    });
+
+    $('favBtn').addEventListener('click', async () => {
+        try {
+            const data = await api('/favorites');
+            if (!data.questions || data.questions.length === 0) {
+                $('questionsList').innerHTML = `<div class="empty-state"><div class="empty-state-title">Избранное пусто</div></div>`;
+            } else {
+                renderQuestions(data.questions);
+            }
+            $('pageTitle').textContent = 'Избранное';
+            switchView('list');
+        } catch (e) { showToast(e.message, 'error'); }
+    });
+
+    // --- Ask question ---
     $('askBtn').addEventListener('click', openAskModal);
 
     document.querySelectorAll('.category-option').forEach(opt => {
@@ -708,16 +1356,61 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
                 body: JSON.stringify({
                     title: fd.get('title'),
                     description: fd.get('description'),
-                    category
+                    category,
+                    tags: pendingTags
                 })
             });
             closeAskModal();
             e.target.reset();
+            pendingTags = [];
             document.querySelector('.category-option').classList.add('selected');
             showToast('Вопрос опубликован');
             openQuestion(data.question.id);
+            loadTags();
+            loadStats();
         } catch (err) { showToast(err.message, 'error'); }
     });
+
+    // --- Tags input ---
+    function renderTagsInput(wrapId, inputId, tagsArr, onChange) {
+        const wrap = $(wrapId);
+        const input = $(inputId);
+        wrap.querySelectorAll('.tag-pill').forEach(p => p.remove());
+        tagsArr.forEach((t, i) => {
+            const pill = document.createElement('span');
+            pill.className = 'tag-pill';
+            pill.innerHTML = `${escapeHtml(t)}<button type="button"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+            pill.querySelector('button').addEventListener('click', () => {
+                tagsArr.splice(i, 1);
+                renderTagsInput(wrapId, inputId, tagsArr, onChange);
+                onChange();
+            });
+            wrap.insertBefore(pill, input);
+        });
+    }
+
+    function setupTagsInput(wrapId, inputId, tagsArr, onChange) {
+        const input = $(inputId);
+        input.addEventListener('keydown', e => {
+            if ((e.key === 'Enter' || e.key === ',') && input.value.trim()) {
+                e.preventDefault();
+                const val = input.value.trim().toLowerCase().replace(/[^a-zа-яё0-9]/gi, '').slice(0, 20);
+                if (val.length >= 2 && tagsArr.length < 5 && !tagsArr.includes(val)) {
+                    tagsArr.push(val);
+                    input.value = '';
+                    renderTagsInput(wrapId, inputId, tagsArr, onChange);
+                    onChange();
+                }
+            } else if (e.key === 'Backspace' && !input.value && tagsArr.length) {
+                tagsArr.pop();
+                renderTagsInput(wrapId, inputId, tagsArr, onChange);
+                onChange();
+            }
+        });
+    }
+
+    setupTagsInput('tagsInputWrap', 'tagsInput', pendingTags, () => {});
+    setupTagsInput('editTagsWrap', 'editTagsInput', editTags, () => {});
 
     // --- Filters ---
     document.querySelectorAll('.category-item').forEach(item => {
@@ -725,6 +1418,10 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
             document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
             currentCategory = item.dataset.category;
+            currentTag = null;
+            searchQuery = '';
+            $('searchInput').value = '';
+            document.querySelectorAll('.tag-chip').forEach(t => t.classList.remove('active'));
             loadQuestions();
         });
     });
@@ -738,17 +1435,62 @@ body { background: var(--bg-body); color: var(--text-primary); font-family: var(
         });
     });
 
+    let searchTimeout;
+    $('searchInput').addEventListener('input', e => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchQuery = e.target.value.trim();
+            currentTag = null;
+            document.querySelectorAll('.tag-chip').forEach(t => t.classList.remove('active'));
+            loadQuestions();
+        }, 400);
+    });
+
+    window.filterByTag = (tag) => {
+        currentTag = tag;
+        currentCategory = 'all';
+        searchQuery = '';
+        $('searchInput').value = '';
+        document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+        document.querySelector('.category-item[data-category="all"]').classList.add('active');
+        document.querySelectorAll('.tag-chip').forEach(t => {
+            t.classList.toggle('active', t.dataset.tag === tag);
+        });
+        if (currentView !== 'list') switchView('list');
+        loadQuestions();
+    };
+
+    // --- Load tags & stats ---
+    async function loadTags() {
+        try {
+            const data = await api('/tags');
+            const tags = (data.tags || []).slice(0, 15);
+            $('tagsCloud').innerHTML = tags.length ? tags.map(t => 
+                `<span class="tag-chip ${currentTag === t.tag ? 'active' : ''}" data-tag="${escapeHtml(t.tag)}" onclick="filterByTag('${escapeHtml(t.tag)}')">${escapeHtml(t.tag)} <span style="color:var(--text-tertiary);margin-left:2px;">${t.count}</span></span>`
+            ).join('') : '<span style="color:var(--text-tertiary);font-size:0.82rem;">Пока нет тегов</span>';
+        } catch (e) {}
+    }
+
+    async function loadStats() {
+        try {
+            const data = await api('/stats');
+            $('statQuestions').textContent = data.questionsCount || 0;
+            $('statTags').textContent = data.tagsCount || 0;
+        } catch (e) {}
+    }
+
     // --- Init ---
     (async () => {
         if (token) {
             try {
                 currentUser = await api('/me');
                 updateAuthUI();
-            } catch (e) {
-                logout();
-            }
+            } catch (e) { logout(); }
         }
         loadQuestions();
+        loadTags();
+        loadStats();
+        setInterval(() => { if (currentUser) loadNotifications(); }, 60000);
     })();
 })();
 </script>
