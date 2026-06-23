@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Oris Ответы — задавайте вопросы и получайте ответы от сообщества">
+<meta name="theme-color" content="#000000">
+<title>Ответы · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #000000; --bg-card: #1C1C1E; --bg-elevated: #2C2C2E; --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7; --text-secondary: #86868B; --text-tertiary: #636366;
+    --accent: #0A84FF; --accent-hover: #409CFF;
+    --danger: #FF453A; --success: #30D158; --warning: #FF9F0A; --purple: #BF5AF2;
+    --border: rgba(255, 255, 255, 0.08); --border-strong: rgba(255, 255, 255, 0.15);
+    --radius-lg: 18px; --radius-md: 12px; --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, sans-serif;
+    --header-h: 56px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-stack); line-height: 1.5; min-height: 100vh; }
+
+.header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,0.72); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); height: var(--header-h); }
+.header-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; }
+.logo svg { width: 22px; height: 22px; color: var(--accent); }
+.nav-links { display: flex; gap: 8px; align-items: center; }
+.nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-link.active { background: var(--accent); color: white; }
+
+.layout { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; display: grid; grid-template-columns: 1fr 280px; gap: 32px; }
+
+/* Sidebar */
+.sidebar { position: sticky; top: calc(var(--header-h) + 24px); align-self: start; }
+.sidebar-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; }
+.sidebar-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 12px; }
+.category-list { list-style: none; }
+.category-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; font-size: 0.9rem; color: var(--text-secondary); }
+.category-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.category-item.active { background: rgba(10, 132, 255, 0.1); color: var(--accent); font-weight: 500; }
+.category-count { font-size: 0.75rem; color: var(--text-tertiary); font-family: 'SF Mono', monospace; }
+
+.user-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-elevated); border-radius: var(--radius-md); }
+.user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; }
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-rep { font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+.user-rep svg { width: 12px; height: 12px; color: var(--warning); }
+
+/* Main */
+.main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+.page-title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+.sort-tabs { display: flex; gap: 4px; background: var(--bg-card); padding: 4px; border-radius: 99px; border: 1px solid var(--border); }
+.sort-tab { padding: 6px 14px; border-radius: 99px; border: none; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.sort-tab.active { background: var(--accent); color: white; }
+.sort-tab:hover:not(.active) { color: var(--text-primary); }
+
+.btn { padding: 10px 20px; border-radius: 99px; border: none; font-family: inherit; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn svg { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--border-strong); }
+.btn-danger { background: rgba(255,69,58,0.15); color: var(--danger); }
+
+/* Question list */
+.question-list { display: flex; flex-direction: column; gap: 12px; }
+.question-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; transition: all 0.2s; cursor: pointer; display: grid; grid-template-columns: 80px 1fr; gap: 16px; }
+.question-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.question-stats { display: flex; flex-direction: column; gap: 8px; align-items: center; padding-top: 4px; }
+.stat-box { text-align: center; }
+.stat-value { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); font-family: 'SF Mono', monospace; }
+.stat-label { font-size: 0.68rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-box.has-accepted .stat-value { color: var(--success); }
+.stat-box.has-accepted { background: rgba(48, 209, 88, 0.1); padding: 4px 8px; border-radius: var(--radius-sm); }
+
+.question-content { min-width: 0; }
+.question-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; line-height: 1.4; color: var(--text-primary); }
+.question-excerpt { font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.question-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-tertiary); }
+.category-badge { padding: 3px 10px; background: var(--bg-elevated); border-radius: 99px; color: var(--text-secondary); font-weight: 500; }
+.question-author { display: flex; align-items: center; gap: 6px; }
+.mini-avatar { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 0.6rem; font-weight: 700; }
+
+/* Question detail */
+.question-detail { display: none; }
+.question-detail.active { display: block; }
+.back-btn { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 0.88rem; margin-bottom: 16px; padding: 6px 0; }
+.back-btn:hover { color: var(--text-primary); }
+.back-btn svg { width: 16px; height: 16px; }
+
+.detail-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; margin-bottom: 16px; }
+.detail-title { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; line-height: 1.3; }
+.detail-description { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 16px; white-space: pre-wrap; }
+.vote-block { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.vote-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.vote-btn:hover { border-color: var(--accent); color: var(--accent); }
+.vote-btn.active-up { background: rgba(48, 209, 88, 0.15); border-color: var(--success); color: var(--success); }
+.vote-btn.active-down { background: rgba(255, 69, 58, 0.15); border-color: var(--danger); color: var(--danger); }
+.vote-btn svg { width: 16px; height: 16px; }
+.vote-count { font-size: 1.1rem; font-weight: 700; font-family: 'SF Mono', monospace; min-width: 32px; text-align: center; }
+
+/* Answers */
+.answers-section { margin-top: 24px; }
+.answers-header { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.answers-count { background: var(--bg-elevated); padding: 2px 10px; border-radius: 99px; font-size: 0.78rem; color: var(--text-secondary); }
+
+.answer-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 12px; position: relative; }
+.answer-card.accepted { border-color: var(--success); background: rgba(48, 209, 88, 0.03); }
+.accepted-badge { position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 6px; color: var(--success); font-size: 0.82rem; font-weight: 600; }
+.accepted-badge svg { width: 18px; height: 18px; }
+.answer-text { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; margin-bottom: 12px; }
+.answer-meta { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.answer-author { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+.answer-actions { display: flex; gap: 8px; align-items: center; }
+.accept-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 6px 12px; border-radius: 99px; font-family: inherit; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+.accept-btn:hover { border-color: var(--success); color: var(--success); }
+.accept-btn.accepted { background: rgba(48, 209, 88, 0.15); border-color: var(--success); color: var(--success); }
+
+/* Forms */
+.answer-form { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-top: 16px; }
+.form-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
+.form-textarea { width: 100%; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-primary); padding: 12px 14px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; min-height: 120px; resize: vertical; }
+.form-textarea:focus { outline: none; border-color: var(--accent); }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-input { width: 100%; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-primary); padding: 10px 14px; border-radius: var(--radius-md); font-family: inherit; font-size: 0.95rem; }
+.form-input:focus { outline: none; border-color: var(--accent); }
+.category-select { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.category-option { padding: 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; text-align: center; font-size: 0.88rem; transition: all 0.15s; }
+.category-option:hover { border-color: var(--border-strong); }
+.category-option.selected { background: rgba(10, 132, 255, 0.1); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+
+/* Auth */
+.auth-screen { max-width: 420px; margin: 80px auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; }
+.auth-tabs { display: flex; gap: 4px; background: var(--bg-subtle); padding: 4px; border-radius: 99px; margin-bottom: 24px; }
+.auth-tab { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-secondary); border-radius: 99px; cursor: pointer; font-weight: 500; font-family: inherit; }
+.auth-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* Empty */
+.empty-state { text-align: center; padding: 60px 24px; color: var(--text-tertiary); }
+.empty-state svg { width: 56px; height: 56px; margin: 0 auto 14px; opacity: 0.5; }
+.empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-card); border: 1px solid var(--border); padding: 10px 18px; border-radius: 99px; font-size: 0.88rem; opacity: 0; pointer-events: none; transition: all 0.3s; z-index: 300; }
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { color: var(--success); }
+.toast.error { color: var(--danger); }
+
+.hidden { display: none !important; }
+
+@media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .question-card { grid-template-columns: 60px 1fr; padding: 16px; gap: 12px; }
+}
+@media (max-width: 640px) {
+    .layout { padding: 20px 16px 60px; }
+    .page-title { font-size: 1.4rem; }
+    .detail-title { font-size: 1.25rem; }
+    .main-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Oris Ответы</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="/news" class="nav-link">News</a>
+            <a href="/answers" class="nav-link active">Answers</a>
+            <button class="btn btn-secondary" id="authBtn" style="padding: 6px 14px; font-size: 0.85rem;">Войти</button>
+        </nav>
+    </div>
+</header>
+
+<div class="layout">
+    <main>
+        <!-- Questions list -->
+        <div id="listView">
+            <div class="main-header">
+                <h1 class="page-title">Все вопросы</h1>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <div class="sort-tabs">
+                        <button class="sort-tab active" data-sort="new">Новые</button>
+                        <button class="sort-tab" data-sort="hot">Горячие</button>
+                        <button class="sort-tab" data-sort="popular">Популярные</button>
+                        <button class="sort-tab" data-sort="unanswered">Без ответа</button>
+                    </div>
+                    <button class="btn btn-primary" id="askBtn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Задать вопрос
+                    </button>
+                </div>
+            </div>
+            <div class="question-list" id="questionsList">
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="empty-state-title">Загрузка вопросов...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question detail -->
+        <div id="detailView" class="question-detail">
+            <button class="back-btn" id="backBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Назад к вопросам
+            </button>
+            <div id="questionDetail"></div>
+        </div>
+    </main>
+
+    <aside class="sidebar">
+        <div class="sidebar-card" id="userCard" style="display:none;">
+            <div class="sidebar-title">Ваш профиль</div>
+            <div class="user-card">
+                <div class="user-avatar" id="userAvatar">?</div>
+                <div class="user-info">
+                    <div class="user-name" id="userName">—</div>
+                    <div class="user-rep">
+                        <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <span id="userRep">0</span> репутации
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" id="logoutBtn" style="width:100%;margin-top:12px;justify-content:center;">Выйти</button>
+        </div>
+
+        <div class="sidebar-card">
+            <div class="sidebar-title">Категории</div>
+            <ul class="category-list" id="categoryList">
+                <li class="category-item active" data-category="all">Все вопросы</li>
+                <li class="category-item" data-category="tech">Технологии</li>
+                <li class="category-item" data-category="design">Дизайн</li>
+                <li class="category-item" data-category="programming">Программирование</li>
+                <li class="category-item" data-category="games">Игры</li>
+                <li class="category-item" data-category="other">Другое</li>
+            </ul>
+        </div>
+    </aside>
+</div>
+
+<!-- Ask Question Modal -->
+<div class="modal-overlay" id="askModal">
+    <div class="modal">
+        <h3>Задать вопрос</h3>
+        <form id="askForm">
+            <div class="form-group">
+                <label class="form-label">Заголовок</label>
+                <input type="text" class="form-input" name="title" required minlength="10" maxlength="200" placeholder="Суть вопроса в одном предложении">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Описание</label>
+                <textarea class="form-input" name="description" rows="5" placeholder="Подробно опишите вашу проблему или вопрос..." style="resize:vertical;min-height:120px;"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Категория</label>
+                <div class="category-select" id="categorySelect">
+                    <div class="category-option selected" data-cat="tech">Технологии</div>
+                    <div class="category-option" data-cat="design">Дизайн</div>
+                    <div class="category-option" data-cat="programming">Программирование</div>
+                    <div class="category-option" data-cat="games">Игры</div>
+                    <div class="category-option" data-cat="other">Другое</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeAskModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Опубликовать</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal" style="max-width:420px;">
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-auth="login">Вход</button>
+            <button class="auth-tab" data-auth="register">Регистрация</button>
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label class="form-label">Имя пользователя</label>
+                <input type="text" class="form-input" name="nickname" required minlength="2" maxlength="30" placeholder="Ваше имя">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeAuthModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </div>
+        </form>
+        <form id="adminLoginForm" class="hidden">
+            <div class="form-group">
+                <label class="form-label">Admin Token</label>
+                <input type="password" class="form-input" name="token" required placeholder="Токен администратора">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeAuthModal()">Отмена</button>
+                <button type="submit" class="btn btn-primary">Войти как админ</button>
+            </div>
+        </form>
+        <div style="margin-top:16px;text-align:center;">
+            <button style="background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:0.82rem;text-decoration:underline;font-family:inherit;" id="toggleAdmin">Вход для администратора</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+    'use strict';
+    const API = '/api/answers';
+    let token = localStorage.getItem('oris_answers_token');
+    let currentUser = null;
+    let currentQuestion = null;
+    let currentCategory = 'all';
+    let currentSort = 'new';
+
+    const CATEGORY_NAMES = { tech: 'Технологии', design: 'Дизайн', programming: 'Программирование', games: 'Игры', other: 'Другое' };
+
+    const $ = id => document.getElementById(id);
+
+    // --- Helpers ---
+    function escapeHtml(str) {
+        if (!str) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str).replace(/[&<>"']/g, m => map[m]);
+    }
+    function formatDate(iso) {
+        const d = new Date(iso);
+        const now = new Date();
+        const diff = (now - d) / 1000;
+        if (diff < 60) return 'только что';
+        if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+        if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
+        return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    }
+    function showToast(msg, type = 'success') {
+        const t = $('toast');
+        t.textContent = msg;
+        t.className = `toast ${type} visible`;
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove('visible'), 2500);
+    }
+    async function api(endpoint, options = {}) {
+        const headers = { ...options.headers };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+        const res = await fetch(`${API}${endpoint}`, { ...options, headers });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) { logout(); throw new Error('Требуется авторизация'); }
+        if (!res.ok) throw new Error(data.error || 'Ошибка');
+        return data;
+    }
+
+    // --- Auth ---
+    function logout() {
+        token = null;
+        currentUser = null;
+        localStorage.removeItem('oris_answers_token');
+        updateAuthUI();
+    }
+
+    function updateAuthUI() {
+        if (currentUser) {
+            $('authBtn').textContent = currentUser.nickname;
+            $('authBtn').onclick = () => {};
+            $('userCard').style.display = 'block';
+            $('userName').textContent = currentUser.nickname;
+            $('userAvatar').textContent = currentUser.nickname.charAt(0).toUpperCase();
+            $('userRep').textContent = currentUser.reputation || 0;
+        } else {
+            $('authBtn').textContent = 'Войти';
+            $('authBtn').onclick = openAuthModal;
+            $('userCard').style.display = 'none';
+        }
+    }
+
+    window.openAuthModal = () => $('authModal').classList.add('active');
+    window.closeAuthModal = () => $('authModal').classList.remove('active');
+
+    $('authBtn').addEventListener('click', openAuthModal);
+
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            if (tab.dataset.auth === 'login') {
+                $('loginForm').classList.remove('hidden');
+                $('adminLoginForm').classList.add('hidden');
+                $('toggleAdmin').style.display = 'inline';
+            } else {
+                $('loginForm').classList.add('hidden');
+                $('adminLoginForm').classList.add('hidden');
+                $('toggleAdmin').style.display = 'none';
+                // Auto-register on submit
+            }
+        });
+    });
+
+    $('toggleAdmin').addEventListener('click', () => {
+        $('loginForm').classList.add('hidden');
+        $('adminLoginForm').classList.remove('hidden');
+        $('toggleAdmin').style.display = 'none';
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    });
+
+    $('loginForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        try {
+            const data = await api('/auth/register', { method: 'POST', body: JSON.stringify({ nickname: fd.get('nickname') }) });
+            token = data.token;
+            currentUser = data.session;
+            localStorage.setItem('oris_answers_token', token);
+            closeAuthModal();
+            updateAuthUI();
+            showToast('Добро пожаловать!');
+        } catch (err) { showToast(err.message, 'error'); }
+    });
+
+    $('adminLoginForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        try {
+            const data = await api('/auth/admin', { method: 'POST', body: JSON.stringify({ token: fd.get('token') }) });
+            token = data.token;
+            currentUser = data.session;
+            localStorage.setItem('oris_answers_token', token);
+            closeAuthModal();
+            updateAuthUI();
+            showToast('Вход выполнен');
+        } catch (err) { showToast(err.message, 'error'); }
+    });
+
+    $('logoutBtn').addEventListener('click', async () => {
+        try { await api('/auth/logout', { method: 'POST' }); } catch(e) {}
+        logout();
+        showToast('Вы вышли');
+    });
+
+    // --- Questions list ---
+    async function loadQuestions() {
+        try {
+            const params = new URLSearchParams({ sort: currentSort, limit: 50 });
+            if (currentCategory !== 'all') params.set('category', currentCategory);
+            const data = await api(`/questions?${params}`);
+            renderQuestions(data.questions);
+        } catch (err) {
+            $('questionsList').innerHTML = `<div class="empty-state"><div class="empty-state-title">${escapeHtml(err.message)}</div></div>`;
+        }
+    }
+
+    function renderQuestions(questions) {
+        if (!questions || questions.length === 0) {
+            $('questionsList').innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="empty-state-title">Пока нет вопросов</div>
+                    <div>Будьте первым, кто задаст вопрос!</div>
+                </div>`;
+            return;
+        }
+        $('questionsList').innerHTML = questions.map(q => `
+            <div class="question-card" data-qid="${q.id}">
+                <div class="question-stats">
+                    <div class="stat-box">
+                        <div class="stat-value">${q.votes || 0}</div>
+                        <div class="stat-label">голосов</div>
+                    </div>
+                    <div class="stat-box ${(q.answersCount || 0) > 0 && q.hasAccepted ? 'has-accepted' : ''}">
+                        <div class="stat-value">${q.answersCount || 0}</div>
+                        <div class="stat-label">ответов</div>
+                    </div>
+                </div>
+                <div class="question-content">
+                    <div class="question-title">${escapeHtml(q.title)}</div>
+                    ${q.description ? `<div class="question-excerpt">${escapeHtml(q.description)}</div>` : ''}
+                    <div class="question-meta">
+                        <span class="category-badge">${CATEGORY_NAMES[q.category] || q.category}</span>
+                        <span class="question-author">
+                            <span class="mini-avatar">${escapeHtml(q.authorName.charAt(0).toUpperCase())}</span>
+                            ${escapeHtml(q.authorName)}
+                        </span>
+                        <span>${formatDate(q.createdAt)}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll('.question-card').forEach(card => {
+            card.addEventListener('click', () => openQuestion(card.dataset.qid));
+        });
+    }
+
+    // --- Question detail ---
+    async function openQuestion(qid) {
+        try {
+            const data = await api(`/questions/${qid}`);
+            currentQuestion = data.question;
+            renderQuestionDetail();
+            $('listView').style.display = 'none';
+            $('detailView').classList.add('active');
+            window.scrollTo(0, 0);
+        } catch (err) { showToast(err.message, 'error'); }
+    }
+
+    function renderQuestionDetail() {
+        const q = currentQuestion;
+        const isAuthor = currentUser && currentUser.id === q.authorId;
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        
+        let html = `
+            <div class="detail-card">
+                <div class="detail-title">${escapeHtml(q.title)}</div>
+                <div class="question-meta" style="margin-bottom:16px;">
+                    <span class="category-badge">${CATEGORY_NAMES[q.category]}</span>
+                    <span class="question-author">
+                        <span class="mini-avatar">${escapeHtml(q.authorName.charAt(0).toUpperCase())}</span>
+                        ${escapeHtml(q.authorName)}
+                    </span>
+                    <span>${formatDate(q.createdAt)}</span>
+                </div>
+                ${q.description ? `<div class="detail-description">${escapeHtml(q.description)}</div>` : ''}
+                <div class="vote-block">
+                    <button class="vote-btn ${q.userVote === 'up' ? 'active-up' : ''}" onclick="voteQuestion('up')" ${!currentUser ? 'disabled' : ''}>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                    </button>
+                    <div class="vote-count">${q.votes || 0}</div>
+                    <button class="vote-btn ${q.userVote === 'down' ? 'active-down' : ''}" onclick="voteQuestion('down')" ${!currentUser ? 'disabled' : ''}>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    ${isAuthor || isAdmin ? `<button class="btn btn-danger" style="margin-left:auto;padding:6px 12px;font-size:0.82rem;" onclick="deleteQuestion()">Удалить</button>` : ''}
+                </div>
+            </div>
+
+            <div class="answers-section">
+                <div class="answers-header">
+                    Ответы <span class="answers-count">${(q.answers || []).length}</span>
+                </div>
+                ${(q.answers || []).map(a => renderAnswer(a, isAuthor)).join('')}
+                
+                ${currentUser ? `
+                <div class="answer-form">
+                    <div class="form-title">Ваш ответ</div>
+                    <textarea class="form-textarea" id="answerText" placeholder="Напишите ваш ответ подробно и по существу..."></textarea>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" onclick="submitAnswer()">Ответить</button>
+                    </div>
+                </div>
+                ` : `
+                <div class="answer-form" style="text-align:center;">
+                    <p style="color:var(--text-secondary);margin-bottom:12px;">Войдите, чтобы ответить на вопрос</p>
+                    <button class="btn btn-primary" onclick="openAuthModal()">Войти</button>
+                </div>
+                `}
+            </div>
+        `;
+        $('questionDetail').innerHTML = html;
+    }
+
+    function renderAnswer(a, isQuestionAuthor) {
+        const isAuthor = currentUser && currentUser.id === a.authorId;
+        const isAdmin = currentUser && currentUser.role === 'admin';
+        return `
+            <div class="answer-card ${a.isAccepted ? 'accepted' : ''}">
+                ${a.isAccepted ? `
+                    <div class="accepted-badge">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        Лучший ответ
+                    </div>
+                ` : ''}
+                <div class="answer-text">${escapeHtml(a.text)}</div>
+                <div class="answer-meta">
+                    <div class="answer-author">
+                        <span class="mini-avatar">${escapeHtml(a.authorName.charAt(0).toUpperCase())}</span>
+                        <strong>${escapeHtml(a.authorName)}</strong>
+                        <span style="color:var(--text-tertiary);">${formatDate(a.createdAt)}</span>
+                    </div>
+                    <div class="answer-actions">
+                        <button class="vote-btn" onclick="voteAnswer('${a.id}', 'up')" ${!currentUser ? 'disabled' : ''} style="width:28px;height:28px;">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                        </button>
+                        <span style="font-weight:700;font-family:'SF Mono',monospace;">${a.votes || 0}</span>
+                        <button class="vote-btn" onclick="voteAnswer('${a.id}', 'down')" ${!currentUser ? 'disabled' : ''} style="width:28px;height:28px;">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        ${isQuestionAuthor && !a.isAccepted ? `
+                            <button class="accept-btn" onclick="acceptAnswer('${a.id}')">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Принять
+                            </button>
+                        ` : ''}
+                        ${isAuthor || isAdmin ? `
+                            <button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="deleteAnswer('${a.id}')">Удалить</button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    $('backBtn').addEventListener('click', () => {
+        $('listView').style.display = 'block';
+        $('detailView').classList.remove('active');
+        currentQuestion = null;
+        loadQuestions();
+    });
+
+    // --- Actions ---
+    window.voteQuestion = async dir => {
+        if (!currentUser) return openAuthModal();
+        try {
+            const data = await api(`/questions/${currentQuestion.id}/vote`, { method: 'POST', body: JSON.stringify({ direction: dir }) });
+            currentQuestion.votes = data.votes;
+            currentQuestion.userVote = data.userVote;
+            renderQuestionDetail();
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    window.voteAnswer = async (aid, dir) => {
+        if (!currentUser) return openAuthModal();
+        try {
+            await api(`/answers/${aid}/vote`, { method: 'POST', body: JSON.stringify({ direction: dir }) });
+            openQuestion(currentQuestion.id);
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    window.acceptAnswer = async aid => {
+        try {
+            await api(`/answers/${aid}/accept`, { method: 'POST' });
+            showToast('Ответ принят');
+            openQuestion(currentQuestion.id);
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    window.submitAnswer = async () => {
+        const text = $('answerText').value.trim();
+        if (text.length < 10) return showToast('Минимум 10 символов', 'error');
+        try {
+            await api(`/questions/${currentQuestion.id}/answers`, { method: 'POST', body: JSON.stringify({ text }) });
+            showToast('Ответ опубликован');
+            openQuestion(currentQuestion.id);
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    window.deleteQuestion = async () => {
+        if (!confirm('Удалить вопрос и все ответы?')) return;
+        try {
+            await api(`/questions/${currentQuestion.id}`, { method: 'DELETE' });
+            showToast('Вопрос удалён');
+            $('backBtn').click();
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    window.deleteAnswer = async aid => {
+        if (!confirm('Удалить ответ?')) return;
+        try {
+            await api(`/answers/${aid}`, { method: 'DELETE' });
+            showToast('Ответ удалён');
+            openQuestion(currentQuestion.id);
+        } catch (err) { showToast(err.message, 'error'); }
+    };
+
+    // --- Ask question ---
+    window.openAskModal = () => {
+        if (!currentUser) return openAuthModal();
+        $('askModal').classList.add('active');
+    };
+    window.closeAskModal = () => $('askModal').classList.remove('active');
+    $('askBtn').addEventListener('click', openAskModal);
+
+    document.querySelectorAll('.category-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            document.querySelectorAll('.category-option').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+        });
+    });
+
+    $('askForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const category = document.querySelector('.category-option.selected').dataset.cat;
+        try {
+            const data = await api('/questions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    title: fd.get('title'),
+                    description: fd.get('description'),
+                    category
+                })
+            });
+            closeAskModal();
+            e.target.reset();
+            document.querySelector('.category-option').classList.add('selected');
+            showToast('Вопрос опубликован');
+            openQuestion(data.question.id);
+        } catch (err) { showToast(err.message, 'error'); }
+    });
+
+    // --- Filters ---
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            currentCategory = item.dataset.category;
+            loadQuestions();
+        });
+    });
+
+    document.querySelectorAll('.sort-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            currentSort = tab.dataset.sort;
+            loadQuestions();
+        });
+    });
+
+    // --- Init ---
+    (async () => {
+        if (token) {
+            try {
+                currentUser = await api('/me');
+                updateAuthUI();
+            } catch (e) {
+                logout();
+            }
+        }
+        loadQuestions();
+    })();
+})();
+</script>
+
+</body>
+</html>
