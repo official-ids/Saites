@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Разводы в мессенджерах — Как не попасться мошенникам</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); }
+  .gradient-text { background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .gradient-bg-2 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(239, 68, 68, 0.15); }
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse-red { 0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } }
+  .pulse-red { animation: pulse-red 2s infinite; }
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  /* Chat bubbles */
+  .chat-container { background: #e5ddd5; background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.2) 0%, transparent 50%); }
+  .bubble-in { background: white; border-radius: 0 12px 12px 12px; }
+  .bubble-out { background: #dcf8c6; border-radius: 12px 0 12px 12px; }
+  .bubble-time { font-size: 10px; color: #667781; margin-top: 2px; }
+  
+  .scheme-card { transition: all 0.3s; }
+  .scheme-card:hover { transform: scale(1.03); }
+  
+  .flag-item { transition: all 0.3s; cursor: pointer; }
+  .flag-item:hover { transform: translateX(8px); }
+  .flag-item.revealed { background: #fef2f2; border-color: #ef4444; }
+  
+  .action-step { position: relative; padding-left: 3rem; }
+  .action-step::before { content: counter(step); counter-increment: step; position: absolute; left: 0; top: 0; width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #f97316, #ef4444); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
+  .steps-container { counter-reset: step; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-lg z-50 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <span class="font-bold text-xl">СтопСкам</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#schemes" class="hover:text-orange-600 transition">Схемы</a>
+      <a href="#examples" class="hover:text-orange-600 transition">Примеры</a>
+      <a href="#flags" class="hover:text-orange-600 transition">Флаги</a>
+      <a href="#quiz" class="hover:text-orange-600 transition">Тест</a>
+      <a href="#actions" class="hover:text-orange-600 transition">Что делать</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-6">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+    <div class="fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-6">
+        <span class="w-2 h-2 bg-red-500 rounded-full pulse-red"></span>
+        12 млн россиян ежегодно становятся жертвами
+      </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+        Разводы в <span class="gradient-text">мессенджерах</span>: как не попасться
+      </h1>
+      <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+        Полный гид по мошенническим схемам в WhatsApp, Telegram и Viber. Узнайте, как вас пытаются обмануть прямо сейчас, и научитесь защищать себя и близких.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#schemes" class="px-8 py-4 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">
+          Изучить схемы →
+        </a>
+        <a href="#examples" class="px-8 py-4 bg-white border-2 border-slate-200 rounded-xl font-semibold hover:border-orange-400 transition">
+          Примеры переписок
+        </a>
+      </div>
+    </div>
+    <div class="fade-in">
+      <img src="https://image.qwenlm.ai/public_source/1bcb5984-7118-4ff8-82aa-c0c586abe7b7/174ce9574-24d2-4847-83cd-18d0ad0aca68.png" alt="Мошенники в мессенджерах" class="w-full rounded-3xl shadow-2xl">
+    </div>
+  </div>
+</section>
+
+<!-- Статистика -->
+<section class="py-12 px-6 bg-white border-y border-slate-200">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">12 млн</div>
+      <div class="text-sm text-slate-500 mt-2">жертв в России в год</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">73%</div>
+      <div class="text-sm text-slate-500 mt-2">через мессенджеры</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">87 000 ₽</div>
+      <div class="text-sm text-slate-500 mt-2">средний ущерб</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">3 мин</div>
+      <div class="text-sm text-slate-500 mt-2">среднее время развода</div>
+    </div>
+  </div>
+</section>
+
+<!-- Схемы мошенников -->
+<section id="schemes" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-4">🎭 ТОП-10 СХЕМ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Как вас пытаются обмануть</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Самые распространённые схемы мошенников в мессенджерах в 2026 году</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="schemesGrid"></div>
+  </div>
+</section>
+
+<!-- Примеры переписок -->
+<section id="examples" class="py-20 px-6 bg-white">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold mb-4">💬 РЕАЛЬНЫЕ ПЕРЕПИСКИ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Примеры мошеннических сообщений</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Нажмите на сообщение, чтобы увидеть разбор и красные флаги</p>
+    </div>
+    <div class="space-y-8" id="examplesContainer"></div>
+  </div>
+</section>
+
+<!-- Красные флаги -->
+<section id="flags" class="py-20 px-6 bg-gradient-to-br from-red-50 to-orange-50">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-4">🚨 КРАСНЫЕ ФЛАГИ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">10 признаков что вас разводят</h2>
+      <p class="text-slate-600 text-lg">Нажмите на каждый пункт, чтобы узнать подробности</p>
+    </div>
+    <div class="space-y-3" id="flagsContainer"></div>
+  </div>
+</section>
+
+<!-- Тест: что ответить -->
+<section id="quiz" class="py-20 px-6 bg-white">
+  <div class="max-w-3xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-4">🎯 ПРАКТИКА</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Тест: как вы ответите?</h2>
+      <p class="text-slate-600 text-lg">Выберите правильный ответ на мошенническое сообщение</p>
+    </div>
+    <div class="bg-gradient-to-br from-slate-50 to-orange-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <div class="flex justify-between items-center mb-6">
+        <div class="text-sm font-semibold text-slate-500">Ситуация <span id="qNum">1</span> из <span id="qTotal">5</span></div>
+        <div class="text-sm font-semibold text-orange-600">Счёт: <span id="score">0</span></div>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-2 mb-6"><div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width:20%"></div></div>
+      
+      <div id="quizCard">
+        <!-- Chat mockup -->
+        <div class="chat-container rounded-2xl p-4 mb-6 min-h-[180px]">
+          <div class="flex items-start gap-2 mb-3">
+            <div class="w-8 h-8 rounded-full bg-slate-400 flex items-center justify-center text-white text-xs font-bold" id="avatarLetter">М</div>
+            <div class="bubble-in p-3 max-w-[80%] shadow-sm">
+              <div class="font-semibold text-sm text-slate-800 mb-1" id="senderName">Мама</div>
+              <div class="text-sm" id="qMessage">Сообщение</div>
+              <div class="bubble-time text-right" id="qTime">14:32</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3" id="qCategory">Категория</div>
+        <h3 class="text-lg font-bold mb-5" id="qQuestion">Как лучше поступить?</h3>
+        
+        <div class="space-y-3" id="answersContainer"></div>
+      </div>
+
+      <div id="quizResult" class="hidden text-center py-8">
+        <div class="text-6xl mb-4" id="resultEmoji">🎉</div>
+        <h3 class="text-3xl font-bold mb-2" id="resultTitle">Результат</h3>
+        <p class="text-slate-600 mb-6" id="resultText">Описание</p>
+        <button onclick="restartQuiz()" class="px-8 py-3 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">Пройти ещё раз</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Что делать если попался -->
+<section id="actions" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">🆘 АЛГОРИТМ ДЕЙСТВИЙ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Если вас уже развели</h2>
+      <p class="text-slate-600 text-lg">Не паникуйте. Действуйте быстро — это повышает шансы вернуть деньги</p>
+    </div>
+    <div class="bg-white rounded-3xl p-8 md:p-12 shadow-xl steps-container space-y-8">
+      <div class="action-step">
+        <h3 class="text-xl font-bold mb-2">Немедленно заблокируйте карту</h3>
+        <p class="text-slate-600">Позвоните в банк по номеру на обратной стороне карты или через приложение. Это остановит дальнейшие списания.</p>
+      </div>
+      <div class="action-step">
+        <h3 class="text-xl font-bold mb-2">Сохраните все доказательства</h3>
+        <p class="text-slate-600">Сделайте скриншоты переписки, номеров телефонов, ссылок, QR-кодов. Всё это понадобится для полиции и банка.</p>
+      </div>
+      <div class="action-step">
+        <h3 class="text-xl font-bold mb-2">Подайте заявление в полицию</h3>
+        <p class="text-slate-600">Обратитесь в ближайшее отделение или подайте заявление онлайн через МВД. Возьмите талон-уведомление.</p>
+      </div>
+      <div class="action-step">
+        <h3 class="text-xl font-bold mb-2">Сообщите в банк о мошенничестве</h3>
+        <p class="text-slate-600">Напишите заявление в банк о несогласии с операцией. По закону у вас есть 24 часа для оспаривания.</p>
+      </div>
+      <div class="action-step">
+        <h3 class="text-xl font-bold mb-2">Смените пароли и включите 2FA</h3>
+        <p class="text-slate-600">Поменяйте пароли от банковских приложений, почты, мессенджеров. Везде включите двухфакторную аутентификацию.</p>
+      </div>
+      <div class="action-step">
+        <h3 class="text-xl font-bold mb-2">Предупредите близких</h3>
+        <p class="text-slate-600">Мошенники могут использовать ваш аккаунт для развода друзей. Напишите в соцсетях и позвоните родным.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Чек-лист -->
+<section class="py-20 px-6 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">✅ ЗАЩИТА</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Чек-лист безопасности</h2>
+      <p class="text-slate-600 text-lg">Отметьте все пункты, которые вы уже выполняете</p>
+    </div>
+    <div class="bg-slate-50 rounded-3xl p-8 shadow-lg" id="checklistContainer"></div>
+    <div class="mt-6 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl p-6 text-white text-center">
+      <div class="text-3xl font-bold"><span id="checkCount">0</span> / <span id="checkTotal">0</span></div>
+      <div class="text-white/90 text-sm">пунктов выполнено</div>
+      <div class="text-xs text-white/70 mt-1" id="checkStatus">Начните отмечать пункты</div>
+    </div>
+  </div>
+</section>
+
+<!-- Куда обращаться -->
+<section class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">📞 ПОМОЩЬ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Куда обращаться</h2>
+      <p class="text-slate-600 text-lg">Горячие линии и сервисы для пострадавших от мошенников</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="resourcesGrid"></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6">
+  <div class="max-w-5xl mx-auto gradient-bg rounded-3xl p-12 md:p-16 text-white text-center relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Предупредите близких</h2>
+      <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Поделитесь этой страницей с родителями и пожилыми родственниками. Они — главная цель мошенников.</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <button onclick="sharePage()" class="px-8 py-4 bg-white text-red-600 rounded-xl font-bold shadow-lg hover:shadow-xl transition">📤 Поделиться</button>
+        <a href="#schemes" class="px-8 py-4 bg-white/20 backdrop-blur border-2 border-white/40 rounded-xl font-bold hover:bg-white/30 transition">Изучить схемы</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-400 py-12 px-6">
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-2 mb-4">
+      <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">СтопСкам</span>
+    </div>
+    <p class="text-sm mb-4">Образовательный проект о кибербезопасности и защите от мошенников</p>
+    <p class="text-xs text-slate-500">© 2026 СтопСкам. Все материалы носят информационный характер.</p>
+  </div>
+</footer>
+
+<script>
+// Схемы мошенников
+const schemes = [
+  { icon: '👨‍👩‍👧', title: '«Привет, это я, займи денег»', desc: 'Взламывают аккаунт друга/родственника и просят деньги в долг «срочно». Всегда перезванивайте.', color: 'red' },
+  { icon: '🏦', title: '«Служба безопасности банка»', desc: 'Звонят или пишут «из банка», говорят о подозрительной операции и просят назвать код из SMS.', color: 'orange' },
+  { icon: '🎁', title: '«Вы выиграли приз!»', desc: 'Сообщают о выигрыше, но для получения нужно оплатить «налог» или «доставку».', color: 'yellow' },
+  { icon: '🗳️', title: '«Голосование за племянницу»', desc: 'Просят перейти по ссылке и «проголосовать» — там крадут данные карты.', color: 'pink' },
+  { icon: '📱', title: '«Ваш аккаунт заблокируют»', desc: 'Пишут от имени Telegram/WhatsApp — просят ввести номер и код для «подтверждения».', color: 'purple' },
+  { icon: '💼', title: '«Лёгкая работа на дому»', desc: 'Предлагают зарабатывать 100к+ без опыта. Просят оплатить «обучение» или «страховку».', color: 'blue' },
+  { icon: '💘', title: 'Романтический скам', desc: 'Знакомятся, втираются в доверие, потом «нужны деньги на операцию/билет».', color: 'rose' },
+  { icon: '📈', title: '«Инвестиции с гарантией»', desc: 'Обещают 30-100% дохода в месяц. Первые выплаты реальные, потом — исчезают с деньгами.', color: 'emerald' },
+  { icon: '📦', title: '«Ваша посылка задержана»', desc: 'Пишут от имени Почты/СДЭК с ссылкой для «оплаты пошлины» — крадут данные карты.', color: 'amber' },
+  { icon: '🎓', title: '«Курсы с трудоустройством»', desc: 'Обещают гарантированную работу после обучения. Берут деньги — и тишина.', color: 'cyan' },
+  { icon: '🔓', title: '«Взлом аккаунта»', desc: 'Пишут что ваш аккаунт взломали, просят «срочно» перейти по ссылке и ввести данные.', color: 'indigo' },
+  { icon: '👮', title: '«Полиция/ФСБ/Следственный комитет»', desc: 'Представляются силовиками, пугают уголовным делом и требуют деньги «для решения вопроса».', color: 'slate' }
+];
+
+const colorMap = {
+  red: 'from-red-500 to-red-600', orange: 'from-orange-500 to-orange-600', yellow: 'from-yellow-500 to-yellow-600',
+  pink: 'from-pink-500 to-pink-600', purple: 'from-purple-500 to-purple-600', blue: 'from-blue-500 to-blue-600',
+  rose: 'from-rose-500 to-rose-600', emerald: 'from-emerald-500 to-emerald-600', amber: 'from-amber-500 to-amber-600',
+  cyan: 'from-cyan-500 to-cyan-600', indigo: 'from-indigo-500 to-indigo-600', slate: 'from-slate-500 to-slate-600'
+};
+
+const schemesGrid = document.getElementById('schemesGrid');
+schemes.forEach((s, i) => {
+  const div = document.createElement('div');
+  div.className = 'scheme-card bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${colorMap[s.color]} flex items-center justify-center text-2xl mb-4 shadow-lg">${s.icon}</div>
+    <div class="text-xs font-bold text-slate-400 mb-1">СХЕМА #${i + 1}</div>
+    <h3 class="font-bold text-lg mb-2">${s.title}</h3>
+    <p class="text-slate-600 text-sm leading-relaxed">${s.desc}</p>
+  `;
+  schemesGrid.appendChild(div);
+});
+
+// Примеры переписок
+const examples = [
+  {
+    title: '«Мама» просит деньги',
+    messages: [
+      { from: 'them', name: 'Мама', text: 'Привет, сынок. У меня телефон сломался, пишу с нового номера. Сохрани: +7 999 *** ** 42', time: '14:32' },
+      { from: 'them', name: 'Мама', text: 'Мне срочно нужно 15000 перевести, на операцию подруге. На карте не хватает, займи до зарплаты', time: '14:33' },
+      { from: 'them', name: 'Мама', text: 'Переведи на этот номер, я потом всё объясню. Только срочно, пожалуйста 🙏', time: '14:33' }
+    ],
+    flags: ['Новый номер без предупреждения', 'Срочность + эмоции', 'Нет возможности проверить голосом', 'Сумма конкретная, но причина размытая']
+  },
+  {
+    title: '«Служба безопасности банка»',
+    messages: [
+      { from: 'them', name: 'СБ Сбербанк', text: '⚠️ С вашего счёта *4521 попытка перевода 45 000₽. Если это не вы — срочно подтвердите отмену', time: '09:15' },
+      { from: 'them', name: 'СБ Сбербанк', text: 'На ваш номер поступит код. Назовите его оператору для отмены операции. Код действителен 2 минуты', time: '09:15' },
+      { from: 'them', name: 'СБ Сбербанк', text: 'Внимание! Не кладите трубку. Каждая секунда на счету. Ждём код', time: '09:16' }
+    ],
+    flags: ['Настоящий банк НИКОГДА не просит код из SMS', 'Давят срочностью', 'Пугают потерей денег', 'Запрет класть трубку — классика']
+  },
+  {
+    title: '«Голосование за племянницу»',
+    messages: [
+      { from: 'them', name: 'Анна К.', text: 'Привет! Это Анна, мы в одном чате по дому. Можешь помочь?', time: '18:20' },
+      { from: 'them', name: 'Анна К.', text: 'Моя племянница участвует в конкурсе, нужен голос! Перейди по ссылке и проголосуй: bit.ly/3x9kLm', time: '18:21' },
+      { from: 'them', name: 'Анна К.', text: 'Там нужно будет указать карту для подтверждения, что ты не робот. Это обязательно по правилам 🙏', time: '18:21' }
+    ],
+    flags: ['Незнакомый человек', 'Короткая ссылка (bit.ly)', 'Просят данные карты «для подтверждения»', 'Настоящие голосования не требуют карту']
+  }
+];
+
+const examplesContainer = document.getElementById('examplesContainer');
+examples.forEach((ex, idx) => {
+  const div = document.createElement('div');
+  div.className = 'bg-white rounded-3xl shadow-lg overflow-hidden border border-slate-200';
+  div.innerHTML = `
+    <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center font-bold">⚠️</div>
+        <div>
+          <div class="font-bold">${ex.title}</div>
+          <div class="text-xs text-slate-400">Нажмите, чтобы увидеть разбор</div>
+        </div>
+      </div>
+      <button class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded-full transition" onclick="toggleExample(${idx})">Разобрать</button>
+    </div>
+    <div class="chat-container p-4 space-y-2">
+      ${ex.messages.map(m => `
+        <div class="flex items-start gap-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">${m.name[0]}</div>
+          <div class="bubble-in p-3 max-w-[80%] shadow-sm">
+            <div class="font-semibold text-xs text-orange-600 mb-1">${m.name}</div>
+            <div class="text-sm text-slate-800">${m.text}</div>
+            <div class="bubble-time text-right">${m.time} ✓✓</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="flags-${idx}" class="hidden bg-red-50 border-t-2 border-red-200 p-6">
+      <div class="font-bold text-red-700 mb-3 flex items-center gap-2">🚨 Красные флаги в этом сообщении:</div>
+      <ul class="space-y-2">
+        ${ex.flags.map(f => `<li class="flex items-start gap-2 text-sm text-slate-700"><span class="text-red-500 mt-0.5">●</span>${f}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+  examplesContainer.appendChild(div);
+});
+
+function toggleExample(idx) {
+  document.getElementById(`flags-${idx}`).classList.toggle('hidden');
+}
+
+// Красные флаги
+const flags = [
+  { title: 'Давят срочностью', desc: '«Срочно!», «Через 5 минут будет поздно!», «Не кладите трубку!» — цель не дать вам подумать.' },
+  { title: 'Вызывают страх', desc: 'Пугают блокировкой, уголовным делом, потерей денег. Эмоции отключают критическое мышление.' },
+  { title: 'Просят код из SMS', desc: 'Банк НИКОГДА не просит код из SMS. Этот код = доступ к вашему счёту.' },
+  { title: 'Просят данные карты', desc: 'CVV-код и срок действия нельзя никому сообщать. Даже «для подтверждения».' },
+  { title: 'Слишком хорошие предложения', desc: '«Заработок 100к без опыта», «Выигрыш 1 млн» — если слишком хорошо, это обман.' },
+  { title: 'Короткие/подозрительные ссылки', desc: 'bit.ly, tinyurl, странные домены — за ними часто фишинговые сайты.' },
+  { title: 'Новый номер «от близкого»', desc: 'Всегда перезванивайте на старый номер для проверки. Не доверяйте только сообщениям.' },
+  { title: 'Запрет обсуждать с близкими', desc: '«Никому не говорите, это конфиденциально» — классический признак мошенничва.' },
+  { title: 'Просят установить приложение', desc: '«Скачайте AnyDesk/TeamViewer для защиты» — через них мошенники получают доступ к вашему телефону.' },
+  { title: 'Представляются силовиками', desc: 'Полиция, ФСБ, СК НИКОГДА не решают вопросы по телефону. Это всегда обман.' }
+];
+
+const flagsContainer = document.getElementById('flagsContainer');
+flags.forEach((f, i) => {
+  const div = document.createElement('div');
+  div.className = 'flag-item bg-white rounded-xl p-5 border-2 border-slate-200 flex items-start gap-4';
+  div.innerHTML = `
+    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold flex-shrink-0">${i + 1}</div>
+    <div class="flex-1">
+      <div class="font-bold text-lg mb-1">${f.title}</div>
+      <div class="text-slate-600 text-sm hidden flag-desc">${f.desc}</div>
+    </div>
+    <div class="text-slate-400 text-sm flag-arrow">→</div>
+  `;
+  div.onclick = () => {
+    div.classList.toggle('revealed');
+    div.querySelector('.flag-desc').classList.toggle('hidden');
+    div.querySelector('.flag-arrow').textContent = div.classList.contains('revealed') ? '↓' : '→';
+  };
+  flagsContainer.appendChild(div);
+});
+
+// Тест
+const quizQuestions = [
+  {
+    category: 'Взлом аккаунта',
+    sender: 'Друг',
+    avatar: 'Д',
+    message: 'Привет! Слушай, можешь 5000 до завтра занять? Зарплату задержали, очень нужно. Верну точно!',
+    time: '10:15',
+    question: 'Ваш друг написал с нового номера и просит денег. Что делать?',
+    answers: [
+      { text: 'Перевести — друг же просит', correct: false, feedback: '❌ Это может быть взломанный аккаунт. Сначала проверьте личность!' },
+      { text: 'Позвонить на его обычный номер', correct: true, feedback: '✅ Правильно! Всегда перезванивайте для проверки. Мошенники не смогут ответить.' },
+      { text: 'Попросить прислать голосовое', correct: false, feedback: '⚠️ Лучше, но голосовое тоже можно подделать. Звонок надёжнее.' }
+    ]
+  },
+  {
+    category: 'Служба банка',
+    sender: 'СБ Банк',
+    avatar: 'С',
+    message: '⚠️ Подозрительная операция 78 000₽! Назовите код из SMS для отмены. Не кладите трубку!',
+    time: '14:22',
+    question: '«Служба безопасности» просит код из SMS. Ваши действия?',
+    answers: [
+      { text: 'Назвать код — спасать деньги!', correct: false, feedback: '❌ НЕТ! Код из SMS = доступ к счёту. Банк никогда его не просит.' },
+      { text: 'Положить трубку и позвонить в банк самому', correct: true, feedback: '✅ Единственно верный вариант! Звоните по номеру на карте.' },
+      { text: 'Назвать только часть кода', correct: false, feedback: '❌ Даже часть кода опасна. Просто положите трубку.' }
+    ]
+  },
+  {
+    category: 'Лёгкий заработок',
+    sender: 'HR Анна',
+    avatar: 'А',
+    message: 'Ищем сотрудников! 80 000₽/мес, 3 часа в день, опыт не нужен. Обучение за 15 000₽ (вернём с первой ЗП).',
+    time: '19:05',
+    question: 'Предлагают работу с высокой оплатой, но просят деньги за обучение. Что делать?',
+    answers: [
+      { text: 'Оплатить — деньги вернут с ЗП', correct: false, feedback: '❌ Настоящие работодатели NEVER не берут деньги с сотрудников.' },
+      { text: 'Отказаться и заблокировать', correct: true, feedback: '✅ Верно! Если просят деньги «за трудоустройство» — это скам.' },
+      { text: 'Попросить договор и реквизиты компании', correct: false, feedback: '⚠️ Лучше, но мошенники подделывают и документы. Безопаснее отказаться.' }
+    ]
+  },
+  {
+    category: 'Голосование',
+    sender: 'Незнакомец',
+    avatar: 'Н',
+    message: 'Привет! Проголосуй за мою племянницу в конкурсе: bit.ly/vote-kids. Нужна карта для подтверждения.',
+    time: '20:40',
+    question: 'Незнакомец просит проголосовать по ссылке с вводом карты. Ваши действия?',
+    answers: [
+      { text: 'Перейти и проголосовать', correct: false, feedback: '❌ Ссылка ведёт на фишинговый сайт. Украдут данные карты.' },
+      { text: 'Заблокировать и пожаловаться', correct: true, feedback: '✅ Идеально! Это 100% скам. Настоящие голосования не требуют карту.' },
+      { text: 'Ввести фейковые данные', correct: false, feedback: '⚠️ Риск всё равно есть. Просто заблокируйте.' }
+    ]
+  },
+  {
+    category: 'Инвестиции',
+    sender: 'Трейдер Иван',
+    avatar: 'И',
+    message: 'Гарантированный доход 40% в месяц! Первые выплаты уже через неделю. Вложи 50 000₽ — получишь 70 000₽.',
+    time: '12:00',
+    question: 'Обещают гарантированный 40% в месяц. Что делать?',
+    answers: [
+      { text: 'Вложить небольшую сумму для проверки', correct: false, feedback: '❌ Ловушка! Первые выплаты реальные — чтобы вы вложили больше.' },
+      { text: 'Заблокировать — это финансовая пирамида', correct: true, feedback: '✅ Верно! Гарантированный 40% в месяц не существует. Это пирамида.' },
+      { text: 'Попросить лицензию ЦБ', correct: false, feedback: '⚠️ Хорошо, но мошенники подделывают лицензии. Безопаснее отказаться.' }
+    ]
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+
+function renderQuestion() {
+  const q = quizQuestions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = quizQuestions.length;
+  document.getElementById('progressBar').style.width = ((currentQ + 1) / quizQuestions.length * 100) + '%';
+  document.getElementById('senderName').textContent = q.sender;
+  document.getElementById('avatarLetter').textContent = q.avatar;
+  document.getElementById('qMessage').textContent = q.message;
+  document.getElementById('qTime').textContent = q.time;
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qQuestion').textContent = q.question;
+  
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left p-4 bg-white hover:bg-orange-50 border-2 border-slate-200 hover:border-orange-400 rounded-xl font-medium transition';
+    btn.textContent = a.text;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('quizCard').classList.remove('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  const q = quizQuestions[currentQ];
+  const a = q.answers[idx];
+  const buttons = document.querySelectorAll('#answersContainer button');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) {
+      b.className = `w-full text-left p-4 rounded-xl font-medium ${a.correct ? 'bg-green-100 border-2 border-green-500 text-green-800' : 'bg-red-100 border-2 border-red-500 text-red-800'}`;
+    } else if (q.answers[i].correct) {
+      b.className = 'w-full text-left p-4 rounded-xl font-medium bg-green-50 border-2 border-green-300 text-green-700';
+    } else {
+      b.className = 'w-full text-left p-4 bg-slate-50 border-2 border-slate-200 text-slate-400';
+    }
+  });
+  
+  if (a.correct) score++;
+  document.getElementById('score').textContent = score;
+  
+  const feedback = document.createElement('div');
+  feedback.className = `mt-4 p-4 rounded-xl text-sm ${a.correct ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`;
+  feedback.textContent = a.feedback;
+  document.getElementById('answersContainer').appendChild(feedback);
+  
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < quizQuestions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 2500);
+}
+
+function showResult() {
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  const pct = score / quizQuestions.length;
+  let emoji, title, text;
+  if (pct >= 0.8) { emoji = '🛡️'; title = `Отлично! ${score}/${quizQuestions.length}`; text = 'Вы отлично распознаёте мошенников! Продолжайте быть бдительными.'; }
+  else if (pct >= 0.5) { emoji = '⚠️'; title = `Неплохо: ${score}/${quizQuestions.length}`; text = 'База есть, но некоторые схемы вас могут провести. Изучите разделы выше.'; }
+  else { emoji = '🚨'; title = `${score}/${quizQuestions.length} — нужно учиться`; text = 'Вы в зоне риска! Обязательно прочитайте про схемы и красные флаги.'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultText').textContent = text;
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('score').textContent = 0;
+  renderQuestion();
+}
+
+renderQuestion();
+
+// Чек-лист
+const checklist = [
+  'Включена двухфакторная аутентификация (2FA) во всех мессенджерах',
+  'Установлен PIN-код или биометрия на SIM-карту',
+  'Пароли от банковских приложений уникальные и сложные',
+  'Включены уведомления о всех операциях по карте',
+  'Установлены лимиты на переводы и покупки',
+  'Никогда не сообщаю коды из SMS никому',
+  'Перезваниваю близким при подозрительных просьбах о деньгах',
+  'Не перехожу по коротким ссылкам от незнакомцев',
+  'Не устанавливаю приложения по просьбе «операторов»',
+  'Рассказал родителям и пожилым родственникам о схемах мошенников'
+];
+
+const checklistContainer = document.getElementById('checklistContainer');
+document.getElementById('checkTotal').textContent = checklist.length;
+checklist.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition hover:border-orange-300 bg-white mb-3';
+  div.innerHTML = `
+    <div class="check-icon w-7 h-7 rounded-lg border-2 border-slate-300 flex items-center justify-center flex-shrink-0 transition">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div class="flex-1 pt-0.5"><span class="font-medium text-sm">${item}</span></div>
+  `;
+  div.onclick = () => {
+    div.classList.toggle('checked');
+    if (div.classList.contains('checked')) {
+      div.style.background = '#fef3c7';
+      div.style.borderColor = '#f97316';
+      div.querySelector('.check-icon').style.background = '#f97316';
+      div.querySelector('.check-icon').style.borderColor = '#f97316';
+    } else {
+      div.style.background = 'white';
+      div.style.borderColor = '#e2e8f0';
+      div.querySelector('.check-icon').style.background = 'transparent';
+      div.querySelector('.check-icon').style.borderColor = '#cbd5e1';
+    }
+    updateCheckCount();
+  };
+  checklistContainer.appendChild(div);
+});
+
+function updateCheckCount() {
+  const checked = document.querySelectorAll('#checklistContainer .check-icon').length;
+  const filled = Array.from(document.querySelectorAll('#checklistContainer > div')).filter(d => d.style.borderColor === 'rgb(249, 115, 22)').length;
+  document.getElementById('checkCount').textContent = filled;
+  const status = document.getElementById('checkStatus');
+  const pct = filled / checked;
+  if (pct === 0) status.textContent = 'Начните отмечать пункты';
+  else if (pct < 0.4) status.textContent = '⚠️ Вы в зоне риска!';
+  else if (pct < 0.7) status.textContent = '👍 Хорошее начало';
+  else if (pct < 1) status.textContent = '💪 Почти защищены';
+  else status.textContent = '🛡️ Отличная защита!';
+}
+
+// Ресурсы
+const resources = [
+  { name: 'Полиция', desc: 'Экстренный номер для заявления о мошенничестве', contact: '102', icon: '👮' },
+  { name: 'ЦБ России', desc: 'Горячая линия по финансовому мошенничеству', contact: '8 800 300-30-00', icon: '🏦' },
+  { name: 'Госуслуги', desc: 'Подача заявления о преступлении онлайн', contact: 'gosuslugi.ru', icon: '🇷🇺' },
+  { name: 'Сбербанк', desc: 'Блокировка карты и оспаривание операций', contact: '900', icon: '💳' },
+  { name: 'Киберполиция', desc: 'Отделение «К» МВД по киберпреступлениям', contact: 'мвд.рф', icon: '💻' },
+  { name: 'Роскомнадзор', desc: 'Блокировка мошеннических сайтов', contact: 'rkn.gov.ru', icon: '🚫' }
+];
+
+const resourcesGrid = document.getElementById('resourcesGrid');
+resources.forEach(r => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="text-4xl mb-3">${r.icon}</div>
+    <h3 class="font-bold text-lg mb-1">${r.name}</h3>
+    <p class="text-slate-600 text-sm mb-3">${r.desc}</p>
+    <div class="text-orange-600 font-bold text-lg">${r.contact}</div>
+  `;
+  resourcesGrid.appendChild(div);
+});
+
+function sharePage() {
+  if (navigator.share) {
+    navigator.share({ title: 'Разводы в мессенджерах', text: 'Как не попасться мошенникам', url: window.location.href });
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    alert('Ссылка скопирована! Поделитесь с близкими.');
+  }
+}
+</script>
+</body>
+</html>
