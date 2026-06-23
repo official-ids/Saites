@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Справочник браузеров</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .fade-in { animation: fadeIn 0.5s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .sort-btn:hover { background: #e5e7eb; }
+  .sort-btn.active { background: #1f2937; color: white; }
+  tr.highlight { background: #fef9c3; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; margin: 2px; }
+</style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+    <h1 class="text-4xl md:text-5xl font-bold mb-3">Справочник браузеров</h1>
+    <p class="text-lg text-indigo-100 max-w-3xl">Что такое веб-браузер, как он устроен и чем отличаются популярные программы для просмотра сайтов</p>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-6 py-10">
+
+  <!-- Что такое браузер -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8 fade-in">
+    <h2 class="text-2xl font-bold text-slate-800 mb-4">Что такое браузер</h2>
+    <p class="text-slate-600 leading-relaxed mb-4">
+      <span class="font-semibold text-slate-800">Веб-браузер</span> — это программа для доступа к сайтам в интернете. Он загружает HTML-страницы, CSS-стили, JavaScript-код, изображения и видео, а затем отображает всё это в удобном виде на экране.
+    </p>
+    <p class="text-slate-600 leading-relaxed mb-4">
+      Браузер работает по модели «клиент-сервер»: пользователь вводит адрес (URL), браузер отправляет запрос на удалённый сервер, получает данные и отрисовывает страницу. Внутри браузера есть специальный компонент — <span class="font-semibold text-slate-800">движок рендеринга</span>, который превращает код в то, что мы видим.
+    </p>
+    <div class="grid md:grid-cols-3 gap-4 mt-6">
+      <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+        <div class="text-indigo-600 font-bold text-sm uppercase tracking-wide mb-1">Адресная строка</div>
+        <p class="text-slate-700 text-sm">Ввод URL или поискового запроса</p>
+      </div>
+      <div class="bg-purple-50 rounded-xl p-4 border border-purple-100">
+        <div class="text-purple-600 font-bold text-sm uppercase tracking-wide mb-1">Вкладки</div>
+        <p class="text-slate-700 text-sm">Открытие нескольких страниц одновременно</p>
+      </div>
+      <div class="bg-pink-50 rounded-xl p-4 border border-pink-100">
+        <div class="text-pink-600 font-bold text-sm uppercase tracking-wide mb-1">Закладки</div>
+        <p class="text-slate-700 text-sm">Сохранение любимых сайтов</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Управление -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6 fade-in">
+    <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+      <div class="flex-1">
+        <input id="search" type="text" placeholder="Поиск по названию, разработчику или движку..."
+          class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button data-filter="all" class="filter-btn px-4 py-2 rounded-lg bg-slate-800 text-white text-sm font-medium">Все</button>
+        <button data-filter="chromium" class="filter-btn px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300">Chromium</button>
+        <button data-filter="gecko" class="filter-btn px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300">Gecko</button>
+        <button data-filter="webkit" class="filter-btn px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300">WebKit</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Таблица -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden fade-in">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-100 text-slate-700 uppercase text-xs tracking-wider">
+          <tr>
+            <th class="px-4 py-3 text-left">Браузер</th>
+            <th class="px-4 py-3 text-left"><button class="sort-btn px-2 py-1 rounded" data-sort="developer">Разработчик</button></th>
+            <th class="px-4 py-3 text-left"><button class="sort-btn px-2 py-1 rounded" data-sort="engine">Движок</button></th>
+            <th class="px-4 py-3 text-left"><button class="sort-btn px-2 py-1 rounded" data-sort="year">Год</button></th>
+            <th class="px-4 py-3 text-left">Платформы</th>
+            <th class="px-4 py-3 text-left"><button class="sort-btn px-2 py-1 rounded" data-sort="share">Доля рынка</button></th>
+            <th class="px-4 py-3 text-left">Особенности</th>
+          </tr>
+        </thead>
+        <tbody id="table-body" class="divide-y divide-slate-100"></tbody>
+      </table>
+    </div>
+    <div id="empty" class="hidden p-10 text-center text-slate-500">Ничего не найдено</div>
+  </section>
+
+  <!-- Движки -->
+  <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mt-8 fade-in">
+    <h2 class="text-2xl font-bold text-slate-800 mb-4">Основные движки рендеринга</h2>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="border border-slate-200 rounded-xl p-5 hover:shadow-md transition">
+        <div class="font-bold text-slate-800 text-lg mb-1">Blink</div>
+        <div class="text-xs text-slate-500 mb-2">Разработан Google (форк WebKit, 2013)</div>
+        <p class="text-slate-600 text-sm">Самый распространённый движок. Используется в Chrome, Edge, Opera, Brave, Vivaldi и Яндекс.Браузере.</p>
+      </div>
+      <div class="border border-slate-200 rounded-xl p-5 hover:shadow-md transition">
+        <div class="font-bold text-slate-800 text-lg mb-1">Gecko</div>
+        <div class="text-xs text-slate-500 mb-2">Разработан Mozilla</div>
+        <p class="text-slate-600 text-sm">Открытый движок, используемый в Firefox. Известен строгой приверженностью веб-стандартам и приватности.</p>
+      </div>
+      <div class="border border-slate-200 rounded-xl p-5 hover:shadow-md transition">
+        <div class="font-bold text-slate-800 text-lg mb-1">WebKit</div>
+        <div class="text-xs text-slate-500 mb-2">Разработан Apple</div>
+        <p class="text-slate-600 text-sm">Основа Safari на всех платформах Apple. Также используется в ряде мобильных браузеров на iOS.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-slate-400 text-sm py-8">
+    Данные о доле рынка приведены ориентировочно на 2026 год
+  </footer>
+</main>
+
+<script>
+const browsers = [
+  {
+    name: "Google Chrome",
+    developer: "Google",
+    engine: "Blink",
+    family: "chromium",
+    year: 2008,
+    platforms: ["Windows", "macOS", "Linux", "Android", "iOS"],
+    share: 65.2,
+    features: ["Синхронизация с Google", "Огромная библиотека расширений", "Высокая скорость"]
+  },
+  {
+    name: "Mozilla Firefox",
+    developer: "Mozilla Foundation",
+    engine: "Gecko",
+    family: "gecko",
+    year: 2004,
+    platforms: ["Windows", "macOS", "Linux", "Android", "iOS"],
+    share: 6.8,
+    features: ["Открытый исходный код", "Строгая защита приватности", "Контейнеры для вкладок"]
+  },
+  {
+    name: "Apple Safari",
+    developer: "Apple",
+    engine: "WebKit",
+    family: "webkit",
+    year: 2003,
+    platforms: ["macOS", "iOS"],
+    share: 18.5,
+    features: ["Глубокая интеграция с Apple", "Энергоэффективность", "iCloud-синхронизация"]
+  },
+  {
+    name: "Microsoft Edge",
+    developer: "Microsoft",
+    engine: "Blink",
+    family: "chromium",
+    year: 2020,
+    platforms: ["Windows", "macOS", "Linux", "Android", "iOS"],
+    share: 5.1,
+    features: ["Интеграция с Windows", "Встроенный Copilot", "Коллекции"]
+  },
+  {
+    name: "Opera",
+    developer: "Opera Software",
+    engine: "Blink",
+    family: "chromium",
+    year: 1995,
+    platforms: ["Windows", "macOS", "Linux", "Android", "iOS"],
+    share: 2.4,
+    features: ["Встроенный VPN", "Блокатор рекламы", "Мессенджеры в боковой панели"]
+  },
+  {
+    name: "Brave",
+    developer: "Brave Software",
+    engine: "Blink",
+    family: "chromium",
+    year: 2016,
+    platforms: ["Windows", "macOS", "Linux", "Android", "iOS"],
+    share: 0.6,
+    features: ["Блокировка трекеров по умолчанию", "Награды BAT", "Фокус на приватности"]
+  },
+  {
+    name: "Vivaldi",
+    developer: "Vivaldi Technologies",
+    engine: "Blink",
+    family: "chromium",
+    year: 2016,
+    platforms: ["Windows", "macOS", "Linux", "Android"],
+    share: 0.2,
+    features: ["Гибкая настройка интерфейса", "Заметки и панели", "Группы вкладок"]
+  },
+  {
+    name: "Яндекс Браузер",
+    developer: "Яндекс",
+    engine: "Blink",
+    family: "chromium",
+    year: 2012,
+    platforms: ["Windows", "macOS", "Linux", "Android", "iOS"],
+    share: 1.8,
+    features: ["Интеграция с сервисами Яндекса", "Защита Protect", "Алиса в браузере"]
+  },
+  {
+    name: "Tor Browser",
+    developer: "Tor Project",
+    engine: "Gecko",
+    family: "gecko",
+    year: 2008,
+    platforms: ["Windows", "macOS", "Linux", "Android"],
+    share: 0.1,
+    features: ["Анонимность через Tor-сеть", "Многослойное шифрование", "Защита от слежки"]
+  }
+];
+
+const tbody = document.getElementById('table-body');
+const searchInput = document.getElementById('search');
+const empty = document.getElementById('empty');
+
+let currentFilter = 'all';
+let currentSort = { key: null, dir: 1 };
+
+function render() {
+  const q = searchInput.value.trim().toLowerCase();
+  let list = browsers.filter(b => {
+    const matchFilter = currentFilter === 'all' || b.family === currentFilter;
+    const matchSearch = !q ||
+      b.name.toLowerCase().includes(q) ||
+      b.developer.toLowerCase().includes(q) ||
+      b.engine.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  if (currentSort.key) {
+    list.sort((a, b) => {
+      const va = a[currentSort.key], vb = b[currentSort.key];
+      if (typeof va === 'string') return currentSort.dir * va.localeCompare(vb, 'ru');
+      return currentSort.dir * (va - vb);
+    });
+  }
+
+  tbody.innerHTML = '';
+  if (list.length === 0) {
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.forEach(b => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-slate-50 transition';
+    const shareColor = b.share > 10 ? 'bg-green-100 text-green-700' :
+                       b.share > 2 ? 'bg-blue-100 text-blue-700' :
+                       'bg-slate-100 text-slate-700';
+    tr.innerHTML = `
+      <td class="px-4 py-4">
+        <div class="font-semibold text-slate-800">${b.name}</div>
+      </td>
+      <td class="px-4 py-4 text-slate-600">${b.developer}</td>
+      <td class="px-4 py-4 text-slate-600">${b.engine}</td>
+      <td class="px-4 py-4 text-slate-600">${b.year}</td>
+      <td class="px-4 py-4">
+        ${b.platforms.map(p => `<span class="tag bg-slate-100 text-slate-700">${p}</span>`).join('')}
+      </td>
+      <td class="px-4 py-4">
+        <span class="tag ${shareColor} font-medium">${b.share}%</span>
+      </td>
+      <td class="px-4 py-4 text-slate-600 text-xs">
+        ${b.features.map(f => `<div class="py-0.5">• ${f}</div>`).join('')}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+searchInput.addEventListener('input', render);
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.classList.remove('bg-slate-800', 'text-white');
+      b.classList.add('bg-slate-200', 'text-slate-700');
+    });
+    btn.classList.remove('bg-slate-200', 'text-slate-700');
+    btn.classList.add('bg-slate-800', 'text-white');
+    currentFilter = btn.dataset.filter;
+    render();
+  });
+});
+
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.sort;
+    if (currentSort.key === key) {
+      currentSort.dir = -currentSort.dir;
+    } else {
+      currentSort = { key, dir: 1 };
+    }
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
+

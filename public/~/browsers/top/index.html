@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Какой браузер лучший? — Сравнение 2026</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); }
+  .gradient-text { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15); }
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse-blue { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } }
+  .pulse-blue { animation: pulse-blue 2s infinite; }
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  .category-tab.active { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; }
+  
+  .bar-fill { transition: width 1s ease-out; }
+  
+  .browser-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  
+  .browser-logo-sm {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  
+  .rating-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  
+  .rating-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.5s ease-out;
+  }
+  
+  .winner-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+  
+  .quiz-option { transition: all 0.2s; }
+  .quiz-option:hover { transform: translateX(4px); }
+  .quiz-option.selected { background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: white; border-color: transparent; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-lg z-50 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <span class="font-bold text-xl">BrowserBattle</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#categories" class="hover:text-blue-600 transition">Категории</a>
+      <a href="#rating" class="hover:text-blue-600 transition">Рейтинг</a>
+      <a href="#browsers" class="hover:text-blue-600 transition">Браузеры</a>
+      <a href="#quiz" class="hover:text-blue-600 transition">Тест</a>
+      <a href="#recommend" class="hover:text-blue-600 transition">Рекомендации</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-6 relative overflow-hidden">
+  <div class="absolute top-20 right-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-10 left-10 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl"></div>
+  
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative">
+    <div class="fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-6">
+        <span class="w-2 h-2 bg-blue-500 rounded-full pulse-blue"></span>
+        Обновлено: Июнь 2026
+      </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+        Какой <span class="gradient-text">браузер</span> лучший?
+      </h1>
+      <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+        Честное сравнение 9 популярных браузеров по скорости, приватности, безопасности и удобству. Найдите идеальный браузер именно для вас.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#quiz" class="px-8 py-4 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">
+          Подобрать браузер →
+        </a>
+        <a href="#rating" class="px-8 py-4 bg-white border-2 border-slate-200 rounded-xl font-semibold hover:border-blue-400 transition">
+          Смотреть рейтинг
+        </a>
+      </div>
+      <div class="mt-10 flex gap-8">
+        <div><div class="text-3xl font-bold gradient-text">9</div><div class="text-sm text-slate-500">браузеров</div></div>
+        <div><div class="text-3xl font-bold gradient-text">7</div><div class="text-sm text-slate-500">категорий</div></div>
+        <div><div class="text-3xl font-bold gradient-text">63</div><div class="text-sm text-slate-500">параметра</div></div>
+      </div>
+    </div>
+    
+    <div class="fade-in">
+      <!-- Сетка логотипов браузеров -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="browser-logo bg-gradient-to-br from-red-400 via-yellow-400 to-green-400">🌐</div>
+        <div class="browser-logo bg-gradient-to-br from-orange-400 to-red-500">🦊</div>
+        <div class="browser-logo bg-gradient-to-br from-blue-400 to-blue-600">🧭</div>
+        <div class="browser-logo bg-gradient-to-br from-blue-500 to-cyan-400">🔷</div>
+        <div class="browser-logo bg-gradient-to-br from-orange-500 to-red-600">🦁</div>
+        <div class="browser-logo bg-gradient-to-br from-red-500 to-pink-500">🔐</div>
+        <div class="browser-logo bg-gradient-to-br from-purple-500 to-indigo-600">🎨</div>
+        <div class="browser-logo bg-gradient-to-br from-slate-600 to-slate-800">🌑</div>
+        <div class="browser-logo bg-gradient-to-br from-pink-400 to-purple-500">✨</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Быстрый выбор по категории -->
+<section id="categories" class="py-20 px-6 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">🏆 ПО КАТЕГОРИЯМ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Лучший в каждой категории</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Нет идеального браузера для всего. Но есть лучший для каждой задачи</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="categoriesGrid"></div>
+  </div>
+</section>
+
+<!-- Рейтинг по категориям -->
+<section id="rating" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">📊 ДЕТАЛЬНЫЙ РЕЙТИНГ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Сравнение по параметрам</h2>
+      <p class="text-slate-600 text-lg">Выберите категорию и посмотрите рейтинг всех браузеров</p>
+    </div>
+    
+    <!-- Табы категорий -->
+    <div class="flex flex-wrap gap-2 justify-center mb-10" id="categoryTabs"></div>
+    
+    <!-- Рейтинг -->
+    <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl" id="ratingContainer"></div>
+  </div>
+</section>
+
+<!-- Карточки браузеров -->
+<section id="browsers" class="py-20 px-6 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">🔍 ПОДРОБНО</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Все браузеры в деталях</h2>
+      <p class="text-slate-600 text-lg">Плюсы, минусы и особенности каждого браузера</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="browsersGrid"></div>
+  </div>
+</section>
+
+<!-- Сравнительная таблица -->
+<section class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-4">📋 ТАБЛИЦА</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Сравнение характеристик</h2>
+      <p class="text-slate-600 text-lg">Все важные параметры в одной таблице</p>
+    </div>
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden overflow-x-auto">
+      <table class="w-full text-sm" id="comparisonTable"></table>
+    </div>
+  </div>
+</section>
+
+<!-- Тест: какой браузер вам подходит -->
+<section id="quiz" class="py-20 px-6 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-4">🎯 ТЕСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Какой браузер вам подходит?</h2>
+      <p class="text-slate-600 text-lg">Ответьте на 6 вопросов — и мы подберём идеальный браузер</p>
+    </div>
+    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <div class="flex justify-between items-center mb-6">
+        <div class="text-sm font-semibold text-slate-500">Вопрос <span id="qNum">1</span> из <span id="qTotal">6</span></div>
+        <div class="text-sm font-semibold text-blue-600">Прогресс: <span id="progress">16</span>%</div>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-2 mb-8"><div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width:16%"></div></div>
+      
+      <div id="quizCard">
+        <h3 class="text-xl md:text-2xl font-bold mb-6" id="qText">Вопрос</h3>
+        <div class="space-y-3" id="answersContainer"></div>
+      </div>
+
+      <div id="quizResult" class="hidden text-center py-8">
+        <div class="text-7xl mb-4" id="resultIcon">🏆</div>
+        <div class="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Вам подходит</div>
+        <h3 class="text-4xl font-extrabold mb-4 gradient-text" id="resultBrowser">Браузер</h3>
+        <p class="text-slate-600 mb-6 max-w-xl mx-auto" id="resultText">Описание</p>
+        <div id="resultStats" class="grid grid-cols-3 gap-4 mb-6 max-w-md mx-auto"></div>
+        <button onclick="restartQuiz()" class="px-8 py-3 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">Пройти ещё раз</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Рекомендации для разных типов пользователей -->
+<section id="recommend" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4">💡 РЕКОМЕНДАЦИИ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Для кого какой браузер</h2>
+      <p class="text-slate-600 text-lg">Подборка под разные сценарии использования</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="recommendGrid"></div>
+  </div>
+</section>
+
+<!-- Интересные факты -->
+<section class="py-20 px-6 bg-white">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold mb-4">📰 ФАКТЫ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Интересное о браузерах</h2>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6" id="factsGrid"></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6">
+  <div class="max-w-5xl mx-auto gradient-bg rounded-3xl p-12 md:p-16 text-white text-center relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Идеальный браузер существует</h2>
+      <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Пройдите тест за 1 минуту и узнайте, какой браузер подходит именно вам по вашим привычкам и потребностям</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="#quiz" class="px-8 py-4 bg-white text-blue-700 rounded-xl font-bold shadow-lg hover:shadow-xl transition">Пройти тест</a>
+        <a href="#rating" class="px-8 py-4 bg-white/20 backdrop-blur border-2 border-white/40 rounded-xl font-bold hover:bg-white/30 transition">Смотреть рейтинг</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-400 py-12 px-6">
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-2 mb-4">
+      <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">BrowserBattle</span>
+    </div>
+    <p class="text-sm mb-4">Объективное сравнение браузеров для осознанного выбора</p>
+    <p class="text-xs text-slate-500">© 2026 BrowserBattle. Все материалы носят информационный характер.</p>
+  </div>
+</footer>
+
+<script>
+// Категории с победителями
+const categories = [
+  { icon: '⚡', title: 'Самый быстрый', winner: 'Brave', desc: 'За счёт блокировки рекламы и трекеров загружает страницы в 3-8 раз быстрее', color: 'from-orange-500 to-red-500', logo: '🦁' },
+  { icon: '🔒', title: 'Самый приватный', winner: 'Tor Browser', desc: 'Трёхслойное шифрование, скрытие IP, защита от отслеживания на уровне протокола', color: 'from-purple-500 to-indigo-600', logo: '🔐' },
+  { icon: '🛡️', title: 'Самый безопасный', winner: 'Firefox', desc: 'Открытый код, строгая защита от отслеживания, регулярные обновления безопасности', color: 'from-orange-400 to-red-500', logo: '🦊' },
+  { icon: '🧩', title: 'Больше расширений', winner: 'Chrome', desc: 'Огромный магазин расширений — более 180 000 дополнений на любой случай', color: 'from-red-400 via-yellow-400 to-green-400', logo: '🌐' },
+  { icon: '🎨', title: 'Лучшая кастомизация', winner: 'Vivaldi', desc: 'Настройка всего: вкладки, панели, жесты, темы, рабочие пространства', color: 'from-red-500 to-pink-500', logo: '🎨' },
+  { icon: '🍎', title: 'Лучший для Apple', winner: 'Safari', desc: 'Идеальная интеграция с macOS/iOS, экономия батареи, Handoff между устройствами', color: 'from-blue-400 to-blue-600', logo: '🧭' },
+  { icon: '💻', title: 'Лучший для Windows', winner: 'Edge', desc: 'Глубокая интеграция с Windows 11, Copilot AI, вертикальные вкладки', color: 'from-blue-500 to-cyan-400', logo: '🔷' },
+  { icon: '🤖', title: 'Лучший AI', winner: 'Arc', desc: 'Встроенный AI-ассистент, умная организация вкладок, современный интерфейс', color: 'from-pink-400 to-purple-500', logo: '✨' },
+  { icon: '🔋', title: 'Экономия ресурсов', winner: 'Opera', desc: 'Встроенный блокировщик рекламы + режим экономии батареи для ноутбуков', color: 'from-red-500 to-pink-500', logo: '🔴' }
+];
+
+const categoriesGrid = document.getElementById('categoriesGrid');
+categories.forEach(c => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm relative overflow-hidden';
+  div.innerHTML = `
+    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${c.color} opacity-10 rounded-full -mr-16 -mt-16"></div>
+    <div class="relative">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${c.color} flex items-center justify-center text-2xl shadow-lg">${c.icon}</div>
+        <div class="browser-logo-sm bg-gradient-to-br ${c.color} shadow-md">${c.logo}</div>
+      </div>
+      <div class="text-xs font-bold text-slate-400 mb-1">ЛУЧШИЙ В КАТЕГОРИИ</div>
+      <h3 class="font-bold text-xl mb-2">${c.title}</h3>
+      <div class="text-lg font-bold gradient-text mb-2">${c.winner}</div>
+      <p class="text-slate-600 text-sm">${c.desc}</p>
+    </div>
+  `;
+  categoriesGrid.appendChild(div);
+});
+
+// Браузеры
+const browsers = [
+  {
+    name: 'Google Chrome', logo: '🌐', color: 'from-red-400 via-yellow-400 to-green-400',
+    engine: 'Blink', market: '65%',
+    pros: ['Огромный магазин расширений', 'Синхронизация с Google-аккаунтом', 'Стабильность и совместимость', 'Быстрые обновления'],
+    cons: ['Высокое потребление RAM', 'Сбор данных о пользователе', 'Привязка к экосистеме Google'],
+    best: 'Для большинства пользователей',
+    desc: 'Самый популярный браузер в мире. Отличная совместимость с сайтами, огромный выбор расширений, но потребляет много памяти.'
+  },
+  {
+    name: 'Mozilla Firefox', logo: '🦊', color: 'from-orange-400 to-red-500',
+    engine: 'Gecko', market: '3%',
+    pros: ['Открытый исходный код', 'Строгая защита от отслеживания', 'Низкое потребление RAM', 'Независимость от корпораций'],
+    cons: ['Меньше расширений, чем Chrome', 'Некоторые сайты работают медленнее', 'Менее плавная синхронизация'],
+    best: 'Для приватности и свободы',
+    desc: 'Единственный крупный браузер не на движке Chromium. Открытый код, независимость, отличная приватность.'
+  },
+  {
+    name: 'Apple Safari', logo: '🧭', color: 'from-blue-400 to-blue-600',
+    engine: 'WebKit', market: '18%',
+    pros: ['Лучшая оптимизация для Mac/iPhone', 'Экономия батареи', 'iCloud-синхронизация', 'Быстрая работа на Apple Silicon'],
+    cons: ['Только для экосистемы Apple', 'Мало расширений', 'Медленные обновления', 'Привязка к Apple ID'],
+    best: 'Для пользователей Apple',
+    desc: 'Идеальный выбор для владельцев Mac, iPhone и iPad. Лучшая интеграция и экономия батареи в экосистеме Apple.'
+  },
+  {
+    name: 'Microsoft Edge', logo: '🔷', color: 'from-blue-500 to-cyan-400',
+    engine: 'Blink', market: '5%',
+    pros: ['Встроенный Copilot AI', 'Вертикальные вкладки', 'Коллекции и веб-заметки', 'Интеграция с Windows'],
+    cons: ['Много телеметрии Microsoft', 'Навязчивые предложения', 'Тяжёлый интерфейс', 'Реклама Bing'],
+    best: 'Для пользователей Windows',
+    desc: 'Современный браузер от Microsoft на движке Chromium. Отличная интеграция с Windows 11 и встроенный AI.'
+  },
+  {
+    name: 'Brave', logo: '🦁', color: 'from-orange-500 to-red-600',
+    engine: 'Blink', market: '<1%',
+    pros: ['Встроенный блокировщик рекламы', 'Самый быстрый из Chromium', 'Tor-режим в приватных окнах', 'HTTPS Everywhere'],
+    cons: ['Крипто-функции могут раздражать', 'Меньше расширений', 'Спорная монетизация через BAT'],
+    best: 'Для скорости и приватности',
+    desc: 'Chromium без мусора. Блокирует рекламу и трекеры из коробки — поэтому работает быстрее всех.'
+  },
+  {
+    name: 'Tor Browser', logo: '🔐', color: 'from-purple-500 to-indigo-600',
+    engine: 'Gecko (мод.)', market: '<1%',
+    pros: ['Максимальная анонимность', 'Трёхслойное шифрование', 'Скрытие IP и геолокации', 'Обход цензуры'],
+    cons: ['Очень медленный', 'Неудобный для повседневного использования', 'Не все сайты работают', 'Много CAPTCHA'],
+    best: 'Для максимальной анонимности',
+    desc: 'Не для повседневного использования, но незаменим для настоящей анонимности и обхода блокировок.'
+  },
+  {
+    name: 'Opera', logo: '🔴', color: 'from-red-500 to-pink-500',
+    engine: 'Blink', market: '2%',
+    pros: ['Встроенный VPN (бесплатный)', 'Мессенджеры в боковой панели', 'Режим экономии батареи', 'Крипто-кошелёк'],
+    cons: ['Принадлежит китайской компании', 'VPN ограниченный', 'Много экспериментальных функций', 'Сбор данных'],
+    best: 'Для встроенных инструментов',
+    desc: 'Браузер со множеством встроенных функций: VPN, мессенджеры, крипто-кошелёк. Всё в одном месте.'
+  },
+  {
+    name: 'Vivaldi', logo: '🎨', color: 'from-red-500 to-pink-500',
+    engine: 'Blink', market: '<1%',
+    pros: ['Максимальная кастомизация', 'Вкладки и панели на стероидах', 'Заметки и скриншоты', 'Рабочие пространства'],
+    cons: ['Сложный для новичков', 'Может перегружать интерфейс', 'Медленнее Brave', 'Меньше сообщества'],
+    best: 'Для продвинутых пользователей',
+    desc: 'Браузер для тех, кто хочет настроить ВСЁ. Создан бывшим CEO Opera, для тех, кому мало стандартных возможностей.'
+  },
+  {
+    name: 'Arc', logo: '✨', color: 'from-pink-400 to-purple-500',
+    engine: 'Blink', market: '<1%',
+    pros: ['Современный AI-интерфейс', 'Умная организация вкладок', 'Spaces для разных задач', 'Boost для кастомизации сайтов'],
+    cons: ['Требует регистрации', 'Пока только macOS/Windows', 'Высокие требования к RAM', 'Непривычный интерфейс'],
+    best: 'Для нового опыта',
+    desc: 'Революционный браузер с AI-функциями и современным интерфейсом. Переосмысляет, как мы работаем с вкладками.'
+  }
+];
+
+// Детали браузеров
+const browsersGrid = document.getElementById('browsersGrid');
+browsers.forEach(b => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="flex items-start gap-4 mb-4">
+      <div class="browser-logo bg-gradient-to-br ${b.color} shadow-lg">${b.logo}</div>
+      <div class="flex-1">
+        <h3 class="font-bold text-xl mb-1">${b.name}</h3>
+        <div class="flex gap-3 text-xs text-slate-500">
+          <span>Движок: ${b.engine}</span>
+          <span>•</span>
+          <span>Доля: ${b.market}</span>
+        </div>
+      </div>
+    </div>
+    <p class="text-sm text-slate-600 mb-4">${b.desc}</p>
+    <div class="mb-3">
+      <div class="text-xs font-bold text-emerald-600 mb-2">✓ ПЛЮСЫ</div>
+      <ul class="space-y-1">
+        ${b.pros.map(p => `<li class="text-xs text-slate-700 flex items-start gap-2"><span class="text-emerald-500 mt-0.5">●</span>${p}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="mb-3">
+      <div class="text-xs font-bold text-red-600 mb-2">✕ МИНУСЫ</div>
+      <ul class="space-y-1">
+        ${b.cons.map(c => `<li class="text-xs text-slate-700 flex items-start gap-2"><span class="text-red-500 mt-0.5">●</span>${c}</li>`).join('')}
+      </ul>
+    </div>
+    <div class="pt-3 border-t border-slate-200">
+      <div class="text-xs text-slate-500">Лучше всего подходит для:</div>
+      <div class="font-bold text-sm gradient-text">${b.best}</div>
+    </div>
+  `;
+  browsersGrid.appendChild(div);
+});
+
+// Рейтинги по категориям
+const ratingCategories = [
+  { id: 'speed', name: '⚡ Скорость', icon: '⚡' },
+  { id: 'privacy', name: '🔒 Приватность', icon: '🔒' },
+  { id: 'security', name: '🛡️ Безопасность', icon: '🛡️' },
+  { id: 'extensions', name: '🧩 Расширения', icon: '🧩' },
+  { id: 'ux', name: '✨ Удобство', icon: '✨' },
+  { id: 'ram', name: '💾 Память', icon: '💾' },
+  { id: 'custom', name: '🎨 Кастомизация', icon: '🎨' }
+];
+
+const ratings = {
+  speed: { Chrome: 82, Firefox: 78, Safari: 88, Edge: 80, Brave: 95, Tor: 35, Opera: 75, Vivaldi: 72, Arc: 76 },
+  privacy: { Chrome: 40, Firefox: 90, Safari: 75, Edge: 45, Brave: 88, Tor: 100, Opera: 60, Vivaldi: 75, Arc: 55 },
+  security: { Chrome: 85, Firefox: 92, Safari: 88, Edge: 85, Brave: 87, Tor: 95, Opera: 78, Vivaldi: 80, Arc: 82 },
+  extensions: { Chrome: 100, Firefox: 80, Safari: 50, Edge: 95, Brave: 90, Tor: 30, Opera: 85, Vivaldi: 90, Arc: 70 },
+  ux: { Chrome: 80, Firefox: 78, Safari: 90, Edge: 82, Brave: 82, Tor: 50, Opera: 78, Vivaldi: 65, Arc: 92 },
+  ram: { Chrome: 50, Firefox: 80, Safari: 95, Edge: 60, Brave: 75, Tor: 70, Opera: 70, Vivaldi: 55, Arc: 55 },
+  custom: { Chrome: 55, Firefox: 75, Safari: 40, Edge: 65, Brave: 60, Tor: 30, Opera: 70, Vivaldi: 100, Arc: 85 }
+};
+
+const browserColors = {
+  Chrome: 'from-red-400 via-yellow-400 to-green-400',
+  Firefox: 'from-orange-400 to-red-500',
+  Safari: 'from-blue-400 to-blue-600',
+  Edge: 'from-blue-500 to-cyan-400',
+  Brave: 'from-orange-500 to-red-600',
+  Tor: 'from-purple-500 to-indigo-600',
+  Opera: 'from-red-500 to-pink-500',
+  Vivaldi: 'from-red-500 to-pink-500',
+  Arc: 'from-pink-400 to-purple-500'
+};
+
+const browserLogos = {
+  Chrome: '🌐', Firefox: '🦊', Safari: '🧭', Edge: '🔷', Brave: '🦁',
+  Tor: '🔐', Opera: '🔴', Vivaldi: '🎨', Arc: '✨'
+};
+
+// Табы категорий
+let currentCategory = 'speed';
+const categoryTabs = document.getElementById('categoryTabs');
+ratingCategories.forEach(cat => {
+  const btn = document.createElement('button');
+  btn.className = `category-tab px-5 py-3 rounded-xl font-semibold text-sm transition ${cat.id === currentCategory ? 'active' : 'bg-white border-2 border-slate-200 hover:border-blue-400'}`;
+  btn.textContent = cat.name;
+  btn.onclick = () => {
+    currentCategory = cat.id;
+    document.querySelectorAll('.category-tab').forEach(t => {
+      t.classList.remove('active');
+      t.classList.add('bg-white', 'border-2', 'border-slate-200');
+    });
+    btn.classList.add('active');
+    btn.classList.remove('bg-white', 'border-2', 'border-slate-200');
+    renderRating();
+  };
+  categoryTabs.appendChild(btn);
+});
+
+function renderRating() {
+  const container = document.getElementById('ratingContainer');
+  const data = ratings[currentCategory];
+  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
+  
+  container.innerHTML = `
+    <div class="space-y-4">
+      ${sorted.map(([name, score], i) => {
+        const isWinner = i === 0;
+        const barColor = score >= 85 ? 'from-emerald-400 to-emerald-600' : score >= 70 ? 'from-blue-400 to-blue-600' : score >= 50 ? 'from-yellow-400 to-orange-500' : 'from-red-400 to-red-600';
+        return `
+          <div class="relative ${isWinner ? 'bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 -mx-4 border-2 border-blue-200' : 'flex items-center gap-4'}">
+            ${isWinner ? '<div class="winner-badge">👑 ЛИДЕР</div>' : ''}
+            <div class="flex items-center gap-4 flex-1">
+              <div class="browser-logo-sm bg-gradient-to-br ${browserColors[name]} shadow-md flex-shrink-0">${browserLogos[name]}</div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="font-bold ${isWinner ? 'text-lg' : ''}">${name}</div>
+                  <div class="font-bold text-lg gradient-text">${score}/100</div>
+                </div>
+                <div class="rating-bar">
+                  <div class="rating-fill bg-gradient-to-r ${barColor} bar-fill" style="width: 0%" data-width="${score}%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  
+  // Анимация баров
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.width;
+    });
+  }, 100);
+}
+
+renderRating();
+
+// Сравнительная таблица
+const comparisonTable = document.getElementById('comparisonTable');
+const tableFeatures = [
+  { name: 'Движок', values: { Chrome: 'Blink', Firefox: 'Gecko', Safari: 'WebKit', Edge: 'Blink', Brave: 'Blink', Tor: 'Gecko', Opera: 'Blink', Vivaldi: 'Blink', Arc: 'Blink' } },
+  { name: 'Блокировщик рекламы', values: { Chrome: 'Нет', Firefox: 'Да', Safari: 'Да', Edge: 'Частично', Brave: 'Да (лучший)', Tor: 'Да', Opera: 'Да', Vivaldi: 'Да', Arc: 'Нет' } },
+  { name: 'VPN встроен', values: { Chrome: 'Нет', Firefox: 'Нет', Safari: 'Нет', Edge: 'Нет', Brave: 'Tor-режим', Tor: 'Да (Tor)', Opera: 'Да', Vivaldi: 'Нет', Arc: 'Нет' } },
+  { name: 'AI-функции', values: { Chrome: 'Gemini', Firefox: 'Нет', Safari: 'Apple Intel.', Edge: 'Copilot', Brave: 'Leo', Tor: 'Нет', Opera: 'Aria', Vivaldi: 'Нет', Arc: 'Max AI' } },
+  { name: 'Синхронизация', values: { Chrome: 'Google', Firefox: 'Firefox Acc.', Safari: 'iCloud', Edge: 'Microsoft', Brave: 'Цепочка', Tor: 'Нет', Opera: 'Opera Acc.', Vivaldi: 'Vivaldi', Arc: 'Arc Acc.' } },
+  { name: 'Потребление RAM', values: { Chrome: 'Высокое', Firefox: 'Среднее', Safari: 'Низкое', Edge: 'Высокое', Brave: 'Среднее', Tor: 'Среднее', Opera: 'Среднее', Vivaldi: 'Высокое', Arc: 'Высокое' } },
+  { name: 'Открытый код', values: { Chrome: 'Частично', Firefox: 'Да', Safari: 'Частично', Edge: 'Частично', Brave: 'Да', Tor: 'Да', Opera: 'Нет', Vivaldi: 'Частично', Arc: 'Нет' } },
+  { name: 'Платформы', values: { Chrome: 'Все', Firefox: 'Все', Safari: 'Apple', Edge: 'Все', Brave: 'Все', Tor: 'Все', Opera: 'Все', Vivaldi: 'ПК', Arc: 'Mac/Win' } }
+];
+
+comparisonTable.innerHTML = `
+  <thead>
+    <tr class="bg-slate-100">
+      <th class="text-left p-4 font-bold sticky left-0 bg-slate-100">Параметр</th>
+      ${browsers.map(b => `<th class="p-4 text-center min-w-[100px]"><div class="browser-logo-sm mx-auto bg-gradient-to-br ${b.color} mb-2">${b.logo}</div><div class="text-xs font-bold">${b.name}</div></th>`).join('')}
+    </tr>
+  </thead>
+  <tbody>
+    ${tableFeatures.map((f, i) => `
+      <tr class="${i % 2 ? 'bg-slate-50' : 'bg-white'}">
+        <td class="p-4 font-semibold sticky left-0 ${i % 2 ? 'bg-slate-50' : 'bg-white'} border-r border-slate-200">${f.name}</td>
+        ${browsers.map(b => `<td class="p-4 text-center text-xs">${f.values[b.name.split(' ')[0]]}</td>`).join('')}
+      </tr>
+    `).join('')}
+  </tbody>
+`;
+
+// Тест
+const quizQuestions = [
+  {
+    text: 'Что для вас важнее всего в браузере?',
+    answers: [
+      { text: 'Скорость загрузки страниц', scores: { Brave: 3, Chrome: 2, Safari: 2, Edge: 1 } },
+      { text: 'Приватность и защита данных', scores: { Tor: 3, Firefox: 3, Brave: 2 } },
+      { text: 'Удобство и красивый интерфейс', scores: { Arc: 3, Safari: 2, Vivaldi: 2 } },
+      { text: 'Много расширений и функций', scores: { Chrome: 3, Edge: 2, Vivaldi: 2 } }
+    ]
+  },
+  {
+    text: 'Какой у вас компьютер/телефон?',
+    answers: [
+      { text: 'Mac / iPhone / iPad', scores: { Safari: 3, Arc: 2 } },
+      { text: 'Windows PC', scores: { Edge: 3, Chrome: 2, Vivaldi: 2 } },
+      { text: 'Linux', scores: { Firefox: 3, Brave: 2, Vivaldi: 2 } },
+      { text: 'Несколько устройств разных ОС', scores: { Firefox: 2, Chrome: 2, Brave: 2 } }
+    ]
+  },
+  {
+    text: 'Как вы относитесь к сбору данных о вас?',
+    answers: [
+      { text: 'Категорически против — нужна анонимность', scores: { Tor: 3, Firefox: 2 } },
+      { text: 'Не хочу, чтобы корпорации следили', scores: { Brave: 3, Firefox: 2 } },
+      { text: 'Готов жертвовать частью приватности ради удобства', scores: { Chrome: 3, Edge: 2, Safari: 2 } },
+      { text: 'Мне всё равно', scores: { Opera: 2, Chrome: 2 } }
+    ]
+  },
+  {
+    text: 'Сколько вкладок вы обычно держите открытыми?',
+    answers: [
+      { text: '5-10, мне хватает простоты', scores: { Safari: 3, Brave: 2 } },
+      { text: '20-50, нужна организация', scores: { Arc: 3, Vivaldi: 2 } },
+      { text: '100+, я табы-маньяк', scores: { Vivaldi: 3, Arc: 2, Opera: 2 } },
+      { text: 'Всё зависит от задачи', scores: { Firefox: 2, Chrome: 2, Edge: 2 } }
+    ]
+  },
+  {
+    text: 'Насколько вы технически подкованы?',
+    answers: [
+      { text: 'Хочу чтобы всё работало из коробки', scores: { Chrome: 3, Safari: 2, Edge: 2 } },
+      { text: 'Могу настроить под себя, если есть возможность', scores: { Firefox: 2, Brave: 2, Opera: 2 } },
+      { text: 'Люблю настраивать всё до мелочей', scores: { Vivaldi: 3, Arc: 2 } },
+      { text: 'Я гик, мне нужны продвинутые инструменты', scores: { Vivaldi: 3, Tor: 2, Firefox: 2 } }
+    ]
+  },
+  {
+    text: 'Что важнее: новые функции или стабильность?',
+    answers: [
+      { text: 'Стабильность и надёжность', scores: { Firefox: 3, Safari: 2, Chrome: 2 } },
+      { text: 'Новые функции и эксперименты', scores: { Arc: 3, Edge: 2, Opera: 2 } },
+      { text: 'Баланс между ними', scores: { Brave: 3, Chrome: 2 } },
+      { text: 'Минимализм и скорость', scores: { Brave: 2, Safari: 2 } }
+    ]
+  }
+];
+
+let currentQ = 0;
+let scores = {};
+
+function renderQuestion() {
+  const q = quizQuestions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = quizQuestions.length;
+  const progress = Math.round(((currentQ + 1) / quizQuestions.length) * 100);
+  document.getElementById('progress').textContent = progress;
+  document.getElementById('progressBar').style.width = progress + '%';
+  document.getElementById('qText').textContent = q.text;
+  
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option w-full text-left p-4 bg-white hover:bg-blue-50 border-2 border-slate-200 hover:border-blue-400 rounded-xl font-medium transition';
+    btn.textContent = a.text;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('quizCard').classList.remove('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  const q = quizQuestions[currentQ];
+  const a = q.answers[idx];
+  
+  // Начисляем очки
+  Object.entries(a.scores).forEach(([browser, points]) => {
+    scores[browser] = (scores[browser] || 0) + points;
+  });
+  
+  // Визуальный фидбек
+  const buttons = document.querySelectorAll('.quiz-option');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === idx) b.classList.add('selected');
+  });
+  
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < quizQuestions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 600);
+}
+
+function showResult() {
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  
+  // Маппинг коротких имён из теста к полным именам из массива browsers
+  const nameMap = {
+    Chrome: 'Google Chrome',
+    Firefox: 'Mozilla Firefox',
+    Safari: 'Apple Safari',
+    Edge: 'Microsoft Edge',
+    Brave: 'Brave',
+    Tor: 'Tor Browser',
+    Opera: 'Opera',
+    Vivaldi: 'Vivaldi',
+    Arc: 'Arc'
+  };
+  
+  // Находим победителя
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const winnerKey = sorted[0][0];
+  const winnerFullName = nameMap[winnerKey] || winnerKey;
+  const winnerData = browsers.find(b => b.name === winnerFullName);
+  
+  if (winnerData) {
+    document.getElementById('resultIcon').textContent = winnerData.logo;
+    document.getElementById('resultBrowser').textContent = winnerData.name;
+    document.getElementById('resultText').textContent = winnerData.desc;
+  }
+  
+  // Топ-3
+  const statsContainer = document.getElementById('resultStats');
+  statsContainer.innerHTML = sorted.slice(0, 3).map(([name, score], i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+    const fullName = nameMap[name] || name;
+    const bData = browsers.find(b => b.name === fullName);
+    const logo = bData ? bData.logo : '🌐';
+    return `
+      <div class="bg-white rounded-xl p-3 shadow-sm">
+        <div class="text-2xl mb-1">${medal}</div>
+        <div class="text-xs font-bold text-slate-500">${fullName}</div>
+        <div class="text-sm font-bold gradient-text">${score} очков</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  scores = {};
+  renderQuestion();
+}
+
+renderQuestion();
+
+// Рекомендации
+const recommendations = [
+  { icon: '👨‍💻', title: 'Разработчик', browser: 'Firefox + Vivaldi', desc: 'Firefox для приватности при работе, Vivaldi для организации множества вкладок и проектов', color: 'from-blue-500 to-cyan-500' },
+  { icon: '🎓', title: 'Студент', browser: 'Chrome', desc: 'Совместимость со всеми учебными платформами, расширения для продуктивности, синхронизация между устройствами', color: 'from-emerald-500 to-teal-500' },
+  { icon: '🕵️', title: 'Журналист', browser: 'Tor Browser', desc: 'Максимальная анонимность при работе с источниками, обход цензуры, защита от слежки', color: 'from-purple-500 to-indigo-500' },
+  { icon: '🎨', title: 'Дизайнер', browser: 'Arc', desc: 'Современный интерфейс, Spaces для разных проектов, AI-инструменты, работа с цветом', color: 'from-pink-500 to-rose-500' },
+  { icon: '💼', title: 'Офисный работник', browser: 'Edge', desc: 'Интеграция с Microsoft 365, Copilot AI, вертикальные вкладки для многозадачности', color: 'from-blue-500 to-indigo-500' },
+  { icon: '👴', title: 'Для пожилого человека', browser: 'Safari / Chrome', desc: 'Простой интерфейс, минимум настроек, крупные элементы, надёжная работа', color: 'from-amber-500 to-orange-500' },
+  { icon: '🎮', title: 'Геймер', browser: 'Opera GX', desc: 'Ограничители RAM/CPU, игровые интеграции, Twitch в боковой панели, темная тема', color: 'from-red-500 to-pink-500' },
+  { icon: '📱', title: 'Мобильный пользователь', browser: 'Brave', desc: 'Быстрая работа на слабом железе, встроенный блокировщик рекламы экономит трафик', color: 'from-orange-500 to-red-500' },
+  { icon: '🔐', title: 'Параноик безопасности', browser: 'LibreWolf + Tor', desc: 'LibreWolf для обычного сёрфинга, Tor для критически важных операций', color: 'from-slate-600 to-slate-800' }
+];
+
+const recommendGrid = document.getElementById('recommendGrid');
+recommendations.forEach(r => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center text-2xl shadow-lg">${r.icon}</div>
+      <div>
+        <div class="text-xs font-bold text-slate-400">ДЛЯ КОГО</div>
+        <h3 class="font-bold text-lg">${r.title}</h3>
+      </div>
+    </div>
+    <div class="text-sm font-bold gradient-text mb-2">${r.browser}</div>
+    <p class="text-sm text-slate-600">${r.desc}</p>
+  `;
+  recommendGrid.appendChild(div);
+});
+
+// Интересные факты
+const facts = [
+  { icon: '📅', title: 'Первый браузер', desc: 'WorldWideWeb создан Тимом Бернерсом-Ли в 1990 году. Он же был первым веб-редактором.', stat: '1990' },
+  { icon: '🏆', title: 'Самый популярный', desc: 'Chrome занимает 65% рынка браузеров в мире. Второй — Safari с 18%.', stat: '65%' },
+  { icon: '💾', title: 'Пожиратель RAM', desc: 'Chrome известен высоким потреблением памяти. Каждая вкладка — отдельный процесс.', stat: '~200 МБ' },
+  { icon: '🔥', title: 'Война браузеров', desc: 'В 90-х IE и Netscape боролись за рынок. Эта война привела к созданию JavaScript за 10 дней.', stat: '10 дней' },
+  { icon: '🦊', title: 'Firefox спас интернет', desc: 'Firefox остановил монополию IE в 2004 году и стал основой для свободных веб-стандартов.', stat: '2004' },
+  { icon: '🔐', title: 'Tor и даркнет', desc: 'Tor использует 3 слоя шифрования и более 7000 добровольных ретрансляторов по миру.', stat: '7000+' },
+  { icon: '🚀', title: 'Скорость Brave', desc: 'Brave загружает страницы в 3-6 раз быстрее Chrome благодаря блокировке рекламы и трекеров.', stat: '3-6x' },
+  { icon: '🎨', title: 'Vivaldi для гиков', desc: 'В Vivaldi можно настроить более 500 параметров интерфейса. Это рекорд среди браузеров.', stat: '500+' }
+];
+
+const factsGrid = document.getElementById('factsGrid');
+facts.forEach(f => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-gradient-to-br from-slate-50 to-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="text-4xl mb-3">${f.icon}</div>
+    <div class="text-3xl font-extrabold gradient-text mb-2">${f.stat}</div>
+    <h3 class="font-bold text-base mb-2">${f.title}</h3>
+    <p class="text-slate-600 text-sm">${f.desc}</p>
+  `;
+  factsGrid.appendChild(div);
+});
+</script>
+</body>
+</html>
+
