@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>БОМЖИ СТРОИТЕЛИ — Официальный сайт клана</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/rubik@5.0.0/index.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/rubik-mono-one@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Rubik', sans-serif; }
+  .font-display { font-family: 'Rubik Mono One', sans-serif; letter-spacing: 1px; }
+  
+  .gradient-bg { background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%); }
+  .gradient-text { background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  
+  .construction-bg {
+    background-color: #fef3c7;
+    background-image: 
+      repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 20px, #1f2937 20px, #1f2937 40px);
+    background-size: 56px 56px;
+  }
+  
+  .construction-stripe {
+    background: repeating-linear-gradient(
+      -45deg,
+      #f59e0b 0,
+      #f59e0b 20px,
+      #1f2937 20px,
+      #1f2937 40px
+    );
+  }
+  
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-8px) rotate(-1deg); }
+  
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  
+  @keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+  
+  @keyframes hammer {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-20deg); }
+    75% { transform: rotate(20deg); }
+  }
+  .hammer-anim { animation: hammer 1.5s ease-in-out infinite; transform-origin: bottom center; }
+  
+  @keyframes blink-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .blink-red { animation: blink-red 1s infinite; }
+  
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  .pixel-border {
+    border: 4px solid #1f2937;
+    box-shadow: 8px 8px 0 #1f2937;
+  }
+  
+  .role-card {
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .role-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+  }
+  .role-card:hover::before { left: 100%; }
+  .role-card:hover { transform: translateY(-6px); }
+  
+  .brick-bg {
+    background-color: #b91c1c;
+    background-image: 
+      linear-gradient(335deg, #991b1b 23px, transparent 23px),
+      linear-gradient(155deg, #991b1b 23px, transparent 23px),
+      linear-gradient(335deg, #991b1b 23px, transparent 23px),
+      linear-gradient(155deg, #991b1b 23px, transparent 23px);
+    background-size: 58px 58px;
+    background-position: 0px 10px, 4px 35px, 29px 39px, 34px 6px;
+  }
+  
+  .stamp {
+    border: 4px solid #dc2626;
+    color: #dc2626;
+    transform: rotate(-8deg);
+    font-family: 'Rubik Mono One', sans-serif;
+  }
+  
+  .avatar-glow {
+    box-shadow: 0 0 60px rgba(245, 158, 11, 0.6), 0 0 100px rgba(220, 38, 38, 0.4);
+  }
+  
+  .tape {
+    background: repeating-linear-gradient(
+      -45deg,
+      #fbbf24 0,
+      #fbbf24 15px,
+      #1f2937 15px,
+      #1f2937 30px
+    );
+  }
+  
+  .closed-badge {
+    background: #dc2626;
+    color: white;
+    animation: pulse-badge 2s infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    50% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); }
+  }
+</style>
+</head>
+<body class="bg-amber-50 text-slate-800 scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-slate-900 z-50 border-b-4 border-amber-500">
+  <div class="construction-stripe h-2"></div>
+  <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center border-2 border-slate-900">
+        <svg class="w-6 h-6 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <div>
+        <div class="font-display text-white text-sm md:text-base">БОМЖИ СТРОИТЕЛИ</div>
+        <div class="text-amber-400 text-xs">Официальный сайт клана</div>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-6 text-sm font-bold text-white">
+      <a href="#about" class="hover:text-amber-400 transition">О клане</a>
+      <a href="#roles" class="hover:text-amber-400 transition">Роли</a>
+      <a href="#join" class="hover:text-amber-400 transition">Вступление</a>
+      <a href="#gallery" class="hover:text-amber-400 transition">Галерея</a>
+      <a href="#chat" class="hover:text-amber-400 transition">Чат</a>
+    </div>
+    <div class="flex items-center gap-2 px-3 py-1 bg-red-600 rounded-full text-white text-xs font-bold blink-red">
+      <span class="w-2 h-2 bg-white rounded-full"></span>
+      НАБОР ЗАКРЫТ
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-6 relative overflow-hidden">
+  <div class="absolute top-20 right-10 w-96 h-96 bg-amber-300/30 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-10 left-10 w-96 h-96 bg-red-300/30 rounded-full blur-3xl"></div>
+  
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative">
+    <div class="fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-amber-400 rounded-full text-sm font-bold mb-6 border-2 border-amber-500">
+        <span class="w-2 h-2 bg-amber-400 rounded-full blink-red"></span>
+        КЛАН 7-13 ЛЕТ • ОСНОВАН В 2024
+      </div>
+      <h1 class="font-display text-5xl md:text-7xl leading-none mb-6 text-slate-900">
+        БОМЖИ<br>
+        <span class="gradient-text">СТРОИТЕЛИ</span>
+      </h1>
+      <p class="text-xl text-slate-700 mb-4 font-bold">
+        Девиз клана: «Из ничего — что-то!»
+      </p>
+      <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+        Мы — команда юных строителей. У нас нет дорогих ресурсов — мы строим из того, что валяется под ногами. И получается круто!
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#about" class="px-8 py-4 gradient-bg text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition flex items-center gap-2 border-4 border-slate-900" style="box-shadow: 6px 6px 0 #1f2937;">
+          Узнать о клане
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+        <a href="#gallery" class="px-8 py-4 bg-white border-4 border-slate-900 rounded-xl font-bold hover:bg-slate-100 transition" style="box-shadow: 6px 6px 0 #1f2937;">
+          Наши постройки
+        </a>
+      </div>
+      
+      <div class="mt-10 grid grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl p-4 border-4 border-slate-900" style="box-shadow: 4px 4px 0 #1f2937;">
+          <div class="font-display text-3xl gradient-text">12</div>
+          <div class="text-xs text-slate-600 font-bold">УЧАСТНИКОВ</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border-4 border-slate-900" style="box-shadow: 4px 4px 0 #1f2937;">
+          <div class="font-display text-3xl gradient-text">47</div>
+          <div class="text-xs text-slate-600 font-bold">ПОСТРОЕК</div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border-4 border-slate-900" style="box-shadow: 4px 4px 0 #1f2937;">
+          <div class="font-display text-3xl gradient-text">∞</div>
+          <div class="text-xs text-slate-600 font-bold">ЭНТУЗИАЗМА</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="fade-in relative">
+      <!-- Аватарка клана -->
+      <div class="relative">
+        <div class="absolute -top-4 -left-4 stamp px-4 py-2 bg-white rounded text-sm">СЕКРЕТНО</div>
+        <div class="absolute -bottom-4 -right-4 stamp px-4 py-2 bg-white rounded text-sm">ОДОБРЕНО</div>
+        
+        <div class="bg-white p-4 border-4 border-slate-900 avatar-glow" style="box-shadow: 12px 12px 0 #1f2937;">
+          <img src="https://image.qwenlm.ai/public_source/1bcb5984-7118-4ff8-82aa-c0c586abe7b7/174ce9574-24d2-4847-83cd-18d0ad0aca68.png" alt="Аватарка клана Бомжи Строители" class="w-full rounded-lg">
+          <div class="mt-4 text-center">
+            <div class="font-display text-2xl text-slate-900">ГЕРБ КЛАНА</div>
+            <div class="text-sm text-slate-600 font-bold mt-1">«Строим из того, что под ногами»</div>
+          </div>
+        </div>
+        
+        <!-- Строительная каска -->
+        <div class="absolute -top-8 -right-8 w-24 h-24 bounce-slow">
+          <div class="w-full h-full bg-amber-500 rounded-full border-4 border-slate-900 flex items-center justify-center" style="box-shadow: 4px 4px 0 #1f2937;">
+            <svg class="w-14 h-14 text-slate-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- О клане -->
+<section id="about" class="py-20 px-6 bg-slate-900 text-white relative overflow-hidden">
+  <div class="construction-stripe h-4 mb-12"></div>
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-amber-500 text-slate-900 rounded-full text-sm font-bold mb-4">ЧТО ЗА КЛАН?</div>
+      <h2 class="font-display text-4xl md:text-5xl mb-4">КТО МЫ ТАКИЕ?</h2>
+      <p class="text-xl text-amber-400">Кратко и по делу</p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6 mb-12">
+      <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 border-4 border-slate-900" style="box-shadow: 8px 8px 0 #f59e0b;">
+        <div class="w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl mb-3">ВОЗРАСТ</h3>
+        <p class="text-amber-50 text-lg">От <span class="font-display text-3xl">7</span> до <span class="font-display text-3xl">13</span> лет</p>
+        <p class="text-amber-100 text-sm mt-2">Только для самых активных и дерзких</p>
+      </div>
+      
+      <div class="bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl p-6 border-4 border-slate-900" style="box-shadow: 8px 8px 0 #dc2626;">
+        <div class="w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-red-400 hammer-anim" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 10-2 2v3a1 1 0 001 1h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl mb-3">ЧТО ДЕЛАЕМ</h3>
+        <p class="text-red-50 text-lg">Строим всякие постройки</p>
+        <p class="text-red-100 text-sm mt-2">Гамаки, шалаши, базы, укрытия — всё что придумается!</p>
+      </div>
+      
+      <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 border-4 border-slate-900" style="box-shadow: 8px 8px 0 #10b981;">
+        <div class="w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>
+        <h3 class="font-display text-2xl mb-3">ПОЧЕМУ «БОМЖИ»?</h3>
+        <p class="text-emerald-50 text-lg">У нас нет ресурсов</p>
+        <p class="text-emerald-100 text-sm mt-2">Мы строим из того, что валяется под руками. И это наша фишка!</p>
+      </div>
+    </div>
+    
+    <div class="bg-gradient-to-r from-amber-500 to-red-500 rounded-2xl p-8 border-4 border-slate-900" style="box-shadow: 8px 8px 0 #f59e0b;">
+      <div class="flex items-start gap-6">
+        <div class="w-20 h-20 bg-slate-900 rounded-xl flex items-center justify-center flex-shrink-0">
+          <svg class="w-12 h-12 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <div>
+          <h3 class="font-display text-2xl md:text-3xl mb-3 text-slate-900">НАША ФИЛОСОФИЯ</h3>
+          <p class="text-slate-800 text-lg leading-relaxed">
+            Настоящий строитель — это не тот, у кого куча денег на материалы. Настоящий строитель — это тот, кто может построить что-то крутое <span class="font-bold">из ничего</span>. Мы берём старые доски, ветки, камни, покрышки — и делаем из них шедевры. Потому что мы — <span class="font-display text-red-600">БОМЖИ СТРОИТЕЛИ</span>!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="construction-stripe h-4 mt-12"></div>
+</section>
+
+<!-- Роли -->
+<section id="roles" class="py-20 px-6 bg-amber-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-slate-900 text-amber-400 rounded-full text-sm font-bold mb-4">КОМАНДА</div>
+      <h2 class="font-display text-4xl md:text-5xl mb-4">РОЛИ В КЛАНЕ</h2>
+      <p class="text-lg text-slate-600">Каждый занимает своё место и делает своё дело</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="rolesGrid"></div>
+  </div>
+</section>
+
+<!-- Вступление -->
+<section id="join" class="py-20 px-6 bg-slate-900 text-white relative overflow-hidden">
+  <div class="construction-stripe h-4 mb-12"></div>
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-red-600 text-white rounded-full text-sm font-bold mb-4 blink-red">ВНИМАНИЕ!</div>
+      <h2 class="font-display text-4xl md:text-5xl mb-4">ОТКРЫТ НАБОР</h2>
+      <p class="text-xl text-amber-400 font-bold">...БЫЛ ОТКРЫТ. СЕЙЧАС МЕСТ НЕТ.</p>
+    </div>
+    
+    <!-- Физподготовка -->
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-6 md:p-8 border-4 border-slate-900 mb-8" style="box-shadow: 8px 8px 0 #f59e0b;">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center">
+          <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h3 class="font-display text-2xl md:text-3xl">ФИЗИЧЕСКАЯ ПОДГОТОВКА</h3>
+      </div>
+      <p class="text-amber-50 mb-6 text-lg">Чтобы вступить в клан, нужно пройти испытания:</p>
+      
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white rounded-xl p-5 border-4 border-slate-900 text-slate-900">
+          <div class="text-sm font-bold text-slate-500 mb-1">УПРАЖНЕНИЕ</div>
+          <div class="font-display text-xl mb-2">ОТЖИМАНИЯ</div>
+          <div class="flex items-baseline gap-2">
+            <span class="font-display text-5xl gradient-text">30</span>
+            <span class="text-slate-600 font-bold">раз</span>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-5 border-4 border-slate-900 text-slate-900">
+          <div class="text-sm font-bold text-slate-500 mb-1">УПРАЖНЕНИЕ</div>
+          <div class="font-display text-xl mb-2">ПРИСЕДАНИЯ</div>
+          <div class="flex items-baseline gap-2">
+            <span class="font-display text-5xl gradient-text">35</span>
+            <span class="text-slate-600 font-bold">раз</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-slate-900 rounded-xl p-4 border-2 border-amber-400 text-amber-100 text-sm">
+        <strong class="text-amber-400">ВАЖНО:</strong> После успешной сдачи нормативов командир или его заместитель назначает вам роль и выдаёт конкретное задание.
+      </div>
+    </div>
+    
+    <!-- Задания по ролям -->
+    <div class="bg-white text-slate-900 rounded-2xl p-6 md:p-8 border-4 border-slate-900 mb-8" style="box-shadow: 8px 8px 0 #dc2626;">
+      <h3 class="font-display text-2xl md:text-3xl mb-6 flex items-center gap-3">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        ЗАДАНИЯ ПО РОЛЯМ
+      </h3>
+      
+      <div class="space-y-4">
+        <div class="bg-amber-50 rounded-xl p-5 border-l-4 border-amber-500">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-8 h-8 bg-amber-500 text-white rounded-lg flex items-center justify-center font-bold">1</span>
+            <h4 class="font-display text-lg">ДОСТАВЩИК / СБОРЩИК</h4>
+          </div>
+          <p class="text-slate-700">Принести <span class="font-bold text-amber-600">5 камней</span>, найти материалы для улучшения постройки.</p>
+        </div>
+        
+        <div class="bg-pink-50 rounded-xl p-5 border-l-4 border-pink-500">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-8 h-8 bg-pink-500 text-white rounded-lg flex items-center justify-center font-bold">2</span>
+            <h4 class="font-display text-lg">ДИЗАЙНЕР / ПОМОЩНИК</h4>
+          </div>
+          <p class="text-slate-700">Найти декорации и украсить постройку. Главный дизайнер лично решит, кем вы станете — <span class="font-bold">заместителем</span> или <span class="font-bold">помощником</span>.</p>
+        </div>
+        
+        <div class="bg-red-50 rounded-xl p-5 border-l-4 border-red-500">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-8 h-8 bg-red-500 text-white rounded-lg flex items-center justify-center font-bold">3</span>
+            <h4 class="font-display text-lg">ОХРАННИК</h4>
+          </div>
+          <p class="text-slate-700 mb-2">Охранять постройку день и ночь.</p>
+          <div class="bg-red-100 rounded-lg p-3 text-sm">
+            <strong class="text-red-700">ОСОБОЕ УСЛОВИЕ:</strong> Вместо обычных отжиманий — <span class="font-bold">15 выпрыгиваний из приседа с хлопком</span> над головой!
+          </div>
+        </div>
+        
+        <div class="bg-purple-50 rounded-xl p-5 border-l-4 border-purple-500">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-8 h-8 bg-purple-500 text-white rounded-lg flex items-center justify-center font-bold">4</span>
+            <h4 class="font-display text-lg">ЗАМЕСТИТЕЛЬ КОМАНДИРА</h4>
+          </div>
+          <p class="text-slate-700">Назначается <span class="font-bold text-purple-600">исключительно по решению командира</span>. Просто так не стать — нужно заслужить.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Закрытый набор -->
+    <div class="relative bg-gradient-to-br from-red-600 to-red-800 rounded-2xl p-8 border-4 border-slate-900" style="box-shadow: 8px 8px 0 #dc2626;">
+      <div class="absolute -top-6 -right-6 stamp bg-white px-6 py-3 rounded-xl text-2xl">ЗАКРЫТО</div>
+      
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center">
+          <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <h3 class="font-display text-3xl md:text-4xl">К СОЖАЛЕНИЮ...</h3>
+      </div>
+      
+      <p class="text-white text-xl mb-6">
+        В клан <span class="font-display text-amber-300">БОЛЬШЕ НЕЛЬЗЯ попасть</span>. Все места заняты.
+      </p>
+      
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <div class="bg-white/10 backdrop-blur rounded-xl p-3 text-center border-2 border-white/20">
+          <div class="font-display text-2xl text-amber-300">5/5</div>
+          <div class="text-xs text-white/80">Командиров</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-xl p-3 text-center border-2 border-white/20">
+          <div class="font-display text-2xl text-amber-300">4/4</div>
+          <div class="text-xs text-white/80">Доставщика</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-xl p-3 text-center border-2 border-white/20">
+          <div class="font-display text-2xl text-amber-300">3/3</div>
+          <div class="text-xs text-white/80">Охранника</div>
+        </div>
+      </div>
+      
+      <p class="text-white/80 text-sm">
+        Но не расстраивайся! Возможно, кто-то выйдет из клана — и тогда появится свободное место. Следи за новостями в нашем чате!
+      </p>
+    </div>
+  </div>
+  <div class="construction-stripe h-4 mt-12"></div>
+</section>
+
+<!-- Галерея -->
+<section id="gallery" class="py-20 px-6 bg-amber-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-slate-900 text-amber-400 rounded-full text-sm font-bold mb-4">НАШИ РАБОТЫ</div>
+      <h2 class="font-display text-4xl md:text-5xl mb-4">ГАЛЕРЕЯ ПОСТРОЕК</h2>
+      <p class="text-lg text-slate-600">Всё это мы построили из того, что нашли под ногами</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="galleryGrid"></div>
+  </div>
+</section>
+
+<!-- Чат в MAX -->
+<section id="chat" class="py-20 px-6 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white relative overflow-hidden">
+  <div class="max-w-5xl mx-auto relative">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-white text-purple-700 rounded-full text-sm font-bold mb-4">НАШ ЧАТ</div>
+      <h2 class="font-display text-4xl md:text-5xl mb-4">МЫ В MAX</h2>
+      <p class="text-xl text-white/90">Весь клан общается в мессенджере MAX</p>
+    </div>
+    
+    <div class="bg-white rounded-3xl p-6 md:p-8 text-slate-900 border-4 border-slate-900" style="box-shadow: 12px 12px 0 rgba(0,0,0,0.3);">
+      <!-- Mock чата -->
+      <div class="bg-slate-100 rounded-2xl p-4 mb-6">
+        <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200">
+          <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold">БС</div>
+          <div class="flex-1">
+            <div class="font-bold">Бомжи Строители — Общий чат</div>
+            <div class="text-xs text-slate-500">12 участников • 3 в сети</div>
+          </div>
+          <div class="w-3 h-3 bg-emerald-500 rounded-full"></div>
+        </div>
+        
+        <div class="space-y-3">
+          <div class="flex items-start gap-2">
+            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">К</div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Командир • 14:32</div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm inline-block">
+                Всем привет! Сегодня строим новый гамак у старого дерева. В 15:00 на месте!
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-start gap-2">
+            <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">Д</div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Доставщик • 14:33</div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm inline-block">
+                Я уже нашёл 5 досок и верёвку! Несу!
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-start gap-2">
+            <div class="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">Д</div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Дизайнер • 14:35</div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm inline-block">
+                А я цветы для украшения набрал! Будет красиво!
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-start gap-2">
+            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">О</div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">Охранник • 14:36</div>
+              <div class="bg-white rounded-2xl rounded-tl-none p-3 shadow-sm inline-block">
+                Я уже на посту. Никто не пройдёт! 💪
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-purple-200">
+        <h3 class="font-display text-xl mb-3 text-purple-900">ЧТО ОБСУЖДАЕМ В ЧАТЕ:</h3>
+        <ul class="space-y-2 text-slate-700">
+          <li class="flex items-start gap-2"><span class="text-purple-600 font-bold">●</span>Планы на новые постройки</li>
+          <li class="flex items-start gap-2"><span class="text-purple-600 font-bold">●</span>Координаты встреч и сборов</li>
+          <li class="flex items-start gap-2"><span class="text-purple-600 font-bold">●</span>Распределение заданий по ролям</li>
+          <li class="flex items-start gap-2"><span class="text-purple-600 font-bold">●</span>Фото готовых построек</li>
+          <li class="flex items-start gap-2"><span class="text-purple-600 font-bold">●</span>Срочные сообщения от охранников</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Правила клана -->
+<section class="py-20 px-6 bg-slate-900 text-white">
+  <div class="construction-stripe h-4 mb-12"></div>
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-amber-500 text-slate-900 rounded-full text-sm font-bold mb-4">ПРАВИЛА</div>
+      <h2 class="font-display text-4xl md:text-5xl mb-4">КОДЕКС БОМЖА-СТРОИТЕЛЯ</h2>
+      <p class="text-xl text-amber-400">Эти правила должен знать каждый</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-5" id="rulesGrid"></div>
+  </div>
+  <div class="construction-stripe h-4 mt-12"></div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-950 text-slate-400 py-12 px-6">
+  <div class="construction-stripe h-2 mb-8"></div>
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-3 mb-4">
+      <div class="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center border-2 border-slate-900">
+        <svg class="w-7 h-7 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <div class="text-left">
+        <div class="font-display text-white text-xl">БОМЖИ СТРОИТЕЛИ</div>
+        <div class="text-amber-400 text-xs font-bold">ИЗ НИЧЕГО — ЧТО-ТО!</div>
+      </div>
+    </div>
+    <p class="text-sm mb-2">Официальный сайт клана юных строителей</p>
+    <p class="text-xs text-slate-500 mb-4">Возраст участников: 7-13 лет • Основан в 2024</p>
+    <p class="text-xs text-slate-600">© 2026 Бомжи Строители. Все права на постройки — наши!</p>
+  </div>
+</footer>
+
+<script>
+// Роли
+const roles = [
+  {
+    title: 'КОМАНДИР',
+    desc: 'Главный в клане. Командует и помогает всем.',
+    duties: ['Принимает главные решения', 'Помогает новичкам', 'Назначает роли', 'Решает споры'],
+    color: 'from-amber-500 to-orange-600',
+    icon: '<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>',
+    rank: 'ГЛАВНЫЙ'
+  },
+  {
+    title: 'ЗАМ КОМАНДИРА',
+    desc: 'Правая рука командира. Заменяет его, если нужно.',
+    duties: ['Помогает командиру', 'Заменяет в его отсутствие', 'Контролирует выполнение заданий', 'Обучает новичков'],
+    color: 'from-purple-500 to-indigo-600',
+    icon: '<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+    rank: '№2'
+  },
+  {
+    title: 'ДОСТАВЩИК',
+    desc: 'Ищет ресурсы и доставляет их на стройку.',
+    duties: ['Ищет материалы вокруг', 'Таскает камни и доски', 'Находит верёвки и гвозди', 'Следит за складом'],
+    color: 'from-emerald-500 to-teal-600',
+    icon: '<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
+    rank: 'СНАБЖЕНИЕ'
+  },
+  {
+    title: 'ДИЗАЙНЕР',
+    desc: 'Украшает постройки. Делает красиво!',
+    duties: ['Придумывает дизайн', 'Украшает постройку', 'Подбирает декор', 'Имеет помощника'],
+    color: 'from-pink-500 to-rose-600',
+    icon: '<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>',
+    rank: 'ТВОРЧЕСТВО'
+  },
+  {
+    title: 'ОХРАННИК',
+    desc: 'Охраняет постройку. Никто не пройдёт!',
+    duties: ['Следит за территорией', 'Не пускает чужаков', 'Обходит посты', 'Сдаёт особые нормативы'],
+    color: 'from-red-500 to-rose-600',
+    icon: '<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
+    rank: 'ЗАЩИТА'
+  },
+  {
+    title: 'НОВИЧОК',
+    desc: 'Только вступил. Проходит испытание и учится.',
+    duties: ['Сдаёт нормативы', 'Помогает старшим', 'Учится ремеслу', 'Мечтает о роли'],
+    color: 'from-slate-500 to-slate-700',
+    icon: '<svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
+    rank: 'СТАЖЁР'
+  }
+];
+
+const rolesGrid = document.getElementById('rolesGrid');
+roles.forEach(r => {
+  const div = document.createElement('div');
+  div.className = 'role-card bg-white rounded-2xl p-6 border-4 border-slate-900';
+  div.style.boxShadow = '6px 6px 0 #1f2937';
+  div.innerHTML = `
+    <div class="flex items-start justify-between mb-4">
+      <div class="w-16 h-16 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center shadow-lg">
+        ${r.icon}
+      </div>
+      <div class="text-right">
+        <div class="text-xs font-bold text-slate-500">РАНГ</div>
+        <div class="font-display text-sm gradient-text">${r.rank}</div>
+      </div>
+    </div>
+    <h3 class="font-display text-2xl mb-2 text-slate-900">${r.title}</h3>
+    <p class="text-slate-600 mb-4">${r.desc}</p>
+    <div class="bg-amber-50 rounded-xl p-3 border-2 border-amber-200">
+      <div class="text-xs font-bold text-amber-700 mb-2">ОБЯЗАННОСТИ:</div>
+      <ul class="space-y-1">
+        ${r.duties.map(d => `<li class="text-xs text-slate-700 flex items-start gap-1"><span class="text-amber-600 font-bold">●</span>${d}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+  rolesGrid.appendChild(div);
+});
+
+// Галерея
+const gallery = [
+  { title: 'ГАМАК', desc: 'Первая постройка клана.', color: 'from-amber-400 to-orange-500', icon: '' },
+];
+
+const galleryGrid = document.getElementById('galleryGrid');
+gallery.forEach(g => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl overflow-hidden border-4 border-slate-900';
+  div.style.boxShadow = '6px 6px 0 #1f2937';
+  div.innerHTML = `
+    <div class="h-48 bg-gradient-to-br ${g.color} flex items-center justify-center text-7xl">
+      ${g.icon}
+    </div>
+    <div class="p-5">
+      <h3 class="font-display text-xl mb-2 text-slate-900">${g.title}</h3>
+      <p class="text-slate-600 text-sm">${g.desc}</p>
+    </div>
+  `;
+  galleryGrid.appendChild(div);
+});
+
+// Правила
+const rules = [
+  { title: 'ПОМОГАЙ ДРУГИМ', desc: 'Мы — команда. Если кому-то тяжело — помоги.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>' },
+  { title: 'НЕ ЛОМАЙ ЧУЖОЕ', desc: 'Мы строим, а не разрушаем. Уважаем чужие постройки.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>' },
+  { title: 'СЛУШАЙ КОМАНДИРА', desc: 'Командир сказал — значит так надо. Но всегда можно обсудить.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>' },
+  { title: 'ПРИХОДИ ВО-ВРЕМЯ', desc: 'Если договорились на 15:00 — будь на месте в 15:00. Не позже.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' },
+  { title: 'БЕРЕГИ РЕСУРСЫ', desc: 'Всё, что нашли — общее. Не разбрасывай и не порти.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>' },
+  { title: 'БУДЬ СМЕЛЫМ', desc: 'Не бойся предлагать идеи. Не бойся браться за сложное.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' },
+  { title: 'УВАЖАЙ ВСЕХ', desc: 'Неважно, сколько тебе лет — 7 или 13. Все равны в клане.', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>' },
+  { title: 'СТРОЙ КРАСИВО', desc: 'Не просто куча досок, а постройка с душой. Дизайнер поможет!', icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>' }
+];
+
+const rulesGrid = document.getElementById('rulesGrid');
+rules.forEach((r, i) => {
+  const div = document.createElement('div');
+  div.className = 'bg-slate-800 rounded-2xl p-5 border-2 border-amber-500 flex items-start gap-4 hover:bg-slate-700 transition';
+  div.innerHTML = `
+    <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
+      ${r.icon}
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="font-display text-amber-400 text-sm">ПРАВИЛО #${i + 1}</span>
+      </div>
+      <h3 class="font-display text-lg text-white mb-1">${r.title}</h3>
+      <p class="text-slate-400 text-sm">${r.desc}</p>
+    </div>
+  `;
+  rulesGrid.appendChild(div);
+});
+</script>
+</body>
+</html>
