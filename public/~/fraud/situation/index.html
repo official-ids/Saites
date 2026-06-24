@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ситуационная безопасность — Фриланс, удалёнка, путешествия, игры</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); }
+  .gradient-text { background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(79, 70, 229, 0.15); }
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse-indigo { 0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(79, 70, 229, 0); } }
+  .pulse-indigo { animation: pulse-indigo 2s infinite; }
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  .scenario-tab.active { background: linear-gradient(135deg, var(--tab-from), var(--tab-to)); color: white; border-color: transparent; }
+  .scenario-tab.active svg { color: white; }
+  
+  .icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .risk-meter {
+    height: 8px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    overflow: hidden;
+  }
+  .risk-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.5s ease-out;
+  }
+  
+  .action-step { position: relative; padding-left: 3rem; }
+  .action-step::before { content: counter(step); counter-increment: step; position: absolute; left: 0; top: 0; width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #4f46e5, #0ea5e9); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
+  .steps-container { counter-reset: step; }
+  
+  .map-bg {
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(14, 165, 233, 0.08) 0%, transparent 40%);
+  }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-lg z-50 border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      </div>
+      <span class="font-bold text-xl">SituationShield</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#scenarios" class="hover:text-indigo-600 transition">Сценарии</a>
+      <a href="#freelance" class="hover:text-indigo-600 transition">Фриланс</a>
+      <a href="#remote" class="hover:text-indigo-600 transition">Удалёнка</a>
+      <a href="#travel" class="hover:text-indigo-600 transition">Путешествия</a>
+      <a href="#gaming" class="hover:text-indigo-600 transition">Игры</a>
+      <a href="#quiz" class="hover:text-indigo-600 transition">Тест</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="pt-32 pb-20 px-6 map-bg relative overflow-hidden">
+  <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative">
+    <div class="fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-6">
+        <span class="w-2 h-2 bg-indigo-500 rounded-full pulse-indigo"></span>
+        4 ситуации — 4 набора угроз
+      </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+        Ситуационная <span class="gradient-text">безопасность</span>
+      </h1>
+      <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+        Фриланс, удалённая работа, путешествия и онлайн-игры — каждая ситуация имеет свои уникальные угрозы. Полный гид по защите в разных сценариях цифровой жизни.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a href="#scenarios" class="px-8 py-4 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition flex items-center gap-2">
+          Изучить сценарии
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+        <a href="#quiz" class="px-8 py-4 bg-white border-2 border-slate-200 rounded-xl font-semibold hover:border-indigo-400 transition">
+          Пройти тест
+        </a>
+      </div>
+      <div class="mt-10 flex gap-8">
+        <div><div class="text-3xl font-bold gradient-text">4</div><div class="text-sm text-slate-500">сценария</div></div>
+        <div><div class="text-3xl font-bold gradient-text">24</div><div class="text-sm text-slate-500">угрозы</div></div>
+        <div><div class="text-3xl font-bold gradient-text">48</div><div class="text-sm text-slate-500">правил защиты</div></div>
+      </div>
+    </div>
+    
+    <div class="fade-in">
+      <!-- 4 карточки сценариев -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 shadow-lg text-white">
+          <svg class="w-10 h-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <div class="font-bold text-lg">Фриланс</div>
+          <div class="text-xs opacity-80 mt-1">Защита проектов и платежей</div>
+        </div>
+        <div class="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg text-white">
+          <svg class="w-10 h-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <div class="font-bold text-lg">Удалёнка</div>
+          <div class="text-xs opacity-80 mt-1">Корпоративные данные</div>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 shadow-lg text-white">
+          <svg class="w-10 h-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div class="font-bold text-lg">Путешествия</div>
+          <div class="text-xs opacity-80 mt-1">Защита данных в поездках</div>
+        </div>
+        <div class="bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl p-5 shadow-lg text-white">
+          <svg class="w-10 h-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <div class="font-bold text-lg">Онлайн-игры</div>
+          <div class="text-xs opacity-80 mt-1">Аккаунты и покупки</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Статистика -->
+<section class="py-12 px-6 bg-white border-y border-slate-200">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">68%</div>
+      <div class="text-sm text-slate-500 mt-2">фрилансеров сталкивались со скамом</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">43%</div>
+      <div class="text-sm text-slate-500 mt-2">утечек данных — через удалённых сотрудников</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">83%</div>
+      <div class="text-sm text-slate-500 mt-2">публичных Wi-Fi в аэропортах небезопасны</div>
+    </div>
+    <div class="text-center">
+      <div class="text-4xl md:text-5xl font-extrabold gradient-text">$8 млрд</div>
+      <div class="text-sm text-slate-500 mt-2">ежегодный оборот скама в онлайн-играх</div>
+    </div>
+  </div>
+</section>
+
+<!-- Обзор 4 сценариев -->
+<section id="scenarios" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">4 СЦЕНАРИЯ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Каждая ситуация — свои угрозы</h2>
+      <p class="text-slate-600 text-lg max-w-2xl mx-auto">Выберите свой сценарий и узнайте, какие риски вам грозят и как защититься</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-5" id="scenariosGrid"></div>
+  </div>
+</section>
+
+<!-- Фриланс -->
+<section id="freelance" class="py-20 px-6 bg-white">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center gap-4 mb-12">
+      <div class="icon-box bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-4xl font-extrabold">Безопасность фрилансера</h2>
+        <p class="text-slate-600">Защита проектов, клиентов и платежей</p>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+        <h3 class="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Главные угрозы
+        </h3>
+        <ul class="space-y-3" id="freelanceThreats"></ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border-2 border-emerald-200">
+        <h3 class="text-xl font-bold text-emerald-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Как защититься
+        </h3>
+        <ul class="space-y-3" id="freelanceProtection"></ul>
+      </div>
+    </div>
+    
+    <div class="bg-slate-900 rounded-3xl p-6 md:p-10 text-white">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+        <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Безопасные платформы для фриланса
+      </h3>
+      <div class="grid md:grid-cols-3 gap-4" id="freelancePlatforms"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Удалёнка -->
+<section id="remote" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center gap-4 mb-12">
+      <div class="icon-box bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-4xl font-extrabold">Безопасность удалённой работы</h2>
+        <p class="text-slate-600">Защита корпоративных данных вне офиса</p>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+        <h3 class="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Главные угрозы
+        </h3>
+        <ul class="space-y-3" id="remoteThreats"></ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-blue-200">
+        <h3 class="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Как защититься
+        </h3>
+        <ul class="space-y-3" id="remoteProtection"></ul>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+        <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Настройки корпоративной безопасности
+      </h3>
+      <div class="grid md:grid-cols-2 gap-4" id="remoteSettings"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Путешествия -->
+<section id="travel" class="py-20 px-6 bg-white">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center gap-4 mb-12">
+      <div class="icon-box bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-4xl font-extrabold">Безопасность в путешествиях</h2>
+        <p class="text-slate-600">Защита данных в поездках и командировках</p>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+        <h3 class="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Главные угрозы
+        </h3>
+        <ul class="space-y-3" id="travelThreats"></ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border-2 border-amber-200">
+        <h3 class="text-xl font-bold text-amber-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Как защититься
+        </h3>
+        <ul class="space-y-3" id="travelProtection"></ul>
+      </div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-6 md:p-10 text-white">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Тревожный чемоданчик путешественника
+      </h3>
+      <div class="grid md:grid-cols-3 gap-4" id="travelKit"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Игры -->
+<section id="gaming" class="py-20 px-6 bg-slate-50">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center gap-4 mb-12">
+      <div class="icon-box bg-gradient-to-br from-rose-500 to-pink-600 shadow-lg">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-4xl font-extrabold">Безопасность в онлайн-играх</h2>
+        <p class="text-slate-600">Защита аккаунтов, покупок и личных данных</p>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 border-2 border-red-200">
+        <h3 class="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Главные угрозы
+        </h3>
+        <ul class="space-y-3" id="gamingThreats"></ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-6 border-2 border-rose-200">
+        <h3 class="text-xl font-bold text-rose-700 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          Как защититься
+        </h3>
+        <ul class="space-y-3" id="gamingProtection"></ul>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+        <svg class="w-7 h-7 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Популярные схемы скама в играх
+      </h3>
+      <div class="grid md:grid-cols-2 gap-4" id="gamingScams"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Тест -->
+<section id="quiz" class="py-20 px-6 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold mb-4">ТЕСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Насколько вы защищены?</h2>
+      <p class="text-slate-600 text-lg">10 вопросов из разных ситуаций — проверьте свою бдительность</p>
+    </div>
+    <div class="bg-gradient-to-br from-indigo-50 to-sky-50 rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200">
+      <div class="flex justify-between items-center mb-6">
+        <div class="text-sm font-semibold text-slate-500">Вопрос <span id="qNum">1</span> из <span id="qTotal">10</span></div>
+        <div class="text-sm font-semibold text-indigo-600">Счёт: <span id="score">0</span></div>
+      </div>
+      <div class="w-full bg-slate-200 rounded-full h-2 mb-8"><div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width:10%"></div></div>
+      
+      <div id="quizCard">
+        <div class="bg-white rounded-2xl p-5 mb-6 border-l-4 border-indigo-500">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider" id="qCategory">Категория</span>
+            <span class="text-xs px-2 py-0.5 bg-slate-100 rounded-full" id="qScenario">Сценарий</span>
+          </div>
+          <h3 class="text-xl md:text-2xl font-bold" id="qText">Текст вопроса</h3>
+        </div>
+        <div class="space-y-3" id="answersContainer"></div>
+      </div>
+
+      <div id="quizResult" class="hidden text-center py-8">
+        <div class="mb-4" id="resultIcon"></div>
+        <h3 class="text-3xl font-bold mb-2" id="resultTitle">Результат</h3>
+        <p class="text-slate-600 mb-6" id="resultText">Описание</p>
+        <button onclick="restartQuiz()" class="px-8 py-3 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">Пройти ещё раз</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Общий чек-лист -->
+<section class="py-20 px-6 bg-slate-50">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4">ЧЕК-ЛИСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Универсальная защита</h2>
+      <p class="text-slate-600 text-lg">Эти правила работают во всех ситуациях</p>
+    </div>
+    <div class="bg-white rounded-3xl p-8 shadow-lg" id="checklistContainer"></div>
+    <div class="mt-6 bg-gradient-to-r from-indigo-500 to-sky-600 rounded-2xl p-6 text-white text-center">
+      <div class="text-3xl font-bold"><span id="checkCount">0</span> / <span id="checkTotal">0</span></div>
+      <div class="text-white/90 text-sm">пунктов выполнено</div>
+      <div class="text-xs text-white/70 mt-1" id="checkStatus">Начните отмечать пункты</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6">
+  <div class="max-w-5xl mx-auto gradient-bg rounded-3xl p-12 md:p-16 text-white text-center relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Любая ситуация — на шаг впереди</h2>
+      <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Мошенники адаптируются к вашей жизни. Работаете удалённо? Путешествуете? Играете? Для каждой ситуации — свои правила безопасности.</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="#quiz" class="px-8 py-4 bg-white text-indigo-700 rounded-xl font-bold shadow-lg hover:shadow-xl transition">Пройти тест</a>
+        <a href="#scenarios" class="px-8 py-4 bg-white/20 backdrop-blur border-2 border-white/40 rounded-xl font-bold hover:bg-white/30 transition">Изучить сценарии</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-400 py-12 px-6">
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-2 mb-4">
+      <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">SituationShield</span>
+    </div>
+    <p class="text-sm mb-4">Образовательный проект о ситуационной безопасности в цифровой жизни</p>
+    <p class="text-xs text-slate-500">© 2026 SituationShield. Все материалы носят информационный характер.</p>
+  </div>
+</footer>
+
+<script>
+// Обзор 4 сценариев
+const scenarios = [
+  {
+    icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+    title: 'Фриланс',
+    desc: 'Защита проектов, клиентов и платежей. Скам на биржах, неоплата, кража работ.',
+    color: 'from-emerald-500 to-teal-600',
+    stats: '68% сталкивались со скамом'
+  },
+  {
+    icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+    title: 'Удалёнка',
+    desc: 'Корпоративные данные вне офиса. Фишинг на сотрудников, утечки, взлом RDP.',
+    color: 'from-blue-500 to-indigo-600',
+    stats: '43% утечек через удалёнку'
+  },
+  {
+    icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+    title: 'Путешествия',
+    desc: 'Публичные Wi-Fi, зарядки в аэропортах, защита данных на границе.',
+    color: 'from-amber-500 to-orange-600',
+    stats: '83% Wi-Fi небезопасны'
+  },
+  {
+    icon: '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+    title: 'Онлайн-игры',
+    desc: 'Кража аккаунтов, читы с вирусами, скам в торговле внутри игр.',
+    color: 'from-rose-500 to-pink-600',
+    stats: '$8 млрд оборот скама'
+  }
+];
+
+const scenariosGrid = document.getElementById('scenariosGrid');
+scenarios.forEach((s, i) => {
+  const div = document.createElement('div');
+  div.className = 'card-hover bg-white rounded-2xl p-6 border border-slate-200 shadow-sm';
+  div.innerHTML = `
+    <div class="icon-box bg-gradient-to-br ${s.color} shadow-lg mb-4">${s.icon}</div>
+    <div class="text-xs font-bold text-slate-400 mb-1">СЦЕНАРИЙ #${i + 1}</div>
+    <h3 class="font-bold text-lg mb-2">${s.title}</h3>
+    <p class="text-slate-600 text-sm mb-3">${s.desc}</p>
+    <div class="text-xs font-bold gradient-text">${s.stats}</div>
+  `;
+  scenariosGrid.appendChild(div);
+});
+
+// Фриланс
+const freelanceThreats = [
+  'Фейковые заказчики на биржах — предоплата за «страховку» или «оформление»',
+  'Неоплата выполненной работы, особенно без договора',
+  'Кража идей и работ — заказчик берёт ТЗ и делает сам',
+  'Фишинговые письма «от биржи» с просьбой обновить данные',
+  'Скам через мессенджеры — увод клиента с безопасной биржи',
+  'Поддельные чеки и платежи с отложенной отменой'
+];
+
+const freelanceProtection = [
+  'Работайте только через проверенные биржи с гарантом',
+  'Всегда заключайте договор, даже с постоянными клиентами',
+  'Требуйте предоплату 30-50% перед началом работы',
+  'Не уходите с биржи в личные мессенджеры — это скам',
+  'Используйте безопасные способы получения платежей',
+  'Сохраняйте всю переписку и ТЗ как доказательства'
+];
+
+const freelancePlatforms = [
+  { name: 'Kwork', desc: 'Российская биржа с системой гарантий и безопасной сделки' },
+  { name: 'Upwork', desc: 'Крупнейшая международная биржа с escrow-защитой платежей' },
+  { name: 'FL.ru', desc: 'Старейшая русскоязычная биржа с проверенными механизмами' }
+];
+
+document.getElementById('freelanceThreats').innerHTML = freelanceThreats.map(t => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-red-500 mt-0.5 flex-shrink-0">●</span><span>${t}</span></li>`
+).join('');
+
+document.getElementById('freelanceProtection').innerHTML = freelanceProtection.map(p => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-emerald-500 mt-0.5 flex-shrink-0">●</span><span>${p}</span></li>`
+).join('');
+
+document.getElementById('freelancePlatforms').innerHTML = freelancePlatforms.map(p => `
+  <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+    <div class="font-bold text-emerald-400 mb-1">${p.name}</div>
+    <div class="text-xs text-slate-300">${p.desc}</div>
+  </div>
+`).join('');
+
+// Удалёнка
+const remoteThreats = [
+  'Фишинговые письма «от IT-отдела» с просьбой ввести пароль',
+  'Взлом через домашний Wi-Fi с слабой защитой',
+  'Утечка данных через личные устройства сотрудников',
+  'Атаки на RDP и корпоративные VPN',
+  'Социальная инженерия — звонки «от коллег» с просьбами',
+  'Использование корпоративного ноутбука для личных дел'
+];
+
+const remoteProtection = [
+  'Используйте только корпоративный VPN для работы',
+  'Включите двухфакторную аутентификацию везде',
+  'Разделяйте рабочие и личные устройства/аккаунты',
+  'Обновляйте ОС и антивирус регулярно',
+  'Блокируйте экран, когда отходите от компьютера',
+  'Не используйте публичный Wi-Fi для корпоративных задач'
+];
+
+const remoteSettings = [
+  { title: 'Корпоративный VPN', desc: 'Обязателен для доступа к рабочим ресурсам. Шифрует весь трафик.' },
+  { title: 'MDM-контроль устройств', desc: 'Mobile Device Management — удалённое управление корпоративными устройствами.' },
+  { title: 'Zero Trust архитектура', desc: 'Проверка каждого запроса, даже из внутренней сети. Никакого «доверия по умолчанию».' },
+  { title: 'DLP-системы', desc: 'Data Loss Prevention — предотвращают утечку конфиденциальных данных.' },
+  { title: 'SIEM-мониторинг', desc: 'Сбор и анализ логов безопасности в реальном времени.' },
+  { title: 'Обязательное обучение', desc: 'Регулярные тренинги по кибергигиене для всех сотрудников.' }
+];
+
+document.getElementById('remoteThreats').innerHTML = remoteThreats.map(t => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-red-500 mt-0.5 flex-shrink-0">●</span><span>${t}</span></li>`
+).join('');
+
+document.getElementById('remoteProtection').innerHTML = remoteProtection.map(p => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-blue-500 mt-0.5 flex-shrink-0">●</span><span>${p}</span></li>`
+).join('');
+
+document.getElementById('remoteSettings').innerHTML = remoteSettings.map(s => `
+  <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+    <div class="font-bold text-blue-700 mb-1">${s.title}</div>
+    <div class="text-xs text-slate-600">${s.desc}</div>
+  </div>
+`).join('');
+
+// Путешествия
+const travelThreats = [
+  'Публичный Wi-Fi в аэропортах, кафе, отелях — перехват данных',
+  'Зарядные станции с USB — «juice jacking», кража данных',
+  'Физическая кража устройств в поездках',
+  'Проверки данных на границе в некоторых странах',
+  'Скимминг на ATM и платёжных терминалах',
+  'Мошенники-«помощники» в туристических местах'
+];
+
+const travelProtection = [
+  'Используйте VPN в любых публичных сетях',
+  'Носите с собой свой адаптер питания, избегайте публичных USB',
+  'Шифруйте устройства (FileVault / BitLocker)',
+  'Делайте бэкапы перед поездкой',
+  'Используйте виртуальные карты для оплат',
+  'Включите «Найти устройство» на всех гаджетах'
+];
+
+const travelKit = [
+  { title: 'VPN-клиент', desc: 'Установлен и настроен до поездки. Включается автоматически в публичных сетях.' },
+  { title: 'Свой зарядный блок', desc: 'Только свой кабель и блок. Никаких публичных USB-портов.' },
+  { title: 'Виртуальная карта', desc: 'Отдельная карта для путешествий с лимитом. Если украдут — потеряете немного.' },
+  { title: 'Зашифрованный ноутбук', desc: 'FileVault / BitLocker включены. Без пароля данные не прочитать.' },
+  { title: 'Offline-карты', desc: 'Загрузите карты заранее. Не придётся искать Wi-Fi в незнакомом месте.' },
+  { title: 'Копии документов', desc: 'Зашифрованные копии паспорта, виз, страховок в облаке.' },
+  { title: 'Трекер устройства', desc: 'AirTag или аналог в сумке с документами и техникой.' },
+  { title: 'Экстренные контакты', desc: 'Номера посольства, банка, страховой — записаны офлайн.' },
+  { title: 'Двухфакторная аутентификация', desc: 'На всех аккаунтах. Используйте приложение-аутентификатор, а не SMS.' }
+];
+
+document.getElementById('travelThreats').innerHTML = travelThreats.map(t => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-red-500 mt-0.5 flex-shrink-0">●</span><span>${t}</span></li>`
+).join('');
+
+document.getElementById('travelProtection').innerHTML = travelProtection.map(p => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-amber-500 mt-0.5 flex-shrink-0">●</span><span>${p}</span></li>`
+).join('');
+
+document.getElementById('travelKit').innerHTML = travelKit.map(k => `
+  <div class="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
+    <div class="font-bold mb-1">${k.title}</div>
+    <div class="text-xs text-white/80">${k.desc}</div>
+  </div>
+`).join('');
+
+// Игры
+const gamingThreats = [
+  'Кража аккаунтов через фишинговые сайты «бесплатных скинов»',
+  'Читы и моды с вирусами — трояны и майнеры',
+  'Скам в торговле внутри игр — обмен предметов без гаранта',
+  'DDoS-атаки на стримеров и про-игроков',
+  'Сваппинг — перехват SIM для обхода 2FA',
+  'Токсичные сообщества и груминг несовершеннолетних'
+];
+
+const gamingProtection = [
+  'Включите 2FA на всех игровых аккаунтах',
+  'Скачивайте игры только из официальных магазинов',
+  'Никогда не вводите пароль на сторонних сайтах',
+  'Используйте разные пароли для игр и почты',
+  'Не переходите по ссылкам «бесплатные донаты»',
+  'Настройте приватность профиля — скройте онлайн-статус'
+];
+
+const gamingScams = [
+  { title: '«Бесплатные скины»', desc: 'Сайт предлагает бесплатные скины за ввод логина и пароля. Классический фишинг.' },
+  { title: '«Тест бета-версии»', desc: 'Просят скачать «тестовую версию» игры — это вирус. Настоящие беты — только через официальные лаунчеры.' },
+  { title: '«Обмен предметов»', desc: 'Предлагают обмен через сторонний сайт. Сайт крадёт предметы. Обмен только внутри игры!' },
+  { title: '«Помощь с аккаунтом»', desc: '«Друг» в игре просит данные для «восстановления». Это скамер, даже если выглядит как знакомый.' },
+  { title: '«Турнир с призами»', desc: 'Фейковые турниры с регистрацией и «взносом». Призов нет, деньги уходят мошенникам.' },
+  { title: '«Разблокировка аккаунта»', desc: 'Письмо «от поддержки» с требованием ввести данные. Настоящая поддержка никогда не просит пароль.' }
+];
+
+document.getElementById('gamingThreats').innerHTML = gamingThreats.map(t => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-red-500 mt-0.5 flex-shrink-0">●</span><span>${t}</span></li>`
+).join('');
+
+document.getElementById('gamingProtection').innerHTML = gamingProtection.map(p => 
+  `<li class="flex items-start gap-2 text-sm"><span class="text-rose-500 mt-0.5 flex-shrink-0">●</span><span>${p}</span></li>`
+).join('');
+
+document.getElementById('gamingScams').innerHTML = gamingScams.map(s => `
+  <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+    <div class="font-bold text-rose-700 mb-1">${s.title}</div>
+    <div class="text-xs text-slate-600">${s.desc}</div>
+  </div>
+`).join('');
+
+// Тест
+const quizQuestions = [
+  { category: 'Платежи', scenario: 'Фриланс', text: 'Заказчик на бирже предлагает перевести вам оплату на карту, но просит сначала оплатить «страховку сделки». Ваши действия?', answers: [
+    { text: 'Оплатить страховку — сумма небольшая', correct: false, feedback: 'Это 100% скам. Никаких «страховок» не существует.' },
+    { text: 'Отказаться и сообщить в поддержку биржи', correct: true, feedback: 'Верно! На настоящих биржах гарантия уже встроена в комиссию.' },
+    { text: 'Попросить прислать документы', correct: false, feedback: 'Документы можно подделать. Лучше сообщить в поддержку.' },
+    { text: 'Оплатить, но с другой карты', correct: false, feedback: 'Любая оплата «страховки» — это скам.' }
+  ]},
+  { category: 'Фишинг', scenario: 'Удалёнка', text: 'Пришло письмо «от IT-отдела» с просьбой срочно сменить пароль по ссылке. Что делать?', answers: [
+    { text: 'Перейти по ссылке и сменить пароль', correct: false, feedback: 'Это классический фишинг. Ссылка ведёт на поддельный сайт.' },
+    { text: 'Позвонить в IT-отдел по внутреннему номеру и уточнить', correct: true, feedback: 'Верно! Всегда проверяйте такие запросы через другой канал.' },
+    { text: 'Ответить на письмо и спросить детали', correct: false, feedback: 'Мошенники ответят и убедят вас перейти по ссылке.' },
+    { text: 'Удалить письмо и забыть', correct: false, feedback: 'Лучше сообщить в IT-отдел — возможно, идёт атака на компанию.' }
+  ]},
+  { category: 'Wi-Fi', scenario: 'Путешествия', text: 'Вы в аэропорту, нужно срочно проверить почту. К какому Wi-Fi подключиться?', answers: [
+    { text: 'К любому открытому Wi-Fi аэропорта', correct: false, feedback: 'Открытые сети небезопасны. Ваши данные могут перехватить.' },
+    { text: 'К Wi-Fi с самым сильным сигналом', correct: false, feedback: 'Сила сигнала не означает безопасность.' },
+    { text: 'Использовать мобильный интернет или VPN', correct: true, feedback: 'Верно! Мобильный интернет или VPN — единственный безопасный вариант.' },
+    { text: 'К Wi-Fi кафе рядом', correct: false, feedback: 'Кафе тоже публичная сеть — не безопаснее.' }
+  ]},
+  { category: 'Аккаунт', scenario: 'Игры', text: 'В игре вам предлагают «бесплатные скины» за ввод логина на сайте. Ваши действия?', answers: [
+    { text: 'Ввести данные — скины же бесплатные', correct: false, feedback: 'Это фишинг. Украдут аккаунт.' },
+    { text: 'Ввести старый пароль — не жалко', correct: false, feedback: 'Если этот пароль где-то ещё используется — потеряете больше.' },
+    { text: 'Закрыть сайт и заблокировать отправителя', correct: true, feedback: 'Верно! Настоящие скины раздаются только внутри игры.' },
+    { text: 'Ввести фейковые данные', correct: false, feedback: 'Проще заблокировать и забыть.' }
+  ]},
+  { category: 'Платежи', scenario: 'Фриланс', text: 'Новый клиент хочет работать напрямую, без биржи, и обещает «большие деньги». Что делать?', answers: [
+    { text: 'Согласиться — дополнительные деньги не помешают', correct: false, feedback: 'Без биржи нет гарантий оплаты. Высокий риск скама.' },
+    { text: 'Согласиться, но взять предоплату 100%', correct: false, feedback: 'Честные клиенты редко согласятся. Это подозрительно.' },
+    { text: 'Предложить работать через биржу с гарантом', correct: true, feedback: 'Верно! Настоящие клиенты согласны на безопасную сделку.' },
+    { text: 'Попросить рекомендации', correct: false, feedback: 'Рекомендации можно подделать. Биржа надёжнее.' }
+  ]},
+  { category: 'Зарядка', scenario: 'Путешествия', text: 'В аэропорту разрядился телефон, а зарядки нет. Рядом USB-порт для зарядки. Что делать?', answers: [
+    { text: 'Зарядить — очень нужно', correct: false, feedback: 'Публичные USB могут красть данные (juice jacking).' },
+    { text: 'Использовать только для зарядки, не передавать данные', correct: false, feedback: 'Даже при зарядке могут быть атаки. Лучше избежать.' },
+    { text: 'Найти розетку 220В и использовать свой адаптер', correct: true, feedback: 'Верно! Обычная розетка со своим адаптером безопасна.' },
+    { text: 'Попросить зарядку у соседа', correct: false, feedback: 'Может быть безопасно, но лучше свой адаптер.' }
+  ]},
+  { category: 'RDP', scenario: 'Удалёнка', text: 'Коллега пишет в Slack: «Срочно! Нужен доступ к серверу, дай пароль от RDP». Что делать?', answers: [
+    { text: 'Дать пароль — коллега же просит', correct: false, feedback: 'Аккаунт коллеги мог быть взломан. Нельзя делиться паролями.' },
+    { text: 'Позвонить коллеге по телефону и подтвердить', correct: true, feedback: 'Верно! Только личный звонок может подтвердить запрос.' },
+    { text: 'Дать временный пароль', correct: false, feedback: 'Любые пароли нельзя передавать через мессенджеры.' },
+    { text: 'Отказать и не объяснять', correct: false, feedback: 'Лучше уточнить через другой канал — возможно, это действительно коллега.' }
+  ]},
+  { category: 'Читы', scenario: 'Игры', text: 'Нашли сайт с «читами для новой игры», которые обещают «100% безопасность». Ваши действия?', answers: [
+    { text: 'Скачать — обещают же безопасность', correct: false, feedback: '99% «читов» содержат вирусы.' },
+    { text: 'Скачать, но запустить в виртуальной машине', correct: false, feedback: 'Даже в ВМ есть риски. Лучше не скачивать.' },
+    { text: 'Не скачивать — читы почти всегда с вирусами', correct: true, feedback: 'Верно! Читы нарушают правила игры и почти всегда содержат вредоносный код.' },
+    { text: 'Скачать и проверить антивирусом', correct: false, feedback: 'Современные вирусы обходят антивирус. Лучше не рисковать.' }
+  ]},
+  { category: 'Граница', scenario: 'Путешествия', text: 'На границе просят разблокировать телефон для проверки. Ваши действия?', answers: [
+    { text: 'Отказать — это нарушение приватности', correct: false, feedback: 'В некоторых странах отказ может привести к депортации.' },
+    { text: 'Разблокировать и отдать', correct: false, feedback: 'Риск утечки всех данных. Нужно подготовиться заранее.' },
+    { text: 'Использовать travel-режим с минимумом данных', correct: true, feedback: 'Верно! Перед поездкой настройте «travel-режим» без чувствительных данных.' },
+    { text: 'Попросить адвоката', correct: false, feedback: 'Может работать в некоторых странах, но не везде.' }
+  ]},
+  { category: '2FA', scenario: 'Игры', text: 'Какой метод 2FA самый безопасный для игрового аккаунта?', answers: [
+    { text: 'SMS-коды', correct: false, feedback: 'SMS можно перехватить через сваппинг SIM.' },
+    { text: 'Email-коды', correct: false, feedback: 'Если взломают почту — потеряете всё.' },
+    { text: 'Приложение-аутентификатор (Google Authenticator, Authy)', correct: true, feedback: 'Верно! Коды генерируются локально, их нельзя перехватить.' },
+    { text: 'Контрольные вопросы', correct: false, feedback: 'Ответы можно найти в соцсетях.' }
+  ]}
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function renderQuestion() {
+  answered = false;
+  const q = quizQuestions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = quizQuestions.length;
+  document.getElementById('progressBar').style.width = ((currentQ + 1) / quizQuestions.length * 100) + '%';
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qScenario').textContent = q.scenario;
+  document.getElementById('qText').textContent = q.text;
+  
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left p-4 bg-white hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-400 rounded-xl font-medium transition flex items-center gap-3';
+    btn.innerHTML = `
+      <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold flex-shrink-0">${String.fromCharCode(65 + i)}</span>
+      <span>${a.text}</span>
+    `;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('quizCard').classList.remove('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = quizQuestions[currentQ];
+  const a = q.answers[idx];
+  const isCorrect = a.correct;
+  if (isCorrect) score++;
+  document.getElementById('score').textContent = score;
+  
+  const buttons = document.querySelectorAll('#answersContainer button');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    const ans = q.answers[i];
+    if (ans.correct) {
+      b.className = 'w-full text-left p-4 bg-emerald-100 border-2 border-emerald-500 rounded-xl font-medium flex items-center gap-3';
+    } else if (i === idx) {
+      b.className = 'w-full text-left p-4 bg-red-100 border-2 border-red-500 rounded-xl font-medium flex items-center gap-3';
+    } else {
+      b.className = 'w-full text-left p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-medium flex items-center gap-3 opacity-60';
+    }
+  });
+  
+  const feedback = document.createElement('div');
+  feedback.className = `mt-4 p-4 rounded-xl text-sm ${isCorrect ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' : 'bg-red-50 border border-red-200 text-red-800'}`;
+  feedback.innerHTML = `<strong>${isCorrect ? 'Верно!' : 'Неверно.'}</strong> ${a.feedback}`;
+  document.getElementById('answersContainer').appendChild(feedback);
+  
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < quizQuestions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 3000);
+}
+
+function showResult() {
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  const pct = score / quizQuestions.length;
+  let icon, title, text;
+  if (pct >= 0.8) {
+    icon = '<svg class="w-20 h-20 mx-auto text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>';
+    title = `Отлично! ${score}/${quizQuestions.length}`;
+    text = 'Вы отлично ориентируетесь в разных ситуациях! Ваша цифровая жизнь под надёжной защитой.';
+  } else if (pct >= 0.5) {
+    icon = '<svg class="w-20 h-20 mx-auto text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+    title = `Неплохо: ${score}/${quizQuestions.length}`;
+    text = 'База есть, но в некоторых ситуациях вы уязвимы. Изучите разделы выше.';
+  } else {
+    icon = '<svg class="w-20 h-20 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    title = `${score}/${quizQuestions.length} — нужно учиться`;
+    text = 'Вы в зоне риска! Мошенники легко вас обманут в любой ситуации. Изучите все разделы.';
+  }
+  document.getElementById('resultIcon').innerHTML = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultText').textContent = text;
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('score').textContent = 0;
+  renderQuestion();
+}
+
+renderQuestion();
+
+// Чек-лист
+const checklist = [
+  'Настроил VPN для использования в публичных сетях',
+  'Включил 2FA на всех рабочих и игровых аккаунтах',
+  'Разделяю рабочие и личные устройства/аккаунты',
+  'Зашифровал все устройства (FileVault / BitLocker)',
+  'Использую менеджер паролей с разными паролями для всего',
+  'Настроил виртуальную карту для путешествий',
+  'Сделал бэкапы всех важных данных по стратегии 3-2-1',
+  'Договорился с семьёй о кодовом слове для проверки звонков',
+  'Настроил «Найти устройство» на всех гаджетах',
+  'Проверил настройки приватности в соцсетях и играх',
+  'Имею экстренные контакты записанные офлайн',
+  'Прошёл обучение по фишингу и социальной инженерии'
+];
+
+const checklistContainer = document.getElementById('checklistContainer');
+document.getElementById('checkTotal').textContent = checklist.length;
+checklist.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-4 p-4 rounded-xl border-2 border-slate-200 cursor-pointer transition hover:border-indigo-300 bg-white mb-3';
+  div.innerHTML = `
+    <div class="check-icon w-7 h-7 rounded-lg border-2 border-slate-300 flex items-center justify-center flex-shrink-0 transition">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div class="flex-1 pt-0.5"><span class="font-medium text-sm">${item}</span></div>
+  `;
+  div.onclick = () => {
+    const isChecked = div.dataset.checked === 'true';
+    if (isChecked) {
+      div.dataset.checked = 'false';
+      div.style.background = 'white';
+      div.style.borderColor = '#e2e8f0';
+      div.querySelector('.check-icon').style.background = 'transparent';
+      div.querySelector('.check-icon').style.borderColor = '#cbd5e1';
+    } else {
+      div.dataset.checked = 'true';
+      div.style.background = '#eef2ff';
+      div.style.borderColor = '#4f46e5';
+      div.querySelector('.check-icon').style.background = '#4f46e5';
+      div.querySelector('.check-icon').style.borderColor = '#4f46e5';
+    }
+    updateCheckCount();
+  };
+  checklistContainer.appendChild(div);
+});
+
+function updateCheckCount() {
+  const items = document.querySelectorAll('#checklistContainer > div');
+  const filled = Array.from(items).filter(d => d.dataset.checked === 'true').length;
+  document.getElementById('checkCount').textContent = filled;
+  const status = document.getElementById('checkStatus');
+  const pct = filled / items.length;
+  if (pct === 0) status.textContent = 'Начните отмечать пункты';
+  else if (pct < 0.4) status.textContent = 'Есть над чем работать';
+  else if (pct < 0.7) status.textContent = 'Хорошее начало';
+  else if (pct < 1) status.textContent = 'Почти всё готово';
+  else status.textContent = 'Отличная защита!';
+}
+</script>
+</body>
+</html>
+

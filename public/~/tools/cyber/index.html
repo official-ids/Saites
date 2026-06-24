@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Карта киберугроз в реальном времени — Kaspersky Cyberthreat Map</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.min.css">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .gradient-bg { background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%); }
+  .gradient-text { background: linear-gradient(135deg, #dc2626 0%, #f97316 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(220, 38, 38, 0.15); }
+  .fade-in { animation: fadeIn 0.6s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse-red { 0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 50% { box-shadow: 0 0 0 15px rgba(220, 38, 38, 0); } }
+  .pulse-red { animation: pulse-red 2s infinite; }
+  .scroll-smooth { scroll-behavior: smooth; }
+  
+  .dark-theme {
+    background: #0a0a0a;
+    color: #e5e7eb;
+  }
+  
+  .map-container {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 80px rgba(220, 38, 38, 0.3);
+  }
+  
+  .map-container iframe {
+    display: block;
+    width: 100%;
+    border: none;
+  }
+  
+  .live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #dc2626;
+    animation: pulse-red 2s infinite;
+  }
+  
+  .attack-type-card {
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .attack-type-card:hover {
+    transform: scale(1.03);
+  }
+  
+  .stat-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: bold;
+  }
+  
+  .threat-level {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+  .threat-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1.5s ease-out;
+  }
+  
+  .glow-red {
+    box-shadow: 0 0 40px rgba(220, 38, 38, 0.4);
+  }
+  
+  .cyber-grid {
+    background-image: 
+      linear-gradient(rgba(220, 38, 38, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(220, 38, 38, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  .action-step { position: relative; padding-left: 3rem; }
+  .action-step::before { content: counter(step); counter-increment: step; position: absolute; left: 0; top: 0; width: 2.5rem; height: 2.5rem; background: linear-gradient(135deg, #dc2626, #f97316); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; }
+  .steps-container { counter-reset: step; }
+</style>
+</head>
+<body class="dark-theme scroll-smooth">
+
+<!-- Навигация -->
+<nav class="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-lg z-50 border-b border-red-900/50">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <span class="font-bold text-xl text-white">CyberMap</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+      <a href="#map" class="text-white/80 hover:text-red-400 transition">Карта</a>
+      <a href="#attacks" class="text-white/80 hover:text-red-400 transition">Типы атак</a>
+      <a href="#stats" class="text-white/80 hover:text-red-400 transition">Статистика</a>
+      <a href="#protection" class="text-white/80 hover:text-red-400 transition">Защита</a>
+      <a href="#quiz" class="text-white/80 hover:text-red-400 transition">Тест</a>
+    </div>
+    <div class="live-indicator text-xs font-bold text-red-400">
+      <span class="live-dot"></span>
+      LIVE
+    </div>
+  </div>
+</nav>
+
+<!-- Hero с картой -->
+<section id="map" class="pt-24 pb-12 px-6 cyber-grid relative overflow-hidden">
+  <div class="max-w-7xl mx-auto relative">
+    <div class="text-center mb-8 fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-red-900/30 text-red-400 rounded-full text-sm font-semibold mb-6 border border-red-900/50">
+        <span class="live-dot"></span>
+        Данные в реальном времени
+      </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6 text-white">
+        Карта <span class="gradient-text">киберугроз</span>
+      </h1>
+      <p class="text-lg text-slate-400 mb-4 max-w-2xl mx-auto">
+        Наблюдайте за кибератаками по всему миру в реальном времени. Данные предоставлены Kaspersky Lab.
+      </p>
+    </div>
+    
+    <!-- Карта Kaspersky -->
+    <div class="map-container glow-red mb-8">
+      <iframe 
+        src="https://cybermap.kaspersky.com/ru/widget" 
+        height="600"
+        title="Kaspersky Cyberthreat Real-Time Map"
+        loading="lazy"
+        allow="fullscreen"
+      ></iframe>
+    </div>
+    
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="bg-gradient-to-br from-red-900/40 to-red-950/40 rounded-2xl p-5 border border-red-900/50">
+        <div class="text-xs font-bold text-red-400 mb-1">АТАК СЕГОДНЯ</div>
+        <div class="stat-number text-3xl text-white">2.4M+</div>
+        <div class="text-xs text-slate-500">обнаружено за сутки</div>
+      </div>
+      <div class="bg-gradient-to-br from-orange-900/40 to-orange-950/40 rounded-2xl p-5 border border-orange-900/50">
+        <div class="text-xs font-bold text-orange-400 mb-1">СТРАН-ИСТОЧНИКОВ</div>
+        <div class="stat-number text-3xl text-white">190+</div>
+        <div class="text-xs text-slate-500">активных источников</div>
+      </div>
+      <div class="bg-gradient-to-br from-amber-900/40 to-amber-950/40 rounded-2xl p-5 border border-amber-900/50">
+        <div class="text-xs font-bold text-amber-400 mb-1">ТИПОВ УГРОЗ</div>
+        <div class="stat-number text-3xl text-white">15+</div>
+        <div class="text-xs text-slate-500">категорий атак</div>
+      </div>
+      <div class="bg-gradient-to-br from-yellow-900/40 to-yellow-950/40 rounded-2xl p-5 border border-yellow-900/50">
+        <div class="text-xs font-bold text-yellow-400 mb-1">ЗАБЛОКИРОВАНО</div>
+        <div class="stat-number text-3xl text-white">98.7%</div>
+        <div class="text-xs text-slate-500">атак предотвращено</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Типы атак -->
+<section id="attacks" class="py-20 px-6 bg-black">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-red-900/30 text-red-400 rounded-full text-sm font-semibold mb-4 border border-red-900/50">ТИПЫ АТАК</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4 text-white">Что вы видите на карте</h2>
+      <p class="text-slate-400 text-lg max-w-2xl mx-auto">Каждая линия — это реальная кибератака. Разберём основные типы угроз</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5" id="attacksGrid"></div>
+  </div>
+</section>
+
+<!-- Статистика -->
+<section id="stats" class="py-20 px-6 bg-gradient-to-b from-black to-red-950/20">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-orange-900/30 text-orange-400 rounded-full text-sm font-semibold mb-4 border border-orange-900/50">СТАТИСТИКА 2026</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4 text-white">Киберугрозы в цифрах</h2>
+      <p class="text-slate-400 text-lg max-w-2xl mx-auto">Масштаб проблемы, которую показывает карта</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-12">
+      <div class="bg-gradient-to-br from-red-900/30 to-transparent rounded-2xl p-6 border border-red-900/50">
+        <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          Топ стран-источников атак
+        </h3>
+        <div class="space-y-3" id="topCountries"></div>
+      </div>
+      
+      <div class="bg-gradient-to-br from-orange-900/30 to-transparent rounded-2xl p-6 border border-orange-900/50">
+        <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Распределение по типам
+        </h3>
+        <div class="space-y-3" id="attackDistribution"></div>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-5">
+      <div class="bg-black/50 rounded-2xl p-6 border border-red-900/50 text-center">
+        <div class="stat-number text-5xl gradient-text mb-2">$8 трлн</div>
+        <div class="text-sm text-slate-400">ущерб от киберпреступности в 2026</div>
+      </div>
+      <div class="bg-black/50 rounded-2xl p-6 border border-red-900/50 text-center">
+        <div class="stat-number text-5xl gradient-text mb-2">39 сек</div>
+        <div class="text-sm text-slate-400">между кибератаками в мире</div>
+      </div>
+      <div class="bg-black/50 rounded-2xl p-6 border border-red-900/50 text-center">
+        <div class="stat-number text-5xl gradient-text mb-2">23 дня</div>
+        <div class="text-sm text-slate-400">среднее время обнаружения взлома</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Как читать карту -->
+<section class="py-20 px-6 bg-black">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-amber-900/30 text-amber-400 rounded-full text-sm font-semibold mb-4 border border-amber-900/50">ИНСТРУКЦИЯ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4 text-white">Как читать карту</h2>
+      <p class="text-slate-400 text-lg">Что означают линии, точки и цвета на карте</p>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-gradient-to-br from-red-900/20 to-transparent rounded-2xl p-6 border border-red-900/50">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-red-500 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Точки на карте</h3>
+        </div>
+        <p class="text-slate-400 text-sm mb-3">Каждая точка — это источник или цель кибератаки. Цвет точки соответствует типу угрозы.</p>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2"><span class="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0"></span><span class="text-slate-300">Красный — критические атаки</span></li>
+          <li class="flex items-start gap-2"><span class="w-2 h-2 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></span><span class="text-slate-300">Оранжевый — вредоносное ПО</span></li>
+          <li class="flex items-start gap-2"><span class="w-2 h-2 rounded-full bg-yellow-500 mt-1.5 flex-shrink-0"></span><span class="text-slate-300">Жёлтый — фишинг и скам</span></li>
+        </ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-orange-900/20 to-transparent rounded-2xl p-6 border border-orange-900/50">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-orange-500 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Линии между точками</h3>
+        </div>
+        <p class="text-slate-400 text-sm mb-3">Линия показывает направление атаки: от источника к цели. Толщина линии отражает интенсивность.</p>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2"><span class="text-orange-400 font-bold">→</span><span class="text-slate-300">Направление: от атакующего к жертве</span></li>
+          <li class="flex items-start gap-2"><span class="text-orange-400 font-bold">━</span><span class="text-slate-300">Толстая линия — массовая атака</span></li>
+          <li class="flex items-start gap-2"><span class="text-orange-400 font-bold">┄</span><span class="text-slate-300">Тонкая — единичная попытка</span></li>
+        </ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-amber-900/20 to-transparent rounded-2xl p-6 border border-amber-900/50">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Счётчики и графики</h3>
+        </div>
+        <p class="text-slate-400 text-sm mb-3">Справа от карты — статистика в реальном времени: количество атак, топ стран, распределение по типам.</p>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2"><span class="text-amber-400 font-bold">⚡</span><span class="text-slate-300">Атаки в секунду</span></li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 font-bold">📊</span><span class="text-slate-300">Гистограмма по времени</span></li>
+          <li class="flex items-start gap-2"><span class="text-amber-400 font-bold">🌍</span><span class="text-slate-300">Топ стран-целей</span></li>
+        </ul>
+      </div>
+      
+      <div class="bg-gradient-to-br from-yellow-900/20 to-transparent rounded-2xl p-6 border border-yellow-900/50">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 rounded-xl bg-yellow-500 flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </div>
+          <h3 class="text-xl font-bold text-white">Интерактивность</h3>
+        </div>
+        <p class="text-slate-400 text-sm mb-3">Кликните на точку или линию, чтобы увидеть детали: тип атаки, источник, цель, время.</p>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start gap-2"><span class="text-yellow-400 font-bold">🖱️</span><span class="text-slate-300">Клик — детали атаки</span></li>
+          <li class="flex items-start gap-2"><span class="text-yellow-400 font-bold">🔍</span><span class="text-slate-300">Зум — приближение региона</span></li>
+          <li class="flex items-start gap-2"><span class="text-yellow-400 font-bold">⏸️</span><span class="text-slate-300">Пауза — остановить анимацию</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Тест -->
+<section id="quiz" class="py-20 px-6 bg-gradient-to-b from-black to-red-950/20">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-green-900/30 text-green-400 rounded-full text-sm font-semibold mb-4 border border-green-900/50">ТЕСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4 text-white">Проверьте свои знания</h2>
+      <p class="text-slate-400 text-lg">8 вопросов о киберугрозах, которые вы видите на карте</p>
+    </div>
+    <div class="bg-gradient-to-br from-red-950/40 to-black rounded-3xl p-6 md:p-10 shadow-xl border border-red-900/50">
+      <div class="flex justify-between items-center mb-6">
+        <div class="text-sm font-semibold text-slate-400">Вопрос <span id="qNum">1</span> из <span id="qTotal">8</span></div>
+        <div class="text-sm font-semibold text-red-400">Счёт: <span id="score">0</span></div>
+      </div>
+      <div class="w-full bg-slate-800 rounded-full h-2 mb-8"><div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width:12.5%"></div></div>
+      
+      <div id="quizCard">
+        <div class="bg-black/50 rounded-2xl p-5 mb-6 border-l-4 border-red-500">
+          <div class="text-xs font-bold text-red-400 uppercase tracking-wider mb-2" id="qCategory">Категория</div>
+          <h3 class="text-xl md:text-2xl font-bold text-white" id="qText">Текст вопроса</h3>
+        </div>
+        <div class="space-y-3" id="answersContainer"></div>
+      </div>
+
+      <div id="quizResult" class="hidden text-center py-8">
+        <div class="mb-4" id="resultIcon"></div>
+        <h3 class="text-3xl font-bold mb-2 text-white" id="resultTitle">Результат</h3>
+        <p class="text-slate-400 mb-6" id="resultText">Описание</p>
+        <button onclick="restartQuiz()" class="px-8 py-3 gradient-bg text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition">Пройти ещё раз</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Защита -->
+<section id="protection" class="py-20 px-6 bg-black">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-block px-4 py-2 bg-emerald-900/30 text-emerald-400 rounded-full text-sm font-semibold mb-4 border border-emerald-900/50">ЗАЩИТА</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4 text-white">Как защититься от этих атак</h2>
+      <p class="text-slate-400 text-lg">Базовые правила, которые блокируют 95% угроз</p>
+    </div>
+    
+    <div class="bg-gradient-to-br from-emerald-950/40 to-black rounded-3xl p-6 md:p-10 border border-emerald-900/50 mb-10">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
+        <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Универсальные правила защиты
+      </h3>
+      <div class="grid md:grid-cols-2 gap-4" id="protectionGrid"></div>
+    </div>
+    
+    <div class="bg-gradient-to-br from-red-950/40 to-black rounded-3xl p-6 md:p-10 border border-red-900/50">
+      <h3 class="text-2xl font-bold mb-6 flex items-center gap-3 text-white">
+        <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        Если вас атаковали
+      </h3>
+      <div class="bg-black/50 rounded-2xl p-6 steps-container space-y-6">
+        <div class="action-step">
+          <h3 class="text-lg font-bold text-white mb-1">Отключите интернет</h3>
+          <p class="text-slate-400 text-sm">Выдерните кабель или выключите Wi-Fi. Это остановит утечку данных.</p>
+        </div>
+        <div class="action-step">
+          <h3 class="text-lg font-bold text-white mb-1">Сделайте скриншоты</h3>
+          <p class="text-slate-400 text-sm">Зафиксируйте все сообщения, окна, IP-адреса атакующих.</p>
+        </div>
+        <div class="action-step">
+          <h3 class="text-lg font-bold text-white mb-1">Смените пароли</h3>
+          <p class="text-slate-400 text-sm">Со другого устройства смените пароли от всех важных аккаунтов.</p>
+        </div>
+        <div class="action-step">
+          <h3 class="text-lg font-bold text-white mb-1">Обратитесь в банк</h3>
+          <p class="text-slate-400 text-sm">Если затронуты финансы — заблокируйте карты, сообщите в банк.</p>
+        </div>
+        <div class="action-step">
+          <h3 class="text-lg font-bold text-white mb-1">Подайте заявление</h3>
+          <p class="text-slate-400 text-sm">Обратитесь в полицию с собранными доказательствами.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Чек-лист -->
+<section class="py-20 px-6 bg-gradient-to-b from-black to-red-950/20">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="inline-block px-4 py-2 bg-indigo-900/30 text-indigo-400 rounded-full text-sm font-semibold mb-4 border border-indigo-900/50">ЧЕК-ЛИСТ</div>
+      <h2 class="text-4xl md:text-5xl font-extrabold mb-4 text-white">Проверьте свою защиту</h2>
+      <p class="text-slate-400 text-lg">Чтобы не стать точкой на карте атак</p>
+    </div>
+    <div class="bg-black/50 rounded-3xl p-8 border border-red-900/50" id="checklistContainer"></div>
+    <div class="mt-6 bg-gradient-to-r from-red-600 to-orange-600 rounded-2xl p-6 text-white text-center">
+      <div class="text-3xl font-bold"><span id="checkCount">0</span> / <span id="checkTotal">0</span></div>
+      <div class="text-white/90 text-sm">пунктов выполнено</div>
+      <div class="text-xs text-white/70 mt-1" id="checkStatus">Начните отмечать пункты</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6 bg-black">
+  <div class="max-w-5xl mx-auto gradient-bg rounded-3xl p-12 md:p-16 text-white text-center relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+    <div class="relative">
+      <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Не становитесь точкой на карте</h2>
+      <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">Каждая точка на карте — это чья-то украденная жизнь, потерянные деньги, разрушенная репутация. Защитите себя сегодня.</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="#protection" class="px-8 py-4 bg-white text-red-700 rounded-xl font-bold shadow-lg hover:shadow-xl transition">Изучить защиту</a>
+        <a href="#quiz" class="px-8 py-4 bg-white/20 backdrop-blur border-2 border-white/40 rounded-xl font-bold hover:bg-white/30 transition">Пройти тест</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-black border-t border-red-900/50 text-slate-400 py-12 px-6">
+  <div class="max-w-7xl mx-auto text-center">
+    <div class="flex items-center justify-center gap-2 mb-4">
+      <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">CyberMap</span>
+    </div>
+    <p class="text-sm mb-2">Карта киберугроз в реальном времени</p>
+    <p class="text-xs text-slate-500 mb-4">Данные карты предоставлены <a href="https://cybermap.kaspersky.com" target="_blank" class="text-red-400 hover:underline">Kaspersky Lab</a></p>
+    <p class="text-xs text-slate-500">© 2026 CyberMap. Образовательный проект.</p>
+  </div>
+</footer>
+
+<script>
+// Типы атак
+const attacks = [
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+    title: 'DDoS-атаки',
+    desc: 'Распределённые атаки отказа в обслуживании. Заваливают сайты миллионами запросов.',
+    severity: 85,
+    color: 'from-red-500 to-rose-600',
+    frequency: 'Каждые 2 минуты'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>',
+    title: 'Ransomware',
+    desc: 'Программы-вымогатели шифруют данные и требуют выкуп в криптовалюте.',
+    severity: 95,
+    color: 'from-purple-500 to-pink-600',
+    frequency: 'Каждые 11 секунд'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>',
+    title: 'Фишинг',
+    desc: 'Поддельные письма и сайты для кражи паролей и банковских данных.',
+    severity: 75,
+    color: 'from-amber-500 to-orange-600',
+    frequency: 'Каждые 39 секунд'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+    title: 'APT-атаки',
+    desc: 'Продвинутые постоянные угрозы. Целенаправленные атаки на организации.',
+    severity: 98,
+    color: 'from-indigo-500 to-blue-600',
+    frequency: 'Ежедневно'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+    title: 'Криптоджекинг',
+    desc: 'Скрытый майнинг криптовалюты на заражённых устройствах жертв.',
+    severity: 60,
+    color: 'from-emerald-500 to-teal-600',
+    frequency: 'Каждые 5 минут'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>',
+    title: 'Шпионское ПО',
+    desc: 'Скрытые программы для слежки: кейлоггеры, перехватчики экрана, трекеры.',
+    severity: 88,
+    color: 'from-cyan-500 to-blue-600',
+    frequency: 'Каждые 10 минут'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>',
+    title: 'Voice Phishing',
+    desc: 'ИИ-клонирование голоса для обмана по телефону. Новая угроза 2026 года.',
+    severity: 92,
+    color: 'from-pink-500 to-rose-600',
+    frequency: 'Растёт на 900% в год'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>',
+    title: 'IoT-атаки',
+    desc: 'Взлом умных устройств: камер, колонок, роутеров для создания ботнетов.',
+    severity: 70,
+    color: 'from-violet-500 to-purple-600',
+    frequency: 'Каждую минуту'
+  },
+  {
+    icon: '<svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
+    title: 'SQL-инъекции',
+    desc: 'Внедрение вредоносного SQL-кода через формы на сайтах для кражи данных.',
+    severity: 80,
+    color: 'from-lime-500 to-green-600',
+    frequency: 'Каждые 4 минуты'
+  }
+];
+
+const attacksGrid = document.getElementById('attacksGrid');
+attacks.forEach(a => {
+  const div = document.createElement('div');
+  div.className = 'attack-type-card bg-gradient-to-br from-slate-900 to-black rounded-2xl p-6 border border-red-900/50';
+  div.innerHTML = `
+    <div class="flex items-start justify-between mb-4">
+      <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${a.color} flex items-center justify-center shadow-lg">${a.icon}</div>
+      <div class="text-right">
+        <div class="text-xs text-slate-500">Частота</div>
+        <div class="text-xs font-bold text-red-400">${a.frequency}</div>
+      </div>
+    </div>
+    <h3 class="font-bold text-lg text-white mb-2">${a.title}</h3>
+    <p class="text-slate-400 text-sm mb-4">${a.desc}</p>
+    <div>
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-slate-500">Опасность</span>
+        <span class="font-bold text-red-400">${a.severity}%</span>
+      </div>
+      <div class="threat-level">
+        <div class="threat-fill bg-gradient-to-r ${a.color}" style="width: 0%" data-width="${a.severity}%"></div>
+      </div>
+    </div>
+  `;
+  attacksGrid.appendChild(div);
+});
+
+// Анимация баров
+setTimeout(() => {
+  document.querySelectorAll('.threat-fill').forEach(bar => {
+    bar.style.width = bar.dataset.width;
+  });
+}, 500);
+
+// Топ стран
+const topCountries = [
+  { name: 'США', percent: 28, flag: '🇺🇸' },
+  { name: 'Россия', percent: 22, flag: '🇷🇺' },
+  { name: 'Китай', percent: 18, flag: '🇨🇳' },
+  { name: 'Германия', percent: 8, flag: '🇩🇪' },
+  { name: 'Бразилия', percent: 6, flag: '🇧🇷' },
+  { name: 'Индия', percent: 5, flag: '🇮🇳' }
+];
+
+document.getElementById('topCountries').innerHTML = topCountries.map(c => `
+  <div>
+    <div class="flex justify-between text-sm mb-1">
+      <span class="text-slate-300 flex items-center gap-2"><span>${c.flag}</span>${c.name}</span>
+      <span class="font-bold text-red-400">${c.percent}%</span>
+    </div>
+    <div class="threat-level">
+      <div class="threat-fill bg-gradient-to-r from-red-500 to-orange-500" style="width: 0%" data-width="${c.percent * 3}%"></div>
+    </div>
+  </div>
+`).join('');
+
+// Распределение атак
+const attackDistribution = [
+  { name: 'Фишинг', percent: 36, color: 'from-amber-500 to-orange-500' },
+  { name: 'Вредоносное ПО', percent: 28, color: 'from-red-500 to-rose-500' },
+  { name: 'DDoS', percent: 15, color: 'from-purple-500 to-pink-500' },
+  { name: 'Ransomware', percent: 12, color: 'from-indigo-500 to-blue-500' },
+  { name: 'Другие', percent: 9, color: 'from-slate-500 to-slate-600' }
+];
+
+document.getElementById('attackDistribution').innerHTML = attackDistribution.map(a => `
+  <div>
+    <div class="flex justify-between text-sm mb-1">
+      <span class="text-slate-300">${a.name}</span>
+      <span class="font-bold text-orange-400">${a.percent}%</span>
+    </div>
+    <div class="threat-level">
+      <div class="threat-fill bg-gradient-to-r ${a.color}" style="width: 0%" data-width="${a.percent * 2.5}%"></div>
+    </div>
+  </div>
+`).join('');
+
+// Анимация баров статистики
+setTimeout(() => {
+  document.querySelectorAll('#topCountries .threat-fill, #attackDistribution .threat-fill').forEach(bar => {
+    bar.style.width = bar.dataset.width;
+  });
+}, 1000);
+
+// Защита
+const protection = [
+  { title: 'Уникальные пароли', desc: 'Для каждого сервиса — свой пароль. Используйте менеджер паролей.' },
+  { title: 'Двухфакторная аутентификация', desc: 'Включите 2FA везде, где это возможно. Это блокирует 99% атак на аккаунты.' },
+  { title: 'Регулярные обновления', desc: 'Обновляйте ОС, браузеры и приложения. Обновления закрывают уязвимости.' },
+  { title: 'Антивирус', desc: 'Установите надёжный антивирус и держите его обновлённым.' },
+  { title: 'Резервные копии', desc: 'Стратегия 3-2-1: 3 копии, 2 носителя, 1 вне дома. Защита от ransomware.' },
+  { title: 'Осторожность с письмами', desc: 'Не открывайте вложения и не переходите по ссылкам из подозрительных писем.' },
+  { title: 'VPN в публичных сетях', desc: 'Всегда используйте VPN в кафе, аэропортах, отелях.' },
+  { title: 'Проверка URL', desc: 'Перед вводом данных проверяйте адрес сайта — не фишинг ли это.' }
+];
+
+document.getElementById('protectionGrid').innerHTML = protection.map(p => `
+  <div class="bg-black/50 rounded-xl p-4 border border-emerald-900/50 flex items-start gap-3">
+    <svg class="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <div>
+      <div class="font-bold text-white text-sm mb-1">${p.title}</div>
+      <div class="text-xs text-slate-400">${p.desc}</div>
+    </div>
+  </div>
+`).join('');
+
+// Тест
+const quizQuestions = [
+  { category: 'Статистика', text: 'Как часто в мире происходит кибератака?', answers: [
+    { text: 'Раз в час', correct: false, feedback: 'Гораздо чаще!' },
+    { text: 'Каждые 39 секунд', correct: true, feedback: 'Верно! Почти каждую минуту происходит новая атака.' },
+    { text: 'Раз в день', correct: false, feedback: 'Слишком редко. Атаки идут непрерывно.' },
+    { text: 'Раз в неделю', correct: false, feedback: 'Очень недооцениваете масштаб проблемы.' }
+  ]},
+  { category: 'Ransomware', text: 'Что делает ransomware?', answers: [
+    { text: 'Удаляет все файлы', correct: false, feedback: 'Нет, он их шифрует.' },
+    { text: 'Шифрует файлы и требует выкуп', correct: true, feedback: 'Верно! Шифрует данные и требует криптовалюту за расшифровку.' },
+    { text: 'Копирует файлы на сервер хакера', correct: false, feedback: 'Это скорее шпионское ПО.' },
+    { text: 'Блокирует интернет', correct: false, feedback: 'Нет, ransomware работает с файлами.' }
+  ]},
+  { category: 'Фишинг', text: 'Как распознать фишинговое письмо?', answers: [
+    { text: 'Оно всегда с ошибками', correct: false, feedback: 'Современный фишинг пишется грамотно, часто с помощью ИИ.' },
+    { text: 'Проверить URL ссылок и адрес отправителя', correct: true, feedback: 'Верно! Это главные признаки фишинга.' },
+    { text: 'Если письмо на русском — точно фишинг', correct: false, feedback: 'Фишинг бывает на любом языке.' },
+    { text: 'По наличию вложений', correct: false, feedback: 'Вложения могут быть и в легитимных письмах.' }
+  ]},
+  { category: 'DDoS', text: 'Что такое DDoS-атака?', answers: [
+    { text: 'Кража паролей', correct: false, feedback: 'Нет, это про другое.' },
+    { text: 'Перегрузка сайта миллионами запросов', correct: true, feedback: 'Верно! Сайт не справляется и перестаёт работать.' },
+    { text: 'Шифрование данных', correct: false, feedback: 'Это ransomware.' },
+    { text: 'Взлом базы данных', correct: false, feedback: 'DDoS не взламывает, а перегружает.' }
+  ]},
+  { category: 'APT', text: 'Чем APT-атаки отличаются от обычных?', answers: [
+    { text: 'Они быстрее', correct: false, feedback: 'Наоборот, APT могут длиться месяцами.' },
+    { text: 'Они целенаправленные и длительные', correct: true, feedback: 'Верно! APT — это сложные многоэтапные атаки на конкретные цели.' },
+    { text: 'Они дешевле', correct: false, feedback: 'APT требуют больших ресурсов.' },
+    { text: 'Они только для мобильных', correct: false, feedback: 'APT нацелены на организации и госструктуры.' }
+  ]},
+  { category: 'Voice Phishing', text: 'Что такое voice phishing в 2026?', answers: [
+    { text: 'Обычные звонки мошенников', correct: false, feedback: 'Современный voice phishing использует ИИ.' },
+    { text: 'ИИ-клонирование голоса для обмана', correct: true, feedback: 'Верно! ИИ клонирует голос за 3 секунды и звонит от имени близких.' },
+    { text: 'Голосовые сообщения в мессенджерах', correct: false, feedback: 'Не совсем, это про телефонные звонки.' },
+    { text: 'Голосовое управление устройствами', correct: false, feedback: 'Это про другое.' }
+  ]},
+  { category: 'IoT', text: 'Чем опасны IoT-атаки?', answers: [
+    { text: 'Умные устройства могут стать частью ботнета', correct: true, feedback: 'Верно! Взломанные камеры, роутеры используются для DDoS и других атак.' },
+    { text: 'Они дорогие', correct: false, feedback: 'Дело не в цене.' },
+    { text: 'Они медленные', correct: false, feedback: 'IoT-устройства быстрые и их много.' },
+    { text: 'Они только для дома', correct: false, feedback: 'IoT есть везде: дома, в офисах, на производствах.' }
+  ]},
+  { category: 'Защита', text: 'Что блокирует 99% атак на аккаунты?', answers: [
+    { text: 'Сложный пароль', correct: false, feedback: 'Важно, но недостаточно.' },
+    { text: 'Двухфакторная аутентификация (2FA)', correct: true, feedback: 'Верно! 2FA — самый эффективный способ защиты аккаунтов.' },
+    { text: 'Антивирус', correct: false, feedback: 'Антивирус защищает от вредоносного ПО, но не от взлома аккаунтов.' },
+    { text: 'Регулярная смена паролей', correct: false, feedback: 'Это устаревшая рекомендация. Лучше 2FA.' }
+  ]}
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function renderQuestion() {
+  answered = false;
+  const q = quizQuestions[currentQ];
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = quizQuestions.length;
+  document.getElementById('progressBar').style.width = ((currentQ + 1) / quizQuestions.length * 100) + '%';
+  document.getElementById('qCategory').textContent = q.category;
+  document.getElementById('qText').textContent = q.text;
+  
+  const container = document.getElementById('answersContainer');
+  container.innerHTML = '';
+  q.answers.forEach((a, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'w-full text-left p-4 bg-black/50 hover:bg-red-950/50 border-2 border-red-900/50 hover:border-red-500 rounded-xl font-medium transition text-slate-200 flex items-center gap-3';
+    btn.innerHTML = `
+      <span class="w-8 h-8 rounded-full bg-red-900/50 flex items-center justify-center text-sm font-bold flex-shrink-0">${String.fromCharCode(65 + i)}</span>
+      <span>${a.text}</span>
+    `;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+  
+  document.getElementById('quizCard').classList.remove('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = quizQuestions[currentQ];
+  const a = q.answers[idx];
+  const isCorrect = a.correct;
+  if (isCorrect) score++;
+  document.getElementById('score').textContent = score;
+  
+  const buttons = document.querySelectorAll('#answersContainer button');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    const ans = q.answers[i];
+    if (ans.correct) {
+      b.className = 'w-full text-left p-4 bg-emerald-950/50 border-2 border-emerald-500 rounded-xl font-medium flex items-center gap-3 text-emerald-200';
+    } else if (i === idx) {
+      b.className = 'w-full text-left p-4 bg-red-950/50 border-2 border-red-500 rounded-xl font-medium flex items-center gap-3 text-red-200';
+    } else {
+      b.className = 'w-full text-left p-4 bg-black/30 border-2 border-slate-800 rounded-xl font-medium flex items-center gap-3 text-slate-500 opacity-60';
+    }
+  });
+  
+  const feedback = document.createElement('div');
+  feedback.className = `mt-4 p-4 rounded-xl text-sm ${isCorrect ? 'bg-emerald-950/50 border border-emerald-500 text-emerald-200' : 'bg-red-950/50 border border-red-500 text-red-200'}`;
+  feedback.innerHTML = `<strong>${isCorrect ? 'Верно!' : 'Неверно.'}</strong> ${a.feedback}`;
+  document.getElementById('answersContainer').appendChild(feedback);
+  
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < quizQuestions.length) {
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 3000);
+}
+
+function showResult() {
+  document.getElementById('quizCard').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  const pct = score / quizQuestions.length;
+  let icon, title, text;
+  if (pct >= 0.8) {
+    icon = '<svg class="w-20 h-20 mx-auto text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>';
+    title = `Отлично! ${score}/${quizQuestions.length}`;
+    text = 'Вы отлично разбираетесь в киберугрозах! Вы под надёжной защитой.';
+  } else if (pct >= 0.5) {
+    icon = '<svg class="w-20 h-20 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+    title = `Неплохо: ${score}/${quizQuestions.length}`;
+    text = 'База есть, но некоторые угрозы могут вас застать врасплох.';
+  } else {
+    icon = '<svg class="w-20 h-20 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+    title = `${score}/${quizQuestions.length} — нужно учиться`;
+    text = 'Вы в зоне риска! Обязательно изучите все разделы выше.';
+  }
+  document.getElementById('resultIcon').innerHTML = icon;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultText').textContent = text;
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('score').textContent = 0;
+  renderQuestion();
+}
+
+renderQuestion();
+
+// Чек-лист
+const checklist = [
+  'Установил антивирус и включил автообновления',
+  'Включил двухфакторную аутентификацию на всех важных аккаунтах',
+  'Использую уникальные пароли для каждого сервиса',
+  'Настроил автоматическое резервное копирование',
+  'Обновил все устройства до последних версий ОС',
+  'Настроил VPN для использования в публичных сетях',
+  'Обучил близких распознавать фишинг',
+  'Отключил неиспользуемые IoT-устройства',
+  'Проверил свои email на утечки (Have I Been Pwned)',
+  'Настроил блокировщик рекламы и трекеров',
+  'Сделал аудит разрешений приложений на телефоне',
+  'Договорился с семьёй о кодовом слове для проверки звонков'
+];
+
+const checklistContainer = document.getElementById('checklistContainer');
+document.getElementById('checkTotal').textContent = checklist.length;
+checklist.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'flex items-start gap-4 p-4 rounded-xl border-2 border-red-900/50 cursor-pointer transition hover:border-red-500 bg-black/50 mb-3';
+  div.innerHTML = `
+    <div class="check-icon w-7 h-7 rounded-lg border-2 border-red-900/50 flex items-center justify-center flex-shrink-0 transition">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div class="flex-1 pt-0.5"><span class="font-medium text-sm text-slate-200">${item}</span></div>
+  `;
+  div.onclick = () => {
+    const isChecked = div.dataset.checked === 'true';
+    if (isChecked) {
+      div.dataset.checked = 'false';
+      div.style.background = 'rgba(0,0,0,0.5)';
+      div.style.borderColor = 'rgba(127, 29, 29, 0.5)';
+      div.querySelector('.check-icon').style.background = 'transparent';
+      div.querySelector('.check-icon').style.borderColor = 'rgba(127, 29, 29, 0.5)';
+    } else {
+      div.dataset.checked = 'true';
+      div.style.background = 'rgba(220, 38, 38, 0.1)';
+      div.style.borderColor = '#dc2626';
+      div.querySelector('.check-icon').style.background = '#dc2626';
+      div.querySelector('.check-icon').style.borderColor = '#dc2626';
+    }
+    updateCheckCount();
+  };
+  checklistContainer.appendChild(div);
+});
+
+function updateCheckCount() {
+  const items = document.querySelectorAll('#checklistContainer > div');
+  const filled = Array.from(items).filter(d => d.dataset.checked === 'true').length;
+  document.getElementById('checkCount').textContent = filled;
+  const status = document.getElementById('checkStatus');
+  const pct = filled / items.length;
+  if (pct === 0) status.textContent = 'Начните отмечать пункты';
+  else if (pct < 0.4) status.textContent = 'Есть над чем работать';
+  else if (pct < 0.7) status.textContent = 'Хорошее начало';
+  else if (pct < 1) status.textContent = 'Почти всё готово';
+  else status.textContent = 'Отличная защита!';
+}
+</script>
+</body>
+</html>
+
