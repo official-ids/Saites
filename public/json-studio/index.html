@@ -1751,15 +1751,6 @@ const observer = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.doc-block').forEach(block => observer.observe(block));
 
-// Download buttons placeholder
-document.getElementById('downloadInstaller')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('Ссылка на загрузку будет добавлена после сборки приложения.\n\nФайл: JSON Studio Setup 1.0.0.exe\nРазмер: ~80 MB');
-});
-document.getElementById('downloadPortable')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('Ссылка на загрузку будет добавлена после сборки приложения.\n\nФайл: JSON Studio 1.0.0.exe (Portable)\nРазмер: ~80 MB');
-});
 </script>
 
 </body>

@@ -978,28 +978,64 @@ router.post('/generate', asyncHandler(async (req, res) => {
     switch (type) {
         case 'uuid': {
             const count = options.count || 1;
-            const result = generateUUID(count);
+            const uuids = generateUUID(count);
+            // Возвращаем готовую строку (один UUID на строку)
+            const result = count === 1 ? uuids[0] : uuids.join('\n');
             return res.json({ 
-                result: count === 1 ? result[0] : result, 
+                result,
                 count,
                 message: `Сгенерировано ${count} UUID`
             });
         }
-        case 'timestamp':
-            return res.json({ result: generateTimestamp() });
-        case 'random':
+        
+        case 'timestamp': {
+            const ts = generateTimestamp();
+            // 🔥 Возвращаем готовый читаемый текст, а не объект
+            const result = [
+                `Timestamp: ${ts.timestamp}`,
+                `Unix:      ${ts.unix}`,
+                `ISO:       ${ts.iso}`,
+                `Local:     ${ts.local}`,
+                `RFC2822:   ${ts.rfc2822}`,
+                `Timezone:  ${ts.timezone}`
+            ].join('\n');
+            
             return res.json({ 
-                result: generateRandomData(options), 
-                count: options.count || 10,
-                message: 'Случайные данные сгенерированы'
+                result,
+                raw: ts,
+                message: 'Timestamp сгенерирован'
             });
-        case 'json':
+        }
+        
+        case 'random': {
+            const data = generateRandomData(options);
+            const count = options.count || 10;
+            // 🔥 Сериализуем массив в красивый JSON с отступами
+            const result = JSON.stringify(data, null, 2);
+            
             return res.json({ 
-                result: generateJsonSchema(options),
-                message: 'JSON схема сгенерирована'
+                result,
+                count,
+                message: `Сгенерировано ${count} записей`
             });
+        }
+        
+        case 'json': {
+            const schema = generateJsonSchema(options);
+            // 🔥 Сериализуем схему в JSON
+            const result = JSON.stringify(schema, null, 2);
+            
+            return res.json({ 
+                result,
+                message: 'JSON Schema сгенерирована'
+            });
+        }
+        
         default:
-            return res.status(400).json({ error: 'Неизвестный тип генератора: ' + type, code: 'UNKNOWN_GENERATOR' });
+            return res.status(400).json({ 
+                error: 'Неизвестный тип генератора: ' + type, 
+                code: 'UNKNOWN_GENERATOR' 
+            });
     }
 }));
 

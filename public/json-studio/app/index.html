@@ -1448,22 +1448,37 @@ async function runTool(tool, action) {
         if (action === 'generate') {
             const count = parseInt(document.getElementById('toolCount')?.value || 1);
             const res = await API.generate(tool, { count });
-            result = res.result || JSON.stringify(res, null, 2);
+            result = res.result;
         } else {
             const input = document.getElementById('toolInput').value;
             const res = await API.encode(input, tool + '/' + action);
             result = res.result;
         }
+        
+        // 🔥 КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: сериализуем объекты в читаемый JSON
+        if (result !== null && typeof result === 'object') {
+            result = JSON.stringify(result, null, 2);
+        }
+        
         const el = document.getElementById('toolResult');
         if (el) el.value = result;
     } catch (err) {
-        // Fallback локально
+        // Fallback локально (если сервер недоступен)
         try {
             let result = '';
             if (tool === 'uuid') {
-                result = Array.from({length: parseInt(document.getElementById('toolCount')?.value || 1)}, () => crypto.randomUUID()).join('\n');
+                const count = parseInt(document.getElementById('toolCount')?.value || 1);
+                result = Array.from({length: count}, () => crypto.randomUUID()).join('\n');
             } else if (tool === 'timestamp') {
-                result = `Timestamp: ${Date.now()}\nISO: ${new Date().toISOString()}\nUnix: ${Math.floor(Date.now()/1000)}`;
+                const now = new Date();
+                result = [
+                    `Timestamp: ${Date.now()}`,
+                    `Unix: ${Math.floor(Date.now()/1000)}`,
+                    `ISO: ${now.toISOString()}`,
+                    `Local: ${now.toLocaleString('ru-RU')}`,
+                    `RFC2822: ${now.toUTCString()}`,
+                    `Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`
+                ].join('\n');
             } else if (tool === 'base64') {
                 const input = document.getElementById('toolInput').value;
                 result = action === 'encode' ? btoa(input) : atob(input);
@@ -1473,6 +1488,31 @@ async function runTool(tool, action) {
             } else if (tool === 'escape') {
                 const input = document.getElementById('toolInput').value;
                 result = action === 'encode' ? JSON.stringify(input) : JSON.parse('"' + input + '"');
+            } else if (tool === 'random') {
+                const count = parseInt(document.getElementById('toolCount')?.value || 1);
+                const data = Array.from({length: count}, (_, i) => ({
+                    id: crypto.randomUUID(),
+                    name: `User_${Math.floor(Math.random() * 10000)}`,
+                    age: Math.floor(Math.random() * 60) + 18,
+                    email: `user${i}@example.com`,
+                    active: Math.random() > 0.5,
+                    score: Math.floor(Math.random() * 1000),
+                    createdAt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString()
+                }));
+                result = JSON.stringify(data, null, 2);
+            } else if (tool === 'generator') {
+                const schema = {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string', format: 'uuid', description: 'Unique identifier' },
+                        name: { type: 'string', minLength: 1, maxLength: 100 },
+                        email: { type: 'string', format: 'email' },
+                        age: { type: 'integer', minimum: 0, maximum: 150 }
+                    },
+                    required: ['id', 'name', 'email', 'age'],
+                    additionalProperties: false
+                };
+                result = JSON.stringify(schema, null, 2);
             }
             const el = document.getElementById('toolResult');
             if (el) el.value = result;
