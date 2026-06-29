@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Мониторинг доступности сайтов в реальном времени">
+<meta name="theme-color" content="#000000">
+<title>Uptime Monitor · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --purple: #BF5AF2;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --header-h: 56px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { min-height: 100vh; }
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+.header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    height: 100%; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
+}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; letter-spacing: -0.02em; }
+.logo svg { width: 22px; height: 22px; color: var(--accent); }
+.nav-links { display: flex; gap: 8px; align-items: center; }
+.nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-link.active { background: var(--accent); color: white; }
+
+.layout { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+
+/* Hero */
+.hero { text-align: center; padding: 24px 0 40px; }
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: rgba(48, 209, 88, 0.1);
+    border: 1px solid rgba(48, 209, 88, 0.25);
+    border-radius: 99px;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--success);
+    margin-bottom: 16px;
+}
+.hero-badge svg { width: 14px; height: 14px; }
+.hero-title {
+    font-size: 2.5rem; font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1.1;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+}
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px;
+}
+.stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+}
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+.stat-value.success { color: var(--success); }
+.stat-value.warning { color: var(--warning); }
+.stat-value.danger { color: var(--danger); }
+
+/* Add monitor */
+.add-monitor {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.add-monitor input {
+    flex: 1;
+    min-width: 240px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+.add-monitor input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.add-monitor input::placeholder { color: var(--text-tertiary); }
+.add-monitor select {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.btn {
+    padding: 12px 22px;
+    border-radius: 99px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+.btn svg { width: 16px; height: 16px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--border-strong); }
+.btn-danger { background: rgba(255,69,58,0.15); color: var(--danger); }
+.btn-danger:hover { background: rgba(255,69,58,0.25); }
+.btn-icon { padding: 10px; background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; transition: all 0.15s; border-radius: var(--radius-sm); }
+.btn-icon:hover { color: var(--danger); background: rgba(255,69,58,0.1); }
+.btn-icon svg { width: 18px; height: 18px; }
+
+/* Controls */
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.controls-left { display: flex; gap: 10px; align-items: center; }
+.interval-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(48, 209, 88, 0.1);
+    border: 1px solid rgba(48, 209, 88, 0.25);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--success);
+}
+.live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0.7); }
+    50% { box-shadow: 0 0 0 6px rgba(48, 209, 88, 0); }
+}
+.live-indicator.paused {
+    background: rgba(142, 142, 147, 0.1);
+    border-color: rgba(142, 142, 147, 0.25);
+    color: var(--text-secondary);
+}
+.live-indicator.paused .live-dot {
+    background: var(--text-secondary);
+    animation: none;
+}
+
+/* Monitors list */
+.monitors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.monitor-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: all 0.2s;
+}
+.monitor-card:hover { border-color: var(--border-strong); }
+.monitor-card.status-down { border-left: 3px solid var(--danger); }
+.monitor-card.status-degraded { border-left: 3px solid var(--warning); }
+.monitor-card.status-up { border-left: 3px solid var(--success); }
+
+.monitor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.monitor-info { flex: 1; min-width: 0; }
+.monitor-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.monitor-name .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.status-dot.up { background: var(--success); }
+.status-dot.degraded { background: var(--warning); }
+.status-dot.down { background: var(--danger); }
+.status-dot.checking { background: var(--text-tertiary); animation: pulse-gray 1.5s infinite; }
+@keyframes pulse-gray {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+.monitor-url {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-family: var(--mono-stack);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.monitor-status-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.monitor-status-badge.up { background: rgba(48, 209, 88, 0.12); color: var(--success); }
+.monitor-status-badge.degraded { background: rgba(255, 159, 10, 0.12); color: var(--warning); }
+.monitor-status-badge.down { background: rgba(255, 69, 58, 0.12); color: var(--danger); }
+.monitor-status-badge.checking { background: rgba(142, 142, 147, 0.12); color: var(--text-secondary); }
+
+.monitor-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.metric-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+}
+.metric-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: var(--mono-stack);
+    color: var(--text-primary);
+}
+.metric-value.fast { color: var(--success); }
+.metric-value.medium { color: var(--warning); }
+.metric-value.slow { color: var(--danger); }
+
+/* Uptime bar */
+.uptime-bar {
+    display: flex;
+    gap: 2px;
+    height: 28px;
+    margin-bottom: 8px;
+}
+.uptime-block {
+    flex: 1;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.uptime-block:hover { transform: scaleY(1.2); z-index: 2; }
+.uptime-block.up { background: var(--success); }
+.uptime-block.degraded { background: var(--warning); }
+.uptime-block.down { background: var(--danger); }
+.uptime-block.empty { background: var(--bg-elevated); opacity: 0.3; }
+
+.uptime-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-primary);
+    color: var(--bg-body);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-family: var(--mono-stack);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+}
+.uptime-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--text-primary);
+}
+.uptime-block:hover .uptime-tooltip { opacity: 1; }
+
+/* Incidents */
+.incidents-section {
+    margin-top: 32px;
+}
+.incidents-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.incidents-count {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+.incident-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.incident-item.resolved { border-left-color: var(--success); }
+.incident-time {
+    font-size: 0.78rem;
+    font-family: var(--mono-stack);
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+.incident-text {
+    flex: 1;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+}
+.incident-text strong { color: var(--text-primary); }
+.incident-duration {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-family: var(--mono-stack);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-tertiary);
+}
+.empty-state svg { width: 56px; height: 56px; margin: 0 auto 14px; opacity: 0.5; }
+.empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 300;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast svg { width: 16px; height: 16px; }
+.toast.success { color: var(--success); }
+.toast.error { color: var(--danger); }
+.toast.info { color: var(--accent); }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.modal h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 16px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+@media (max-width: 640px) {
+    .hero-title { font-size: 1.8rem; }
+    .layout { padding: 20px 16px 60px; }
+    .add-monitor { flex-direction: column; align-items: stretch; }
+    .add-monitor input { min-width: auto; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .controls-left { justify-content: space-between; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span>Oris Monitor</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="/status" class="nav-link">Status</a>
+            <a href="/monitor" class="nav-link active">Monitor</a>
+        </nav>
+    </div>
+</header>
+
+<main class="layout">
+
+    <section class="hero">
+        <div class="hero-badge">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Client-side monitoring
+        </div>
+        <h1 class="hero-title">Uptime Monitor</h1>
+        <p class="hero-subtitle">
+            Отслеживайте доступность ваших сайтов прямо из браузера. 
+            Работает без серверной части — все проверки выполняются на стороне клиента.
+        </p>
+    </section>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Мониторов</div>
+            <div class="stat-value" id="statTotal">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Онлайн</div>
+            <div class="stat-value success" id="statUp">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Проблемы</div>
+            <div class="stat-value warning" id="statDegraded">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Недоступны</div>
+            <div class="stat-value danger" id="statDown">0</div>
+        </div>
+    </div>
+
+    <div class="add-monitor">
+        <input type="text" id="addUrlInput" placeholder="https://example.com" autocomplete="off">
+        <input type="text" id="addNameInput" placeholder="Название (опционально)" style="max-width:200px;">
+        <select id="addMethod">
+            <option value="GET">GET</option>
+            <option value="HEAD">HEAD</option>
+        </select>
+        <select id="addExpected">
+            <option value="200">200 OK</option>
+            <option value="any">Любой 2xx</option>
+            <option value="301">301 Redirect</option>
+            <option value="302">302 Redirect</option>
+        </select>
+        <button class="btn btn-primary" id="addBtn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Добавить
+        </button>
+    </div>
+
+    <div class="controls">
+        <div class="controls-left">
+            <div class="live-indicator" id="liveIndicator">
+                <span class="live-dot"></span>
+                <span id="liveText">Мониторинг активен</span>
+            </div>
+            <select class="interval-select" id="intervalSelect">
+                <option value="15000">15 сек</option>
+                <option value="30000" selected>30 сек</option>
+                <option value="60000">1 мин</option>
+                <option value="120000">2 мин</option>
+                <option value="300000">5 мин</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary" id="pauseBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Пауза
+            </button>
+            <button class="btn btn-secondary" id="exportBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Экспорт
+            </button>
+            <button class="btn btn-danger" id="clearBtn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Очистить
+            </button>
+        </div>
+    </div>
+
+    <div class="monitors-list" id="monitorsList"></div>
+
+    <div class="incidents-section" id="incidentsSection" style="display:none;">
+        <div class="incidents-title">
+            Инциденты
+            <span class="incidents-count" id="incidentsCount">0</span>
+        </div>
+        <div id="incidentsList"></div>
+    </div>
+
+</main>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h3>Редактировать монитор</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Название</label>
+                <input type="text" id="editName" style="width:100%;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-md);font-family:inherit;font-size:0.95rem;margin-top:4px;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">URL</label>
+                <input type="text" id="editUrl" style="width:100%;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-md);font-family:inherit;font-size:0.95rem;margin-top:4px;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Метод</label>
+                <select id="editMethod" style="width:100%;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-md);font-family:inherit;font-size:0.95rem;margin-top:4px;">
+                    <option value="GET">GET</option>
+                    <option value="HEAD">HEAD</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="cancelEdit">Отмена</button>
+            <button class="btn btn-primary" id="saveEdit">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    <span id="toastText">Готово</span>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    const STORAGE_KEY = 'oris_monitor_monitors';
+    const HISTORY_KEY = 'oris_monitor_history';
+    const INCIDENTS_KEY = 'oris_monitor_incidents';
+
+    const State = {
+        monitors: [],
+        history: {},
+        incidents: [],
+        interval: 30000,
+        paused: false,
+        timer: null,
+        editingId: null,
+        alertState: {} // { monitorId: { sent: bool, from: timestamp } }
+    };
+
+    const $ = id => document.getElementById(id);
+
+    // --- Helpers ---
+    function generateId() {
+        return 'm_' + Math.random().toString(36).slice(2, 10);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return String(str).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function isValidUrl(url) {
+        try {
+            const u = new URL(url);
+            return u.protocol === 'http:' || u.protocol === 'https:';
+        } catch { return false; }
+    }
+
+    function normalizeUrl(url) {
+        url = url.trim();
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        return url;
+    }
+
+    function formatLatency(ms) {
+        if (ms === null || ms === undefined) return { value: '—', cls: '' };
+        if (ms < 500) return { value: `${ms}ms`, cls: 'fast' };
+        if (ms < 1500) return { value: `${ms}ms`, cls: 'medium' };
+        return { value: `${ms}ms`, cls: 'slow' };
+    }
+
+    function formatTime(iso) {
+        return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function formatDuration(ms) {
+        if (ms < 60000) return `${Math.round(ms / 1000)}с`;
+        if (ms < 3600000) return `${Math.round(ms / 60000)}м`;
+        return `${Math.round(ms / 3600000)}ч`;
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = $('toast');
+        $('toastText').textContent = msg;
+        t.className = `toast ${type} visible`;
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => t.classList.remove('visible'), 2500);
+    }
+
+// --- Storage ---
+const ALERT_STATE_KEY = 'oris_monitor_alert_state';
+
+function saveState() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(State.monitors));
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(State.history));
+        localStorage.setItem(INCIDENTS_KEY, JSON.stringify(State.incidents));
+        localStorage.setItem(ALERT_STATE_KEY, JSON.stringify(State.alertState));
+    } catch (e) {
+        console.error('[monitor] Storage error:', e);
+    }
+}
+
+function loadState() {
+    try {
+        State.monitors = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        State.history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+        State.incidents = JSON.parse(localStorage.getItem(INCIDENTS_KEY) || '[]');
+        State.alertState = JSON.parse(localStorage.getItem(ALERT_STATE_KEY) || '{}');
+    } catch (e) {
+        console.error('[monitor] Load error:', e);
+        State.monitors = [];
+        State.history = {};
+        State.incidents = [];
+        State.alertState = {};
+    }
+}
+
+    function loadState() {
+        try {
+            State.monitors = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            State.history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
+            State.incidents = JSON.parse(localStorage.getItem(INCIDENTS_KEY) || '[]');
+        } catch (e) {
+            State.monitors = [];
+            State.history = {};
+            State.incidents = [];
+        }
+    }
+
+// --- Check ---
+async function checkMonitor(monitor) {
+    try {
+        // Серверная проверка (обход CORS)
+        const res = await fetch('/api/monitor/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                url: monitor.url,
+                method: monitor.method,
+                expected: monitor.expected
+            })
+        });
+        
+        if (!res.ok) throw new Error('Server error');
+        
+        const result = await res.json();
+        
+        // Сохраняем историю на сервере (fire-and-forget)
+        fetch(`/api/monitor/history/${monitor.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(result)
+        }).catch(err => console.error('[monitor/history] save error:', err));
+
+        return result;
+    } catch (err) {
+        return {
+            status: 'down',
+            latency: 0,
+            error: err.message,
+            timestamp: Date.now()
+        };
+    }
+}
+
+async function sendAlert(monitor, status, from) {
+    try {
+        const res = await fetch('/api/monitor/alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                monitorName: monitor.name,
+                monitorUrl: monitor.url,
+                status,
+                from,
+                to: status === 'up' ? Date.now() : null
+            })
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.warn('[monitor/alert] server error:', err.error || res.status);
+        }
+    } catch (err) {
+        console.error('[monitor/alert] network error:', err.message);
+    }
+}
+
+async function runCheck(monitor) {
+    const result = await checkMonitor(monitor);
+
+    // Сохраняем историю локально (последние 100 записей)
+    if (!State.history[monitor.id]) State.history[monitor.id] = [];
+    State.history[monitor.id].push(result);
+    if (State.history[monitor.id].length > 100) {
+        State.history[monitor.id] = State.history[monitor.id].slice(-100);
+    }
+
+    // Инициализируем состояние алертов для монитора
+    if (!State.alertState[monitor.id]) {
+        State.alertState[monitor.id] = { sent: false, from: null };
+    }
+    const alertState = State.alertState[monitor.id];
+
+    // Определяем смену статуса -> инцидент + алерт
+    const prevStatus = monitor.lastStatus;
+    if (prevStatus && prevStatus !== result.status) {
+        // Переход в down/degraded
+        if (result.status === 'down' || result.status === 'degraded') {
+            // Регистрируем инцидент локально
+            State.incidents.unshift({
+                monitorId: monitor.id,
+                monitorName: monitor.name,
+                monitorUrl: monitor.url,
+                from: Date.now(),
+                to: null,
+                status: result.status,
+                resolved: false
+            });
+
+            // Отправляем алерт только если ещё не отправляли
+            if (!alertState.sent) {
+                const incidentStart = Date.now();
+                alertState.sent = true;
+                alertState.from = incidentStart;
+                sendAlert(monitor, result.status, incidentStart);
+            }
+        }
+        // Переход обратно в up (восстановление)
+        else if ((prevStatus === 'down' || prevStatus === 'degraded') && result.status === 'up') {
+            // Закрываем локальный инцидент
+            const active = State.incidents.find(i => i.monitorId === monitor.id && !i.resolved);
+            if (active) {
+                active.to = Date.now();
+                active.resolved = true;
+            }
+
+            // Отправляем алерт о восстановлении, если был отправлен алерт о падении
+            if (alertState.sent) {
+                sendAlert(monitor, 'up', alertState.from);
+                alertState.sent = false;
+                alertState.from = null;
+            }
+        }
+    }
+
+    // Обновляем метрики монитора
+    monitor.lastStatus = result.status;
+    monitor.lastLatency = result.latency;
+    monitor.lastStatusCode = result.statusCode;
+    monitor.lastCheck = result.timestamp;
+    monitor.totalChecks = (monitor.totalChecks || 0) + 1;
+    if (result.status === 'up') monitor.upChecks = (monitor.upChecks || 0) + 1;
+
+    saveState();
+    render();
+}
+
+    async function runAllChecks() {
+        if (State.paused) return;
+        await Promise.all(State.monitors.map(m => runCheck(m)));
+    }
+
+    function startMonitoring() {
+        if (State.timer) clearInterval(State.timer);
+        runAllChecks();
+        State.timer = setInterval(runAllChecks, State.interval);
+    }
+
+    function stopMonitoring() {
+        if (State.timer) {
+            clearInterval(State.timer);
+            State.timer = null;
+        }
+    }
+
+    // --- Actions ---
+    function addMonitor() {
+        const url = normalizeUrl($('addUrlInput').value);
+        if (!isValidUrl(url)) {
+            showToast('Неверный URL', 'error');
+            return;
+        }
+        const name = $('addNameInput').value.trim() || new URL(url).hostname;
+        const method = $('addMethod').value;
+        const expected = $('addExpected').value;
+
+        State.monitors.push({
+            id: generateId(),
+            name,
+            url,
+            method,
+            expected,
+            createdAt: Date.now(),
+            lastStatus: 'checking',
+            lastLatency: null,
+            lastStatusCode: null,
+            lastCheck: null,
+            totalChecks: 0,
+            upChecks: 0
+        });
+
+        $('addUrlInput').value = '';
+        $('addNameInput').value = '';
+        saveState();
+        render();
+        showToast('Монитор добавлен');
+    }
+
+    function removeMonitor(id) {
+        if (!confirm('Удалить монитор и всю его историю?')) return;
+        State.monitors = State.monitors.filter(m => m.id !== id);
+        delete State.history[id];
+        saveState();
+        render();
+        showToast('Монитор удалён');
+    }
+
+    function openEdit(id) {
+        const m = State.monitors.find(x => x.id === id);
+        if (!m) return;
+        State.editingId = id;
+        $('editName').value = m.name;
+        $('editUrl').value = m.url;
+        $('editMethod').value = m.method;
+        $('editModal').classList.add('active');
+    }
+
+    function saveEdit() {
+        const m = State.monitors.find(x => x.id === State.editingId);
+        if (!m) return;
+        const url = normalizeUrl($('editUrl').value);
+        if (!isValidUrl(url)) {
+            showToast('Неверный URL', 'error');
+            return;
+        }
+        m.name = $('editName').value.trim() || new URL(url).hostname;
+        m.url = url;
+        m.method = $('editMethod').value;
+        saveState();
+        render();
+        $('editModal').classList.remove('active');
+        showToast('Сохранено');
+    }
+
+    function togglePause() {
+        State.paused = !State.paused;
+        $('pauseBtn').innerHTML = State.paused 
+            ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Продолжить'
+            : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Пауза';
+        $('liveIndicator').classList.toggle('paused', State.paused);
+        $('liveText').textContent = State.paused ? 'Мониторинг на паузе' : 'Мониторинг активен';
+        if (State.paused) stopMonitoring();
+        else startMonitoring();
+    }
+
+    function changeInterval() {
+        State.interval = parseInt($('intervalSelect').value);
+        if (!State.paused) startMonitoring();
+    }
+
+    function exportData() {
+        const data = {
+            monitors: State.monitors,
+            history: State.history,
+            incidents: State.incidents,
+            exportedAt: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `monitor-export-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Данные экспортированы');
+    }
+
+function clearAll() {
+    if (!confirm('Удалить все мониторы и историю?')) return;
+    State.monitors = [];
+    State.history = {};
+    State.incidents = [];
+    State.alertState = {};
+    localStorage.removeItem(ALERT_STATE_KEY);
+    saveState();
+    render();
+    showToast('Всё очищено');
+}
+
+    // --- Render ---
+    function render() {
+        renderStats();
+        renderMonitors();
+        renderIncidents();
+    }
+
+    function renderStats() {
+        $('statTotal').textContent = State.monitors.length;
+        $('statUp').textContent = State.monitors.filter(m => m.lastStatus === 'up').length;
+        $('statDegraded').textContent = State.monitors.filter(m => m.lastStatus === 'degraded').length;
+        $('statDown').textContent = State.monitors.filter(m => m.lastStatus === 'down').length;
+    }
+
+    function renderMonitors() {
+        const list = $('monitorsList');
+        if (State.monitors.length === 0) {
+            list.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <div class="empty-state-title">Нет мониторов</div>
+                    <div>Добавьте первый URL для мониторинга</div>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = State.monitors.map(m => {
+            const history = State.history[m.id] || [];
+            const uptime = m.totalChecks > 0 ? ((m.upChecks / m.totalChecks) * 100).toFixed(1) : '—';
+            const latency = formatLatency(m.lastLatency);
+            const statusLabel = { up: 'Operational', degraded: 'Degraded', down: 'Down', checking: 'Checking' }[m.lastStatus] || 'Unknown';
+
+            const blocks = history.slice(-60).map((h, i) => {
+                const time = formatTime(h.timestamp);
+                return `<div class="uptime-block ${h.status}">
+                    <div class="uptime-tooltip">${time}<br>${h.latency}ms · ${h.statusCode || 'err'}</div>
+                </div>`;
+            }).join('');
+
+            return `
+                <div class="monitor-card status-${m.lastStatus}">
+                    <div class="monitor-header">
+                        <div class="monitor-info">
+                            <div class="monitor-name">
+                                <span class="status-dot ${m.lastStatus}"></span>
+                                ${escapeHtml(m.name)}
+                            </div>
+                            <div class="monitor-url">${escapeHtml(m.url)}</div>
+                        </div>
+                        <span class="monitor-status-badge ${m.lastStatus}">${statusLabel}</span>
+                        <div style="display:flex;gap:4px;">
+                            <button class="btn-icon" onclick="window.__editMonitor('${m.id}')" title="Редактировать">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button class="btn-icon" onclick="window.__removeMonitor('${m.id}')" title="Удалить">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="monitor-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Latency</div>
+                            <div class="metric-value ${latency.cls}">${latency.value}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Status</div>
+                            <div class="metric-value">${m.lastStatusCode || '—'}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Uptime</div>
+                            <div class="metric-value">${uptime}%</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Checks</div>
+                            <div class="metric-value">${m.totalChecks || 0}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Last</div>
+                            <div class="metric-value" style="font-size:0.82rem;">${m.lastCheck ? formatTime(m.lastCheck) : '—'}</div>
+                        </div>
+                    </div>
+                    <div class="uptime-bar">${blocks || '<div class="uptime-block empty" style="flex:1;"></div>'}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderIncidents() {
+        const section = $('incidentsSection');
+        const list = $('incidentsList');
+        const active = State.incidents.filter(i => !i.resolved);
+        const resolved = State.incidents.filter(i => i.resolved).slice(0, 10);
+
+        if (State.incidents.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        $('incidentsCount').textContent = State.incidents.length;
+
+        const items = [...active, ...resolved].map(i => {
+            const duration = i.to ? formatDuration(i.to - i.from) : formatDuration(Date.now() - i.from);
+            return `
+                <div class="incident-item ${i.resolved ? 'resolved' : ''}">
+                    <div class="incident-time">${new Date(i.from).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</div>
+                    <div class="incident-text">
+                        <strong>${escapeHtml(i.monitorName)}</strong> — 
+                        ${i.status === 'down' ? 'недоступен' : 'работает с задержками'}
+                        ${i.resolved ? ' (восстановлен)' : ''}
+                    </div>
+                    <div class="incident-duration">${duration}</div>
+                </div>
+            `;
+        }).join('');
+
+        list.innerHTML = items;
+    }
+
+    // --- Expose for inline handlers ---
+    window.__removeMonitor = removeMonitor;
+    window.__editMonitor = openEdit;
+
+    // --- Init ---
+    $('addBtn').addEventListener('click', addMonitor);
+    $('addUrlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addMonitor(); });
+    $('pauseBtn').addEventListener('click', togglePause);
+    $('intervalSelect').addEventListener('change', changeInterval);
+    $('exportBtn').addEventListener('click', exportData);
+    $('clearBtn').addEventListener('click', clearAll);
+    $('cancelEdit').addEventListener('click', () => $('editModal').classList.remove('active'));
+    $('saveEdit').addEventListener('click', saveEdit);
+    $('editModal').addEventListener('click', e => { if (e.target === $('editModal')) $('editModal').classList.remove('active'); });
+
+    loadState();
+    render();
+    startMonitoring();
+
+    // Pause on tab hidden
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) stopMonitoring();
+        else if (!State.paused) startMonitoring();
+    });
+})();
+</script>
+
+</body>
+</html>

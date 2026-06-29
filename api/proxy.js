@@ -72,7 +72,8 @@ const MODULE_PATHS = {
     REDIRECTS: '../redirects',
     NOTIFICATIONS: '../notifications',
     ROBLOX: '../roblox',
-    YOUTUBE: '../youtube'
+    YOUTUBE: '../youtube',
+    MONITOR: '../monitor'
 };
 
 /**
@@ -109,6 +110,11 @@ const robloxRouter = require(MODULE_PATHS.ROBLOX);
  * Роутер для youtube
  */
 const youtubeRouter = require(MODULE_PATHS.YOUTUBE);
+
+/**
+ * Роутер для monitor
+ */
+const monitorRouter = require(MODULE_PATHS.MONITOR);
 
 
 // -----------------------------
@@ -1240,6 +1246,7 @@ app.use('/api/downloader', downloaderRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
+app.use('/api/monitor', monitorRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
