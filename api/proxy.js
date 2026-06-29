@@ -120,7 +120,7 @@ const monitorRouter = require(MODULE_PATHS.MONITOR);
 /**
  * Роутер для monitor
  */
-const jsonStudioRouter = require(MODULE_PATHS.MONITOR);
+const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
 
 // -----------------------------
 // Константы и Конфигурация
