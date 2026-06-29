@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-miZhs03Kxv7gKjJ3Lp8K9Vq8qY0m5K5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q5q==" crossorigin="anonymous" referrerpolicy="no-referrer">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js" integrity="sha512-ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root {
     --bg-primary: #f3f3f3;
@@ -1811,130 +1811,142 @@ function closeWindow() {
 // ============================================
 // Monaco Editor Init
 // ============================================
-require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-require(['vs/editor/editor.main'], function () {
-    State.editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-        value: '{}',
-        language: 'json',
-        theme: 'vs',
-        fontSize: State.settings.fontSize,
-        tabSize: State.settings.tabSize,
-        insertSpaces: !State.settings.useTabs,
-        automaticLayout: true,
-        minimap: { enabled: true },
-        scrollBeyondLastLine: true,
-        renderLineHighlight: 'all',
-        folding: true,
-        lineNumbers: 'on',
-        glyphMargin: true,
-        bracketPairColorization: { enabled: true },
-        formatOnPaste: true,
-        formatOnType: true,
-        autoClosingBrackets: 'always',
-        autoClosingQuotes: 'always',
-        autoSurround: 'languageDefined',
-        suggestOnTriggerCharacters: true,
-        wordBasedSuggestions: 'currentDocument',
-        quickSuggestions: { other: true, comments: false, strings: false }
-    });
+function initMonacoEditor() {
+    // Ждём, пока Monaco loader определит require и monaco
+    if (typeof require === 'undefined' || typeof monaco === 'undefined') {
+        setTimeout(initMonacoEditor, 50);
+        return;
+    }
+    
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+    
+    require(['vs/editor/editor.main'], function () {
+        State.editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+            value: '{}',
+            language: 'json',
+            theme: 'vs',
+            fontSize: State.settings.fontSize,
+            tabSize: State.settings.tabSize,
+            insertSpaces: !State.settings.useTabs,
+            automaticLayout: true,
+            minimap: { enabled: true },
+            scrollBeyondLastLine: true,
+            renderLineHighlight: 'all',
+            folding: true,
+            lineNumbers: 'on',
+            glyphMargin: true,
+            bracketPairColorization: { enabled: true },
+            formatOnPaste: true,
+            formatOnType: true,
+            autoClosingBrackets: 'always',
+            autoClosingQuotes: 'always',
+            autoSurround: 'languageDefined',
+            suggestOnTriggerCharacters: true,
+            wordBasedSuggestions: 'currentDocument',
+            quickSuggestions: { other: true, comments: false, strings: false }
+        });
 
-    State.editor.onDidChangeModelContent(() => {
-        markModified();
-        // Авто-валидация
-        clearTimeout(State.editor._validateTimer);
-        State.editor._validateTimer = setTimeout(() => {
-            const content = State.editor.getValue();
-            try {
-                JSON.parse(content);
-                monaco.editor.setModelMarkers(State.editor.getModel(), 'json', []);
-            } catch (e) {
-                const match = e.message.match(/position (\d+)/);
-                const pos = match ? parseInt(match[1]) : 0;
-                const model = State.editor.getModel();
-                const position = model.getPositionAt(pos);
-                monaco.editor.setModelMarkers(model, 'json', [{
-                    severity: monaco.MarkerSeverity.Error,
-                    message: e.message,
-                    startLineNumber: position.lineNumber,
-                    startColumn: position.column,
-                    endLineNumber: position.lineNumber,
-                    endColumn: position.column + 1
-                }]);
+        State.editor.onDidChangeModelContent(() => {
+            markModified();
+            // Авто-валидация
+            clearTimeout(State.editor._validateTimer);
+            State.editor._validateTimer = setTimeout(() => {
+                const content = State.editor.getValue();
+                try {
+                    JSON.parse(content);
+                    monaco.editor.setModelMarkers(State.editor.getModel(), 'json', []);
+                } catch (e) {
+                    const match = e.message.match(/position (\d+)/);
+                    const pos = match ? parseInt(match[1]) : 0;
+                    const model = State.editor.getModel();
+                    const position = model.getPositionAt(pos);
+                    monaco.editor.setModelMarkers(model, 'json', [{
+                        severity: monaco.MarkerSeverity.Error,
+                        message: e.message,
+                        startLineNumber: position.lineNumber,
+                        startColumn: position.column,
+                        endLineNumber: position.lineNumber,
+                        endColumn: position.column + 1
+                    }]);
+                }
+                const tab = State.tabs.find(t => t.id === State.activeTabId);
+                if (tab) {
+                    tab.content = content;
+                    parseAndRenderTree(content);
+                }
+            }, 500);
+        });
+
+        State.editor.onDidChangeCursorPosition((e) => {
+            document.getElementById('statusCursor').textContent = `Стр ${e.position.lineNumber}, Кол ${e.position.column}`;
+        });
+
+        // Ctrl+Wheel zoom
+        State.editor.onDidScrollChange(() => {});
+        document.getElementById('monaco-editor').addEventListener('wheel', (e) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -1 : 1;
+                const currentSize = State.editor.getOption(monaco.editor.EditorOption.fontSize);
+                const newSize = Math.max(10, Math.min(32, currentSize + delta));
+                State.editor.updateOptions({ fontSize: newSize });
+                State.settings.fontSize = newSize;
             }
-            const tab = State.tabs.find(t => t.id === State.activeTabId);
-            if (tab) {
-                tab.content = content;
-                parseAndRenderTree(content);
+        }, { passive: false });
+
+        // Init with empty tab
+        createTab();
+
+        // Загрузка настроек с сервера
+        API.getSettings().then(result => {
+            if (result.settings) {
+                Object.assign(State.settings, result.settings);
+                setTheme(State.settings.theme);
+                State.editor.updateOptions({
+                    fontSize: State.settings.fontSize,
+                    tabSize: State.settings.tabSize,
+                    insertSpaces: !State.settings.useTabs
+                });
             }
-        }, 500);
+        }).catch(() => {});
+
+        // Загрузка недавних файлов
+        API.getRecent().then(result => {
+            if (result.files?.length > 0) {
+                State.recentFiles = result.files;
+            }
+        }).catch(() => {});
+        
+        // Theme system preference
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (State.settings.theme === 'system') {
+                setTheme('system');
+            }
+        });
+
+        // Auto-save
+        setInterval(() => {
+            if (State.settings.autoSave && State.activeTabId) {
+                const tab = State.tabs.find(t => t.id === State.activeTabId);
+                if (tab?.modified && tab?.path) {
+                    saveFile();
+                }
+            }
+        }, State.settings.autoSaveInterval);
+
+        // Prevent accidental close
+        window.addEventListener('beforeunload', (e) => {
+            const hasModified = State.tabs.some(t => t.modified);
+            if (hasModified) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
     });
+}
 
-    State.editor.onDidChangeCursorPosition((e) => {
-        document.getElementById('statusCursor').textContent = `Стр ${e.position.lineNumber}, Кол ${e.position.column}`;
-    });
-
-    // Ctrl+Wheel zoom
-    State.editor.onDidScrollChange(() => {});
-    document.getElementById('monaco-editor').addEventListener('wheel', (e) => {
-        if (e.ctrlKey) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -1 : 1;
-            const currentSize = State.editor.getOption(monaco.editor.EditorOption.fontSize);
-            const newSize = Math.max(10, Math.min(32, currentSize + delta));
-            State.editor.updateOptions({ fontSize: newSize });
-            State.settings.fontSize = newSize;
-        }
-    }, { passive: false });
-
-    // Init with empty tab
-    createTab();
-
-    // Загрузка настроек с сервера
-    API.getSettings().then(result => {
-        if (result.settings) {
-            Object.assign(State.settings, result.settings);
-            setTheme(State.settings.theme);
-            State.editor.updateOptions({
-                fontSize: State.settings.fontSize,
-                tabSize: State.settings.tabSize,
-                insertSpaces: !State.settings.useTabs
-            });
-        }
-    }).catch(() => {});
-
-    // Загрузка недавних файлов
-    API.getRecent().then(result => {
-        if (result.files?.length > 0) {
-            State.recentFiles = result.files;
-        }
-    }).catch(() => {});
-});
-
-// Theme system preference
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (State.settings.theme === 'system') {
-        setTheme('system');
-    }
-});
-
-// Auto-save
-setInterval(() => {
-    if (State.settings.autoSave && State.activeTabId) {
-        const tab = State.tabs.find(t => t.id === State.activeTabId);
-        if (tab?.modified && tab?.path) {
-            saveFile();
-        }
-    }
-}, State.settings.autoSaveInterval);
-
-// Prevent accidental close
-window.addEventListener('beforeunload', (e) => {
-    const hasModified = State.tabs.some(t => t.modified);
-    if (hasModified) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});
+// Запуск инициализации
+initMonacoEditor();
 </script>
 </body>
 </html>
