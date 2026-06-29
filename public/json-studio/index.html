@@ -635,20 +635,26 @@ body {
         <div class="titlebar-title">JSON Studio</div>
         <div class="titlebar-menu">
             <div class="menu-item" data-menu="file">
-                Файл
-                <div class="menu-dropdown">
-                    <div class="menu-dropdown-item" data-action="new"><span>Новый</span><span class="shortcut">Ctrl+N</span></div>
-                    <div class="menu-dropdown-item" data-action="open"><span>Открыть</span><span class="shortcut">Ctrl+O</span></div>
-                    <div class="menu-separator"></div>
-                    <div class="menu-dropdown-item" data-action="save"><span>Сохранить</span><span class="shortcut">Ctrl+S</span></div>
-                    <div class="menu-dropdown-item" data-action="save-as"><span>Сохранить как...</span><span class="shortcut">Ctrl+Shift+S</span></div>
-                    <div class="menu-separator"></div>
-                    <div class="menu-dropdown-item" data-action="recent"><span>Недавние файлы</span><span class="shortcut">→</span></div>
-                    <div class="menu-separator"></div>
-                    <div class="menu-dropdown-item" data-action="export"><span>Экспорт</span><span class="shortcut"></span></div>
-                    <div class="menu-dropdown-item" data-action="print"><span>Печать</span><span class="shortcut">Ctrl+P</span></div>
-                </div>
-            </div>
+    Файл
+    <div class="menu-dropdown">
+        <div class="menu-dropdown-item" data-action="new"><span>Новый</span><span class="shortcut">Ctrl+N</span></div>
+        <div class="menu-dropdown-item" data-action="open"><span>Открыть</span><span class="shortcut">Ctrl+O</span></div>
+        <div class="menu-separator"></div>
+        <div class="menu-dropdown-item" data-action="save"><span>Сохранить</span><span class="shortcut">Ctrl+S</span></div>
+        <div class="menu-dropdown-item" data-action="save-as"><span>Сохранить как...</span><span class="shortcut">Ctrl+Shift+S</span></div>
+        <div class="menu-dropdown-item" data-action="delete-file"><span>Удалить файл</span><span class="shortcut"></span></div>
+        <div class="menu-separator"></div>
+        <div class="menu-dropdown-item" data-action="pinned"><span>Закреплённые файлы</span><span class="shortcut">→</span></div>
+        <div class="menu-dropdown-item" data-action="recent"><span>Недавние файлы</span><span class="shortcut">→</span></div>
+        <div class="menu-dropdown-item" data-action="clear-recent"><span>Очистить историю</span><span class="shortcut"></span></div>
+        <div class="menu-separator"></div>
+        <div class="menu-dropdown-item" data-action="export"><span>Экспорт</span><span class="shortcut"></span></div>
+        <div class="menu-dropdown-item" data-action="print"><span>Печать</span><span class="shortcut">Ctrl+P</span></div>
+        <div class="menu-separator"></div>
+        <div class="menu-dropdown-item" data-action="server-status"><span>Статус сервера</span><span class="shortcut"></span></div>
+        <div class="menu-dropdown-item" data-action="stats"><span>Статистика</span><span class="shortcut"></span></div>
+    </div>
+</div>
             <div class="menu-item" data-menu="edit">
                 Правка
                 <div class="menu-dropdown">
@@ -889,10 +895,29 @@ const API = {
             throw err;
         }
     },
+    
+    // Health & Metrics
+    health: () => API.request('/health'),
+    metrics: () => API.request('/metrics'),
+    
+    // Files
     getFiles: () => API.request('/files'),
     openFile: (path) => API.request('/files/open', { method: 'POST', body: JSON.stringify({ path }) }),
+    openFileContent: (name, content) => API.request('/files/open', { method: 'POST', body: JSON.stringify({ name, content }) }),
     saveFile: (path, content) => API.request('/files/save', { method: 'POST', body: JSON.stringify({ path, content }) }),
-    saveFileAs: (path, content) => API.request('/files/save-as', { method: 'POST', body: JSON.stringify({ path, content }) }),
+    saveFileAs: (path, content, oldPath) => API.request('/files/save-as', { method: 'POST', body: JSON.stringify({ path, content, oldPath }) }),
+    deleteFile: (path) => API.request(`/files/${encodeURIComponent(path)}`, { method: 'DELETE' }),
+    
+    // Pin
+    pinFile: (path) => API.request('/files/pin', { method: 'POST', body: JSON.stringify({ path }) }),
+    unpinFile: (path) => API.request(`/files/unpin/${encodeURIComponent(path)}`, { method: 'DELETE' }),
+    getPinned: () => API.request('/files/pinned'),
+    
+    // Recent
+    getRecent: () => API.request('/recent'),
+    clearRecent: () => API.request('/recent/clear', { method: 'DELETE' }),
+    
+    // JSON Operations
     validate: (content) => API.request('/validate', { method: 'POST', body: JSON.stringify({ content }) }),
     format: (content, indent = 2, useTabs = false) => API.request('/format', { method: 'POST', body: JSON.stringify({ content, indent, useTabs }) }),
     minify: (content) => API.request('/minify', { method: 'POST', body: JSON.stringify({ content }) }),
@@ -900,12 +925,34 @@ const API = {
     convert: (content, from, to) => API.request('/convert', { method: 'POST', body: JSON.stringify({ content, from, to }) }),
     compare: (left, right) => API.request('/compare', { method: 'POST', body: JSON.stringify({ left, right }) }),
     schemaValidate: (content, schema) => API.request('/schema/validate', { method: 'POST', body: JSON.stringify({ content, schema }) }),
-    getRecent: () => API.request('/recent'),
-    pinFile: (path) => API.request('/files/pin', { method: 'POST', body: JSON.stringify({ path }) }),
+    
+    // Settings
     getSettings: () => API.request('/settings'),
     saveSettings: (settings) => API.request('/settings', { method: 'POST', body: JSON.stringify({ settings }) }),
+    
+    // Generators & Encoding
     generate: (type, options) => API.request('/generate', { method: 'POST', body: JSON.stringify({ type, options }) }),
-    encode: (content, type) => API.request('/encode', { method: 'POST', body: JSON.stringify({ content, type }) })
+    encode: (content, type) => API.request('/encode', { method: 'POST', body: JSON.stringify({ content, type }) }),
+    
+    // Stats
+    stats: () => API.request('/stats'),
+    
+    // Admin
+    adminClear: (token) => API.request('/admin/clear', { 
+        method: 'POST', 
+        headers: { 'Authorization': `Bearer ${token}` }
+    }),
+    adminCleanupBackups: (token) => API.request('/admin/cleanup-backups', { 
+        method: 'POST', 
+        headers: { 'Authorization': `Bearer ${token}` }
+    }),
+    adminGetBackups: (token) => API.request('/admin/backups', { 
+        headers: { 'Authorization': `Bearer ${token}` }
+    }),
+    adminRestoreBackup: (token, backupKey) => API.request(`/admin/restore/${encodeURIComponent(backupKey)}`, { 
+        method: 'POST', 
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
 };
 
 // ============================================
@@ -991,15 +1038,25 @@ async function handleFiles(files) {
     for (const file of files) {
         try {
             const content = await file.text();
-            // Отправляем на сервер для обработки
             try {
-                await API.request('/files/open', {
-                    method: 'POST',
-                    body: JSON.stringify({ name: file.name, content })
-                });
-            } catch (e) { /* сервер недоступен, работаем локально */ }
-            createTab(file.name, content, file.name);
-            toast(`Открыт: ${file.name}`, 'success');
+                const result = await API.openFileContent(file.name, content);
+                createTab(result.name || file.name, result.content, result.name || file.name);
+                toast(`Открыт: ${file.name}`, 'success');
+            } catch (e) {
+                // Если сервер недоступен — открываем локально
+                if (e.message.includes('Нет соединения')) {
+                    createTab(file.name, content, file.name);
+                    toast(`Открыт локально: ${file.name}`, 'warning');
+                } else if (e.message.includes('слишком большой')) {
+                    toast('Файл слишком большой (макс. 100 MB)', 'error');
+                } else if (e.message.includes('Невалидный JSON')) {
+                    if (confirm('JSON невалиден. Открыть всё равно?')) {
+                        createTab(file.name, content, file.name);
+                    }
+                } else {
+                    throw e;
+                }
+            }
         } catch (err) {
             toast(`Ошибка открытия ${file.name}: ${err.message}`, 'error');
         }
@@ -1013,13 +1070,23 @@ async function saveFile() {
     if (!tab.path) { saveFileAs(); return; }
     try {
         const content = State.editor.getValue();
-        await API.saveFile(tab.path, content);
+        const result = await API.saveFile(tab.path, content);
         tab.content = content;
         tab.modified = false;
         renderTabs();
-        toast('Файл сохранён', 'success');
+        toast(`Сохранено (${result.size} байт)`, 'success');
     } catch (err) {
-        toast('Ошибка сохранения: ' + err.message, 'error');
+        if (err.message.includes('Нет соединения')) {
+            // Сохраняем локально
+            tab.content = State.editor.getValue();
+            tab.modified = false;
+            renderTabs();
+            toast('Сохранено локально (сервер недоступен)', 'warning');
+        } else if (err.message.includes('Невалидный JSON')) {
+            toast('Нельзя сохранить невалидный JSON', 'error');
+        } else {
+            toast('Ошибка сохранения: ' + err.message, 'error');
+        }
     }
     closeAllMenus();
 }
@@ -1437,6 +1504,17 @@ function toggleRightPanel() {
 function updateStatusBar(tab) {
     document.getElementById('statusFile').textContent = tab?.path || tab?.name || 'Нет файла';
     document.getElementById('statusIndent').textContent = `${State.settings.useTabs ? 'Tabs' : 'Пробелы'}: ${State.settings.tabSize}`;
+    
+    // Размер файла
+    if (tab && State.editor) {
+        const size = State.editor.getValue().length;
+        const sizeStr = size > 1024 * 1024 
+            ? `${(size / 1024 / 1024).toFixed(1)} MB` 
+            : size > 1024 
+                ? `${(size / 1024).toFixed(1)} KB` 
+                : `${size} B`;
+        document.getElementById('statusReady').innerHTML = `<i class="fas fa-check"></i> ${sizeStr}`;
+    }
 }
 
 function toast(message, type = 'info') {
@@ -1492,9 +1570,31 @@ function handleMenuAction(action) {
         'compare': showCompare, 'convert': showConvert, 'schema': showSchema,
         'generators': showTools, 'shortcuts': showShortcuts, 'about': showAbout,
         'export': showExport, 'print': () => window.print(),
-        'recent': showRecent
+        'recent': showRecent,
+        'pinned': showPinnedFiles,
+        'clear-recent': clearRecentFiles,
+        'server-status': showServerStatus,
+        'stats': showStats,
+        'delete-file': deleteCurrentFile
     };
     if (actions[action]) actions[action]();
+}
+
+async function deleteCurrentFile() {
+    const tab = State.tabs.find(t => t.id === State.activeTabId);
+    if (!tab || !tab.path) {
+        toast('Нет файла для удаления', 'warning');
+        return;
+    }
+    if (!confirm(`Удалить файл "${tab.name}"?`)) return;
+    
+    try {
+        await API.deleteFile(tab.path);
+        toast('Файл удалён', 'success');
+        closeTab(tab.id);
+    } catch (err) {
+        toast('Ошибка: ' + err.message, 'error');
+    }
 }
 
 function setTheme(theme) {
@@ -1709,6 +1809,31 @@ function showRecent() {
     });
 }
 
+function showPinnedFiles() {
+    API.getPinned().then(result => {
+        const files = result.files || [];
+        const body = files.length === 0
+            ? '<div class="empty-state"><i class="fas fa-thumbtack"></i><h3>Нет закреплённых файлов</h3></div>'
+            : files.map(f => `
+                <div class="menu-dropdown-item" onclick="openRecentFile('${escapeHtml(f.path)}')">
+                    <span><i class="fas fa-thumbtack" style="color:var(--warning);margin-right:6px;"></i>${escapeHtml(f.path)}</span>
+                    <span class="shortcut">${Math.round(f.size / 1024)} KB</span>
+                </div>`).join('');
+        showModal('Закреплённые файлы', body, [{ text: 'Закрыть', class: 'secondary', action: 'closeModal()' }]);
+    }).catch(() => {
+        showModal('Закреплённые файлы', '<div class="empty-state"><i class="fas fa-exclamation"></i><h3>Сервер недоступен</h3></div>', [{ text: 'Закрыть', class: 'secondary', action: 'closeModal()' }]);
+    });
+}
+
+function clearRecentFiles() {
+    if (!confirm('Очистить историю недавних файлов?')) return;
+    API.clearRecent().then(() => {
+        toast('История очищена', 'success');
+    }).catch(err => {
+        toast('Ошибка: ' + err.message, 'error');
+    });
+}
+
 async function openRecentFile(path) {
     try {
         const result = await API.openFile(path);
@@ -1742,6 +1867,90 @@ function showAbout() {
             <p style="color:var(--text-secondary);font-size:12px;line-height:1.6;">Профессиональный редактор JSON для Windows 10/11.<br>Создан с использованием современных веб-технологий.</p>
         </div>`;
     showModal('О программе', body, [{ text: 'Закрыть', class: 'primary', action: 'closeModal()' }]);
+}
+
+function showServerStatus() {
+    API.health().then(result => {
+        const uptime = new Date(result.uptime * 1000).toISOString().substr(11, 8);
+        const body = `
+            <div style="display:grid;gap:10px;">
+                <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                    <span style="color:var(--text-secondary);">Статус</span>
+                    <span style="color:var(--success);font-weight:600;">● Работает</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                    <span style="color:var(--text-secondary);">Uptime</span>
+                    <span style="font-family:var(--font-mono);">${uptime}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                    <span style="color:var(--text-secondary);">Время сервера</span>
+                    <span style="font-family:var(--font-mono);">${new Date(result.timestamp).toLocaleString('ru-RU')}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                    <span style="color:var(--text-secondary);">RAM (heap)</span>
+                    <span style="font-family:var(--font-mono);">${Math.round(result.memory.heapUsed / 1024 / 1024)} MB</span>
+                </div>
+            </div>`;
+        showModal('Статус сервера', body, [{ text: 'Закрыть', class: 'primary', action: 'closeModal()' }]);
+    }).catch(() => {
+        showModal('Статус сервера', 
+            '<div style="text-align:center;padding:20px;"><i class="fas fa-exclamation-triangle" style="font-size:32px;color:var(--error);margin-bottom:12px;"></i><h3>Сервер недоступен</h3><p style="color:var(--text-secondary);font-size:12px;">Работа в локальном режиме</p></div>', 
+            [{ text: 'Закрыть', class: 'primary', action: 'closeModal()' }]
+        );
+    });
+}
+
+function showStats() {
+    API.stats().then(result => {
+        const body = `
+            <div style="display:grid;gap:12px;">
+                <div>
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">Файлы</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center;">
+                            <div style="font-size:18px;font-weight:700;">${result.files.total}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Открыто</div>
+                        </div>
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center;">
+                            <div style="font-size:18px;font-weight:700;">${result.files.recent}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Недавних</div>
+                        </div>
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center;">
+                            <div style="font-size:18px;font-weight:700;">${result.files.pinned}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Закреплено</div>
+                        </div>
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);text-align:center;">
+                            <div style="font-size:18px;font-weight:700;">${result.files.backups}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Backup'ов</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">Метрики</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                            <div style="font-size:14px;font-weight:700;">${result.metrics.totalRequests}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Запросов</div>
+                        </div>
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                            <div style="font-size:14px;font-weight:700;">${result.metrics.totalConversions}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Конвертаций</div>
+                        </div>
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                            <div style="font-size:14px;font-weight:700;color:var(--error);">${result.metrics.errors}</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Ошибок</div>
+                        </div>
+                        <div style="padding:8px;background:var(--bg-primary);border-radius:var(--radius-sm);">
+                            <div style="font-size:14px;font-weight:700;">${Math.floor(result.metrics.uptime / 60)}м</div>
+                            <div style="font-size:10px;color:var(--text-secondary);">Аптайм</div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        showModal('Статистика', body, [{ text: 'Закрыть', class: 'primary', action: 'closeModal()' }]);
+    }).catch(() => {
+        toast('Сервер недоступен', 'error');
+    });
 }
 
 // ============================================
@@ -1783,6 +1992,7 @@ document.addEventListener('keydown', (e) => {
             case 'b': e.preventDefault(); toggleTree(); break;
             case 'j': e.preventDefault(); toggleRightPanel(); break;
             case 'p': e.preventDefault(); window.print(); break;
+            case 'd': if (e.shiftKey) { e.preventDefault(); deleteCurrentFile(); } break;
         }
     }
     if (e.shiftKey && e.altKey && e.key.toLowerCase() === 'f') {
