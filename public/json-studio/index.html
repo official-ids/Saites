@@ -2183,6 +2183,77 @@ function initMonacoEditor() {
     });
 }
 
+// ============================================
+// Electron Integration
+// ============================================
+if (window.electronAPI?.isElectron) {
+    console.log('[JSON Studio] Running in Electron');
+    
+    // Переопределяем функции для работы с локальными файлами
+    const originalOpenFile = openFile;
+    const originalSaveFile = saveFile;
+    const originalSaveFileAs = saveFileAs;
+    
+    window.openFile = async function() {
+        const result = await window.electronAPI.openFile();
+        if (result.success) {
+            createTab(result.name, result.content, result.path);
+            toast(`Открыт: ${result.name}`, 'success');
+        }
+    };
+    
+    window.saveFile = async function() {
+        const tab = State.tabs.find(t => t.id === State.activeTabId);
+        if (!tab) return;
+        if (!tab.path) { saveFileAs(); return; }
+        
+        const content = State.editor.getValue();
+        const result = await window.electronAPI.saveFile(tab.path, content);
+        if (result.success) {
+            tab.content = content;
+            tab.modified = false;
+            renderTabs();
+            toast('Файл сохранён', 'success');
+        } else {
+            toast('Ошибка: ' + result.error, 'error');
+        }
+    };
+    
+    window.saveFileAs = async function() {
+        const tab = State.tabs.find(t => t.id === State.activeTabId);
+        if (!tab) return;
+        
+        const content = State.editor.getValue();
+        const result = await window.electronAPI.saveFileAs(content, tab.name);
+        if (result.success) {
+            tab.path = result.path;
+            tab.name = result.path.split(/[/\\]/).pop();
+            tab.content = content;
+            tab.modified = false;
+            renderTabs();
+            toast('Файл сохранён', 'success');
+        } else if (!result.canceled) {
+            toast('Ошибка: ' + result.error, 'error');
+        }
+    };
+    
+    // Приём файла извне (открыть с помощью JSON Studio)
+    window.electronAPI.onFileOpened((file) => {
+        createTab(file.name, file.content, file.path);
+        toast(`Открыт: ${file.name}`, 'success');
+    });
+    
+    // Обработка действий из меню
+    window.electronAPI.onMenuAction((action) => {
+        if (action === 'save') saveFile();
+        else if (action === 'save-as') saveFileAs();
+    });
+    
+    // Скрываем элементы, которые не нужны в Electron
+    document.querySelectorAll('.titlebar-controls').forEach(el => el.style.display = 'none');
+    document.querySelector('.titlebar').style.webkitAppRegion = 'no-drag';
+}
+
 initMonacoEditor();
 </script>
 </body>
