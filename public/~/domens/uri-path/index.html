@@ -1,0 +1,654 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Path Characters — Allowed Symbols After the Domain Name</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>URL Path Characters</h1>
+    <p class="subtitle">Allowed symbols after the domain name.</p>
+</header>
+
+<main>
+
+    <section id="introduction">
+        <h2>Introduction</h2>
+        <p>This page documents every character that may appear in the <strong>path</strong> component of a URL — the part that comes after the domain name and before the query string or fragment.</p>
+        <p>For example, in the URL <code>https://example.com/docs/api/v2#section</code>, the path is <code>/docs/api/v2</code>. This document covers exactly which characters are legal inside that path, which of them must be percent-encoded, and which are reserved for structural purposes.</p>
+        <p>The rules described here are defined by <strong>RFC 3986</strong>, the current standard for Uniform Resource Identifiers (URI), published in January 2005.</p>
+    </section>
+
+    <section id="allowed-characters">
+        <h2>Allowed Characters</h2>
+        <p>The table below lists every printable ASCII character and its status inside a URL path. Characters are grouped by their role according to RFC 3986.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Char</th>
+                    <th>Name</th>
+                    <th>Unicode</th>
+                    <th>ASCII</th>
+                    <th>Percent-Encoding</th>
+                    <th>Category</th>
+                    <th>Can Be Used Raw</th>
+                    <th>Needs Encoding</th>
+                    <th>Example URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="mono">A–Z</td>
+                    <td>Uppercase Latin letters</td>
+                    <td>U+0041 – U+005A</td>
+                    <td>65 – 90</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/ABC</td>
+                </tr>
+                <tr>
+                    <td class="mono">a–z</td>
+                    <td>Lowercase Latin letters</td>
+                    <td>U+0061 – U+007A</td>
+                    <td>97 – 122</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/abc</td>
+                </tr>
+                <tr>
+                    <td class="mono">0–9</td>
+                    <td>Digits</td>
+                    <td>U+0030 – U+0039</td>
+                    <td>48 – 57</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/123</td>
+                </tr>
+                <tr>
+                    <td class="mono">-</td>
+                    <td>Hyphen / Minus</td>
+                    <td>U+002D</td>
+                    <td>45</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/file-name</td>
+                </tr>
+                <tr>
+                    <td class="mono">.</td>
+                    <td>Period / Full stop</td>
+                    <td>U+002E</td>
+                    <td>46</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/file.txt</td>
+                </tr>
+                <tr>
+                    <td class="mono">_</td>
+                    <td>Underscore</td>
+                    <td>U+005F</td>
+                    <td>95</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/file_name</td>
+                </tr>
+                <tr>
+                    <td class="mono">~</td>
+                    <td>Tilde</td>
+                    <td>U+007E</td>
+                    <td>126</td>
+                    <td>—</td>
+                    <td>Unreserved</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/~user</td>
+                </tr>
+                <tr>
+                    <td class="mono">!</td>
+                    <td>Exclamation mark</td>
+                    <td>U+0021</td>
+                    <td>33</td>
+                    <td>%21</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/!</td>
+                </tr>
+                <tr>
+                    <td class="mono">$</td>
+                    <td>Dollar sign</td>
+                    <td>U+0024</td>
+                    <td>36</td>
+                    <td>%24</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/$</td>
+                </tr>
+                <tr>
+                    <td class="mono">&amp;</td>
+                    <td>Ampersand</td>
+                    <td>U+0026</td>
+                    <td>38</td>
+                    <td>%26</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/&amp;</td>
+                </tr>
+                <tr>
+                    <td class="mono">'</td>
+                    <td>Apostrophe</td>
+                    <td>U+0027</td>
+                    <td>39</td>
+                    <td>%27</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/'</td>
+                </tr>
+                <tr>
+                    <td class="mono">(</td>
+                    <td>Left parenthesis</td>
+                    <td>U+0028</td>
+                    <td>40</td>
+                    <td>%28</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/(</td>
+                </tr>
+                <tr>
+                    <td class="mono">)</td>
+                    <td>Right parenthesis</td>
+                    <td>U+0029</td>
+                    <td>41</td>
+                    <td>%29</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/)</td>
+                </tr>
+                <tr>
+                    <td class="mono">*</td>
+                    <td>Asterisk</td>
+                    <td>U+002A</td>
+                    <td>42</td>
+                    <td>%2A</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/*</td>
+                </tr>
+                <tr>
+                    <td class="mono">+</td>
+                    <td>Plus sign</td>
+                    <td>U+002B</td>
+                    <td>43</td>
+                    <td>%2B</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/+</td>
+                </tr>
+                <tr>
+                    <td class="mono">,</td>
+                    <td>Comma</td>
+                    <td>U+002C</td>
+                    <td>44</td>
+                    <td>%2C</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/,</td>
+                </tr>
+                <tr>
+                    <td class="mono">;</td>
+                    <td>Semicolon</td>
+                    <td>U+003B</td>
+                    <td>59</td>
+                    <td>%3B</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/;</td>
+                </tr>
+                <tr>
+                    <td class="mono">=</td>
+                    <td>Equals sign</td>
+                    <td>U+003D</td>
+                    <td>61</td>
+                    <td>%3D</td>
+                    <td>Sub-delimiter</td>
+                    <td>Yes</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/=</td>
+                </tr>
+                <tr>
+                    <td class="mono">:</td>
+                    <td>Colon</td>
+                    <td>U+003A</td>
+                    <td>58</td>
+                    <td>%3A</td>
+                    <td>General delimiter</td>
+                    <td>Yes (in path)</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/a:b</td>
+                </tr>
+                <tr>
+                    <td class="mono">@</td>
+                    <td>At sign</td>
+                    <td>U+0040</td>
+                    <td>64</td>
+                    <td>%40</td>
+                    <td>General delimiter</td>
+                    <td>Yes (in path)</td>
+                    <td>No</td>
+                    <td class="mono">example.com/ex/@user</td>
+                </tr>
+                <tr>
+                    <td class="mono">/</td>
+                    <td>Slash</td>
+                    <td>U+002F</td>
+                    <td>47</td>
+                    <td>%2F</td>
+                    <td>General delimiter</td>
+                    <td>As separator</td>
+                    <td>If literal</td>
+                    <td class="mono">example.com/ex/a/b</td>
+                </tr>
+                <tr>
+                    <td class="mono">[</td>
+                    <td>Left square bracket</td>
+                    <td>U+005B</td>
+                    <td>91</td>
+                    <td>%5B</td>
+                    <td>General delimiter</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%5B</td>
+                </tr>
+                <tr>
+                    <td class="mono">]</td>
+                    <td>Right square bracket</td>
+                    <td>U+005D</td>
+                    <td>93</td>
+                    <td>%5D</td>
+                    <td>General delimiter</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%5D</td>
+                </tr>
+                <tr>
+                    <td class="mono">?</td>
+                    <td>Question mark</td>
+                    <td>U+003F</td>
+                    <td>63</td>
+                    <td>%3F</td>
+                    <td>General delimiter</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%3F</td>
+                </tr>
+                <tr>
+                    <td class="mono">#</td>
+                    <td>Hash / Number sign</td>
+                    <td>U+0023</td>
+                    <td>35</td>
+                    <td>%23</td>
+                    <td>General delimiter</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%23</td>
+                </tr>
+                <tr>
+                    <td class="mono">%</td>
+                    <td>Percent sign</td>
+                    <td>U+0025</td>
+                    <td>37</td>
+                    <td>%25</td>
+                    <td>Encoding marker</td>
+                    <td>Only as escape</td>
+                    <td>If literal</td>
+                    <td class="mono">example.com/ex/%25</td>
+                </tr>
+                <tr>
+                    <td class="mono">SP</td>
+                    <td>Space</td>
+                    <td>U+0020</td>
+                    <td>32</td>
+                    <td>%20</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/a%20b</td>
+                </tr>
+                <tr>
+                    <td class="mono">"</td>
+                    <td>Double quote</td>
+                    <td>U+0022</td>
+                    <td>34</td>
+                    <td>%22</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%22</td>
+                </tr>
+                <tr>
+                    <td class="mono">&lt;</td>
+                    <td>Less-than</td>
+                    <td>U+003C</td>
+                    <td>60</td>
+                    <td>%3C</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%3C</td>
+                </tr>
+                <tr>
+                    <td class="mono">&gt;</td>
+                    <td>Greater-than</td>
+                    <td>U+003E</td>
+                    <td>62</td>
+                    <td>%3E</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%3E</td>
+                </tr>
+                <tr>
+                    <td class="mono">\</td>
+                    <td>Backslash</td>
+                    <td>U+005C</td>
+                    <td>92</td>
+                    <td>%5C</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%5C</td>
+                </tr>
+                <tr>
+                    <td class="mono">^</td>
+                    <td>Caret</td>
+                    <td>U+005E</td>
+                    <td>94</td>
+                    <td>%5E</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%5E</td>
+                </tr>
+                <tr>
+                    <td class="mono">`</td>
+                    <td>Grave accent</td>
+                    <td>U+0060</td>
+                    <td>96</td>
+                    <td>%60</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%60</td>
+                </tr>
+                <tr>
+                    <td class="mono">{</td>
+                    <td>Left curly bracket</td>
+                    <td>U+007B</td>
+                    <td>123</td>
+                    <td>%7B</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%7B</td>
+                </tr>
+                <tr>
+                    <td class="mono">|</td>
+                    <td>Vertical bar / Pipe</td>
+                    <td>U+007C</td>
+                    <td>124</td>
+                    <td>%7C</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%7C</td>
+                </tr>
+                <tr>
+                    <td class="mono">}</td>
+                    <td>Right curly bracket</td>
+                    <td>U+007D</td>
+                    <td>125</td>
+                    <td>%7D</td>
+                    <td>Unsafe</td>
+                    <td>No</td>
+                    <td>Yes</td>
+                    <td class="mono">example.com/ex/%7D</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="reserved">
+        <h2>Reserved Characters</h2>
+        <p>Reserved characters have a special structural meaning in a URI. They are split into two groups: <strong>general delimiters</strong> (gen-delims) and <strong>sub-delimiters</strong> (sub-delims). Inside the path component, only some of them may appear literally.</p>
+
+        <h3>General Delimiters</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Char</th>
+                    <th>Encoding</th>
+                    <th>Purpose</th>
+                    <th>Allowed in Path</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="mono">:</td><td>%3A</td><td>Separates the scheme from the rest of the URI (e.g. <code>https:</code>). Also used inside path segments.</td><td>Yes</td></tr>
+                <tr><td class="mono">/</td><td>%2F</td><td>Separates path segments (e.g. <code>/docs/api</code>).</td><td>As separator only</td></tr>
+                <tr><td class="mono">?</td><td>%3F</td><td>Marks the beginning of the query component.</td><td>No (must encode)</td></tr>
+                <tr><td class="mono">#</td><td>%23</td><td>Marks the beginning of the fragment identifier.</td><td>No (must encode)</td></tr>
+                <tr><td class="mono">[</td><td>%5B</td><td>Used in IPv6 host literals. Not allowed in path.</td><td>No (must encode)</td></tr>
+                <tr><td class="mono">]</td><td>%5D</td><td>Used in IPv6 host literals. Not allowed in path.</td><td>No (must encode)</td></tr>
+                <tr><td class="mono">@</td><td>%40</td><td>Separates user information from the host. Permitted inside path segments.</td><td>Yes</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Sub-Delimiters</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Char</th>
+                    <th>Encoding</th>
+                    <th>Purpose</th>
+                    <th>Allowed in Path</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="mono">!</td><td>%21</td><td>General sub-delimiter, no special URI meaning.</td><td>Yes</td></tr>
+                <tr><td class="mono">$</td><td>%24</td><td>General sub-delimiter.</td><td>Yes</td></tr>
+                <tr><td class="mono">&amp;</td><td>%26</td><td>Separates key-value pairs in query strings; legal in path.</td><td>Yes</td></tr>
+                <tr><td class="mono">'</td><td>%27</td><td>General sub-delimiter.</td><td>Yes</td></tr>
+                <tr><td class="mono">(</td><td>%28</td><td>General sub-delimiter.</td><td>Yes</td></tr>
+                <tr><td class="mono">)</td><td>%29</td><td>General sub-delimiter.</td><td>Yes</td></tr>
+                <tr><td class="mono">*</td><td>%2A</td><td>General sub-delimiter; sometimes used as wildcard.</td><td>Yes</td></tr>
+                <tr><td class="mono">+</td><td>%2B</td><td>General sub-delimiter; represents space in query strings only.</td><td>Yes</td></tr>
+                <tr><td class="mono">,</td><td>%2C</td><td>General sub-delimiter.</td><td>Yes</td></tr>
+                <tr><td class="mono">;</td><td>%3B</td><td>Separates path parameters (matrix parameters).</td><td>Yes</td></tr>
+                <tr><td class="mono">=</td><td>%3D</td><td>Separates keys from values in query strings; legal in path.</td><td>Yes</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="unreserved">
+        <h2>Unreserved Characters</h2>
+        <p>Unreserved characters are the safest choice for URL paths. They are never interpreted as delimiters and never need percent-encoding. RFC 3986 explicitly recommends using only these characters when designing new URIs.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Set</th>
+                    <th>Characters</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Uppercase letters</td><td class="mono">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</td><td>26</td></tr>
+                <tr><td>Lowercase letters</td><td class="mono">a b c d e f g h i j k l m n o p q r s t u v w x y z</td><td>26</td></tr>
+                <tr><td>Digits</td><td class="mono">0 1 2 3 4 5 6 7 8 9</td><td>10</td></tr>
+                <tr><td>Hyphen</td><td class="mono">-</td><td>1</td></tr>
+                <tr><td>Period</td><td class="mono">.</td><td>1</td></tr>
+                <tr><td>Underscore</td><td class="mono">_</td><td>1</td></tr>
+                <tr><td>Tilde</td><td class="mono">~</td><td>1</td></tr>
+            </tbody>
+        </table>
+
+        <p><strong>Total: 66 characters.</strong></p>
+
+        <h3>Why These Characters Are Recommended</h3>
+        <ul>
+            <li>They are not reserved for any structural role in a URI.</li>
+            <li>They are interpreted identically whether encoded or not — <code>a</code> and <code>%61</code> mean the same thing.</li>
+            <li>They are safe across all transport protocols, proxies, gateways, and user agents.</li>
+            <li>They are human-readable and easy to type.</li>
+            <li>They do not conflict with any URI component delimiter.</li>
+        </ul>
+    </section>
+
+    <section id="percent-encoding">
+        <h2>Percent-Encoding</h2>
+        <p>Percent-encoding represents a byte as a three-character sequence: a percent sign <code>%</code> followed by two hexadecimal digits. It is the only way to include characters that are otherwise illegal or reserved in a URI component.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Character</th>
+                    <th>Name</th>
+                    <th>ASCII</th>
+                    <th>Encoding</th>
+                    <th>Reason to Encode</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="mono">SP</td><td>Space</td><td>32</td><td>%20</td><td>Unsafe, not allowed in URIs</td></tr>
+                <tr><td class="mono">!</td><td>Exclamation</td><td>33</td><td>%21</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">"</td><td>Double quote</td><td>34</td><td>%22</td><td>Unsafe</td></tr>
+                <tr><td class="mono">#</td><td>Hash</td><td>35</td><td>%23</td><td>Fragment delimiter</td></tr>
+                <tr><td class="mono">$</td><td>Dollar</td><td>36</td><td>%24</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">%</td><td>Percent</td><td>37</td><td>%25</td><td>Escape character itself</td></tr>
+                <tr><td class="mono">&amp;</td><td>Ampersand</td><td>38</td><td>%26</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">'</td><td>Apostrophe</td><td>39</td><td>%27</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">(</td><td>Left parenthesis</td><td>40</td><td>%28</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">)</td><td>Right parenthesis</td><td>41</td><td>%29</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">*</td><td>Asterisk</td><td>42</td><td>%2A</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">+</td><td>Plus</td><td>43</td><td>%2B</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">,</td><td>Comma</td><td>44</td><td>%2C</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">/</td><td>Slash</td><td>47</td><td>%2F</td><td>Path segment separator</td></tr>
+                <tr><td class="mono">:</td><td>Colon</td><td>58</td><td>%3A</td><td>Scheme delimiter</td></tr>
+                <tr><td class="mono">;</td><td>Semicolon</td><td>59</td><td>%3B</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">&lt;</td><td>Less-than</td><td>60</td><td>%3C</td><td>Unsafe</td></tr>
+                <tr><td class="mono">=</td><td>Equals</td><td>61</td><td>%3D</td><td>Optional (sub-delim)</td></tr>
+                <tr><td class="mono">&gt;</td><td>Greater-than</td><td>62</td><td>%3E</td><td>Unsafe</td></tr>
+                <tr><td class="mono">?</td><td>Question mark</td><td>63</td><td>%3F</td><td>Query delimiter</td></tr>
+                <tr><td class="mono">@</td><td>At sign</td><td>64</td><td>%40</td><td>User-info delimiter</td></tr>
+                <tr><td class="mono">[</td><td>Left bracket</td><td>91</td><td>%5B</td><td>Reserved for IPv6</td></tr>
+                <tr><td class="mono">\</td><td>Backslash</td><td>92</td><td>%5C</td><td>Unsafe</td></tr>
+                <tr><td class="mono">]</td><td>Right bracket</td><td>93</td><td>%5D</td><td>Reserved for IPv6</td></tr>
+                <tr><td class="mono">^</td><td>Caret</td><td>94</td><td>%5E</td><td>Unsafe</td></tr>
+                <tr><td class="mono">_</td><td>Underscore</td><td>95</td><td>—</td><td>Unreserved, no encoding needed</td></tr>
+                <tr><td class="mono">`</td><td>Grave accent</td><td>96</td><td>%60</td><td>Unsafe</td></tr>
+                <tr><td class="mono">{</td><td>Left brace</td><td>123</td><td>%7B</td><td>Unsafe</td></tr>
+                <tr><td class="mono">|</td><td>Pipe</td><td>124</td><td>%7C</td><td>Unsafe</td></tr>
+                <tr><td class="mono">}</td><td>Right brace</td><td>125</td><td>%7D</td><td>Unsafe</td></tr>
+                <tr><td class="mono">~</td><td>Tilde</td><td>126</td><td>—</td><td>Unreserved, no encoding needed</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="examples">
+        <h2>Examples</h2>
+        <p>Real-world URL paths demonstrating different character categories.</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="mono">example.com/ex/hello</td><td>Plain unreserved characters.</td></tr>
+                <tr><td class="mono">example.com/ex/hello-world</td><td>Hyphenated path segment.</td></tr>
+                <tr><td class="mono">example.com/ex/hello_world</td><td>Underscore separator.</td></tr>
+                <tr><td class="mono">example.com/ex/file.txt</td><td>Period used for file extension.</td></tr>
+                <tr><td class="mono">example.com/ex/~user</td><td>Tilde, common in legacy user directories.</td></tr>
+                <tr><td class="mono">example.com/ex/!important</td><td>Sub-delimiter used literally.</td></tr>
+                <tr><td class="mono">example.com/ex/$price</td><td>Dollar sign in path.</td></tr>
+                <tr><td class="mono">example.com/ex/@user</td><td>At sign, common for user profiles.</td></tr>
+                <tr><td class="mono">example.com/ex/a:b</td><td>Colon allowed inside a path segment.</td></tr>
+                <tr><td class="mono">example.com/ex/a/b/c</td><td>Slash separates path segments.</td></tr>
+                <tr><td class="mono">example.com/ex/a%20b</td><td>Space encoded as %20.</td></tr>
+                <tr><td class="mono">example.com/ex/file%2Fname</td><td>Literal slash encoded (does not create a new segment).</td></tr>
+                <tr><td class="mono">example.com/ex/%23tag</td><td>Hash encoded so it is not interpreted as fragment.</td></tr>
+                <tr><td class="mono">example.com/ex/%3Fquery</td><td>Question mark encoded so it is not interpreted as query.</td></tr>
+                <tr><td class="mono">example.com/ex/%5B0%5D</td><td>Square brackets encoded (e.g. array notation).</td></tr>
+                <tr><td class="mono">example.com/ex/100%25</td><td>Literal percent sign encoded as %25.</td></tr>
+                <tr><td class="mono">example.com/ex/path;param=value</td><td>Path parameter (matrix parameter) syntax.</td></tr>
+                <tr><td class="mono">example.com/ex/(archive)</td><td>Parentheses allowed as sub-delimiters.</td></tr>
+                <tr><td class="mono">example.com/ex/a+b</td><td>Plus sign allowed; not interpreted as space in path.</td></tr>
+                <tr><td class="mono">example.com/ex/a&amp;b</td><td>Ampersand allowed in path (unlike in query).</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="rfc">
+        <h2>RFC Reference</h2>
+        <p>The authoritative specification for URI syntax is:</p>
+        <blockquote>
+            <p><strong>RFC 3986</strong></p>
+            <p>Uniform Resource Identifier (URI): Generic Syntax</p>
+            <p>Authors: T. Berners-Lee, R. Fielding, L. Masinter</p>
+            <p>Date: January 2005</p>
+            <p>Status: Internet Standard (STD 66)</p>
+        </blockquote>
+        <p>Relevant sections of RFC 3986:</p>
+        <ul>
+            <li><strong>Section 2</strong> — Characters (unreserved, reserved, percent-encoded).</li>
+            <li><strong>Section 3.3</strong> — The Path component and its ABNF grammar.</li>
+            <li><strong>Section 2.1</strong> — Percent-Encoding definition.</li>
+            <li><strong>Section 2.2</strong> — Reserved characters.</li>
+            <li><strong>Section 2.3</strong> — Unreserved characters.</li>
+        </ul>
+        <p>ABNF grammar for the path component (simplified):</p>
+        <pre>
+path          = path-abempty    ; begins with "/" or is empty
+              / path-absolute   ; begins with "/" but not "//"
+              / path-noscheme   ; begins with a non-colon segment
+              / path-rootless   ; begins with a segment
+              / path-empty      ; zero characters
+
+pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
+        </pre>
+        <p>This grammar shows that a path segment (<code>pchar</code>) may contain unreserved characters, percent-encoded triplets, sub-delimiters, and the characters <code>:</code> and <code>@</code>. The slash <code>/</code> is only allowed as a separator between segments.</p>
+    </section>
+
+</main>
+
+<footer>
+    <p>Reference documentation based on RFC 3986. For the authoritative specification, consult the IETF standards directly.</p>
+</footer>
+
+</body>
+</html>
