@@ -2294,6 +2294,57 @@ if (window.electronAPI?.isElectron) {
     document.querySelector('.titlebar').style.webkitAppRegion = 'no-drag';
 }
 
+// ============================================
+// 🚫 Глобальный перехватчик Ctrl+S
+// Перехватывает событие ДО Monaco Editor и браузера
+// ============================================
+document.addEventListener('keydown', function(e) {
+    // Ловим Ctrl+S (Windows/Linux) и Cmd+S (Mac)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();      // 🔒 Блокируем браузерное сохранение
+        e.stopPropagation();     // 🛑 Останавливаем всплытие до Monaco Editor
+        e.stopImmediatePropagation(); // 🚫 Блокируем другие обработчики
+        
+        // Вызываем свою функцию сохранения
+        if (e.shiftKey) {
+            saveFileAs();  // Ctrl+Shift+S
+        } else {
+            saveFile();    // Ctrl+S
+        }
+        return false;
+    }
+    
+    // Дополнительно: блокируем Ctrl+P (печать страницы браузером)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        window.print(); // Или своя функция печати
+        return false;
+    }
+    
+    // Блокируем Ctrl+U (просмотр исходного кода)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    }
+}, true); // ← true = capture phase (перехват ДО других обработчиков)
+
+// Блокируем контекстное меню (правый клик)
+document.addEventListener('contextmenu', function(e) {
+    // Если хочешь полностью отключить правый клик:
+    // e.preventDefault();
+    // return false;
+    
+    // Или разрешить только в определённых зонах:
+    if (!e.target.closest('.monaco-editor') && !e.target.closest('.modal')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+
 initMonacoEditor();
 </script>
 </body>
