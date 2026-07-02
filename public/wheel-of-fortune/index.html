@@ -1,0 +1,2880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wheel of Fortune — Premium Edition</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/500.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/600.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/700.css" />
+<style>
+/* ============================================================
+   CSS VARIABLES — THEMES
+   ============================================================ */
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --surface-3: #f0f0f2;
+  --border: #e5e5e7;
+  --border-strong: #d4d4d7;
+  --text: #0a0a0b;
+  --text-2: #4a4a4f;
+  --text-3: #8a8a90;
+  --accent: #0a0a0b;
+  --accent-2: #1a1a1d;
+  --danger: #c0392b;
+  --success: #1e7a46;
+  --warning: #b8860b;
+  --shadow-sm: 0 1px 2px rgba(10,10,11,0.04);
+  --shadow: 0 2px 8px rgba(10,10,11,0.06), 0 1px 2px rgba(10,10,11,0.04);
+  --shadow-lg: 0 12px 32px rgba(10,10,11,0.08), 0 4px 12px rgba(10,10,11,0.04);
+  --shadow-xl: 0 24px 64px rgba(10,10,11,0.12);
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #141416;
+  --surface-2: #1a1a1d;
+  --surface-3: #222226;
+  --border: #2a2a2e;
+  --border-strong: #3a3a3e;
+  --text: #f5f5f7;
+  --text-2: #b5b5ba;
+  --text-3: #75757a;
+  --accent: #f5f5f7;
+  --accent-2: #e5e5e7;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ============================================================
+   APP LAYOUT
+   ============================================================ */
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr 28px;
+  grid-template-columns: 280px 1fr 340px;
+  grid-template-areas:
+    "toolbar toolbar toolbar"
+    "sidebar main props"
+    "statusbar statusbar statusbar";
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar {
+  grid-area: toolbar;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  z-index: 10;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+  margin-right: 8px;
+}
+.brand-mark {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--surface);
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 700;
+}
+[data-theme="dark"] .brand-mark { background: var(--accent); color: var(--bg); }
+.tb-group { display: flex; gap: 4px; }
+.tb-sep { width: 1px; height: 24px; background: var(--border); margin: 0 6px; }
+.tb-spacer { flex: 1; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all var(--transition);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.btn:hover { background: var(--surface-3); }
+.btn:active { transform: scale(0.97); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn-icon { padding: 7px; width: 32px; height: 32px; }
+.btn-primary {
+  background: var(--accent);
+  color: var(--surface);
+}
+.btn-primary:hover { background: var(--accent-2); opacity: 0.92; }
+[data-theme="dark"] .btn-primary { color: var(--bg); }
+.btn-ghost { background: transparent; }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: rgba(192,57,43,0.08); }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.side-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+}
+.side-tab {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+}
+.side-tab:hover { color: var(--text); }
+.side-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.side-panel { flex: 1; overflow-y: auto; padding: 12px; }
+.side-panel[hidden] { display: none; }
+
+.side-search {
+  position: relative;
+  margin-bottom: 12px;
+}
+.side-search input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.side-search input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.side-search svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-3); }
+
+/* Sector list */
+.sector-list { display: flex; flex-direction: column; gap: 4px; }
+.sector-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+.sector-item:hover { background: var(--surface-2); }
+.sector-item.selected { background: var(--surface-3); border-color: var(--border-strong); }
+.sector-item.locked { opacity: 0.55; }
+.sector-item.hidden { opacity: 0.4; }
+.sector-swatch {
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.sector-label {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sector-weight {
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.sector-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.sector-item:hover .sector-actions { opacity: 1; }
+.sector-actions button {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-3);
+  transition: all var(--transition);
+}
+.sector-actions button:hover { background: var(--surface); color: var(--text); }
+
+.side-footer {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
+}
+.side-footer .btn { flex: 1; font-size: 12px; }
+
+/* ============================================================
+   MAIN
+   ============================================================ */
+.main {
+  grid-area: main;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.wheel-stage {
+  position: relative;
+  width: min(68vh, 68vw, 640px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  width: 0; height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 32px solid var(--accent);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+}
+.wheel-pointer::after {
+  content: '';
+  position: absolute;
+  top: -36px;
+  left: -8px;
+  width: 16px; height: 8px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+}
+
+.wheel-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: var(--shadow-xl);
+  background: var(--surface);
+  transition: box-shadow var(--transition);
+}
+.wheel-canvas.spinning { box-shadow: 0 24px 64px rgba(10,10,11,0.18), 0 0 0 4px var(--accent) inset; }
+
+.wheel-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14%; height: 14%;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--border-strong);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-lg);
+  z-index: 3;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+
+.spin-btn {
+  margin-top: 28px;
+  padding: 14px 48px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius);
+  transition: all var(--transition);
+  box-shadow: var(--shadow);
+}
+[data-theme="dark"] .spin-btn { color: var(--bg); }
+.spin-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.spin-btn:active { transform: translateY(0); }
+.spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.mode-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-mini {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+}
+.stat-chip {
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
+}
+.stat-chip strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   PROPERTIES PANEL
+   ============================================================ */
+.props {
+  grid-area: props;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.props-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.props-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.props-section {
+  margin-bottom: 20px;
+}
+.props-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.field { margin-bottom: 12px; }
+.field-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+.field-label .hint { color: var(--text-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.field input[type="text"],
+.field input[type="number"],
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.field textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+.field-row { display: flex; gap: 8px; }
+.field-row .field { flex: 1; margin-bottom: 0; }
+
+.field-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field-color input[type="color"] {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+  padding: 2px;
+}
+.field-color input[type="text"] { flex: 1; }
+
+/* Range slider */
+.field-range {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Toggle */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  cursor: pointer;
+}
+.toggle-label { font-size: 13px; color: var(--text); }
+.toggle-switch {
+  width: 36px; height: 20px;
+  background: var(--border-strong);
+  border-radius: 10px;
+  position: relative;
+  transition: background var(--transition);
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: var(--surface);
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+.toggle input { display: none; }
+.toggle input:checked + .toggle-switch { background: var(--accent); }
+.toggle input:checked + .toggle-switch::after { transform: translateX(16px); }
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+.statusbar {
+  grid-area: statusbar;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 11px;
+  color: var(--text-3);
+  gap: 16px;
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.status-spacer { flex: 1; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,11,0.5);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-slow);
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: min(520px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.95) translateY(10px);
+  transition: transform var(--transition-slow);
+  overflow: hidden;
+}
+.modal-overlay.open .modal { transform: scale(1) translateY(0); }
+.modal.lg { width: min(720px, 92vw); }
+.modal.xl { width: min(960px, 92vw); }
+.modal-head {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+.modal-foot {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Win modal */
+.win-modal .modal {
+  width: min(440px, 92vw);
+  text-align: center;
+}
+.win-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+  margin-bottom: 12px;
+}
+.win-value {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+.win-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 20px;
+}
+.win-swatch {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  border: 3px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-stack {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-lg);
+  min-width: 260px;
+  max-width: 360px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all var(--transition-slow);
+  pointer-events: auto;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast-icon {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid; place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--surface);
+}
+.toast.info .toast-icon { background: var(--text); }
+.toast.success .toast-icon { background: var(--success); }
+.toast.error .toast-icon { background: var(--danger); }
+.toast.warning .toast-icon { background: var(--warning); }
+.toast-content { flex: 1; font-size: 13px; }
+.toast-title { font-weight: 600; margin-bottom: 2px; }
+.toast-msg { color: var(--text-2); font-size: 12px; }
+
+/* ============================================================
+   CONFETTI CANVAS
+   ============================================================ */
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 150;
+}
+
+/* ============================================================
+   TEMPLATES GRID
+   ============================================================ */
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.template-card {
+  padding: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.template-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+.template-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.template-desc { font-size: 11px; color: var(--text-3); }
+
+/* ============================================================
+   HISTORY TABLE
+   ============================================================ */
+.history-list { display: flex; flex-direction: column; gap: 6px; }
+.history-item {
+  display: grid;
+  grid-template-columns: 20px 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.history-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); }
+.history-date { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   STATS
+   ============================================================ */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  padding: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.stat-value { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+.bar-chart { display: flex; flex-direction: column; gap: 6px; }
+.bar-row { display: grid; grid-template-columns: 120px 1fr 40px; gap: 8px; align-items: center; font-size: 12px; }
+.bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { height: 8px; background: var(--surface-3); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; transition: width var(--transition-slow); }
+.bar-value { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-2); }
+
+/* ============================================================
+   PROFILES LIST
+   ============================================================ */
+.profile-list { display: flex; flex-direction: column; gap: 6px; }
+.profile-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.profile-item:hover { border-color: var(--border-strong); }
+.profile-item.active { border-color: var(--accent); background: var(--surface-3); }
+.profile-name { flex: 1; font-size: 13px; font-weight: 500; }
+.profile-meta { font-size: 11px; color: var(--text-3); }
+
+/* ============================================================
+   DROP ZONE
+   ============================================================ */
+.drop-zone {
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: center;
+  color: var(--text-3);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+.drop-zone:hover, .drop-zone.drag { border-color: var(--accent); color: var(--text); background: var(--surface-2); }
+
+/* ============================================================
+   CONTEXT MENU
+   ============================================================ */
+.context-menu {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  min-width: 180px;
+  z-index: 300;
+  display: none;
+}
+.context-menu.open { display: block; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.ctx-item:hover { background: var(--surface-3); }
+.ctx-item.danger { color: var(--danger); }
+.ctx-sep { height: 1px; background: var(--border); margin: 4px 2px; }
+.ctx-shortcut { margin-left: auto; font-size: 11px; color: var(--text-3); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+  .app { grid-template-columns: 260px 1fr 300px; }
+}
+@media (max-width: 960px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px 1fr 28px;
+    grid-template-areas:
+      "toolbar"
+      "main"
+      "statusbar";
+  }
+  .sidebar, .props {
+    position: fixed;
+    top: 56px; bottom: 28px;
+    width: 320px;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform var(--transition-slow);
+    box-shadow: var(--shadow-xl);
+  }
+  .props { right: 0; left: auto; transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); }
+  .props.open { transform: translateX(0); }
+  .wheel-stage { width: min(70vh, 85vw, 500px); }
+}
+@media (max-width: 600px) {
+  .toolbar { padding: 0 12px; gap: 6px; }
+  .brand { padding-right: 10px; margin-right: 4px; font-size: 13px; }
+  .tb-group.hide-mobile { display: none; }
+  .spin-btn { padding: 12px 32px; font-size: 13px; }
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.fade-in { animation: fadeIn var(--transition-slow); }
+.slide-up { animation: slideUp var(--transition-slow); }
+
+/* Flash on win */
+.flash {
+  position: fixed;
+  inset: 0;
+  background: var(--surface);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 140;
+  transition: opacity 120ms;
+}
+.flash.active { opacity: 0.8; }
+
+/* Sector highlight */
+.sector-highlight {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.sector-highlight.active { opacity: 1; }
+
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ============================================================
+       TOOLBAR
+       ============================================================ -->
+  <header class="toolbar" role="toolbar" aria-label="Главная панель">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+      <span>Wheel of Fortune</span>
+    </div>
+
+    <div class="tb-group">
+      <button class="btn btn-icon" id="btnNew" title="Новый профиль (Ctrl+N)" aria-label="Новый">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="btn btn-icon" id="btnOpen" title="Открыть (Ctrl+O)" aria-label="Открыть">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h4l2 3h10v9H3z"/></svg>
+      </button>
+      <button class="btn btn-icon" id="btnSave" title="Сохранить (Ctrl+S)" aria-label="Сохранить">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+      </button>
+    </div>
+
+    <div class="tb-sep"></div>
+
+    <div class="tb-group hide-mobile">
+      <button class="btn btn-icon" id="btnUndo" title="Отменить (Ctrl+Z)" aria-label="Отменить">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+      </button>
+      <button class="btn btn-icon" id="btnRedo" title="Повторить (Ctrl+Y)" aria-label="Повторить">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7L21 13"/></svg>
+      </button>
+    </div>
+
+    <div class="tb-sep"></div>
+
+    <div class="tb-group hide-mobile">
+      <button class="btn" id="btnSpinTop">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Крутить</span>
+      </button>
+    </div>
+
+    <div class="tb-spacer"></div>
+
+    <div class="tb-group">
+      <button class="btn btn-icon" id="btnTheme" title="Переключить тему" aria-label="Тема">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="btn btn-icon" id="btnSound" title="Звук" aria-label="Звук">
+        <svg id="soundIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button class="btn btn-icon" id="btnFullscreen" title="Полный экран (F11)" aria-label="Полный экран">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      </button>
+      <button class="btn btn-icon" id="btnHelp" title="Помощь (F1)" aria-label="Помощь">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <circle cx="12" cy="12" r="10"/>
+         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+         <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </button>
+    </div>
+
+    <button class="btn btn-icon" id="btnToggleSidebar" aria-label="Боковая панель" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </header>
+
+  <!-- ============================================================
+       SIDEBAR
+       ============================================================ -->
+  <aside class="sidebar" id="sidebar" role="complementary">
+    <div class="side-tabs" role="tablist">
+      <button class="side-tab active" data-tab="sectors" role="tab">Секторы</button>
+      <button class="side-tab" data-tab="templates" role="tab">Шаблоны</button>
+      <button class="side-tab" data-tab="profiles" role="tab">Профили</button>
+    </div>
+
+    <div class="side-panel" id="panel-sectors">
+      <div class="side-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="sectorSearch" placeholder="Поиск секторов..." aria-label="Поиск секторов" />
+      </div>
+      <div class="sector-list" id="sectorList" role="list"></div>
+    </div>
+
+    <div class="side-panel" id="panel-templates" hidden>
+      <div class="templates-grid" id="templatesGrid"></div>
+    </div>
+
+    <div class="side-panel" id="panel-profiles" hidden>
+      <div class="profile-list" id="profileList"></div>
+      <button class="btn btn-primary" id="btnNewProfile" style="width:100%; margin-top:12px">+ Новый профиль</button>
+    </div>
+
+    <div class="side-footer">
+      <button class="btn" id="btnImport">Импорт</button>
+      <button class="btn" id="btnExport">Экспорт</button>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       MAIN
+       ============================================================ -->
+  <main class="main" id="main">
+    <div class="mode-badge" id="modeBadge">Честный режим</div>
+    <div class="stats-mini">
+      <div class="stat-chip">Вращений: <strong id="statSpins">0</strong></div>
+      <div class="stat-chip">Секторов: <strong id="statSectors">0</strong></div>
+    </div>
+
+    <div class="wheel-stage" id="wheelStage">
+      <div class="wheel-pointer" aria-hidden="true"></div>
+      <canvas class="wheel-canvas" id="wheelCanvas" width="800" height="800" aria-label="Колесо фортуны"></canvas>
+      <div class="wheel-center" id="wheelCenter">SPIN</div>
+    </div>
+
+    <button class="spin-btn" id="btnSpin">Крутить колесо</button>
+  </main>
+
+  <!-- ============================================================
+       PROPERTIES
+       ============================================================ -->
+  <aside class="props" id="props" role="complementary">
+    <div class="props-head" id="propsHead">Настройки колеса</div>
+    <div class="props-body" id="propsBody">
+      <!-- Dynamic content -->
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       STATUS BAR
+       ============================================================ -->
+  <footer class="statusbar" role="status">
+    <span class="status-dot"></span>
+    <span id="statusText">Готово</span>
+    <span class="status-spacer"></span>
+    <span id="statusProfile">Профиль: Default</span>
+    <span id="statusSaved">Автосохранение: ВКЛ</span>
+  </footer>
+</div>
+
+<!-- Flash overlay -->
+<div class="flash" id="flash"></div>
+
+<!-- Confetti -->
+<canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+
+<!-- Toast stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<!-- Context menu -->
+<div class="context-menu" id="contextMenu" role="menu"></div>
+
+<!-- Modals container -->
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   APP — WHEEL OF FORTUNE
+   Single-file premium edition
+   ============================================================ */
+'use strict';
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const debounce = (fn, ms = 200) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const now = () => new Date().toISOString();
+const fmtDate = iso => {
+  const d = new Date(iso);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) + ' ' +
+         d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+};
+
+/* ============================================================
+   COLOR PALETTE — clean, premium, no gradients
+   ============================================================ */
+const PALETTE = [
+  '#0a0a0b', '#1e3a5f', '#5b2c3f', '#2d4a3e', '#4a3b2a',
+  '#6b4423', '#3a3a3e', '#7a1f2b', '#1e5245', '#4a2c5f',
+  '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400',
+  '#16a085', '#2c3e50', '#e67e22', '#34495e', '#7f8c8d'
+];
+const nextColor = (idx) => PALETTE[idx % PALETTE.length];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const DEFAULT_STATE = {
+  profileId: 'default',
+  profiles: {
+    default: {
+      id: 'default',
+      name: 'Default',
+      sectors: [],
+      settings: defaultSettings(),
+      history: [],
+      createdAt: now(),
+      updatedAt: now()
+    }
+  },
+  ui: {
+    theme: 'light',
+    sound: true,
+    volume: 0.5,
+    selectedSectorId: null,
+    mode: 'fair',
+    riggedTargetId: null,
+    autoplay: false,
+    noRepeat: false,
+    repeatWinner: false,
+    turnPlayers: [],
+    currentTurn: 0,
+    lastWinners: []
+  }
+};
+
+function defaultSettings() {
+  return {
+    minSpinTime: 4000,
+    maxSpinTime: 7000,
+    minRotation: 5,
+    maxRotation: 10,
+    easingPower: 3,
+    tickSound: true,
+    borderColor: '#ffffff',
+    borderWidth: 2,
+    showText: true,
+    textSize: 14,
+    textColor: '#ffffff',
+    textFont: 'Inter',
+    centerText: 'SPIN',
+    pointerSide: 'top'
+  };
+}
+
+function defaultSector(text, color, weight = 1) {
+  return {
+    id: uid(),
+    text: text || 'Sector',
+    color: color || nextColor(Math.floor(Math.random() * PALETTE.length)),
+    weight: weight,
+    description: '',
+    icon: '',
+    imageUrl: '',
+    font: 'Inter',
+    fontSize: 14,
+    fontStyle: 'normal',
+    hidden: false,
+    locked: false,
+    opacity: 1
+  };
+}
+
+/* ============================================================
+   PERSISTENCE
+   ============================================================ */
+const STORAGE_KEY = 'wof_state_v1';
+
+function saveState() {
+  try {
+    currentProfile().updatedAt = now();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    $('#statusSaved').textContent = 'Сохранено ' + new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  } catch (e) {
+    console.warn('Save failed', e);
+  }
+}
+const debouncedSave = debounce(saveState, 400);
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return { ...structuredClone(DEFAULT_STATE), ...parsed, ui: { ...DEFAULT_STATE.ui, ...(parsed.ui || {}) } };
+  } catch (e) {
+    console.warn('Load failed', e);
+    return null;
+  }
+}
+
+let state = loadState() || structuredClone(DEFAULT_STATE);
+
+// Seed default sectors if empty
+if (state.profiles[state.profileId].sectors.length === 0) {
+  const demo = ['100', '200', '300', '500', '1000', 'Шанс', 'Банк', 'Джекпот'];
+  state.profiles[state.profileId].sectors = demo.map((t, i) => defaultSector(t, PALETTE[i]));
+}
+
+function currentProfile() { return state.profiles[state.profileId]; }
+function currentSettings() { return currentProfile().settings; }
+function currentSectors() { return currentProfile().sectors; }
+
+
+/* ============================================================
+   UNDO / REDO
+   ============================================================ */
+const history = { past: [], future: [], limit: 50 };
+function snapshot() {
+  history.past.push(JSON.stringify(currentProfile()));
+  if (history.past.length > history.limit) history.past.shift();
+  history.future = [];
+  debouncedSave();
+}
+function undo() {
+  if (!history.past.length) return;
+  history.future.push(JSON.stringify(currentProfile()));
+  const prev = JSON.parse(history.past.pop());
+  state.profiles[state.profileId] = prev;
+  renderAll();
+  toast('info', 'Отменено');
+}
+function redo() {
+  if (!history.future.length) return;
+  history.past.push(JSON.stringify(currentProfile()));
+  const next = JSON.parse(history.future.pop());
+  state.profiles[state.profileId] = next;
+  renderAll();
+  toast('info', 'Повторено');
+}
+
+/* ============================================================
+   AUDIO ENGINE (Web Audio API — no external files)
+   ============================================================ */
+const Audio = (() => {
+  let ctx = null;
+  const ensure = () => {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { ctx = null; }
+    }
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  const beep = (freq = 800, dur = 0.05, type = 'sine', vol = 0.3) => {
+    if (!state.ui.sound) return;
+    const c = ensure(); if (!c) return;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, c.currentTime);
+    gain.gain.linearRampToValueAtTime(vol * state.ui.volume, c.currentTime + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    osc.connect(gain).connect(c.destination);
+    osc.start();
+    osc.stop(c.currentTime + dur);
+  };
+  return {
+    tick: () => beep(1400, 0.03, 'square', 0.15),
+    start: () => { beep(600, 0.1, 'sine', 0.2); setTimeout(() => beep(900, 0.15, 'sine', 0.2), 80); },
+    slow: () => beep(400, 0.2, 'sine', 0.15),
+    win: () => {
+      [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.2, 'triangle', 0.25), i * 120));
+    },
+    ui: () => beep(1000, 0.04, 'sine', 0.1),
+    error: () => beep(200, 0.2, 'sawtooth', 0.15)
+  };
+})();
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
+function toast(type, title, msg = '', duration = 3000) {
+  const stack = $('#toastStack');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.setAttribute('role', 'alert');
+  const iconChar = { info: 'i', success: '✓', error: '!', warning: '!' }[type] || 'i';
+  el.innerHTML = `
+    <div class="toast-icon">${iconChar}</div>
+    <div class="toast-content">
+      <div class="toast-title">${escapeHtml(title)}</div>
+      ${msg ? `<div class="toast-msg">${escapeHtml(msg)}</div>` : ''}
+    </div>`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 400);
+  }, duration);
+}
+
+/* ============================================================
+   MODAL SYSTEM
+   ============================================================ */
+function modal({ title, body, footer, size = '', onClose, className = '' }) {
+  const root = $('#modalRoot');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal ${size} ${className}" role="dialog" aria-modal="true" aria-labelledby="m-title">
+      <div class="modal-head">
+        <div class="modal-title" id="m-title">${escapeHtml(title)}</div>
+        <button class="btn btn-icon" data-close aria-label="Закрыть">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body"></div>
+      ${footer ? '<div class="modal-foot"></div>' : ''}
+    </div>`;
+  overlay.querySelector('.modal-body').appendChild(typeof body === 'string' ? htmlToFragment(body) : body);
+  if (footer) overlay.querySelector('.modal-foot').appendChild(typeof footer === 'string' ? htmlToFragment(footer) : footer);
+  root.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('open'));
+
+  const close = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.remove(), 320);
+    onClose && onClose();
+  };
+  overlay.querySelector('[data-close]').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  return { overlay, close, body: overlay.querySelector('.modal-body'), foot: overlay.querySelector('.modal-foot') };
+}
+
+function confirmModal(title, message, onConfirm) {
+  const m = modal({
+    title,
+    body: `<p style="color:var(--text-2); font-size:13px;">${escapeHtml(message)}</p>`,
+    footer: `
+      <button class="btn" data-cancel>Отмена</button>
+      <button class="btn btn-primary" data-ok>Подтвердить</button>`
+  });
+  m.foot.querySelector('[data-cancel]').addEventListener('click', m.close);
+  m.foot.querySelector('[data-ok]').addEventListener('click', () => { m.close(); onConfirm(); });
+}
+
+function htmlToFragment(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  return t.content.cloneNode(true);
+}
+
+/* ============================================================
+   WHEEL RENDERER (Canvas)
+   ============================================================ */
+const Wheel = (() => {
+  const canvas = $('#wheelCanvas');
+  const ctx = canvas.getContext('2d');
+  let rotation = 0; // radians
+  let spinning = false;
+  let lastTickSector = -1;
+
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  function visibleSectors() {
+    return currentSectors().filter(s => !s.hidden && s.weight > 0);
+  }
+
+  function computeAngles() {
+    const sectors = visibleSectors();
+    const total = sectors.reduce((a, s) => a + s.weight, 0) || 1;
+    let acc = 0;
+    return sectors.map(s => {
+      const start = acc;
+      const size = (s.weight / total) * Math.PI * 2;
+      acc += size;
+      return { sector: s, start, size, end: acc };
+    });
+  }
+
+  function draw() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const cx = w / 2, cy = h / 2;
+    const r = Math.min(cx, cy) - 4;
+    const settings = currentSettings();
+    const angles = computeAngles();
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotation);
+
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+    ctx.fill();
+
+    if (angles.length === 0) {
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-3').trim();
+      ctx.font = '500 14px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Добавьте секторы', 0, 0);
+      ctx.restore();
+      return;
+    }
+
+    angles.forEach(({ sector, start, size }) => {
+      const a0 = start - Math.PI / 2;
+      const a1 = a0 + size;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, r - 2, a0, a1);
+      ctx.closePath();
+      ctx.globalAlpha = sector.opacity ?? 1;
+      ctx.fillStyle = sector.color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Border between sectors
+      if (settings.borderWidth > 0) {
+        ctx.strokeStyle = settings.borderColor;
+        ctx.lineWidth = settings.borderWidth;
+        ctx.stroke();
+      }
+
+      // Text
+      if (settings.showText && sector.text) {
+        ctx.save();
+        const mid = a0 + size / 2;
+        ctx.rotate(mid);
+        const fontSize = Math.min(settings.textSize, r * 0.08);
+        ctx.font = `${sector.fontStyle || 'normal'} ${sector.fontWeight || 600} ${fontSize}px ${sector.font || settings.textFont}`;
+        ctx.fillStyle = sector.textColor || settings.textColor;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        const maxLen = r * 0.72;
+        let label = sector.text;
+        while (ctx.measureText(label).width > maxLen && label.length > 1) {
+          label = label.slice(0, -1);
+        }
+        if (label !== sector.text) label += '…';
+        ctx.fillText(label, r - 16, 0);
+        ctx.restore();
+      }
+    });
+
+    // Outer rim
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border-strong').trim();
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Determine which sector is at pointer (top)
+ function sectorAtPointer() {
+  const angles = computeAngles();
+  if (!angles.length) return null;
+  // Pointer is at -PI/2 in canvas space. Wheel rotated by `rotation`.
+  // Find angle where sector should be: angle + rotation = -PI/2 + 2*PI*k
+  const pointerAngle = ((-Math.PI / 2 - rotation) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+  for (const a of angles) {
+    if (pointerAngle >= a.start && pointerAngle < a.end) return a.sector;
+  }
+  return angles[angles.length - 1].sector;
+}
+
+  // Spin with physics
+  function spin(targetSectorId = null) {
+    if (spinning) return;
+    const sectors = visibleSectors();
+    if (sectors.length < 2) {
+      toast('error', 'Невозможно крутить', 'Нужно минимум 2 активных сектора');
+      Audio.error();
+      return;
+    }
+
+    spinning = true;
+    canvas.classList.add('spinning');
+    Audio.start();
+
+    const settings = currentSettings();
+    const duration = lerp(settings.minSpinTime, settings.maxSpinTime, Math.random());
+    const rotations = lerp(settings.minRotation, settings.maxRotation, Math.random());
+    const totalAngle = rotations * Math.PI * 2;
+
+    // Determine target
+    let targetSector = null;
+    if (state.ui.mode === 'rigged' && state.ui.riggedTargetId) {
+      targetSector = sectors.find(s => s.id === state.ui.riggedTargetId);
+    } else if (targetSectorId) {
+      targetSector = sectors.find(s => s.id === targetSectorId);
+    } else if (state.ui.mode === 'fair') {
+      // Weighted random
+      const total = sectors.reduce((a, s) => a + s.weight, 0);
+      let r = Math.random() * total;
+      for (const s of sectors) { r -= s.weight; if (r <= 0) { targetSector = s; break; } }
+    } else {
+      // Uniform
+      targetSector = sectors[Math.floor(Math.random() * sectors.length)];
+    }
+
+    if (!targetSector) targetSector = sectors[0];
+
+    // Compute final rotation so pointer lands on target sector center
+    const angles = computeAngles();
+    const targetAngle = angles.find(a => a.sector.id === targetSector.id);
+    const centerOfTarget = targetAngle.start + targetAngle.size / 2;
+    
+    // Указатель находится сверху (угол -PI/2 в canvas координатах)
+    // При рисовании сектор начинается с start - PI/2, затем поворачивается на rotation
+    // Центр сектора оказывается на угле: start + size/2 - PI/2 + rotation
+    // Нам нужно: start + size/2 - PI/2 + rotation = -PI/2 + 2*PI*k
+    // Упрощаем: rotation = -centerOfTarget + 2*PI*k
+    
+    let finalRotation = -centerOfTarget;
+    // Гарантируем, что колесо сделает хотя бы totalAngle вращений
+    while (finalRotation - rotation < totalAngle) {
+      finalRotation += Math.PI * 2;
+    }
+
+    const startRot = rotation;
+    const delta = finalRotation - startRot;
+    const startTime = performance.now();
+    lastTickSector = -1;
+
+    const animate = (t) => {
+      const elapsed = t - startTime;
+      const p = clamp(elapsed / duration, 0, 1);
+      // Easing: power-out (deceleration)
+      const eased = 1 - Math.pow(1 - p, settings.easingPower);
+      rotation = startRot + delta * eased;
+
+      // Tick sound when crossing sector boundary
+      if (settings.tickSound) {
+        const cur = sectorAtPointer();
+        if (cur && cur.id !== lastTickSector) {
+          lastTickSector = cur.id;
+          Audio.tick();
+        }
+      }
+
+      draw();
+
+      if (p < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        spinning = false;
+        canvas.classList.remove('spinning');
+        onSpinEnd(targetSector);
+      }
+    };
+    requestAnimationFrame(animate);
+  }
+
+  function onSpinEnd(sector) {
+    Audio.win();
+    flash();
+    confetti.burst();
+
+    // Record history
+    currentProfile().history.unshift({
+      id: uid(),
+      sectorId: sector.id,
+      text: sector.text,
+      color: sector.color,
+      timestamp: now()
+    });
+    if (currentProfile().history.length > 500) currentProfile().history.length = 500;
+
+    // Mode-specific behavior
+    state.ui.lastWinners.unshift(sector.id);
+    if (state.ui.lastWinners.length > 50) state.ui.lastWinners.length = 50;
+
+    showWinModal(sector);
+    debouncedSave();
+    renderStatsMini();
+    renderHistory();
+
+    // Autoplay
+    if (state.ui.autoplay) {
+      setTimeout(() => { if (!spinning) spin(); }, 2500);
+    }
+    // Turn-based
+    if (state.ui.mode === 'turn' && state.ui.turnPlayers.length > 0) {
+      state.ui.currentTurn = (state.ui.currentTurn + 1) % state.ui.turnPlayers.length;
+    }
+  }
+
+  return {
+    resize, draw, spin,
+    get spinning() { return spinning; },
+    get rotation() { return rotation; },
+    set rotation(v) { rotation = v; draw(); }
+  };
+})();
+
+/* ============================================================
+   CONFETTI
+   ============================================================ */
+const confetti = (() => {
+  const canvas = $('#confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  let raf = null;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function burst(count = 120) {
+    resize();
+    const colors = ['#0a0a0b', '#c0392b', '#2980b9', '#27ae60', '#d35400', '#8e44ad'];
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 14,
+        vy: -Math.random() * 14 - 4,
+        g: 0.35,
+        size: 4 + Math.random() * 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.3,
+        life: 1
+      });
+    }
+    if (!raf) loop();
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= 0.008;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.5);
+      ctx.restore();
+    });
+    particles = particles.filter(p => p.life > 0 && p.y < canvas.height + 50);
+    if (particles.length) {
+      raf = requestAnimationFrame(loop);
+    } else {
+      raf = null;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+
+  return { burst };
+})();
+
+/* ============================================================
+   FLASH
+   ============================================================ */
+function flash() {
+  const el = $('#flash');
+  el.classList.add('active');
+  setTimeout(() => el.classList.remove('active'), 140);
+}
+
+/* ============================================================
+   WIN MODAL
+   ============================================================ */
+function showWinModal(sector) {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="win-swatch" style="background:${sector.color}"></div>
+    <div class="win-label">Победитель</div>
+    <div class="win-value">${escapeHtml(sector.text)}</div>
+    ${sector.description ? `<div class="win-desc">${escapeHtml(sector.description)}</div>` : ''}
+  `;
+  const footer = document.createElement('div');
+  footer.style.cssText = 'display:flex; gap:8px; width:100%; justify-content:center';
+  footer.innerHTML = `
+    <button class="btn" data-close>Закрыть</button>
+    <button class="btn btn-primary" data-spin>Крутить ещё</button>`;
+  const m = modal({ title: 'Поздравляем', body, footer, className: 'win-modal' });
+  m.foot.querySelector('[data-close]').addEventListener('click', m.close);
+  m.foot.querySelector('[data-spin]').addEventListener('click', () => { m.close(); Wheel.spin(); });
+}
+
+/* ============================================================
+   SIDEBAR — SECTOR LIST
+   ============================================================ */
+function renderSectorList() {
+  const list = $('#sectorList');
+  const query = ($('#sectorSearch').value || '').toLowerCase();
+  const sectors = currentSectors().filter(s => !query || s.text.toLowerCase().includes(query));
+  list.innerHTML = '';
+  if (!sectors.length) {
+    list.innerHTML = `<div style="text-align:center; padding:30px 10px; color:var(--text-3); font-size:12px;">Секторы не найдены</div>`;
+    return;
+  }
+  sectors.forEach((s, idx) => {
+    const el = document.createElement('div');
+    el.className = 'sector-item' + (s.id === state.ui.selectedSectorId ? ' selected' : '') + (s.locked ? ' locked' : '') + (s.hidden ? ' hidden' : '');
+    el.setAttribute('role', 'listitem');
+    el.setAttribute('tabindex', '0');
+    el.dataset.id = s.id;
+    el.innerHTML = `
+      <div class="sector-swatch" style="background:${s.color}"></div>
+      <div class="sector-label">${escapeHtml(s.text || '(без названия)')}</div>
+      <div class="sector-weight">×${s.weight}</div>
+      <div class="sector-actions">
+        <button data-act="up" title="Вверх" aria-label="Переместить вверх">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <button data-act="down" title="Вниз" aria-label="Переместить вниз">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button data-act="del" title="Удалить" aria-label="Удалить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>`;
+    el.addEventListener('click', e => {
+      if (e.target.closest('[data-act]')) return;
+      selectSector(s.id);
+    });
+    el.addEventListener('contextmenu', e => { e.preventDefault(); openSectorContext(e, s); });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectSector(s.id); }
+      if (e.key === 'Delete') { e.preventDefault(); deleteSector(s.id); }
+    });
+    el.querySelector('[data-act="up"]').addEventListener('click', e => { e.stopPropagation(); moveSector(s.id, -1); });
+    el.querySelector('[data-act="down"]').addEventListener('click', e => { e.stopPropagation(); moveSector(s.id, 1); });
+    el.querySelector('[data-act="del"]').addEventListener('click', e => { e.stopPropagation(); deleteSector(s.id); });
+    list.appendChild(el);
+  });
+  $('#statSectors').textContent = currentSectors().filter(s => !s.hidden).length;
+}
+
+function selectSector(id) {
+  state.ui.selectedSectorId = id;
+  Audio.ui();
+  renderSectorList();
+  renderProps();
+}
+
+function addSector() {
+  snapshot();
+  const s = defaultSector('Новый сектор', nextColor(currentSectors().length));
+  currentSectors().push(s);
+  selectSector(s.id);
+  Wheel.draw();
+  toast('success', 'Сектор добавлен');
+}
+
+function deleteSector(id) {
+  const s = currentSectors().find(x => x.id === id);
+  if (!s) return;
+  if (s.locked) { toast('warning', 'Сектор заблокирован'); return; }
+  confirmModal('Удалить сектор', `Удалить "${s.text}"? Это действие нельзя отменить.`, () => {
+    snapshot();
+    const idx = currentSectors().findIndex(x => x.id === id);
+    currentSectors().splice(idx, 1);
+    if (state.ui.selectedSectorId === id) state.ui.selectedSectorId = currentSectors()[0]?.id || null;
+    renderAll();
+    toast('success', 'Сектор удалён');
+  });
+}
+
+function moveSector(id, dir) {
+  const arr = currentSectors();
+  const idx = arr.findIndex(x => x.id === id);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  snapshot();
+  [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+  renderSectorList();
+  Wheel.draw();
+}
+
+function cloneSector(id) {
+  const s = currentSectors().find(x => x.id === id);
+  if (!s) return;
+  snapshot();
+  const copy = { ...structuredClone(s), id: uid(), text: s.text + ' (копия)' };
+  const idx = currentSectors().findIndex(x => x.id === id);
+  currentSectors().splice(idx + 1, 0, copy);
+  selectSector(copy.id);
+  Wheel.draw();
+  toast('success', 'Сектор клонирован');
+}
+
+/* ============================================================
+   CONTEXT MENU
+   ============================================================ */
+function openSectorContext(e, sector) {
+  const menu = $('#contextMenu');
+  menu.innerHTML = `
+    <div class="ctx-item" data-act="edit">Редактировать</div>
+    <div class="ctx-item" data-act="clone">Клонировать<span class="ctx-shortcut">Ctrl+D</span></div>
+    <div class="ctx-item" data-act="toggle-hide">${sector.hidden ? 'Показать' : 'Скрыть'}</div>
+    <div class="ctx-item" data-act="toggle-lock">${sector.locked ? 'Разблокировать' : 'Заблокировать'}</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" data-act="up">Переместить вверх</div>
+    <div class="ctx-item" data-act="down">Переместить вниз</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item danger" data-act="del">Удалить<span class="ctx-shortcut">Del</span></div>`;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 300) + 'px';
+  menu.classList.add('open');
+
+  const handle = (act) => {
+    switch (act) {
+      case 'edit': selectSector(sector.id); break;
+      case 'clone': cloneSector(sector.id); break;
+      case 'toggle-hide': snapshot(); sector.hidden = !sector.hidden; renderAll(); break;
+      case 'toggle-lock': snapshot(); sector.locked = !sector.locked; renderAll(); break;
+      case 'up': moveSector(sector.id, -1); break;
+      case 'down': moveSector(sector.id, 1); break;
+      case 'del': deleteSector(sector.id); break;
+    }
+    menu.classList.remove('open');
+  };
+  menu.querySelectorAll('.ctx-item').forEach(it => it.addEventListener('click', () => handle(it.dataset.act)));
+}
+document.addEventListener('click', () => $('#contextMenu').classList.remove('open'));
+
+/* ============================================================
+   PROPERTIES PANEL
+   ============================================================ */
+function renderProps() {
+  const body = $('#propsBody');
+  const head = $('#propsHead');
+  const sid = state.ui.selectedSectorId;
+  const sector = sid ? currentSectors().find(s => s.id === sid) : null;
+
+  if (sector) {
+    head.textContent = 'Свойства сектора';
+    body.innerHTML = propsSectorHTML(sector);
+    bindSectorProps(sector);
+  } else {
+    head.textContent = 'Настройки колеса';
+    body.innerHTML = propsWheelHTML();
+    bindWheelProps();
+  }
+}
+
+function propsSectorHTML(s) {
+  return `
+    <div class="props-section">
+      <div class="props-section-title">Основное</div>
+      <div class="field">
+        <div class="field-label">Название</div>
+        <input type="text" data-f="text" value="${escapeHtml(s.text)}" maxlength="100" />
+      </div>
+      <div class="field">
+        <div class="field-label">Описание</div>
+        <textarea data-f="description" maxlength="500">${escapeHtml(s.description)}</textarea>
+      </div>
+      <div class="field">
+        <div class="field-label">Цвет</div>
+        <div class="field-color">
+          <input type="color" data-f="color" value="${s.color}" />
+          <input type="text" data-f="color-text" value="${s.color}" maxlength="7" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Шанс (вес) <span class="hint">${s.weight}</span></div>
+        <div class="field-range">
+          <input type="range" data-f="weight" min="0" max="100" step="1" value="${s.weight}" />
+        </div>
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Типографика</div>
+      <div class="field-row">
+        <div class="field">
+          <div class="field-label">Шрифт</div>
+          <select data-f="font">
+            <option value="Inter"${s.font==='Inter'?' selected':''}>Inter</option>
+            <option value="Georgia"${s.font==='Georgia'?' selected':''}>Georgia</option>
+            <option value="Courier New"${s.font==='Courier New'?' selected':''}>Courier</option>
+            <option value="Arial"${s.font==='Arial'?' selected':''}>Arial</option>
+            <option value="Times New Roman"${s.font==='Times New Roman'?' selected':''}>Times</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-label">Размер</div>
+          <input type="number" data-f="fontSize" min="8" max="48" value="${s.fontSize}" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Стиль</div>
+        <select data-f="fontStyle">
+          <option value="normal"${s.fontStyle==='normal'?' selected':''}>Обычный</option>
+          <option value="italic"${s.fontStyle==='italic'?' selected':''}>Курсив</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="field-label">Цвет текста</div>
+        <div class="field-color">
+          <input type="color" data-f="textColor" value="${s.textColor || '#ffffff'}" />
+          <input type="text" data-f="textColor-text" value="${s.textColor || '#ffffff'}" maxlength="7" />
+        </div>
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Медиа</div>
+      <div class="field">
+        <div class="field-label">Иконка (emoji/символ)</div>
+        <input type="text" data-f="icon" value="${escapeHtml(s.icon)}" maxlength="4" />
+      </div>
+      <div class="field">
+        <div class="field-label">URL изображения</div>
+        <input type="text" data-f="imageUrl" value="${escapeHtml(s.imageUrl)}" placeholder="https://..." />
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Видимость и доступ</div>
+      <label class="toggle">
+        <span class="toggle-label">Скрыть сектор</span>
+        <input type="checkbox" data-f="hidden" ${s.hidden?'checked':''} />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle">
+        <span class="toggle-label">Заблокировать</span>
+        <input type="checkbox" data-f="locked" ${s.locked?'checked':''} />
+        <span class="toggle-switch"></span>
+      </label>
+      <div class="field" style="margin-top:12px">
+        <div class="field-label">Прозрачность <span class="hint">${Math.round((s.opacity ?? 1) * 100)}%</span></div>
+        <input type="range" data-f="opacity" min="0" max="1" step="0.05" value="${s.opacity ?? 1}" />
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Действия</div>
+      <div style="display:flex; flex-direction:column; gap:6px">
+        <button class="btn" data-a="clone">Клонировать сектор</button>
+        <button class="btn btn-danger" data-a="delete">Удалить сектор</button>
+      </div>
+    </div>`;
+}
+
+function bindSectorProps(sector) {
+  const body = $('#propsBody');
+  const update = (field, value) => {
+    snapshot();
+    sector[field] = value;
+    Wheel.draw();
+    renderSectorList();
+    debouncedSave();
+  };
+
+  body.querySelectorAll('[data-f]').forEach(el => {
+    const f = el.dataset.f;
+    el.addEventListener('input', e => {
+      let v = e.target.value;
+      if (f === 'weight' || f === 'fontSize') v = Number(v);
+      else if (f === 'opacity') v = Number(v);
+      else if (f === 'hidden' || f === 'locked') v = e.target.checked;
+
+      if (f === 'color-text') {
+        if (/^#[0-9a-f]{6}$/i.test(v)) {
+          sector.color = v;
+          body.querySelector('[data-f="color"]').value = v;
+        }
+      } else if (f === 'textColor-text') {
+        if (/^#[0-9a-f]{6}$/i.test(v)) {
+          sector.textColor = v;
+          body.querySelector('[data-f="textColor"]').value = v;
+        }
+      } else if (f === 'color') {
+        body.querySelector('[data-f="color-text"]').value = v;
+        sector.color = v;
+      } else if (f === 'textColor') {
+        body.querySelector('[data-f="textColor-text"]').value = v;
+        sector.textColor = v;
+      } else {
+        sector[f] = v;
+      }
+      // Update hint labels
+      const hint = el.parentElement.querySelector('.hint');
+      if (hint && (f === 'weight' || f === 'opacity')) {
+        hint.textContent = f === 'opacity' ? Math.round(v * 100) + '%' : v;
+      }
+      Wheel.draw();
+      renderSectorList();
+      debouncedSave();
+    });
+    el.addEventListener('change', e => {
+      if (el.type === 'checkbox') {
+        sector[f] = el.checked;
+        Wheel.draw();
+        renderSectorList();
+        debouncedSave();
+      }
+    });
+  });
+
+  body.querySelector('[data-a="clone"]').addEventListener('click', () => cloneSector(sector.id));
+  body.querySelector('[data-a="delete"]').addEventListener('click', () => deleteSector(sector.id));
+}
+
+function propsWheelHTML() {
+  const s = currentSettings();
+  return `
+    <div class="props-section">
+      <div class="props-section-title">Режим</div>
+      <div class="field">
+        <select id="modeSelect">
+          <option value="fair"${state.ui.mode==='fair'?' selected':''}>Честный (взвешенный)</option>
+          <option value="normal"${state.ui.mode==='normal'?' selected':''}>Обычный (равный)</option>
+          <option value="rigged"${state.ui.mode==='rigged'?' selected':''}>Подкрученный</option>
+          <option value="turn"${state.ui.mode==='turn'?' selected':''}>По очереди</option>
+          <option value="random"${state.ui.mode==='random'?' selected':''}>Случайный режим</option>
+        </select>
+      </div>
+      <div id="modeExtras"></div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Физика вращения</div>
+      <div class="field">
+        <div class="field-label">Мин. время (мс) <span class="hint">${s.minSpinTime}</span></div>
+        <input type="range" data-s="minSpinTime" min="1000" max="10000" step="100" value="${s.minSpinTime}" />
+      </div>
+      <div class="field">
+        <div class="field-label">Макс. время (мс) <span class="hint">${s.maxSpinTime}</span></div>
+        <input type="range" data-s="maxSpinTime" min="2000" max="15000" step="100" value="${s.maxSpinTime}" />
+      </div>
+      <div class="field">
+        <div class="field-label">Мин. оборотов <span class="hint">${s.minRotation}</span></div>
+        <input type="range" data-s="minRotation" min="1" max="20" step="1" value="${s.minRotation}" />
+      </div>
+      <div class="field">
+        <div class="field-label">Макс. оборотов <span class="hint">${s.maxRotation}</span></div>
+        <input type="range" data-s="maxRotation" min="2" max="30" step="1" value="${s.maxRotation}" />
+      </div>
+      <div class="field">
+        <div class="field-label">Сила инерции <span class="hint">${s.easingPower}</span></div>
+        <input type="range" data-s="easingPower" min="1" max="8" step="0.5" value="${s.easingPower}" />
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Внешний вид</div>
+      <div class="field">
+        <div class="field-label">Текст в центре</div>
+        <input type="text" data-s="centerText" value="${escapeHtml(s.centerText)}" maxlength="12" />
+      </div>
+      <div class="field">
+        <div class="field-label">Цвет рамки <span class="hint">${s.borderColor}</span></div>
+        <div class="field-color">
+          <input type="color" data-s="borderColor" value="${s.borderColor}" />
+          <input type="text" data-s="borderColor-text" value="${s.borderColor}" maxlength="7" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Толщина рамки <span class="hint">${s.borderWidth}px</span></div>
+        <input type="range" data-s="borderWidth" min="0" max="6" step="1" value="${s.borderWidth}" />
+      </div>
+      <div class="field">
+        <div class="field-label">Размер текста <span class="hint">${s.textSize}px</span></div>
+        <input type="range" data-s="textSize" min="8" max="28" step="1" value="${s.textSize}" />
+      </div>
+      <div class="field">
+        <div class="field-label">Цвет текста секторов</div>
+        <div class="field-color">
+          <input type="color" data-s="textColor" value="${s.textColor}" />
+          <input type="text" data-s="textColor-text" value="${s.textColor}" maxlength="7" />
+        </div>
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Поведение</div>
+      <label class="toggle">
+        <span class="toggle-label">Показывать текст</span>
+        <input type="checkbox" data-s="showText" ${s.showText?'checked':''} />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle">
+        <span class="toggle-label">Звук щелчков</span>
+        <input type="checkbox" data-s="tickSound" ${s.tickSound?'checked':''} />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle">
+        <span class="toggle-label">Автоповтор</span>
+        <input type="checkbox" id="autoplayToggle" ${state.ui.autoplay?'checked':''} />
+        <span class="toggle-switch"></span>
+      </label>
+      <label class="toggle">
+        <span class="toggle-label">Без повторов победителя</span>
+        <input type="checkbox" id="noRepeatToggle" ${state.ui.noRepeat?'checked':''} />
+        <span class="toggle-switch"></span>
+      </label>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Звук</div>
+      <div class="field">
+        <div class="field-label">Громкость <span class="hint">${Math.round(state.ui.volume * 100)}%</span></div>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="${state.ui.volume}" />
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">История и статистика</div>
+      <div style="display:flex; flex-direction:column; gap:6px">
+        <button class="btn" id="btnShowHistory">История вращений</button>
+        <button class="btn" id="btnShowStats">Статистика</button>
+        <button class="btn btn-danger" id="btnClearHistory">Очистить историю</button>
+      </div>
+    </div>`;
+}
+
+function bindWheelProps() {
+  const body = $('#propsBody');
+  const settings = currentSettings();
+
+  body.querySelectorAll('[data-s]').forEach(el => {
+    const s = el.dataset.s;
+    el.addEventListener('input', e => {
+      let v = e.target.value;
+      if (['minSpinTime','maxSpinTime','minRotation','maxRotation','borderWidth','textSize'].includes(s)) v = Number(v);
+      if (['easingPower'].includes(s)) v = Number(v);
+      if (s === 'showText' || s === 'tickSound') v = e.target.checked;
+
+      if (s === 'borderColor-text') {
+        if (/^#[0-9a-f]{6}$/i.test(v)) {
+          settings.borderColor = v;
+          body.querySelector('[data-s="borderColor"]').value = v;
+        }
+      } else if (s === 'textColor-text') {
+        if (/^#[0-9a-f]{6}$/i.test(v)) {
+          settings.textColor = v;
+          body.querySelector('[data-s="textColor"]').value = v;
+        }
+      } else if (s === 'borderColor') {
+        body.querySelector('[data-s="borderColor-text"]').value = v;
+        settings.borderColor = v;
+      } else if (s === 'textColor') {
+        body.querySelector('[data-s="textColor-text"]').value = v;
+        settings.textColor = v;
+      } else {
+        settings[s] = v;
+      }
+
+      const hint = el.parentElement.querySelector('.hint');
+      if (hint) hint.textContent = typeof v === 'number' ? v : (s === 'centerText' ? v : '');
+
+      $('#wheelCenter').textContent = settings.centerText || '';
+      Wheel.draw();
+      debouncedSave();
+    });
+    el.addEventListener('change', e => {
+      if (el.type === 'checkbox') {
+        settings[s] = el.checked;
+        Wheel.draw();
+        debouncedSave();
+      }
+    });
+  });
+
+  // Mode select
+  const modeSelect = $('#modeSelect');
+  modeSelect.addEventListener('change', e => {
+    state.ui.mode = e.target.value;
+    updateModeBadge();
+    renderModeExtras();
+    debouncedSave();
+  });
+  renderModeExtras();
+
+  // Toggles
+  $('#autoplayToggle').addEventListener('change', e => { state.ui.autoplay = e.target.checked; debouncedSave(); });
+  $('#noRepeatToggle').addEventListener('change', e => { state.ui.noRepeat = e.target.checked; debouncedSave(); });
+
+  // Volume
+  $('#volumeSlider').addEventListener('input', e => {
+    state.ui.volume = Number(e.target.value);
+    e.target.parentElement.querySelector('.hint').textContent = Math.round(state.ui.volume * 100) + '%';
+    debouncedSave();
+  });
+
+  // Buttons
+  $('#btnShowHistory').addEventListener('click', showHistoryModal);
+  $('#btnShowStats').addEventListener('click', showStatsModal);
+  $('#btnClearHistory').addEventListener('click', () => {
+    confirmModal('Очистить историю', 'Удалить все записи истории?', () => {
+      snapshot();
+      currentProfile().history = [];
+      renderStatsMini();
+      toast('success', 'История очищена');
+      debouncedSave();
+    });
+  });
+}
+
+function renderModeExtras() {
+  const container = $('#modeExtras');
+  if (!container) return;
+  if (state.ui.mode === 'rigged') {
+    const sectors = currentSectors().filter(s => !s.hidden);
+    container.innerHTML = `
+      <div class="field" style="margin-top:10px">
+        <div class="field-label">Целевой сектор</div>
+        <select id="riggedTarget">
+          ${sectors.map(s => `<option value="${s.id}"${s.id===state.ui.riggedTargetId?' selected':''}>${escapeHtml(s.text)}</option>`).join('')}
+        </select>
+      </div>`;
+    $('#riggedTarget').addEventListener('change', e => { state.ui.riggedTargetId = e.target.value; debouncedSave(); });
+  } else if (state.ui.mode === 'turn') {
+    container.innerHTML = `
+      <div class="field" style="margin-top:10px">
+        <div class="field-label">Игроки (по одному на строку)</div>
+        <textarea id="turnPlayers" rows="4" placeholder="Игрок 1&#10;Игрок 2&#10;Игрок 3">${escapeHtml(state.ui.turnPlayers.join('\n'))}</textarea>
+      </div>
+      <div style="font-size:12px; color:var(--text-3); margin-top:6px">Сейчас: <strong style="color:var(--text)">${escapeHtml(state.ui.turnPlayers[state.ui.currentTurn] || '—')}</strong></div>`;
+    $('#turnPlayers').addEventListener('input', e => {
+      state.ui.turnPlayers = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
+      state.ui.currentTurn = 0;
+      debouncedSave();
+    });
+  } else {
+    container.innerHTML = '';
+  }
+}
+
+function updateModeBadge() {
+  const labels = {
+    fair: 'Честный режим',
+    normal: 'Обычный режим',
+    rigged: 'Подкрученный',
+    turn: 'По очереди',
+    random: 'Случайный режим'
+  };
+  $('#modeBadge').textContent = labels[state.ui.mode] || 'Режим';
+}
+
+/* ============================================================
+   TEMPLATES
+   ============================================================ */
+const TEMPLATES = [
+  { id: 'birthday', name: 'День рождения', desc: 'Подарки и желания', sectors: ['Плеер','Книга','Игра','Плюшевая игрушка','Подарочная карта','Сладости','Футболка','Сюрприз'] },
+  { id: 'raffle', name: 'Розыгрыш', desc: 'Призы для лотереи', sectors: ['1 место','2 место','3 место','Утешительный','Сертификат','Скидка 50%','Скидка 20%','Главный приз'] },
+  { id: 'stream', name: 'Стрим', desc: 'Задания для стримера', sectors: ['Танец','Песня','20 отжиманий','Рассказать историю','Ответить на вопрос','Съесть лимон','Позвонить другу','Ничего'] },
+  { id: 'roblox', name: 'Roblox', desc: 'Игровые предметы', sectors: ['Robux 100','Robux 500','Robux 1000','Скин','Питомец','Эмоция','Game Pass','Ничего'] },
+  { id: 'minecraft', name: 'Minecraft', desc: 'Ресурсы и предметы', sectors: ['Алмазы x64','Золото x32','Железо x64','Еда','Инструменты','Зелье','Эндер-жемчуг','Элитры'] },
+  { id: 'discord', name: 'Discord', desc: 'Роли и награды', sectors: ['VIP роль','Модератор','Бонус нитро','Кастомная роль','Опыт x2','Участник месяца','Подарок','Ничего'] },
+  { id: 'telegram', name: 'Telegram', desc: 'Премиум и подарки', sectors: ['Premium 1 мес','Premium 3 мес','Premium 6 мес','Подарок','Стиicker-пак','Эмодзи-статус','Фон профиля','Ничего'] },
+  { id: 'youtube', name: 'YouTube', desc: 'Для видеоблогеров', sectors: ['Сценарий','Идея','Коллаб','Shoutout','Q&A','Челлендж','Обзор','Стрим'] },
+  { id: 'gifts', name: 'Подарки', desc: 'Идеи подарков', sectors: ['Цветы','Книга','Парфюм','Украшение','Гаджет','Одежда','Билеты','Сертификат'] },
+  { id: 'grades', name: 'Школьные оценки', desc: 'Случайная оценка', sectors: ['2','3','4','5','Пересдача','Отлично','Хорошо','Удовл.'] },
+  { id: 'numbers', name: 'Случайные числа', desc: 'Числа от 1 до 10', sectors: ['1','2','3','4','5','6','7','8','9','10'] },
+  { id: 'yesno', name: 'Да / Нет', desc: 'Бинарный выбор', sectors: ['Да','Нет','Возможно','Спроси позже','Определённо да','Скорее нет','Да','Нет'] },
+  { id: 'games', name: 'Игры', desc: 'Выбор игры', sectors: ['Шахматы','Шашки','Монополия','Карточная','Настольная','Викторина','Квиз','Пазл'] },
+  { id: 'roles', name: 'Роли', desc: 'Распределение ролей', sectors: ['Ведущий','Судья','Игрок 1','Игрок 2','Игрок 3','Наблюдатель','Помощник','Капитан'] },
+  { id: 'prizes', name: 'Призы', desc: 'Уровни призов', sectors: ['Бронза','Серебро','Золото','Платина','Алмаз','Изумруд','Рубин','Джекпот'] }
+];
+
+function renderTemplates() {
+  const grid = $('#templatesGrid');
+  grid.innerHTML = '';
+  TEMPLATES.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'template-card';
+    el.setAttribute('tabindex', '0');
+    el.innerHTML = `<div class="template-name">${escapeHtml(t.name)}</div><div class="template-desc">${escapeHtml(t.desc)}</div>`;
+    el.addEventListener('click', () => applyTemplate(t));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') applyTemplate(t); });
+    grid.appendChild(el);
+  });
+}
+
+function applyTemplate(t) {
+  confirmModal('Применить шаблон', `Заменить текущие секторы на шаблон "${t.name}"? Текущие секторы будут удалены.`, () => {
+    snapshot();
+    currentProfile().sectors = t.sectors.map((name, i) => defaultSector(name, PALETTE[i % PALETTE.length]));
+    state.ui.selectedSectorId = null;
+    renderAll();
+    toast('success', 'Шаблон применён', t.name);
+  });
+}
+
+/* ============================================================
+   PROFILES
+   ============================================================ */
+function renderProfiles() {
+  const list = $('#profileList');
+  list.innerHTML = '';
+  Object.values(state.profiles).forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'profile-item' + (p.id === state.profileId ? ' active' : '');
+    el.innerHTML = `
+      <div style="flex:1">
+        <div class="profile-name">${escapeHtml(p.name)}</div>
+        <div class="profile-meta">${p.sectors.length} сект. · ${p.history.length} вращ.</div>
+      </div>
+      <button class="btn btn-icon" data-act="menu" aria-label="Меню">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      </button>`;
+    el.addEventListener('click', e => {
+      if (e.target.closest('[data-act]')) return;
+      switchProfile(p.id);
+    });
+    el.querySelector('[data-act="menu"]').addEventListener('click', e => {
+      e.stopPropagation();
+      openProfileMenu(e, p);
+    });
+    list.appendChild(el);
+  });
+}
+
+function openProfileMenu(e, profile) {
+  const menu = $('#contextMenu');
+  menu.innerHTML = `
+    <div class="ctx-item" data-act="rename">Переименовать</div>
+    <div class="ctx-item" data-act="export">Экспортировать</div>
+    <div class="ctx-item" data-act="duplicate">Дублировать</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item danger" data-act="delete">Удалить</div>`;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
+  menu.classList.add('open');
+  menu.querySelectorAll('.ctx-item').forEach(it => it.addEventListener('click', () => {
+    menu.classList.remove('open');
+    handleProfileAction(it.dataset.act, profile);
+  }));
+}
+
+function handleProfileAction(act, profile) {
+  if (act === 'rename') {
+    const name = prompt('Новое имя профиля:', profile.name);
+    if (name && name.trim()) {
+      profile.name = name.trim();
+      renderProfiles();
+      updateStatusProfile();
+      debouncedSave();
+    }
+  } else if (act === 'duplicate') {
+    const copy = structuredClone(profile);
+    copy.id = uid();
+    copy.name = profile.name + ' (копия)';
+    copy.createdAt = now();
+    state.profiles[copy.id] = copy;
+    renderProfiles();
+    toast('success', 'Профиль дублирован');
+    debouncedSave();
+  } else if (act === 'export') {
+    downloadJSON(profile, `profile-${profile.name}.json`);
+    toast('success', 'Профиль экспортирован');
+  } else if (act === 'delete') {
+    if (Object.keys(state.profiles).length <= 1) {
+      toast('error', 'Нельзя удалить', 'Должен остаться хотя бы один профиль');
+      return;
+    }
+    confirmModal('Удалить профиль', `Удалить "${profile.name}" безвозвратно?`, () => {
+      delete state.profiles[profile.id];
+      if (state.profileId === profile.id) {
+        state.profileId = Object.keys(state.profiles)[0];
+      }
+      renderAll();
+      toast('success', 'Профиль удалён');
+      debouncedSave();
+    });
+  }
+}
+
+function switchProfile(id) {
+  if (state.profileId === id) return;
+  state.profileId = id;
+  state.ui.selectedSectorId = null;
+  renderAll();
+  updateStatusProfile();
+  toast('info', 'Профиль переключён', currentProfile().name);
+  debouncedSave();
+}
+
+function createProfile() {
+  const name = prompt('Имя нового профиля:', 'Новый профиль');
+  if (!name || !name.trim()) return;
+  const id = uid();
+  state.profiles[id] = {
+    id, name: name.trim(),
+    sectors: [],
+    settings: defaultSettings(),
+    history: [],
+    createdAt: now(),
+    updatedAt: now()
+  };
+  switchProfile(id);
+  toast('success', 'Профиль создан');
+}
+
+function updateStatusProfile() {
+  $('#statusProfile').textContent = 'Профиль: ' + currentProfile().name;
+}
+
+/* ============================================================
+   HISTORY MODAL
+   ============================================================ */
+function showHistoryModal() {
+  const hist = currentProfile().history;
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="side-search" style="margin-bottom:12px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="histSearch" placeholder="Поиск по истории..." />
+    </div>
+    <div class="history-list" id="histList"></div>`;
+  const footer = document.createElement('div');
+  footer.style.cssText = 'display:flex; gap:8px; width:100%; justify-content:space-between';
+  footer.innerHTML = `
+    <div style="display:flex; gap:8px">
+      <button class="btn" data-act="export-csv">Экспорт CSV</button>
+      <button class="btn" data-act="export-json">Экспорт JSON</button>
+    </div>
+    <button class="btn btn-primary" data-close>Закрыть</button>`;
+  const m = modal({ title: 'История вращений', body, footer, size: 'lg' });
+
+  const renderList = (q = '') => {
+    const list = m.body.querySelector('#histList');
+    const filtered = hist.filter(h => !q || h.text.toLowerCase().includes(q.toLowerCase()));
+    if (!filtered.length) {
+      list.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-3); font-size:13px;">История пуста</div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(h => `
+      <div class="history-item">
+        <div class="history-swatch" style="background:${h.color}"></div>
+        <div>${escapeHtml(h.text)}</div>
+        <div class="history-date">${fmtDate(h.timestamp)}</div>
+      </div>`).join('');
+  };
+  renderList();
+  m.body.querySelector('#histSearch').addEventListener('input', e => renderList(e.target.value));
+
+  m.foot.querySelector('[data-close]').addEventListener('click', m.close);
+  m.foot.querySelector('[data-act="export-csv"]').addEventListener('click', () => {
+    const csv = 'text,color,timestamp\n' + hist.map(h => `"${h.text.replace(/"/g,'""')}","${h.color}","${h.timestamp}"`).join('\n');
+    downloadFile(csv, 'history.csv', 'text/csv');
+    toast('success', 'CSV экспортирован');
+  });
+  m.foot.querySelector('[data-act="export-json"]').addEventListener('click', () => {
+    downloadJSON(hist, 'history.json');
+    toast('success', 'JSON экспортирован');
+  });
+}
+
+/* ============================================================
+   STATS MODAL
+   ============================================================ */
+function showStatsModal() {
+  const hist = currentProfile().history;
+  const sectors = currentSectors();
+  const counts = {};
+  hist.forEach(h => { counts[h.text] = (counts[h.text] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const maxCount = sorted[0]?.[1] || 1;
+  const avgTime = hist.length ? Math.round(currentSettings().minSpinTime * 0.7 / 1000) : 0;
+
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value">${hist.length}</div>
+        <div class="stat-label">Вращений</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${sectors.filter(s => !s.hidden).length}</div>
+        <div class="stat-label">Активных секторов</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${sorted[0] ? escapeHtml(sorted[0][0]) : '—'}</div>
+        <div class="stat-label">Самый частый</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">${sorted.length ? escapeHtml(sorted[sorted.length-1][0]) : '—'}</div>
+        <div class="stat-label">Самый редкий</div>
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Распределение побед</div>
+      <div class="bar-chart">
+        ${sorted.slice(0, 10).map(([name, count]) => {
+          const pct = Math.round(count / hist.length * 100);
+          const w = Math.round(count / maxCount * 100);
+          const color = sectors.find(s => s.text === name)?.color || '#0a0a0b';
+          return `
+            <div class="bar-row">
+              <div class="bar-label">${escapeHtml(name)}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${w}%; background:${color}"></div></div>
+              <div class="bar-value">${pct}%</div>
+            </div>`;
+        }).join('') || '<div style="color:var(--text-3); font-size:12px; padding:10px 0;">Нет данных</div>'}
+      </div>
+    </div>
+
+    <div class="props-section">
+      <div class="props-section-title">Вероятности секторов</div>
+      <div class="bar-chart">
+        ${sectors.filter(s => !s.hidden).slice(0, 10).map(s => {
+          const total = sectors.filter(x => !x.hidden).reduce((a, x) => a + x.weight, 0) || 1;
+          const pct = Math.round(s.weight / total * 100);
+          return `
+            <div class="bar-row">
+              <div class="bar-label">${escapeHtml(s.text)}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${s.color}"></div></div>
+              <div class="bar-value">${pct}%</div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  const m = modal({ title: 'Статистика', body, size: 'lg' });
+}
+
+function renderStatsMini() {
+  $('#statSpins').textContent = currentProfile().history.length;
+  $('#statSectors').textContent = currentSectors().filter(s => !s.hidden).length;
+}
+
+function renderHistory() {
+  // История рендерится только в модальном окне, здесь просто обновляем счетчик
+  renderStatsMini();
+}
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadJSON(data, filename) {
+  downloadFile(JSON.stringify(data, null, 2), filename, 'application/json');
+}
+
+function exportAll() {
+  const formats = ['JSON', 'CSV (секторы)', 'PNG', 'SVG', 'PDF (печать)'];
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <p style="color:var(--text-2); font-size:13px; margin-bottom:16px">Выберите формат экспорта:</p>
+    <div style="display:flex; flex-direction:column; gap:8px">
+      ${formats.map(f => `<button class="btn" data-fmt="${f}" style="justify-content:flex-start">${f}</button>`).join('')}
+    </div>`;
+  const m = modal({ title: 'Экспорт', body });
+
+  m.body.querySelectorAll('[data-fmt]').forEach(b => b.addEventListener('click', () => {
+    const fmt = b.dataset.fmt;
+    if (fmt === 'JSON') {
+      downloadJSON(currentProfile(), `wheel-${currentProfile().name}.json`);
+    } else if (fmt.startsWith('CSV')) {
+      const csv = 'text,color,weight,description\n' + currentSectors().map(s =>
+        `"${s.text.replace(/"/g,'""')}","${s.color}",${s.weight},"${(s.description||'').replace(/"/g,'""')}"`
+      ).join('\n');
+      downloadFile(csv, 'sectors.csv', 'text/csv');
+    } else if (fmt === 'PNG') {
+      const canvas = $('#wheelCanvas');
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'wheel.png'; a.click();
+        URL.revokeObjectURL(url);
+      });
+    } else if (fmt === 'SVG') {
+      downloadFile(generateSVG(), 'wheel.svg', 'image/svg+xml');
+    } else if (fmt.startsWith('PDF')) {
+      window.print();
+    }
+    m.close();
+    toast('success', 'Экспорт выполнен', fmt);
+  }));
+}
+
+function generateSVG() {
+  const sectors = currentSectors().filter(s => !s.hidden);
+  const total = sectors.reduce((a, s) => a + s.weight, 0) || 1;
+  const cx = 400, cy = 400, r = 390;
+  let acc = 0;
+  let paths = '';
+  sectors.forEach(s => {
+    const a0 = acc / total * Math.PI * 2 - Math.PI / 2;
+    const size = s.weight / total * Math.PI * 2;
+    const a1 = a0 + size;
+    const x0 = cx + r * Math.cos(a0);
+    const y0 = cy + r * Math.sin(a0);
+    const x1 = cx + r * Math.cos(a1);
+    const y1 = cy + r * Math.sin(a1);
+    const large = size > Math.PI ? 1 : 0;
+    paths += `<path d="M${cx},${cy} L${x0},${y0} A${r},${r} 0 ${large} 1 ${x1},${y1} Z" fill="${s.color}" stroke="${currentSettings().borderColor}" stroke-width="${currentSettings().borderWidth}"/>`;
+    // Text
+    const mid = a0 + size / 2;
+    const tx = cx + (r * 0.7) * Math.cos(mid);
+    const ty = cy + (r * 0.7) * Math.sin(mid);
+    const rot = mid * 180 / Math.PI;
+    paths += `<text x="${tx}" y="${ty}" fill="${s.textColor || currentSettings().textColor}" font-size="${s.fontSize || currentSettings().textSize}" font-family="${s.font || 'Inter'}" font-weight="600" text-anchor="middle" dominant-baseline="middle" transform="rotate(${rot} ${tx} ${ty})">${escapeHtml(s.text)}</text>`;
+    acc += s.weight;
+  });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#fff" stroke="#ccc" stroke-width="2"/>${paths}</svg>`;
+}
+
+function importFile() {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="drop-zone" id="dropZone">
+      <div style="font-size:14px; font-weight:500; margin-bottom:6px">Перетащите файл сюда</div>
+      <div style="font-size:12px">или нажмите для выбора</div>
+      <div style="font-size:11px; margin-top:8px; color:var(--text-3)">Поддерживаются JSON и CSV</div>
+      <input type="file" id="fileInput" accept=".json,.csv" style="display:none" />
+    </div>`;
+  const m = modal({ title: 'Импорт', body });
+
+  const handleFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const content = e.target.result;
+        if (file.name.endsWith('.json')) {
+          const data = JSON.parse(content);
+          if (Array.isArray(data)) {
+            // Array of sectors or history
+            if (data[0]?.text !== undefined) {
+              snapshot();
+              data.forEach(s => currentSectors().push({ ...defaultSector(s.text, s.color), ...s, id: s.id || uid() }));
+              toast('success', 'Импортировано', `${data.length} секторов`);
+            } else if (data[0]?.sectorId !== undefined) {
+              snapshot();
+              currentProfile().history = data.concat(currentProfile().history);
+              toast('success', 'История импортирована');
+            }
+          } else if (data.sectors) {
+            // Full profile
+            confirmModal('Импортировать профиль', `Заменить текущий профиль данными из "${data.name || 'файл'}"?`, () => {
+              const id = uid();
+              state.profiles[id] = { ...data, id, name: data.name || 'Импортированный' };
+              switchProfile(id);
+              toast('success', 'Профиль импортирован');
+            });
+          }
+        } else if (file.name.endsWith('.csv')) {
+          const lines = content.split('\n').filter(Boolean);
+          if (lines.length < 2) { toast('error', 'Пустой CSV'); return; }
+          snapshot();
+          lines.slice(1).forEach(line => {
+            const parts = line.match(/("([^"]|"")*"|[^,]+)/g)?.map(p => p.replace(/^"|"$/g, '').replace(/""/g, '"')) || [];
+            if (parts[0]) {
+              currentSectors().push(defaultSector(parts[0], parts[1] || nextColor(currentSectors().length), Number(parts[2]) || 1));
+            }
+          });
+          renderAll();
+          toast('success', 'CSV импортирован');
+        }
+        m.close();
+      } catch (err) {
+        toast('error', 'Ошибка импорта', err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const dz = m.body.querySelector('#dropZone');
+  const fi = m.body.querySelector('#fileInput');
+  dz.addEventListener('click', () => fi.click());
+  fi.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+}
+
+/* ============================================================
+   RENDER ALL
+   ============================================================ */
+function renderAll() {
+  renderSectorList();
+  renderProps();
+  renderTemplates();
+  renderProfiles();
+  renderStatsMini();
+  updateModeBadge();
+  updateStatusProfile();
+  $('#wheelCenter').textContent = currentSettings().centerText || '';
+  Wheel.draw();
+}
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  state.ui.theme = theme;
+  const icon = $('#themeIcon');
+  if (theme === 'dark') {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+  }
+  Wheel.draw();
+  debouncedSave();
+}
+
+function toggleSound() {
+  state.ui.sound = !state.ui.sound;
+  const icon = $('#soundIcon');
+  if (state.ui.sound) {
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+  } else {
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+  }
+  debouncedSave();
+  toast('info', state.ui.sound ? 'Звук включён' : 'Звук выключен');
+}
+
+/* ============================================================
+   HELP MODAL
+   ============================================================ */
+function showHelp() {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:13px">
+      <div>
+        <h3 style="font-size:13px; font-weight:600; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-3)">Горячие клавиши</h3>
+        <div style="display:flex; flex-direction:column; gap:6px">
+          ${[
+            ['Space', 'Крутить колесо'],
+            ['Ctrl+S', 'Сохранить'],
+            ['Ctrl+N', 'Новый профиль'],
+            ['Ctrl+O', 'Открыть (импорт)'],
+            ['Ctrl+Z', 'Отменить'],
+            ['Ctrl+Y', 'Повторить'],
+            ['Ctrl+D', 'Клонировать сектор'],
+            ['Delete', 'Удалить сектор'],
+            ['F11', 'Полный экран'],
+            ['F1', 'Помощь'],
+            ['Esc', 'Закрыть окно']
+          ].map(([k, d]) => `<div style="display:flex; justify-content:space-between"><span style="color:var(--text-2)">${d}</span><kbd style="padding:2px 6px; background:var(--surface-3); border-radius:4px; font-size:11px; font-family:monospace">${k}</kbd></div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <h3 style="font-size:13px; font-weight:600; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-3)">Режимы</h3>
+        <div style="display:flex; flex-direction:column; gap:6px; color:var(--text-2)">
+          <div><strong style="color:var(--text)">Честный</strong> — взвешенный случайный выбор</div>
+          <div><strong style="color:var(--text)">Обычный</strong> — равные шансы</div>
+          <div><strong style="color:var(--text)">Подкрученный</strong> — всегда выпадает выбранный</div>
+          <div><strong style="color:var(--text)">По очереди</strong> — для нескольких игроков</div>
+          <div><strong style="color:var(--text)">Случайный</strong> — случайный режим каждый раз</div>
+        </div>
+      </div>
+    </div>`;
+  modal({ title: 'Помощь', body, size: 'lg' });
+}
+
+/* ============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================ */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+  if (e.key === 'Escape') {
+    $$('.modal-overlay.open').forEach(m => m.querySelector('[data-close]')?.click());
+    $('#contextMenu').classList.remove('open');
+    return;
+  }
+
+  if (e.key === 'F1') { e.preventDefault(); showHelp(); return; }
+  if (e.key === 'F11') { e.preventDefault(); document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); return; }
+
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); saveState(); toast('success', 'Сохранено'); }
+    else if (e.key === 'z' || e.key === 'Z') { e.preventDefault(); undo(); }
+    else if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); redo(); }
+    else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); createProfile(); }
+    else if (e.key === 'o' || e.key === 'O') { e.preventDefault(); importFile(); }
+    else if (e.key === 'd' || e.key === 'D') {
+      if (state.ui.selectedSectorId) { e.preventDefault(); cloneSector(state.ui.selectedSectorId); }
+    }
+    return;
+  }
+
+  if (!typing) {
+    if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); if (!Wheel.spinning) Wheel.spin(); }
+    else if (e.key === 'Delete' && state.ui.selectedSectorId) { deleteSector(state.ui.selectedSectorId); }
+  }
+});
+
+/* ============================================================
+   EVENT BINDINGS
+   ============================================================ */
+function bindUI() {
+  // Spin
+  $('#btnSpin').addEventListener('click', () => Wheel.spin());
+  $('#btnSpinTop').addEventListener('click', () => Wheel.spin());
+  $('#wheelCenter').addEventListener('click', () => Wheel.spin());
+
+  // Theme
+  $('#btnTheme').addEventListener('click', () => applyTheme(state.ui.theme === 'dark' ? 'light' : 'dark'));
+  $('#btnSound').addEventListener('click', toggleSound);
+  $('#btnFullscreen').addEventListener('click', () => {
+    document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  });
+  $('#btnHelp').addEventListener('click', showHelp);
+
+  // Toolbar actions
+  $('#btnNew').addEventListener('click', createProfile);
+  $('#btnOpen').addEventListener('click', importFile);
+  $('#btnSave').addEventListener('click', () => { saveState(); toast('success', 'Сохранено'); });
+  $('#btnUndo').addEventListener('click', undo);
+  $('#btnRedo').addEventListener('click', redo);
+
+  // Sidebar tabs
+  $$('.side-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      $$('.side-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      $$('.side-panel').forEach(p => p.hidden = true);
+      $(`#panel-${tab.dataset.tab}`).hidden = false;
+      Audio.ui();
+    });
+  });
+
+  // Sector search
+  $('#sectorSearch').addEventListener('input', debounce(renderSectorList, 150));
+
+  // Footer buttons
+  $('#btnImport').addEventListener('click', importFile);
+  $('#btnExport').addEventListener('click', exportAll);
+  $('#btnNewProfile').addEventListener('click', createProfile);
+
+  // Responsive sidebar toggle
+  const checkResponsive = () => {
+    const isMobile = window.innerWidth <= 960;
+    $('#btnToggleSidebar').style.display = isMobile ? 'grid' : 'none';
+  };
+  window.addEventListener('resize', () => { checkResponsive(); Wheel.resize(); });
+  checkResponsive();
+
+  // Wheel resize
+  const ro = new ResizeObserver(() => Wheel.resize());
+  ro.observe($('#wheelStage'));
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  applyTheme(state.ui.theme);
+  if (!state.ui.sound) {
+    $('#soundIcon').innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+  }
+  bindUI();
+  renderAll();
+  $('#statusText').textContent = 'Готово';
+  setTimeout(() => toast('info', 'Добро пожаловать', 'Нажмите "Крутить" или Space'), 400);
+}
+
+init();
+
+// Autosave every 30s
+setInterval(saveState, 30000);
+window.addEventListener('beforeunload', saveState);
+</script>
+</body>
+</html>
