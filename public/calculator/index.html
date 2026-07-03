@@ -1,1693 +1,1680 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Calculator Studio</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Calculator Studio — профессиональный калькулятор для браузера. Стандартный и научный режимы, история вычислений, память, настройки.">
+<meta name="theme-color" content="#000000">
+<title>Calculator Studio — Oris Platform</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* ============================================================
-   THEME VARIABLES
-   ============================================================ */
 :root {
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --surface-2: #fafafa;
-  --surface-3: #f0f0f2;
-  --surface-4: #e8e8ec;
-  --border: #e5e5e7;
-  --border-strong: #d4d4d7;
-  --text: #0a0a0b;
-  --text-2: #4a4a4f;
-  --text-3: #8a8a90;
-  --accent: #0a0a0b;
-  --accent-fg: #ffffff;
-  --btn-num: #ffffff;
-  --btn-num-hover: #f5f5f7;
-  --btn-op: #f0f0f2;
-  --btn-op-hover: #e5e5e7;
-  --btn-fn: #e8e8ec;
-  --btn-fn-hover: #dcdce0;
-  --btn-eq: #0a0a0b;
-  --btn-eq-fg: #ffffff;
-  --btn-eq-hover: #2a2a2e;
-  --danger: #c0392b;
-  --success: #1e7a46;
-  --shadow-sm: 0 1px 2px rgba(10,10,11,0.04);
-  --shadow: 0 2px 8px rgba(10,10,11,0.06), 0 1px 2px rgba(10,10,11,0.04);
-  --shadow-lg: 0 12px 32px rgba(10,10,11,0.08), 0 4px 12px rgba(10,10,11,0.04);
-  --shadow-xl: 0 24px 64px rgba(10,10,11,0.12);
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
-  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --purple: #BF5AF2;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --header-h: 56px;
 }
-
-[data-theme="dark"] {
-  --bg: #0a0a0b;
-  --surface: #141416;
-  --surface-2: #1a1a1d;
-  --surface-3: #222226;
-  --surface-4: #2a2a2e;
-  --border: #2a2a2e;
-  --border-strong: #3a3a3e;
-  --text: #f5f5f7;
-  --text-2: #b5b5ba;
-  --text-3: #75757a;
-  --accent: #f5f5f7;
-  --accent-fg: #0a0a0b;
-  --btn-num: #1e1e22;
-  --btn-num-hover: #28282d;
-  --btn-op: #222226;
-  --btn-op-hover: #2a2a2e;
-  --btn-fn: #28282d;
-  --btn-fn-hover: #323238;
-  --btn-eq: #f5f5f7;
-  --btn-eq-fg: #0a0a0b;
-  --btn-eq-hover: #e5e5e7;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow: 0 2px 8px rgba(0,0,0,0.4);
-  --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
-  --shadow-xl: 0 24px 64px rgba(0,0,0,0.6);
-}
-
-/* ============================================================
-   RESET & BASE
-   ============================================================ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  transition: background var(--transition), color var(--transition);
-  overflow: hidden;
-}
-button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-input, select { font-family: inherit; color: inherit; }
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
-
-/* ============================================================
-   APP LAYOUT
-   ============================================================ */
-.app {
-  display: grid;
-  grid-template-rows: 56px 1fr;
-  height: 100vh;
-  width: 100vw;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
-/* ============================================================
-   TOOLBAR
-   ============================================================ */
-.toolbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 12px;
+/* Header */
+.header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: -0.01em;
-  padding-right: 20px;
-  border-right: 1px solid var(--border);
-  margin-right: 8px;
+.header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    height: 100%; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
 }
-.brand-mark {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-fg);
-  display: grid; place-items: center;
-  font-size: 13px; font-weight: 800;
-  font-family: var(--mono);
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; letter-spacing: -0.02em; }
+.logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 13px;
+    font-family: var(--font-mono);
 }
-.mode-tabs {
-  display: flex;
-  gap: 2px;
-  background: var(--surface-3);
-  padding: 3px;
-  border-radius: var(--radius);
-}
-.mode-tab {
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-2);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition);
-}
-.mode-tab:hover { color: var(--text); }
-.mode-tab.active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
-}
-.toolbar-spacer { flex: 1; }
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-  transition: all var(--transition);
-  white-space: nowrap;
-}
-.btn:hover { background: var(--surface-3); }
-.btn:active { transform: scale(0.97); }
-.btn-icon { padding: 7px; width: 32px; height: 32px; }
+.nav-links { display: flex; gap: 8px; }
+.nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
+.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-link.active { background: var(--accent); color: white; }
 
-/* ============================================================
-   MAIN CONTENT
-   ============================================================ */
-.main {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  overflow: hidden;
+/* Layout */
+.layout { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* Hero */
+.hero {
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
 }
-@media (max-width: 900px) {
-  .main { grid-template-columns: 1fr; }
-  .history-panel { display: none; }
-  .history-panel.open {
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 99px;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+.hero-badge svg { width: 14px; height: 14px; }
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #F5F5F7 0%, #86868B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-title .accent {
+    background: linear-gradient(135deg, #FFFFFF 0%, #A0A0A5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+}
+.hero-actions {
     display: flex;
-    position: fixed;
-    inset: 56px 0 0 0;
-    z-index: 50;
-    background: var(--surface);
-  }
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+.btn {
+    padding: 14px 28px;
+    border-radius: 99px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    user-select: none;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-primary {
+    background: var(--text-primary);
+    color: var(--bg-body);
+}
+.btn-primary:hover {
+    background: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.2);
+}
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+    background: #3A3A3C;
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+}
+.btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+}
+.hero-meta {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+    color: var(--text-tertiary);
+}
+.hero-meta span { display: flex; align-items: center; gap: 6px; }
+.hero-meta svg { width: 14px; height: 14px; }
+
+/* App Preview */
+.app-preview {
+    max-width: 900px;
+    margin: 0 auto 80px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+.preview-titlebar {
+    height: 40px;
+    background: #1C1C1E;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+}
+.preview-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 13px;
+}
+.preview-brand-mark {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #F5F5F7;
+    color: #0A0A0B;
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 800;
+    font-family: var(--font-mono);
+}
+.preview-mode-tabs {
+    display: flex;
+    gap: 2px;
+    background: #2C2C2E;
+    padding: 3px;
+    border-radius: 8px;
+    margin-left: auto;
+}
+.preview-mode-tab {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #86868B;
+    border-radius: 6px;
+}
+.preview-mode-tab.active {
+    background: #1C1C1E;
+    color: #F5F5F7;
+}
+.preview-body {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    min-height: 500px;
+}
+.preview-calc {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.preview-display {
+    background: #1C1C1E;
+    border-radius: 12px;
+    padding: 20px;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+.preview-expr {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #636366;
+    text-align: right;
+    margin-bottom: 8px;
+}
+.preview-result {
+    font-family: var(--font-mono);
+    font-size: 36px;
+    font-weight: 600;
+    color: #F5F5F7;
+    text-align: right;
+}
+.preview-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+.preview-btn {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+.preview-btn.num { background: #2C2C2E; color: #F5F5F7; }
+.preview-btn.op { background: #3A3A3C; color: #F5F5F7; font-weight: 600; }
+.preview-btn.fn { background: #48484A; color: #B5B5BA; }
+.preview-btn.eq { background: #F5F5F7; color: #0A0A0B; font-weight: 600; font-size: 16px; }
+.preview-history {
+    background: #1C1C1E;
+    border-left: 1px solid var(--border);
+    padding: 16px;
+}
+.preview-history-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #F5F5F7;
+}
+.preview-history-item {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: #2C2C2E;
+}
+.preview-history-expr {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #86868B;
+    margin-bottom: 4px;
+}
+.preview-history-result {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: #F5F5F7;
 }
 
-/* ============================================================
-   CALCULATOR
-   ============================================================ */
-.calc-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  overflow: auto;
+/* Sections */
+.section {
+    padding: 60px 0;
+    border-top: 1px solid var(--border);
 }
-.calc {
-  width: min(440px, 100%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+.section-header {
+    margin-bottom: 40px;
 }
-
-/* Display */
-.display {
-  padding: 28px 24px 20px;
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: relative;
+.section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
 }
-.display-memory {
-  position: absolute;
-  top: 14px;
-  left: 24px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-3);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0;
-  transition: opacity var(--transition);
+.section-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
 }
-.display-memory.active { opacity: 1; }
-.display-mode {
-  position: absolute;
-  top: 14px;
-  right: 24px;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-3);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.display-expr {
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--text-3);
-  text-align: right;
-  min-height: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 8px;
-  direction: rtl;
-}
-.display-result {
-  font-family: var(--mono);
-  font-size: 48px;
-  font-weight: 600;
-  color: var(--text);
-  text-align: right;
-  letter-spacing: -0.02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.1;
-  transition: font-size var(--transition);
-}
-.display-result.small { font-size: 36px; }
-.display-result.tiny { font-size: 28px; }
-.display-result.error { color: var(--danger); font-size: 24px; }
-
-/* Buttons */
-.buttons {
-  padding: 12px;
-  display: grid;
-  gap: 8px;
-}
-.buttons.standard {
-  grid-template-columns: repeat(4, 1fr);
-}
-.buttons.scientific {
-  grid-template-columns: repeat(5, 1fr);
-}
-.btn-calc {
-  height: 56px;
-  border-radius: var(--radius);
-  font-size: 17px;
-  font-weight: 500;
-  font-family: var(--font);
-  transition: all var(--transition);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-}
-.btn-calc:hover { transform: translateY(-1px); }
-.btn-calc:active { transform: translateY(0) scale(0.97); }
-.btn-calc.num {
-  background: var(--btn-num);
-  color: var(--text);
-  box-shadow: var(--shadow-sm);
-}
-.btn-calc.num:hover { background: var(--btn-num-hover); }
-.btn-calc.op {
-  background: var(--btn-op);
-  color: var(--text);
-  font-weight: 600;
-}
-.btn-calc.op:hover { background: var(--btn-op-hover); }
-.btn-calc.fn {
-  background: var(--btn-fn);
-  color: var(--text-2);
-  font-size: 14px;
-  font-weight: 500;
-}
-.btn-calc.fn:hover { background: var(--btn-fn-hover); }
-.btn-calc.eq {
-  background: var(--btn-eq);
-  color: var(--btn-eq-fg);
-  font-weight: 600;
-  font-size: 20px;
-}
-.btn-calc.eq:hover { background: var(--btn-eq-hover); }
-.btn-calc.danger {
-  color: var(--danger);
-  font-weight: 600;
-}
-.btn-calc.pressed {
-  background: var(--accent);
-  color: var(--accent-fg);
-}
-.btn-calc sup {
-  font-size: 10px;
-  vertical-align: super;
-  margin-left: 1px;
+.section-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 640px;
 }
 
-/* ============================================================
-   HISTORY PANEL
-   ============================================================ */
-.history-panel {
-  background: var(--surface);
-  border-left: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* Open Card */
+.open-card {
+    background: var(--bg-card);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.05) 0%, var(--bg-card) 100%);
 }
-.history-head {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.open-card::before {
+    content: 'Веб-приложение';
+    position: absolute;
+    top: 20px; right: 20px;
+    padding: 4px 12px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
-.history-title {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+.open-icon {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, #1C1C1E 0%, #3A3A3C 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    color: white;
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 800;
 }
-.history-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
+.open-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
-.history-empty {
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--text-3);
-  font-size: 12px;
+.open-desc {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
 }
-.history-item {
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: background var(--transition);
-  margin-bottom: 4px;
+.open-meta {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 28px;
+    font-size: 0.88rem;
+    color: var(--text-tertiary);
+    flex-wrap: wrap;
 }
-.history-item:hover { background: var(--surface-3); }
-.history-expr {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--text-3);
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.open-meta span { display: flex; align-items: center; gap: 6px; }
+.open-meta svg { width: 14px; height: 14px; }
+.open-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* Requirements */
+.req-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
 }
-.history-result {
-  font-family: var(--mono);
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.req-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
 }
-.history-time {
-  font-size: 10px;
-  color: var(--text-3);
-  margin-top: 4px;
-  font-variant-numeric: tabular-nums;
+.req-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+}
+.req-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
-/* ============================================================
-   MODAL
-   ============================================================ */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10,10,11,0.5);
-  backdrop-filter: blur(4px);
-  display: grid;
-  place-items: center;
-  z-index: 100;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition-slow);
+/* Documentation */
+.doc-nav {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    align-self: start;
+    max-height: calc(100vh - var(--header-h) - 48px);
+    overflow-y: auto;
 }
-.modal-overlay.open { opacity: 1; pointer-events: auto; }
-.modal {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  width: min(440px, 92vw);
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  transform: scale(0.96);
-  transition: transform var(--transition-slow);
-  overflow: hidden;
+.doc-nav-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+    padding: 0 12px;
 }
-.modal-overlay.open .modal { transform: scale(1); }
-.modal-head {
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.doc-nav-list { list-style: none; }
+.doc-nav-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
 }
-.modal-title { font-size: 15px; font-weight: 600; }
-.modal-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
-.modal-foot {
-  padding: 14px 22px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+.doc-nav-item:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+.doc-nav-item.active {
+    background: rgba(10, 132, 255, 0.1);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+}
+.doc-content {
+    flex: 1;
+    min-width: 0;
+}
+.doc-block {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    margin-bottom: 20px;
+}
+.doc-block h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.doc-block h2 .num {
+    width: 32px; height: 32px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+.doc-block h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 20px 0 10px;
+    color: var(--text-primary);
+}
+.doc-block p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+.doc-block ul, .doc-block ol {
+    margin: 12px 0 16px 24px;
+    color: var(--text-secondary);
+}
+.doc-block li { margin-bottom: 6px; }
+.doc-block code {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    background: var(--bg-subtle);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+}
+.doc-block pre {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+.doc-block pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+}
+.doc-block table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.88rem;
+}
+.doc-block th, .doc-block td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.doc-block th {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+}
+.doc-block td { color: var(--text-secondary); }
+.doc-block td code {
+    font-size: 0.82rem;
 }
 
-/* Settings */
-.settings-group {
-  margin-bottom: 20px;
+/* Features Grid */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
 }
-.settings-group-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-3);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    transition: all 0.2s;
 }
-.setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0;
+.feature-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
 }
-.setting-label { font-size: 13px; color: var(--text); }
-.setting-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; }
-.toggle {
-  position: relative;
-  width: 36px; height: 20px;
-  background: var(--border-strong);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background var(--transition);
+.feature-icon {
+    width: 40px; height: 40px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    color: var(--text-primary);
 }
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 16px; height: 16px;
-  background: var(--surface);
-  border-radius: 50%;
-  transition: transform var(--transition);
-  box-shadow: var(--shadow-sm);
+.feature-icon svg { width: 20px; height: 20px; }
+.feature-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
 }
-.toggle.on { background: var(--accent); }
-.toggle.on::after { transform: translateX(16px); }
-select.setting-select {
-  padding: 6px 10px;
-  background: var(--surface-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
+.feature-desc {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }
 
-/* ============================================================
-   TOAST
-   ============================================================ */
-.toast-stack {
-  position: fixed;
-  top: 72px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 200;
-  pointer-events: none;
+/* FAQ */
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
-.toast {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 10px 14px;
-  box-shadow: var(--shadow-lg);
-  min-width: 220px;
-  max-width: 320px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transform: translateX(120%);
-  opacity: 0;
-  transition: all var(--transition-slow);
-  pointer-events: auto;
+.faq-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
 }
-.toast.show { transform: translateX(0); opacity: 1; }
-.toast-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.faq-question {
+    padding: 18px 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: background 0.15s;
 }
-.toast.info .toast-dot { background: var(--text); }
-.toast.success .toast-dot { background: var(--success); }
-.toast.error .toast-dot { background: var(--danger); }
-.toast-content { flex: 1; font-size: 12px; }
-.toast-title { font-weight: 600; }
+.faq-question:hover { background: var(--bg-elevated); }
+.faq-question svg {
+    width: 16px; height: 16px;
+    color: var(--text-tertiary);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+.faq-item.open .faq-question svg { transform: rotate(180deg); }
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+.faq-item.open .faq-answer { max-height: 500px; }
+.faq-answer-inner {
+    padding: 0 22px 18px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 600px) {
-  .toolbar { padding: 0 12px; gap: 8px; }
-  .brand { padding-right: 10px; margin-right: 4px; font-size: 13px; }
-  .mode-tab { padding: 6px 10px; font-size: 11px; }
-  .btn-calc { height: 50px; font-size: 16px; }
-  .display-result { font-size: 40px; }
-  .calc-wrap { padding: 12px; }
+/* Support */
+.support-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+.support-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+}
+.support-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.support-icon {
+    width: 44px; height: 44px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    color: var(--accent);
+}
+.support-icon svg { width: 22px; height: 22px; }
+.support-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.support-value {
+    font-size: 0.88rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+.support-desc {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+}
+
+/* Changelog */
+.changelog-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.changelog-version {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+}
+.changelog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.changelog-version-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.changelog-version-name .badge {
+    padding: 3px 10px;
+    background: var(--accent);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.changelog-date {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+}
+.changelog-changes {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.changelog-change {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.change-type {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.change-type.feat { background: rgba(48, 209, 88, 0.15); color: var(--success); }
+.change-type.fix { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
+.change-type.docs { background: rgba(10, 132, 255, 0.15); color: var(--accent); }
+.change-type.perf { background: rgba(255, 159, 10, 0.15); color: var(--warning); }
+
+/* Footer */
+.footer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Two column layout */
+.two-col {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 40px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .hero-title { font-size: 2.75rem; }
+    .two-col { grid-template-columns: 1fr; }
+    .doc-nav { position: static; max-height: none; }
+    .preview-body { grid-template-columns: 1fr; }
+    .preview-history { border-left: none; border-top: 1px solid var(--border); }
+}
+@media (max-width: 640px) {
+    .hero { padding: 40px 0 30px; }
+    .hero-title { font-size: 2.25rem; }
+    .hero-subtitle { font-size: 1rem; }
+    .section-title { font-size: 1.75rem; }
+    .layout { padding: 0 16px; }
+    .section { padding: 40px 0; }
+    .doc-block { padding: 20px; }
+    .open-card { padding: 28px 20px; }
 }
 </style>
 </head>
 <body>
 
-<div class="app">
-
-  <!-- TOOLBAR -->
-  <header class="toolbar">
-    <div class="brand">
-      <div class="brand-mark">C</div>
-      <span>Calculator Studio</span>
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <div class="logo-icon">C</div>
+            <span>Calculator Studio</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="#open" class="nav-link active">Open</a>
+            <a href="#docs" class="nav-link">Docs</a>
+            <a href="#faq" class="nav-link">FAQ</a>
+            <a href="#support" class="nav-link">Support</a>
+        </nav>
     </div>
+</header>
 
-    <div class="mode-tabs">
-      <button class="mode-tab active" data-mode="standard">Стандартный</button>
-      <button class="mode-tab" data-mode="scientific">Научный</button>
-    </div>
+<main class="layout">
 
-    <div class="toolbar-spacer"></div>
-
-    <button class="btn btn-icon" id="btnHistory" title="История">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
-    </button>
-    <button class="btn btn-icon" id="btnTheme" title="Тема">
-      <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-    </button>
-    <button class="btn btn-icon" id="btnSettings" title="Настройки">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-  </header>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="calc-wrap">
-      <div class="calc">
-        <div class="display">
-          <div class="display-memory" id="displayMemory">M</div>
-          <div class="display-mode" id="displayMode">Стандартный</div>
-          <div class="display-expr" id="displayExpr">&nbsp;</div>
-          <div class="display-result" id="displayResult">0</div>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            Version 1.0.0 · Web Application
         </div>
-        <div class="buttons standard" id="buttons"></div>
-      </div>
+        <h1 class="hero-title">
+            <span class="accent">Calculator</span> Studio
+        </h1>
+        <p class="hero-subtitle">
+            Профессиональный калькулятор с стандартным и научным режимами, историей вычислений, памятью и настраиваемой точностью. Работает прямо в браузере на базе Oris Platform.
+        </p>
+        <div class="hero-actions">
+            <a href="/calculator/app" class="btn btn-primary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Открыть калькулятор
+            </a>
+            <a href="#docs" class="btn btn-secondary">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Документация
+            </a>
+        </div>
+        <div class="hero-meta">
+            <span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Безопасно
+            </span>
+            <span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Обновлено 3 июля 2026
+            </span>
+            <span>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
+                Любой браузер
+            </span>
+        </div>
+    </section>
+
+    <!-- App Preview -->
+    <div class="app-preview">
+        <div class="preview-titlebar">
+            <div class="preview-brand">
+                <div class="preview-brand-mark">C</div>
+                <span>Calculator Studio</span>
+            </div>
+            <div class="preview-mode-tabs">
+                <div class="preview-mode-tab active">Стандартный</div>
+                <div class="preview-mode-tab">Научный</div>
+            </div>
+        </div>
+        <div class="preview-body">
+            <div class="preview-calc">
+                <div class="preview-display">
+                    <div class="preview-expr">125 × 48 =</div>
+                    <div class="preview-result">6 000</div>
+                </div>
+                <div class="preview-buttons">
+                    <div class="preview-btn fn">%</div>
+                    <div class="preview-btn fn">CE</div>
+                    <div class="preview-btn fn">C</div>
+                    <div class="preview-btn fn">⌫</div>
+                    <div class="preview-btn fn">¹⁄ₓ</div>
+                    <div class="preview-btn fn">x²</div>
+                    <div class="preview-btn fn">√x</div>
+                    <div class="preview-btn op">÷</div>
+                    <div class="preview-btn num">7</div>
+                    <div class="preview-btn num">8</div>
+                    <div class="preview-btn num">9</div>
+                    <div class="preview-btn op">×</div>
+                    <div class="preview-btn num">4</div>
+                    <div class="preview-btn num">5</div>
+                    <div class="preview-btn num">6</div>
+                    <div class="preview-btn op">−</div>
+                    <div class="preview-btn num">1</div>
+                    <div class="preview-btn num">2</div>
+                    <div class="preview-btn num">3</div>
+                    <div class="preview-btn op">+</div>
+                    <div class="preview-btn fn">±</div>
+                    <div class="preview-btn num">0</div>
+                    <div class="preview-btn num">,</div>
+                    <div class="preview-btn eq">=</div>
+                </div>
+            </div>
+            <div class="preview-history">
+                <div class="preview-history-title">История вычислений</div>
+                <div class="preview-history-item">
+                    <div class="preview-history-expr">125 × 48</div>
+                    <div class="preview-history-result">= 6 000</div>
+                </div>
+                <div class="preview-history-item">
+                    <div class="preview-history-expr">√(144)</div>
+                    <div class="preview-history-result">= 12</div>
+                </div>
+                <div class="preview-history-item">
+                    <div class="preview-history-expr">sin(30)</div>
+                    <div class="preview-history-result">= 0.5</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <aside class="history-panel" id="historyPanel">
-      <div class="history-head">
-        <div class="history-title">История вычислений</div>
-        <button class="btn btn-icon" id="btnClearHistory" title="Очистить">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        </button>
-      </div>
-      <div class="history-body" id="historyBody">
-        <div class="history-empty">История пуста</div>
-      </div>
-    </aside>
-  </div>
-</div>
+    <!-- Open Section -->
+    <section class="section" id="open">
+        <div class="section-header">
+            <div class="section-label">Открыть</div>
+            <h2 class="section-title">Запуск калькулятора</h2>
+            <p class="section-subtitle">Calculator Studio работает прямо в браузере — установка не требуется. Все вычисления выполняются локально на вашем устройстве.</p>
+        </div>
 
-<!-- Toast stack -->
-<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+        <div class="open-card">
+            <div class="open-icon">C</div>
+            <div class="open-name">Calculator Studio Web</div>
+            <div class="open-desc">Полнофункциональный калькулятор со стандартным и научным режимами, историей вычислений, памятью и настраиваемой точностью. Работает в любом современном браузере.</div>
+            <div class="open-meta">
+                <span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/></svg>
+                    Любой браузер
+                </span>
+                <span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Мгновенный запуск
+                </span>
+                <span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Приватно
+                </span>
+            </div>
+            <div class="open-actions">
+                <a href="/calculator/app" class="btn btn-primary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Открыть калькулятор
+                </a>
+                <a href="#docs" class="btn btn-secondary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    Читать документацию
+                </a>
+            </div>
+        </div>
+    </section>
 
-<!-- Modal root -->
-<div id="modalRoot"></div>
+    <!-- Requirements -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-label">Требования</div>
+            <h2 class="section-title">Системные требования</h2>
+            <p class="section-subtitle">Calculator Studio работает в любом современном браузере без установки дополнительного программного обеспечения.</p>
+        </div>
+        <div class="req-grid">
+            <div class="req-card">
+                <div class="req-label">Браузер</div>
+                <div class="req-value">Chrome, Firefox, Safari, Edge (последние версии)</div>
+            </div>
+            <div class="req-card">
+                <div class="req-label">JavaScript</div>
+                <div class="req-value">Включён (по умолчанию)</div>
+            </div>
+            <div class="req-card">
+                <div class="req-label">Разрешение экрана</div>
+                <div class="req-value">От 320×480 (мобильные)</div>
+            </div>
+            <div class="req-card">
+                <div class="req-label">Сетевое подключение</div>
+                <div class="req-value">Требуется при первом открытии</div>
+            </div>
+            <div class="req-card">
+                <div class="req-label">Хранилище</div>
+                <div class="req-value">Локальное (localStorage) для истории и настроек</div>
+            </div>
+            <div class="req-card">
+                <div class="req-label">Платформы</div>
+                <div class="req-value">Windows, macOS, Linux, iOS, Android</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-label">Возможности</div>
+            <h2 class="section-title">Что умеет Calculator Studio</h2>
+            <p class="section-subtitle">Полный набор инструментов для математических вычислений с двумя режимами работы.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="feature-title">Стандартный режим</div>
+                <div class="feature-desc">Базовые арифметические операции: сложение, вычитание, умножение, деление, проценты, смена знака, квадрат, квадратный корень, обратное значение.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                </div>
+                <div class="feature-title">Научный режим</div>
+                <div class="feature-desc">Тригонометрия (sin, cos, tan, asin, acos, atan), гиперболические функции, логарифмы (log, ln), экспонента, факториал, степени, скобки.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="feature-title">История вычислений</div>
+                <div class="feature-desc">Автоматическое сохранение до 100 последних операций с временем выполнения. Клик по записи восстанавливает результат для дальнейших вычислений.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+                </div>
+                <div class="feature-title">Память</div>
+                <div class="feature-desc">Пять операций с памятью: MC (очистка), MR (вызов), M+ (добавление), M− (вычитание), MS (сохранение). Индикатор M на дисплее показывает наличие значения.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <div class="feature-title">Настройки</div>
+                <div class="feature-desc">Точность вычислений (6-14 знаков), единицы углов (градусы/радианы), разделитель тысяч, тема оформления (светлая/тёмная), вибрация на мобильных.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                </div>
+                <div class="feature-title">Горячие клавиши</div>
+                <div class="feature-desc">Полная поддержка клавиатуры: цифры 0-9, операторы +−×÷, Enter для вычисления, Escape для очистки, Backspace для удаления, % для процентов.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                </div>
+                <div class="feature-title">Темы оформления</div>
+                <div class="feature-desc">Светлая и тёмная темы с плавными переходами. Переключение через кнопку в панели инструментов или в настройках. Выбор сохраняется автоматически.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                </div>
+                <div class="feature-title">Экспорт истории</div>
+                <div class="feature-desc">Выгрузка всей истории вычислений в формате JSON через настройки. Можно сохранить для анализа или переноса на другое устройство.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </div>
+                <div class="feature-title">Приватность</div>
+                <div class="feature-desc">Все вычисления выполняются локально в браузере. Данные не отправляются на сервер. История и настройки хранятся только в localStorage вашего устройства.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation -->
+    <section class="section" id="docs">
+        <div class="section-header">
+            <div class="section-label">Документация</div>
+            <h2 class="section-title">Руководство пользователя</h2>
+            <p class="section-subtitle">Полное описание всех функций Calculator Studio — от базовых вычислений до продвинутых возможностей.</p>
+        </div>
+
+        <div class="two-col">
+            <nav class="doc-nav">
+                <div class="doc-nav-title">Содержание</div>
+                <ul class="doc-nav-list">
+                    <li class="doc-nav-item active" data-target="doc-start">1. Начало работы</li>
+                    <li class="doc-nav-item" data-target="doc-interface">2. Интерфейс</li>
+                    <li class="doc-nav-item" data-target="doc-standard">3. Стандартный режим</li>
+                    <li class="doc-nav-item" data-target="doc-scientific">4. Научный режим</li>
+                    <li class="doc-nav-item" data-target="doc-memory">5. Память</li>
+                    <li class="doc-nav-item" data-target="doc-history">6. История</li>
+                    <li class="doc-nav-item" data-target="doc-settings">7. Настройки</li>
+                    <li class="doc-nav-item" data-target="doc-keyboard">8. Горячие клавиши</li>
+                    <li class="doc-nav-item" data-target="doc-tips">9. Советы</li>
+                </ul>
+            </nav>
+
+            <div class="doc-content">
+                <div class="doc-block" id="doc-start">
+                    <h2><span class="num">01</span> Начало работы</h2>
+                    <h3>Запуск калькулятора</h3>
+                    <ol>
+                        <li>Перейдите по адресу <code>/calculator/app</code> или нажмите кнопку «Открыть калькулятор» на этой странице.</li>
+                        <li>При первом запуске калькулятор загрузит интерфейс и сохранит его в кэш браузера.</li>
+                        <li>При последующих открытиях загрузка происходит мгновенно.</li>
+                    </ol>
+
+                    <h3>Первое вычисление</h3>
+                    <p>Для выполнения простого вычисления:</p>
+                    <ol>
+                        <li>Введите первое число (например, <code>125</code>).</li>
+                        <li>Нажмите оператор (например, <code>×</code>).</li>
+                        <li>Введите второе число (например, <code>48</code>).</li>
+                        <li>Нажмите <code>=</code> или клавишу Enter.</li>
+                        <li>Результат <code>6 000</code> отобразится на экране.</li>
+                    </ol>
+
+                    <h3>Очистка</h3>
+                    <p>Кнопка <code>C</code> (Clear) полностью сбрасывает текущее вычисление и очищает выражение. Кнопка <code>CE</code> (Clear Entry) очищает только текущее вводимое число. Кнопка <code>⌫</code> (Backspace) удаляет последний введённый символ.</p>
+                </div>
+
+                <div class="doc-block" id="doc-interface">
+                    <h2><span class="num">02</span> Интерфейс</h2>
+                    <p>Calculator Studio использует минималистичный интерфейс в стиле Apple и Fluent Design:</p>
+                    <table>
+                        <thead>
+                            <tr><th>Элемент</th><th>Описание</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Панель инструментов</strong></td><td>Верхняя панель с логотипом, переключателем режимов (Стандартный/Научный) и кнопками истории, темы, настроек.</td></tr>
+                            <tr><td><strong>Дисплей</strong></td><td>Верхняя область калькулятора с текущим выражением (мелкий шрифт) и результатом (крупный шрифт). Индикатор M показывает наличие значения в памяти.</td></tr>
+                            <tr><td><strong>Цифровая панель</strong></td><td>Кнопки 0-9 для ввода чисел и запятая для десятичной части.</td></tr>
+                            <tr><td><strong>Операторы</strong></td><td>Кнопки +, −, ×, ÷ выделены серым цветом для быстрого распознавания.</td></tr>
+                            <tr><td><strong>Функциональные кнопки</strong></td><td>C, CE, ⌫, %, ±, x², √x, ¹⁄ₓ — для управления вычислением.</td></tr>
+                            <tr><td><strong>Панель истории</strong></td><td>Правая панель со списком предыдущих вычислений (до 100 записей).</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="doc-block" id="doc-standard">
+                    <h2><span class="num">03</span> Стандартный режим</h2>
+                    <h3>Арифметика</h3>
+                    <table>
+                        <thead><tr><th>Операция</th><th>Кнопка</th><th>Пример</th><th>Результат</th></tr></thead>
+                        <tbody>
+                            <tr><td>Сложение</td><td><code>+</code></td><td>15 + 27</td><td>42</td></tr>
+                            <tr><td>Вычитание</td><td><code>−</code></td><td>100 − 38</td><td>62</td></tr>
+                            <tr><td>Умножение</td><td><code>×</code></td><td>12 × 8</td><td>96</td></tr>
+                            <tr><td>Деление</td><td><code>÷</code></td><td>144 ÷ 12</td><td>12</td></tr>
+                            <tr><td>Проценты</td><td><code>%</code></td><td>200 × 15%</td><td>30</td></tr>
+                            <tr><td>Смена знака</td><td><code>±</code></td><td>±42</td><td>−42</td></tr>
+                            <tr><td>Квадрат</td><td><code>x²</code></td><td>5²</td><td>25</td></tr>
+                            <tr><td>Корень</td><td><code>√x</code></td><td>√144</td><td>12</td></tr>
+                            <tr><td>Обратное</td><td><code>¹⁄ₓ</code></td><td>¹⁄₄</td><td>0.25</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Цепочки операций</h3>
+                    <p>Можно вводить последовательные операции без нажатия <code>=</code> после каждой:</p>
+                    <pre><code>10 + 5 × 2 − 3 = 17</code></pre>
+                    <p>Результат вычисляется с учётом приоритета операторов.</p>
+                </div>
+
+                <div class="doc-block" id="doc-scientific">
+                    <h2><span class="num">04</span> Научный режим</h2>
+                    <p>Переключите калькулятор в научный режим через вкладки в панели инструментов для доступа к расширенным функциям.</p>
+
+                    <h3>Тригонометрия</h3>
+                    <table>
+                        <thead><tr><th>Функция</th><th>Описание</th><th>Пример</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>sin</code></td><td>Синус угла</td><td>sin(30°) = 0.5</td></tr>
+                            <tr><td><code>cos</code></td><td>Косинус угла</td><td>cos(60°) = 0.5</td></tr>
+                            <tr><td><code>tan</code></td><td>Тангенс угла</td><td>tan(45°) = 1</td></tr>
+                            <tr><td><code>asin</code></td><td>Арксинус</td><td>asin(0.5) = 30°</td></tr>
+                            <tr><td><code>acos</code></td><td>Арккосинус</td><td>acos(0.5) = 60°</td></tr>
+                            <tr><td><code>atan</code></td><td>Арктангенс</td><td>atan(1) = 45°</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Гиперболические функции</h3>
+                    <table>
+                        <thead><tr><th>Функция</th><th>Описание</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>sinh</code></td><td>Гиперболический синус</td></tr>
+                            <tr><td><code>cosh</code></td><td>Гиперболический косинус</td></tr>
+                            <tr><td><code>tanh</code></td><td>Гиперболический тангенс</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Логарифмы и степени</h3>
+                    <table>
+                        <thead><tr><th>Функция</th><th>Описание</th><th>Пример</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>x²</code></td><td>Квадрат числа</td><td>5² = 25</td></tr>
+                            <tr><td><code>x^y</code></td><td>Степень</td><td>2^10 = 1024</td></tr>
+                            <tr><td><code>√x</code></td><td>Квадратный корень</td><td>√144 = 12</td></tr>
+                            <tr><td><code>log</code></td><td>Десятичный логарифм</td><td>log(1000) = 3</td></tr>
+                            <tr><td><code>ln</code></td><td>Натуральный логарифм</td><td>ln(e) = 1</td></tr>
+                            <tr><td><code>n!</code></td><td>Факториал</td><td>5! = 120</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Константы</h3>
+                    <table>
+                        <thead><tr><th>Константа</th><th>Значение</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>π</code></td><td>3.141592653589793...</td></tr>
+                            <tr><td><code>e</code></td><td>2.718281828459045...</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Скобки</h3>
+                    <p>В научном режиме доступны скобки для группировки операций:</p>
+                    <pre><code>(15 + 5) × 3 = 60
+15 + 5 × 3 = 30</code></pre>
+                </div>
+
+                <div class="doc-block" id="doc-memory">
+                    <h2><span class="num">05</span> Память</h2>
+                    <p>Calculator Studio предоставляет пять операций с памятью для сохранения промежуточных результатов.</p>
+
+                    <h3>Операции</h3>
+                    <table>
+                        <thead><tr><th>Кнопка</th><th>Действие</th><th>Описание</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>MC</code></td><td>Memory Clear</td><td>Очищает память. Индикатор M на дисплее исчезает.</td></tr>
+                            <tr><td><code>MR</code></td><td>Memory Recall</td><td>Вызывает сохранённое значение из памяти и отображает его на дисплее.</td></tr>
+                            <tr><td><code>M+</code></td><td>Memory Plus</td><td>Добавляет текущее число к значению в памяти.</td></tr>
+                            <tr><td><code>M−</code></td><td>Memory Minus</td><td>Вычитает текущее число из значения в памяти.</td></tr>
+                            <tr><td><code>MS</code></td><td>Memory Store</td><td>Сохраняет текущее число в память, заменяя предыдущее значение.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Индикатор M</h3>
+                    <p>Когда в памяти есть значение, в левом верхнем углу дисплея появляется индикатор <code>M</code>. Это позволяет отслеживать наличие сохранённого результата.</p>
+
+                    <h3>Пример использования</h3>
+                    <ol>
+                        <li>Вычислите <code>100 × 5 = 500</code></li>
+                        <li>Нажмите <code>MS</code> — значение 500 сохранено в память</li>
+                        <li>Вычислите <code>200 + 300 = 500</code></li>
+                        <li>Нажмите <code>MR</code> — на дисплее появится 500 (из памяти)</li>
+                        <li>Нажмите <code>+</code> и <code>=</code> — получите 1000</li>
+                    </ol>
+                </div>
+
+                <div class="doc-block" id="doc-history">
+                    <h2><span class="num">06</span> История вычислений</h2>
+                    <p>Calculator Studio автоматически сохраняет все выполненные операции в историю.</p>
+
+                    <h3>Просмотр истории</h3>
+                    <p>Нажмите на иконку часов в правой части панели инструментов, чтобы открыть/закрыть панель истории. В ней отображаются:</p>
+                    <ul>
+                        <li>Полное выражение (например, <code>125 × 48</code>)</li>
+                        <li>Результат (<code>6 000</code>)</li>
+                        <li>Время выполнения</li>
+                    </ul>
+
+                    <h3>Использование результатов</h3>
+                    <p>Кликните на любой элемент истории, чтобы:</p>
+                    <ul>
+                        <li>Вставить результат в текущее вычисление</li>
+                        <li>Продолжить вычисления с этим значением</li>
+                    </ul>
+
+                    <h3>Очистка истории</h3>
+                    <p>Кнопка корзины в шапке панели истории удаляет все записи. Действие необратимо.</p>
+
+                    <h3>Экспорт</h3>
+                    <p>Через настройки можно экспортировать всю историю в формате JSON для анализа или переноса на другое устройство.</p>
+
+                    <h3>Хранение</h3>
+                    <p>История сохраняется в <code>localStorage</code> браузера и сохраняется между сессиями. Максимальное количество записей — 100. При превышении лимита старые записи удаляются автоматически.</p>
+                </div>
+
+                <div class="doc-block" id="doc-settings">
+                    <h2><span class="num">07</span> Настройки</h2>
+                    <p>Нажмите на иконку шестерёнки в панели инструментов, чтобы открыть модальное окно настроек.</p>
+
+                    <h3>Внешний вид</h3>
+                    <table>
+                        <thead><tr><th>Параметр</th><th>Описание</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Тема</strong></td><td>Светлая или тёмная тема интерфейса. Переключается также кнопкой в панели инструментов.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Вычисления</h3>
+                    <table>
+                        <thead><tr><th>Параметр</th><th>По умолчанию</th><th>Описание</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Точность</strong></td><td><code>10</code></td><td>Количество значащих цифр в результате (6, 8, 10, 12, 14)</td></tr>
+                            <tr><td><strong>Единицы углов</strong></td><td><code>Градусы</code></td><td>Для тригонометрических функций: градусы или радианы</td></tr>
+                            <tr><td><strong>Разделитель тысяч</strong></td><td><code>Вкл</code></td><td>Пробел между разрядами для читаемости (например, 6 000)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Обратная связь</h3>
+                    <table>
+                        <thead><tr><th>Параметр</th><th>Описание</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Вибрация</strong></td><td>Тактильный отклик на мобильных устройствах при нажатии кнопок</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Данные</h3>
+                    <ul>
+                        <li><strong>Экспорт истории</strong> — выгрузка всех записей в JSON-файл</li>
+                        <li><strong>Сбросить все данные</strong> — удаление истории, настроек и памяти (необратимо)</li>
+                    </ul>
+                </div>
+
+                <div class="doc-block" id="doc-keyboard">
+                    <h2><span class="num">08</span> Горячие клавиши</h2>
+                    <p>Calculator Studio поддерживает полную работу с клавиатуры:</p>
+                    <table>
+                        <thead><tr><th>Клавиша</th><th>Действие</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>0-9</code></td><td>Ввод цифр</td></tr>
+                            <tr><td><code>.</code> или <code>,</code></td><td>Десятичная точка</td></tr>
+                            <tr><td><code>+</code></td><td>Сложение</td></tr>
+                            <tr><td><code>-</code></td><td>Вычитание</td></tr>
+                            <tr><td><code>*</code></td><td>Умножение</td></tr>
+                            <tr><td><code>/</code></td><td>Деление</td></tr>
+                            <tr><td><code>^</code></td><td>Степень (научный режим)</td></tr>
+                            <tr><td><code>Enter</code> или <code>=</code></td><td>Вычислить результат</td></tr>
+                            <tr><td><code>Escape</code></td><td>Очистить всё (C)</td></tr>
+                            <tr><td><code>Delete</code></td><td>Очистить ввод (CE)</td></tr>
+                            <tr><td><code>Backspace</code></td><td>Удалить последний символ</td></tr>
+                            <tr><td><code>%</code></td><td>Проценты</td></tr>
+                        </tbody>
+                    </table>
+                    <p>Горячие клавиши работают только когда калькулятор находится в фокусе.</p>
+                </div>
+
+                <div class="doc-block" id="doc-tips">
+                    <h2><span class="num">09</span> Советы и рекомендации</h2>
+
+                    <h3>Точные вычисления</h3>
+                    <p>Calculator Studio использует собственный парсер выражений без <code>eval()</code> для безопасности. Для критически важных расчётов учитывайте возможную погрешность в последних знаках после запятой из-за стандарта IEEE 754.</p>
+
+                    <h3>Быстрый доступ</h3>
+                    <p>Добавьте страницу калькулятора в закладки браузера для быстрого запуска:</p>
+                    <ol>
+                        <li>Откройте калькулятор в браузере.</li>
+                        <li>Нажмите Ctrl+D (Cmd+D на macOS).</li>
+                        <li>Подтвердите сохранение закладки.</li>
+                    </ol>
+
+                    <h3>Копирование результата</h3>
+                    <p>Двойной клик по результату на дисплее выделяет его для копирования. Также можно использовать правый клик и пункт «Копировать».</p>
+
+                    <h3>Сброс настроек</h3>
+                    <p>Для полного сброса всех настроек и истории:</p>
+                    <ol>
+                        <li>Откройте настройки калькулятора.</li>
+                        <li>Нажмите «Сбросить все данные».</li>
+                        <li>Подтвердите действие.</li>
+                    </ol>
+                    <p>Или очистите данные сайта в настройках браузера.</p>
+
+                    <h3>Производительность</h3>
+                    <p>Calculator Studio оптимизирован для работы на любых устройствах. Если интерфейс работает медленно:</p>
+                    <ul>
+                        <li>Закройте другие вкладки браузера</li>
+                        <li>Отключите расширения браузера</li>
+                        <li>Обновите браузер до последней версии</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+        <div class="section-header">
+            <div class="section-label">Вопросы и ответы</div>
+            <h2 class="section-title">Часто задаваемые вопросы</h2>
+            <p class="section-subtitle">Ответы на популярные вопросы о Calculator Studio.</p>
+        </div>
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Нужен ли интернет для работы калькулятора?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Интернет требуется только при первом открытии для загрузки интерфейса. После этого калькулятор кэшируется браузером и может работать офлайн. Все вычисления выполняются локально на вашем устройстве.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Безопасны ли мои вычисления?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Да, полностью. Все вычисления выполняются локально в вашем браузере. Данные не отправляются на сервер и не сохраняются вне вашего устройства. История операций хранится только в localStorage браузера.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Почему результаты отличаются от других калькуляторов?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Calculator Studio использует стандарт IEEE 754 для операций с плавающей точкой, как и большинство современных калькуляторов. В некоторых случаях (особенно с очень большими или очень маленькими числами) могут возникать незначительные расхождения в последних знаках после запятой из-за особенностей представления чисел в памяти компьютера.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Работает ли калькулятор на мобильных устройствах?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Да, Calculator Studio полностью адаптирован для мобильных устройств. Интерфейс автоматически подстраивается под размер экрана. На смартфонах и планшетах доступны все функции, включая научный режим, память и историю. Поддерживается тактильная вибрация при нажатии кнопок.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Как переключиться между стандартным и научным режимом?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Нажмите на вкладку «Стандартный» или «Научный» в панели инструментов в верхней части экрана. Переключение происходит мгновенно, и набор кнопок на дисплее меняется соответствующим образом. Выбор режима сохраняется между сессиями.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Можно ли использовать калькулятор коммерчески?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Да, Calculator Studio бесплатен для личного и коммерческого использования. Никаких лицензионных ограничений или платы за использование не предусмотрено.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Где хранится история вычислений?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        История вычислений хранится локально в вашем браузере (localStorage). Она не синхронизируется между устройствами и не передаётся на сервер. При очистке данных браузера история будет удалена. Максимальное количество записей — 100.
+                    </div>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Почему калькулятор не работает в моём браузере?</span>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+                <div class="faq-answer">
+                    <div class="faq-answer-inner">
+                        Calculator Studio требует поддержки современных веб-стандартов (ES6+, CSS Grid, Flexbox). Убедитесь, что вы используете актуальную версию браузера: Chrome 80+, Firefox 75+, Safari 13+, Edge 80+. Также проверьте, что JavaScript включён в настройках браузера.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Changelog -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-label">История версий</div>
+            <h2 class="section-title">Changelog</h2>
+            <p class="section-subtitle">Все изменения и улучшения Calculator Studio.</p>
+        </div>
+        <div class="changelog-list">
+            <div class="changelog-version">
+                <div class="changelog-header">
+                    <div class="changelog-version-name">
+                        v1.0.0
+                        <span class="badge">Latest</span>
+                    </div>
+                    <div class="changelog-date">3 июля 2026</div>
+                </div>
+                <ul class="changelog-changes">
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Первый публичный релиз Calculator Studio</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Стандартный режим с базовыми арифметическими операциями</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Научный режим с тригонометрией, логарифмами и степенями</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Система памяти (MC, MR, M+, M−, MS)</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>История вычислений до 100 записей с экспортом в JSON</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Настройки: точность, единицы углов, разделитель тысяч, тема</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Полная поддержка горячих клавиш</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Адаптивный дизайн для мобильных устройств</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type feat">feat</span>
+                        <span>Светлая и тёмная темы оформления</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type perf">perf</span>
+                        <span>Собственный парсер выражений без eval() для безопасности</span>
+                    </li>
+                    <li class="changelog-change">
+                        <span class="change-type docs">docs</span>
+                        <span>Полная документация и FAQ</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support -->
+    <section class="section" id="support">
+        <div class="section-header">
+            <div class="section-label">Поддержка</div>
+            <h2 class="section-title">Техническая поддержка</h2>
+            <p class="section-subtitle">Связаться с разработчиком или задать вопрос.</p>
+        </div>
+        <div class="support-grid">
+            <a href="mailto:di44avolod@ya.ru" class="support-card">
+                <div class="support-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="support-title">Email</div>
+                <div class="support-value">di44avolod@ya.ru</div>
+                <div class="support-desc">Ответ в течение 24 часов в рабочие дни</div>
+            </a>
+            <a href="https://t.me/VoraxisBOT" target="_blank" class="support-card">
+                <div class="support-icon">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                </div>
+                <div class="support-title">Telegram</div>
+                <div class="support-value">@VoraxisBOT</div>
+                <div class="support-desc">Быстрые ответы в мессенджере</div>
+            </a>
+            <a href="https://oris-flax.vercel.app/support" target="_blank" class="support-card">
+                <div class="support-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <div class="support-title">Тикет-система</div>
+                <div class="support-value">oris-flax.vercel.app/support</div>
+                <div class="support-desc">Создать тикет в поддержку Oris</div>
+            </a>
+        </div>
+    </section>
+
+    <!-- Info -->
+    <section class="section">
+        <div class="section-header">
+            <div class="section-label">Информация</div>
+            <h2 class="section-title">О проекте</h2>
+        </div>
+        <div class="doc-block">
+            <h3>Calculator Studio</h3>
+            <p>Профессиональный калькулятор для браузера, созданный командой Oris Platform. Приложение сочетает в себе простоту использования с мощью научных вычислений и удобством памяти для промежуточных результатов.</p>
+            <p>Проект разработан с акцентом на производительность, приватность и доступность. Все вычисления выполняются локально, данные не покидают ваше устройство. Используется собственный парсер выражений без <code>eval()</code> для максимальной безопасности.</p>
+
+            <h3>Технологии</h3>
+            <table>
+                <thead><tr><th>Компонент</th><th>Технология</th></tr></thead>
+                <tbody>
+                    <tr><td>Frontend</td><td>HTML5, CSS3, Vanilla JavaScript</td></tr>
+                    <tr><td>Вычисления</td><td>Собственный ExpressionParser (без eval)</td></tr>
+                    <tr><td>Хранилище</td><td>localStorage (история, настройки, память)</td></tr>
+                    <tr><td>Хостинг</td><td>Vercel (Hobby Plan)</td></tr>
+                    <tr><td>CDN</td><td>jsDelivr (шрифты Inter, JetBrains Mono)</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Лицензия</h3>
+            <p>Calculator Studio распространяется бесплатно для личного и коммерческого использования. Исходный код доступен в рамках платформы Oris.</p>
+
+            <h3>Автор</h3>
+            <p>Разработано командой <strong>Oris</strong>. Контакты для связи указаны в разделе «Поддержка».</p>
+
+            <h3>Версия</h3>
+            <p>Текущая версия: <strong>1.0.0</strong> (3 июля 2026)</p>
+        </div>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <div>
+        <strong>Calculator Studio</strong> · Oris Platform · v1.0.0
+    </div>
+    <div>
+        <a href="/">Главная</a> · 
+        <a href="#docs">Документация</a> · 
+        <a href="#support">Поддержка</a> · 
+        <a href="https://t.me/VoraxisBOT" target="_blank">Telegram</a>
+    </div>
+</footer>
 
 <script>
-/* ============================================================
-   CALCULATOR STUDIO — CORE
-   ============================================================ */
-'use strict';
+// FAQ accordion
+document.querySelectorAll('.faq-question').forEach(q => {
+    q.addEventListener('click', () => {
+        const item = q.parentElement;
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+    });
+});
 
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-/* ============================================================
-   STATE
-   ============================================================ */
-const STORAGE_KEY = 'calculator_studio_v1';
-
-const state = {
-  theme: 'light',
-  mode: 'standard',
-  current: '0',
-  expression: '',
-  memory: 0,
-  hasMemory: false,
-  history: [],
-  justEvaluated: false,
-  settings: {
-    sound: true,
-    haptics: true,
-    precision: 10,
-    thousandsSep: true,
-    angleUnit: 'deg'
-  }
-};
-
-/* ============================================================
-   PERSISTENCE
-   ============================================================ */
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      theme: state.theme,
-      mode: state.mode,
-      memory: state.memory,
-      hasMemory: state.hasMemory,
-      history: state.history,
-      settings: state.settings
-    }));
-  } catch (e) { console.warn('Save failed', e); }
-}
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const data = JSON.parse(raw);
-    state.theme = data.theme || 'light';
-    state.mode = data.mode || 'standard';
-    state.memory = data.memory || 0;
-    state.hasMemory = data.hasMemory || false;
-    state.history = data.history || [];
-    state.settings = { ...state.settings, ...(data.settings || {}) };
-    return true;
-  } catch (e) { return false; }
-}
-
-/* ============================================================
-   EXPRESSION PARSER (без eval)
-   ============================================================ ============================================================ */
-class ExpressionParser {
-  constructor(input, angleUnit = 'deg') {
-    this.input = input.replace(/\s+/g, '');
-    this.pos = 0;
-    this.angleUnit = angleUnit;
-  }
-
-  parse() {
-    const result = this.parseExpression();
-    if (this.pos < this.input.length) {
-      throw new Error('Unexpected character: ' + this.input[this.pos]);
-    }
-    return result;
-  }
-
-  parseExpression() {
-    let left = this.parseTerm();
-    while (this.pos < this.input.length) {
-      const ch = this.input[this.pos];
-      if (ch === '+' || ch === '-') {
-        this.pos++;
-        const right = this.parseTerm();
-        left = ch === '+' ? left + right : left - right;
-      } else break;
-    }
-    return left;
-  }
-
-  parseTerm() {
-    let left = this.parsePower();
-    while (this.pos < this.input.length) {
-      const ch = this.input[this.pos];
-      if (ch === '*' || ch === '/' || ch === '×' || ch === '÷') {
-        this.pos++;
-        const right = this.parsePower();
-        if ((ch === '/' || ch === '÷') && right === 0) throw new Error('Division by zero');
-        left = (ch === '*' || ch === '×') ? left * right : left / right;
-      } else break;
-    }
-    return left;
-  }
-
-  parsePower() {
-    let base = this.parseUnary();
-    if (this.pos < this.input.length && this.input[this.pos] === '^') {
-      this.pos++;
-      const exp = this.parseUnary();
-      base = Math.pow(base, exp);
-    }
-    return base;
-  }
-
-  parseUnary() {
-    if (this.input[this.pos] === '-') {
-      this.pos++;
-      return -this.parsePostfix();
-    }
-    if (this.input[this.pos] === '+') {
-      this.pos++;
-    }
-    return this.parsePostfix();
-  }
-
-  parsePostfix() {
-    let value = this.parsePrimary();
-    while (this.pos < this.input.length) {
-      const ch = this.input[this.pos];
-      if (ch === '%') {
-        this.pos++;
-        value = value / 100;
-      } else if (ch === '!') {
-        this.pos++;
-        value = this.factorial(value);
-      } else break;
-    }
-    return value;
-  }
-
-  parsePrimary() {
-    // Число
-    if (/[0-9.]/.test(this.input[this.pos])) {
-      return this.parseNumber();
-    }
-    // Скобки
-    if (this.input[this.pos] === '(') {
-      this.pos++;
-      const value = this.parseExpression();
-      if (this.input[this.pos] !== ')') throw new Error('Missing closing parenthesis');
-      this.pos++;
-      return value;
-    }
-    // Константы и функции
-    if (this.input.substr(this.pos, 2) === 'pi' || this.input.substr(this.pos, 1) === 'π') {
-      this.pos += this.input[this.pos] === 'π' ? 1 : 2;
-      return Math.PI;
-    }
-    if (this.input.substr(this.pos, 1) === 'e' && !/[a-z]/i.test(this.input[this.pos + 1] || '')) {
-      this.pos++;
-      return Math.E;
-    }
-    // Функции
-    const funcs = ['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh', 'sqrt', 'cbrt', 'log', 'ln', 'exp', 'abs', 'floor', 'ceil', 'round'];
-    for (const fn of funcs) {
-      if (this.input.substr(this.pos, fn.length) === fn) {
-        this.pos += fn.length;
-        if (this.input[this.pos] !== '(') throw new Error('Expected ( after ' + fn);
-        this.pos++;
-        const arg = this.parseExpression();
-        if (this.input[this.pos] !== ')') throw new Error('Missing closing parenthesis');
-        this.pos++;
-        return this.applyFunction(fn, arg);
-      }
-    }
-    throw new Error('Unexpected token at position ' + this.pos);
-  }
-
-  parseNumber() {
-    let numStr = '';
-    while (this.pos < this.input.length && /[0-9.]/.test(this.input[this.pos])) {
-      numStr += this.input[this.pos++];
-    }
-    const num = parseFloat(numStr);
-    if (isNaN(num)) throw new Error('Invalid number');
-    return num;
-  }
-
-  applyFunction(fn, arg) {
-    const toRad = this.angleUnit === 'deg' ? Math.PI / 180 : 1;
-    const fromRad = this.angleUnit === 'deg' ? 180 / Math.PI : 1;
-    switch (fn) {
-      case 'sin': return Math.sin(arg * toRad);
-      case 'cos': return Math.cos(arg * toRad);
-      case 'tan': return Math.tan(arg * toRad);
-      case 'asin': return Math.asin(arg) * fromRad;
-      case 'acos': return Math.acos(arg) * fromRad;
-      case 'atan': return Math.atan(arg) * fromRad;
-      case 'sinh': return Math.sinh(arg);
-      case 'cosh': return Math.cosh(arg);
-      case 'tanh': return Math.tanh(arg);
-      case 'sqrt': return Math.sqrt(arg);
-      case 'cbrt': return Math.cbrt(arg);
-      case 'log': return Math.log10(arg);
-      case 'ln': return Math.log(arg);
-      case 'exp': return Math.exp(arg);
-      case 'abs': return Math.abs(arg);
-      case 'floor': return Math.floor(arg);
-      case 'ceil': return Math.ceil(arg);
-      case 'round': return Math.round(arg);
-      default: throw new Error('Unknown function: ' + fn);
-    }
-  }
-
-  factorial(n) {
-    if (n < 0 || !Number.isInteger(n)) throw new Error('Factorial requires non-negative integer');
-    if (n > 170) throw new Error('Number too large');
-    let result = 1;
-    for (let i = 2; i <= n; i++) result *= i;
-    return result;
-  }
-}
-
-function evaluate(expr, angleUnit = 'deg') {
-  if (!expr || !expr.trim()) return 0;
-  try {
-    const parser = new ExpressionParser(expr, angleUnit);
-    const result = parser.parse();
-    if (!isFinite(result)) throw new Error('Result is not finite');
-    return result;
-  } catch (e) {
-    throw e;
-  }
-}
-
-/* ============================================================
-   NUMBER FORMATTING
-   ============================================================ */
-function formatNumber(n, precision = 10, thousandsSep = true) {
-  if (typeof n !== 'number' || !isFinite(n)) return String(n);
-  
-  // Округление до precision знаков
-  const rounded = parseFloat(n.toPrecision(precision));
-  
-  // Если очень большое или очень маленькое — экспоненциальная запись
-  if (Math.abs(rounded) >= 1e15 || (Math.abs(rounded) < 1e-6 && rounded !== 0)) {
-    return rounded.toExponential(precision - 1);
-  }
-  
-  let str = String(rounded);
-  
-  if (thousandsSep) {
-    const parts = str.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    str = parts.join('.');
-  }
-  
-  return str;
-}
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-function toast(type, title, duration = 2500) {
-  const stack = $('#toastStack');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = `<div class="toast-dot"></div><div class="toast-content"><div class="toast-title">${escapeHtml(title)}</div></div>`;
-  stack.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => {
-    el.classList.remove('show');
-    setTimeout(() => el.remove(), 300);
-  }, duration);
-}
-
-/* ============================================================
-   MODAL
-   ============================================================ */
-function modal({ title, body, footer }) {
-  const root = $('#modalRoot');
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal">
-      <div class="modal-head">
-        <div class="modal-title">${escapeHtml(title)}</div>
-        <button class="btn btn-icon" data-close>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <div class="modal-body"></div>
-      ${footer ? '<div class="modal-foot"></div>' : ''}
-    </div>`;
-  const bodyEl = overlay.querySelector('.modal-body');
-  if (typeof body === 'string') bodyEl.innerHTML = body;
-  else bodyEl.appendChild(body);
-  if (footer) {
-    const footEl = overlay.querySelector('.modal-foot');
-    if (typeof footer === 'string') footEl.innerHTML = footer;
-    else footEl.appendChild(footer);
-  }
-  root.appendChild(overlay);
-  requestAnimationFrame(() => overlay.classList.add('open'));
-  const close = () => {
-    overlay.classList.remove('open');
-    setTimeout(() => overlay.remove(), 300);
-  };
-  overlay.querySelector('[data-close]').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-  return { overlay, close, body: bodyEl, foot: overlay.querySelector('.modal-foot') };
-}
-
-/* ============================================================
-   BUTTONS DEFINITION
-   ============================================================ */
-const STANDARD_BUTTONS = [
-  { label: '%', action: 'percent', type: 'fn' },
-  { label: 'CE', action: 'ce', type: 'fn danger' },
-  { label: 'C', action: 'clear', type: 'fn danger' },
-  { label: '⌫', action: 'backspace', type: 'fn' },
-  
-  { label: '¹⁄ₓ', action: 'reciprocal', type: 'fn' },
-  { label: 'x²', action: 'square', type: 'fn' },
-  { label: '√x', action: 'sqrt', type: 'fn' },
-  { label: '÷', action: 'op', value: '/', type: 'op' },
-  
-  { label: '7', action: 'digit', value: '7', type: 'num' },
-  { label: '8', action: 'digit', value: '8', type: 'num' },
-  { label: '9', action: 'digit', value: '9', type: 'num' },
-  { label: '×', action: 'op', value: '*', type: 'op' },
-  
-  { label: '4', action: 'digit', value: '4', type: 'num' },
-  { label: '5', action: 'digit', value: '5', type: 'num' },
-  { label: '6', action: 'digit', value: '6', type: 'num' },
-  { label: '−', action: 'op', value: '-', type: 'op' },
-  
-  { label: '1', action: 'digit', value: '1', type: 'num' },
-  { label: '2', action: 'digit', value: '2', type: 'num' },
-  { label: '3', action: 'digit', value: '3', type: 'num' },
-  { label: '+', action: 'op', value: '+', type: 'op' },
-  
-  { label: '±', action: 'negate', type: 'fn' },
-  { label: '0', action: 'digit', value: '0', type: 'num' },
-  { label: ',', action: 'dot', type: 'num' },
-  { label: '=', action: 'equals', type: 'eq' }
-];
-
-const SCIENTIFIC_BUTTONS = [
-  { label: '(', action: 'paren', value: '(', type: 'fn' },
-  { label: ')', action: 'paren', value: ')', type: 'fn' },
-  { label: '%', action: 'percent', type: 'fn' },
-  { label: 'CE', action: 'ce', type: 'fn danger' },
-  { label: 'C', action: 'clear', type: 'fn danger' },
-  
-  { label: 'sin', action: 'func', value: 'sin', type: 'fn' },
-  { label: 'cos', action: 'func', value: 'cos', type: 'fn' },
-  { label: 'tan', action: 'func', value: 'tan', type: 'fn' },
-  { label: '⌫', action: 'backspace', type: 'fn' },
-  { label: '÷', action: 'op', value: '/', type: 'op' },
-  
-  { label: 'x²', action: 'square', type: 'fn' },
-  { label: 'x<sup>y</sup>', action: 'op', value: '^', type: 'fn' },
-  { label: '√x', action: 'sqrt', type: 'fn' },
-  { label: '7', action: 'digit', value: '7', type: 'num' },
-  { label: '×', action: 'op', value: '*', type: 'op' },
-  
-  { label: 'ln', action: 'func', value: 'ln', type: 'fn' },
-  { label: 'log', action: 'func', value: 'log', type: 'fn' },
-  { label: 'n!', action: 'factorial', type: 'fn' },
-  { label: '8', action: 'digit', value: '8', type: 'num' },
-  { label: '−', action: 'op', value: '-', type: 'op' },
-  
-  { label: 'π', action: 'const', value: 'π', type: 'fn' },
-  { label: 'e', action: 'const', value: 'e', type: 'fn' },
-  { label: '1/x', action: 'reciprocal', type: 'fn' },
-  { label: '9', action: 'digit', value: '9', type: 'num' },
-  { label: '+', action: 'op', value: '+', type: 'op' },
-  
-  { label: '±', action: 'negate', type: 'fn' },
-  { label: 'MC', action: 'mc', type: 'fn' },
-  { label: 'MR', action: 'mr', type: 'fn' },
-  { label: '4', action: 'digit', value: '4', type: 'num' },
-  { label: '5', action: 'digit', value: '5', type: 'num' },
-  
-  { label: 'M+', action: 'mplus', type: 'fn' },
-  { label: 'M−', action: 'mminus', type: 'fn' },
-  { label: 'MS', action: 'ms', type: 'fn' },
-  { label: '1', action: 'digit', value: '1', type: 'num' },
-  { label: '2', action: 'digit', value: '2', type: 'num' },
-  
-  { label: '3', action: 'digit', value: '3', type: 'num' },
-  { label: '0', action: 'digit', value: '0', type: 'num' },
-  { label: ',', action: 'dot', type: 'num' },
-  { label: '=', action: 'equals', type: 'eq' },
-  { label: '', action: 'noop', type: 'fn', hidden: true }
-];
-
-/* ============================================================
-   CALCULATOR LOGIC
-   ============================================================ */
-let pendingOp = null;
-let pendingValue = null;
-let buildingExpression = '';
-
-function resetState() {
-  state.current = '0';
-  state.expression = '';
-  pendingOp = null;
-  pendingValue = null;
-  buildingExpression = '';
-  state.justEvaluated = false;
-}
-
-function inputDigit(d) {
-  if (state.justEvaluated) {
-    state.current = d;
-    state.expression = '';
-    state.justEvaluated = false;
-    pendingOp = null;
-    pendingValue = null;
-  } else if (state.current === '0' || state.current === 'Ошибка') {
-    state.current = d;
-  } else {
-    state.current = state.current + d;
-  }
-  updateDisplay();
-}
-
-function inputDot() {
-  const sep = '.';
-  if (state.justEvaluated) {
-    state.current = '0' + sep;
-    state.expression = '';
-    state.justEvaluated = false;
-    pendingOp = null;
-    pendingValue = null;
-  } else if (!state.current.includes(sep)) {
-    state.current = state.current + sep;
-  }
-  updateDisplay();
-}
-
-function inputOp(op) {
-  const currentNum = parseFloat(state.current);
-  
-  if (state.justEvaluated) {
-    // Продолжаем вычисления с результатом
-    pendingValue = currentNum;
-    pendingOp = op;
-    state.expression = formatNumber(currentNum, state.settings.precision, state.settings.thousandsSep) + ' ' + opSymbol(op);
-    state.justEvaluated = false;
-    state.current = '0';
-  } else if (pendingOp !== null && pendingValue !== null) {
-    // Выполняем предыдущую операцию
-    try {
-      const result = compute(pendingValue, currentNum, pendingOp);
-      state.current = formatNumber(result, state.settings.precision, false);
-      pendingValue = result;
-      state.expression = formatNumber(result, state.settings.precision, state.settings.thousandsSep) + ' ' + opSymbol(op);
-    } catch (e) {
-      showError(e.message);
-      return;
-    }
-    pendingOp = op;
-  } else {
-    pendingValue = currentNum;
-    pendingOp = op;
-    state.expression = formatNumber(currentNum, state.settings.precision, state.settings.thousandsSep) + ' ' + opSymbol(op);
-    state.current = '0';
-  }
-  updateDisplay();
-}
-
-function opSymbol(op) {
-  return { '+': '+', '-': '−', '*': '×', '/': '÷', '^': '^' }[op] || op;
-}
-
-function compute(a, b, op) {
-  switch (op) {
-    case '+': return a + b;
-    case '-': return a - b;
-    case '*': return a * b;
-    case '/':
-      if (b === 0) throw new Error('Деление на ноль');
-      return a / b;
-    case '^': return Math.pow(a, b);
-    default: throw new Error('Unknown op');
-  }
-}
-
-function doEquals() {
-  const currentNum = parseFloat(state.current);
-  
-  if (pendingOp !== null && pendingValue !== null) {
-    try {
-      const result = compute(pendingValue, currentNum, pendingOp);
-      const fullExpr = formatNumber(pendingValue, state.settings.precision, state.settings.thousandsSep) + ' ' + opSymbol(pendingOp) + ' ' + formatNumber(currentNum, state.settings.precision, state.settings.thousandsSep);
-      
-      addToHistory(fullExpr, result);
-      
-      state.current = formatNumber(result, state.settings.precision, false);
-      state.expression = fullExpr + ' =';
-      pendingOp = null;
-      pendingValue = null;
-      state.justEvaluated = true;
-    } catch (e) {
-      showError(e.message);
-      return;
-    }
-  } else if (state.expression && !state.justEvaluated) {
-    // Парсим полное выражение
-    try {
-      const result = evaluate(state.expression.replace(/=$/, ''), state.settings.angleUnit);
-      addToHistory(state.expression.replace(/=$/, ''), result);
-      state.current = formatNumber(result, state.settings.precision, false);
-      state.expression = state.expression + ' =';
-      state.justEvaluated = true;
-    } catch (e) {
-      showError(e.message);
-      return;
-    }
-  }
-  updateDisplay();
-}
-
-function doClear() {
-  resetState();
-  updateDisplay();
-}
-
-function doCE() {
-  state.current = '0';
-  updateDisplay();
-}
-
-function doBackspace() {
-  if (state.justEvaluated) return;
-  if (state.current.length <= 1 || (state.current.length === 2 && state.current[0] === '-')) {
-    state.current = '0';
-  } else {
-    state.current = state.current.slice(0, -1);
-  }
-  updateDisplay();
-}
-
-function doNegate() {
-  if (state.current === '0' || state.current === 'Ошибка') return;
-  if (state.current.startsWith('-')) {
-    state.current = state.current.slice(1);
-  } else {
-    state.current = '-' + state.current;
-  }
-  updateDisplay();
-}
-
-function doPercent() {
-  const currentNum = parseFloat(state.current);
-  if (pendingValue !== null) {
-    state.current = formatNumber(pendingValue * currentNum / 100, state.settings.precision, false);
-  } else {
-    state.current = formatNumber(currentNum / 100, state.settings.precision, false);
-  }
-  updateDisplay();
-}
-
-function doSquare() {
-  const n = parseFloat(state.current);
-  const result = n * n;
-  state.expression = `sqr(${formatNumber(n, state.settings.precision, state.settings.thousandsSep)})`;
-  state.current = formatNumber(result, state.settings.precision, false);
-  state.justEvaluated = true;
-  addToHistory(state.expression, result);
-  updateDisplay();
-}
-
-function doSqrt() {
-  const n = parseFloat(state.current);
-  if (n < 0) { showError('Отрицательное число'); return; }
-  const result = Math.sqrt(n);
-  state.expression = `√(${formatNumber(n, state.settings.precision, state.settings.thousandsSep)})`;
-  state.current = formatNumber(result, state.settings.precision, false);
-  state.justEvaluated = true;
-  addToHistory(state.expression, result);
-  updateDisplay();
-}
-
-function doReciprocal() {
-  const n = parseFloat(state.current);
-  if (n === 0) { showError('Деление на ноль'); return; }
-  const result = 1 / n;
-  state.expression = `1/(${formatNumber(n, state.settings.precision, state.settings.thousandsSep)})`;
-  state.current = formatNumber(result, state.settings.precision, false);
-  state.justEvaluated = true;
-  addToHistory(state.expression, result);
-  updateDisplay();
-}
-
-function doFactorial() {
-  const n = parseFloat(state.current);
-  if (n < 0 || !Number.isInteger(n) || n > 170) { showError('Недопустимое значение'); return; }
-  let result = 1;
-  for (let i = 2; i <= n; i++) result *= i;
-  state.expression = `${formatNumber(n, state.settings.precision, state.settings.thousandsSep)}!`;
-  state.current = formatNumber(result, state.settings.precision, false);
-  state.justEvaluated = true;
-  addToHistory(state.expression, result);
-  updateDisplay();
-}
-
-function doFunc(fn) {
-  const n = parseFloat(state.current);
-  try {
-    const result = evaluate(`${fn}(${n})`, state.settings.angleUnit);
-    state.expression = `${fn}(${formatNumber(n, state.settings.precision, state.settings.thousandsSep)})`;
-    state.current = formatNumber(result, state.settings.precision, false);
-    state.justEvaluated = true;
-    addToHistory(state.expression, result);
-  } catch (e) {
-    showError(e.message);
-    return;
-  }
-  updateDisplay();
-}
-
-function doConst(c) {
-  if (state.justEvaluated || state.current === '0') {
-    state.current = c === 'π' ? String(Math.PI) : String(Math.E);
-    state.justEvaluated = false;
-  }
-  updateDisplay();
-}
-
-function doParen(p) {
-  // В стандартном режиме скобки не поддерживаются напрямую
-  // Просто добавляем к выражению если есть
-  if (p === '(') {
-    buildingExpression += '(';
-    state.expression = buildingExpression;
-  } else if (p === ')') {
-    buildingExpression += ')';
-    state.expression = buildingExpression;
-  }
-  updateDisplay();
-}
-
-// Memory operations
-function doMC() {
-  state.memory = 0;
-  state.hasMemory = false;
-  updateDisplay();
-  toast('info', 'Память очищена');
-}
-function doMR() {
-  state.current = formatNumber(state.memory, state.settings.precision, false);
-  updateDisplay();
-}
-function doMPlus() {
-  state.memory += parseFloat(state.current);
-  state.hasMemory = true;
-  updateDisplay();
-  toast('success', 'M+ ' + formatNumber(state.memory, state.settings.precision, true));
-}
-function doMMinus() {
-  state.memory -= parseFloat(state.current);
-  state.hasMemory = true;
-  updateDisplay();
-  toast('success', 'M− ' + formatNumber(state.memory, state.settings.precision, true));
-}
-function doMS() {
-  state.memory = parseFloat(state.current);
-  state.hasMemory = true;
-  updateDisplay();
-  toast('success', 'MS сохранено');
-}
-
-function showError(msg) {
-  state.current = 'Ошибка';
-  state.expression = msg;
-  state.justEvaluated = true;
-  pendingOp = null;
-  pendingValue = null;
-  updateDisplay();
-}
-
-/* ============================================================
-   HISTORY
-   ============================================================ */
-function addToHistory(expr, result) {
-  state.history.unshift({
-    expr,
-    result: formatNumber(result, state.settings.precision, state.settings.thousandsSep),
-    rawResult: result,
-    time: Date.now()
-  });
-  if (state.history.length > 100) state.history.length = 100;
-  renderHistory();
-  saveState();
-}
-
-function renderHistory() {
-  const body = $('#historyBody');
-  if (state.history.length === 0) {
-    body.innerHTML = '<div class="history-empty">История пуста</div>';
-    return;
-  }
-  body.innerHTML = state.history.map((h, i) => `
-    <div class="history-item" data-idx="${i}">
-      <div class="history-expr">${escapeHtml(h.expr)}</div>
-      <div class="history-result">= ${escapeHtml(h.result)}</div>
-      <div class="history-time">${formatTime(h.time)}</div>
-    </div>
-  `).join('');
-  
-  body.querySelectorAll('.history-item').forEach(item => {
+// Doc nav scroll
+document.querySelectorAll('.doc-nav-item').forEach(item => {
     item.addEventListener('click', () => {
-      const idx = parseInt(item.dataset.idx);
-      const h = state.history[idx];
-      state.current = formatNumber(h.rawResult, state.settings.precision, false);
-      state.expression = h.expr + ' =';
-      state.justEvaluated = true;
-      pendingOp = null;
-      pendingValue = null;
-      updateDisplay();
-      toast('info', 'Результат восстановлен');
+        document.querySelectorAll('.doc-nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        const target = document.getElementById(item.dataset.target);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  });
-}
+});
 
-function formatTime(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) {
-    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-  }
-  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }) + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-}
-
-function clearHistory() {
-  if (state.history.length === 0) return;
-  state.history = [];
-  renderHistory();
-  saveState();
-  toast('success', 'История очищена');
-}
-
-/* ============================================================
-   DISPLAY
-   ============================================================ */
-function updateDisplay() {
-  const exprEl = $('#displayExpr');
-  const resultEl = $('#displayResult');
-  const memoryEl = $('#displayMemory');
-  const modeEl = $('#displayMode');
-  
-  exprEl.innerHTML = state.expression || '&nbsp;';
-  
-  if (state.current === 'Ошибка') {
-    resultEl.textContent = 'Ошибка';
-    resultEl.className = 'display-result error';
-  } else {
-    const formatted = formatNumber(
-      parseFloat(state.current),
-      state.settings.precision,
-      state.settings.thousandsSep && !state.current.includes('.') === false
-    );
-    // Используем оригинальное значение если это строка с точкой
-    const displayValue = state.current.includes('.') || state.current === '0' 
-      ? state.current.replace('.', ',')
-      : formatNumber(parseFloat(state.current), state.settings.precision, state.settings.thousandsSep).replace('.', ',');
-    
-    resultEl.textContent = displayValue;
-    resultEl.className = 'display-result';
-    
-    if (displayValue.length > 14) resultEl.classList.add('small');
-    if (displayValue.length > 20) resultEl.classList.add('tiny');
-  }
-  
-  memoryEl.classList.toggle('active', state.hasMemory);
-  modeEl.textContent = state.mode === 'standard' ? 'Стандартный' : 'Научный';
-}
-
-/* ============================================================
-   BUTTONS RENDERING
-   ============================================================ */
-function renderButtons() {
-  const container = $('#buttons');
-  const buttons = state.mode === 'standard' ? STANDARD_BUTTONS : SCIENTIFIC_BUTTONS;
-  container.className = 'buttons ' + state.mode;
-  container.innerHTML = '';
-  
-  buttons.forEach(btn => {
-    if (btn.hidden) return;
-    const el = document.createElement('button');
-    el.className = 'btn-calc ' + btn.type;
-    el.innerHTML = btn.label;
-    el.dataset.action = btn.action;
-    if (btn.value !== undefined) el.dataset.value = btn.value;
-    el.addEventListener('click', () => handleButton(btn));
-    container.appendChild(el);
-  });
-}
-
-function handleButton(btn) {
-  // Визуальная обратная связь
-  if (state.settings.haptics && navigator.vibrate) {
-    navigator.vibrate(10);
-  }
-  
-  switch (btn.action) {
-    case 'digit': inputDigit(btn.value); break;
-    case 'dot': inputDot(); break;
-    case 'op': inputOp(btn.value); break;
-    case 'equals': doEquals(); break;
-    case 'clear': doClear(); break;
-    case 'ce': doCE(); break;
-    case 'backspace': doBackspace(); break;
-    case 'negate': doNegate(); break;
-    case 'percent': doPercent(); break;
-    case 'square': doSquare(); break;
-    case 'sqrt': doSqrt(); break;
-    case 'reciprocal': doReciprocal(); break;
-    case 'factorial': doFactorial(); break;
-    case 'func': doFunc(btn.value); break;
-    case 'const': doConst(btn.value); break;
-    case 'paren': doParen(btn.value); break;
-    case 'mc': doMC(); break;
-    case 'mr': doMR(); break;
-    case 'mplus': doMPlus(); break;
-    case 'mminus': doMMinus(); break;
-    case 'ms': doMS(); break;
-  }
-}
-
-/* ============================================================
-   KEYBOARD
-   ============================================================ */
-function handleKeyboard(e) {
-  const key = e.key;
-  
-  if (/^[0-9]$/.test(key)) {
-    e.preventDefault();
-    inputDigit(key);
-  } else if (key === ',' || key === '.') {
-    e.preventDefault();
-    inputDot();
-  } else if (key === '+' || key === '-' || key === '*' || key === '/') {
-    e.preventDefault();
-    inputOp(key);
-  } else if (key === 'Enter' || key === '=') {
-    e.preventDefault();
-    doEquals();
-  } else if (key === 'Backspace') {
-    e.preventDefault();
-    doBackspace();
-  } else if (key === 'Escape') {
-    e.preventDefault();
-    doClear();
-  } else if (key === 'Delete') {
-    e.preventDefault();
-    doCE();
-  } else if (key === '%') {
-    e.preventDefault();
-    doPercent();
-  } else if (key === '^') {
-    e.preventDefault();
-    inputOp('^');
-  }
-}
-
-/* ============================================================
-   THEME
-   ============================================================ */
-function applyTheme(theme) {
-  state.theme = theme;
-  document.documentElement.setAttribute('data-theme', theme);
-  const icon = $('#themeIcon');
-  if (theme === 'dark') {
-    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-  } else {
-    icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
-  }
-  saveState();
-}
-
-/* ============================================================
-   SETTINGS MODAL
-   ============================================================ */
-function showSettingsModal() {
-  const body = document.createElement('div');
-  body.innerHTML = `
-    <div class="settings-group">
-      <div class="settings-group-title">Внешний вид</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Тема</div>
-          <div class="setting-desc">Светлая или тёмная тема интерфейса</div>
-        </div>
-        <select class="setting-select" id="setTheme">
-          <option value="light"${state.theme === 'light' ? ' selected' : ''}>Светлая</option>
-          <option value="dark"${state.theme === 'dark' ? ' selected' : ''}>Тёмная</option>
-        </select>
-      </div>
-    </div>
-    
-    <div class="settings-group">
-      <div class="settings-group-title">Вычисления</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Точность</div>
-          <div class="setting-desc">Количество значащих цифр</div>
-        </div>
-        <select class="setting-select" id="setPrecision">
-          <option value="6"${state.settings.precision === 6 ? ' selected' : ''}>6</option>
-          <option value="8"${state.settings.precision === 8 ? ' selected' : ''}>8</option>
-          <option value="10"${state.settings.precision === 10 ? ' selected' : ''}>10</option>
-          <option value="12"${state.settings.precision === 12 ? ' selected' : ''}>12</option>
-          <option value="14"${state.settings.precision === 14 ? ' selected' : ''}>14</option>
-        </select>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Единицы углов</div>
-          <div class="setting-desc">Для тригонометрических функций</div>
-        </div>
-        <select class="setting-select" id="setAngle">
-          <option value="deg"${state.settings.angleUnit === 'deg' ? ' selected' : ''}>Градусы</option>
-          <option value="rad"${state.settings.angleUnit === 'rad' ? ' selected' : ''}>Радианы</option>
-        </select>
-      </div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Разделитель тысяч</div>
-          <div class="setting-desc">Пробел между разрядами</div>
-        </div>
-        <div class="toggle ${state.settings.thousandsSep ? 'on' : ''}" id="setThousands"></div>
-      </div>
-    </div>
-    
-    <div class="settings-group">
-      <div class="settings-group-title">Обратная связь</div>
-      <div class="setting-row">
-        <div>
-          <div class="setting-label">Вибрация</div>
-          <div class="setting-desc">Тактильный отклик на мобильных</div>
-        </div>
-        <div class="toggle ${state.settings.haptics ? 'on' : ''}" id="setHaptics"></div>
-      </div>
-    </div>
-    
-    <div class="settings-group">
-      <div class="settings-group-title">Данные</div>
-      <div style="display:flex; gap:8px; flex-direction:column">
-        <button class="btn" id="btnExportHistory" style="justify-content:flex-start">Экспорт истории (JSON)</button>
-        <button class="btn btn-danger" id="btnResetAll" style="justify-content:flex-start">Сбросить все данные</button>
-      </div>
-    </div>`;
-  
-  const m = modal({ title: 'Настройки', body });
-  
-  m.body.querySelector('#setTheme').addEventListener('change', e => {
-    applyTheme(e.target.value);
-  });
-  m.body.querySelector('#setPrecision').addEventListener('change', e => {
-    state.settings.precision = parseInt(e.target.value);
-    saveState();
-    updateDisplay();
-  });
-  m.body.querySelector('#setAngle').addEventListener('change', e => {
-    state.settings.angleUnit = e.target.value;
-    saveState();
-  });
-  m.body.querySelector('#setThousands').addEventListener('click', e => {
-    state.settings.thousandsSep = !state.settings.thousandsSep;
-    e.currentTarget.classList.toggle('on', state.settings.thousandsSep);
-    saveState();
-    updateDisplay();
-  });
-  m.body.querySelector('#setHaptics').addEventListener('click', e => {
-    state.settings.haptics = !state.settings.haptics;
-    e.currentTarget.classList.toggle('on', state.settings.haptics);
-    saveState();
-  });
-  m.body.querySelector('#btnExportHistory').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state.history, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'calculator-history.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('success', 'История экспортирована');
-  });
-  m.body.querySelector('#btnResetAll').addEventListener('click', () => {
-    if (confirm('Удалить все данные? Это действие нельзя отменить.')) {
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
-    }
-  });
-}
-
-/* ============================================================
-   INIT
-   ============================================================ */
-function init() {
-  loadState();
-  applyTheme(state.theme);
-  renderButtons();
-  renderHistory();
-  updateDisplay();
-  
-  // Mode tabs
-  $$('.mode-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      $$('.mode-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      state.mode = tab.dataset.mode;
-      resetState();
-      renderButtons();
-      updateDisplay();
-      saveState();
+// Intersection observer for doc nav
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const id = entry.target.id;
+            document.querySelectorAll('.doc-nav-item').forEach(i => {
+                i.classList.toggle('active', i.dataset.target === id);
+            });
+        }
     });
-  });
-  
-  // Set initial active mode tab
-  $$('.mode-tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.mode === state.mode);
-  });
-  
-  // Toolbar buttons
-  $('#btnTheme').addEventListener('click', () => {
-    applyTheme(state.theme === 'dark' ? 'light' : 'dark');
-  });
-  $('#btnSettings').addEventListener('click', showSettingsModal);
-  $('#btnHistory').addEventListener('click', () => {
-    const panel = $('#historyPanel');
-    panel.classList.toggle('open');
-  });
-  $('#btnClearHistory').addEventListener('click', clearHistory);
-  
-  // Keyboard
-  document.addEventListener('keydown', handleKeyboard);
-  
-  // Prevent zoom on double-tap for mobile
-  document.addEventListener('dblclick', e => {
-    if (e.target.closest('.btn-calc')) e.preventDefault();
-  });
-}
+}, { rootMargin: '-20% 0px -70% 0px' });
 
-init();
-
-// Autosave
-setInterval(saveState, 10000);
-window.addEventListener('beforeunload', saveState);
+document.querySelectorAll('.doc-block').forEach(block => observer.observe(block));
 </script>
+
 </body>
 </html>

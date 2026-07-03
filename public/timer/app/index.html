@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Timer Studio</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css" />
+<style>
+/* ============================================================
+   THEME VARIABLES
+   ============================================================ */
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --surface-3: #f0f0f2;
+  --surface-4: #e8e8ec;
+  --border: #e5e5e7;
+  --border-strong: #d4d4d7;
+  --text: #0a0a0b;
+  --text-2: #4a4a4f;
+  --text-3: #8a8a90;
+  --accent: #0a0a0b;
+  --accent-fg: #ffffff;
+  --danger: #c0392b;
+  --success: #1e7a46;
+  --warning: #b8860b;
+  --info: #2563eb;
+  --ring: #0a0a0b;
+  --ring-track: #e5e5e7;
+  --shadow-sm: 0 1px 2px rgba(10,10,11,0.04);
+  --shadow: 0 2px 8px rgba(10,10,11,0.06), 0 1px 2px rgba(10,10,11,0.04);
+  --shadow-lg: 0 12px 32px rgba(10,10,11,0.08), 0 4px 12px rgba(10,10,11,0.04);
+  --shadow-xl: 0 24px 64px rgba(10,10,11,0.12);
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #141416;
+  --surface-2: #1a1a1d;
+  --surface-3: #222226;
+  --surface-4: #2a2a2e;
+  --border: #2a2a2e;
+  --border-strong: #3a3a3e;
+  --text: #f5f5f7;
+  --text-2: #b5b5ba;
+  --text-3: #75757a;
+  --accent: #f5f5f7;
+  --accent-fg: #0a0a0b;
+  --ring: #f5f5f7;
+  --ring-track: #2a2a2e;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+  --shadow-xl: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+  overflow: hidden;
+}
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select, textarea { font-family: inherit; color: inherit; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* ============================================================
+   APP LAYOUT
+   ============================================================ */
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr 28px;
+  grid-template-columns: 300px 1fr 320px;
+  grid-template-areas:
+    "toolbar toolbar toolbar"
+    "sidebar main props"
+    "statusbar statusbar statusbar";
+  height: 100vh;
+  width: 100vw;
+}
+@media (max-width: 1100px) {
+  .app { grid-template-columns: 260px 1fr 280px; }
+}
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "toolbar"
+      "main"
+      "statusbar";
+  }
+  .sidebar, .props {
+    position: fixed;
+    top: 56px; bottom: 28px;
+    width: 320px;
+    z-index: 50;
+    background: var(--surface);
+    box-shadow: var(--shadow-xl);
+    transform: translateX(-100%);
+    transition: transform var(--transition-slow);
+  }
+  .props { right: 0; left: auto; transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); }
+  .props.open { transform: translateX(0); }
+  .btn-mobile-toggle { display: grid !important; }
+}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar {
+  grid-area: toolbar;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  z-index: 10;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  padding-right: 20px;
+  border-right: 1px solid var(--border);
+  margin-right: 8px;
+}
+.brand-mark {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-fg);
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 800;
+  font-family: var(--mono);
+}
+.mode-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface-3);
+  padding: 3px;
+  border-radius: var(--radius);
+}
+.mode-tab {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.mode-tab:hover { color: var(--text); }
+.mode-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.toolbar-spacer { flex: 1; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all var(--transition);
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.btn:hover { background: var(--surface-3); }
+.btn:active { transform: scale(0.97); }
+.btn-icon { padding: 7px; width: 32px; height: 32px; }
+.btn-primary { background: var(--accent); color: var(--accent-fg); }
+.btn-primary:hover { opacity: 0.9; }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: rgba(192,57,43,0.08); }
+.btn-mobile-toggle { display: none; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.side-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  padding: 0 8px;
+}
+.side-tab {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition);
+}
+.side-tab:hover { color: var(--text); }
+.side-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.side-panel { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.side-panel[hidden] { display: none; }
+
+.side-head {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+
+/* Timers list */
+.timers-list { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.timer-card {
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+}
+.timer-card:hover { border-color: var(--border-strong); }
+.timer-card.active { border-color: var(--accent); background: var(--surface-3); }
+.timer-card.running { border-left: 3px solid var(--success); }
+.timer-card.paused { border-left: 3px solid var(--warning); }
+.timer-card.finished { border-left: 3px solid var(--danger); animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+.timer-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.timer-time {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.timer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.timer-status {
+  padding: 2px 6px;
+  background: var(--surface-3);
+  border-radius: 3px;
+  font-weight: 600;
+}
+.timer-status.running { background: rgba(30,122,70,0.12); color: var(--success); }
+.timer-status.paused { background: rgba(184,134,11,0.12); color: var(--warning); }
+.timer-status.finished { background: rgba(192,57,43,0.12); color: var(--danger); }
+.timer-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.timer-card:hover .timer-actions { opacity: 1; }
+.timer-actions button {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-3);
+  transition: all var(--transition);
+}
+.timer-actions button:hover { background: var(--surface); color: var(--text); }
+
+/* Presets */
+.presets-list { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.preset-item {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.preset-item:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.preset-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--surface-4);
+  display: grid; place-items: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.preset-info { flex: 1; min-width: 0; }
+.preset-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.preset-desc { font-size: 10px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preset-time { font-family: var(--mono); font-size: 11px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   MAIN
+   ============================================================ */
+.main {
+  grid-area: main;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+  position: relative;
+}
+.main-empty {
+  text-align: center;
+  color: var(--text-3);
+  font-size: 13px;
+}
+.main-empty h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+/* Timer display */
+.timer-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 560px;
+}
+.timer-header {
+  text-align: center;
+}
+.timer-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+.timer-subtitle {
+  font-size: 12px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ring-wrap {
+  position: relative;
+  width: min(420px, 70vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+.ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.ring-track {
+  fill: none;
+  stroke: var(--ring-track);
+  stroke-width: 8;
+}
+.ring-progress {
+  fill: none;
+  stroke: var(--ring);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.ring-time {
+  font-family: var(--mono);
+  font-size: clamp(40px, 8vw, 72px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ring-ms {
+  font-family: var(--mono);
+  font-size: 18px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.ring-label {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 8px;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.ctrl-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+.ctrl-btn:hover { background: var(--surface-3); transform: translateY(-1px); box-shadow: var(--shadow); }
+.ctrl-btn:active { transform: translateY(0); }
+.ctrl-btn.primary {
+  width: 72px; height: 72px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+.ctrl-btn.primary:hover { opacity: 0.9; }
+.ctrl-btn.danger { color: var(--danger); }
+.ctrl-btn[disabled] { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+/* Input mode */
+.input-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 480px;
+}
+.time-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.time-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.time-field input {
+  width: 80px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: all var(--transition);
+}
+.time-field input:focus { outline: none; border-color: var(--accent); }
+.time-field label {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.time-sep {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-3);
+  padding-top: 20px;
+}
+
+.timer-name-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  text-align: center;
+  transition: all var(--transition);
+}
+.timer-name-input:focus { outline: none; border-color: var(--accent); }
+
+/* Stopwatch mode */
+.laps-list {
+  width: 100%;
+  max-width: 480px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.lap-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto auto;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  align-items: center;
+}
+.lap-item:last-child { border-bottom: none; }
+.lap-num {
+  font-family: var(--mono);
+  color: var(--text-3);
+  font-weight: 600;
+}
+.lap-name { color: var(--text-2); }
+.lap-split { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.lap-total { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; }
+.lap-item.best .lap-split { color: var(--success); }
+.lap-item.worst .lap-split { color: var(--danger); }
+
+/* ============================================================
+   PROPERTIES PANEL
+   ============================================================ */
+.props {
+  grid-area: props;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.props-head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.props-body { flex: 1; overflow-y: auto; padding: 12px 0; }
+.props-section { margin-bottom: 16px; }
+.props-section-title {
+  padding: 6px 18px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.props-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 18px;
+  font-size: 12px;
+}
+.props-row:hover { background: var(--surface-2); }
+.props-label { color: var(--text-2); }
+.props-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 500; }
+
+.toggle {
+  position: relative;
+  width: 36px; height: 20px;
+  background: var(--border-strong);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: var(--surface);
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+.toggle.on { background: var(--accent); }
+.toggle.on::after { transform: translateX(16px); }
+
+/* History */
+.history-list { padding: 0 12px; display: flex; flex-direction: column; gap: 4px; }
+.history-item {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.history-item:hover { background: var(--surface-3); border-color: var(--border-strong); }
+.history-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.history-time { font-family: var(--mono); font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.history-empty { padding: 30px 20px; text-align: center; color: var(--text-3); font-size: 12px; }
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+.statusbar {
+  grid-area: statusbar;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 11px;
+  color: var(--text-3);
+  gap: 14px;
+  font-family: var(--mono);
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+.status-dot.running { animation: blink 1s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.status-spacer { flex: 1; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,11,0.5);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-slow);
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: min(520px, 92vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.96);
+  transition: transform var(--transition-slow);
+  overflow: hidden;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal.lg { width: min(720px, 92vw); }
+.modal-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+.modal-foot {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Form */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  transition: all var(--transition);
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+.form-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-stack {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow-lg);
+  min-width: 240px;
+  max-width: 340px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all var(--transition-slow);
+  pointer-events: auto;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.toast.info .toast-dot { background: var(--text); }
+.toast.success .toast-dot { background: var(--success); }
+.toast.error .toast-dot { background: var(--danger); }
+.toast.warning .toast-dot { background: var(--warning); }
+.toast-content { flex: 1; font-size: 12px; }
+.toast-title { font-weight: 600; margin-bottom: 2px; }
+.toast-msg { color: var(--text-2); font-size: 11px; }
+
+/* ============================================================
+   CONTEXT MENU
+   ============================================================ */
+.context-menu {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  min-width: 180px;
+  z-index: 300;
+  display: none;
+}
+.context-menu.open { display: block; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.ctx-item:hover { background: var(--surface-3); }
+.ctx-item.danger { color: var(--danger); }
+.ctx-sep { height: 1px; background: var(--border); margin: 4px 2px; }
+.ctx-shortcut { font-size: 10px; color: var(--text-3); font-family: var(--mono); }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation: fadeIn var(--transition-slow); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOOLBAR -->
+  <header class="toolbar">
+    <div class="brand">
+      <div class="brand-mark">T</div>
+      <span>Timer Studio</span>
+    </div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="countdown">Таймер</button>
+      <button class="mode-tab" data-mode="stopwatch">Секундомер</button>
+      <button class="mode-tab" data-mode="pomodoro">Pomodoro</button>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <button class="btn btn-mobile-toggle btn-icon" id="btnToggleSidebar" aria-label="Меню">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <button class="btn btn-icon" id="btnNewTimer" title="Новый таймер (Ctrl+N)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="btn btn-icon" id="btnTheme" title="Тема">
+      <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+    <button class="btn btn-icon" id="btnSound" title="Звук">
+      <svg id="soundIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+    <button class="btn btn-icon" id="btnSettings" title="Настройки">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <button class="btn btn-icon" id="btnHelp" title="Помощь (F1)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-tabs">
+      <button class="side-tab active" data-tab="timers">Таймеры</button>
+      <button class="side-tab" data-tab="presets">Пресеты</button>
+      <button class="side-tab" data-tab="history">История</button>
+    </div>
+
+    <div class="side-panel" id="panel-timers">
+      <div class="side-head">
+        <span>Активные</span>
+        <button class="btn btn-icon" id="btnAddTimer" title="Добавить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="timers-list" id="timersList"></div>
+    </div>
+
+    <div class="side-panel" id="panel-presets" hidden>
+      <div class="side-head">
+        <span>Быстрый старт</span>
+        <button class="btn btn-icon" id="btnAddPreset" title="Добавить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="presets-list" id="presetsList"></div>
+    </div>
+
+    <div class="side-panel" id="panel-history" hidden>
+      <div class="side-head">
+        <span>Завершённые</span>
+        <button class="btn btn-icon" id="btnClearHistory" title="Очистить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+    <div class="main-empty" id="mainEmpty">
+      <h2>Добро пожаловать в Timer Studio</h2>
+      <p>Создайте таймер или выберите пресет, чтобы начать</p>
+    </div>
+    <div class="timer-display" id="timerDisplay" style="display:none">
+      <div class="timer-header">
+        <div class="timer-title" id="timerTitle">Таймер</div>
+        <div class="timer-subtitle" id="timerSubtitle">Обратный отсчёт</div>
+      </div>
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 200 200">
+          <circle class="ring-track" cx="100" cy="100" r="90" />
+          <circle class="ring-progress" id="ringProgress" cx="100" cy="100" r="90"
+                  stroke-dasharray="565.48" stroke-dashoffset="0" />
+        </svg>
+        <div class="ring-center">
+          <div class="ring-time" id="ringTime">00:00</div>
+          <div class="ring-ms" id="ringMs">.000</div>
+          <div class="ring-label" id="ringLabel">Готов</div>
+        </div>
+      </div>
+      <div class="controls" id="controls">
+        <button class="ctrl-btn danger" id="btnReset" title="Сброс (R)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <button class="ctrl-btn primary" id="btnPlayPause" title="Старт/Пауза (Space)">
+          <svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="ctrl-btn" id="btnLap" title="Круг (L)" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+      </div>
+      <div class="laps-list" id="lapsList" style="display:none"></div>
+    </div>
+  </main>
+
+  <!-- PROPERTIES -->
+  <aside class="props">
+    <div class="props-head">Свойства</div>
+    <div class="props-body" id="propsBody">
+      <div class="props-section">
+        <div class="props-section-title">Статистика</div>
+        <div class="props-row"><span class="props-label">Всего таймеров</span><span class="props-value" id="statTotal">0</span></div>
+        <div class="props-row"><span class="props-label">Активных</span><span class="props-value" id="statActive">0</span></div>
+        <div class="props-row"><span class="props-label">Завершённых</span><span class="props-value" id="statFinished">0</span></div>
+      </div>
+      <div class="props-section">
+        <div class="props-section-title">Поведение</div>
+        <div class="props-row">
+          <span class="props-label">Автозапуск</span>
+          <div class="toggle" id="toggleAutostart"></div>
+        </div>
+        <div class="props-row">
+          <span class="props-label">Показывать мс</span>
+          <div class="toggle on" id="toggleMs"></div>
+        </div>
+        <div class="props-row">
+          <span class="props-label">Уведомления</span>
+          <div class="toggle on" id="toggleNotify"></div>
+        </div>
+        <div class="props-row">
+          <span class="props-label">Зацикливание</span>
+          <div class="toggle" id="toggleLoop"></div>
+        </div>
+      </div>
+      <div class="props-section">
+        <div class="props-section-title">Данные</div>
+        <div style="padding: 8px 18px; display: flex; flex-direction: column; gap: 6px;">
+          <button class="btn" id="btnExport">Экспорт (JSON)</button>
+          <button class="btn" id="btnImport">Импорт</button>
+          <button class="btn btn-danger" id="btnClearAll">Очистить всё</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- STATUS BAR -->
+  <footer class="statusbar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Готово</span>
+    <span class="status-spacer"></span>
+    <span id="statusTime">00:00:00</span>
+    <span id="statusSaved">Сохранено</span>
+  </footer>
+</div>
+
+<!-- Toast stack -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<!-- Context menu -->
+<div class="context-menu" id="contextMenu"></div>
+
+<!-- Modal root -->
+<div id="modalRoot"></div>
+
+<script>
+/* ============================================================
+   TIMER STUDIO — CORE
+   ============================================================ */
+'use strict';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = (n, w = 2) => String(n).padStart(w, '0');
+
+/* ============================================================
+   PRESETS
+   ============================================================ */
+const DEFAULT_PRESETS = [
+  { id: 'p1', name: 'Pomodoro', desc: 'Классический Pomodoro', icon: '🍅', duration: 25 * 60 * 1000, category: 'Работа' },
+  { id: 'p2', name: 'Короткий перерыв', desc: 'Отдых после Pomodoro', icon: '☕', duration: 5 * 60 * 1000, category: 'Отдых' },
+  { id: 'p3', name: 'Длинный перерыв', desc: 'После 4 Pomodoro', icon: '🌿', duration: 15 * 60 * 1000, category: 'Отдых' },
+  { id: 'p4', name: '1 минута', desc: 'Быстрый таймер', icon: '⏱', duration: 60 * 1000, category: 'Быстрые' },
+  { id: 'p5', name: '5 минут', desc: 'Короткий интервал', icon: '⏰', duration: 5 * 60 * 1000, category: 'Быстрые' },
+  { id: 'p6', name: '10 минут', desc: 'Средний интервал', icon: '⌛', duration: 10 * 60 * 1000, category: 'Быстрые' },
+  { id: 'p7', name: '30 минут', desc: 'Полчаса работы', icon: '📚', duration: 30 * 60 * 1000, category: 'Работа' },
+  { id: 'p8', name: '1 час', desc: 'Час работы', icon: '💼', duration: 60 * 60 * 1000, category: 'Работа' },
+  { id: 'p9', name: 'HIIT 30/30', desc: 'Интервальная тренировка', icon: '🏃', duration: 30 * 1000, category: 'Спорт' },
+  { id: 'p10', name: 'Планка 2 мин', desc: 'Удержание планки', icon: '💪', duration: 2 * 60 * 1000, category: 'Спорт' },
+  { id: 'p11', name: 'Медитация 10', desc: '10 минут медитации', icon: '🧘', duration: 10 * 60 * 1000, category: 'Здоровье' },
+  { id: 'p12', name: 'Яйцо вкрутую', desc: 'Варка яиц', icon: '🥚', duration: 10 * 60 * 1000, category: 'Кухня' },
+  { id: 'p13', name: 'Паста аль денте', desc: 'Варка пасты', icon: '🍝', duration: 8 * 60 * 1000, category: 'Кухня' },
+  { id: 'p14', name: 'Чай', desc: 'Заваривание чая', icon: '🍵', duration: 3 * 60 * 1000, category: 'Кухня' },
+  { id: 'p15', name: '25 сек', desc: 'Спринт', icon: '⚡', duration: 25 * 1000, category: 'Быстрые' }
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STORAGE_KEY = 'timer_studio_v2';
+
+const state = {
+  theme: 'light',
+  mode: 'countdown', // countdown | stopwatch | pomodoro
+  timers: {},        // id -> timer
+  timerOrder: [],    // order of timer ids
+  activeTimerId: null,
+  presets: [...DEFAULT_PRESETS],
+  history: [],
+  settings: {
+    sound: true,
+    volume: 0.5,
+    autostart: false,
+    showMs: true,
+    notify: true,
+    loop: false
+  }
+};
+
+/* ============================================================
+   PERSISTENCE
+   ============================================================ */
+function saveState() {
+  try {
+    const data = {
+      theme: state.theme,
+      mode: state.mode,
+      timers: state.timers,
+      timerOrder: state.timerOrder,
+      activeTimerId: state.activeTimerId,
+      presets: state.presets,
+      history: state.history,
+      settings: state.settings
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    $('#statusSaved').textContent = 'Сохранено ' + new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+  } catch (e) { console.warn('Save failed', e); }
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    state.theme = data.theme || 'light';
+    state.mode = data.mode || 'countdown';
+    state.timers = data.timers || {};
+    state.timerOrder = data.timerOrder || [];
+    state.activeTimerId = data.activeTimerId || null;
+    state.presets = data.presets && data.presets.length ? data.presets : [...DEFAULT_PRESETS];
+    state.history = data.history || [];
+    state.settings = { ...state.settings, ...(data.settings || {}) };
+    // Resume running timers
+    Object.values(state.timers).forEach(t => {
+      if (t.status === 'running' && t.startTime) {
+        const elapsed = Date.now() - t.startTime + t.accumulated;
+        if (t.type === 'countdown' || t.type === 'pomodoro') {
+          if (elapsed >= t.duration) {
+            t.remaining = 0;
+            t.status = 'finished';
+          } else {
+            t.remaining = t.duration - elapsed;
+          }
+        } else {
+          t.elapsed = elapsed;
+        }
+      }
+    });
+    return true;
+  } catch (e) { console.warn('Load failed', e); return false; }
+}
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+const Audio = (() => {
+  let ctx = null;
+  const ensure = () => {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { ctx = null; }
+    }
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  };
+  const beep = (freq, dur, type = 'sine', vol = 0.3) => {
+    if (!state.settings.sound) return;
+    const c = ensure(); if (!c) return;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, c.currentTime);
+    gain.gain.linearRampToValueAtTime(vol * state.settings.volume, c.currentTime + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+    osc.connect(gain).connect(c.destination);
+    osc.start();
+    osc.stop(c.currentTime + dur);
+  };
+  return {
+    start: () => { beep(800, 0.08, 'sine', 0.2); },
+    pause: () => { beep(400, 0.08, 'sine', 0.15); },
+    reset: () => { beep(300, 0.1, 'sine', 0.15); },
+    lap: () => { beep(1200, 0.05, 'square', 0.15); },
+    finish: () => {
+      [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, 0.2, 'triangle', 0.3), i * 120));
+    },
+    tick: () => { beep(1000, 0.02, 'sine', 0.1); }
+  };
+})();
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function toast(type, title, msg = '', duration = 3000) {
+  const stack = $('#toastStack');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <div class="toast-dot"></div>
+    <div class="toast-content">
+      <div class="toast-title">${escapeHtml(title)}</div>
+      ${msg ? `<div class="toast-msg">${escapeHtml(msg)}</div>` : ''}
+    </div>`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+function modal({ title, body, footer, size = '' }) {
+  const root = $('#modalRoot');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal ${size}">
+      <div class="modal-head">
+        <div class="modal-title">${escapeHtml(title)}</div>
+        <button class="btn btn-icon" data-close>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body"></div>
+      ${footer ? '<div class="modal-foot"></div>' : ''}
+    </div>`;
+  const bodyEl = overlay.querySelector('.modal-body');
+  if (typeof body === 'string') bodyEl.innerHTML = body;
+  else bodyEl.appendChild(body);
+  if (footer) {
+    const footEl = overlay.querySelector('.modal-foot');
+    if (typeof footer === 'string') footEl.innerHTML = footer;
+    else footEl.appendChild(footer);
+  }
+  root.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('open'));
+  const close = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.remove(), 300);
+  };
+  overlay.querySelector('[data-close]').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  return { overlay, close, body: bodyEl, foot: overlay.querySelector('.modal-foot') };
+}
+
+function confirmModal(title, message, onConfirm) {
+  const m = modal({
+    title,
+    body: `<p style="color:var(--text-2); font-size:13px;">${escapeHtml(message)}</p>`,
+    footer: `<button class="btn" data-cancel>Отмена</button><button class="btn btn-primary" data-ok>Подтвердить</button>`
+  });
+  m.foot.querySelector('[data-cancel]').addEventListener('click', m.close);
+  m.foot.querySelector('[data-ok]').addEventListener('click', () => { m.close(); onConfirm(); });
+}
+
+/* ============================================================
+   TIME FORMATTING
+   ============================================================ */
+function formatTime(ms, showMs = true) {
+  if (ms < 0) ms = 0;
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const millis = Math.floor(ms % 1000);
+  
+  let main;
+  if (h > 0) {
+    main = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  } else {
+    main = `${pad(m)}:${pad(s)}`;
+  }
+  
+  if (showMs) {
+    return { main, ms: `.${pad(millis, 3)}` };
+  }
+  return { main, ms: '' };
+}
+
+function formatTimeShort(ms) {
+  const { main } = formatTime(ms, false);
+  return main;
+}
+
+/* ============================================================
+   TIMER OPERATIONS
+   ============================================================ */
+function createTimer(opts = {}) {
+  const id = uid();
+  const type = opts.type || state.mode;
+  const duration = opts.duration || 60 * 1000;
+  const timer = {
+    id,
+    type,
+    name: opts.name || (type === 'stopwatch' ? 'Секундомер' : type === 'pomodoro' ? 'Pomodoro' : 'Таймер'),
+    duration,
+    remaining: duration,
+    elapsed: 0,
+    status: 'idle', // idle | running | paused | finished
+    startTime: null,
+    accumulated: 0,
+    laps: [],
+    createdAt: Date.now(),
+    sound: true
+  };
+  state.timers[id] = timer;
+  state.timerOrder.push(id);
+  state.activeTimerId = id;
+  return id;
+}
+
+function deleteTimer(id) {
+  const t = state.timers[id];
+  if (!t) return;
+  if (t.status === 'running') {
+    toast('warning', 'Нельзя удалить', 'Остановите таймер сначала');
+    return;
+  }
+  delete state.timers[id];
+  state.timerOrder = state.timerOrder.filter(x => x !== id);
+  if (state.activeTimerId === id) {
+    state.activeTimerId = state.timerOrder[0] || null;
+  }
+  renderAll();
+  saveState();
+}
+
+function startTimer(id) {
+  const t = state.timers[id];
+  if (!t) return;
+  if (t.status === 'finished') {
+    resetTimer(id);
+  }
+  if (t.status === 'running') return;
+  if (t.type !== 'stopwatch' && t.remaining <= 0) {
+    toast('warning', 'Время вышло', 'Сбросьте таймер');
+    return;
+  }
+  t.status = 'running';
+  t.startTime = Date.now();
+  Audio.start();
+  renderAll();
+  saveState();
+}
+
+function pauseTimer(id) {
+  const t = state.timers[id];
+  if (!t || t.status !== 'running') return;
+  const now = Date.now();
+  const elapsed = now - t.startTime;
+  t.accumulated += elapsed;
+  if (t.type === 'stopwatch') {
+    t.elapsed = t.accumulated;
+  } else {
+    t.remaining = Math.max(0, t.duration - t.accumulated);
+  }
+  t.status = 'paused';
+  t.startTime = null;
+  Audio.pause();
+  renderAll();
+  saveState();
+}
+
+function resetTimer(id) {
+  const t = state.timers[id];
+  if (!t) return;
+  t.status = 'idle';
+  t.startTime = null;
+  t.accumulated = 0;
+  t.remaining = t.duration;
+  t.elapsed = 0;
+  t.laps = [];
+  Audio.reset();
+  renderAll();
+  saveState();
+}
+
+function addLap(id) {
+  const t = state.timers[id];
+  if (!t || t.type !== 'stopwatch' || t.status !== 'running') return;
+  const now = Date.now();
+  const total = t.accumulated + (now - t.startTime);
+  const lastLap = t.laps.length ? t.laps[t.laps.length - 1].total : 0;
+  const split = total - lastLap;
+  t.laps.push({ num: t.laps.length + 1, split, total, time: Date.now() });
+  Audio.lap();
+  renderAll();
+}
+
+function finishTimer(id) {
+  const t = state.timers[id];
+  if (!t) return;
+  t.status = 'finished';
+  t.startTime = null;
+  t.remaining = 0;
+  Audio.finish();
+  
+  // Add to history
+  state.history.unshift({
+    id: uid(),
+    name: t.name,
+    type: t.type,
+    duration: t.duration,
+    completedAt: Date.now()
+  });
+  if (state.history.length > 100) state.history.length = 100;
+  
+  // Notification
+  if (state.settings.notify && 'Notification' in window && Notification.permission === 'granted') {
+    new Notification('Timer Studio', {
+      body: `${t.name} завершён`,
+      silent: false
+    });
+  }
+  
+  toast('success', 'Таймер завершён', t.name);
+  
+  // Loop
+  if (state.settings.loop && t.type !== 'stopwatch') {
+    setTimeout(() => {
+      resetTimer(id);
+      startTimer(id);
+    }, 1000);
+  }
+  
+  renderAll();
+  saveState();
+}
+
+function selectTimer(id) {
+  state.activeTimerId = id;
+  renderAll();
+}
+
+/* ============================================================
+   RENDER: TIMERS LIST
+   ============================================================ */
+function renderTimersList() {
+  const list = $('#timersList');
+  list.innerHTML = '';
+  
+  if (state.timerOrder.length === 0) {
+    list.innerHTML = '<div style="padding:30px 20px; text-align:center; color:var(--text-3); font-size:12px;">Нет таймеров.<br/>Создайте новый или выберите пресет.</div>';
+    return;
+  }
+  
+  state.timerOrder.forEach(id => {
+    const t = state.timers[id];
+    if (!t) return;
+    const time = t.type === 'stopwatch' 
+      ? formatTimeShort(t.status === 'running' ? t.accumulated + (Date.now() - t.startTime) : t.elapsed)
+      : formatTimeShort(t.status === 'running' ? Math.max(0, t.duration - t.accumulated - (Date.now() - t.startTime)) : t.remaining);
+    
+    const card = document.createElement('div');
+    card.className = 'timer-card' + (id === state.activeTimerId ? ' active' : '') + (t.status !== 'idle' ? ' ' + t.status : '');
+    card.dataset.id = id;
+    card.innerHTML = `
+      <div class="timer-name">${escapeHtml(t.name)}</div>
+      <div class="timer-time">${time}</div>
+      <div class="timer-meta">
+        <span>${t.type === 'stopwatch' ? 'Секундомер' : t.type === 'pomodoro' ? 'Pomodoro' : 'Таймер'}</span>
+        <span class="timer-status ${t.status}">${statusLabel(t.status)}</span>
+      </div>
+      <div class="timer-actions">
+        <button data-act="play" title="${t.status === 'running' ? 'Пауза' : 'Старт'}">
+          ${t.status === 'running' 
+            ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+            : '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>'}
+        </button>
+        <button data-act="reset" title="Сброс">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        </button>
+        <button data-act="delete" title="Удалить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>`;
+    
+    card.addEventListener('click', e => {
+      if (e.target.closest('[data-act]')) return;
+      selectTimer(id);
+    });
+    card.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      selectTimer(id);
+      openTimerContext(e, id);
+    });
+    card.querySelector('[data-act="play"]').addEventListener('click', e => {
+      e.stopPropagation();
+      if (t.status === 'running') pauseTimer(id);
+      else startTimer(id);
+    });
+    card.querySelector('[data-act="reset"]').addEventListener('click', e => {
+      e.stopPropagation();
+      resetTimer(id);
+    });
+    card.querySelector('[data-act="delete"]').addEventListener('click', e => {
+      e.stopPropagation();
+      deleteTimer(id);
+    });
+    
+    list.appendChild(card);
+  });
+}
+
+function statusLabel(s) {
+  return { idle: 'Готов', running: 'Идёт', paused: 'Пауза', finished: 'Готово' }[s] || s;
+}
+
+function openTimerContext(e, id) {
+  const menu = $('#contextMenu');
+  const t = state.timers[id];
+  menu.innerHTML = `
+    <div class="ctx-item" data-act="rename">Переименовать</div>
+    <div class="ctx-item" data-act="duplicate">Дублировать</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" data-act="start">${t.status === 'running' ? 'Пауза' : 'Старт'} <span class="ctx-shortcut">Space</span></div>
+    <div class="ctx-item" data-act="reset">Сбросить <span class="ctx-shortcut">R</span></div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item danger" data-act="delete">Удалить <span class="ctx-shortcut">Del</span></div>`;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 300) + 'px';
+  menu.classList.add('open');
+  menu.querySelectorAll('.ctx-item').forEach(it => {
+    it.addEventListener('click', () => {
+      menu.classList.remove('open');
+      handleTimerAction(it.dataset.act, id);
+    });
+  });
+}
+
+function handleTimerAction(act, id) {
+  const t = state.timers[id];
+  if (!t) return;
+  if (act === 'rename') {
+    const name = prompt('Новое имя:', t.name);
+    if (name && name.trim()) {
+      t.name = name.trim();
+      renderAll();
+      saveState();
+    }
+  } else if (act === 'duplicate') {
+    const newId = createTimer({ type: t.type, duration: t.duration, name: t.name + ' (копия)' });
+    selectTimer(newId);
+    toast('success', 'Таймер дублирован');
+  } else if (act === 'start') {
+    if (t.status === 'running') pauseTimer(id);
+    else startTimer(id);
+  } else if (act === 'reset') {
+    resetTimer(id);
+  } else if (act === 'delete') {
+    deleteTimer(id);
+  }
+}
+
+/* ============================================================
+   RENDER: PRESETS
+   ============================================================ */
+function renderPresets() {
+  const list = $('#presetsList');
+  list.innerHTML = '';
+  state.presets.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    item.innerHTML = `
+      <div class="preset-icon">${p.icon || '⏱'}</div>
+      <div class="preset-info">
+        <div class="preset-name">${escapeHtml(p.name)}</div>
+        <div class="preset-desc">${escapeHtml(p.desc || '')}</div>
+      </div>
+      <div class="preset-time">${formatTimeShort(p.duration)}</div>`;
+    item.addEventListener('click', () => {
+      const id = createTimer({ type: 'countdown', duration: p.duration, name: p.name });
+      selectTimer(id);
+      if (state.settings.autostart) startTimer(id);
+      toast('success', 'Таймер создан', p.name);
+    });
+    item.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      openPresetContext(e, p);
+    });
+    list.appendChild(item);
+  });
+}
+
+function openPresetContext(e, preset) {
+  const menu = $('#contextMenu');
+  const isDefault = DEFAULT_PRESETS.some(p => p.id === preset.id);
+  menu.innerHTML = `
+    <div class="ctx-item" data-act="use">Использовать</div>
+    ${!isDefault ? '<div class="ctx-item" data-act="edit">Редактировать</div>' : ''}
+    ${!isDefault ? '<div class="ctx-item danger" data-act="delete">Удалить</div>' : ''}`;
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
+  menu.classList.add('open');
+  menu.querySelectorAll('.ctx-item').forEach(it => {
+    it.addEventListener('click', () => {
+      menu.classList.remove('open');
+      if (it.dataset.act === 'use') {
+        const id = createTimer({ type: 'countdown', duration: preset.duration, name: preset.name });
+        selectTimer(id);
+      } else if (it.dataset.act === 'edit') {
+        showPresetEditor(preset);
+      } else if (it.dataset.act === 'delete') {
+        state.presets = state.presets.filter(p => p.id !== preset.id);
+        renderPresets();
+        saveState();
+        toast('success', 'Пресет удалён');
+      }
+    });
+  });
+}
+
+/* ============================================================
+   RENDER: HISTORY
+   ============================================================ */
+function renderHistory() {
+  const list = $('#historyList');
+  list.innerHTML = '';
+  if (state.history.length === 0) {
+    list.innerHTML = '<div class="history-empty">История пуста</div>';
+    return;
+  }
+  state.history.forEach(h => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="history-name">${escapeHtml(h.name)}</div>
+      <div class="history-time">${formatTimeShort(h.duration)} · ${new Date(h.completedAt).toLocaleString('ru-RU', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}</div>`;
+    item.addEventListener('click', () => {
+      const id = createTimer({ type: h.type, duration: h.duration, name: h.name + ' (повтор)' });
+      selectTimer(id);
+      toast('info', 'Таймер создан из истории');
+    });
+    list.appendChild(item);
+  });
+}
+
+/* ============================================================
+   RENDER: MAIN DISPLAY
+   ============================================================ */
+function renderMain() {
+  const empty = $('#mainEmpty');
+  const display = $('#timerDisplay');
+  
+  if (!state.activeTimerId || !state.timers[state.activeTimerId]) {
+    empty.style.display = 'block';
+    display.style.display = 'none';
+    return;
+  }
+  
+  empty.style.display = 'none';
+  display.style.display = 'flex';
+  
+  const t = state.timers[state.activeTimerId];
+  $('#timerTitle').textContent = t.name;
+  $('#timerSubtitle').textContent = t.type === 'stopwatch' ? 'Секундомер' : t.type === 'pomodoro' ? 'Pomodoro' : 'Обратный отсчёт';
+  
+  // Lap button visibility
+  $('#btnLap').style.display = t.type === 'stopwatch' ? 'grid' : 'none';
+  
+  updateTimerDisplay(t);
+  renderLaps(t);
+}
+
+function updateTimerDisplay(t) {
+  if (!t) return;
+  let currentMs, totalMs;
+  
+  if (t.type === 'stopwatch') {
+    currentMs = t.status === 'running' ? t.accumulated + (Date.now() - t.startTime) : t.elapsed;
+    totalMs = currentMs; // для секундомера прогресс не имеет смысла, показываем полный круг
+  } else {
+    const elapsed = t.status === 'running' ? t.accumulated + (Date.now() - t.startTime) : t.accumulated;
+    currentMs = Math.max(0, t.duration - elapsed);
+    totalMs = t.duration;
+  }
+  
+  const { main, ms } = formatTime(currentMs, state.settings.showMs);
+  $('#ringTime').textContent = main;
+  $('#ringMs').textContent = state.settings.showMs ? ms : '';
+  $('#ringLabel').textContent = statusLabel(t.status);
+  
+  // Ring progress
+  const ring = $('#ringProgress');
+  const circumference = 2 * Math.PI * 90;
+  let progress = 0;
+  if (t.type === 'stopwatch') {
+    // Для секундомера: 1 круг = 60 секунд
+    const sec = currentMs / 1000;
+    progress = (sec % 60) / 60;
+  } else {
+    progress = totalMs > 0 ? 1 - (currentMs / totalMs) : 0;
+  }
+  ring.setAttribute('stroke-dashoffset', circumference * (1 - progress));
+  
+  // Play/pause icon
+  const playIcon = $('#playIcon');
+  if (t.status === 'running') {
+    playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/>';
+  } else {
+    playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>';
+  }
+}
+
+function renderLaps(t) {
+  const list = $('#lapsList');
+  if (t.type !== 'stopwatch' || t.laps.length === 0) {
+    list.style.display = 'none';
+    return;
+  }
+  list.style.display = 'block';
+  list.innerHTML = '';
+  
+  const splits = t.laps.map(l => l.split);
+  const best = Math.min(...splits);
+  const worst = Math.max(...splits);
+  
+  t.laps.slice().reverse().forEach(l => {
+    const item = document.createElement('div');
+    let cls = 'lap-item';
+    if (t.laps.length > 1) {
+      if (l.split === best) cls += ' best';
+      else if (l.split === worst) cls += ' worst';
+    }
+    item.className = cls;
+    item.innerHTML = `
+      <div class="lap-num">#${l.num}</div>
+      <div class="lap-name">Круг</div>
+      <div class="lap-split">${formatTimeShort(l.split)}</div>
+      <div class="lap-total">${formatTimeShort(l.total)}</div>`;
+    list.appendChild(item);
+  });
+}
+
+/* ============================================================
+   RENDER: STATS
+   ============================================================ */
+function renderStats() {
+  const timers = Object.values(state.timers);
+  $('#statTotal').textContent = timers.length;
+  $('#statActive').textContent = timers.filter(t => t.status === 'running').length;
+  $('#statFinished').textContent = state.history.length;
+}
+
+/* ============================================================
+   RENDER: STATUS BAR
+   ============================================================ */
+function updateStatus() {
+  const running = Object.values(state.timers).filter(t => t.status === 'running').length;
+  const dot = $('#statusDot');
+  dot.classList.toggle('running', running > 0);
+  $('#statusText').textContent = running > 0 ? `${running} активн.` : 'Готово';
+  $('#statusTime').textContent = new Date().toLocaleTimeString('ru-RU');
+}
+
+/* ============================================================
+   RENDER ALL
+   ============================================================ */
+function renderAll() {
+  renderTimersList();
+  renderPresets();
+  renderHistory();
+  renderMain();
+  renderStats();
+  updateStatus();
+}
+
+/* ============================================================
+   MAIN LOOP
+   ============================================================ */
+let lastTick = 0;
+function mainLoop() {
+  const now = Date.now();
+  
+  // Update running timers
+  Object.values(state.timers).forEach(t => {
+    if (t.status !== 'running') return;
+    const elapsed = t.accumulated + (now - t.startTime);
+    
+    if (t.type === 'stopwatch') {
+      t.elapsed = elapsed;
+    } else {
+      const remaining = t.duration - elapsed;
+      if (remaining <= 0) {
+        finishTimer(t.id);
+        return;
+      }
+      t.remaining = remaining;
+    }
+  });
+  
+  // Update display for active timer
+  if (state.activeTimerId && state.timers[state.activeTimerId]) {
+    const t = state.timers[state.activeTimerId];
+    if (t.status === 'running') {
+      updateTimerDisplay(t);
+    }
+  }
+  
+  // Update timers list every second
+  if (now - lastTick > 1000) {
+    renderTimersList();
+    updateStatus();
+    lastTick = now;
+  }
+  
+  requestAnimationFrame(mainLoop);
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function showNewTimerModal() {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Название</label>
+      <input type="text" class="form-input" id="newName" placeholder="Мой таймер" value="Таймер" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Тип</label>
+      <select class="form-select" id="newType">
+        <option value="countdown"${state.mode === 'countdown' ? ' selected' : ''}>Обратный отсчёт</option>
+        <option value="stopwatch"${state.mode === 'stopwatch' ? ' selected' : ''}>Секундомер</option>
+        <option value="pomodoro"${state.mode === 'pomodoro' ? ' selected' : ''}>Pomodoro</option>
+      </select>
+    </div>
+    <div class="form-group" id="durationGroup">
+      <label class="form-label">Длительность</label>
+      <div class="form-row">
+        <div>
+          <input type="number" class="form-input" id="newH" value="0" min="0" max="99" placeholder="ч" />
+          <div style="font-size:10px; color:var(--text-3); margin-top:4px; text-align:center;">Часы</div>
+        </div>
+        <div>
+          <input type="number" class="form-input" id="newM" value="5" min="0" max="59" placeholder="м" />
+          <div style="font-size:10px; color:var(--text-3); margin-top:4px; text-align:center;">Минуты</div>
+        </div>
+        <div>
+          <input type="number" class="form-input" id="newS" value="0" min="0" max="59" placeholder="с" />
+          <div style="font-size:10px; color:var(--text-3); margin-top:4px; text-align:center;">Секунды</div>
+        </div>
+      </div>
+    </div>`;
+  
+  const footer = document.createElement('div');
+  footer.innerHTML = `
+    <button class="btn" data-cancel>Отмена</button>
+    <button class="btn btn-primary" data-ok>Создать</button>`;
+  
+  const m = modal({ title: 'Новый таймер', body, footer });
+  
+  const typeSelect = m.body.querySelector('#newType');
+  const durationGroup = m.body.querySelector('#durationGroup');
+  typeSelect.addEventListener('change', e => {
+    durationGroup.style.display = e.target.value === 'stopwatch' ? 'none' : 'block';
+  });
+  
+  m.foot.querySelector('[data-cancel]').addEventListener('click', m.close);
+  m.foot.querySelector('[data-ok]').addEventListener('click', () => {
+    const name = m.body.querySelector('#newName').value.trim() || 'Таймер';
+    const type = m.body.querySelector('#newType').value;
+    const h = parseInt(m.body.querySelector('#newH').value) || 0;
+    const min = parseInt(m.body.querySelector('#newM').value) || 0;
+    const s = parseInt(m.body.querySelector('#newS').value) || 0;
+    const duration = (h * 3600 + min * 60 + s) * 1000;
+    
+    if (type !== 'stopwatch' && duration <= 0) {
+      toast('error', 'Укажите длительность');
+      return;
+    }
+    
+    const id = createTimer({ type, duration, name });
+    selectTimer(id);
+    if (state.settings.autostart && type !== 'stopwatch') startTimer(id);
+    m.close();
+    toast('success', 'Таймер создан', name);
+  });
+  
+  setTimeout(() => m.body.querySelector('#newName').focus(), 100);
+}
+
+function showPresetEditor(preset) {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Название</label>
+      <input type="text" class="form-input" id="pName" value="${escapeHtml(preset.name)}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Описание</label>
+      <input type="text" class="form-input" id="pDesc" value="${escapeHtml(preset.desc || '')}" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Иконка</label>
+      <input type="text" class="form-input" id="pIcon" value="${escapeHtml(preset.icon || '')}" maxlength="4" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Длительность</label>
+      <div class="form-row">
+        <div>
+          <input type="number" class="form-input" id="pH" value="${Math.floor(preset.duration / 3600000)}" min="0" />
+          <div style="font-size:10px; color:var(--text-3); margin-top:4px; text-align:center;">Часы</div>
+        </div>
+        <div>
+          <input type="number" class="form-input" id="pM" value="${Math.floor((preset.duration % 3600000) / 60000)}" min="0" max="59" />
+          <div style="font-size:10px; color:var(--text-3); margin-top:4px; text-align:center;">Минуты</div>
+        </div>
+        <div>
+          <input type="number" class="form-input" id="pS" value="${Math.floor((preset.duration % 60000) / 1000)}" min="0" max="59" />
+          <div style="font-size:10px; color:var(--text-3); margin-top:4px; text-align:center;">Секунды</div>
+        </div>
+      </div>
+    </div>`;
+  
+  const footer = document.createElement('div');
+  footer.innerHTML = `
+    <button class="btn" data-cancel>Отмена</button>
+    <button class="btn btn-primary" data-ok>Сохранить</button>`;
+  
+  const m = modal({ title: 'Редактировать пресет', body, footer });
+  m.foot.querySelector('[data-cancel]').addEventListener('click', m.close);
+  m.foot.querySelector('[data-ok]').addEventListener('click', () => {
+    preset.name = m.body.querySelector('#pName').value.trim() || preset.name;
+    preset.desc = m.body.querySelector('#pDesc').value.trim();
+    preset.icon = m.body.querySelector('#pIcon').value.trim();
+    const h = parseInt(m.body.querySelector('#pH').value) || 0;
+    const min = parseInt(m.body.querySelector('#pM').value) || 0;
+    const s = parseInt(m.body.querySelector('#pS').value) || 0;
+    preset.duration = (h * 3600 + min * 60 + s) * 1000;
+    renderPresets();
+    saveState();
+    m.close();
+    toast('success', 'Пресет обновлён');
+  });
+}
+
+function showSettingsModal() {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div class="props-section">
+      <div class="props-section-title">Звук</div>
+      <div class="props-row">
+        <span class="props-label">Звуковые уведомления</span>
+        <div class="toggle ${state.settings.sound ? 'on' : ''}" id="setSound"></div>
+      </div>
+      <div class="props-row">
+        <span class="props-label">Громкость</span>
+        <input type="range" id="setVolume" min="0" max="1" step="0.05" value="${state.settings.volume}" style="width:120px" />
+      </div>
+    </div>
+    <div class="props-section">
+      <div class="props-section-title">Поведение</div>
+      <div class="props-row">
+        <span class="props-label">Автозапуск новых таймеров</span>
+        <div class="toggle ${state.settings.autostart ? 'on' : ''}" id="setAutostart"></div>
+      </div>
+      <div class="props-row">
+        <span class="props-label">Показывать миллисекунды</span>
+        <div class="toggle ${state.settings.showMs ? 'on' : ''}" id="setMs"></div>
+      </div>
+      <div class="props-row">
+        <span class="props-label">Системные уведомления</span>
+        <div class="toggle ${state.settings.notify ? 'on' : ''}" id="setNotify"></div>
+      </div>
+      <div class="props-row">
+        <span class="props-label">Зацикливание таймеров</span>
+        <div class="toggle ${state.settings.loop ? 'on' : ''}" id="setLoop"></div>
+      </div>
+    </div>
+    <div class="props-section">
+      <div class="props-section-title">Уведомления</div>
+      <div style="padding: 8px 18px;">
+        <button class="btn" id="btnRequestNotify" style="width:100%; justify-content:flex-start">Запросить разрешение</button>
+        <div style="font-size:11px; color:var(--text-3); margin-top:6px;">Статус: ${'Notification' in window ? Notification.permission : 'не поддерживается'}</div>
+      </div>
+    </div>`;
+  
+  const m = modal({ title: 'Настройки', body });
+  
+  const bindToggle = (id, key) => {
+    const el = m.body.querySelector('#' + id);
+    el.addEventListener('click', () => {
+      state.settings[key] = !state.settings[key];
+      el.classList.toggle('on', state.settings[key]);
+      saveState();
+      if (key === 'sound' && !state.settings.sound) {
+        $('#soundIcon').innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+      } else if (key === 'sound') {
+        $('#soundIcon').innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+      }
+    });
+  };
+  
+  bindToggle('setSound', 'sound');
+  bindToggle('setAutostart', 'autostart');
+  bindToggle('setMs', 'showMs');
+  bindToggle('setNotify', 'notify');
+  bindToggle('setLoop', 'loop');
+  
+  m.body.querySelector('#setVolume').addEventListener('input', e => {
+    state.settings.volume = parseFloat(e.target.value);
+    saveState();
+  });
+  
+  m.body.querySelector('#btnRequestNotify').addEventListener('click', async () => {
+    if ('Notification' in window) {
+      const result = await Notification.requestPermission();
+      toast('info', 'Статус: ' + result);
+    } else {
+      toast('error', 'Уведомления не поддерживаются');
+    }
+  });
+}
+
+function showHelpModal() {
+  const shortcuts = [
+    ['Space', 'Старт / Пауза'],
+    ['R', 'Сброс'],
+    ['L', 'Круг (секундомер)'],
+    ['N', 'Следующий таймер'],
+    ['P', 'Предыдущий таймер'],
+    ['Ctrl+N', 'Новый таймер'],
+    ['Ctrl+S', 'Сохранить'],
+    ['Delete', 'Удалить таймер'],
+    ['F11', 'Полный экран'],
+    ['F1', 'Помощь'],
+    ['Esc', 'Закрыть окно']
+  ];
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div style="font-size:13px; color:var(--text-2); margin-bottom:16px; line-height:1.6">
+      <strong>Timer Studio</strong> — профессиональный таймер и секундомер с поддержкой нескольких таймеров, пресетов и Pomodoro.
+    </div>
+    <div class="props-section-title" style="padding:0 0 8px 0">Горячие клавиши</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px">
+      ${shortcuts.map(([k, d]) => `<div style="display:flex; justify-content:space-between; padding:6px 10px; background:var(--surface-3); border-radius:var(--radius-sm)">
+        <span style="color:var(--text-2); font-size:12px">${d}</span>
+        <kbd style="padding:2px 8px; background:var(--surface-4); border-radius:3px; font-family:var(--mono); font-size:11px">${k}</kbd>
+      </div>`).join('')}
+    </div>
+    <div class="props-section-title" style="padding:16px 0 8px 0">Режимы</div>
+    <div style="font-size:12px; color:var(--text-2); line-height:1.7">
+      <div><strong>Таймер</strong> — обратный отсчёт до нуля</div>
+      <div><strong>Секундомер</strong> — подсчёт времени с кругами</div>
+      <div><strong>Pomodoro</strong> — техника продуктивности 25/5</div>
+    </div>`;
+  modal({ title: 'Помощь', body });
+}
+
+/* ============================================================
+   EXPORT / IMPORT
+   ============================================================ */
+function exportData() {
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    timers: state.timers,
+    timerOrder: state.timerOrder,
+    presets: state.presets,
+    history: state.history,
+    settings: state.settings
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `timer-studio-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('success', 'Данные экспортированы');
+}
+
+function importData() {
+  const body = document.createElement('div');
+  body.innerHTML = `
+    <div style="border:2px dashed var(--border-strong); border-radius:var(--radius); padding:30px; text-align:center; cursor:pointer" id="dropZone">
+      <div style="font-size:13px; font-weight:500; margin-bottom:6px">Перетащите JSON файл сюда</div>
+      <div style="font-size:11px; color:var(--text-3)">или нажмите для выбора</div>
+      <input type="file" id="fileInput" accept=".json" style="display:none" />
+    </div>`;
+  const footer = document.createElement('div');
+  footer.innerHTML = `<button class="btn" data-close>Закрыть</button>`;
+  const m = modal({ title: 'Импорт', body, footer });
+  
+  const dz = m.body.querySelector('#dropZone');
+  const fi = m.body.querySelector('#fileInput');
+  dz.addEventListener('click', () => fi.click());
+  fi.addEventListener('change', e => {
+    if (e.target.files[0]) handleImportFile(e.target.files[0], m);
+  });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; });
+  dz.addEventListener('dragleave', () => { dz.style.borderColor = ''; });
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.style.borderColor = '';
+    if (e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0], m);
+  });
+  m.foot.querySelector('[data-close]').addEventListener('click', m.close);
+}
+
+function handleImportFile(file, m) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.timers && data.timerOrder) {
+        confirmModal('Импорт данных', 'Заменить текущие данные импортированными?', () => {
+          state.timers = data.timers;
+          state.timerOrder = data.timerOrder;
+          state.presets = data.presets || [...DEFAULT_PRESETS];
+          state.history = data.history || [];
+          state.settings = { ...state.settings, ...(data.settings || {}) };
+          state.activeTimerId = state.timerOrder[0] || null;
+          renderAll();
+          saveState();
+          m.close();
+          toast('success', 'Данные импортированы');
+        });
+      } else {
+        toast('error', 'Неверный формат файла');
+      }
+    } catch (err) {
+      toast('error', 'Ошибка парсинга', err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   THEME
+   ============================================================ */
+function applyTheme(theme) {
+  state.theme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  const icon = $('#themeIcon');
+  if (theme === 'dark') {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+  }
+  saveState();
+}
+
+function toggleSound() {
+  state.settings.sound = !state.settings.sound;
+  const icon = $('#soundIcon');
+  if (state.settings.sound) {
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+    toast('info', 'Звук включён');
+  } else {
+    icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    toast('info', 'Звук выключен');
+  }
+  saveState();
+}
+
+/* ============================================================
+   EVENT BINDINGS
+   ============================================================ */
+function bindUI() {
+  // Mode tabs
+  $$('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      $$('.mode-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.mode = tab.dataset.mode;
+      saveState();
+    });
+  });
+  
+  // Set initial mode
+  $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === state.mode));
+  
+  // Sidebar tabs
+  $$('.side-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      $$('.side-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      $$('.side-panel').forEach(p => p.hidden = true);
+      $('#panel-' + tab.dataset.tab).hidden = false;
+    });
+  });
+  
+  // Toolbar
+  $('#btnNewTimer').addEventListener('click', showNewTimerModal);
+  $('#btnAddTimer').addEventListener('click', showNewTimerModal);
+  $('#btnAddPreset').addEventListener('click', () => {
+    const id = uid();
+    state.presets.push({
+      id, name: 'Новый пресет', desc: 'Описание', icon: '⏱',
+      duration: 5 * 60 * 1000, category: 'Пользовательские'
+    });
+    renderPresets();
+    saveState();
+    showPresetEditor(state.presets[state.presets.length - 1]);
+  });
+  $('#btnClearHistory').addEventListener('click', () => {
+    if (state.history.length === 0) return;
+    confirmModal('Очистить историю', 'Удалить всю историю?', () => {
+      state.history = [];
+      renderHistory();
+      renderStats();
+      saveState();
+      toast('success', 'История очищена');
+    });
+  });
+  
+  $('#btnTheme').addEventListener('click', () => applyTheme(state.theme === 'dark' ? 'light' : 'dark'));
+  $('#btnSound').addEventListener('click', toggleSound);
+  $('#btnSettings').addEventListener('click', showSettingsModal);
+  $('#btnHelp').addEventListener('click', showHelpModal);
+  $('#btnToggleSidebar').addEventListener('click', () => {
+    $('#sidebar').classList.toggle('open');
+  });
+  
+  // Main controls
+  $('#btnPlayPause').addEventListener('click', () => {
+    if (!state.activeTimerId) return;
+    const t = state.timers[state.activeTimerId];
+    if (t.status === 'running') pauseTimer(state.activeTimerId);
+    else startTimer(state.activeTimerId);
+  });
+  $('#btnReset').addEventListener('click', () => {
+    if (state.activeTimerId) resetTimer(state.activeTimerId);
+  });
+  $('#btnLap').addEventListener('click', () => {
+    if (state.activeTimerId) addLap(state.activeTimerId);
+  });
+  
+  // Props toggles
+  const bindPropsToggle = (id, key) => {
+    const el = $('#' + id);
+    el.addEventListener('click', () => {
+      state.settings[key] = !state.settings[key];
+      el.classList.toggle('on', state.settings[key]);
+      saveState();
+      if (key === 'showMs' && state.activeTimerId) {
+        updateTimerDisplay(state.timers[state.activeTimerId]);
+      }
+    });
+  };
+  bindPropsToggle('toggleAutostart', 'autostart');
+  bindPropsToggle('toggleMs', 'showMs');
+  bindPropsToggle('toggleNotify', 'notify');
+  bindPropsToggle('toggleLoop', 'loop');
+  
+  $('#btnExport').addEventListener('click', exportData);
+  $('#btnImport').addEventListener('click', importData);
+  $('#btnClearAll').addEventListener('click', () => {
+    confirmModal('Очистить всё', 'Удалить все таймеры, пресеты и историю?', () => {
+      state.timers = {};
+      state.timerOrder = [];
+      state.activeTimerId = null;
+      state.presets = [...DEFAULT_PRESETS];
+      state.history = [];
+      renderAll();
+      saveState();
+      toast('success', 'Все данные очищены');
+    });
+  });
+  
+  // Click outside context menu
+  document.addEventListener('click', () => {
+    $('#contextMenu').classList.remove('open');
+  });
+}
+
+/* ============================================================
+   KEYBOARD SHORTCUTS
+   ============================================================ */
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement?.tagName;
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+  
+  if (e.key === 'Escape') {
+    $$('.modal-overlay.open').forEach(m => m.querySelector('[data-close]')?.click());
+    $('#contextMenu').classList.remove('open');
+    return;
+  }
+  
+  if (e.key === 'F1') { e.preventDefault(); showHelpModal(); return; }
+  if (e.key === 'F11') { e.preventDefault(); document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); return; }
+  
+  if (e.ctrlKey || e.metaKey) {
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); showNewTimerModal(); }
+    else if (e.key === 's' || e.key === 'S') { e.preventDefault(); saveState(); toast('success', 'Сохранено'); }
+    return;
+  }
+  
+  if (typing) return;
+  
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (state.activeTimerId) {
+      const t = state.timers[state.activeTimerId];
+      if (t.status === 'running') pauseTimer(state.activeTimerId);
+      else startTimer(state.activeTimerId);
+    }
+  } else if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') {
+    if (state.activeTimerId) resetTimer(state.activeTimerId);
+  } else if (e.key === 'l' || e.key === 'L' || e.key === 'д' || e.key === 'Д') {
+    if (state.activeTimerId) addLap(state.activeTimerId);
+  } else if (e.key === 'n' || e.key === 'N' || e.key === 'т' || e.key === 'Т') {
+    // Next timer
+    const idx = state.timerOrder.indexOf(state.activeTimerId);
+    if (idx >= 0 && idx < state.timerOrder.length - 1) {
+      selectTimer(state.timerOrder[idx + 1]);
+    }
+  } else if (e.key === 'p' || e.key === 'P' || e.key === 'з' || e.key === 'З') {
+    // Previous timer
+    const idx = state.timerOrder.indexOf(state.activeTimerId);
+    if (idx > 0) {
+      selectTimer(state.timerOrder[idx - 1]);
+    }
+  } else if (e.key === 'Delete') {
+    if (state.activeTimerId) deleteTimer(state.activeTimerId);
+  }
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  loadState();
+  applyTheme(state.theme);
+  
+  if (!state.settings.sound) {
+    $('#soundIcon').innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+  }
+  
+  // Apply toggles initial state
+  $('#toggleAutostart').classList.toggle('on', state.settings.autostart);
+  $('#toggleMs').classList.toggle('on', state.settings.showMs);
+  $('#toggleNotify').classList.toggle('on', state.settings.notify);
+  $('#toggleLoop').classList.toggle('on', state.settings.loop);
+  
+  bindUI();
+  renderAll();
+  
+  // Request notification permission
+  if ('Notification' in window && Notification.permission === 'default') {
+    setTimeout(() => {
+      if (confirm('Разрешить уведомления о завершении таймеров?')) {
+        Notification.requestPermission();
+      }
+    }, 1000);
+  }
+  
+  // Start main loop
+  requestAnimationFrame(mainLoop);
+  
+  setTimeout(() => toast('info', 'Добро пожаловать в Timer Studio', 'Нажмите Space для старта'), 400);
+}
+
+init();
+
+// Autosave
+setInterval(saveState, 10000);
+window.addEventListener('beforeunload', saveState);
+
+// Visibility change — update timers when tab becomes visible
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    renderAll();
+  }
+});
+</script>
+</body>
+</html>
+
