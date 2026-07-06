@@ -74,7 +74,8 @@ const MODULE_PATHS = {
     ROBLOX: '../roblox',
     YOUTUBE: '../youtube',
     MONITOR: '../monitor',
-    JSON_STUDIO: '../json_studio'
+    JSON_STUDIO: '../json_studio',
+    PROFILE: '../profile'
 };
 
 /**
@@ -122,6 +123,11 @@ const monitorRouter = require(MODULE_PATHS.MONITOR);
  * Роутер для Json Studio
  */
 const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
+
+/**
+ * Роутер для Profile
+ */
+const profileRouter = require(MODULE_PATHS.PROFILE);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -680,21 +686,24 @@ const CSP_DIRECTIVES = {
         CSP_TAILWIND_CDN,
         CSP_GOOGLE_FONTS,
         CSP_UNPKG,
-        CSP_CLOUDFLARE
+        CSP_CLOUDFLARE,
+        'https://api.qrserver.com'
     ],
     
     styleSrc: [
         CSP_SELF,
         CSP_UNSAFE_INLINE,
         CSP_GOOGLE_FONTS,
-        CSP_CLOUDFLARE
+        CSP_CLOUDFLARE,
+        'https://api.qrserver.com'
     ],
     
     fontSrc: [
         CSP_SELF,
         CSP_GOOGLE_FONTS_STATIC,
         CSP_DATA,
-        CSP_CLOUDFLARE
+        CSP_CLOUDFLARE,
+        'https://api.qrserver.com'
     ],
     
     imgSrc: [
@@ -705,14 +714,16 @@ const CSP_DIRECTIVES = {
         CSP_YOUTUBE_CHANNEL,
         CSP_YOUTUBE_USER_CONTENT,
         CSP_VERCEL_BLOB,
-        CSP_VERCEL_PUBLIC_BLOB
+        CSP_VERCEL_PUBLIC_BLOB,
+        'https://api.qrserver.com'
     ],
     
     mediaSrc: [
         CSP_SELF,
         CSP_BLOB,
         CSP_VERCEL_BLOB,
-        CSP_VERCEL_PUBLIC_BLOB
+        CSP_VERCEL_PUBLIC_BLOB,
+        'https://api.qrserver.com'
     ],
     
     connectSrc: [
@@ -736,7 +747,8 @@ const CSP_DIRECTIVES = {
         CSP_VERCEL_PUBLIC_BLOB,
         'https://fcm.googleapis.com/fcm/send',
         'https://android.googleapis.com',    // Android GCM
-        'https://push.apple.com' 
+        'https://push.apple.com',
+        'https://api.qrserver.com'
     ],
     
     objectSrc: [CSP_NONE],
@@ -1254,6 +1266,7 @@ app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/json_studio', jsonStudioRouter);
+app.use('/api/profile', profileRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
