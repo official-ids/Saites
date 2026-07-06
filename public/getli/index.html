@@ -52,7 +52,6 @@ body {
     min-height: 100vh;
 }
 
-/* Header */
 .header {
     position: sticky; top: 0; z-index: 100;
     background: rgba(0, 0, 0, 0.72);
@@ -80,7 +79,6 @@ body {
 .nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
 
-/* Auth button */
 .auth-btn {
     display: flex; align-items: center; gap: 8px;
     padding: 8px 14px;
@@ -100,10 +98,6 @@ body {
     object-fit: cover;
 }
 
-/* Layout */
-.layout { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-
-/* Hero */
 .hero {
     padding: 80px 0 60px;
     text-align: center;
@@ -183,8 +177,8 @@ body {
 .btn-ghost:hover { color: var(--text-primary); border-color: var(--border-strong); }
 .btn-danger { background: var(--danger); color: white; }
 .btn-danger:hover { background: #FF6961; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Sections */
 .section { padding: 60px 0; border-top: 1px solid var(--border); }
 .section-header { margin-bottom: 40px; }
 .section-label {
@@ -201,7 +195,6 @@ body {
     max-width: 640px;
 }
 
-/* Features */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -227,9 +220,8 @@ body {
 .feature-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
 .feature-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; }
 
-/* App container */
 .app-container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 40px 24px;
 }
@@ -245,7 +237,6 @@ body {
     margin-bottom: 32px;
 }
 
-/* Form */
 .form-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -263,23 +254,28 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.form-input {
+.form-input, .form-textarea, .form-select {
     width: 100%;
     padding: 14px 16px;
     background: var(--bg-subtle);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     color: var(--text-primary);
-    font-family: var(--font-mono);
+    font-family: var(--font-stack);
     font-size: 0.95rem;
     transition: all 0.2s;
 }
-.form-input:focus {
+.form-textarea {
+    font-family: var(--font-stack);
+    resize: vertical;
+    min-height: 70px;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
     outline: none;
     border-color: var(--accent);
     background: var(--bg-elevated);
 }
-.form-input::placeholder { color: var(--text-tertiary); }
+.form-input::placeholder, .form-textarea::placeholder { color: var(--text-tertiary); }
 .form-hint {
     font-size: 0.78rem;
     color: var(--text-tertiary);
@@ -294,38 +290,53 @@ body {
     .form-row { grid-template-columns: 1fr; }
 }
 
-/* Toggle */
-.toggle-row {
+.tags-input {
     display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    min-height: 48px;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 0;
+    cursor: text;
+    transition: all 0.2s;
 }
-.toggle-label { font-size: 0.9rem; color: var(--text-primary); }
-.toggle-desc { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 2px; }
-.toggle {
-    position: relative;
-    width: 44px; height: 24px;
-    background: var(--border-strong);
-    border-radius: 12px;
+.tags-input:focus-within {
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--accent-light);
+    border: 1px solid rgba(10, 132, 255, 0.3);
+    border-radius: 99px;
+    font-size: 0.82rem;
+    color: var(--accent-hover);
+    font-weight: 500;
+}
+.tag-remove {
     cursor: pointer;
-    transition: background 0.2s;
-    flex-shrink: 0;
+    opacity: 0.7;
+    font-size: 1rem;
+    line-height: 1;
 }
-.toggle.on { background: var(--accent); }
-.toggle::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 20px; height: 20px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+.tag-remove:hover { opacity: 1; }
+.tags-input input {
+    flex: 1;
+    min-width: 100px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    padding: 4px;
 }
-.toggle.on::after { transform: translateX(20px); }
 
-/* Result */
 .result-card {
     background: linear-gradient(135deg, rgba(10, 132, 255, 0.08) 0%, var(--bg-card) 100%);
     border: 1px solid var(--accent);
@@ -359,7 +370,41 @@ body {
 }
 .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* Links list */
+.links-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+}
+.search-box input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+.search-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.search-box svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+}
+.toolbar-actions { display: flex; gap: 6px; }
+
 .links-list {
     display: flex;
     flex-direction: column;
@@ -370,19 +415,30 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 16px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    align-items: center;
     transition: all 0.2s;
+    cursor: pointer;
 }
 .link-item:hover { border-color: var(--border-strong); }
+.link-item.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+}
+.link-item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.link-checkbox {
+    width: 18px; height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
 .link-alias {
     font-family: var(--font-mono);
     font-size: 0.95rem;
     color: var(--accent-hover);
     font-weight: 600;
-    margin-bottom: 4px;
 }
 .link-target {
     font-size: 0.82rem;
@@ -390,31 +446,81 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 400px;
+    max-width: 100%;
+    margin-bottom: 6px;
+}
+.link-description {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+.link-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.link-tag {
+    padding: 2px 8px;
+    background: var(--bg-elevated);
+    border-radius: 99px;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
 }
 .link-meta {
     display: flex;
     gap: 12px;
-    margin-top: 6px;
     font-size: 0.72rem;
     color: var(--text-tertiary);
+    flex-wrap: wrap;
 }
 .link-meta span { display: flex; align-items: center; gap: 4px; }
-.link-actions { display: flex; gap: 4px; }
+.link-meta .expired { color: var(--danger); }
+.link-actions { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
 .icon-btn {
-    width: 32px; height: 32px;
+    padding: 6px 10px;
     border-radius: var(--radius-sm);
     background: transparent;
-    border: 1px solid transparent;
+    border: 1px solid var(--border);
     color: var(--text-secondary);
     cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; gap: 4px;
+    font-size: 0.78rem;
     transition: all 0.2s;
 }
 .icon-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
-.icon-btn.danger:hover { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
+.icon-btn.danger:hover { background: rgba(255, 69, 58, 0.15); color: var(--danger); border-color: var(--danger); }
+.icon-btn svg { width: 14px; height: 14px; }
 
-/* Captcha page */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+.pagination button {
+    padding: 6px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.pagination button:hover:not(:disabled) { background: var(--bg-elevated); }
+.pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pagination button.active { background: var(--accent); border-color: var(--accent); }
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-tertiary);
+}
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 8px; }
+
 .captcha-container {
     min-height: 100vh;
     display: flex;
@@ -503,16 +609,68 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Empty state */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-tertiary);
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
 }
-.empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
-.empty-state h3 { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 8px; }
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+}
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+.stat-label {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+}
 
-/* Toast */
+.device-stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.device-bar {
+    flex: 1;
+    padding: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+.device-bar-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.device-bar-label {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+}
+
+.qr-container {
+    text-align: center;
+    padding: 20px;
+}
+.qr-container img {
+    max-width: 300px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin: 16px 0;
+}
+
 .toast-container {
     position: fixed;
     bottom: 24px;
@@ -542,7 +700,6 @@ body {
     to { transform: translateX(0); opacity: 1; }
 }
 
-/* Footer */
 .footer {
     max-width: 1200px;
     margin: 0 auto;
@@ -559,13 +716,11 @@ body {
 .footer a { color: var(--accent-hover); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
-/* Responsive */
 @media (max-width: 640px) {
     .hero-title { font-size: 2.25rem; }
     .hero-subtitle { font-size: 1rem; }
     .section-title { font-size: 1.75rem; }
-    .layout { padding: 0 16px; }
-    .section { padding: 40px 0; }
+    .app-container { padding: 24px 16px; }
     .form-card { padding: 24px; }
     .captcha-card { padding: 28px 20px; }
 }
@@ -592,7 +747,7 @@ body {
 
 <footer class="footer">
     <div>
-        <strong>GetLi</strong> · Oris Platform · v1.0.0
+        <strong>GetLi</strong> · Oris Platform · v1.1.0
     </div>
     <div>
         <a href="/">Главная</a> · 
@@ -612,7 +767,13 @@ const State = {
     token: null,
     links: [],
     currentView: 'home',
-    captchaAlias: null
+    captchaAlias: null,
+    currentPage: 1,
+    totalPages: 1,
+    searchQuery: '',
+    selectedLinks: new Set(),
+    lastResultUrl: null,
+    recaptchaToken: null
 };
 
 // ============================================
@@ -650,9 +811,31 @@ const API = {
         method: 'POST', 
         body: JSON.stringify(data) 
     }),
-    getMyLinks: () => API.request('/my-links'),
+    getMyLinks: (params = {}) => {
+        const qs = new URLSearchParams();
+        if (params.page) qs.set('page', params.page);
+        if (params.limit) qs.set('limit', params.limit);
+        if (params.q) qs.set('q', params.q);
+        if (params.tag) qs.set('tag', params.tag);
+        const qsStr = qs.toString();
+        return API.request('/my-links' + (qsStr ? `?${qsStr}` : ''));
+    },
+    updateLink: (alias, data) => API.request(`/${alias}`, { 
+        method: 'PUT', 
+        body: JSON.stringify(data) 
+    }),
     deleteLink: (alias) => API.request(`/${alias}`, { method: 'DELETE' }),
+    cloneLink: (alias, newAlias) => API.request(`/clone/${alias}`, { 
+        method: 'POST', 
+        body: JSON.stringify({ newAlias }) 
+    }),
+    bulkDelete: (aliases) => API.request('/bulk-delete', { 
+        method: 'POST', 
+        body: JSON.stringify({ aliases }) 
+    }),
+    exportLinks: () => API.request('/export'),
     getStats: (alias) => API.request(`/stats/${alias}`),
+    getQr: (alias) => API.request(`/qr/${alias}`),
     
     // Капча и пароль
     verifyCaptcha: (data) => API.request('/verify-captcha', { 
@@ -694,6 +877,8 @@ function navigate(view, params = {}) {
     else if (view === 'app') renderAppPage();
     else if (view === 'docs') renderDocsPage();
     else if (view === 'login') renderLoginPage();
+    else if (view === 'stats' && params.alias) renderStatsPage(params.alias);
+    else if (view === 'qr' && params.alias) renderQrPage(params.alias);
     
     window.scrollTo(0, 0);
 }
@@ -715,11 +900,10 @@ function initGoogleAuth() {
 
 async function handleGoogleCredential(response) {
     try {
-        // Отправляем credential на сервер для создания сессии
         const result = await API.googleAuth(response.credential);
         
         State.user = result.user;
-        State.token = result.token; // серверная сессия, не JWT
+        State.token = result.token;
         
         localStorage.setItem('getli_user', JSON.stringify(State.user));
         localStorage.setItem('getli_token', State.token);
@@ -841,8 +1025,8 @@ function renderHomePage() {
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     </div>
-                    <div class="feature-title">Статистика</div>
-                    <div class="feature-desc">Отслеживайте количество переходов по каждой ссылке в реальном времени.</div>
+                    <div class="feature-title">Статистика и QR</div>
+                    <div class="feature-desc">Отслеживайте переходы, устройства пользователей и генерируйте QR-коды.</div>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
@@ -858,7 +1042,7 @@ function renderHomePage() {
 }
 
 // ============================================
-// APP PAGE (создание ссылок)
+// APP PAGE
 // ============================================
 function renderAppPage() {
     document.getElementById('app').innerHTML = `
@@ -873,16 +1057,43 @@ function renderAppPage() {
                     <div class="form-hint">Ссылка, на которую будет переходить пользователь после капчи</div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Кастомный алиас</label>
-                    <input type="text" class="form-input" id="customAlias" placeholder="my-link (необязательно)" maxlength="50">
-                    <div class="form-hint">3-50 символов: a-z, A-Z, 0-9, -, _ . Оставьте пустым для автогенерации</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Кастомный алиас</label>
+                        <input type="text" class="form-input" id="customAlias" placeholder="my-link" maxlength="50">
+                        <div class="form-hint">3-50 символов: a-z, A-Z, 0-9, -, _</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Пароль</label>
+                        <input type="password" class="form-input" id="linkPassword" placeholder="Необязательно">
+                        <div class="form-hint">Дополнительная защита</div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Пароль на ссылку</label>
-                    <input type="password" class="form-input" id="linkPassword" placeholder="Оставьте пустым, если не нужен">
-                    <div class="form-hint">Пользователь должен будет ввести пароль после капчи</div>
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-textarea" id="linkDescription" placeholder="Краткое описание ссылки (необязательно)" maxlength="500"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Теги</label>
+                    <div class="tags-input" id="tagsContainer" onclick="document.getElementById('tagInput').focus()">
+                        <input type="text" id="tagInput" placeholder="Добавьте тег и нажмите Enter">
+                    </div>
+                    <div class="form-hint">До 5 тегов для организации ссылок</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Срок жизни</label>
+                    <select class="form-select" id="linkExpires">
+                        <option value="">Бессрочно</option>
+                        <option value="1h">1 час</option>
+                        <option value="24h">24 часа</option>
+                        <option value="7d">7 дней</option>
+                        <option value="30d">30 дней</option>
+                        <option value="90d">90 дней</option>
+                    </select>
+                    <div class="form-hint">Ссылка перестанет работать после истечения срока</div>
                 </div>
 
                 <button class="btn btn-primary" id="createBtn" style="width:100%; justify-content:center; margin-top:8px" onclick="createLink()">
@@ -903,16 +1114,33 @@ function renderAppPage() {
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         Открыть
                     </button>
+                    <button class="btn btn-ghost" onclick="openQrForLast()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                        QR-код
+                    </button>
                 </div>
             </div>
 
             <div style="margin-top:48px">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
-                    <h2 style="font-size:1.25rem; font-weight:600">Мои ссылки</h2>
-                    <button class="btn btn-ghost" onclick="loadMyLinks()" style="padding:6px 12px; font-size:0.82rem">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.419-2.001m15.419 2.001L9 9"/></svg>
-                        Обновить
-                    </button>
+                <div class="links-toolbar">
+                    <div class="search-box">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input type="text" id="searchInput" placeholder="Поиск по ссылкам..." oninput="onSearchChange()">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="btn btn-ghost" onclick="loadMyLinks()" style="padding:8px 14px; font-size:0.82rem">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.419-2.001m15.419 2.001L9 9"/></svg>
+                            Обновить
+                        </button>
+                        <button class="btn btn-ghost" onclick="exportLinks()" style="padding:8px 14px; font-size:0.82rem">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Экспорт
+                        </button>
+                        <button class="btn btn-danger" id="bulkDeleteBtn" onclick="bulkDelete()" style="padding:8px 14px; font-size:0.82rem; display:none">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Удалить (<span id="bulkCount">0</span>)
+                        </button>
+                    </div>
                 </div>
                 <div id="linksList">
                     <div class="empty-state">
@@ -921,17 +1149,101 @@ function renderAppPage() {
                         <p>Создайте первую ссылку выше</p>
                     </div>
                 </div>
+                <div class="pagination" id="pagination"></div>
             </div>
         </div>
     `;
     updateActiveNav('app');
+    initTagsInput();
     loadMyLinks();
 }
 
+// ============================================
+// TAGS INPUT
+// ============================================
+function initTagsInput() {
+    const input = document.getElementById('tagInput');
+    if (!input) return;
+    
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const value = input.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 20);
+            if (value && !hasTag(value)) {
+                addTag(value);
+            }
+            input.value = '';
+        } else if (e.key === 'Backspace' && !input.value) {
+            removeLastTag();
+        }
+    });
+}
+
+function hasTag(value) {
+    return State.selectedTags && State.selectedTags.includes(value);
+}
+
+function addTag(value) {
+    if (!State.selectedTags) State.selectedTags = [];
+    if (State.selectedTags.length >= 5) {
+        toast('Максимум 5 тегов', 'warning');
+        return;
+    }
+    State.selectedTags.push(value);
+    renderTags();
+}
+
+function removeTag(value) {
+    State.selectedTags = State.selectedTags.filter(t => t !== value);
+    renderTags();
+}
+
+function removeLastTag() {
+    if (State.selectedTags && State.selectedTags.length > 0) {
+        State.selectedTags.pop();
+        renderTags();
+    }
+}
+
+function renderTags() {
+    const container = document.getElementById('tagsContainer');
+    const input = document.getElementById('tagInput');
+    if (!container || !input) return;
+    
+    // Удаляем старые теги
+    container.querySelectorAll('.tag').forEach(t => t.remove());
+    
+    // Добавляем теги перед инпутом
+    State.selectedTags.forEach(tag => {
+        const el = document.createElement('span');
+        el.className = 'tag';
+        el.innerHTML = `${tag}<span class="tag-remove" onclick="removeTag('${tag}')">×</span>`;
+        container.insertBefore(el, input);
+    });
+}
+
+function getExpiresAt(value) {
+    if (!value) return null;
+    const map = {
+        '1h': 60 * 60 * 1000,
+        '24h': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000,
+        '30d': 30 * 24 * 60 * 60 * 1000,
+        '90d': 90 * 24 * 60 * 60 * 1000
+    };
+    return new Date(Date.now() + (map[value] || 0)).toISOString();
+}
+
+// ============================================
+// CREATE LINK
+// ============================================
 async function createLink() {
     const targetUrl = document.getElementById('targetUrl').value.trim();
     const customAlias = document.getElementById('customAlias').value.trim();
     const password = document.getElementById('linkPassword').value;
+    const description = document.getElementById('linkDescription').value.trim();
+    const expiresSelect = document.getElementById('linkExpires').value;
+    const expiresAt = getExpiresAt(expiresSelect);
     const btn = document.getElementById('createBtn');
     const btnText = btn.querySelector('span');
     const btnSvg = btn.querySelector('svg');
@@ -951,7 +1263,6 @@ async function createLink() {
         return;
     }
 
-    // Состояние загрузки
     btn.disabled = true;
     btnSvg.style.display = 'none';
     btnText.textContent = 'Создание...';
@@ -960,13 +1271,17 @@ async function createLink() {
         const result = await API.createLink({
             targetUrl,
             customAlias: customAlias || null,
-            password: password || null
+            password: password || null,
+            description: description || null,
+            tags: State.selectedTags || [],
+            expiresAt
         });
 
         const fullUrl = `${window.location.origin}/getli/${result.alias}`;
         document.getElementById('resultUrl').textContent = fullUrl;
         document.getElementById('resultCard').classList.add('show');
         State.lastResultUrl = fullUrl;
+        State.lastResultAlias = result.alias;
 
         toast('Ссылка создана!', 'success');
         loadMyLinks();
@@ -975,8 +1290,11 @@ async function createLink() {
         document.getElementById('targetUrl').value = '';
         document.getElementById('customAlias').value = '';
         document.getElementById('linkPassword').value = '';
+        document.getElementById('linkDescription').value = '';
+        document.getElementById('linkExpires').value = '';
+        State.selectedTags = [];
+        renderTags();
         
-        // Прокрутка к результату
         document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch (err) {
         toast(err.message, 'error');
@@ -999,14 +1317,67 @@ function openResult() {
     window.open(url, '_blank');
 }
 
-async function loadMyLinks() {
+function openQrForLast() {
+    if (State.lastResultAlias) {
+        navigate('qr', { alias: State.lastResultAlias });
+    }
+}
+
+// ============================================
+// LOAD LINKS
+// ============================================
+async function loadMyLinks(page = 1) {
     try {
-        const result = await API.getMyLinks();
+        const result = await API.getMyLinks({
+            page,
+            limit: 20,
+            q: State.searchQuery || undefined
+        });
         State.links = result.links || [];
+        State.currentPage = page;
+        State.totalPages = result.totalPages || 1;
         renderLinksList();
+        renderPagination();
     } catch (err) {
         console.error('Failed to load links:', err);
     }
+}
+
+function onSearchChange() {
+    const input = document.getElementById('searchInput');
+    if (!input) return;
+    State.searchQuery = input.value.trim();
+    State.selectedLinks.clear();
+    updateBulkDeleteButton();
+    loadMyLinks(1);
+}
+
+function renderPagination() {
+    const container = document.getElementById('pagination');
+    if (!container || State.totalPages <= 1) {
+        if (container) container.innerHTML = '';
+        return;
+    }
+    
+    let html = `
+        <button onclick="loadMyLinks(1)" ${State.currentPage === 1 ? 'disabled' : ''}>«</button>
+        <button onclick="loadMyLinks(${State.currentPage - 1})" ${State.currentPage === 1 ? 'disabled' : ''}>‹</button>
+    `;
+    
+    for (let i = 1; i <= State.totalPages; i++) {
+        if (i === 1 || i === State.totalPages || Math.abs(i - State.currentPage) <= 1) {
+            html += `<button onclick="loadMyLinks(${i})" class="${i === State.currentPage ? 'active' : ''}">${i}</button>`;
+        } else if (Math.abs(i - State.currentPage) === 2) {
+            html += `<button disabled>…</button>`;
+        }
+    }
+    
+    html += `
+        <button onclick="loadMyLinks(${State.currentPage + 1})" ${State.currentPage === State.totalPages ? 'disabled' : ''}>›</button>
+        <button onclick="loadMyLinks(${State.totalPages})" ${State.currentPage === State.totalPages ? 'disabled' : ''}>»</button>
+    `;
+    
+    container.innerHTML = html;
 }
 
 function renderLinksList() {
@@ -1017,43 +1388,131 @@ function renderLinksList() {
         container.innerHTML = `
             <div class="empty-state">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                <h3>У вас пока нет ссылок</h3>
-                <p>Создайте первую ссылку выше</p>
+                <h3>${State.searchQuery ? 'Ничего не найдено' : 'У вас пока нет ссылок'}</h3>
+                <p>${State.searchQuery ? 'Попробуйте другой запрос' : 'Создайте первую ссылку выше'}</p>
             </div>
         `;
         return;
     }
 
+    const now = Date.now();
     container.innerHTML = `
         <div class="links-list">
-            ${State.links.map(link => `
-                <div class="link-item">
-                    <div>
-                        <div class="link-alias">/getli/${link.alias}</div>
+            ${State.links.map(link => {
+                const isExpired = link.expiresAt && link.expiresAt < now;
+                const isSelected = State.selectedLinks.has(link.alias);
+                return `
+                    <div class="link-item ${isSelected ? 'selected' : ''}">
+                        <div class="link-item-header">
+                            <input type="checkbox" class="link-checkbox" 
+                                ${isSelected ? 'checked' : ''} 
+                                onchange="toggleSelect('${link.alias}')"
+                                title="Выбрать для массового удаления">
+                            <div class="link-alias">/getli/${link.alias}</div>
+                        </div>
                         <div class="link-target" title="${link.targetUrl}">${link.targetUrl}</div>
+                        ${link.description ? `<div class="link-description">${link.description}</div>` : ''}
+                        ${link.tags && link.tags.length ? `
+                            <div class="link-tags">
+                                ${link.tags.map(t => `<span class="link-tag">#${t}</span>`).join('')}
+                            </div>
+                        ` : ''}
                         <div class="link-meta">
                             <span>
                                 <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 ${link.clicks} переходов
                             </span>
                             ${link.hasPassword ? '<span>🔒 С паролем</span>' : ''}
+                            ${link.expiresAt ? `<span class="${isExpired ? 'expired' : ''}">${isExpired ? '⏰ Истекла' : ' ' + new Date(link.expiresAt).toLocaleDateString('ru-RU')}</span>` : ''}
                             <span>${new Date(link.createdAt).toLocaleDateString('ru-RU')}</span>
                         </div>
+                        <div class="link-actions">
+                            <button class="icon-btn" onclick="copyLink('${link.alias}')" title="Копировать">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                Копировать
+                            </button>
+                            <button class="icon-btn" onclick="navigate('stats', {alias: '${link.alias}'})" title="Статистика">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                Статистика
+                            </button>
+                            <button class="icon-btn" onclick="navigate('qr', {alias: '${link.alias}'})" title="QR-код">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                QR
+                            </button>
+                            <button class="icon-btn" onclick="cloneLink('${link.alias}')" title="Клонировать">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                Клонировать
+                            </button>
+                            <button class="icon-btn danger" onclick="deleteLink('${link.alias}')" title="Удалить">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                Удалить
+                            </button>
+                        </div>
                     </div>
-                    <div class="link-actions">
-                        <button class="icon-btn" onclick="copyLink('${link.alias}')" title="Копировать">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                        </button>
-                        <button class="icon-btn danger" onclick="deleteLink('${link.alias}')" title="Удалить">
-                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
-                    </div>
-                </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 }
 
+// ============================================
+// BULK OPERATIONS
+// ============================================
+function toggleSelect(alias) {
+    if (State.selectedLinks.has(alias)) {
+        State.selectedLinks.delete(alias);
+    } else {
+        State.selectedLinks.add(alias);
+    }
+    updateBulkDeleteButton();
+    renderLinksList();
+}
+
+function updateBulkDeleteButton() {
+    const btn = document.getElementById('bulkDeleteBtn');
+    const count = document.getElementById('bulkCount');
+    if (!btn || !count) return;
+    
+    const size = State.selectedLinks.size;
+    count.textContent = size;
+    btn.style.display = size > 0 ? 'inline-flex' : 'none';
+}
+
+async function bulkDelete() {
+    const aliases = Array.from(State.selectedLinks);
+    if (aliases.length === 0) return;
+    
+    if (!confirm(`Удалить ${aliases.length} ссылок?`)) return;
+    
+    try {
+        await API.bulkDelete(aliases);
+        toast(`Удалено: ${aliases.length}`, 'success');
+        State.selectedLinks.clear();
+        loadMyLinks(State.currentPage);
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+async function exportLinks() {
+    try {
+        const result = await API.exportLinks();
+        const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `getli-export-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast('Экспорт завершён', 'success');
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ============================================
+// LINK OPERATIONS
+// ============================================
 function copyLink(alias) {
     const url = `${window.location.origin}/getli/${alias}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -1067,9 +1526,206 @@ async function deleteLink(alias) {
     try {
         await API.deleteLink(alias);
         toast('Ссылка удалена', 'success');
-        loadMyLinks();
+        loadMyLinks(State.currentPage);
     } catch (err) {
         toast(err.message, 'error');
+    }
+}
+
+async function cloneLink(alias) {
+    const newAlias = prompt('Новый алиас (оставьте пустым для автогенерации):');
+    if (newAlias === null) return;
+    
+    try {
+        const result = await API.cloneLink(alias, newAlias || null);
+        toast('Ссылка клонирована', 'success');
+        loadMyLinks(State.currentPage);
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ============================================
+// STATS PAGE
+// ============================================
+async function renderStatsPage(alias) {
+    document.getElementById('app').innerHTML = `
+        <div class="app-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px">
+                <div>
+                    <h1 class="app-title">Статистика: /getli/${alias}</h1>
+                    <p class="app-subtitle">Подробная информация о ссылке</p>
+                </div>
+                <button class="btn btn-ghost" onclick="navigate('app')">
+                    ← Назад
+                </button>
+            </div>
+            <div id="statsContent">
+                <div class="empty-state">
+                    <div class="spinner"></div>
+                    <p>Загрузка статистики...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    updateActiveNav('app');
+    
+    try {
+        const stats = await API.getStats(alias);
+        renderStatsContent(stats);
+    } catch (err) {
+        document.getElementById('statsContent').innerHTML = `
+            <div class="empty-state">
+                <h3>Ошибка загрузки</h3>
+                <p>${err.message}</p>
+            </div>
+        `;
+    }
+}
+
+function renderStatsContent(stats) {
+    const container = document.getElementById('statsContent');
+    if (!container) return;
+    
+    const deviceStats = stats.deviceStats || { mobile: 0, desktop: 0, other: 0 };
+    const total = deviceStats.mobile + deviceStats.desktop + deviceStats.other;
+    const mobilePct = total ? Math.round(deviceStats.mobile / total * 100) : 0;
+    const desktopPct = total ? Math.round(deviceStats.desktop / total * 100) : 0;
+    const otherPct = total ? Math.round(deviceStats.other / total * 100) : 0;
+    
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalClicks || 0}</div>
+                <div class="stat-label">Всего переходов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.recentClicks?.length || 0}</div>
+                <div class="stat-label">Последние записи</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.tags?.length || 0}</div>
+                <div class="stat-label">Тегов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.expiresAt ? '⏰' : ''}</div>
+                <div class="stat-label">${stats.expiresAt ? new Date(stats.expiresAt).toLocaleDateString('ru-RU') : 'Бессрочно'}</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px">Распределение по устройствам</h3>
+            <div class="device-stats">
+                <div class="device-bar">
+                    <div class="device-bar-value">${mobilePct}%</div>
+                    <div class="device-bar-label"> Мобильные</div>
+                </div>
+                <div class="device-bar">
+                    <div class="device-bar-value">${desktopPct}%</div>
+                    <div class="device-bar-label">💻 Десктоп</div>
+                </div>
+                <div class="device-bar">
+                    <div class="device-bar-value">${otherPct}%</div>
+                    <div class="device-bar-label">❓ Другое</div>
+                </div>
+            </div>
+        </div>
+
+        ${stats.description ? `
+            <div class="form-card">
+                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:8px">Описание</h3>
+                <p style="color:var(--text-secondary)">${stats.description}</p>
+            </div>
+        ` : ''}
+
+        ${stats.tags && stats.tags.length ? `
+            <div class="form-card">
+                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:12px">Теги</h3>
+                <div class="link-tags">
+                    ${stats.tags.map(t => `<span class="link-tag">#${t}</span>`).join('')}
+                </div>
+            </div>
+        ` : ''}
+
+        <div class="form-card">
+            <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:16px">Последние переходы</h3>
+            ${stats.recentClicks && stats.recentClicks.length ? `
+                <div style="font-size:0.82rem; color:var(--text-secondary)">
+                    ${stats.recentClicks.slice(-10).reverse().map(c => `
+                        <div style="padding:6px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between">
+                            <span>${new Date(c.timestamp).toLocaleString('ru-RU')}</span>
+                            <span style="color:var(--text-tertiary); font-family:var(--font-mono); font-size:0.75rem">${c.userAgent?.slice(0, 50) || '—'}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p style="color:var(--text-tertiary)">Переходов пока нет</p>'}
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="copyLink('${stats.alias}')">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Копировать ссылку
+            </button>
+            <button class="btn btn-ghost" onclick="navigate('qr', {alias: '${stats.alias}'})">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                QR-код
+            </button>
+        </div>
+    `;
+}
+
+// ============================================
+// QR PAGE
+// ============================================
+async function renderQrPage(alias) {
+    document.getElementById('app').innerHTML = `
+        <div class="app-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px">
+                <div>
+                    <h1 class="app-title">QR-код: /getli/${alias}</h1>
+                    <p class="app-subtitle">Скачайте или распечатайте QR-код</p>
+                </div>
+                <button class="btn btn-ghost" onclick="navigate('app')">
+                    ← Назад
+                </button>
+            </div>
+            <div class="form-card qr-container" id="qrContent">
+                <div class="spinner"></div>
+                <p>Загрузка QR-кода...</p>
+            </div>
+        </div>
+    `;
+    updateActiveNav('app');
+    
+    try {
+        const qr = await API.getQr(alias);
+        document.getElementById('qrContent').innerHTML = `
+            <img src="${qr.qrUrl}" alt="QR-код для ${alias}">
+            <div style="font-family:var(--font-mono); font-size:0.9rem; color:var(--text-secondary); margin-bottom:16px; word-break:break-all">
+                ${qr.fullUrl}
+            </div>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap">
+                <a href="${qr.qrUrl}" download="qr-${alias}.png" class="btn btn-primary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Скачать PNG
+                </a>
+                <a href="${qr.qrSvg}" download="qr-${alias}.svg" class="btn btn-secondary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Скачать SVG
+                </a>
+                <button class="btn btn-ghost" onclick="copyLink('${alias}')">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    Копировать URL
+                </button>
+            </div>
+        `;
+    } catch (err) {
+        document.getElementById('qrContent').innerHTML = `
+            <div class="empty-state">
+                <h3>Ошибка загрузки</h3>
+                <p>${err.message}</p>
+            </div>
+        `;
     }
 }
 
@@ -1113,7 +1769,6 @@ function renderCaptchaPage(alias) {
         </div>
     `;
     
-    // Инициализация reCAPTCHA
     setTimeout(initRecaptcha, 500);
 }
 
@@ -1153,7 +1808,6 @@ async function verifyCaptcha() {
     loader.classList.add('show');
     
     try {
-        // Используем правильный endpoint /verify-captcha
         const result = await API.verifyCaptcha({
             alias: State.captchaAlias,
             password: password || null,
@@ -1172,7 +1826,6 @@ async function verifyCaptcha() {
         loader.classList.remove('show');
         toast(err.message, 'error');
         
-        // Сброс reCAPTCHA
         if (typeof grecaptcha !== 'undefined') {
             grecaptcha.reset();
         }
@@ -1202,14 +1855,16 @@ function renderDocsPage() {
             </div>
 
             <div class="form-card">
-                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:12px">Функции</h3>
+                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:12px">Новые функции v1.1</h3>
                 <ul style="margin-left:20px; color:var(--text-secondary); line-height:1.8">
-                    <li><strong>Кастомные алиасы</strong> — создавайте красивые ссылки</li>
-                    <li><strong>Пароль на ссылку</strong> — дополнительная защита</li>
-                    <li><strong>Google reCAPTCHA v3</strong> — защита от ботов</li>
-                    <li><strong>Статистика переходов</strong> — отслеживайте клики</li>
-                    <li><strong>Вход через Google</strong> — быстрая авторизация</li>
-                    <li><strong>Без рекламы</strong> — только капча и переход</li>
+                    <li><strong>Описание и теги</strong> — организуйте ссылки</li>
+                    <li><strong>Срок жизни</strong> — временные ссылки</li>
+                    <li><strong>Статистика устройств</strong> — мобильные/десктоп</li>
+                    <li><strong>QR-коды</strong> — скачивание PNG и SVG</li>
+                    <li><strong>Клонирование</strong> — быстрое дублирование</li>
+                    <li><strong>Массовое удаление</strong> — до 50 ссылок за раз</li>
+                    <li><strong>Экспорт в JSON</strong> — резервное копирование</li>
+                    <li><strong>Поиск</strong> — по названию, URL, описанию</li>
                 </ul>
             </div>
 
@@ -1285,7 +1940,8 @@ function updateActiveNav(view) {
 // INIT
 // ============================================
 async function init() {
-    // Восстановление сессии
+    State.selectedTags = [];
+    
     const savedUser = localStorage.getItem('getli_user');
     const savedToken = localStorage.getItem('getli_token');
     
@@ -1294,13 +1950,11 @@ async function init() {
             State.user = JSON.parse(savedUser);
             State.token = savedToken;
             
-            // Проверяем валидность сессии на сервере
             try {
                 const me = await API.getMe();
                 State.user = me.user;
                 localStorage.setItem('getli_user', JSON.stringify(State.user));
             } catch (err) {
-                // Сессия невалидна — выходим
                 console.warn('Session invalid:', err.message);
                 State.user = null;
                 State.token = null;
@@ -1318,12 +1972,11 @@ async function init() {
     
     renderAuthButton();
     
-    // Определение текущего view из URL
     const path = window.location.pathname;
     
     if (path.startsWith('/getli/') && path !== '/getli/' && path !== '/getli/app' && path !== '/getli/docs') {
         const alias = path.replace('/getli/', '');
-        if (alias) {
+        if (alias && !['app', 'docs', 'login', 'index.html'].includes(alias)) {
             navigate('captcha', { alias });
             return;
         }
@@ -1337,11 +1990,9 @@ async function init() {
         navigate('home');
     }
     
-    // Инициализация Google Auth
     initGoogleAuth();
 }
 
-// Запуск
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
