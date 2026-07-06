@@ -712,7 +712,7 @@ router.post('/auth/refresh', requireAuth, async (req, res) => {
 // PROFILE: Get own profile
 // ------------------------------------------------------------
 
-router.get('/profile', requireAuth, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -740,7 +740,7 @@ router.get('/profile', requireAuth, async (req, res) => {
 // PROFILE: Get profile by username
 // ------------------------------------------------------------
 
-router.get('/profile/@:username', optionalAuth, async (req, res) => {
+router.get('/@:username', optionalAuth, async (req, res) => {
     try {
         const username = req.params.username.toLowerCase();
 
@@ -803,7 +803,7 @@ router.get('/profile/@:username', optionalAuth, async (req, res) => {
 // PROFILE: Update profile
 // ------------------------------------------------------------
 
-router.patch('/profile', requireAuth, async (req, res) => {
+router.patch('/', requireAuth, async (req, res) => {
     try {
         const { displayName, bio, socials } = req.body;
 
@@ -910,7 +910,7 @@ router.patch('/profile', requireAuth, async (req, res) => {
 // PROFILE: Delete profile
 // ------------------------------------------------------------
 
-router.delete('/profile', requireAuth, async (req, res) => {
+router.delete('/', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -972,7 +972,7 @@ router.delete('/profile', requireAuth, async (req, res) => {
 // PROFILE: Change username
 // ------------------------------------------------------------
 
-router.patch('/profile/username', requireAuth, async (req, res) => {
+router.patch('/username', requireAuth, async (req, res) => {
     try {
         const { username } = req.body;
 
@@ -1059,7 +1059,7 @@ router.patch('/profile/username', requireAuth, async (req, res) => {
 // PROFILE: Username history
 // ------------------------------------------------------------
 
-router.get('/profile/username-history', requireAuth, async (req, res) => {
+router.get('/username-history', requireAuth, async (req, res) => {
     try {
         const history = await kv.get(K.USERNAME_HISTORY(req.userId)) || [];
         res.json({ history });
@@ -1076,7 +1076,7 @@ router.get('/profile/username-history', requireAuth, async (req, res) => {
 // PROFILE: Name history
 // ------------------------------------------------------------
 
-router.get('/profile/name-history', requireAuth, async (req, res) => {
+router.get('/name-history', requireAuth, async (req, res) => {
     try {
         const history = await kv.get(K.NAME_HISTORY(req.userId)) || [];
         res.json({ history });
@@ -1093,7 +1093,7 @@ router.get('/profile/name-history', requireAuth, async (req, res) => {
 // PROFILE: Avatar history
 // ------------------------------------------------------------
 
-router.get('/profile/avatar-history', requireAuth, async (req, res) => {
+router.get('/avatar-history', requireAuth, async (req, res) => {
     try {
         const history = await kv.get(K.AVATAR_HISTORY(req.userId)) || [];
         res.json({ history });
@@ -1110,7 +1110,7 @@ router.get('/profile/avatar-history', requireAuth, async (req, res) => {
 // PROFILE: Theme history
 // ------------------------------------------------------------
 
-router.get('/profile/theme-history', requireAuth, async (req, res) => {
+router.get('/theme-history', requireAuth, async (req, res) => {
     try {
         const history = await kv.get(K.THEME_HISTORY(req.userId)) || [];
         res.json({ history });
@@ -1127,7 +1127,7 @@ router.get('/profile/theme-history', requireAuth, async (req, res) => {
 // PROFILE: Check username availability
 // ------------------------------------------------------------
 
-router.get('/profile/check-username/:username', async (req, res) => {
+router.get('/check-username/:username', async (req, res) => {
     try {
         const username = req.params.username.toLowerCase();
 
@@ -1158,7 +1158,7 @@ router.get('/profile/check-username/:username', async (req, res) => {
 // PROFILE: Settings
 // ------------------------------------------------------------
 
-router.get('/profile/settings', requireAuth, async (req, res) => {
+router.get('/settings', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1182,7 +1182,7 @@ router.get('/profile/settings', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/profile/settings', requireAuth, async (req, res) => {
+router.patch('/settings', requireAuth, async (req, res) => {
     try {
         const { settings } = req.body;
 
@@ -1238,7 +1238,7 @@ router.patch('/profile/settings', requireAuth, async (req, res) => {
 // PROFILE: Privacy
 // ------------------------------------------------------------
 
-router.get('/profile/privacy', requireAuth, async (req, res) => {
+router.get('/privacy', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1262,7 +1262,7 @@ router.get('/profile/privacy', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/profile/privacy', requireAuth, async (req, res) => {
+router.patch('/privacy', requireAuth, async (req, res) => {
     try {
         const { privacy } = req.body;
 
@@ -1324,7 +1324,7 @@ router.patch('/profile/privacy', requireAuth, async (req, res) => {
 // PROFILE: Theme
 // ------------------------------------------------------------
 
-router.get('/profile/theme', requireAuth, async (req, res) => {
+router.get('/theme', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1348,7 +1348,7 @@ router.get('/profile/theme', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/profile/theme', requireAuth, async (req, res) => {
+router.patch('/theme', requireAuth, async (req, res) => {
     try {
         const { theme } = req.body;
 
@@ -1409,7 +1409,7 @@ router.patch('/profile/theme', requireAuth, async (req, res) => {
 // PROFILE: Customization
 // ------------------------------------------------------------
 
-router.get('/profile/customization', requireAuth, async (req, res) => {
+router.get('/customization', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1433,7 +1433,7 @@ router.get('/profile/customization', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/profile/customization', requireAuth, async (req, res) => {
+router.patch('/customization', requireAuth, async (req, res) => {
     try {
         const { customization } = req.body;
 
@@ -1495,7 +1495,7 @@ router.patch('/profile/customization', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/profile/customization/reset', requireAuth, async (req, res) => {
+router.post('/customization/reset', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1528,7 +1528,7 @@ router.post('/profile/customization/reset', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/profile/customization/export', requireAuth, async (req, res) => {
+router.post('/customization/export', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1561,7 +1561,7 @@ router.post('/profile/customization/export', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/profile/customization/import', requireAuth, async (req, res) => {
+router.post('/customization/import', requireAuth, async (req, res) => {
     try {
         const { data } = req.body;
 
@@ -1615,7 +1615,7 @@ router.post('/profile/customization/import', requireAuth, async (req, res) => {
 // PROFILE: Avatar
 // ------------------------------------------------------------
 
-router.post('/profile/avatar', requireAuth, async (req, res) => {
+router.post('/avatar', requireAuth, async (req, res) => {
     try {
         const { avatar } = req.body;
 
@@ -1680,7 +1680,7 @@ router.post('/profile/avatar', requireAuth, async (req, res) => {
 // PROFILE: Status
 // ------------------------------------------------------------
 
-router.get('/profile/status', requireAuth, async (req, res) => {
+router.get('/status', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -1704,7 +1704,7 @@ router.get('/profile/status', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/profile/status', requireAuth, async (req, res) => {
+router.patch('/status', requireAuth, async (req, res) => {
     try {
         const { state, text, pinned } = req.body;
 
@@ -1776,7 +1776,7 @@ router.patch('/profile/status', requireAuth, async (req, res) => {
 // PROFILE: Activity log
 // ------------------------------------------------------------
 
-router.get('/profile/activity', requireAuth, async (req, res) => {
+router.get('/activity', requireAuth, async (req, res) => {
     try {
         const log = await kv.get(K.ACTIVITY_LOG(req.userId)) || [];
         res.json({ activity: log });
@@ -1793,7 +1793,7 @@ router.get('/profile/activity', requireAuth, async (req, res) => {
 // FRIENDS: Send request
 // ------------------------------------------------------------
 
-router.post('/profile/friends/request', requireAuth, async (req, res) => {
+router.post('/friends/request', requireAuth, async (req, res) => {
     try {
         const { userId: targetUserId, username } = req.body;
 
@@ -1917,7 +1917,7 @@ router.post('/profile/friends/request', requireAuth, async (req, res) => {
 // FRIENDS: Accept request
 // ------------------------------------------------------------
 
-router.post('/profile/friends/accept', requireAuth, async (req, res) => {
+router.post('/friends/accept', requireAuth, async (req, res) => {
     try {
         const { userId: requesterId, username } = req.body;
 
@@ -2018,7 +2018,7 @@ router.post('/profile/friends/accept', requireAuth, async (req, res) => {
 // FRIENDS: Reject request
 // ------------------------------------------------------------
 
-router.post('/profile/friends/reject', requireAuth, async (req, res) => {
+router.post('/friends/reject', requireAuth, async (req, res) => {
     try {
         const { userId: requesterId, username } = req.body;
 
@@ -2091,7 +2091,7 @@ router.post('/profile/friends/reject', requireAuth, async (req, res) => {
 // FRIENDS: Remove friend
 // ------------------------------------------------------------
 
-router.delete('/profile/friends/remove', requireAuth, async (req, res) => {
+router.delete('/friends/remove', requireAuth, async (req, res) => {
     try {
         const { userId: friendId, username } = req.body;
 
@@ -2170,7 +2170,7 @@ router.delete('/profile/friends/remove', requireAuth, async (req, res) => {
 // FRIENDS: Get friends list
 // ------------------------------------------------------------
 
-router.get('/profile/friends', requireAuth, async (req, res) => {
+router.get('/friends', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -2217,7 +2217,7 @@ router.get('/profile/friends', requireAuth, async (req, res) => {
 // FRIENDS: Get incoming requests
 // ------------------------------------------------------------
 
-router.get('/profile/friends/requests/incoming', requireAuth, async (req, res) => {
+router.get('/friends/requests/incoming', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -2262,7 +2262,7 @@ router.get('/profile/friends/requests/incoming', requireAuth, async (req, res) =
 // FRIENDS: Get outgoing requests
 // ------------------------------------------------------------
 
-router.get('/profile/friends/requests/outgoing', requireAuth, async (req, res) => {
+router.get('/friends/requests/outgoing', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -2306,7 +2306,7 @@ router.get('/profile/friends/requests/outgoing', requireAuth, async (req, res) =
 // FRIENDS: Check friendship
 // ------------------------------------------------------------
 
-router.get('/profile/friends/check/:userId', requireAuth, async (req, res) => {
+router.get('/friends/check/:userId', requireAuth, async (req, res) => {
     try {
         const targetId = req.params.userId;
 
@@ -2344,7 +2344,7 @@ router.get('/profile/friends/check/:userId', requireAuth, async (req, res) => {
 // FRIENDS: Pin friend
 // ------------------------------------------------------------
 
-router.post('/profile/friends/pin', requireAuth, async (req, res) => {
+router.post('/friends/pin', requireAuth, async (req, res) => {
     try {
         const { userId: friendId } = req.body;
 
@@ -2404,7 +2404,7 @@ router.post('/profile/friends/pin', requireAuth, async (req, res) => {
 // FRIENDS: Unpin friend
 // ------------------------------------------------------------
 
-router.post('/profile/friends/unpin', requireAuth, async (req, res) => {
+router.post('/friends/unpin', requireAuth, async (req, res) => {
     try {
         const { userId: friendId } = req.body;
 
@@ -2442,7 +2442,7 @@ router.post('/profile/friends/unpin', requireAuth, async (req, res) => {
 // BLOCK: Block user
 // ------------------------------------------------------------
 
-router.post('/profile/block', requireAuth, async (req, res) => {
+router.post('/block', requireAuth, async (req, res) => {
     try {
         const { userId: targetId, username } = req.body;
 
@@ -2525,7 +2525,7 @@ router.post('/profile/block', requireAuth, async (req, res) => {
 // BLOCK: Unblock user
 // ------------------------------------------------------------
 
-router.post('/profile/unblock', requireAuth, async (req, res) => {
+router.post('/unblock', requireAuth, async (req, res) => {
     try {
         const { userId: targetId } = req.body;
 
@@ -2575,7 +2575,7 @@ router.post('/profile/unblock', requireAuth, async (req, res) => {
 // BLOCK: Get blocked users
 // ------------------------------------------------------------
 
-router.get('/profile/blocked', requireAuth, async (req, res) => {
+router.get('/blocked', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -2619,7 +2619,7 @@ router.get('/profile/blocked', requireAuth, async (req, res) => {
 // FOLLOWERS: Follow
 // ------------------------------------------------------------
 
-router.post('/profile/follow', requireAuth, async (req, res) => {
+router.post('/follow', requireAuth, async (req, res) => {
     try {
         const { userId: targetId } = req.body;
 
@@ -2696,7 +2696,7 @@ router.post('/profile/follow', requireAuth, async (req, res) => {
 // FOLLOWERS: Unfollow
 // ------------------------------------------------------------
 
-router.post('/profile/unfollow', requireAuth, async (req, res) => {
+router.post('/unfollow', requireAuth, async (req, res) => {
     try {
         const { userId: targetId } = req.body;
 
@@ -2756,7 +2756,7 @@ router.post('/profile/unfollow', requireAuth, async (req, res) => {
 // FAVORITES: Add to favorites
 // ------------------------------------------------------------
 
-router.post('/profile/favorites/add', requireAuth, async (req, res) => {
+router.post('/favorites/add', requireAuth, async (req, res) => {
     try {
         const { userId: targetId } = req.body;
 
@@ -2809,7 +2809,7 @@ router.post('/profile/favorites/add', requireAuth, async (req, res) => {
 // FAVORITES: Remove from favorites
 // ------------------------------------------------------------
 
-router.post('/profile/favorites/remove', requireAuth, async (req, res) => {
+router.post('/favorites/remove', requireAuth, async (req, res) => {
     try {
         const { userId: targetId } = req.body;
 
@@ -2855,7 +2855,7 @@ router.post('/profile/favorites/remove', requireAuth, async (req, res) => {
 // FAVORITES: Get favorites
 // ------------------------------------------------------------
 
-router.get('/profile/favorites', requireAuth, async (req, res) => {
+router.get('/favorites', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -2900,7 +2900,7 @@ router.get('/profile/favorites', requireAuth, async (req, res) => {
 // SEARCH: Search users
 // ------------------------------------------------------------
 
-router.get('/profile/search', optionalAuth, async (req, res) => {
+router.get('/search', optionalAuth, async (req, res) => {
     try {
         const { q, limit = 20, offset = 0 } = req.query;
 
@@ -2963,7 +2963,7 @@ router.get('/profile/search', optionalAuth, async (req, res) => {
 // CATALOG: Get user catalog
 // ------------------------------------------------------------
 
-router.get('/profile/catalog', optionalAuth, async (req, res) => {
+router.get('/catalog', optionalAuth, async (req, res) => {
     try {
         const {
             sort = 'newest',
@@ -3123,7 +3123,7 @@ async function registerProfileView(userId, req) {
 // VIEWS: Get profile views
 // ------------------------------------------------------------
 
-router.get('/profile/views', requireAuth, async (req, res) => {
+router.get('/views', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3163,7 +3163,7 @@ router.get('/profile/views', requireAuth, async (req, res) => {
 // COMPLAINTS: Submit complaint
 // ------------------------------------------------------------
 
-router.post('/profile/complaint', requireAuth, async (req, res) => {
+router.post('/complaint', requireAuth, async (req, res) => {
     try {
         const { userId: targetId, reason, description } = req.body;
 
@@ -3241,7 +3241,7 @@ router.post('/profile/complaint', requireAuth, async (req, res) => {
 // VERIFICATION: Check verification status
 // ------------------------------------------------------------
 
-router.get('/profile/verification', async (req, res) => {
+router.get('/verification', async (req, res) => {
     try {
         const { userId } = req.query;
 
@@ -3272,7 +3272,7 @@ router.get('/profile/verification', async (req, res) => {
 // BADGES: Get user badges
 // ------------------------------------------------------------
 
-router.get('/profile/badges/:userId', async (req, res) => {
+router.get('/badges/:userId', async (req, res) => {
     try {
         const targetId = req.params.userId;
 
@@ -3303,7 +3303,7 @@ router.get('/profile/badges/:userId', async (req, res) => {
 // ACHIEVEMENTS: Get user achievements
 // ------------------------------------------------------------
 
-router.get('/profile/achievements/:userId', async (req, res) => {
+router.get('/achievements/:userId', async (req, res) => {
     try {
         const targetId = req.params.userId;
 
@@ -3334,7 +3334,7 @@ router.get('/profile/achievements/:userId', async (req, res) => {
 // ROLES: Get user roles
 // ------------------------------------------------------------
 
-router.get('/profile/roles/:userId', async (req, res) => {
+router.get('/roles/:userId', async (req, res) => {
     try {
         const targetId = req.params.userId;
 
@@ -3364,7 +3364,7 @@ router.get('/profile/roles/:userId', async (req, res) => {
 // ONLINE: Update online status
 // ------------------------------------------------------------
 
-router.post('/profile/online', requireAuth, async (req, res) => {
+router.post('/online', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3405,7 +3405,7 @@ router.post('/profile/online', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/profile/offline', requireAuth, async (req, res) => {
+router.post('/offline', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3444,7 +3444,7 @@ router.post('/profile/offline', requireAuth, async (req, res) => {
 // NOTIFICATIONS: Get notification settings
 // ------------------------------------------------------------
 
-router.get('/profile/notifications', requireAuth, async (req, res) => {
+router.get('/notifications', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3468,7 +3468,7 @@ router.get('/profile/notifications', requireAuth, async (req, res) => {
     }
 });
 
-router.patch('/profile/notifications', requireAuth, async (req, res) => {
+router.patch('/notifications', requireAuth, async (req, res) => {
     try {
         const { notifications } = req.body;
 
@@ -3527,7 +3527,7 @@ router.patch('/profile/notifications', requireAuth, async (req, res) => {
 // SOCIALS: Get social links
 // ------------------------------------------------------------
 
-router.get('/profile/socials', requireAuth, async (req, res) => {
+router.get('/socials', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3561,7 +3561,7 @@ router.get('/profile/socials', requireAuth, async (req, res) => {
 // STATS: Get profile statistics
 // ------------------------------------------------------------
 
-router.get('/profile/stats', requireAuth, async (req, res) => {
+router.get('/stats', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3589,7 +3589,7 @@ router.get('/profile/stats', requireAuth, async (req, res) => {
 // EXPORT: Export profile data
 // ------------------------------------------------------------
 
-router.get('/profile/export', requireAuth, async (req, res) => {
+router.get('/export', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3670,7 +3670,7 @@ router.get('/profile/export', requireAuth, async (req, res) => {
 // QR: Generate profile QR code URL
 // ------------------------------------------------------------
 
-router.get('/profile/qr', requireAuth, async (req, res) => {
+router.get('/qr', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -3704,7 +3704,7 @@ router.get('/profile/qr', requireAuth, async (req, res) => {
 // COPY LINK: Get profile link
 // ------------------------------------------------------------
 
-router.get('/profile/link', requireAuth, async (req, res) => {
+router.get('/link', requireAuth, async (req, res) => {
     try {
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
