@@ -1266,7 +1266,7 @@ app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/json_studio', jsonStudioRouter);
-app.use('/api/profile', profileRouter);
+app.use('/api', profileRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
