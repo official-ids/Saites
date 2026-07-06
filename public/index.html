@@ -660,27 +660,43 @@
 
         .modal-text a:hover { border-bottom-color: var(--accent); }
 
-        /* --- Site Header --- */
+/* --- Site Header --- */
 .site-header {
     position: sticky;
-    top: 0;
+    top: 12px;                          /* отступ сверху — floating эффект */
     z-index: 100;
+    max-width: 1100px;                  /* ← ограничиваем ширину */
+    margin: 0 auto;                     /* центрируем */
+    padding: 0;
     background: rgba(245, 245, 247, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid var(--border-light);
-    transition: background 0.3s ease, border-color 0.3s ease;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;                /* скругление со всех сторон */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 :root[data-theme="dark"] .site-header {
-    background: rgba(0, 0, 0, 0.72);
+    background: rgba(28, 28, 30, 0.72);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme]) .site-header {
-        background: rgba(0, 0, 0, 0.72);
+        background: rgba(28, 28, 30, 0.72);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 }
+
+/* Адаптивные отступы для floating эффекта */
+@media (max-width: 1200px) {
+    .site-header {
+        max-width: calc(100% - 32px);   /* 16px отступ с каждой стороны */
+        margin: 0 16px;
+    }
+}
+
 
 .header-inner {
     max-width: 1200px;
@@ -990,12 +1006,28 @@
         }
 
         /* Объединить в одно место */
+/* --- Responsive: 480px --- */
 @media (max-width: 480px) {
+    /* Typography */
     h1 { font-size: 2.2rem; }
     .section-title { font-size: 1.4rem; }
+
+    /* Cards */
     .card { padding: 22px; }
+
+    /* Header */
     .header-inner { padding: 0 16px; }
+
+    /* Hero */
     .hero { padding: 40px 16px 20px; }
+
+    /* Floating Site Header */
+    .site-header {
+        top: 8px;
+        max-width: calc(100% - 16px);
+        margin: 0 8px;
+        border-radius: 14px;
+    }
 }
     </style>
 </head>
