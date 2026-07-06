@@ -74,7 +74,8 @@ const MODULE_PATHS = {
     ROBLOX: '../roblox',
     YOUTUBE: '../youtube',
     MONITOR: '../monitor',
-    JSON_STUDIO: '../json_studio'
+    JSON_STUDIO: '../json_studio',
+    GETLI: '../getli'
 };
 
 /**
@@ -101,6 +102,11 @@ const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
  * Роутер для уведомлений
  */
 const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
+
+/**
+ * Роутер для уведомлений
+ */
+const getliRouter = require(MODULE_PATHS.GETLI);
 
 /**
  * Роутер для roblox
@@ -1253,6 +1259,7 @@ app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/json_studio', jsonStudioRouter);
+app.use('/api/hetli', getliRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
