@@ -1055,8 +1055,11 @@ const State = {
     currentPage: 'catalog',
     catalogFilter: 'all',
     catalogSort: 'newest',
-    catalogSearch: ''
+    catalogSearch: '',
+    googleInitialized: false,  // ← ДОБАВИТЬ
+    googleInitPromise: null    // ← ДОБАВИТЬ
 };
+
 
 // ============================================
 // API CLIENT
@@ -1288,18 +1291,62 @@ window.addEventListener('popstate', (event) => {
 // ============================================
 // AUTH
 // ============================================
+
+// Состояние инициализации Google Identity Services
+let googleInitPromise = null;
+let googleIsInitialized = false;
+
+/**
+ * Инициализация Google Identity Services
+ * Возвращает Promise, который резолвится после успешной инициализации
+ * Кэширует промис, чтобы не инициализировать повторно
+ */
 function initGoogleAuth() {
-    if (typeof google === 'undefined' || !google.accounts) {
-        setTimeout(initGoogleAuth, 200);
-        return;
+    if (googleIsInitialized) {
+        return Promise.resolve();
     }
     
-    google.accounts.id.initialize({
-        client_id: '479666067128-24dbdtd6qnebskivt7h0lnfm7mi683iu.apps.googleusercontent.com',
-        callback: handleGoogleCredential
+    if (googleInitPromise) {
+        return googleInitPromise;
+    }
+    
+    googleInitPromise = new Promise((resolve, reject) => {
+        const tryInit = () => {
+            // Проверяем, загрузился ли скрипт Google
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+                setTimeout(tryInit, 200);
+                return;
+            }
+            
+            try {
+                google.accounts.id.initialize({
+                    client_id: '479666067128-24dbdtd6qnebskivt7h0lnfm7mi683iu.apps.googleusercontent.com',
+                    callback: handleGoogleCredential,
+                    auto_select: false,
+                    cancel_on_tap_outside: true,
+                    context: 'signin'
+                });
+                
+                googleIsInitialized = true;
+                console.log('[Google Auth] Initialized successfully');
+                resolve();
+            } catch (err) {
+                console.error('[Google Auth] Initialize failed:', err);
+                googleInitPromise = null;
+                reject(err);
+            }
+        };
+        
+        tryInit();
     });
+    
+    return googleInitPromise;
 }
 
+/**
+ * Обработчик успешной авторизации через Google
+ * @param {Object} response - Объект с credential от Google
+ */
 async function handleGoogleCredential(response) {
     try {
         const result = await API.googleAuth(response.credential);
@@ -1325,25 +1372,44 @@ async function handleGoogleCredential(response) {
     }
 }
 
+/**
+ * Выход из аккаунта
+ */
 async function logout() {
     try {
         await API.logout();
     } catch (err) {
         console.error('Logout error:', err);
-    } finally {
-        State.user = null;
-        State.token = null;
-        localStorage.removeItem('profile_user');
-        localStorage.removeItem('profile_token');
-        updateHeaderAuth();
-        navigate('catalog');
-        toast('Вы вышли из аккаунта', 'info');
     }
+    
+    try {
+        await API.updateOffline();
+    } catch (err) {
+        console.error('Failed to update offline status:', err);
+    }
+    
+    State.user = null;
+    State.token = null;
+    localStorage.removeItem('profile_user');
+    localStorage.removeItem('profile_token');
+    
+    updateHeaderAuth();
+    navigate('catalog');
+    toast('Вы вышли из аккаунта', 'info');
 }
 
-function updateHeaderAuth() {
+/**
+ * Обновление UI авторизации в хэдере
+ * Гарантирует, что renderButton вызывается только после initialize
+ */
+async function updateHeaderAuth() {
     const container = document.getElementById('headerActions');
+    
     if (State.user) {
+        // Пользователь авторизован — показываем меню
+        const avatarUrl = State.user.avatar || '/favicon.svg';
+        const firstName = State.user.displayName ? State.user.displayName.split(' ')[0] : 'Профиль';
+        
         container.innerHTML = `
             <a href="/catalog" class="auth-btn" onclick="event.preventDefault(); navigate('catalog')">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1351,9 +1417,9 @@ function updateHeaderAuth() {
                 </svg>
                 <span>Каталог</span>
             </a>
-            <a href="/profile" class="auth-btn" onclick="event.preventDefault(); navigate('profile')">
-                <img src="${State.user.avatar}" class="auth-avatar" alt="">
-                <span>${State.user.displayName.split(' ')[0]}</span>
+            <a href="/profile/@${State.user.username || 'me'}" class="auth-btn" onclick="event.preventDefault(); navigate('profile')">
+                <img src="${avatarUrl}" class="auth-avatar" alt="">
+                <span>${firstName}</span>
             </a>
             <a href="/profile/settings" class="auth-btn" onclick="event.preventDefault(); navigate('settings')">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1370,6 +1436,7 @@ function updateHeaderAuth() {
             </button>
         `;
     } else {
+        // Пользователь не авторизован — показываем кнопку входа
         container.innerHTML = `
             <a href="/catalog" class="auth-btn" onclick="event.preventDefault(); navigate('catalog')">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1379,14 +1446,37 @@ function updateHeaderAuth() {
             </a>
             <div id="googleSignInButton"></div>
         `;
-        setTimeout(() => {
-            if (typeof google !== 'undefined' && google.accounts) {
-                google.accounts.id.renderButton(
-                    document.getElementById('googleSignInButton'),
-                    { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'pill', width: 180 }
-                );
+        
+        // Ждём инициализации Google Auth перед рендером кнопки
+        try {
+            await initGoogleAuth();
+            
+            const btnContainer = document.getElementById('googleSignInButton');
+            if (btnContainer && typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.renderButton(btnContainer, {
+                    theme: 'filled_black',
+                    size: 'large',
+                    text: 'signin_with',
+                    shape: 'pill',
+                    width: 180
+                });
             }
-        }, 100);
+        } catch (err) {
+            console.error('[Google Auth] Failed to render button:', err);
+            
+            // Fallback — обычная кнопка, если Google не загрузился
+            const btnContainer = document.getElementById('googleSignInButton');
+            if (btnContainer) {
+                btnContainer.innerHTML = `
+                    <button class="auth-btn" onclick="initGoogleAuth().then(() => updateHeaderAuth())">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                        </svg>
+                        <span>Войти</span>
+                    </button>
+                `;
+            }
+        }
     }
 }
 
@@ -1928,19 +2018,18 @@ async function init() {
         }
     }
     
+    // СНАЧАЛА инициализируем Google Auth, ПОТОМ обновляем UI
+    await initGoogleAuth();
     updateHeaderAuth();
-    initGoogleAuth();
     
     // Обработка URL
     const path = window.location.pathname;
     
-    // /catalog или /catalog/search
     if (path === '/catalog' || path === '/catalog/search') {
         navigate('catalog');
         return;
     }
     
-    // /profile/settings
     if (path === '/profile/settings') {
         if (State.user) {
             navigate('settings');
@@ -1951,7 +2040,6 @@ async function init() {
         return;
     }
     
-    // /profile/friends
     if (path === '/profile/friends') {
         if (State.user) {
             navigate('friends');
@@ -1961,7 +2049,6 @@ async function init() {
         return;
     }
     
-    // /profile/favorites
     if (path === '/profile/favorites') {
         if (State.user) {
             navigate('favorites');
@@ -1971,7 +2058,6 @@ async function init() {
         return;
     }
     
-    // /profile/@username
     if (path.startsWith('/profile/@')) {
         const username = path.split('/profile/@')[1]?.split('/')[0];
         if (username) {
@@ -1980,7 +2066,6 @@ async function init() {
         }
     }
     
-    // /profile или /profile/me — свой профиль
     if (path === '/profile' || path === '/profile/me') {
         if (State.user) {
             navigate('profile');
@@ -1991,7 +2076,6 @@ async function init() {
         return;
     }
     
-    // По умолчанию — каталог
     navigate('catalog');
 }
 
