@@ -124,7 +124,7 @@ const youtubeRouter = require(MODULE_PATHS.YOUTUBE);
 const monitorRouter = require(MODULE_PATHS.MONITOR);
 
 /**
- * Роутер для monitor
+ * Роутер для Json Studio
  */
 const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
 
