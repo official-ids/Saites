@@ -660,6 +660,245 @@
 
         .modal-text a:hover { border-bottom-color: var(--accent); }
 
+        /* --- Site Header --- */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border-light);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+:root[data-theme="dark"] .site-header {
+    background: rgba(0, 0, 0, 0.72);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .site-header {
+        background: rgba(0, 0, 0, 0.72);
+    }
+}
+
+.header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Logo */
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+    transition: opacity 0.2s ease;
+}
+
+.header-logo:hover { opacity: 0.75; }
+
+.header-logo-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.header-logo-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Desktop Nav */
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    justify-content: center;
+}
+
+.header-nav-link {
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.header-nav-link:hover {
+    color: var(--text-primary);
+    background: var(--border-light);
+}
+
+.header-nav-link.active {
+    color: var(--text-primary);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
+
+/* Actions */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--accent);
+    color: white;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s var(--transition);
+    box-shadow: 0 2px 8px rgba(10, 132, 255, 0.25);
+}
+
+.header-btn-add:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(10, 132, 255, 0.35);
+}
+
+.header-btn-add:active { transform: scale(0.97); }
+
+/* Theme Toggle */
+.header-theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.header-theme-toggle:hover {
+    color: var(--text-primary);
+    border-color: var(--border);
+    transform: rotate(15deg);
+}
+
+.theme-icon-dark { display: none; }
+:root[data-theme="dark"] .theme-icon-light { display: none; }
+:root[data-theme="dark"] .theme-icon-dark { display: block; }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .theme-icon-light { display: none; }
+    :root:not([data-theme]) .theme-icon-dark { display: block; }
+}
+
+/* Mobile Toggle */
+.header-mobile-toggle {
+    display: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.header-mobile-toggle:hover { background: var(--border-light); }
+
+/* Mobile Menu */
+.header-mobile-menu {
+    display: none;
+    flex-direction: column;
+    padding: 8px 16px 16px;
+    border-top: 1px solid var(--border-light);
+    background: var(--bg-card);
+    animation: slideDown 0.25s var(--transition);
+}
+
+.header-mobile-menu.active { display: flex; }
+
+.header-mobile-link {
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.header-mobile-link:hover {
+    background: var(--border-light);
+    color: var(--text-primary);
+}
+
+.header-mobile-link.active {
+    background: var(--border-light);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.header-mobile-link.accent {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.header-mobile-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 8px 0;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 60px 24px 30px;
+    opacity: 0;
+    animation: fadeIn 0.8s var(--transition) forwards;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .header-nav { display: none; }
+    .header-btn-add span { display: none; }
+    .header-btn-add { padding: 8px 12px; }
+    .header-mobile-toggle { display: flex; }
+}
+
         /* --- Footer --- */
         footer {
             background: var(--bg-card);
@@ -750,19 +989,76 @@
             .toolbar-actions { justify-content: space-between; }
         }
 
-        @media (max-width: 480px) {
-            h1 { font-size: 2.2rem; }
-            .section-title { font-size: 1.4rem; }
-            .card { padding: 22px; }
-        }
+        /* Объединить в одно место */
+@media (max-width: 480px) {
+    h1 { font-size: 2.2rem; }
+    .section-title { font-size: 1.4rem; }
+    .card { padding: 22px; }
+    .header-inner { padding: 0 16px; }
+    .hero { padding: 40px 16px 20px; }
+}
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Oris</h1>
-        <p class="subtitle">Инновационные решения и цифровые проекты</p>
-    </header>
+    <!-- Sticky Header -->
+<header class="site-header" id="siteHeader">
+    <div class="header-inner">
+        <a href="/" class="header-logo">
+            <img src="/favicon.svg" alt="Oris" class="header-logo-icon">
+            <span class="header-logo-text">Oris</span>
+        </a>
+
+        <nav class="header-nav" id="headerNav">
+            <a href="/" class="header-nav-link active">Проекты</a>
+            <a href="/news" class="header-nav-link">Новости</a>
+            <a href="/status" class="header-nav-link">Статус</a>
+            <a href="/rest" class="header-nav-link">API</a>
+            <a href="/changelog" class="header-nav-link">Changelog</a>
+        </nav>
+
+        <div class="header-actions">
+            <a href="/add" class="header-btn-add">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span>Добавить сайт</span>
+            </a>
+
+            <button class="header-theme-toggle" id="themeToggle" aria-label="Сменить тему">
+                <svg class="theme-icon-light" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <svg class="theme-icon-dark" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+            </button>
+
+            <button class="header-mobile-toggle" id="mobileMenuToggle" aria-label="Меню">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="header-mobile-menu" id="mobileMenu">
+        <a href="/" class="header-mobile-link active">Проекты</a>
+        <a href="/news" class="header-mobile-link">Новости</a>
+        <a href="/status" class="header-mobile-link">Статус</a>
+        <a href="/rest" class="header-mobile-link">API</a>
+        <a href="/changelog" class="header-mobile-link">Changelog</a>
+        <div class="header-mobile-divider"></div>
+        <a href="/add" class="header-mobile-link accent">+ Добавить сайт</a>
+    </div>
+</header>
+
+<!-- Hero Section (отдельно от хэдера) -->
+<section class="hero">
+    <h1>Oris</h1>
+    <p class="subtitle">Инновационные решения и цифровые проекты</p>
+</section>
 
     <main class="container">
         <div class="banner-wrapper">
@@ -1735,6 +2031,63 @@
     } else {
         startApp();
     }
+})();
+
+// ============================================
+// Header & Theme Toggle
+// ============================================
+
+(function() {
+    'use strict';
+
+    // Mobile menu toggle
+    const mobileToggle = document.getElementById('mobileMenuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    if (mobileToggle && mobileMenu) {
+        mobileToggle.addEventListener('click', () => {
+            mobileMenu.classList.toggle('active');
+        });
+
+        // Закрытие при клике по ссылке
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+            });
+        });
+
+        // Закрытие при клике вне меню
+        document.addEventListener('click', (e) => {
+            if (!mobileMenu.contains(e.target) && !mobileToggle.contains(e.target)) {
+                mobileMenu.classList.remove('active');
+            }
+        });
+    }
+
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const current = document.documentElement.dataset.theme;
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = current === 'dark' || (!current && systemDark);
+            const newTheme = isDark ? 'light' : 'dark';
+            
+            document.documentElement.dataset.theme = newTheme;
+            localStorage.setItem('oris-theme', newTheme);
+        });
+    }
+
+    // Активная ссылка в навигации (по текущему URL)
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.header-nav-link, .header-mobile-link').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
+            link.classList.add('active');
+        } else if (href === '/' && currentPath !== '/') {
+            link.classList.remove('active');
+        }
+    });
 })();
 </script>
 <script src="/theme.js" defer></script>

@@ -74,8 +74,7 @@ const MODULE_PATHS = {
     ROBLOX: '../roblox',
     YOUTUBE: '../youtube',
     MONITOR: '../monitor',
-    JSON_STUDIO: '../json_studio',
-    GETLI: '../getli'
+    JSON_STUDIO: '../json_studio'
 };
 
 /**
@@ -103,10 +102,6 @@ const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
  */
 const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
 
-/**
- * Роутер для уведомлений
- */
-const getliRouter = require(MODULE_PATHS.GETLI);
 
 /**
  * Роутер для roblox
@@ -1259,7 +1254,6 @@ app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/json_studio', jsonStudioRouter);
-app.use('/api/getli', getliRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
@@ -1410,36 +1404,6 @@ app.get('/downloader/:hash', async (req, res) => {
     }
 });
 
-// -----------------------------
-// Dynamic Page: GetLi
-// -----------------------------
-const GETLI_HTML_PATH = path.join(PUBLIC_DIR, 'getli', 'index.html');
-
-app.get('/getli', (req, res) => {
-    res.sendFile(GETLI_HTML_PATH);
-});
-
-app.get('/getli/app', (req, res) => {
-    res.sendFile(GETLI_HTML_PATH);
-});
-
-app.get('/getli/docs', (req, res) => {
-    res.sendFile(GETLI_HTML_PATH);
-});
-
-app.get('/getli/login', (req, res) => {
-    res.sendFile(GETLI_HTML_PATH);
-});
-
-// Страница капчи для конкретной ссылки
-app.get('/getli/:alias', (req, res, next) => {
-    const alias = req.params.alias;
-    // Игнорируем служебные пути
-    if (['app', 'docs', 'login', 'index.html'].includes(alias)) {
-        return next();
-    }
-    res.sendFile(GETLI_HTML_PATH);
-});
 
 // -----------------------------
 // Static Files Middleware
