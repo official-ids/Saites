@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="GetLi — защищённые короткие ссылки с капчей. Создавайте ссылки и защищайте их паролем и Google reCAPTCHA.">
+<meta name="theme-color" content="#000000">
+<title>GetLi — Защищённые короткие ссылки · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+<style>
+:root {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.12);
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --header-h: 56px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+.header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    height: 100%; display: flex; align-items: center;
+    justify-content: space-between; gap: 16px;
+}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; letter-spacing: -0.02em; cursor: pointer; }
+.logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #0A84FF 0%, #5AC8FA 100%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 13px;
+    font-family: var(--font-mono);
+}
+.nav-links { display: flex; gap: 8px; align-items: center; }
+.nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; cursor: pointer; }
+.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-link.active { background: var(--accent); color: white; }
+
+/* Auth button */
+.auth-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.auth-btn:hover { background: #3A3A3C; border-color: var(--border-strong); }
+.auth-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Layout */
+.layout { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* Hero */
+.hero {
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(10, 132, 255, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: var(--accent-light);
+    border: 1px solid rgba(10, 132, 255, 0.25);
+    border-radius: 99px;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--accent-hover);
+    margin-bottom: 24px;
+}
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #F5F5F7 0%, #86868B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-title .accent {
+    background: linear-gradient(135deg, #0A84FF 0%, #5AC8FA 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+}
+.hero-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.btn {
+    padding: 14px 28px;
+    border-radius: 99px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    user-select: none;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(10, 132, 255, 0.4); }
+.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { background: #3A3A3C; border-color: var(--border-strong); transform: translateY(-2px); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: #FF6961; }
+
+/* Sections */
+.section { padding: 60px 0; border-top: 1px solid var(--border); }
+.section-header { margin-bottom: 40px; }
+.section-label {
+    font-size: 0.78rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent-hover); margin-bottom: 8px;
+}
+.section-title {
+    font-size: 2.25rem; font-weight: 700;
+    letter-spacing: -0.03em; margin-bottom: 12px;
+}
+.section-subtitle {
+    font-size: 1.05rem; color: var(--text-secondary);
+    max-width: 640px;
+}
+
+/* Features */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+.feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    transition: all 0.2s;
+}
+.feature-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.feature-icon {
+    width: 40px; height: 40px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+    color: var(--accent-hover);
+}
+.feature-icon svg { width: 20px; height: 20px; }
+.feature-title { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+.feature-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; }
+
+/* App container */
+.app-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+.app-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+.app-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+/* Form */
+.form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+}
+.form-group { margin-bottom: 20px; }
+.form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+.form-input::placeholder { color: var(--text-tertiary); }
+.form-hint {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+@media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+}
+
+/* Toggle */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+.toggle-label { font-size: 0.9rem; color: var(--text-primary); }
+.toggle-desc { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 2px; }
+.toggle {
+    position: relative;
+    width: 44px; height: 24px;
+    background: var(--border-strong);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 20px; height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.toggle.on::after { transform: translateX(20px); }
+
+/* Result */
+.result-card {
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.08) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-top: 24px;
+    display: none;
+}
+.result-card.show { display: block; animation: slideUp 0.3s ease; }
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.result-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-hover);
+    margin-bottom: 8px;
+}
+.result-url {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    word-break: break-all;
+    padding: 12px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+}
+.result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Links list */
+.links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.link-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    transition: all 0.2s;
+}
+.link-item:hover { border-color: var(--border-strong); }
+.link-alias {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    color: var(--accent-hover);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.link-target {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
+}
+.link-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+}
+.link-meta span { display: flex; align-items: center; gap: 4px; }
+.link-actions { display: flex; gap: 4px; }
+.icon-btn {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.icon-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.icon-btn.danger:hover { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
+
+/* Captcha page */
+.captcha-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: radial-gradient(ellipse at center, rgba(10, 132, 255, 0.08) 0%, var(--bg-body) 70%);
+}
+.captcha-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+}
+.captcha-logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, #0A84FF 0%, #5AC8FA 100%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    color: white; font-weight: 800; font-size: 24px;
+    font-family: var(--font-mono);
+}
+.captcha-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+}
+.captcha-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+.captcha-alias {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    color: var(--accent-hover);
+    background: var(--bg-subtle);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 24px;
+    word-break: break-all;
+}
+.captcha-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.captcha-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.captcha-btn:hover { background: var(--accent-hover); }
+.captcha-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.captcha-loader {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+.captcha-loader.show { display: flex; }
+.spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border-strong);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-tertiary);
+}
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 8px; }
+
+/* Toast */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-lg);
+    min-width: 240px;
+    max-width: 360px;
+    font-size: 0.88rem;
+    animation: slideIn 0.3s ease;
+}
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Footer */
+.footer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent-hover); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .hero-title { font-size: 2.25rem; }
+    .hero-subtitle { font-size: 1rem; }
+    .section-title { font-size: 1.75rem; }
+    .layout { padding: 0 16px; }
+    .section { padding: 40px 0; }
+    .form-card { padding: 24px; }
+    .captcha-card { padding: 28px 20px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a class="logo" onclick="navigate('home')">
+            <div class="logo-icon">G</div>
+            <span>GetLi</span>
+        </a>
+        <nav class="nav-links" id="navLinks">
+            <a class="nav-link" onclick="navigate('home')">Главная</a>
+            <a class="nav-link" onclick="navigate('app')" id="navApp">Приложение</a>
+            <a class="nav-link" onclick="navigate('docs')">Документация</a>
+            <div id="authContainer"></div>
+        </nav>
+    </div>
+</header>
+
+<div id="app"></div>
+
+<footer class="footer">
+    <div>
+        <strong>GetLi</strong> · Oris Platform · v1.0.0
+    </div>
+    <div>
+        <a href="/">Главная</a> · 
+        <a onclick="navigate('docs')">Документация</a> · 
+        <a href="https://t.me/VoraxisBOT" target="_blank">Telegram</a>
+    </div>
+</footer>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+const State = {
+    user: null,
+    token: null,
+    links: [],
+    currentView: 'home',
+    captchaAlias: null
+};
+
+// ============================================
+// API CLIENT
+// ============================================
+const API = {
+    baseUrl: '/api/getli',
+    
+    async request(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (State.token) {
+            headers['Authorization'] = `Bearer ${State.token}`;
+        }
+        try {
+            const res = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            return data;
+        } catch (err) {
+            if (err.name === 'TypeError') throw new Error('Нет соединения с сервером');
+            throw err;
+        }
+    },
+    
+    // Авторизация
+    googleAuth: (credential) => API.request('/auth/google', { 
+        method: 'POST', 
+        body: JSON.stringify({ credential }) 
+    }),
+    logout: () => API.request('/auth/logout', { method: 'POST' }),
+    getMe: () => API.request('/auth/me'),
+    
+    // Ссылки
+    createLink: (data) => API.request('/create', { 
+        method: 'POST', 
+        body: JSON.stringify(data) 
+    }),
+    getMyLinks: () => API.request('/my-links'),
+    deleteLink: (alias) => API.request(`/${alias}`, { method: 'DELETE' }),
+    getStats: (alias) => API.request(`/stats/${alias}`),
+    
+    // Капча и пароль
+    verifyCaptcha: (data) => API.request('/verify-captcha', { 
+        method: 'POST', 
+        body: JSON.stringify(data) 
+    }),
+    getLinkInfo: (alias) => API.request(`/info/${alias}`)
+};
+
+// ============================================
+// TOAST
+// ============================================
+function toast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+function navigate(view, params = {}) {
+    State.currentView = view;
+    
+    if (view === 'captcha' && params.alias) {
+        renderCaptchaPage(params.alias);
+        return;
+    }
+    
+    if (view === 'app' && !State.user) {
+        renderLoginPage();
+        return;
+    }
+    
+    if (view === 'home') renderHomePage();
+    else if (view === 'app') renderAppPage();
+    else if (view === 'docs') renderDocsPage();
+    else if (view === 'login') renderLoginPage();
+    
+    window.scrollTo(0, 0);
+}
+
+// ============================================
+// AUTH
+// ============================================
+function initGoogleAuth() {
+    if (typeof google === 'undefined' || !google.accounts) {
+        setTimeout(initGoogleAuth, 200);
+        return;
+    }
+    
+    google.accounts.id.initialize({
+        client_id: '479666067128-24dbdtd6qnebskivt7h0lnfm7mi683iu.apps.googleusercontent.com',
+        callback: handleGoogleCredential
+    });
+}
+
+async function handleGoogleCredential(response) {
+    try {
+        // Отправляем credential на сервер для создания сессии
+        const result = await API.googleAuth(response.credential);
+        
+        State.user = result.user;
+        State.token = result.token; // серверная сессия, не JWT
+        
+        localStorage.setItem('getli_user', JSON.stringify(State.user));
+        localStorage.setItem('getli_token', State.token);
+        
+        renderAuthButton();
+        toast(`Добро пожаловать, ${State.user.name}!`, 'success');
+        
+        if (State.currentView === 'login') {
+            navigate('app');
+        }
+    } catch (err) {
+        console.error('Auth error:', err);
+        toast('Ошибка входа: ' + err.message, 'error');
+    }
+}
+
+async function logout() {
+    try {
+        if (State.token) {
+            await API.logout();
+        }
+    } catch (err) {
+        console.error('Logout error:', err);
+    } finally {
+        State.user = null;
+        State.token = null;
+        State.links = [];
+        localStorage.removeItem('getli_user');
+        localStorage.removeItem('getli_token');
+        renderAuthButton();
+        navigate('home');
+        toast('Вы вышли из аккаунта', 'info');
+    }
+}
+
+function renderAuthButton() {
+    const container = document.getElementById('authContainer');
+    if (State.user) {
+        container.innerHTML = `
+            <button class="auth-btn" onclick="logout()">
+                <img src="${State.user.picture}" class="auth-avatar" alt="">
+                <span>${State.user.name.split(' ')[0]}</span>
+            </button>
+        `;
+    } else {
+        container.innerHTML = `
+            <button class="auth-btn" onclick="navigate('login')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                <span>Войти</span>
+            </button>
+        `;
+    }
+}
+
+// ============================================
+// HOME PAGE
+// ============================================
+function renderHomePage() {
+    document.getElementById('app').innerHTML = `
+        <section class="hero">
+            <div class="hero-badge">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                Защищённые короткие ссылки
+            </div>
+            <h1 class="hero-title">
+                <span class="accent">Get</span>Li
+            </h1>
+            <p class="hero-subtitle">
+                Создавайте короткие ссылки с защитой Google reCAPTCHA и паролем. Делитесь безопасно — получатель должен пройти капчу, чтобы перейти по ссылке.
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" onclick="navigate('app')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    Создать ссылку
+                </button>
+                <button class="btn btn-secondary" onclick="navigate('docs')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Документация
+                </button>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <div class="section-label">Возможности</div>
+                <h2 class="section-title">Почему GetLi</h2>
+                <p class="section-subtitle">Защита ссылок без рекламы и лишних шагов.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </div>
+                    <div class="feature-title">Google reCAPTCHA</div>
+                    <div class="feature-desc">Надёжная защита от ботов. Получатель проходит капчу перед переходом по ссылке.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div class="feature-title">Пароль на ссылку</div>
+                    <div class="feature-desc">Дополнительный уровень защиты. Только те, кто знает пароль, получат доступ.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </div>
+                    <div class="feature-title">Кастомные алиасы</div>
+                    <div class="feature-desc">Создавайте красивые ссылки вида get.li/my-link вместо случайных символов.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div class="feature-title">Вход через Google</div>
+                    <div class="feature-desc">Быстрая авторизация через Google аккаунт. Не нужно запоминать пароли.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
+                    <div class="feature-title">Статистика</div>
+                    <div class="feature-desc">Отслеживайте количество переходов по каждой ссылке в реальном времени.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <div class="feature-title">Без рекламы</div>
+                    <div class="feature-desc">Никакой рекламы и лишних шагов. Только капча и переход к цели.</div>
+                </div>
+            </div>
+        </section>
+    `;
+    updateActiveNav('home');
+}
+
+// ============================================
+// APP PAGE (создание ссылок)
+// ============================================
+function renderAppPage() {
+    document.getElementById('app').innerHTML = `
+        <div class="app-container">
+            <h1 class="app-title">Создать ссылку</h1>
+            <p class="app-subtitle">Заполните форму, чтобы получить защищённую короткую ссылку</p>
+
+            <div class="form-card">
+                <div class="form-group">
+                    <label class="form-label">Целевой URL *</label>
+                    <input type="url" class="form-input" id="targetUrl" placeholder="https://example.com/very-long-url" required>
+                    <div class="form-hint">Ссылка, на которую будет переходить пользователь после капчи</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Кастомный алиас</label>
+                    <input type="text" class="form-input" id="customAlias" placeholder="my-link (необязательно)" maxlength="50">
+                    <div class="form-hint">3-50 символов: a-z, A-Z, 0-9, -, _ . Оставьте пустым для автогенерации</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Пароль на ссылку</label>
+                    <input type="password" class="form-input" id="linkPassword" placeholder="Оставьте пустым, если не нужен">
+                    <div class="form-hint">Пользователь должен будет ввести пароль после капчи</div>
+                </div>
+
+                <button class="btn btn-primary" id="createBtn" style="width:100%; justify-content:center; margin-top:8px" onclick="createLink()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    <span>Создать ссылку</span>
+                </button>
+            </div>
+
+            <div class="result-card" id="resultCard">
+                <div class="result-label">Ваша ссылка готова</div>
+                <div class="result-url" id="resultUrl"></div>
+                <div class="result-actions">
+                    <button class="btn btn-secondary" onclick="copyResult()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        Копировать
+                    </button>
+                    <button class="btn btn-ghost" onclick="openResult()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        Открыть
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-top:48px">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+                    <h2 style="font-size:1.25rem; font-weight:600">Мои ссылки</h2>
+                    <button class="btn btn-ghost" onclick="loadMyLinks()" style="padding:6px 12px; font-size:0.82rem">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.419-2.001m15.419 2.001L9 9"/></svg>
+                        Обновить
+                    </button>
+                </div>
+                <div id="linksList">
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                        <h3>У вас пока нет ссылок</h3>
+                        <p>Создайте первую ссылку выше</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    updateActiveNav('app');
+    loadMyLinks();
+}
+
+async function createLink() {
+    const targetUrl = document.getElementById('targetUrl').value.trim();
+    const customAlias = document.getElementById('customAlias').value.trim();
+    const password = document.getElementById('linkPassword').value;
+    const btn = document.getElementById('createBtn');
+    const btnText = btn.querySelector('span');
+    const btnSvg = btn.querySelector('svg');
+
+    if (!targetUrl) {
+        toast('Укажите целевой URL', 'error');
+        return;
+    }
+
+    if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        toast('URL должен начинаться с http:// или https://', 'error');
+        return;
+    }
+
+    if (customAlias && !/^[a-zA-Z0-9_-]{3,50}$/.test(customAlias)) {
+        toast('Алиас должен содержать 3-50 символов: a-z, A-Z, 0-9, -, _', 'error');
+        return;
+    }
+
+    // Состояние загрузки
+    btn.disabled = true;
+    btnSvg.style.display = 'none';
+    btnText.textContent = 'Создание...';
+
+    try {
+        const result = await API.createLink({
+            targetUrl,
+            customAlias: customAlias || null,
+            password: password || null
+        });
+
+        const fullUrl = `${window.location.origin}/getli/${result.alias}`;
+        document.getElementById('resultUrl').textContent = fullUrl;
+        document.getElementById('resultCard').classList.add('show');
+        State.lastResultUrl = fullUrl;
+
+        toast('Ссылка создана!', 'success');
+        loadMyLinks();
+
+        // Очистка формы
+        document.getElementById('targetUrl').value = '';
+        document.getElementById('customAlias').value = '';
+        document.getElementById('linkPassword').value = '';
+        
+        // Прокрутка к результату
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) {
+        toast(err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btnSvg.style.display = '';
+        btnText.textContent = 'Создать ссылку';
+    }
+}
+
+function copyResult() {
+    const url = State.lastResultUrl || document.getElementById('resultUrl').textContent;
+    navigator.clipboard.writeText(url).then(() => {
+        toast('Скопировано в буфер обмена', 'success');
+    });
+}
+
+function openResult() {
+    const url = State.lastResultUrl || document.getElementById('resultUrl').textContent;
+    window.open(url, '_blank');
+}
+
+async function loadMyLinks() {
+    try {
+        const result = await API.getMyLinks();
+        State.links = result.links || [];
+        renderLinksList();
+    } catch (err) {
+        console.error('Failed to load links:', err);
+    }
+}
+
+function renderLinksList() {
+    const container = document.getElementById('linksList');
+    if (!container) return;
+
+    if (State.links.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                <h3>У вас пока нет ссылок</h3>
+                <p>Создайте первую ссылку выше</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="links-list">
+            ${State.links.map(link => `
+                <div class="link-item">
+                    <div>
+                        <div class="link-alias">/getli/${link.alias}</div>
+                        <div class="link-target" title="${link.targetUrl}">${link.targetUrl}</div>
+                        <div class="link-meta">
+                            <span>
+                                <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                ${link.clicks} переходов
+                            </span>
+                            ${link.hasPassword ? '<span>🔒 С паролем</span>' : ''}
+                            <span>${new Date(link.createdAt).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                    </div>
+                    <div class="link-actions">
+                        <button class="icon-btn" onclick="copyLink('${link.alias}')" title="Копировать">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        </button>
+                        <button class="icon-btn danger" onclick="deleteLink('${link.alias}')" title="Удалить">
+                            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function copyLink(alias) {
+    const url = `${window.location.origin}/getli/${alias}`;
+    navigator.clipboard.writeText(url).then(() => {
+        toast('Ссылка скопирована', 'success');
+    });
+}
+
+async function deleteLink(alias) {
+    if (!confirm(`Удалить ссылку /getli/${alias}?`)) return;
+    
+    try {
+        await API.deleteLink(alias);
+        toast('Ссылка удалена', 'success');
+        loadMyLinks();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ============================================
+// CAPTCHA PAGE
+// ============================================
+function renderCaptchaPage(alias) {
+    State.captchaAlias = alias;
+    document.getElementById('app').innerHTML = `
+        <div class="captcha-container">
+            <div class="captcha-card">
+                <div class="captcha-logo">G</div>
+                <h1 class="captcha-title">Проверка безопасности</h1>
+                <p class="captcha-desc">
+                    Чтобы перейти по ссылке, пройдите проверку капчи. Это защита от автоматических запросов.
+                </p>
+                <div class="captcha-alias">/getli/${alias}</div>
+                
+                <div id="captchaForm" class="captcha-form">
+                    <div class="form-group" style="margin-bottom:16px">
+                        <label class="form-label" style="text-align:left">Пароль (если установлен)</label>
+                        <input type="password" class="form-input" id="captchaPassword" placeholder="Введите пароль">
+                    </div>
+                    
+                    <div id="recaptcha-container"></div>
+                    
+                    <button class="captcha-btn" id="captchaBtn" onclick="verifyCaptcha()">
+                        Пройти проверку и перейти
+                    </button>
+                    
+                    <div class="captcha-loader" id="captchaLoader">
+                        <div class="spinner"></div>
+                        <span>Проверка...</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top:24px; font-size:0.78rem; color:var(--text-tertiary)">
+                    Защищено Google reCAPTCHA
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Инициализация reCAPTCHA
+    setTimeout(initRecaptcha, 500);
+}
+
+function initRecaptcha() {
+    if (typeof grecaptcha === 'undefined') {
+        setTimeout(initRecaptcha, 200);
+        return;
+    }
+    
+    try {
+        grecaptcha.render('recaptcha-container', {
+            sitekey: '6LdY7EYtAAAAALdiv-16rew4zxb7pPygFLJHW98a',
+            callback: onRecaptchaSuccess,
+            theme: 'dark'
+        });
+    } catch (err) {
+        console.error('reCAPTCHA init error:', err);
+    }
+}
+
+function onRecaptchaSuccess(token) {
+    State.recaptchaToken = token;
+}
+
+async function verifyCaptcha() {
+    if (!State.recaptchaToken) {
+        toast('Пройдите капчу', 'error');
+        return;
+    }
+    
+    const password = document.getElementById('captchaPassword').value;
+    const btn = document.getElementById('captchaBtn');
+    const loader = document.getElementById('captchaLoader');
+    
+    btn.disabled = true;
+    btn.style.display = 'none';
+    loader.classList.add('show');
+    
+    try {
+        // Используем правильный endpoint /verify-captcha
+        const result = await API.verifyCaptcha({
+            alias: State.captchaAlias,
+            password: password || null,
+            recaptchaToken: State.recaptchaToken
+        });
+        
+        if (result.redirectUrl) {
+            toast('Переход...', 'success');
+            setTimeout(() => {
+                window.location.href = result.redirectUrl;
+            }, 500);
+        }
+    } catch (err) {
+        btn.disabled = false;
+        btn.style.display = 'block';
+        loader.classList.remove('show');
+        toast(err.message, 'error');
+        
+        // Сброс reCAPTCHA
+        if (typeof grecaptcha !== 'undefined') {
+            grecaptcha.reset();
+        }
+        State.recaptchaToken = null;
+    }
+}
+
+// ============================================
+// DOCS PAGE
+// ============================================
+function renderDocsPage() {
+    document.getElementById('app').innerHTML = `
+        <div class="app-container">
+            <h1 class="app-title">Документация GetLi</h1>
+            <p class="app-subtitle">Полное руководство по использованию сервиса</p>
+
+            <div class="form-card">
+                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:12px">Как это работает</h3>
+                <ol style="margin-left:20px; color:var(--text-secondary); line-height:1.8">
+                    <li>Вы создаёте ссылку через приложение GetLi</li>
+                    <li>Получаете короткий URL вида <code style="font-family:var(--font-mono); background:var(--bg-subtle); padding:2px 6px; border-radius:4px">/getli/alias</code></li>
+                    <li>Делитесь ссылкой с кем угодно</li>
+                    <li>Получатель переходит по ссылке и видит страницу капчи</li>
+                    <li>Проходит Google reCAPTCHA (и вводит пароль, если установлен)</li>
+                    <li>Автоматически перенаправляется на целевой URL</li>
+                </ol>
+            </div>
+
+            <div class="form-card">
+                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:12px">Функции</h3>
+                <ul style="margin-left:20px; color:var(--text-secondary); line-height:1.8">
+                    <li><strong>Кастомные алиасы</strong> — создавайте красивые ссылки</li>
+                    <li><strong>Пароль на ссылку</strong> — дополнительная защита</li>
+                    <li><strong>Google reCAPTCHA v3</strong> — защита от ботов</li>
+                    <li><strong>Статистика переходов</strong> — отслеживайте клики</li>
+                    <li><strong>Вход через Google</strong> — быстрая авторизация</li>
+                    <li><strong>Без рекламы</strong> — только капча и переход</li>
+                </ul>
+            </div>
+
+            <div class="form-card">
+                <h3 style="font-size:1.1rem; font-weight:600; margin-bottom:12px">Требования к алиасу</h3>
+                <ul style="margin-left:20px; color:var(--text-secondary); line-height:1.8">
+                    <li>Длина: от 3 до 50 символов</li>
+                    <li>Разрешённые символы: <code style="font-family:var(--font-mono); background:var(--bg-subtle); padding:2px 6px; border-radius:4px">a-z</code>, <code style="font-family:var(--font-mono); background:var(--bg-subtle); padding:2px 6px; border-radius:4px">A-Z</code>, <code style="font-family:var(--font-mono); background:var(--bg-subtle); padding:2px 6px; border-radius:4px">0-9</code>, <code style="font-family:var(--font-mono); background:var(--bg-subtle); padding:2px 6px; border-radius:4px">-</code>, <code style="font-family:var(--font-mono); background:var(--bg-subtle); padding:2px 6px; border-radius:4px">_</code></li>
+                    <li>Должен быть уникальным</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    updateActiveNav('docs');
+}
+
+// ============================================
+// LOGIN PAGE
+// ============================================
+function renderLoginPage() {
+    document.getElementById('app').innerHTML = `
+        <div class="captcha-container">
+            <div class="captcha-card">
+                <div class="captcha-logo">G</div>
+                <h1 class="captcha-title">Вход в GetLi</h1>
+                <p class="captcha-desc">
+                    Войдите через Google аккаунт, чтобы создавать и управлять ссылками
+                </p>
+                
+                <div id="googleSignInButton" style="margin:24px 0"></div>
+                
+                <div style="font-size:0.78rem; color:var(--text-tertiary); line-height:1.6">
+                    Продолжая, вы соглашаетесь с условиями использования сервиса
+                </div>
+            </div>
+        </div>
+    `;
+    
+    setTimeout(initGoogleSignInButton, 500);
+}
+
+function initGoogleSignInButton() {
+    if (typeof google === 'undefined' || !google.accounts) {
+        setTimeout(initGoogleSignInButton, 200);
+        return;
+    }
+    
+    google.accounts.id.renderButton(
+        document.getElementById('googleSignInButton'),
+        { 
+            theme: 'filled_black', 
+            size: 'large', 
+            text: 'signin_with',
+            shape: 'pill',
+            width: 320
+        }
+    );
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function updateActiveNav(view) {
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    const activeLink = document.querySelector(`.nav-link[onclick="navigate('${view}')"]`);
+    if (activeLink) activeLink.classList.add('active');
+}
+
+// ============================================
+// INIT
+// ============================================
+async function init() {
+    // Восстановление сессии
+    const savedUser = localStorage.getItem('getli_user');
+    const savedToken = localStorage.getItem('getli_token');
+    
+    if (savedUser && savedToken) {
+        try {
+            State.user = JSON.parse(savedUser);
+            State.token = savedToken;
+            
+            // Проверяем валидность сессии на сервере
+            try {
+                const me = await API.getMe();
+                State.user = me.user;
+                localStorage.setItem('getli_user', JSON.stringify(State.user));
+            } catch (err) {
+                // Сессия невалидна — выходим
+                console.warn('Session invalid:', err.message);
+                State.user = null;
+                State.token = null;
+                localStorage.removeItem('getli_user');
+                localStorage.removeItem('getli_token');
+            }
+        } catch (err) {
+            console.error('Failed to restore session:', err);
+            State.user = null;
+            State.token = null;
+            localStorage.removeItem('getli_user');
+            localStorage.removeItem('getli_token');
+        }
+    }
+    
+    renderAuthButton();
+    
+    // Определение текущего view из URL
+    const path = window.location.pathname;
+    
+    if (path.startsWith('/getli/') && path !== '/getli/' && path !== '/getli/app' && path !== '/getli/docs') {
+        const alias = path.replace('/getli/', '');
+        if (alias) {
+            navigate('captcha', { alias });
+            return;
+        }
+    }
+    
+    if (path === '/getli/app') {
+        navigate('app');
+    } else if (path === '/getli/docs') {
+        navigate('docs');
+    } else {
+        navigate('home');
+    }
+    
+    // Инициализация Google Auth
+    initGoogleAuth();
+}
+
+// Запуск
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

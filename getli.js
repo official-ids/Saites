@@ -33,6 +33,10 @@ const K = {
 const ALIAS_REGEX = /^[a-zA-Z0-9_-]{3,50}$/;
 const MAX_CLICKS_PER_HOUR = 1000;
 
+// Переменные окружения
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const RECAPTCHA_SECRET_KEY = process.env.RECAPTCHA_SECRET_KEY;
+
 // -----------------------------
 // Утилиты
 // -----------------------------
@@ -55,6 +59,53 @@ function hashPassword(password) {
 
 function generateToken() {
     return crypto.randomBytes(32).toString('hex');
+}
+
+// -----------------------------
+// Google reCAPTCHA Verification
+// -----------------------------
+async function verifyRecaptcha(token) {
+    if (!token) {
+        throw new Error('reCAPTCHA token required');
+    }
+
+    if (!RECAPTCHA_SECRET_KEY) {
+        console.warn('[getli] RECAPTCHA_SECRET_KEY not set — skipping verification');
+        return { success: true, score: 1.0 };
+    }
+
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `secret=${RECAPTCHA_SECRET_KEY}&response=${token}`
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+        throw new Error('reCAPTCHA verification failed: ' + (data['error-codes']?.join(', ') || 'unknown'));
+    }
+
+    // Для v3: score от 0.0 (бот) до 1.0 (человек)
+    if (data.score !== undefined && data.score < 0.5) {
+        throw new Error(`reCAPTCHA score too low: ${data.score}`);
+    }
+
+    return data;
+}
+
+// -----------------------------
+// Google OAuth
+// -----------------------------
+function decodeGoogleJWT(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) throw new Error('Invalid JWT');
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+        return payload;
+    } catch (err) {
+        throw new Error('Invalid Google token');
+    }
 }
 
 // -----------------------------
@@ -85,7 +136,110 @@ async function requireAuth(req, res, next) {
 
 // Health check
 router.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        recaptchaConfigured: !!RECAPTCHA_SECRET_KEY,
+        googleConfigured: !!GOOGLE_CLIENT_ID
+    });
+});
+
+// Google OAuth — вход через Google
+router.post('/auth/google', async (req, res) => {
+    try {
+        const { credential } = req.body;
+        
+        if (!credential) {
+            return res.status(400).json({ error: 'Missing credential', code: 'NO_CREDENTIAL' });
+        }
+        
+        // Декодируем JWT
+        const payload = decodeGoogleJWT(credential);
+        
+        // Проверяем issuer
+        if (payload.iss !== 'https://accounts.google.com' && 
+            payload.iss !== 'accounts.google.com') {
+            return res.status(401).json({ error: 'Invalid issuer', code: 'INVALID_ISSUER' });
+        }
+        
+        // Проверяем audience (если настроен GOOGLE_CLIENT_ID)
+        if (GOOGLE_CLIENT_ID && payload.aud !== GOOGLE_CLIENT_ID) {
+            return res.status(401).json({ error: 'Invalid audience', code: 'INVALID_AUDIENCE' });
+        }
+        
+        // Проверяем срок действия
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+            return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
+        }
+        
+        // Сохраняем пользователя в KV
+        const users = await kv.get(K.USERS) || {};
+        if (!users[payload.sub]) {
+            users[payload.sub] = {
+                id: payload.sub,
+                email: payload.email,
+                name: payload.name,
+                picture: payload.picture,
+                createdAt: Date.now()
+            };
+            await kv.set(K.USERS, users);
+        }
+        
+        // Создаём сессию (30 дней)
+        const sessions = await kv.get(K.SESSIONS) || {};
+        const sessionToken = crypto.randomBytes(32).toString('hex');
+        sessions[sessionToken] = {
+            userId: payload.sub,
+            email: payload.email,
+            name: payload.name,
+            picture: payload.picture,
+            expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000
+        };
+        await kv.set(K.SESSIONS, sessions);
+        
+        res.json({
+            success: true,
+            token: sessionToken,
+            user: {
+                id: payload.sub,
+                name: payload.name,
+                email: payload.email,
+                picture: payload.picture
+            }
+        });
+    } catch (err) {
+        console.error('[getli/auth/google]', err);
+        res.status(500).json({ error: 'Ошибка авторизации', code: 'AUTH_ERROR' });
+    }
+});
+
+// Выход из аккаунта
+router.post('/auth/logout', requireAuth, async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        const sessions = await kv.get(K.SESSIONS) || {};
+        delete sessions[token];
+        await kv.set(K.SESSIONS, sessions);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[getli/auth/logout]', err);
+        res.status(500).json({ error: 'Ошибка выхода', code: 'LOGOUT_ERROR' });
+    }
+});
+
+// Получение текущего пользователя
+router.get('/auth/me', requireAuth, async (req, res) => {
+    try {
+        const users = await kv.get(K.USERS) || {};
+        const user = users[req.userId];
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден', code: 'USER_NOT_FOUND' });
+        }
+        res.json({ user });
+    } catch (err) {
+        console.error('[getli/auth/me]', err);
+        res.status(500).json({ error: 'Ошибка получения профиля', code: 'INTERNAL_ERROR' });
+    }
 });
 
 // Создание ссылки
@@ -243,10 +397,26 @@ router.get('/stats/:alias', requireAuth, async (req, res) => {
     }
 });
 
-// Проверка пароля на ссылку
-router.post('/verify-password', async (req, res) => {
+// Публичная проверка капчи + пароля + редирект
+router.post('/verify-captcha', async (req, res) => {
     try {
-        const { alias, password } = req.body;
+        const { alias, password, recaptchaToken } = req.body;
+        
+        if (!alias) {
+            return res.status(400).json({ error: 'Алиас обязателен', code: 'MISSING_ALIAS' });
+        }
+        
+        // Проверка reCAPTCHA
+        try {
+            await verifyRecaptcha(recaptchaToken);
+        } catch (err) {
+            return res.status(403).json({ 
+                error: 'Проверка безопасности не пройдена', 
+                code: 'CAPTCHA_FAILED' 
+            });
+        }
+        
+        // Получение ссылки
         const links = await kv.get(K.LINKS) || {};
         const link = links[alias];
         
@@ -254,20 +424,52 @@ router.post('/verify-password', async (req, res) => {
             return res.status(404).json({ error: 'Ссылка не найдена', code: 'NOT_FOUND' });
         }
         
-        if (!link.password) {
-            return res.json({ success: true, redirectUrl: link.targetUrl });
+        // Проверка пароля (если установлен)
+        if (link.password) {
+            if (!password) {
+                return res.status(401).json({ 
+                    error: 'Требуется пароль', 
+                    code: 'PASSWORD_REQUIRED' 
+                });
+            }
+            
+            const hashedPassword = hashPassword(password);
+            if (hashedPassword !== link.password) {
+                return res.status(401).json({ 
+                    error: 'Неверный пароль', 
+                    code: 'WRONG_PASSWORD' 
+                });
+            }
         }
         
-        const hashedPassword = hashPassword(password);
+        // Инкремент счётчика кликов
+        link.clicks = (link.clicks || 0) + 1;
+        link.lastClick = Date.now();
+        links[alias] = link;
+        await kv.set(K.LINKS, links);
         
-        if (hashedPassword !== link.password) {
-            return res.status(401).json({ error: 'Неверный пароль', code: 'WRONG_PASSWORD' });
+        // Сохранение в статистику
+        const stats = await kv.get(K.STATS(alias)) || { clicks: [], total: 0 };
+        stats.clicks.push({
+            timestamp: Date.now(),
+            ip: req.ip,
+            userAgent: req.headers['user-agent']?.slice(0, 100)
+        });
+        stats.total = (stats.total || 0) + 1;
+        // Ограничиваем историю последними 100 записями
+        if (stats.clicks.length > 100) {
+            stats.clicks = stats.clicks.slice(-100);
         }
+        await kv.set(K.STATS(alias), stats);
         
-        res.json({ success: true, redirectUrl: link.targetUrl });
+        res.json({ 
+            success: true, 
+            redirectUrl: link.targetUrl,
+            clicks: link.clicks
+        });
     } catch (err) {
-        console.error('[getli/verify-password]', err);
-        res.status(500).json({ error: 'Ошибка проверки пароля', code: 'INTERNAL_ERROR' });
+        console.error('[getli/verify-captcha]', err);
+        res.status(500).json({ error: 'Ошибка проверки', code: 'INTERNAL_ERROR' });
     }
 });
 
