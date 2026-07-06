@@ -1085,116 +1085,116 @@ const API = {
     logout: () => API.request('/auth/logout', { method: 'POST' }),
     getMe: () => API.request('/auth/me'),
     
-    // Profile
-    getProfile: () => API.request('/profile'),
-    getProfileByUsername: (username) => API.request(`/profile/@${username}`),
-    updateProfile: (data) => API.request('/profile', { method: 'PATCH', body: JSON.stringify(data) }),
-    deleteProfile: () => API.request('/profile', { method: 'DELETE' }),
-    changeUsername: (username) => API.request('/profile/username', { method: 'PATCH', body: JSON.stringify({ username }) }),
-    checkUsername: (username) => API.request(`/profile/check-username/${username}`),
+    // Profile — убрали /profile из всех путей
+    getProfile: () => API.request('/'),
+    getProfileByUsername: (username) => API.request(`/@${username}`),
+    updateProfile: (data) => API.request('/', { method: 'PATCH', body: JSON.stringify(data) }),
+    deleteProfile: () => API.request('/', { method: 'DELETE' }),
+    changeUsername: (username) => API.request('/username', { method: 'PATCH', body: JSON.stringify({ username }) }),
+    checkUsername: (username) => API.request(`/check-username/${username}`),
     
     // Settings
-    getSettings: () => API.request('/profile/settings'),
-    updateSettings: (settings) => API.request('/profile/settings', { method: 'PATCH', body: JSON.stringify({ settings }) }),
+    getSettings: () => API.request('/settings'),
+    updateSettings: (settings) => API.request('/settings', { method: 'PATCH', body: JSON.stringify({ settings }) }),
     
     // Privacy
-    getPrivacy: () => API.request('/profile/privacy'),
-    updatePrivacy: (privacy) => API.request('/profile/privacy', { method: 'PATCH', body: JSON.stringify({ privacy }) }),
+    getPrivacy: () => API.request('/privacy'),
+    updatePrivacy: (privacy) => API.request('/privacy', { method: 'PATCH', body: JSON.stringify({ privacy }) }),
     
     // Theme
-    getTheme: () => API.request('/profile/theme'),
-    updateTheme: (theme) => API.request('/profile/theme', { method: 'PATCH', body: JSON.stringify({ theme }) }),
+    getTheme: () => API.request('/theme'),
+    updateTheme: (theme) => API.request('/theme', { method: 'PATCH', body: JSON.stringify({ theme }) }),
     
     // Customization
-    getCustomization: () => API.request('/profile/customization'),
-    updateCustomization: (customization) => API.request('/profile/customization', { method: 'PATCH', body: JSON.stringify({ customization }) }),
-    resetCustomization: () => API.request('/profile/customization/reset', { method: 'POST' }),
-    exportCustomization: () => API.request('/profile/customization/export'),
-    importCustomization: (data) => API.request('/profile/customization/import', { method: 'POST', body: JSON.stringify({ data }) }),
+    getCustomization: () => API.request('/customization'),
+    updateCustomization: (customization) => API.request('/customization', { method: 'PATCH', body: JSON.stringify({ customization }) }),
+    resetCustomization: () => API.request('/customization/reset', { method: 'POST' }),
+    exportCustomization: () => API.request('/customization/export'),
+    importCustomization: (data) => API.request('/customization/import', { method: 'POST', body: JSON.stringify({ data }) }),
     
     // Avatar
-    updateAvatar: (avatar) => API.request('/profile/avatar', { method: 'POST', body: JSON.stringify({ avatar }) }),
+    updateAvatar: (avatar) => API.request('/avatar', { method: 'POST', body: JSON.stringify({ avatar }) }),
     
     // Status
-    getStatus: () => API.request('/profile/status'),
-    updateStatus: (data) => API.request('/profile/status', { method: 'PATCH', body: JSON.stringify(data) }),
+    getStatus: () => API.request('/status'),
+    updateStatus: (data) => API.request('/status', { method: 'PATCH', body: JSON.stringify(data) }),
     
     // Activity
-    getActivity: () => API.request('/profile/activity'),
+    getActivity: () => API.request('/activity'),
     
     // Friends
-    sendFriendRequest: (data) => API.request('/profile/friends/request', { method: 'POST', body: JSON.stringify(data) }),
-    acceptFriendRequest: (data) => API.request('/profile/friends/accept', { method: 'POST', body: JSON.stringify(data) }),
-    rejectFriendRequest: (data) => API.request('/profile/friends/reject', { method: 'POST', body: JSON.stringify(data) }),
-    removeFriend: (data) => API.request('/profile/friends/remove', { method: 'DELETE', body: JSON.stringify(data) }),
-    getFriends: () => API.request('/profile/friends'),
-    getIncomingRequests: () => API.request('/profile/friends/requests/incoming'),
-    getOutgoingRequests: () => API.request('/profile/friends/requests/outgoing'),
-    checkFriendship: (userId) => API.request(`/profile/friends/check/${userId}`),
-    pinFriend: (userId) => API.request('/profile/friends/pin', { method: 'POST', body: JSON.stringify({ userId }) }),
-    unpinFriend: (userId) => API.request('/profile/friends/unpin', { method: 'POST', body: JSON.stringify({ userId }) }),
+    sendFriendRequest: (data) => API.request('/friends/request', { method: 'POST', body: JSON.stringify(data) }),
+    acceptFriendRequest: (data) => API.request('/friends/accept', { method: 'POST', body: JSON.stringify(data) }),
+    rejectFriendRequest: (data) => API.request('/friends/reject', { method: 'POST', body: JSON.stringify(data) }),
+    removeFriend: (data) => API.request('/friends/remove', { method: 'DELETE', body: JSON.stringify(data) }),
+    getFriends: () => API.request('/friends'),
+    getIncomingRequests: () => API.request('/friends/requests/incoming'),
+    getOutgoingRequests: () => API.request('/friends/requests/outgoing'),
+    checkFriendship: (userId) => API.request(`/friends/check/${userId}`),
+    pinFriend: (userId) => API.request('/friends/pin', { method: 'POST', body: JSON.stringify({ userId }) }),
+    unpinFriend: (userId) => API.request('/friends/unpin', { method: 'POST', body: JSON.stringify({ userId }) }),
     
     // Block
-    blockUser: (data) => API.request('/profile/block', { method: 'POST', body: JSON.stringify(data) }),
-    unblockUser: (data) => API.request('/profile/unblock', { method: 'POST', body: JSON.stringify(data) }),
-    getBlockedUsers: () => API.request('/profile/blocked'),
+    blockUser: (data) => API.request('/block', { method: 'POST', body: JSON.stringify(data) }),
+    unblockUser: (data) => API.request('/unblock', { method: 'POST', body: JSON.stringify(data) }),
+    getBlockedUsers: () => API.request('/blocked'),
     
     // Follow
-    follow: (userId) => API.request('/profile/follow', { method: 'POST', body: JSON.stringify({ userId }) }),
-    unfollow: (userId) => API.request('/profile/unfollow', { method: 'POST', body: JSON.stringify({ userId }) }),
+    follow: (userId) => API.request('/follow', { method: 'POST', body: JSON.stringify({ userId }) }),
+    unfollow: (userId) => API.request('/unfollow', { method: 'POST', body: JSON.stringify({ userId }) }),
     
     // Favorites
-    addToFavorites: (userId) => API.request('/profile/favorites/add', { method: 'POST', body: JSON.stringify({ userId }) }),
-    removeFromFavorites: (userId) => API.request('/profile/favorites/remove', { method: 'POST', body: JSON.stringify({ userId }) }),
-    getFavorites: () => API.request('/profile/favorites'),
+    addToFavorites: (userId) => API.request('/favorites/add', { method: 'POST', body: JSON.stringify({ userId }) }),
+    removeFromFavorites: (userId) => API.request('/favorites/remove', { method: 'POST', body: JSON.stringify({ userId }) }),
+    getFavorites: () => API.request('/favorites'),
     
     // Search & Catalog
-    search: (q, limit = 20, offset = 0) => API.request(`/profile/search?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`),
+    search: (q, limit = 20, offset = 0) => API.request(`/search?q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}`),
     getCatalog: (params = {}) => {
         const qs = new URLSearchParams(params).toString();
-        return API.request(`/profile/catalog${qs ? '?' + qs : ''}`);
+        return API.request(`/catalog${qs ? '?' + qs : ''}`);
     },
     
     // Views
-    getViews: () => API.request('/profile/views'),
+    getViews: () => API.request('/views'),
     
     // Complaints
-    submitComplaint: (data) => API.request('/profile/complaint', { method: 'POST', body: JSON.stringify(data) }),
+    submitComplaint: (data) => API.request('/complaint', { method: 'POST', body: JSON.stringify(data) }),
     
     // Verification
-    getVerification: (userId) => API.request(`/profile/verification?userId=${userId}`),
+    getVerification: (userId) => API.request(`/verification?userId=${userId}`),
     
     // Badges & Achievements
-    getBadges: (userId) => API.request(`/profile/badges/${userId}`),
-    getAchievements: (userId) => API.request(`/profile/achievements/${userId}`),
-    getRoles: (userId) => API.request(`/profile/roles/${userId}`),
+    getBadges: (userId) => API.request(`/badges/${userId}`),
+    getAchievements: (userId) => API.request(`/achievements/${userId}`),
+    getRoles: (userId) => API.request(`/roles/${userId}`),
     
     // Online
-    updateOnline: () => API.request('/profile/online', { method: 'POST' }),
-    updateOffline: () => API.request('/profile/offline', { method: 'POST' }),
+    updateOnline: () => API.request('/online', { method: 'POST' }),
+    updateOffline: () => API.request('/offline', { method: 'POST' }),
     
     // Notifications
-    getNotifications: () => API.request('/profile/notifications'),
-    updateNotifications: (notifications) => API.request('/profile/notifications', { method: 'PATCH', body: JSON.stringify({ notifications }) }),
+    getNotifications: () => API.request('/notifications'),
+    updateNotifications: (notifications) => API.request('/notifications', { method: 'PATCH', body: JSON.stringify({ notifications }) }),
     
     // Socials
-    getSocials: () => API.request('/profile/socials'),
+    getSocials: () => API.request('/socials'),
     
     // Stats
-    getStats: () => API.request('/profile/stats'),
+    getStats: () => API.request('/stats'),
     
     // Export
-    exportProfile: () => API.request('/profile/export'),
+    exportProfile: () => API.request('/export'),
     
     // QR & Link
-    getQr: () => API.request('/profile/qr'),
-    getLink: () => API.request('/profile/link'),
+    getQr: () => API.request('/qr'),
+    getLink: () => API.request('/link'),
     
     // History
-    getUsernameHistory: () => API.request('/profile/username-history'),
-    getNameHistory: () => API.request('/profile/name-history'),
-    getAvatarHistory: () => API.request('/profile/avatar-history'),
-    getThemeHistory: () => API.request('/profile/theme-history')
+    getUsernameHistory: () => API.request('/username-history'),
+    getNameHistory: () => API.request('/name-history'),
+    getAvatarHistory: () => API.request('/avatar-history'),
+    getThemeHistory: () => API.request('/theme-history')
 };
 
 // ============================================
