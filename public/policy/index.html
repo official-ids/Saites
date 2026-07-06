@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Политика конфиденциальности Oris Platform">
+<meta name="theme-color" content="#000000">
+<title>Политика конфиденциальности · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F5F5F7;
+    --bg-subtle: #FAFAFA;
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #AEAEB2;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-light: rgba(0, 113, 227, 0.1);
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+    --header-h: 52px;
+}
+
+:root[data-theme="dark"] {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.12);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --bg-body: #000000;
+        --bg-card: #1C1C1E;
+        --bg-elevated: #2C2C2E;
+        --bg-subtle: #0A0A0A;
+        --text-primary: #F5F5F7;
+        --text-secondary: #86868B;
+        --text-tertiary: #636366;
+        --accent: #0A84FF;
+        --accent-hover: #409CFF;
+        --accent-light: rgba(10, 132, 255, 0.12);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.12);
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+    }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+:root[data-theme="dark"] .header { background: rgba(0, 0, 0, 0.72); }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .header { background: rgba(0, 0, 0, 0.72); }
+}
+.header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+.logo:hover { opacity: 0.75; }
+.logo-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+}
+.logo-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.header-nav a {
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.header-nav a:hover {
+    color: var(--text-primary);
+    background: var(--border);
+}
+.header-nav a.active {
+    color: var(--text-primary);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
+
+/* Hero */
+.hero {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    text-align: center;
+}
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--accent-light);
+    border: 1px solid rgba(10, 132, 255, 0.2);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+.hero-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+.hero-meta {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    flex-wrap: wrap;
+}
+.hero-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Layout */
+.content-layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 40px;
+}
+
+/* Sidebar */
+.sidebar {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    align-self: start;
+    max-height: calc(100vh - var(--header-h) - 48px);
+    overflow-y: auto;
+}
+.sidebar-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+    padding: 0 12px;
+}
+.sidebar-list { list-style: none; }
+.sidebar-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    display: block;
+}
+.sidebar-item:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+.sidebar-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+}
+
+/* Content */
+.content { min-width: 0; }
+.section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 20px;
+    scroll-margin-top: calc(var(--header-h) + 24px);
+}
+.section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 12px;
+    font-variant-numeric: tabular-nums;
+}
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+}
+.section-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+.section p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+.section ul, .section ol {
+    margin: 12px 0 16px 24px;
+    color: var(--text-secondary);
+}
+.section li {
+    margin-bottom: 6px;
+    line-height: 1.6;
+}
+.section strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.section a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+}
+.section a:hover { border-bottom-color: var(--accent); }
+
+/* Info box */
+.info-box {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.info-box-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.88rem;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.data-table th, .data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.data-table th {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.data-table td { color: var(--text-secondary); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* Footer */
+.footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .sidebar {
+        position: static;
+        max-height: none;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+    }
+    .sidebar-title { padding: 0; }
+    .section { padding: 24px; }
+    .header-nav { display: none; }
+}
+@media (max-width: 480px) {
+    .hero { padding: 40px 16px 30px; }
+    .content-layout { padding: 0 16px 60px; }
+    .section { padding: 20px; }
+    .section-title { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <img src="/favicon.svg" alt="Oris" class="logo-icon">
+            <span class="logo-text">Oris</span>
+        </a>
+        <nav class="header-nav">
+            <a href="/">Проекты</a>
+            <a href="/news">Новости</a>
+            <a href="/policy" class="active">Privacy</a>
+            <a href="/terms">Terms</a>
+        </nav>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="hero-badge">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Политика конфиденциальности
+    </div>
+    <h1 class="hero-title">Ваши данные под защитой</h1>
+    <p class="hero-subtitle">
+        Мы собираем только необходимую информацию и никогда не передаём её третьим лицам. Полная прозрачность обработки данных.
+    </p>
+    <div class="hero-meta">
+        <span>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Обновлено: 6 июля 2026
+        </span>
+        <span>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Версия 1.0
+        </span>
+    </div>
+</section>
+
+<div class="content-layout">
+    <aside class="sidebar">
+        <div class="sidebar-title">Разделы</div>
+        <ul class="sidebar-list">
+            <li><a class="sidebar-item active" href="#intro">Введение</a></li>
+            <li><a class="sidebar-item" href="#what-we-collect">Что мы собираем</a></li>
+            <li><a class="sidebar-item" href="#how-we-use">Как используем</a></li>
+            <li><a class="sidebar-item" href="#third-parties">Третьи стороны</a></li>
+            <li><a class="sidebar-item" href="#cookies">Cookies</a></li>
+            <li><a class="sidebar-item" href="#security">Безопасность</a></li>
+            <li><a class="sidebar-item" href="#your-rights">Ваши права</a></li>
+            <li><a class="sidebar-item" href="#children">Дети</a></li>
+            <li><a class="sidebar-item" href="#changes">Изменения</a></li>
+            <li><a class="sidebar-item" href="#contact">Контакты</a></li>
+        </ul>
+    </aside>
+
+    <main class="content">
+        <section class="section" id="intro">
+            <h2 class="section-title"><span class="section-number">01</span>Введение</h2>
+            <p class="section-subtitle">
+                Настоящая Политика конфиденциальности описывает, как Oris Platform («мы», «нас», «наш») собирает, использует и защищает информацию, которую вы предоставляете при использовании наших сервисов.
+            </p>
+            <p>Используя наши сервисы, вы соглашаетесь с условиями данной Политики. Если вы не согласны с какими-либо положениями, пожалуйста, прекратите использование сервисов.</p>
+            
+            <div class="info-box">
+                <div class="info-box-title">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Принцип Privacy by Design
+                </div>
+                Мы собираем только те данные, которые действительно необходимы для работы сервисов. Никаких скрытых трекеров или продажи данных рекламодателям.
+            </div>
+        </section>
+
+        <section class="section" id="what-we-collect">
+            <h2 class="section-title"><span class="section-number">02</span>Что мы собираем</h2>
+            <p>Мы собираем информацию в следующих категориях:</p>
+
+            <h3 style="font-size:1.05rem; font-weight:600; margin: 20px 0 10px; color: var(--text-primary);">Автоматически собираемые данные</h3>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Тип данных</th><th>Цель</th><th>Хранение</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>IP-адрес</td><td>Rate limiting, безопасность</td><td>30 дней</td></tr>
+                    <tr><td>User-Agent</td><td>Аналитика устройств</td><td>Агрегированно</td></tr>
+                    <tr><td>Время запроса</td><td>Мониторинг производительности</td><td>90 дней</td></tr>
+                    <tr><td>Referrer URL</td><td>Аналитика трафика</td><td>Агрегированно</td></tr>
+                </tbody>
+            </table>
+
+            <h3 style="font-size:1.05rem; font-weight:600; margin: 20px 0 10px; color: var(--text-primary);">Данные, которые вы предоставляете</h3>
+            <ul>
+                <li><strong>Формы обратной связи:</strong> имя, email, сообщение (для обработки заявок)</li>
+                <li><strong>Аккаунт в новостях:</strong> nickname, 4-значный ID, роль (reader/admin)</li>
+                <li><strong>Комментарии:</strong> текст, лайки, дизлайки</li>
+                <li><strong>Push-подписки:</strong> endpoint, ключи VAPID, выбранные каналы</li>
+                <li><strong>Настройки:</strong> тема, язык, предпочтения (в Vercel KV)</li>
+            </ul>
+
+            <h3 style="font-size:1.05rem; font-weight:600; margin: 20px 0 10px; color: var(--text-primary);">Данные проектов</h3>
+            <ul>
+                <li>Название, URL, описание проекта (из заявок на добавление)</li>
+                <li>История изменений (changelog)</li>
+                <li>Метрики использования API (агрегированно)</li>
+            </ul>
+        </section>
+
+        <section class="section" id="how-we-use">
+            <h2 class="section-title"><span class="section-number">03</span>Как мы используем данные</h2>
+            <p>Собранная информация используется исключительно для:</p>
+            <ol>
+                <li><strong>Работы сервисов</strong> — обработка заявок, аутентификация, хранение настроек</li>
+                <li><strong>Безопасности</strong> — предотвращение злоупотреблений, rate limiting</li>
+                <li><strong>Улучшения продуктов</strong> — анализ производительности, исправление ошибок</li>
+                <li><strong>Коммуникации</strong> — ответы на заявки, push-уведомления (с вашего согласия)</li>
+                <li><strong>Мониторинга</strong> — проверка доступности сервисов (status page)</li>
+            </ol>
+            <p>Мы <strong>никогда</strong> не используем данные для:</p>
+            <ul>
+                <li>Продажи или передачи третьим лицам в коммерческих целях</li>
+                <li>Таргетированной рекламы</li>
+                <li>Профилирования пользователей</li>
+                <li>Принятия автоматизированных решений о пользователях</li>
+            </ul>
+        </section>
+
+        <section class="section" id="third-parties">
+            <h2 class="section-title"><span class="section-number">04</span>Третьи стороны</h2>
+            <p>Мы используем следующие сервисы для работы платформы:</p>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Сервис</th><th>Цель</th><th>Данные</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Vercel</td><td>Хостинг, KV storage</td><td>Метаданные запросов</td></tr>
+                    <tr><td>GitHub</td><td>Хранение контента</td><td>Файлы saites.txt, changelog.txt</td></tr>
+                    <tr><td>Telegram Bot API</td><td>Уведомления администратору</td><td>Текст заявок</td></tr>
+                    <tr><td>Google Fonts</td><td>Шрифты</td><td>IP (стандартно)</td></tr>
+                    <tr><td>Google reCAPTCHA</td><td>Защита от ботов</td><td>Токен, поведение</td></tr>
+                    <tr><td>Cloudflare CDN</td><td>Раздача статики</td><td>IP, запросы</td></tr>
+                </tbody>
+            </table>
+            <p>Каждый из этих сервисов имеет собственную политику конфиденциальности. Мы рекомендуем ознакомиться с ними.</p>
+        </section>
+
+        <section class="section" id="cookies">
+            <h2 class="section-title"><span class="section-number">05</span>Cookies и локальное хранилище</h2>
+            <p>Мы используем минимальное количество технологий хранения:</p>
+            <ul>
+                <li><strong>localStorage:</strong> тема оформления, сессия пользователя, настройки приложения</li>
+                <li><strong>SessionStorage:</strong> временные данные сессии</li>
+                <li><strong>Cookies:</strong> не используются для отслеживания</li>
+            </ul>
+            <p>Все данные хранятся локально в вашем браузере и могут быть удалены в любой момент через настройки браузера.</p>
+        </section>
+
+        <section class="section" id="security">
+            <h2 class="section-title"><span class="section-number">06</span>Безопасность данных</h2>
+            <p>Мы применяем следующие меры защиты:</p>
+            <ul>
+                <li><strong>HTTPS/TLS</strong> — все соединения зашифрованы</li>
+                <li><strong>Helmet.js</strong> — HTTP-заголовки безопасности (CSP, X-Frame-Options и др.)</li>
+                <li><strong>Rate limiting</strong> — защита от brute-force и DDoS</li>
+                <li><strong>Timing-safe сравнение</strong> — для админских токенов</li>
+                <li><strong>Санитизация ввода</strong> — защита от XSS и инъекций</li>
+                <li><strong>CSP (Content Security Policy)</strong> — ограничение источников скриптов</li>
+            </ul>
+            <div class="info-box">
+                <div class="info-box-title">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    Уведомление об инцидентах
+                </div>
+                В случае утечки данных мы уведомим受影响ных пользователей в течение 72 часов через доступные каналы связи.
+            </div>
+        </section>
+
+        <section class="section" id="your-rights">
+            <h2 class="section-title"><span class="section-number">07</span>Ваши права</h2>
+            <p>В соответствии с GDPR и другими применимыми законами, вы имеете право:</p>
+            <ul>
+                <li><strong>Доступ</strong> — запросить копию ваших данных</li>
+                <li><strong>Исправление</strong> — потребовать исправления неточных данных</li>
+                <li><strong>Удаление</strong> — запросить удаление ваших данных («право на забвение»)</li>
+                <li><strong>Ограничение обработки</strong> — временно приостановить обработку</li>
+                <li><strong>Переносимость</strong> — получить данные в машиночитаемом формате</li>
+                <li><strong>Возражение</strong> — возразить против обработки данных</li>
+            </ul>
+            <p>Для реализации этих прав свяжитесь с нами по адресу <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a>. Мы ответим в течение 30 дней.</p>
+        </section>
+
+        <section class="section" id="children">
+            <h2 class="section-title"><span class="section-number">08</span>Дети</h2>
+            <p>Наши сервисы не предназначены для детей младше 13 лет. Мы не собираем осознанно информацию о детях. Если вы считаете, что ребёнок предоставил нам личные данные, пожалуйста, свяжитесь с нами для удаления этой информации.</p>
+        </section>
+
+        <section class="section" id="changes">
+            <h2 class="section-title"><span class="section-number">09</span>Изменения политики</h2>
+            <p>Мы можем обновлять данную Политику время от времени. Существенные изменения будут опубликованы на этой странице с указанием даты обновления. Продолжение использования сервисов после изменений означает ваше согласие с новой редакцией.</p>
+            <p>Рекомендуем периодически проверять эту страницу на наличие обновлений.</p>
+        </section>
+
+        <section class="section" id="contact">
+            <h2 class="section-title"><span class="section-number">10</span>Контакты</h2>
+            <p>По вопросам конфиденциальности и защиты данных обращайтесь:</p>
+            <ul>
+                <li><strong>Email:</strong> <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a></li>
+                <li><strong>Telegram:</strong> <a href="https://t.me/VoraxisBOT" target="_blank" rel="noopener">@VoraxisBOT</a></li>
+                <li><strong>Тикет-система:</strong> <a href="/support">oris-flax.vercel.app/support</a></li>
+            </ul>
+            <p>Время ответа: до 24 часов в рабочие дни.</p>
+        </section>
+    </main>
+</div>
+
+<footer class="footer">
+    <div>
+        <strong>Oris Platform</strong> · © 2026 Oris Inc.
+    </div>
+    <div>
+        <a href="/">Главная</a> · 
+        <a href="/policy">Privacy</a> · 
+        <a href="/terms">Terms</a> · 
+        <a href="https://t.me/VoraxisBOT" target="_blank">Telegram</a>
+    </div>
+</footer>
+
+<script>
+// Sidebar active state on scroll
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            const active = document.querySelector(`.sidebar-item[href="#${entry.target.id}"]`);
+            if (active) active.classList.add('active');
+        }
+    });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+// Theme from localStorage
+try {
+    const t = localStorage.getItem('oris-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+} catch(e) {}
+</script>
+
+</body>
+</html>

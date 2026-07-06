@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Условия использования Oris Platform">
+<meta name="theme-color" content="#000000">
+<title>Условия использования · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F5F5F7;
+    --bg-subtle: #FAFAFA;
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #AEAEB2;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-light: rgba(0, 113, 227, 0.1);
+    --danger: #FF3B30;
+    --danger-light: rgba(255, 59, 48, 0.1);
+    --success: #34C759;
+    --success-light: rgba(52, 199, 89, 0.1);
+    --warning: #FF9F0A;
+    --warning-light: rgba(255, 159, 10, 0.1);
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+    --header-h: 52px;
+}
+
+:root[data-theme="dark"] {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.12);
+    --danger: #FF453A;
+    --danger-light: rgba(255, 69, 58, 0.12);
+    --success: #30D158;
+    --success-light: rgba(48, 209, 88, 0.12);
+    --warning: #FF9F0A;
+    --warning-light: rgba(255, 159, 10, 0.12);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --bg-body: #000000;
+        --bg-card: #1C1C1E;
+        --bg-elevated: #2C2C2E;
+        --bg-subtle: #0A0A0A;
+        --text-primary: #F5F5F7;
+        --text-secondary: #86868B;
+        --text-tertiary: #636366;
+        --accent: #0A84FF;
+        --accent-hover: #409CFF;
+        --accent-light: rgba(10, 132, 255, 0.12);
+        --danger: #FF453A;
+        --danger-light: rgba(255, 69, 58, 0.12);
+        --success: #30D158;
+        --success-light: rgba(48, 209, 88, 0.12);
+        --warning: #FF9F0A;
+        --warning-light: rgba(255, 159, 10, 0.12);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.12);
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+    }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+:root[data-theme="dark"] .header { background: rgba(0, 0, 0, 0.72); }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .header { background: rgba(0, 0, 0, 0.72); }
+}
+.header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+.logo:hover { opacity: 0.75; }
+.logo-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+}
+.logo-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.header-nav a {
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.header-nav a:hover {
+    color: var(--text-primary);
+    background: var(--border);
+}
+.header-nav a.active {
+    color: var(--text-primary);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
+
+.hero {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 24px 40px;
+    text-align: center;
+}
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--warning-light);
+    border: 1px solid rgba(255, 159, 10, 0.25);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--warning);
+    margin-bottom: 20px;
+}
+.hero-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+.hero-meta {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 24px;
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    flex-wrap: wrap;
+}
+.hero-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.content-layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 40px;
+}
+
+.sidebar {
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    align-self: start;
+    max-height: calc(100vh - var(--header-h) - 48px);
+    overflow-y: auto;
+}
+.sidebar-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+    padding: 0 12px;
+}
+.sidebar-list { list-style: none; }
+.sidebar-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    display: block;
+}
+.sidebar-item:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+.sidebar-item.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 500;
+}
+
+.content { min-width: 0; }
+.section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 20px;
+    scroll-margin-top: calc(var(--header-h) + 24px);
+}
+.section-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-right: 12px;
+    font-variant-numeric: tabular-nums;
+}
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    color: var(--text-primary);
+}
+.section-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+.section p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+.section ul, .section ol {
+    margin: 12px 0 16px 24px;
+    color: var(--text-secondary);
+}
+.section li {
+    margin-bottom: 6px;
+    line-height: 1.6;
+}
+.section strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+.section a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+}
+.section a:hover { border-bottom-color: var(--accent); }
+
+/* Alert boxes */
+.alert-box {
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin: 20px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.alert-box svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+}
+.alert-box-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.alert-box.danger {
+    background: var(--danger-light);
+    border-left: 3px solid var(--danger);
+}
+.alert-box.warning {
+    background: var(--warning-light);
+    border-left: 3px solid var(--warning);
+}
+.alert-box.success {
+    background: var(--success-light);
+    border-left: 3px solid var(--success);
+}
+
+/* License card */
+.license-card {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin: 16px 0;
+}
+.license-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.license-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.license-icon.mit { background: var(--success-light); color: var(--success); }
+.license-icon.prop { background: var(--warning-light); color: var(--warning); }
+.license-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+.license-type {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.88rem;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.data-table th, .data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.data-table th {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.data-table td { color: var(--text-secondary); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* Footer */
+.footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    .sidebar {
+        position: static;
+        max-height: none;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+    }
+    .sidebar-title { padding: 0; }
+    .section { padding: 24px; }
+    .header-nav { display: none; }
+}
+@media (max-width: 480px) {
+    .hero { padding: 40px 16px 30px; }
+    .content-layout { padding: 0 16px 60px; }
+    .section { padding: 20px; }
+    .section-title { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <img src="/favicon.svg" alt="Oris" class="logo-icon">
+            <span class="logo-text">Oris</span>
+        </a>
+        <nav class="header-nav">
+            <a href="/">Проекты</a>
+            <a href="/news">Новости</a>
+            <a href="/policy">Privacy</a>
+            <a href="/terms" class="active">Terms</a>
+        </nav>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="hero-badge">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Условия использования
+    </div>
+    <h1 class="hero-title">Правила платформы Oris</h1>
+    <p class="hero-subtitle">
+        Используя наши сервисы, вы соглашаетесь с настоящими условиями. Пожалуйста, прочитайте их внимательно.
+    </p>
+    <div class="hero-meta">
+        <span>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Вступает в силу: 6 июля 2026
+        </span>
+        <span>
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Версия 1.0
+        </span>
+    </div>
+</section>
+
+<div class="content-layout">
+    <aside class="sidebar">
+        <div class="sidebar-title">Разделы</div>
+        <ul class="sidebar-list">
+            <li><a class="sidebar-item active" href="#acceptance">Принятие условий</a></li>
+            <li><a class="sidebar-item" href="#description">Описание сервисов</a></li>
+            <li><a class="sidebar-item" href="#licenses">Лицензирование</a></li>
+            <li><a class="sidebar-item" href="#acceptable-use">Допустимое использование</a></li>
+            <li><a class="sidebar-item" href="#prohibited">Запрещённое</a></li>
+            <li><a class="sidebar-item" href="#user-content">Контент пользователей</a></li>
+            <li><a class="sidebar-item" href="#dmca">DMCA и авторские права</a></li>
+            <li><a class="sidebar-item" href="#disclaimer">Отказ от ответственности</a></li>
+            <li><a class="sidebar-item" href="#liability">Ограничение ответственности</a></li>
+            <li><a class="sidebar-item" href="#termination">Прекращение доступа</a></li>
+            <li><a class="sidebar-item" href="#changes">Изменения условий</a></li>
+            <li><a class="sidebar-item" href="#governing-law">Применимое право</a></li>
+            <li><a class="sidebar-item" href="#contact">Контакты</a></li>
+        </ul>
+    </aside>
+
+    <main class="content">
+        <section class="section" id="acceptance">
+            <h2 class="section-title"><span class="section-number">01</span>Принятие условий</h2>
+            <p class="section-subtitle">
+                Настоящие Условия использования («Условия») регулируют ваше взаимодействие с платформой Oris и всеми её сервисами.
+            </p>
+            <p>Используя любой из наших сервисов — включая веб-сайт, API, приложения и инструменты — вы подтверждаете, что прочитали, поняли и согласны с настоящими Условиями. Если вы не согласны с каким-либо положением, пожалуйста, прекратите использование сервисов.</p>
+            
+            <div class="alert-box warning">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div>
+                    <div class="alert-box-title">Важно</div>
+                    Использование сервисов лицами младше 13 лет запрещено. Используя сервисы, вы подтверждаете, что вам исполнилось 13 лет.
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="description">
+            <h2 class="section-title"><span class="section-number">02</span>Описание сервисов</h2>
+            <p>Платформа Oris включает следующие сервисы:</p>
+            <ul>
+                <li><strong>Каталог проектов</strong> — коллекция избранных веб-проектов</li>
+                <li><strong>Новости</strong> — блог с системой комментариев и лайков</li>
+                <li><strong>Статус</strong> — мониторинг доступности сервисов</li>
+                <li><strong>API</strong> — программный интерфейс для разработчиков</li>
+                <li><strong>Файлообменник</strong> — хранение и раздача файлов</li>
+                <li><strong>Видеозвонки</strong> — P2P связь через WebRTC</li>
+                <li><strong>JSON Studio</strong> — редактор JSON-файлов</li>
+                <li><strong>Calculator Studio</strong> — калькулятор</li>
+                <li><strong>Timer Studio</strong> — таймер и секундомер</li>
+                <li><strong>Wheel of Fortune</strong> — колесо фортуны</li>
+                <li><strong>GetLi</strong> — защищённые короткие ссылки</li>
+                <li><strong>Push-уведомления</strong> — система веб-push</li>
+            </ul>
+            <p>Мы оставляем за собой право добавлять, изменять или удалять сервисы без предварительного уведомления.</p>
+        </section>
+
+        <section class="section" id="licenses">
+            <h2 class="section-title"><span class="section-number">03</span>Лицензирование</h2>
+            <p>Различные компоненты платформы распространяются под разными лицензиями:</p>
+
+            <div class="license-card">
+                <div class="license-card-header">
+                    <div class="license-icon mit">MIT</div>
+                    <div>
+                        <div class="license-name">Открытые компоненты</div>
+                        <div class="license-type">MIT License</div>
+                    </div>
+                </div>
+                <p style="margin:0">Клиентский код (HTML, CSS, JS), утилиты и инструменты распространяются под лицензией MIT. Вы можете свободно использовать, модифицировать и распространять их.</p>
+            </div>
+
+            <div class="license-card">
+                <div class="license-card-header">
+                    <div class="license-icon prop">©</div>
+                    <div>
+                        <div class="license-name">Проприетарные компоненты</div>
+                        <div class="license-type">All Rights Reserved</div>
+                    </div>
+                </div>
+                <p style="margin:0">Серверный код, бизнес-логика, дизайн-система и бренд Oris защищены авторским правом. Копирование, распространение или коммерческое использование без письменного разрешения запрещено.</p>
+            </div>
+
+            <p>Торговые марки, логотипы и фирменный стиль Oris являются собственностью Oris Inc. и защищены международным законодательством.</p>
+        </section>
+
+        <section class="section" id="acceptable-use">
+            <h2 class="section-title"><span class="section-number">04</span>Допустимое использование</h2>
+            <p>Вы соглашаетесь использовать сервисы только в законных целях и в соответствии с настоящими Условиями. Допустимое использование включает:</p>
+            <ul>
+                <li>Просмотр каталога проектов и новостей</li>
+                <li>Оставление комментариев и участие в обсуждениях</li>
+                <li>Использование API в рамках установленных лимитов</li>
+                <li>Загрузку и скачивание файлов через файлообменник</li>
+                <li>Проведение видеозвонков для личного и делового общения</li>
+                <li>Использование инструментов (JSON Studio, Calculator и др.) для личных и коммерческих задач</li>
+                <li>Подачу заявок на добавление проектов и сотрудничество</li>
+            </ul>
+        </section>
+
+        <section class="section" id="prohibited">
+            <h2 class="section-title"><span class="section-number">05</span>Запрещённое использование</h2>
+            <p>Строго запрещается:</p>
+            <ul>
+                <li>Нарушение любых применимых законов и нормативных актов</li>
+                <li>Попытки несанкционированного доступа к системам, аккаунтам или данным</li>
+                <li>Распространение вредоносного ПО, вирусов, троянов</li>
+                <li>Спам, фишинг, социальная инженерия</li>
+                <li>Нарушение интеллектуальной собственности третьих лиц</li>
+                <li>Публикация контента, разжигающего ненависть, насилие, дискриминацию</li>
+                <li>Автоматизированный сбор данных (скрейпинг) без разрешения</li>
+                <li>Обход rate limiting и других механизмов защиты</li>
+                <li>Использование сервисов для майнинга криптовалют</li>
+                <li>Любые действия, нарушающие работу или безопасность платформы</li>
+            </ul>
+
+            <div class="alert-box danger">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                <div>
+                    <div class="alert-box-title">Последствия нарушений</div>
+                    Нарушение этих правил может привести к немедленному блокированию аккаунта, удалению контента и, при необходимости, передаче информации правоохранительным органам.
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="user-content">
+            <h2 class="section-title"><span class="section-number">06</span>Контент пользователей</h2>
+            <p>Вы сохраняете все права на контент, который публикуете через наши сервисы (комментарии, заявки, файлы). Публикуя контент, вы предоставляете нам неисключительную, безвозмездную, всемирную лицензию на его хранение, отображение и распространение в рамках работы сервисов.</p>
+            <p>Вы несёте полную ответственность за публикуемый контент и гарантируете, что:</p>
+            <ul>
+                <li>Контент не нарушает права третьих лиц</li>
+                <li>Контент не содержит вредоносного кода</li>
+                <li>У вас есть все необходимые права и разрешения</li>
+            </ul>
+            <p>Мы оставляем за собой право удалять любой контент, который, по нашему мнению, нарушает настоящие Условия или применимое законодательство, без предварительного уведомления.</p>
+        </section>
+
+        <section class="section" id="dmca">
+            <h2 class="section-title"><span class="section-number">07</span>DMCA и авторские права</h2>
+            <p>Мы уважаем права интеллектуальной собственности и ожидаем того же от пользователей. Если вы считаете, что контент на платформе нарушает ваши авторские права, отправьте уведомление по адресу <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a> со следующей информацией:</p>
+            <ol>
+                <li>Описание защищённого авторским правом произведения</li>
+                <li>URL или описание материала, который нарушает ваши права</li>
+                <li>Ваши контактные данные</li>
+                <li>Заявление о добросовестности</li>
+                <li>Заявление о точности информации под страхом наказания за лжесвидетельство</li>
+                <li>Ваша физическая или электронная подпись</li>
+            </ol>
+            <p>Мы рассмотрим уведомление в течение 5 рабочих дней и примем соответствующие меры.</p>
+        </section>
+
+        <section class="section" id="disclaimer">
+            <h2 class="section-title"><span class="section-number">08</span>Отказ от ответственности</h2>
+            <p>Сервисы предоставляются <strong>«как есть»</strong> и <strong>«как доступно»</strong>, без каких-либо явных или подразумеваемых гарантий, включая, но не ограничиваясь:</p>
+            <ul>
+                <li>Гарантии товарной пригодности</li>
+                <li>Гарантии соответствия конкретной цели</li>
+                <li>Гарантии ненарушения прав</li>
+                <li>Гарантии бесперебойной работы</li>
+            </ul>
+            <p>Мы не гарантируем, что:</p>
+            <ul>
+                <li>Сервисы будут работать без ошибок или перерывов</li>
+                <li>Результаты использования будут точными или надёжными</li>
+                <li>Качество продуктов, услуг или информации, полученных через сервисы, будет соответствовать вашим ожиданиям</li>
+            </ul>
+
+            <div class="alert-box warning">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div>
+                    <div class="alert-box-title">Регулярные бэкапы</div>
+                    Мы рекомендуем регулярно создавать резервные копии важных данных. Мы не несём ответственности за потерю данных из-за технических сбоев.
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="liability">
+            <h2 class="section-title"><span class="section-number">09</span>Ограничение ответственности</h2>
+            <p>В максимальной степени, разрешённой применимым законодательством, Oris Inc. и её аффилированные лица не несут ответственности за:</p>
+            <ul>
+                <li>Косвенные, случайные, особые или последующие убытки</li>
+                <li>Потерю прибыли, доходов, данных или нематериальных потерь</li>
+                <li>Ущерб, возникший в результате использования или невозможности использования сервисов</li>
+            </ul>
+            <p>Наша совокупная ответственность по любым претензиям, связанным с сервисами, ограничена <strong>100 USD</strong> или суммой, фактически уплаченной вами за использование сервисов за последние 12 месяцев (в зависимости от того, что больше).</p>
+            <p>Некоторые юрисдикции не допускают ограничения ответственности, поэтому вышеуказанные ограничения могут не применяться к вам в полной мере.</p>
+        </section>
+
+        <section class="section" id="termination">
+            <h2 class="section-title"><span class="section-number">10</span>Прекращение доступа</h2>
+            <p>Мы оставляем за собой право приостановить или прекратить ваш доступ к сервисам в любое время, с или без уведомления, по любой причине, включая, но не ограничиваясь:</p>
+            <ul>
+                <li>Нарушением настоящих Условий</li>
+                <li>Требованиями закона или правоохранительных органов</li>
+                <li>Техническими или безопасностными причинами</li>
+                <li>Прекращением работы сервисов</li>
+            </ul>
+            <p>После прекращения доступа ваши права на использование сервисов немедленно прекращаются. Положения об интеллектуальной собственности, ограничении ответственности и применимом праве остаются в силе.</p>
+        </section>
+
+        <section class="section" id="changes">
+            <h2 class="section-title"><span class="section-number">11</span>Изменения условий</h2>
+            <p>Мы можем периодически обновлять настоящие Условия. Существенные изменения будут опубликованы на этой странице с указанием даты вступления в силу. Мы также можем уведомить вас через:</p>
+            <ul>
+                <li>Push-уведомления (если вы подписаны)</li>
+                <li>Сообщение на странице входа</li>
+                <li>Публикацию в разделе новостей</li>
+            </ul>
+            <p>Продолжение использования сервисов после вступления изменений в силу означает ваше согласие с новой редакцией Условий.</p>
+        </section>
+
+        <section class="section" id="governing-law">
+            <h2 class="section-title"><span class="section-number">12</span>Применимое право</h2>
+            <p>Настоящие Условия регулируются и толкуются в соответствии с законодательством <strong>Российской Федерации</strong>, без учёта принципов коллизионного права.</p>
+            <p>Любые споры, возникающие из настоящих Условий или в связи с ними, подлежат разрешению в судах общей юрисдикции по месту нахождения ответчика, если иное не установлено императивными нормами закона.</p>
+            <p>Если какое-либо положение настоящих Условий будет признано недействительным или неисполнимым, остальные положения останутся в полной силе.</p>
+        </section>
+
+        <section class="section" id="contact">
+            <h2 class="section-title"><span class="section-number">13</span>Контакты</h2>
+            <p>По вопросам, связанным с настоящими Условиями, обращайтесь:</p>
+            <ul>
+                <li><strong>Email:</strong> <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a></li>
+                <li><strong>Telegram:</strong> <a href="https://t.me/VoraxisBOT" target="_blank" rel="noopener">@VoraxisBOT</a></li>
+                <li><strong>Тикет-система:</strong> <a href="/support">oris-flax.vercel.app/support</a></li>
+            </ul>
+            <p>Время ответа: до 24 часов в рабочие дни.</p>
+
+            <div class="alert-box success">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div>
+                    <div class="alert-box-title">Спасибо за внимание</div>
+                    Используя сервисы Oris, вы помогаете нам создавать лучшие продукты. Мы ценим ваше доверие и стремимся заслужить его каждый день.
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<footer class="footer">
+    <div>
+        <strong>Oris Platform</strong> · © 2026 Oris Inc.
+    </div>
+    <div>
+        <a href="/">Главная</a> · 
+        <a href="/policy">Privacy</a> · 
+        <a href="/terms">Terms</a> · 
+        <a href="https://t.me/VoraxisBOT" target="_blank">Telegram</a>
+    </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            const active = document.querySelector(`.sidebar-item[href="#${entry.target.id}"]`);
+            if (active) active.classList.add('active');
+        }
+    });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+try {
+    const t = localStorage.getItem('oris-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+} catch(e) {}
+</script>
+
+</body>
+</html>
