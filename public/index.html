@@ -941,53 +941,229 @@ p.subtitle {
 .modal-text a:hover { border-bottom-color: var(--accent); }
 
 /* ============================================
-   FOOTER
+   FLOATING FOOTER (macOS/Oris style)
    ============================================ */
-footer {
-    background: var(--bg-card);
-    border-top: 1px solid var(--border);
-    padding: 60px 24px 40px;
-    margin-top: 80px;
+.site-footer {
+    max-width: 1100px;
+    margin: 80px auto 24px;
+    padding: 0;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
 }
 
-.footer-grid {
+:root[data-theme="dark"] .site-footer {
+    background: rgba(28, 28, 30, 0.72);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .site-footer {
+        background: rgba(28, 28, 30, 0.72);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+}
+
+.footer-inner {
+    padding: 40px 32px 24px;
+}
+
+/* Top section */
+.footer-top {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: 240px 1fr;
     gap: 40px;
-    max-width: 1200px;
-    margin: 0 auto 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border-light);
 }
 
-.footer-col h4 {
-    font-size: 0.85rem;
-    font-weight: 600;
+/* Brand section */
+.footer-brand-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
     color: var(--text-primary);
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    transition: opacity 0.2s ease;
 }
 
-.footer-col a, .footer-col p {
-    display: block;
+.footer-logo:hover { opacity: 0.75; }
+
+.footer-logo-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.footer-logo-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.footer-tagline {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.footer-social {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.footer-social-link {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.footer-social-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Footer columns */
+.footer-columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+/* Accordion sections */
+.footer-section {
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--bg-card);
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.footer-section:hover {
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.footer-section-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-align: left;
+}
+
+.footer-section-toggle:hover {
+    background: var(--border-light);
+}
+
+.footer-section-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.footer-chevron {
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+    color: var(--text-tertiary);
+}
+
+.footer-section-toggle[aria-expanded="true"] .footer-chevron {
+    transform: rotate(90deg);
+    color: var(--accent);
+}
+
+.footer-section-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    padding: 0 16px;
+}
+
+.footer-section-toggle[aria-expanded="true"] + .footer-section-content {
+    max-height: 400px;
+    padding: 0 16px 16px;
+}
+
+.footer-section-content a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0;
     color: var(--text-secondary);
     text-decoration: none;
-    margin-bottom: 12px;
-    font-size: 0.9rem;
-    transition: color 0.2s;
+    font-size: 0.88rem;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.footer-col a:hover { color: var(--accent); }
+.footer-section-content a:hover {
+    color: var(--accent);
+    transform: translateX(4px);
+}
 
+.footer-external-icon {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.footer-section-content a:hover .footer-external-icon {
+    opacity: 1;
+}
+
+/* Bottom section */
 .footer-bottom {
-    max-width: 1200px;
-    margin: 0 auto;
-    border-top: 1px solid var(--border);
-    padding-top: 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
+    padding-top: 24px;
     gap: 16px;
+    flex-wrap: wrap;
+}
+
+.footer-bottom-left,
+.footer-bottom-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .footer-brand {
@@ -998,11 +1174,84 @@ footer {
     color: var(--text-secondary);
 }
 
-.footer-brand svg { width: 20px; height: 20px; color: var(--accent); }
+.footer-brand-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--accent);
+}
+
+.footer-divider {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+}
 
 .footer-made {
     font-size: 0.8rem;
     color: var(--text-tertiary);
+}
+
+.footer-legal-link {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-legal-link:hover {
+    color: var(--accent);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+    .site-footer {
+        max-width: calc(100% - 32px);
+        margin: 60px 16px 16px;
+    }
+    
+    .footer-top {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    .footer-columns {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .footer-inner {
+        padding: 28px 20px 20px;
+    }
+    
+    .footer-columns {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .footer-bottom-right {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .site-footer {
+        max-width: calc(100% - 16px);
+        margin: 40px 8px 8px;
+        border-radius: 16px;
+    }
+    
+    .footer-social-link {
+        width: 32px;
+        height: 32px;
+    }
 }
 
 /* ============================================
@@ -1253,54 +1502,134 @@ footer {
         </div>
     </div>
 
-    <footer>
-        <div class="footer-grid">
-            <div class="footer-col">
-                <h4>Oris</h4>
-                <a href="#" data-modal="privacyModal">Конфиденциальность</a>
-                <a href="#" data-modal="termsModal">Условия использования</a>
-                <a href="#" data-modal="collabModal">Сотрудничество</a>
+    <!-- Floating Footer -->
+<footer class="site-footer">
+    <div class="footer-inner">
+        <div class="footer-top">
+            <div class="footer-brand-section">
+                <a href="/" class="footer-logo">
+                    <img src="/favicon.svg" alt="Oris" class="footer-logo-icon">
+                    <span class="footer-logo-text">Oris</span>
+                </a>
+                <p class="footer-tagline">Инновационные решения и цифровые проекты</p>
+                <div class="footer-social">
+                    <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="Telegram">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                    </a>
+                    <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer" class="footer-social-link" aria-label="GitHub">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>
+                    <a href="mailto:di44avolod@ya.ru" class="footer-social-link" aria-label="Email">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </a>
+                </div>
             </div>
-            <div class="footer-col">
-                <h4>Проекты</h4>
-                <a href="/news">Новости</a>
-                <a href="/changelog">История изменений</a>
-                <a href="/rest">API Reference</a>
-                <a href="/links">Короткие ссылки</a>
-                <a href="/status">Статус</a>
-                <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer">
-                    Исходный код
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                </a>
-            </div>
-            <div class="footer-col">
-                <h4>Поддержка</h4>
-                <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer">
-                    Telegram-бот
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                </a>
-                <a href="mailto:di44avolod@ya.ru">
-                    Email
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-left: 4px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                </a>
+
+            <div class="footer-columns">
+                <!-- Секция: Oris -->
+                <div class="footer-section">
+                    <button class="footer-section-toggle" aria-expanded="false">
+                        <span>Oris</span>
+                        <svg class="footer-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <div class="footer-section-content">
+                        <a href="#" data-modal="privacyModal">Конфиденциальность</a>
+                        <a href="#" data-modal="termsModal">Условия использования</a>
+                        <a href="#" data-modal="collabModal">Сотрудничество</a>
+                    </div>
+                </div>
+
+                <!-- Секция: Проекты -->
+                <div class="footer-section">
+                    <button class="footer-section-toggle" aria-expanded="false">
+                        <span>Проекты</span>
+                        <svg class="footer-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <div class="footer-section-content">
+                        <a href="/news">Новости</a>
+                        <a href="/changelog">История изменений</a>
+                        <a href="/rest">API Reference</a>
+                        <a href="/links">Короткие ссылки</a>
+                        <a href="/status">Статус</a>
+                        <a href="https://github.com/official-ids/Saites/tree/Oris" target="_blank" rel="noopener noreferrer">
+                            Исходный код
+                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="footer-external-icon">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Секция: Поддержка -->
+                <div class="footer-section">
+                    <button class="footer-section-toggle" aria-expanded="false">
+                        <span>Поддержка</span>
+                        <svg class="footer-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <div class="footer-section-content">
+                        <a href="https://t.me/OrisAssistancebot" target="_blank" rel="noopener noreferrer">
+                            Telegram-бот
+                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="footer-external-icon">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </a>
+                        <a href="mailto:di44avolod@ya.ru">
+                            Email
+                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="footer-external-icon">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                        </a>
+                        <a href="/support">Создать тикет</a>
+                        <a href="/help">Центр помощи</a>
+                    </div>
+                </div>
+
+                <!-- Секция: Ресурсы -->
+                <div class="footer-section">
+                    <button class="footer-section-toggle" aria-expanded="false">
+                        <span>Ресурсы</span>
+                        <svg class="footer-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <div class="footer-section-content">
+                        <a href="/add">Добавить сайт</a>
+                        <a href="/downloader">Файлообменник</a>
+                        <a href="/call">Видеозвонки</a>
+                        <a href="/getli">GetLi</a>
+                        <a href="/json-studio">JSON Studio</a>
+                    </div>
+                </div>
             </div>
         </div>
+
         <div class="footer-bottom">
-            <div class="footer-brand">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>© <span id="currentYear"></span> Oris Inc. Все права защищены.</span>
+            <div class="footer-bottom-left">
+                <div class="footer-brand">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="footer-brand-icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span>© <span id="currentYear"></span> Oris Inc.</span>
+                </div>
+                <span class="footer-divider">·</span>
+                <span class="footer-made">Сделано с ❤︎ в России</span>
             </div>
-            <div class="footer-made">Сделано с ❤︎ в России</div>
+            <div class="footer-bottom-right">
+                <a href="/privacy" class="footer-legal-link">Privacy</a>
+                <span class="footer-divider">·</span>
+                <a href="/terms" class="footer-legal-link">Terms</a>
+                <span class="footer-divider">·</span>
+                <a href="/status" class="footer-legal-link">Status</a>
+            </div>
         </div>
-    </footer>
+    </div>
+</footer>
 
 <script>
 (function() {
@@ -2184,6 +2513,43 @@ footer {
         }
     });
 })();
+
+// ============================================
+// Footer Accordion
+// ============================================
+(function() {
+    'use strict';
+    
+    const footerToggles = document.querySelectorAll('.footer-section-toggle');
+    
+    footerToggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+            
+            // Закрыть все остальные (опционально — убрать если нужно несколько открытых)
+            footerToggles.forEach(otherToggle => {
+                if (otherToggle !== toggle) {
+                    otherToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Переключить текущий
+            toggle.setAttribute('aria-expanded', !isExpanded);
+        });
+    });
+    
+    // На десктопе можно открыть все по умолчанию
+    function handleResponsive() {
+        const isDesktop = window.innerWidth > 900;
+        footerToggles.forEach(toggle => {
+            toggle.setAttribute('aria-expanded', isDesktop);
+        });
+    }
+    
+    handleResponsive();
+    window.addEventListener('resize', handleResponsive);
+})();
+
 </script>
 <script src="/theme.js" defer></script>
 </body>
