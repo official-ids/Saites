@@ -74,8 +74,7 @@ const MODULE_PATHS = {
     ROBLOX: '../roblox',
     YOUTUBE: '../youtube',
     MONITOR: '../monitor',
-    JSON_STUDIO: '../json_studio',
-    PROFILE: '../profile'
+    JSON_STUDIO: '../json_studio'
 };
 
 /**
@@ -124,10 +123,6 @@ const monitorRouter = require(MODULE_PATHS.MONITOR);
  */
 const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
 
-/**
- * Роутер для Profile
- */
-const profileRouter = require(MODULE_PATHS.PROFILE);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1275,7 +1270,6 @@ app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/json_studio', jsonStudioRouter);
-app.use('/api/profile', profileRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
