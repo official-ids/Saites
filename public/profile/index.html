@@ -1217,23 +1217,73 @@ function navigate(page, params = {}) {
     
     document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
     
+    // Обновление URL без перезагрузки
+    let newUrl = '/catalog';
+    
     if (page === 'catalog') {
         document.getElementById('catalogPage').classList.add('active');
+        newUrl = '/catalog';
         loadCatalog();
     } else if (page === 'profile') {
         document.getElementById('profilePage').classList.add('active');
-        loadProfile(params.username);
+        newUrl = params.username 
+            ? `/profile/@${params.username}` 
+            : (State.user ? `/profile/@${State.user.username}` : '/profile');
+        loadProfile(params.username || (State.user ? State.user.username : null));
     } else if (page === 'settings') {
+        if (!State.user) {
+            navigate('catalog');
+            toast('Войдите в аккаунт', 'warning');
+            return;
+        }
+        document.getElementById('settingsPage').classList.add('active');
+        newUrl = '/profile/settings';
+        loadSettings();
+    } else if (page === 'friends') {
         if (!State.user) {
             navigate('catalog');
             return;
         }
-        document.getElementById('settingsPage').classList.add('active');
-        loadSettings();
+        document.getElementById('friendsPage')?.classList.add('active');
+        newUrl = '/profile/friends';
+    } else if (page === 'favorites') {
+        if (!State.user) {
+            navigate('catalog');
+            return;
+        }
+        document.getElementById('favoritesPage')?.classList.add('active');
+        newUrl = '/profile/favorites';
+    }
+    
+    // Обновляем URL через history API
+    if (window.location.pathname !== newUrl) {
+        window.history.pushState({ page, params }, '', newUrl);
     }
     
     window.scrollTo(0, 0);
 }
+
+// Обработка кнопки "Назад" в браузере
+window.addEventListener('popstate', (event) => {
+    const path = window.location.pathname;
+    
+    if (path === '/catalog' || path === '/catalog/search') {
+        navigate('catalog');
+    } else if (path === '/profile/settings') {
+        navigate('settings');
+    } else if (path === '/profile/friends') {
+        navigate('friends');
+    } else if (path === '/profile/favorites') {
+        navigate('favorites');
+    } else if (path.startsWith('/profile/@')) {
+        const username = path.split('/profile/@')[1];
+        navigate('profile', { username });
+    } else if (path === '/profile' || path === '/profile/me') {
+        navigate('profile');
+    } else {
+        navigate('catalog');
+    }
+});
 
 // ============================================
 // AUTH
@@ -1295,17 +1345,38 @@ function updateHeaderAuth() {
     const container = document.getElementById('headerActions');
     if (State.user) {
         container.innerHTML = `
+            <a href="/catalog" class="auth-btn" onclick="event.preventDefault(); navigate('catalog')">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span>Каталог</span>
+            </a>
+            <a href="/profile" class="auth-btn" onclick="event.preventDefault(); navigate('profile')">
+                <img src="${State.user.avatar}" class="auth-avatar" alt="">
+                <span>${State.user.displayName.split(' ')[0]}</span>
+            </a>
             <a href="/profile/settings" class="auth-btn" onclick="event.preventDefault(); navigate('settings')">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
                 <span>Настройки</span>
             </a>
             <button class="auth-btn" onclick="logout()">
-                <img src="${State.user.avatar}" class="auth-avatar" alt="">
-                <span>${State.user.displayName.split(' ')[0]}</span>
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                <span>Выйти</span>
             </button>
         `;
     } else {
         container.innerHTML = `
+            <a href="/catalog" class="auth-btn" onclick="event.preventDefault(); navigate('catalog')">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span>Каталог</span>
+            </a>
             <div id="googleSignInButton"></div>
         `;
         setTimeout(() => {
@@ -1831,13 +1902,11 @@ async function init() {
             State.user = JSON.parse(savedUser);
             State.token = savedToken;
             
-            // Проверить валидность сессии
             try {
                 const me = await API.getMe();
                 State.user = me.user;
                 localStorage.setItem('profile_user', JSON.stringify(State.user));
                 
-                // Обновить онлайн статус
                 try {
                     await API.updateOnline();
                 } catch (err) {
@@ -1864,9 +1933,46 @@ async function init() {
     
     // Обработка URL
     const path = window.location.pathname;
-    const hash = window.location.hash;
     
-    if (path.includes('/profile/@')) {
+    // /catalog или /catalog/search
+    if (path === '/catalog' || path === '/catalog/search') {
+        navigate('catalog');
+        return;
+    }
+    
+    // /profile/settings
+    if (path === '/profile/settings') {
+        if (State.user) {
+            navigate('settings');
+        } else {
+            navigate('catalog');
+            toast('Войдите в аккаунт', 'warning');
+        }
+        return;
+    }
+    
+    // /profile/friends
+    if (path === '/profile/friends') {
+        if (State.user) {
+            navigate('friends');
+        } else {
+            navigate('catalog');
+        }
+        return;
+    }
+    
+    // /profile/favorites
+    if (path === '/profile/favorites') {
+        if (State.user) {
+            navigate('favorites');
+        } else {
+            navigate('catalog');
+        }
+        return;
+    }
+    
+    // /profile/@username
+    if (path.startsWith('/profile/@')) {
         const username = path.split('/profile/@')[1]?.split('/')[0];
         if (username) {
             navigate('profile', { username });
@@ -1874,13 +1980,18 @@ async function init() {
         }
     }
     
-    if (path.includes('/profile/settings') || hash === '#settings') {
+    // /profile или /profile/me — свой профиль
+    if (path === '/profile' || path === '/profile/me') {
         if (State.user) {
-            navigate('settings');
-            return;
+            navigate('profile');
+        } else {
+            navigate('catalog');
+            toast('Войдите в аккаунт', 'warning');
         }
+        return;
     }
     
+    // По умолчанию — каталог
     navigate('catalog');
 }
 
