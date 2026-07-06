@@ -637,6 +637,10 @@ const CSP_CLOUDFLARE = "https://cdnjs.cloudflare.com";
 const CSP_GOOGLE_FONTS = "https://fonts.googleapis.com";
 const CSP_GOOGLE_FONTS_STATIC = "https://fonts.gstatic.com";
 
+const CSP_GOOGLE_ACCOUNTS = "https://accounts.google.com";
+const CSP_GOOGLE_GSTATIC = "https://www.gstatic.com";
+const CSP_GOOGLE_USER_CONTENT = "https://*.googleusercontent.com";
+
 // Notifications
 const CSP_FIREFOX = "https://push.services.mozilla.com";
 const CSP_GOOGLE_notifications = "https://fcm.googleapis.com";
@@ -687,6 +691,8 @@ const CSP_DIRECTIVES = {
         CSP_GOOGLE_FONTS,
         CSP_UNPKG,
         CSP_CLOUDFLARE,
+        CSP_GOOGLE_ACCOUNTS,
+        CSP_GOOGLE_GSTATIC,   
         'https://api.qrserver.com'
     ],
     
@@ -695,6 +701,7 @@ const CSP_DIRECTIVES = {
         CSP_UNSAFE_INLINE,
         CSP_GOOGLE_FONTS,
         CSP_CLOUDFLARE,
+        CSP_GOOGLE_ACCOUNTS,
         'https://api.qrserver.com'
     ],
     
@@ -715,6 +722,7 @@ const CSP_DIRECTIVES = {
         CSP_YOUTUBE_USER_CONTENT,
         CSP_VERCEL_BLOB,
         CSP_VERCEL_PUBLIC_BLOB,
+        CSP_GOOGLE_USER_CONTENT,  // ← ДОБАВИТЬ (для аватаров Google)
         'https://api.qrserver.com'
     ],
     
@@ -745,6 +753,7 @@ const CSP_DIRECTIVES = {
         CSP_GLITCH_WSS,
         CSP_VERCEL_BLOB,
         CSP_VERCEL_PUBLIC_BLOB,
+        CSP_GOOGLE_ACCOUNTS,
         'https://fcm.googleapis.com/fcm/send',
         'https://android.googleapis.com',    // Android GCM
         'https://push.apple.com',
