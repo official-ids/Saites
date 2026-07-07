@@ -627,6 +627,7 @@ const app = express();
 // Self and inline resources
 const CSP_SELF = "'self'";
 const CSP_UNSAFE_INLINE = "'unsafe-inline'";
+const CSP_UNSAFE_EVAL = "'unsafe-eval'";
 const CSP_NONE = "'none'";
 
 // CDN and external resources
@@ -638,13 +639,15 @@ const CSP_CLOUDFLARE = "https://cdnjs.cloudflare.com";
 const CSP_GOOGLE_FONTS = "https://fonts.googleapis.com";
 const CSP_GOOGLE_FONTS_STATIC = "https://fonts.gstatic.com";
 
+// Google Identity Services (OAuth)
 const CSP_GOOGLE_ACCOUNTS = "https://accounts.google.com";
 const CSP_GOOGLE_GSTATIC = "https://www.gstatic.com";
 const CSP_GOOGLE_USER_CONTENT = "https://*.googleusercontent.com";
+const CSP_GOOGLE_APIS = "https://apis.google.com";
 
 // Notifications
 const CSP_FIREFOX = "https://push.services.mozilla.com";
-const CSP_GOOGLE_notifications = "https://fcm.googleapis.com";
+const CSP_GOOGLE_NOTIFICATIONS = "https://fcm.googleapis.com";
 
 // YouTube resources
 const CSP_YOUTUBE_THUMBNAILS = "https://i.ytimg.com";
@@ -674,6 +677,9 @@ const CSP_GLITCH_WSS = "wss://*.glitch.me";
 const CSP_GITHUB_API = "https://api.github.com";
 const CSP_TELEGRAM_API = "https://api.telegram.org";
 
+// QR Code API
+const CSP_QR_SERVER = "https://api.qrserver.com";
+
 // Data and blob URLs
 const CSP_DATA = "data:";
 const CSP_BLOB = "blob:";
@@ -688,13 +694,15 @@ const CSP_DIRECTIVES = {
     scriptSrc: [
         CSP_SELF,
         CSP_UNSAFE_INLINE,
+        CSP_UNSAFE_EVAL,  // ← ДОБАВИТЬ (для Google Sign-In)
         CSP_TAILWIND_CDN,
         CSP_GOOGLE_FONTS,
         CSP_UNPKG,
         CSP_CLOUDFLARE,
         CSP_GOOGLE_ACCOUNTS,
-        CSP_GOOGLE_GSTATIC,   
-        'https://api.qrserver.com'
+        CSP_GOOGLE_GSTATIC,
+        CSP_GOOGLE_APIS,  // ← ДОБАВИТЬ (для Google Sign-In)
+        CSP_QR_SERVER
     ],
     
     styleSrc: [
@@ -702,8 +710,7 @@ const CSP_DIRECTIVES = {
         CSP_UNSAFE_INLINE,
         CSP_GOOGLE_FONTS,
         CSP_CLOUDFLARE,
-        CSP_GOOGLE_ACCOUNTS,
-        'https://api.qrserver.com'
+        CSP_QR_SERVER
     ],
     
     fontSrc: [
@@ -711,7 +718,7 @@ const CSP_DIRECTIVES = {
         CSP_GOOGLE_FONTS_STATIC,
         CSP_DATA,
         CSP_CLOUDFLARE,
-        'https://api.qrserver.com'
+        CSP_QR_SERVER
     ],
     
     imgSrc: [
@@ -723,8 +730,8 @@ const CSP_DIRECTIVES = {
         CSP_YOUTUBE_USER_CONTENT,
         CSP_VERCEL_BLOB,
         CSP_VERCEL_PUBLIC_BLOB,
-        CSP_GOOGLE_USER_CONTENT,  // ← ДОБАВИТЬ (для аватаров Google)
-        'https://api.qrserver.com'
+        CSP_GOOGLE_USER_CONTENT,
+        CSP_QR_SERVER
     ],
     
     mediaSrc: [
@@ -732,12 +739,12 @@ const CSP_DIRECTIVES = {
         CSP_BLOB,
         CSP_VERCEL_BLOB,
         CSP_VERCEL_PUBLIC_BLOB,
-        'https://api.qrserver.com'
+        CSP_QR_SERVER
     ],
     
     connectSrc: [
         CSP_FIREFOX,
-        CSP_GOOGLE_notifications,
+        CSP_GOOGLE_NOTIFICATIONS,
         CSP_SELF,
         CSP_GITHUB_API,
         CSP_YOUTUBE_API,
@@ -755,10 +762,27 @@ const CSP_DIRECTIVES = {
         CSP_VERCEL_BLOB,
         CSP_VERCEL_PUBLIC_BLOB,
         CSP_GOOGLE_ACCOUNTS,
+        CSP_GOOGLE_APIS,  // ← ДОБАВИТЬ
+        CSP_QR_SERVER,
         'https://fcm.googleapis.com/fcm/send',
-        'https://android.googleapis.com',    // Android GCM
-        'https://push.apple.com',
-        'https://api.qrserver.com'
+        'https://android.googleapis.com',
+        'https://push.apple.com'
+    ],
+    
+    frameSrc: [  // ← ДОБАВИТЬ (для Google Sign-In iframe)
+        CSP_GOOGLE_ACCOUNTS,
+        CSP_GOOGLE_GSTATIC,
+        CSP_GOOGLE_APIS
+    ],
+    
+    childSrc: [  // ← ДОБАВИТЬ (для iframe)
+        CSP_GOOGLE_ACCOUNTS,
+        CSP_GOOGLE_GSTATIC
+    ],
+    
+    workerSrc: [  // ← ДОБАВИТЬ (для service workers)
+        CSP_SELF,
+        CSP_BLOB
     ],
     
     objectSrc: [CSP_NONE],
