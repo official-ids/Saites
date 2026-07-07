@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="ChromaCode v2.0 — конвертер авторской системы цветов с 50 параметрами">
+<meta name="theme-color" content="#000000">
+<title>ChromaCode v2.0 · Oris Palette Converter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.12);
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --danger: #FF453A;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --header-h: 56px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+.header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.logo:hover { opacity: 0.75; }
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.header-nav a {
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.header-nav a:hover {
+    color: var(--text-primary);
+    background: var(--border);
+}
+.header-nav a.active {
+    color: var(--text-primary);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
+
+/* Layout */
+.layout { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* Hero */
+.hero {
+    padding: 80px 0 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 800px;
+    background: radial-gradient(circle, rgba(10, 132, 255, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--accent-light);
+    border: 1px solid rgba(10, 132, 255, 0.25);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent-hover);
+    margin-bottom: 24px;
+}
+.hero-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #F5F5F7 0%, #86868B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-title .accent {
+    background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #45B7D1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+}
+.hero-code {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    padding: 12px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--accent-hover);
+    display: inline-block;
+}
+
+/* Sections */
+.section {
+    padding: 60px 0;
+    border-top: 1px solid var(--border);
+}
+.section-header {
+    margin-bottom: 40px;
+}
+.section-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-hover);
+    margin-bottom: 8px;
+}
+.section-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 12px;
+}
+.section-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+}
+
+/* Converter */
+.converter-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+}
+.converter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+@media (max-width: 768px) {
+    .converter-grid { grid-template-columns: 1fr; }
+}
+.converter-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.converter-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+.converter-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.converter-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+.converter-input::placeholder {
+    color: var(--text-tertiary);
+}
+.converter-hint {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+}
+.convert-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+.convert-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* Preview */
+.color-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.preview-box {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.preview-value {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    word-break: break-all;
+}
+.preview-value-label {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+
+/* Parameters */
+.parameters-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.param-category {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+.param-category-header {
+    padding: 20px 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+    user-select: none;
+}
+.param-category-header:hover {
+    background: var(--bg-elevated);
+}
+.param-category-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.param-category-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+.param-category-count {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+.param-category-arrow {
+    transition: transform 0.3s;
+    color: var(--text-tertiary);
+}
+.param-category.open .param-category-arrow {
+    transform: rotate(180deg);
+}
+.param-category-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+.param-category.open .param-category-content {
+    max-height: 2000px;
+}
+.param-category-inner {
+    padding: 0 24px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* Slider */
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.slider-label {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.slider-desc {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+}
+.slider-value {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    color: var(--accent);
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+}
+.slider {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 3px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+}
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+.slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+.slider-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+}
+.slider-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.slider-input[type="text"] {
+    text-transform: lowercase;
+}
+
+/* Select */
+.param-select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+.param-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Copy button */
+.copy-btn {
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.copy-btn:hover {
+    background: var(--border-strong);
+}
+.copy-btn.copied {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+/* Examples */
+.examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+.example-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.example-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.example-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+}
+.example-name {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    word-break: break-all;
+    margin-bottom: 4px;
+}
+.example-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* Doc */
+.doc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+}
+.doc-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+.doc-card p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.7;
+}
+.doc-card ul, .doc-card ol {
+    margin: 12px 0 16px 24px;
+    color: var(--text-secondary);
+}
+.doc-card li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+.doc-card code {
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    background: var(--bg-subtle);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+}
+.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.9rem;
+}
+.doc-table th, .doc-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+.doc-table th {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.doc-table td {
+    color: var(--text-secondary);
+}
+.doc-table tr:hover td {
+    background: var(--bg-elevated);
+}
+.doc-table code {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+}
+.color-swatch {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* Toast */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-lg);
+    min-width: 240px;
+    max-width: 360px;
+    font-size: 0.88rem;
+    animation: slideIn 0.3s ease;
+}
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Footer */
+.footer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent-hover); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .hero { padding: 40px 0 30px; }
+    .hero-subtitle { font-size: 1rem; }
+    .section-title { font-size: 1.75rem; }
+    .layout { padding: 0 16px; }
+    .section { padding: 40px 0; }
+    .converter-card { padding: 24px; }
+    .doc-card { padding: 24px; }
+    .header-nav { display: none; }
+    .param-category-inner {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <div class="logo-icon">
+                <img src="https://oris-flax.vercel.app/~/assets/chromacode_v2-logo.jpeg" alt="ChromaCode">
+            </div>
+            <span>ChromaCode</span>
+        </a>
+        <nav class="header-nav">
+            <a href="#converter" class="active">Конвертер</a>
+            <a href="#parameters">Параметры</a>
+            <a href="#examples">Примеры</a>
+            <a href="#docs">Документация</a>
+        </nav>
+    </div>
+</header>
+
+<main class="layout">
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+            </svg>
+            Авторская система цветов v2.0
+        </div>
+        <h1 class="hero-title">
+            <span class="accent">Chroma</span>Code
+        </h1>
+        <p class="hero-subtitle">
+            Интуитивная система кодирования цвета с 50 параметрами. Замените сложные HEX-коды на понятный язык.
+        </p>
+        <div class="hero-code">
+            #_blue/brightness-5/saturation-7
+        </div>
+    </section>
+
+    <!-- Converter -->
+    <section class="section" id="converter">
+        <div class="section-header">
+            <div class="section-label">Конвертер</div>
+            <h2 class="section-title">Перевод цветов</h2>
+            <p class="section-subtitle">Конвертируйте между HEX, RGB и ChromaCode</p>
+        </div>
+
+        <div class="converter-card">
+            <div class="converter-grid">
+                <div>
+                    <div class="converter-input-group">
+                        <label class="converter-label">HEX</label>
+                        <input type="text" class="converter-input" id="hexInput" placeholder="#FF5733" maxlength="7">
+                        <div class="converter-hint">Формат: #RRGGBB</div>
+                    </div>
+                    <div class="converter-input-group">
+                        <label class="converter-label">RGB</label>
+                        <input type="text" class="converter-input" id="rgbInput" placeholder="255, 87, 51">
+                        <div class="converter-hint">Формат: R, G, B (0-255)</div>
+                    </div>
+                    <div class="converter-input-group">
+                        <label class="converter-label">ChromaCode</label>
+                        <input type="text" class="converter-input" id="chromaInput" placeholder="#_blue/brightness-5/saturation-7">
+                        <div class="converter-hint">Формат: #_color/brightness-N/saturation-N/...</div>
+                    </div>
+                    <button class="convert-btn" onclick="convertFromChroma()">Конвертировать в HEX</button>
+                </div>
+                <div class="color-preview">
+                    <div class="preview-box" id="previewBox"></div>
+                    <div class="preview-info">
+                        <div>
+                            <div class="preview-value-label">HEX</div>
+                            <div class="preview-value" id="hexValue">#000000</div>
+                        </div>
+                        <div>
+                            <div class="preview-value-label">RGB</div>
+                            <div class="preview-value" id="rgbValue">0, 0, 0</div>
+                        </div>
+                        <div>
+                            <div class="preview-value-label">ChromaCode</div>
+                            <div class="preview-value" id="chromaValue">#_black/brightness-0/saturation-0</div>
+                            <button class="copy-btn" onclick="copyChromaCode()" style="margin-top: 8px;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <span>Копировать</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Parameters -->
+    <section class="section" id="parameters">
+        <div class="section-header">
+            <div class="section-label">50 параметров</div>
+            <h2 class="section-title">Все параметры ChromaCode</h2>
+            <p class="section-subtitle">Настройте каждый аспект цвета и визуального эффекта</p>
+        </div>
+
+        <div class="parameters-container" id="parametersContainer"></div>
+    </section>
+
+    <!-- Examples -->
+    <section class="section" id="examples">
+        <div class="section-header">
+            <div class="section-label">Примеры</div>
+            <h2 class="section-title">Галерея цветов</h2>
+            <p class="section-subtitle">Нажмите на любой цвет, чтобы загрузить его в конвертер</p>
+        </div>
+
+        <div class="converter-card">
+            <div class="examples-grid" id="examplesGrid"></div>
+        </div>
+    </section>
+
+    <!-- Documentation -->
+    <section class="section" id="docs">
+        <div class="section-header">
+            <div class="section-label">Документация</div>
+            <h2 class="section-title">Как работает система</h2>
+            <p class="section-subtitle">Полное руководство по ChromaCode v2.0</p>
+        </div>
+
+        <div class="doc-card">
+            <h3>Структура палитры</h3>
+            <p>Каждый цвет в системе ChromaCode собирается из параметров, разделённых косой чертой:</p>
+            <p style="font-family: var(--font-mono); font-size: 1.1rem; padding: 16px; background: var(--bg-subtle); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                #_color/brightness-N/saturation-N/alpha-N/...
+            </p>
+        </div>
+
+        <div class="doc-card">
+            <h3>Категории параметров</h3>
+            <table class="doc-table">
+                <thead>
+                    <tr>
+                        <th>Категория</th>
+                        <th>Параметры</th>
+                        <th>Описание</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> Базовые</td>
+                        <td>1-8</td>
+                        <td>Основные свойства цвета</td>
+                    </tr>
+                    <tr>
+                        <td>💎 Оптические</td>
+                        <td>9-16</td>
+                        <td>Физические свойства света</td>
+                    </tr>
+                    <tr>
+                        <td>🌊 Визуальные</td>
+                        <td>17-24</td>
+                        <td>Эффекты и искажения</td>
+                    </tr>
+                    <tr>
+                        <td>💫 Эмоциональные</td>
+                        <td>25-32</td>
+                        <td>Психологическое восприятие</td>
+                    </tr>
+                    <tr>
+                        <td>⚡ Динамические</td>
+                        <td>33-40</td>
+                        <td>Анимация и движение</td>
+                    </tr>
+                    <tr>
+                        <td>🌌 Пространственные</td>
+                        <td>41-46</td>
+                        <td>3D и глубина</td>
+                    </tr>
+                    <tr>
+                        <td>🔬 Материальные</td>
+                        <td>47-50</td>
+                        <td>Физические материалы</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="doc-card">
+            <h3>Правила использования</h3>
+            <ol>
+                <li><strong>Обязательные параметры</strong>: <code>color</code>, <code>brightness</code>, <code>saturation</code></li>
+                <li><strong>Порядок</strong>: параметры идут в порядке номеров (1→50)</li>
+                <li><strong>Разделитель</strong>: косая черта <code>/</code></li>
+                <li><strong>Формат значения</strong>: <code>параметр-значение</code> (например, <code>brightness-5</code>)</li>
+                <li><strong>Пропуск</strong>: можно пропускать параметры, но порядок должен сохраняться</li>
+            </ol>
+        </div>
+
+        <div class="doc-card">
+            <h3>Примеры кодов</h3>
+            <ul>
+                <li><code>#_blue/brightness-5/saturation-7</code> — минимальный формат</li>
+                <li><code>#_red/brightness-6/saturation-8/warmth-7/contrast-6/glossy-5</code> — средний формат</li>
+                <li><code>#_cyan/brightness-7/saturation-9/alpha-8/glow-6/metallic-3/blur-2/depth-5/material-glass</code> — расширенный формат</li>
+            </ul>
+        </div>
+    </section>
+</main>
+
+<footer class="footer">
+    <div>
+        <strong>ChromaCode v2.0</strong> · Oris Palette System
+    </div>
+    <div>
+        <a href="#converter">Конвертер</a> · 
+        <a href="#parameters">Параметры</a> · 
+        <a href="#docs">Документация</a>
+    </div>
+</footer>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================
+// COLOR CONVERSION UTILITIES
+// ============================================
+
+const COLOR_HUES = {
+    red: 0,
+    orange: 30,
+    yellow: 60,
+    green: 120,
+    cyan: 180,
+    blue: 240,
+    indigo: 270,
+    violet: 300,
+    pink: 330,
+    magenta: 300,
+    teal: 180,
+    lime: 90,
+    coral: 15,
+    salmon: 20,
+    turquoise: 170,
+    lavender: 270,
+    peach: 25
+};
+
+const COLOR_NAMES = Object.keys(COLOR_HUES);
+
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return { r, g, b };
+}
+
+function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => {
+        const hex = Math.max(0, Math.min(255, Math.round(x))).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('').toUpperCase();
+}
+
+function rgbToHsv(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    let h = 0;
+    const s = max === 0 ? 0 : d / max;
+    const v = max;
+    if (d !== 0) {
+        switch (max) {
+            case r: h = ((g - b) / d + 6) % 6; break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+    }
+    return { h: Math.round(h), s: Math.round(s * 100), v: Math.round(v * 100) };
+}
+
+function hsvToRgb(h, s, v) {
+    s /= 100;
+    v /= 100;
+    const c = v * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+    else if (h >= 60 && h < 120) { r = x; g = c; b = 0; }
+    else if (h >= 120 && h < 180) { r = 0; g = c; b = x; }
+    else if (h >= 180 && h < 240) { r = 0; g = x; b = c; }
+    else if (h >= 240 && h < 300) { r = x; g = 0; b = c; }
+    else if (h >= 300 && h < 360) { r = c; g = 0; b = x; }
+    return {
+        r: Math.round((r + m) * 255),
+        g: Math.round((g + m) * 255),
+        b: Math.round((b + m) * 255)
+    };
+}
+
+function hueToColorName(hue) {
+    let closest = 'red';
+    let minDiff = 360;
+    for (const [name, degree] of Object.entries(COLOR_HUES)) {
+        const diff = Math.abs(hue - degree);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = name;
+        }
+    }
+    return closest;
+}
+
+// ============================================
+// CHROMACODE PARSER
+// ============================================
+
+function parseChromaCode(code) {
+    const params = {};
+    const parts = code.replace('#_', '').split('/');
+    
+    if (parts.length === 0) return null;
+    
+    params.color = parts[0];
+    
+    for (let i = 1; i < parts.length; i++) {
+        const [key, value] = parts[i].split('-');
+        if (key && value !== undefined) {
+            params[key] = isNaN(value) ? value : parseInt(value);
+        }
+    }
+    
+    return params;
+}
+
+function buildChromaCode(params) {
+    let code = `#_${params.color || 'black'}`;
+    
+    if (params.brightness !== undefined) code += `/brightness-${params.brightness}`;
+    if (params.saturation !== undefined) code += `/saturation-${params.saturation}`;
+    if (params.alpha !== undefined && params.alpha !== 9) code += `/alpha-${params.alpha}`;
+    if (params.warmth !== undefined && params.warmth !== 5) code += `/warmth-${params.warmth}`;
+    if (params.contrast !== undefined && params.contrast !== 5) code += `/contrast-${params.contrast}`;
+    if (params.glow !== undefined && params.glow !== 0) code += `/glow-${params.glow}`;
+    if (params.texture !== undefined && params.texture !== 0) code += `/texture-${params.texture}`;
+    if (params.reflectivity !== undefined && params.reflectivity !== 0) code += `/reflectivity-${params.reflectivity}`;
+    if (params.luminosity !== undefined && params.luminosity !== 0) code += `/luminosity-${params.luminosity}`;
+    if (params.vibrance !== undefined && params.vibrance !== 5) code += `/vibrance-${params.vibrance}`;
+    if (params['hue-shift'] !== undefined && params['hue-shift'] !== 0) code += `/hue-shift-${params['hue-shift']}`;
+    if (params.metallic !== undefined && params.metallic !== 0) code += `/metallic-${params.metallic}`;
+    if (params.glossy !== undefined && params.glossy !== 0) code += `/glossy-${params.glossy}`;
+    if (params.rough !== undefined && params.rough !== 0) code += `/rough-${params.rough}`;
+    if (params.translucent !== undefined && params.translucent !== 0) code += `/translucent-${params.translucent}`;
+    if (params.blur !== undefined && params.blur !== 0) code += `/blur-${params.blur}`;
+    if (params.shadow !== undefined && params.shadow !== 0) code += `/shadow-${params.shadow}`;
+    if (params.highlight !== undefined && params.highlight !== 0) code += `/highlight-${params.highlight}`;
+    if (params.gradient !== undefined && params.gradient !== 0) code += `/gradient-${params.gradient}`;
+    if (params.noise !== undefined && params.noise !== 0) code += `/noise-${params.noise}`;
+    if (params.grain !== undefined && params.grain !== 0) code += `/grain-${params.grain}`;
+    if (params.pattern !== undefined && params.pattern !== 0) code += `/pattern-${params.pattern}`;
+    if (params.distortion !== undefined && params.distortion !== 0) code += `/distortion-${params.distortion}`;
+    if (params.mood !== undefined && params.mood !== 5) code += `/mood-${params.mood}`;
+    if (params.energy !== undefined && params.energy !== 5) code += `/energy-${params.energy}`;
+    if (params.calm !== undefined && params.calm !== 5) code += `/calm-${params.calm}`;
+    if (params.intensity !== undefined && params.intensity !== 5) code += `/intensity-${params.intensity}`;
+    if (params.softness !== undefined && params.softness !== 5) code += `/softness-${params.softness}`;
+    if (params.harshness !== undefined && params.harshness !== 0) code += `/harshness-${params.harshness}`;
+    if (params.elegance !== undefined && params.elegance !== 5) code += `/elegance-${params.elegance}`;
+    if (params.playfulness !== undefined && params.playfulness !== 5) code += `/playfulness-${params.playfulness}`;
+    if (params.animation !== undefined && params.animation !== 0) code += `/animation-${params.animation}`;
+    if (params.pulse !== undefined && params.pulse !== 0) code += `/pulse-${params.pulse}`;
+    if (params.flicker !== undefined && params.flicker !== 0) code += `/flicker-${params.flicker}`;
+    if (params.fade !== undefined && params.fade !== 0) code += `/fade-${params.fade}`;
+    if (params.bounce !== undefined && params.bounce !== 0) code += `/bounce-${params.bounce}`;
+    if (params.rotation !== undefined && params.rotation !== 0) code += `/rotation-${params.rotation}`;
+    if (params['scale-pulse'] !== undefined && params['scale-pulse'] !== 0) code += `/scale-pulse-${params['scale-pulse']}`;
+    if (params.wave !== undefined && params.wave !== 0) code += `/wave-${params.wave}`;
+    if (params.depth !== undefined && params.depth !== 0) code += `/depth-${params.depth}`;
+    if (params.distance !== undefined && params.distance !== 5) code += `/distance-${params.distance}`;
+    if (params.perspective !== undefined && params.perspective !== 0) code += `/perspective-${params.perspective}`;
+    if (params.scale !== undefined && params.scale !== 5) code += `/scale-${params.scale}`;
+    if (params.dimension !== undefined && params.dimension !== 0) code += `/dimension-${params.dimension}`;
+    if (params.layer !== undefined && params.layer !== 1) code += `/layer-${params.layer}`;
+    if (params.material !== undefined && params.material !== 'plastic') code += `/material-${params.material}`;
+    if (params.weight !== undefined && params.weight !== 5) code += `/weight-${params.weight}`;
+    if (params.density !== undefined && params.density !== 5) code += `/density-${params.density}`;
+    if (params.age !== undefined && params.age !== 0) code += `/age-${params.age}`;
+    
+    return code;
+}
+
+function chromaToRgb(params) {
+    const hue = COLOR_HUES[params.color] || 0;
+    const brightness = params.brightness !== undefined ? params.brightness : 5;
+    const saturation = params.saturation !== undefined ? params.saturation : 5;
+    
+    const value = Math.round((brightness / 9) * 100);
+    const sat = Math.round((saturation / 9) * 100);
+    
+    let adjustedHue = hue;
+    if (params['hue-shift']) {
+        adjustedHue = (hue + params['hue-shift'] * 10) % 360;
+        if (adjustedHue < 0) adjustedHue += 360;
+    }
+    
+    if (params.warmth) {
+        const warmthShift = (params.warmth - 5) * 5;
+        adjustedHue = (adjustedHue - warmthShift + 360) % 360;
+    }
+    
+    return hsvToRgb(adjustedHue, sat, value);
+}
+
+function rgbToChromaParams(r, g, b) {
+    const hsv = rgbToHsv(r, g, b);
+    const colorName = hueToColorName(hsv.h);
+    const brightness = Math.round((hsv.v / 100) * 9);
+    const saturation = Math.round((hsv.s / 100) * 9);
+    
+    return {
+        color: colorName,
+        brightness: brightness,
+        saturation: saturation,
+        alpha: 9,
+        warmth: 5,
+        contrast: 5,
+        glow: 0,
+        texture: 0,
+        reflectivity: 0,
+        luminosity: 0,
+        vibrance: 5,
+        'hue-shift': 0,
+        metallic: 0,
+        glossy: 0,
+        rough: 0,
+        translucent: 0,
+        blur: 0,
+        shadow: 0,
+        highlight: 0,
+        gradient: 0,
+        noise: 0,
+        grain: 0,
+        pattern: 0,
+        distortion: 0,
+        mood: 5,
+        energy: 5,
+        calm: 5,
+        intensity: 5,
+        softness: 5,
+        harshness: 0,
+        elegance: 5,
+        playfulness: 5,
+        animation: 0,
+        pulse: 0,
+        flicker: 0,
+        fade: 0,
+        bounce: 0,
+        rotation: 0,
+        'scale-pulse': 0,
+        wave: 0,
+        depth: 0,
+        distance: 5,
+        perspective: 0,
+        scale: 5,
+        dimension: 0,
+        layer: 1,
+        material: 'plastic',
+        weight: 5,
+        density: 5,
+        age: 0
+    };
+}
+
+// ============================================
+// PARAMETERS DEFINITION
+// ============================================
+
+const PARAMETERS = [
+    {
+        category: 'Базовые параметры',
+        icon: '🎨',
+        params: [
+            { id: 'color', label: 'Базовый цвет', type: 'select', options: COLOR_NAMES, default: 'blue', desc: 'Основной цвет' },
+            { id: 'brightness', label: 'Яркость', type: 'range', min: 0, max: 9, default: 5, desc: '0=чёрный, 9=белый' },
+            { id: 'saturation', label: 'Насыщенность', type: 'range', min: 0, max: 9, default: 5, desc: '0=серый, 9=сочный' },
+            { id: 'alpha', label: 'Прозрачность', type: 'range', min: 0, max: 9, default: 9, desc: '0=прозрачный, 9=непрозрачный' },
+            { id: 'warmth', label: 'Теплота', type: 'range', min: 0, max: 9, default: 5, desc: '0=холодный, 9=тёплый' },
+            { id: 'contrast', label: 'Контрастность', type: 'range', min: 0, max: 9, default: 5, desc: '0=мягкий, 9=резкий' },
+            { id: 'glow', label: 'Свечение', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=неон' },
+            { id: 'texture', label: 'Текстура', type: 'range', min: 0, max: 9, default: 0, desc: '0=гладкий, 9=текстура' }
+        ]
+    },
+    {
+        category: 'Оптические свойства',
+        icon: '💎',
+        params: [
+            { id: 'reflectivity', label: 'Отражаемость', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=зеркало' },
+            { id: 'luminosity', label: 'Светимость', type: 'range', min: 0, max: 9, default: 0, desc: '0=тусклый, 9=светится' },
+            { id: 'vibrance', label: 'Живость', type: 'range', min: 0, max: 9, default: 5, desc: '0=блёклый, 9=живой' },
+            { id: 'hue-shift', label: 'Сдвиг оттенка', type: 'range', min: -9, max: 9, default: 0, desc: '-9=красный, +9=синий' },
+            { id: 'metallic', label: 'Металличность', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=металл' },
+            { id: 'glossy', label: 'Глянцевость', type: 'range', min: 0, max: 9, default: 0, desc: '0=матовый, 9=глянец' },
+            { id: 'rough', label: 'Шероховатость', type: 'range', min: 0, max: 9, default: 0, desc: '0=гладкий, 9=шершавый' },
+            { id: 'translucent', label: 'Полупрозрачность', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=просвечивает' }
+        ]
+    },
+    {
+        category: 'Визуальные эффекты',
+        icon: '🌊',
+        params: [
+            { id: 'blur', label: 'Размытие', type: 'range', min: 0, max: 9, default: 0, desc: '0=чёткий, 9=размытый' },
+            { id: 'shadow', label: 'Тень', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=глубокая' },
+            { id: 'highlight', label: 'Блик', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=яркий' },
+            { id: 'gradient', label: 'Градиентность', type: 'range', min: 0, max: 9, default: 0, desc: '0=сплошной, 9=градиент' },
+            { id: 'noise', label: 'Шум', type: 'range', min: 0, max: 9, default: 0, desc: '0=чистый, 9=шумный' },
+            { id: 'grain', label: 'Зернистость', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=зерно' },
+            { id: 'pattern', label: 'Паттерн', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=паттерн' },
+            { id: 'distortion', label: 'Искажение', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=искажён' }
+        ]
+    },
+    {
+        category: 'Эмоциональные свойства',
+        icon: '💫',
+        params: [
+            { id: 'mood', label: 'Настроение', type: 'range', min: 0, max: 9, default: 5, desc: '0=мрачный, 9=радостный' },
+            { id: 'energy', label: 'Энергия', type: 'range', min: 0, max: 9, default: 5, desc: '0=спокойный, 9=взрывной' },
+            { id: 'calm', label: 'Спокойствие', type: 'range', min: 0, max: 9, default: 5, desc: '0=тревожный, 9=мирный' },
+            { id: 'intensity', label: 'Интенсивность', type: 'range', min: 0, max: 9, default: 5, desc: '0=слабый, 9=мощный' },
+            { id: 'softness', label: 'Мягкость', type: 'range', min: 0, max: 9, default: 5, desc: '0=жёсткий, 9=мягкий' },
+            { id: 'harshness', label: 'Резкость', type: 'range', min: 0, max: 9, default: 0, desc: '0=мягкий, 9=агрессивный' },
+            { id: 'elegance', label: 'Элегантность', type: 'range', min: 0, max: 9, default: 5, desc: '0=простой, 9=изысканный' },
+            { id: 'playfulness', label: 'Игривость', type: 'range', min: 0, max: 9, default: 5, desc: '0=серьёзный, 9=весёлый' }
+        ]
+    },
+    {
+        category: 'Динамические свойства',
+        icon: '⚡',
+        params: [
+            { id: 'animation', label: 'Анимация', type: 'range', min: 0, max: 9, default: 0, desc: '0=статичный, 9=анимирован' },
+            { id: 'pulse', label: 'Пульсация', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=пульсирует' },
+            { id: 'flicker', label: 'Мерцание', type: 'range', min: 0, max: 9, default: 0, desc: '0=стабильный, 9=мерцает' },
+            { id: 'fade', label: 'Затухание', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=затухает' },
+            { id: 'bounce', label: 'Отскок', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=отскакивает' },
+            { id: 'rotation', label: 'Вращение', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=вращается' },
+            { id: 'scale-pulse', label: 'Пульсация масштаба', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=пульсирует' },
+            { id: 'wave', label: 'Волна', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=волна' }
+        ]
+    },
+    {
+        category: 'Пространственные свойства',
+        icon: '🌌',
+        params: [
+            { id: 'depth', label: 'Глубина', type: 'range', min: 0, max: 9, default: 0, desc: '0=плоский, 9=глубокий' },
+            { id: 'distance', label: 'Расстояние', type: 'range', min: 0, max: 9, default: 5, desc: '0=близко, 9=далеко' },
+            { id: 'perspective', label: 'Перспектива', type: 'range', min: 0, max: 9, default: 0, desc: '0=нет, 9=сильная' },
+            { id: 'scale', label: 'Масштаб', type: 'range', min: 0, max: 9, default: 5, desc: '0=маленький, 9=большой' },
+            { id: 'dimension', label: 'Измерение', type: 'range', min: 0, max: 9, default: 0, desc: '0=2D, 9=3D' },
+            { id: 'layer', label: 'Слой', type: 'range', min: 0, max: 9, default: 1, desc: '0=один, 9=много' }
+        ]
+    },
+    {
+        category: 'Материальные свойства',
+        icon: '🔬',
+        params: [
+            { id: 'material', label: 'Материал', type: 'select', options: ['plastic', 'rubber', 'wood', 'stone', 'metal', 'glass', 'liquid', 'fabric', 'paper', 'ceramic'], default: 'plastic', desc: 'Физический материал' },
+            { id: 'weight', label: 'Вес', type: 'range', min: 0, max: 9, default: 5, desc: '0=невесомый, 9=тяжёлый' },
+            { id: 'density', label: 'Плотность', type: 'range', min: 0, max: 9, default: 5, desc: '0=разреженный, 9=плотный' },
+            { id: 'age', label: 'Возраст', type: 'range', min: 0, max: 9, default: 0, desc: '0=новый, 9=винтажный' }
+        ]
+    }
+];
+
+// ============================================
+// STATE
+// ============================================
+
+let currentParams = rgbToChromaParams(0, 0, 0);
+
+// ============================================
+// UI RENDERING
+// ============================================
+
+function renderParameters() {
+    const container = document.getElementById('parametersContainer');
+    container.innerHTML = PARAMETERS.map((category, catIdx) => `
+        <div class="param-category ${catIdx === 0 ? 'open' : ''}" data-category="${catIdx}">
+            <div class="param-category-header" onclick="toggleCategory(${catIdx})">
+                <div class="param-category-title">
+                    <div class="param-category-icon">${category.icon}</div>
+                    <div>
+                        <div>${category.category}</div>
+                        <div class="param-category-count">${category.params.length} параметров</div>
+                    </div>
+                </div>
+                <svg class="param-category-arrow" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+            <div class="param-category-content">
+                <div class="param-category-inner">
+                    ${category.params.map(param => renderParamInput(param)).join('')}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderParamInput(param) {
+    if (param.type === 'select') {
+        return `
+            <div class="slider-group">
+                <div class="slider-header">
+                    <div>
+                        <div class="slider-label">${param.label}</div>
+                        <div class="slider-desc">${param.desc}</div>
+                    </div>
+                </div>
+                <select class="param-select" id="param-${param.id}" onchange="updateParam('${param.id}', this.value)">
+                    ${param.options.map(opt => `<option value="${opt}" ${currentParams[param.id] === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                </select>
+            </div>
+        `;
+    }
+    
+    return `
+        <div class="slider-group">
+            <div class="slider-header">
+                <div>
+                    <div class="slider-label">${param.label}</div>
+                    <div class="slider-desc">${param.desc}</div>
+                </div>
+                <div class="slider-value" id="value-${param.id}">${currentParams[param.id] !== undefined ? currentParams[param.id] : param.default}</div>
+            </div>
+            <input type="range" class="slider" id="slider-${param.id}" min="${param.min}" max="${param.max}" value="${currentParams[param.id] !== undefined ? currentParams[param.id] : param.default}" oninput="updateParam('${param.id}', parseInt(this.value))">
+        </div>
+    `;
+}
+
+function toggleCategory(idx) {
+    const category = document.querySelector(`[data-category="${idx}"]`);
+    category.classList.toggle('open');
+}
+
+function updateParam(id, value) {
+    currentParams[id] = value;
+    
+    const slider = document.getElementById(`slider-${id}`);
+    const valueDisplay = document.getElementById(`value-${id}`);
+    const select = document.getElementById(`param-${id}`);
+    
+    if (slider) slider.value = value;
+    if (valueDisplay) valueDisplay.textContent = value;
+    if (select) select.value = value;
+    
+    updatePreview();
+}
+
+function updatePreview() {
+    const rgb = chromaToRgb(currentParams);
+    const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+    const chromaCode = buildChromaCode(currentParams);
+    
+    const previewBox = document.getElementById('previewBox');
+    previewBox.style.backgroundColor = hex;
+    
+    // Apply visual effects
+    if (currentParams.glow > 0) {
+        const glowIntensity = currentParams.glow * 20;
+        previewBox.style.boxShadow = `0 0 ${glowIntensity}px ${glowIntensity / 2}px ${hex}`;
+    } else {
+        previewBox.style.boxShadow = 'var(--shadow-md)';
+    }
+    
+    if (currentParams.blur > 0) {
+        previewBox.style.filter = `blur(${currentParams.blur * 2}px)`;
+    } else {
+        previewBox.style.filter = 'none';
+    }
+    
+    document.getElementById('hexValue').textContent = hex;
+    document.getElementById('rgbValue').textContent = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+    document.getElementById('chromaValue').textContent = chromaCode;
+    document.getElementById('hexInput').value = hex;
+    document.getElementById('rgbInput').value = `${rgb.r}, ${rgb.g}, ${rgb.b}`;
+    document.getElementById('chromaInput').value = chromaCode;
+}
+
+function convertFromChroma() {
+    const code = document.getElementById('chromaInput').value.trim();
+    if (!code) return;
+    
+    const params = parseChromaCode(code);
+    if (!params) {
+        toast('Неверный формат ChromaCode', 'error');
+        return;
+    }
+    
+    currentParams = { ...rgbToChromaParams(0, 0, 0), ...params };
+    renderParameters();
+    updatePreview();
+    toast('ChromaCode конвертирован', 'success');
+}
+
+function copyChromaCode() {
+    const code = document.getElementById('chromaValue').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        toast('ChromaCode скопирован', 'success');
+    });
+}
+
+// ============================================
+// EXAMPLES
+// ============================================
+
+const EXAMPLES = [
+    { chroma: '#_red/brightness-9/saturation-9', desc: 'Ослепительно яркий алый' },
+    { chroma: '#_red/brightness-5/saturation-7', desc: 'Чистый красный' },
+    { chroma: '#_red/brightness-2/saturation-4', desc: 'Тёмный бордовый' },
+    { chroma: '#_orange/brightness-8/saturation-8', desc: 'Яркий оранжевый' },
+    { chroma: '#_orange/brightness-5/saturation-6', desc: 'Тёплый оранжевый' },
+    { chroma: '#_yellow/brightness-9/saturation-9', desc: 'Солнечный жёлтый' },
+    { chroma: '#_yellow/brightness-6/saturation-5', desc: 'Приглушённый жёлтый' },
+    { chroma: '#_green/brightness-7/saturation-8', desc: 'Яркий зелёный' },
+    { chroma: '#_green/brightness-4/saturation-2', desc: 'Защитный хаки' },
+    { chroma: '#_green/brightness-2/saturation-6', desc: 'Тёмно-зелёный' },
+    { chroma: '#_cyan/brightness-8/saturation-7', desc: 'Светлый циан' },
+    { chroma: '#_cyan/brightness-5/saturation-9', desc: 'Чистый бирюзовый' },
+    { chroma: '#_blue/brightness-9/saturation-9', desc: 'Яркий голубой' },
+    { chroma: '#_blue/brightness-5/saturation-7', desc: 'Средний синий' },
+    { chroma: '#_blue/brightness-2/saturation-0', desc: 'Тёмный серо-синий' },
+    { chroma: '#_indigo/brightness-6/saturation-8', desc: 'Насыщенный индиго' },
+    { chroma: '#_indigo/brightness-3/saturation-5', desc: 'Тёмный индиго' },
+    { chroma: '#_violet/brightness-8/saturation-9', desc: 'Яркий фиолетовый' },
+    { chroma: '#_violet/brightness-5/saturation-6', desc: 'Умеренный фиолетовый' },
+    { chroma: '#_violet/brightness-2/saturation-3', desc: 'Тёмный пурпурный' },
+    { chroma: '#_pink/brightness-7/saturation-6', desc: 'Нежно-розовый' },
+    { chroma: '#_coral/brightness-6/saturation-7', desc: 'Коралловый' },
+    { chroma: '#_teal/brightness-5/saturation-8', desc: 'Бирюзовый' },
+    { chroma: '#_lavender/brightness-7/saturation-5', desc: 'Лавандовый' },
+    { chroma: '#_gray/brightness-5/saturation-0', desc: 'Средний серый' },
+    { chroma: '#_gray/brightness-8/saturation-0', desc: 'Светло-серый' },
+    { chroma: '#_gray/brightness-2/saturation-0', desc: 'Тёмно-серый' },
+    { chroma: '#_black/brightness-0/saturation-0', desc: 'Чёрный' },
+    { chroma: '#_white/brightness-9/saturation-0', desc: 'Белый' },
+    { chroma: '#_blue/brightness-5/saturation-7/glow-6', desc: 'Светящийся синий' },
+    { chroma: '#_red/brightness-6/saturation-8/metallic-7', desc: 'Металлический красный' },
+    { chroma: '#_green/brightness-4/saturation-6/texture-5', desc: 'Текстурированный зелёный' }
+];
+
+function renderExamples() {
+    const grid = document.getElementById('examplesGrid');
+    grid.innerHTML = EXAMPLES.map(example => {
+        const params = parseChromaCode(example.chroma);
+        const rgb = chromaToRgb(params);
+        const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+        
+        return `
+            <div class="example-card" onclick="loadExample('${example.chroma}')">
+                <div class="example-preview" style="background-color: ${hex};"></div>
+                <div class="example-name">${example.chroma}</div>
+                <div class="example-desc">${example.desc}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function loadExample(chroma) {
+    const params = parseChromaCode(chroma);
+    if (!params) return;
+    
+    currentParams = { ...rgbToChromaParams(0, 0, 0), ...params };
+    renderParameters();
+    updatePreview();
+    
+    document.getElementById('converter').scrollIntoView({ behavior: 'smooth' });
+    toast('Пример загружен', 'success');
+}
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+document.getElementById('hexInput').addEventListener('input', (e) => {
+    let hex = e.target.value;
+    if (!hex.startsWith('#')) hex = '#' + hex;
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+        const rgb = hexToRgb(hex);
+        currentParams = rgbToChromaParams(rgb.r, rgb.g, rgb.b);
+        renderParameters();
+        updatePreview();
+    }
+});
+
+document.getElementById('rgbInput').addEventListener('input', (e) => {
+    const match = e.target.value.match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+            currentParams = rgbToChromaParams(r, g, b);
+            renderParameters();
+            updatePreview();
+        }
+    }
+});
+
+// ============================================
+// TOAST
+// ============================================
+
+function toast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+// ============================================
+// INIT
+// ============================================
+
+renderParameters();
+renderExamples();
+updatePreview();
+</script>
+
+</body>
+</html>
