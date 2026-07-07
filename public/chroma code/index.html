@@ -69,25 +69,66 @@ body {
     justify-content: space-between;
     gap: 16px;
 }
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+    transition: opacity 0.2s ease;
+}
+.logo:hover { opacity: 0.75; }
+
 .logo-icon {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: transparent;
+    background: var(--bg-card);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
 }
 
 .logo-icon img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 8px;
+    display: block;
 }
-.logo:hover { opacity: 0.75; }
+
+/* Fallback если изображение не загрузилось */
+.logo-icon img[src=""],
+.logo-icon img:not([src]) {
+    display: none;
+}
+
+.logo-icon::before {
+    content: 'C';
+    position: absolute;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #45B7D1 100%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.logo-icon img:not([src]) ~ ::before,
+.logo-icon:has(img:not([src]))::before {
+    opacity: 1;
+}
 .header-nav {
     display: flex;
     align-items: center;
@@ -684,12 +725,12 @@ body {
 
 <header class="header">
     <div class="header-inner">
-        <a href="/" class="logo">
-            <div class="logo-icon">
-                <img src="https://oris-flax.vercel.app/~/assets/chromacode_v2-logo.jpeg" alt="ChromaCode">
-            </div>
-            <span>ChromaCode</span>
-        </a>
+            <a href="/" class="logo">
+                <div class="logo-icon">
+                     <img src="https://oris-flax.vercel.app/~/assets/chromacode_v2-logo.jpeg" alt="ChromaCode">
+                </div>
+                <span>ChromaCode</span>
+            </a>
         <nav class="header-nav">
             <a href="#converter" class="active">Конвертер</a>
             <a href="#parameters">Параметры</a>
