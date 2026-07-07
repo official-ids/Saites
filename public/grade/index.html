@@ -717,8 +717,7 @@ body {
     </div>
     <div>
         <a href="/">Главная</a> · 
-        <a href="/profile">Профили</a> · 
-        <a href="https://t.me/VoraxisBOT" target="_blank">Telegram</a>
+        <a href="https://t.me/ytn_cat" target="_blank">Telegram</a>
     </div>
 </footer>
 
@@ -874,10 +873,13 @@ async function logout() {
 function updateHeaderAuth() {
     const container = document.getElementById('headerActions');
     if (State.user) {
+        const avatarUrl = State.user.avatar || '/favicon.svg';
+        const firstName = State.user.nickname ? State.user.nickname.split(' ')[0] : 'Профиль';
+        
         container.innerHTML = `
             <button class="auth-btn" onclick="logout()">
-                <img src="${State.user.avatar}" class="auth-avatar" alt="">
-                <span>${State.user.nickname.split(' ')[0]}</span>
+                <img src="${avatarUrl}" class="auth-avatar" alt="">
+                <span>${firstName}</span>
             </button>
         `;
     } else {
@@ -892,16 +894,69 @@ function showHero() {
     document.getElementById('heroSection').style.display = 'block';
     document.getElementById('profileSection').style.display = 'none';
     
-    // Инициализируем кнопку Google
-    setTimeout(() => {
-        if (typeof google !== 'undefined' && google.accounts) {
-            google.accounts.id.renderButton(
-                document.getElementById('googleSignInButton'),
-                { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'pill', width: 200 }
-            );
+    // Рендерим кнопку только если Google уже инициализирован
+    if (googleIsInitialized && typeof google !== 'undefined' && google.accounts) {
+        const btnContainer = document.getElementById('googleSignInButton');
+        if (btnContainer) {
+            try {
+                google.accounts.id.renderButton(btnContainer, {
+                    theme: 'filled_black',
+                    size: 'large',
+                    text: 'signin_with',
+                    shape: 'pill',
+                    width: 200
+                });
+            } catch (err) {
+                console.error('[Google Auth] Render failed:', err);
+            }
         }
-    }, 100);
+    } else {
+        // Fallback: показываем обычную кнопку, которая инициирует рендер при клике
+        const btnContainer = document.getElementById('googleSignInButton');
+        if (btnContainer) {
+            btnContainer.innerHTML = `
+                <button class="btn btn-primary" onclick="renderGoogleButton()" style="padding: 12px 24px;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 8px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                    </svg>
+                    Войти через Google
+                </button>
+            `;
+        }
+    }
 }
+
+// Глобальная функция для рендера кнопки по клику (fallback)
+window.renderGoogleButton = function() {
+    if (!googleIsInitialized) {
+        initGoogleAuth().then(() => {
+            const btnContainer = document.getElementById('googleSignInButton');
+            if (btnContainer && typeof google !== 'undefined' && google.accounts) {
+                btnContainer.innerHTML = '';
+                google.accounts.id.renderButton(btnContainer, {
+                    theme: 'filled_black',
+                    size: 'large',
+                    text: 'signin_with',
+                    shape: 'pill',
+                    width: 200
+                });
+            }
+        });
+        return;
+    }
+    
+    const btnContainer = document.getElementById('googleSignInButton');
+    if (btnContainer && typeof google !== 'undefined' && google.accounts) {
+        btnContainer.innerHTML = '';
+        google.accounts.id.renderButton(btnContainer, {
+            theme: 'filled_black',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'pill',
+            width: 200
+        });
+    }
+};
 
 async function showProfile() {
     document.getElementById('heroSection').style.display = 'none';
@@ -1140,7 +1195,6 @@ async function init() {
             State.user = JSON.parse(savedUser);
             State.token = savedToken;
             
-            // Проверяем валидность сессии
             try {
                 const me = await API.getMe();
                 State.user = me.user;
@@ -1161,6 +1215,14 @@ async function init() {
         }
     }
     
+    // СНАЧАЛА инициализируем Google Auth
+    try {
+        await initGoogleAuth();
+    } catch (err) {
+        console.error('[Google Auth] Init failed:', err);
+    }
+    
+    // ПОТОМ обновляем UI
     updateHeaderAuth();
     
     // Проверяем URL параметр people
@@ -1169,15 +1231,7 @@ async function init() {
     
     if (peopleParam) {
         State.viewingUserId = peopleParam;
-        
-        if (State.user) {
-            await showProfile();
-        } else {
-            // Не авторизован, но смотрим чужой профиль
-            document.getElementById('heroSection').style.display = 'none';
-            document.getElementById('profileSection').style.display = 'block';
-            await showProfile();
-        }
+        await showProfile();
     } else {
         if (State.user) {
             await showProfile();
@@ -1185,9 +1239,6 @@ async function init() {
             showHero();
         }
     }
-    
-    // Инициализируем Google Auth
-    await initGoogleAuth();
 }
 
 // Запуск
