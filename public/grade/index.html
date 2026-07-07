@@ -1045,7 +1045,13 @@ async function showProfile() {
         
         // Показываем форму отзыва только для своего профиля
         const isOwner = State.user && State.user.id === userId;
-        document.getElementById('reviewFormSection').style.display = isOwner ? 'block' : 'none';
+        const showForm = State.user && !isOwner; // Форма видна только если авторизован И не владелец
+        document.getElementById('reviewFormSection').style.display = showForm ? 'block' : 'none';
+
+        // Рендерим звёзды для формы отзыва (если форма видима)
+        if (showForm) {
+            renderRatingInput();
+        }
         
         // Рендерим звёзды для формы отзыва (если форма видима)
         if (isOwner) {
