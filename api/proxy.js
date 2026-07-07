@@ -75,7 +75,8 @@ const MODULE_PATHS = {
     YOUTUBE: '../youtube',
     MONITOR: '../monitor',
     JSON_STUDIO: '../json_studio',
-    REVIEW: '../review'
+    REVIEW: '../review',
+    GRADE: '../grade'
 };
 
 /**
@@ -125,6 +126,8 @@ const monitorRouter = require(MODULE_PATHS.MONITOR);
 const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
 
 const reviewRouter = require(MODULE_PATHS.REVIEW);
+
+const gradeRouter = require(MODULE_PATHS.GRADE);
 
 
 // -----------------------------
@@ -1274,6 +1277,7 @@ app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
+app.use('/api/grade', gradeRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
