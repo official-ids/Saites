@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Grade — система оценок и отзывов Oris Platform">
+<meta name="theme-color" content="#000000">
+<title>Grade — Система оценок · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #F5F5F7;
+    --bg-subtle: #FAFAFA;
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #AEAEB2;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-light: rgba(0, 113, 227, 0.1);
+    --danger: #FF3B30;
+    --success: #34C759;
+    --warning: #FF9F0A;
+    --star-color: #FF9F0A;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+    --radius-lg: 18px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+    --header-h: 56px;
+}
+
+:root[data-theme="dark"] {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-subtle: #0A0A0A;
+    --text-primary: #F5F5F7;
+    --text-secondary: #86868B;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-light: rgba(10, 132, 255, 0.12);
+    --danger: #FF453A;
+    --success: #30D158;
+    --warning: #FF9F0A;
+    --star-color: #FF9F0A;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --bg-body: #000000;
+        --bg-card: #1C1C1E;
+        --bg-elevated: #2C2C2E;
+        --bg-subtle: #0A0A0A;
+        --text-primary: #F5F5F7;
+        --text-secondary: #86868B;
+        --text-tertiary: #636366;
+        --accent: #0A84FF;
+        --accent-hover: #409CFF;
+        --accent-light: rgba(10, 132, 255, 0.12);
+        --danger: #FF453A;
+        --success: #30D158;
+        --warning: #FF9F0A;
+        --star-color: #FF9F0A;
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.12);
+        --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+        --shadow-lg: 0 12px 32px rgba(0,0,0,0.5);
+    }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+body {
+    background-color: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+}
+
+/* Header */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+}
+:root[data-theme="dark"] .header { background: rgba(0, 0, 0, 0.72); }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .header { background: rgba(0, 0, 0, 0.72); }
+}
+.header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+.logo:hover { opacity: 0.75; }
+.logo-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+}
+.logo-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.auth-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.auth-btn:hover { background: var(--border-strong); }
+.auth-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Main Container */
+.main-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 60px 20px;
+}
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--accent-light);
+    border: 1px solid rgba(10, 132, 255, 0.2);
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+.hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+}
+
+/* Profile Card */
+.profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-elevated);
+    object-fit: cover;
+    box-shadow: var(--shadow-md);
+}
+.profile-avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--bg-elevated);
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow-md);
+}
+.profile-info {
+    flex: 1;
+}
+.profile-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+.profile-email {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+.profile-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+}
+.stat-item {
+    text-align: center;
+}
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.stat-label {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Rating Display */
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+}
+.rating-score {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.rating-stars {
+    display: flex;
+    gap: 4px;
+}
+.star {
+    font-size: 1.5rem;
+    color: var(--text-tertiary);
+}
+.star.filled {
+    color: var(--star-color);
+}
+.rating-count {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-left: 8px;
+}
+
+/* Review Form */
+.review-form {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+}
+.form-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+.rating-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.rating-input .star {
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.rating-input .star:hover,
+.rating-input .star.active {
+    color: var(--star-color);
+    transform: scale(1.1);
+}
+.form-textarea {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 100px;
+    transition: all 0.2s;
+}
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 24px;
+    border-radius: 99px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+.btn svg { width: 18px; height: 18px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border-strong); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { opacity: 0.9; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Reviews List */
+.reviews-section {
+    margin-top: 32px;
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+.review-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+.review-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
+}
+.review-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.review-author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.review-author-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+.review-author-info {
+    flex: 1;
+}
+.review-author-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.review-date {
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+}
+.review-rating {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+.review-rating .star {
+    font-size: 1rem;
+}
+.review-text {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+.review-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+.pagination button {
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.pagination button:hover:not(:disabled) {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+}
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.pagination button.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+.empty-state svg {
+    width: 56px;
+    height: 56px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+.empty-state h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+.empty-state p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Loading */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-lg);
+    min-width: 240px;
+    max-width: 360px;
+    font-size: 0.88rem;
+    animation: slideIn 0.3s ease;
+}
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Footer */
+.footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    .profile-stats {
+        justify-content: center;
+    }
+    .main-container {
+        padding: 24px 16px;
+    }
+    .review-form, .profile-card {
+        padding: 20px;
+    }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <img src="/favicon.svg" alt="Oris" class="logo-icon">
+            <span class="logo-text">Grade</span>
+        </a>
+        <div class="header-actions" id="headerActions">
+            <!-- Динамически заполняется -->
+        </div>
+    </div>
+</header>
+
+<main class="main-container">
+    <!-- Hero Section (показывается если не авторизован) -->
+    <div id="heroSection" class="hero">
+        <div class="hero-badge">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            Система оценок
+        </div>
+        <h1 class="hero-title">Оцените и получите отзывы</h1>
+        <p class="hero-subtitle">
+            Войдите через Google, чтобы создать свой профиль и получать оценки от других пользователей.
+        </p>
+        <div id="googleSignInButton"></div>
+    </div>
+
+    <!-- Profile Section (показывается после авторизации) -->
+    <div id="profileSection" style="display: none;">
+        <!-- Profile Card -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <img id="profileAvatar" class="profile-avatar" src="" alt="">
+                <div class="profile-info">
+                    <h1 id="profileName" class="profile-name"></h1>
+                    <p id="profileEmail" class="profile-email"></p>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div id="reviewCount" class="stat-value">0</div>
+                            <div class="stat-label">Отзывов</div>
+                        </div>
+                        <div class="stat-item">
+                            <div id="averageRating" class="stat-value">0</div>
+                            <div class="stat-label">Средний рейтинг</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rating Display -->
+            <div class="rating-display">
+                <div id="ratingScore" class="rating-score">0.0</div>
+                <div class="rating-stars" id="ratingStars"></div>
+                <div id="ratingCount" class="rating-count">0 отзывов</div>
+            </div>
+        </div>
+
+        <!-- Review Form (только для своего профиля) -->
+        <div id="reviewFormSection" class="review-form" style="display: none;">
+            <h2 class="form-title">Оставить отзыв</h2>
+            <div class="rating-input" id="ratingInput"></div>
+            <textarea id="reviewText" class="form-textarea" placeholder="Напишите ваш отзыв..."></textarea>
+            <div class="form-actions">
+                <button class="btn btn-primary" id="submitReview">Отправить отзыв</button>
+            </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="reviews-section">
+            <div class="section-header">
+                <h2 class="section-title">Отзывы</h2>
+            </div>
+            <div id="reviewsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Загрузка отзывов...</p>
+                </div>
+            </div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div>
+        <strong>Grade</strong> · Oris Platform · v1.0.0
+    </div>
+    <div>
+        <a href="/">Главная</a> · 
+        <a href="/profile">Профили</a> · 
+        <a href="https://t.me/VoraxisBOT" target="_blank">Telegram</a>
+    </div>
+</footer>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+const State = {
+    user: null,
+    token: null,
+    viewingUserId: null,
+    selectedRating: 0,
+    currentPage: 1,
+    reviewsPerPage: 10
+};
+
+// ============================================
+// API CLIENT
+// ============================================
+const API = {
+    baseUrl: '/api/grade',
+    
+    async request(endpoint, options = {}) {
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (State.token) {
+            headers['Authorization'] = `Bearer ${State.token}`;
+        }
+        try {
+            const res = await fetch(`${this.baseUrl}${endpoint}`, { ...options, headers });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            return data;
+        } catch (err) {
+            if (err.name === 'TypeError') throw new Error('Нет соединения с сервером');
+            throw err;
+        }
+    },
+    
+    // Auth
+    googleAuth: (credential) => API.request('/auth/google', { method: 'POST', body: JSON.stringify({ credential }) }),
+    logout: () => API.request('/auth/logout', { method: 'POST' }),
+    getMe: () => API.request('/auth/me'),
+    
+    // User
+    getUser: (userId) => API.request(`/user/${userId}`),
+    
+    // Reviews
+    getReviews: (userId, page = 1, limit = 10) => API.request(`/reviews/${userId}?page=${page}&limit=${limit}`),
+    createReview: (userId, data) => API.request(`/reviews/${userId}`, { method: 'POST', body: JSON.stringify(data) }),
+    updateReview: (userId, reviewId, data) => API.request(`/reviews/${userId}/${reviewId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteReview: (userId, reviewId) => API.request(`/reviews/${userId}/${reviewId}`, { method: 'DELETE' })
+};
+
+// ============================================
+// TOAST
+// ============================================
+function toast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+}
+
+// ============================================
+// AUTH
+// ============================================
+let googleInitPromise = null;
+let googleIsInitialized = false;
+
+function initGoogleAuth() {
+    if (googleIsInitialized) {
+        return Promise.resolve();
+    }
+    
+    if (googleInitPromise) {
+        return googleInitPromise;
+    }
+    
+    googleInitPromise = new Promise((resolve, reject) => {
+        const tryInit = () => {
+            if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+                setTimeout(tryInit, 200);
+                return;
+            }
+            
+            try {
+                google.accounts.id.initialize({
+                    client_id: '479666067128-24dbdtd6qnebskivt7h0lnfm7mi683iu.apps.googleusercontent.com',
+                    callback: handleGoogleCredential,
+                    auto_select: false,
+                    cancel_on_tap_outside: true,
+                    context: 'signin'
+                });
+                
+                googleIsInitialized = true;
+                console.log('[Google Auth] Initialized successfully');
+                resolve();
+            } catch (err) {
+                console.error('[Google Auth] Initialize failed:', err);
+                googleInitPromise = null;
+                reject(err);
+            }
+        };
+        
+        tryInit();
+    });
+    
+    return googleInitPromise;
+}
+
+async function handleGoogleCredential(response) {
+    try {
+        const result = await API.googleAuth(response.credential);
+        
+        State.user = result.user;
+        State.token = result.token;
+        
+        localStorage.setItem('grade_user', JSON.stringify(State.user));
+        localStorage.setItem('grade_token', State.token);
+        
+        updateHeaderAuth();
+        toast(`Добро пожаловать, ${State.user.nickname}!`, 'success');
+        
+        // Показываем профиль
+        showProfile();
+    } catch (err) {
+        console.error('Auth error:', err);
+        toast('Ошибка входа: ' + err.message, 'error');
+    }
+}
+
+async function logout() {
+    try {
+        await API.logout();
+    } catch (err) {
+        console.error('Logout error:', err);
+    }
+    
+    State.user = null;
+    State.token = null;
+    localStorage.removeItem('grade_user');
+    localStorage.removeItem('grade_token');
+    
+    updateHeaderAuth();
+    showHero();
+    toast('Вы вышли из аккаунта', 'info');
+}
+
+function updateHeaderAuth() {
+    const container = document.getElementById('headerActions');
+    if (State.user) {
+        container.innerHTML = `
+            <button class="auth-btn" onclick="logout()">
+                <img src="${State.user.avatar}" class="auth-avatar" alt="">
+                <span>${State.user.nickname.split(' ')[0]}</span>
+            </button>
+        `;
+    } else {
+        container.innerHTML = '';
+    }
+}
+
+// ============================================
+// UI RENDERING
+// ============================================
+function showHero() {
+    document.getElementById('heroSection').style.display = 'block';
+    document.getElementById('profileSection').style.display = 'none';
+    
+    // Инициализируем кнопку Google
+    setTimeout(() => {
+        if (typeof google !== 'undefined' && google.accounts) {
+            google.accounts.id.renderButton(
+                document.getElementById('googleSignInButton'),
+                { theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'pill', width: 200 }
+            );
+        }
+    }, 100);
+}
+
+async function showProfile() {
+    document.getElementById('heroSection').style.display = 'none';
+    document.getElementById('profileSection').style.display = 'block';
+    
+    const userId = State.viewingUserId || State.user.id;
+    
+    try {
+        // Загружаем профиль
+        const profileResult = await API.getUser(userId);
+        const profile = profileResult.user;
+        
+        // Обновляем UI профиля
+        document.getElementById('profileAvatar').src = profile.avatar || '';
+        document.getElementById('profileAvatar').style.display = profile.avatar ? 'block' : 'none';
+        document.getElementById('profileName').textContent = profile.nickname;
+        document.getElementById('profileEmail').textContent = profile.email;
+        document.getElementById('reviewCount').textContent = profile.reviewCount;
+        document.getElementById('averageRating').textContent = profile.averageRating.toFixed(1);
+        document.getElementById('ratingScore').textContent = profile.averageRating.toFixed(1);
+        document.getElementById('ratingCount').textContent = `${profile.reviewCount} отзывов`;
+        
+        // Рисуем звёзды
+        renderStars('ratingStars', profile.averageRating);
+        
+        // Показываем форму отзыва только для своего профиля
+        const isOwner = State.user && State.user.id === userId;
+        document.getElementById('reviewFormSection').style.display = isOwner ? 'block' : 'none';
+        
+        // Загружаем отзывы
+        await loadReviews(userId);
+    } catch (err) {
+        console.error('Failed to load profile:', err);
+        toast('Ошибка загрузки профиля: ' + err.message, 'error');
+    }
+}
+
+function renderStars(containerId, rating) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star' + (i <= Math.round(rating) ? ' filled' : '');
+        star.textContent = '★';
+        container.appendChild(star);
+    }
+}
+
+function renderRatingInput() {
+    const container = document.getElementById('ratingInput');
+    container.innerHTML = '';
+    
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star' + (i <= State.selectedRating ? ' active' : '');
+        star.textContent = '★';
+        star.addEventListener('click', () => {
+            State.selectedRating = i;
+            renderRatingInput();
+        });
+        container.appendChild(star);
+    }
+}
+
+async function loadReviews(userId) {
+    const container = document.getElementById('reviewsList');
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загрузка отзывов...</p></div>';
+    
+    try {
+        const result = await API.getReviews(userId, State.currentPage, State.reviewsPerPage);
+        
+        if (result.reviews.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <h3>Отзывов пока нет</h3>
+                    <p>Будьте первым, кто оставит отзыв!</p>
+                </div>
+            `;
+            document.getElementById('pagination').innerHTML = '';
+            return;
+        }
+        
+        container.innerHTML = result.reviews.map(review => `
+            <div class="review-card">
+                <div class="review-header">
+                    <img src="${review.authorAvatar}" class="review-author-avatar" alt="">
+                    <div class="review-author-info">
+                        <div class="review-author-name">${escapeHtml(review.authorNickname)}</div>
+                        <div class="review-date">${new Date(review.createdAt).toLocaleDateString('ru-RU')}</div>
+                    </div>
+                </div>
+                <div class="review-rating">
+                    ${renderStarsHTML(review.rating)}
+                </div>
+                <div class="review-text">${escapeHtml(review.text)}</div>
+                ${State.user && State.user.id === review.authorId ? `
+                    <div class="review-actions">
+                        <button class="btn btn-ghost" onclick="deleteReview('${userId}', '${review.id}')">Удалить</button>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+        
+        // Пагинация
+        renderPagination(result.total, result.page, result.limit);
+    } catch (err) {
+        console.error('Failed to load reviews:', err);
+        container.innerHTML = '<div class="empty-state"><h3>Ошибка загрузки</h3><p>' + err.message + '</p></div>';
+    }
+}
+
+function renderStarsHTML(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        html += `<span class="star ${i <= rating ? 'filled' : ''}">★</span>`;
+    }
+    return html;
+}
+
+function renderPagination(total, currentPage, limit) {
+    const totalPages = Math.ceil(total / limit);
+    const container = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    if (currentPage > 1) {
+        html += `<button onclick="goToPage(${currentPage - 1})">‹</button>`;
+    }
+    
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+    
+    if (currentPage < totalPages) {
+        html += `<button onclick="goToPage(${currentPage + 1})">›</button>`;
+    }
+    
+    container.innerHTML = html;
+}
+
+function goToPage(page) {
+    State.currentPage = page;
+    const userId = State.viewingUserId || State.user.id;
+    loadReviews(userId);
+}
+
+// ============================================
+// REVIEW ACTIONS
+// ============================================
+document.getElementById('submitReview').addEventListener('click', async () => {
+    if (State.selectedRating === 0) {
+        toast('Выберите рейтинг', 'warning');
+        return;
+    }
+    
+    const text = document.getElementById('reviewText').value.trim();
+    if (!text) {
+        toast('Напишите отзыв', 'warning');
+        return;
+    }
+    
+    if (text.length < 10) {
+        toast('Отзыв слишком короткий (минимум 10 символов)', 'warning');
+        return;
+    }
+    
+    if (text.length > 1000) {
+        toast('Отзыв слишком длинный (максимум 1000 символов)', 'warning');
+        return;
+    }
+    
+    try {
+        const userId = State.viewingUserId || State.user.id;
+        await API.createReview(userId, {
+            rating: State.selectedRating,
+            text: text
+        });
+        
+        toast('Отзыв отправлен', 'success');
+        
+        // Сброс формы
+        State.selectedRating = 0;
+        document.getElementById('reviewText').value = '';
+        renderRatingInput();
+        
+        // Перезагрузка
+        State.currentPage = 1;
+        await showProfile();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+});
+
+async function deleteReview(userId, reviewId) {
+    if (!confirm('Удалить отзыв?')) return;
+    
+    try {
+        await API.deleteReview(userId, reviewId);
+        toast('Отзыв удалён', 'success');
+        await showProfile();
+    } catch (err) {
+        toast(err.message, 'error');
+    }
+}
+
+// ============================================
+// HELPERS
+// ============================================
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+}
+
+// ============================================
+// INIT
+// ============================================
+async function init() {
+    // Восстановление сессии
+    const savedUser = localStorage.getItem('grade_user');
+    const savedToken = localStorage.getItem('grade_token');
+    
+    if (savedUser && savedToken) {
+        try {
+            State.user = JSON.parse(savedUser);
+            State.token = savedToken;
+            
+            // Проверяем валидность сессии
+            try {
+                const me = await API.getMe();
+                State.user = me.user;
+                localStorage.setItem('grade_user', JSON.stringify(State.user));
+            } catch (err) {
+                console.warn('Session invalid:', err.message);
+                State.user = null;
+                State.token = null;
+                localStorage.removeItem('grade_user');
+                localStorage.removeItem('grade_token');
+            }
+        } catch (err) {
+            console.error('Failed to restore session:', err);
+            State.user = null;
+            State.token = null;
+            localStorage.removeItem('grade_user');
+            localStorage.removeItem('grade_token');
+        }
+    }
+    
+    updateHeaderAuth();
+    
+    // Проверяем URL параметр people
+    const urlParams = new URLSearchParams(window.location.search);
+    const peopleParam = urlParams.get('people');
+    
+    if (peopleParam) {
+        State.viewingUserId = peopleParam;
+        
+        if (State.user) {
+            await showProfile();
+        } else {
+            // Не авторизован, но смотрим чужой профиль
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('profileSection').style.display = 'block';
+            await showProfile();
+        }
+    } else {
+        if (State.user) {
+            await showProfile();
+        } else {
+            showHero();
+        }
+    }
+    
+    // Инициализируем Google Auth
+    await initGoogleAuth();
+}
+
+// Запуск
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
