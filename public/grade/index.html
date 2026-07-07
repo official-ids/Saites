@@ -1,3 +1,6 @@
+# Исправленный клиент /grade
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -221,6 +224,14 @@ body {
     line-height: 1.6;
 }
 
+/* Google Sign-In Container - центрирование */
+.google-signin-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+}
+
 /* Profile Card */
 .profile-card {
     background: var(--bg-card);
@@ -325,6 +336,37 @@ body {
     margin-left: 8px;
 }
 
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+.quick-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-stack);
+}
+.quick-action-btn:hover {
+    background: var(--border-strong);
+    transform: translateY(-1px);
+}
+.quick-action-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
 /* Review Form */
 .review-form {
     background: var(--bg-card);
@@ -348,6 +390,7 @@ body {
     font-size: 2rem;
     cursor: pointer;
     transition: all 0.2s;
+    user-select: none;
 }
 .rating-input .star:hover,
 .rating-input .star.active {
@@ -624,6 +667,9 @@ body {
     .review-form, .profile-card {
         padding: 20px;
     }
+    .quick-actions {
+        justify-content: center;
+    }
 }
 </style>
 </head>
@@ -652,7 +698,10 @@ body {
         <p class="hero-subtitle">
             Войдите через Google, чтобы создать свой профиль и получать оценки от других пользователей.
         </p>
-        <div id="googleSignInButton"></div>
+        <!-- Контейнер для кнопки Google Sign-In с центрированием -->
+        <div class="google-signin-container">
+            <div id="googleSignInButton"></div>
+        </div>
     </div>
 
     <!-- Profile Section (показывается после авторизации) -->
@@ -683,6 +732,18 @@ body {
                 <div class="rating-stars" id="ratingStars"></div>
                 <div id="ratingCount" class="rating-count">0 отзывов</div>
             </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions" id="quickActions">
+            <button class="quick-action-btn" onclick="shareProfile()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                Поделиться
+            </button>
+            <button class="quick-action-btn" onclick="copyProfileLink()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Копировать ссылку
+            </button>
         </div>
 
         <!-- Review Form (только для своего профиля) -->
@@ -986,6 +1047,11 @@ async function showProfile() {
         const isOwner = State.user && State.user.id === userId;
         document.getElementById('reviewFormSection').style.display = isOwner ? 'block' : 'none';
         
+        // Рендерим звёзды для формы отзыва (если форма видима)
+        if (isOwner) {
+            renderRatingInput();
+        }
+        
         // Загружаем отзывы
         await loadReviews(userId);
     } catch (err) {
@@ -1108,6 +1174,41 @@ function goToPage(page) {
     State.currentPage = page;
     const userId = State.viewingUserId || State.user.id;
     loadReviews(userId);
+}
+
+// ============================================
+// QUICK ACTIONS
+// ============================================
+function getProfileUrl() {
+    const userId = State.viewingUserId || State.user.id;
+    return `${window.location.origin}/grade?people=${userId}`;
+}
+
+function shareProfile() {
+    const url = getProfileUrl();
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Профиль пользователя',
+            text: 'Посмотрите мой профиль на Grade',
+            url: url
+        }).catch(err => {
+            console.error('Share failed:', err);
+        });
+    } else {
+        copyProfileLink();
+    }
+}
+
+function copyProfileLink() {
+    const url = getProfileUrl();
+    
+    navigator.clipboard.writeText(url).then(() => {
+        toast('Ссылка скопирована в буфер обмена', 'success');
+    }).catch(err => {
+        console.error('Copy failed:', err);
+        toast('Не удалось скопировать ссылку', 'error');
+    });
 }
 
 // ============================================
