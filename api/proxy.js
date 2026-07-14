@@ -1499,15 +1499,12 @@ const handleDownloaderError = (err, res) => {
 // -----------------------------
 // Dynamic Page: ScriptBlox
 // -----------------------------
-
 // -----------------------------
 // Constants
 // -----------------------------
-
 const SCRIPTBLOX_DIR = 'scriptblox';
 const SCRIPTBLOX_HTML_FILE = 'index.html';
 const SCRIPTBLOX_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
-
 const SCRIPTBLOX_ERROR_MESSAGES = {
     FILE_NOT_FOUND: 'ScriptBlox page not found',
     INTERNAL_ERROR: 'Internal server error'
@@ -1516,7 +1513,6 @@ const SCRIPTBLOX_ERROR_MESSAGES = {
 // -----------------------------
 // ScriptBlox Page Service
 // -----------------------------
-
 /**
  * Сервис для управления страницами ScriptBlox
  */
@@ -1550,10 +1546,11 @@ class ScriptBloxPageService {
     /**
      * Установка заголовков кэширования
      * @param {Response} res - Express response объект
+     * @param {string} cacheControl - Значение Cache-Control
      */
-    setPageHeaders(res) {
+    setPageHeaders(res, cacheControl = SCRIPTBLOX_CACHE_CONTROL) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', SCRIPTBLOX_CACHE_CONTROL);
+        res.setHeader('Cache-Control', cacheControl);
     }
 
     /**
@@ -1574,7 +1571,6 @@ const scriptBloxPageService = new ScriptBloxPageService();
 // -----------------------------
 // Route Handlers: ScriptBlox
 // -----------------------------
-
 /**
  * GET /scriptblox — главная страница ScriptBlox (каталог)
  */
@@ -1624,27 +1620,6 @@ app.get('/scriptblox/favorites', async (req, res) => {
  */
 app.get('/scriptblox/script/:id', async (req, res) => {
     try {
-        const scriptId = req.params.id;
-        // Валидация ID скрипта (hex, 32 символа)
-        if (!/^[a-f0-9]{32}$/i.test(scriptId)) {
-            return res.status(400).send('Invalid script ID');
-        }
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
-});
-
-/**
- * GET /scriptblox/user/:userId — страница профиля пользователя
- */
-app.get('/scriptblox/user/:userId', async (req, res) => {
-    try {
-        const userId = req.params.userId;
-        // Валидация ID пользователя (формат usr_ + hex)
-        if (!/^usr_[a-f0-9]{32}$/i.test(userId)) {
-            return res.status(400).send('Invalid user ID');
-    }
         await scriptBloxPageService.serveScriptBloxPage(res);
     } catch (err) {
         handleScriptBloxPageError(err, res);
@@ -1654,7 +1629,6 @@ app.get('/scriptblox/user/:userId', async (req, res) => {
 // -----------------------------
 // Helper Functions
 // -----------------------------
-
 /**
  * Обработчик ошибок для ScriptBlox routes
  * @param {Error} err - Объект ошибки
