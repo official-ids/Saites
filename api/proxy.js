@@ -1308,6 +1308,31 @@ app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
 
 // -----------------------------
+// Dynamic Page: ScriptBlox
+// -----------------------------
+const SCRIPTBLOX_HTML_PATH = path.join(PUBLIC_DIR, 'scriptblox', 'index.html');
+
+app.get('/scriptblox', (req, res) => {
+    res.sendFile(SCRIPTBLOX_HTML_PATH);
+});
+
+app.get('/scriptblox/my', (req, res) => {
+    res.sendFile(SCRIPTBLOX_HTML_PATH);
+});
+
+app.get('/scriptblox/create', (req, res) => {
+    res.sendFile(SCRIPTBLOX_HTML_PATH);
+});
+
+app.get('/scriptblox/favorites', (req, res) => {
+    res.sendFile(SCRIPTBLOX_HTML_PATH);
+});
+
+app.get('/scriptblox/script/:id', (req, res) => {
+    res.sendFile(SCRIPTBLOX_HTML_PATH);
+});
+
+// -----------------------------
 // Dynamic Page: Downloader
 // -----------------------------
 
@@ -1495,153 +1520,6 @@ const handleDownloaderError = (err, res) => {
     
     res.status(500).send(ERROR_MESSAGES.INTERNAL_ERROR);
 };
-
-// -----------------------------
-// Dynamic Page: ScriptBlox
-// -----------------------------
-// -----------------------------
-// Constants
-// -----------------------------
-const SCRIPTBLOX_DIR = 'scriptblox';
-const SCRIPTBLOX_HTML_FILE = 'index.html';
-const SCRIPTBLOX_CACHE_CONTROL = 'public, max-age=60, s-maxage=300';
-const SCRIPTBLOX_ERROR_MESSAGES = {
-    FILE_NOT_FOUND: 'ScriptBlox page not found',
-    INTERNAL_ERROR: 'Internal server error'
-};
-
-// -----------------------------
-// ScriptBlox Page Service
-// -----------------------------
-/**
- * Сервис для управления страницами ScriptBlox
- */
-class ScriptBloxPageService {
-    /**
-     * Формирование пути к HTML-файлу
-     * @param {string} fileName - Имя файла
-     * @returns {string} - Полный путь к файлу
-     */
-    buildHtmlPath(fileName) {
-        return path.join(PUBLIC_DIR, SCRIPTBLOX_DIR, fileName);
-    }
-
-    /**
-     * Чтение HTML-файла
-     * @param {string} filePath - Путь к файлу
-     * @returns {Promise<string>} - Содержимое файла
-     * @throws {Error} - Если файл не найден
-     */
-    async readHtmlFile(filePath) {
-        try {
-            return await fs.readFile(filePath, 'utf8');
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                throw new Error(SCRIPTBLOX_ERROR_MESSAGES.FILE_NOT_FOUND);
-            }
-            throw err;
-        }
-    }
-
-    /**
-     * Установка заголовков кэширования
-     * @param {Response} res - Express response объект
-     * @param {string} cacheControl - Значение Cache-Control
-     */
-    setPageHeaders(res, cacheControl = SCRIPTBLOX_CACHE_CONTROL) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        res.setHeader('Cache-Control', cacheControl);
-    }
-
-    /**
-     * Отдача HTML-страницы ScriptBlox
-     * @param {Response} res - Express response объект
-     */
-    async serveScriptBloxPage(res) {
-        const htmlPath = this.buildHtmlPath(SCRIPTBLOX_HTML_FILE);
-        const html = await this.readHtmlFile(htmlPath);
-        this.setPageHeaders(res);
-        res.status(200).send(html);
-    }
-}
-
-// Инициализация сервиса
-const scriptBloxPageService = new ScriptBloxPageService();
-
-// -----------------------------
-// Route Handlers: ScriptBlox
-// -----------------------------
-/**
- * GET /scriptblox — главная страница ScriptBlox (каталог)
- */
-app.get('/scriptblox', async (req, res) => {
-    try {
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
-});
-
-/**
- * GET /scriptblox/create — страница создания скрипта
- */
-app.get('/scriptblox/create', async (req, res) => {
-    try {
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
-});
-
-/**
- * GET /scriptblox/my — страница "Мои скрипты"
- */
-app.get('/scriptblox/my', async (req, res) => {
-    try {
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
-});
-
-/**
- * GET /scriptblox/favorites — страница "Избранное"
- */
-app.get('/scriptblox/favorites', async (req, res) => {
-    try {
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
-});
-
-/**
- * GET /scriptblox/script/:id — страница просмотра скрипта
- */
-app.get('/scriptblox/script/:id', async (req, res) => {
-    try {
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
-});
-
-// -----------------------------
-// Helper Functions
-// -----------------------------
-/**
- * Обработчик ошибок для ScriptBlox routes
- * @param {Error} err - Объект ошибки
- * @param {Response} res - Express response объект
- */
-const handleScriptBloxPageError = (err, res) => {
-    console.error('[scriptblox/page]', err);
-    if (err.message === SCRIPTBLOX_ERROR_MESSAGES.FILE_NOT_FOUND) {
-        return res.status(404).send(SCRIPTBLOX_ERROR_MESSAGES.FILE_NOT_FOUND);
-    }
-    res.status(500).send(SCRIPTBLOX_ERROR_MESSAGES.INTERNAL_ERROR);
-};
-
 
 // -----------------------------
 // Кэш и Данные
