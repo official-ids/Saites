@@ -1500,16 +1500,29 @@ const handleDownloaderError = (err, res) => {
 // Route Handlers: ScriptBlox
 // -----------------------------
 
-/**
- * GET /scriptblox и любые вложенные страницы
- * Например: /scriptblox, /scriptblox/create, /scriptblox/script/123 и т.д.
- */
-app.get('/scriptblox/:path*', async (req, res) => {
-    try {
-        await scriptBloxPageService.serveScriptBloxPage(res);
-    } catch (err) {
-        handleScriptBloxPageError(err, res);
-    }
+app.get('/scriptblox', async (req, res) => {
+    try { await scriptBloxPageService.serveScriptBloxPage(res); } 
+    catch (err) { handleScriptBloxPageError(err, res); }
+});
+
+app.get('/scriptblox/create', async (req, res) => {
+    try { await scriptBloxPageService.serveScriptBloxPage(res); } 
+    catch (err) { handleScriptBloxPageError(err, res); }
+});
+
+app.get('/scriptblox/my', async (req, res) => {
+    try { await scriptBloxPageService.serveScriptBloxPage(res); } 
+    catch (err) { handleScriptBloxPageError(err, res); }
+});
+
+app.get('/scriptblox/favorites', async (req, res) => {
+    try { await scriptBloxPageService.serveScriptBloxPage(res); } 
+    catch (err) { handleScriptBloxPageError(err, res); }
+});
+
+app.get('/scriptblox/script/:id', async (req, res) => {
+    try { await scriptBloxPageService.serveScriptBloxPage(res); } 
+    catch (err) { handleScriptBloxPageError(err, res); }
 });
 
 // -----------------------------
