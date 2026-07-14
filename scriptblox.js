@@ -9,8 +9,10 @@ const crypto = require('crypto');
 const cors = require('cors');
 const helmet = require('helmet');
 const { kv } = require('@vercel/kv');
+const { OAuth2Client } = require('google-auth-library'); // Добавлено для безопасности
 
 const router = express.Router();
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // Инициализация клиента Google
 
 // ------------------------------------------------------------
 // MIDDLEWARE
@@ -177,12 +179,12 @@ function createDefaultScriptStats() {
 async function checkRateLimit(ip, action, maxRequests = CONFIG.RATE_LIMIT_MAX) {
     const key = `scriptblox:rate:${ip}:${action}`;
     const data = await kv.get(key);
-    const now = timestamp();
+    const nowTime = timestamp();
 
-    if (!data || now > data.resetAt) {
+    if (!data || nowTime > data.resetAt) {
         await kv.set(key, {
             count: 1,
-            resetAt: now + CONFIG.RATE_LIMIT_WINDOW
+            resetAt: nowTime + CONFIG.RATE_LIMIT_WINDOW
         }, { ex: Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000) });
         return true;
     }
@@ -192,7 +194,7 @@ async function checkRateLimit(ip, action, maxRequests = CONFIG.RATE_LIMIT_MAX) {
     }
 
     data.count++;
-    await kv.set(key, data, { ex: Math.ceil((data.resetAt - now) / 1000) });
+    await kv.set(key, data, { ex: Math.ceil((data.resetAt - nowTime) / 1000) });
     return true;
 }
 
@@ -264,21 +266,6 @@ async function logActivity(userId, action, details = {}) {
 }
 
 // ------------------------------------------------------------
-// GOOGLE OAUTH
-// ------------------------------------------------------------
-
-function decodeGoogleJWT(token) {
-    try {
-        const parts = token.split('.');
-        if (parts.length !== 3) throw new Error('Invalid JWT');
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-        return payload;
-    } catch (err) {
-        throw new Error('Invalid Google token');
-    }
-}
-
-// ------------------------------------------------------------
 // API ROUTES
 // ------------------------------------------------------------
 
@@ -292,7 +279,7 @@ router.get('/health', (req, res) => {
 });
 
 // ------------------------------------------------------------
-// AUTH: Google OAuth
+// AUTH: Google OAuth (БЕЗОПАСНАЯ ВЕРИФИКАЦИЯ)
 // ------------------------------------------------------------
 
 router.post('/auth/google', async (req, res) => {
@@ -306,20 +293,19 @@ router.post('/auth/google', async (req, res) => {
             });
         }
         
-        const payload = decodeGoogleJWT(credential);
-        
-        if (payload.iss !== 'https://accounts.google.com' &&
-            payload.iss !== 'accounts.google.com') {
-            return res.status(401).json({
-                error: 'Неверный issuer',
-                code: 'INVALID_ISSUER'
+        // БЕЗОПАСНОСТЬ: Верифицируем подпись JWT через официальную библиотеку Google
+        let payload;
+        try {
+            const ticket = await googleClient.verifyIdToken({
+                idToken: credential,
+                audience: process.env.GOOGLE_CLIENT_ID
             });
-        }
-        
-        if (payload.exp && payload.exp * 1000 < timestamp()) {
+            payload = ticket.getPayload();
+        } catch (verifyErr) {
+            console.error('[scriptblox/auth/google] Token verification failed:', verifyErr);
             return res.status(401).json({
-                error: 'Токен истёк',
-                code: 'TOKEN_EXPIRED'
+                error: 'Неверный или истекший токен Google',
+                code: 'INVALID_TOKEN'
             });
         }
         
