@@ -1414,18 +1414,18 @@ function updateHeaderAuth() {
 
 function renderGoogleButton() {
     const container = document.getElementById('googleSignInButton');
-    if (!container) return;
-    
-    container.innerHTML = '';
+    if (!container) return; // Если элемента нет на текущей странице, выходим
+
+    container.innerHTML = ''; // Очищаем контейнер перед рендером
 
     if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         try {
             google.accounts.id.renderButton(container, {
-                theme: 'filled_black',
+                theme: 'outline', // 'outline' лучше смотрится на темном фоне
                 size: 'large',
                 text: 'signin_with',
                 shape: 'pill',
-                width: 250
+                width: 260
             });
         } catch (err) {
             console.error('[Google Auth] Render failed:', err);
@@ -2258,6 +2258,12 @@ async function init() {
     
     try {
         await initGoogleAuth();
+        
+        // 🚀 ДОБАВЛЕНО: Если пользователь НЕ вошел в систему, рисуем кнопку входа
+        if (!State.user) {
+            renderGoogleButton();
+        }
+        
     } catch (err) {
         console.error('[Google Auth] Init failed:', err);
     }
