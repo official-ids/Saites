@@ -1308,19 +1308,6 @@ app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
 
 // -----------------------------
-// Dynamic Page: ScriptBlox (All subroutes)
-// -----------------------------
-const SCRIPTBLOX_HTML_PATH = path.join(PUBLIC_DIR, 'scriptblox', 'index.html');
-
-// Вместо: app.get('/scriptblox(.*)', ...)
-// Вместо: app.get('/scriptblox*', ...)
-
-// Правильно:
-app.get('/scriptblox/:any*', (req, res) => {
-    // Маршрут совпадет со всеми путями вроде /scriptblox/my, /scriptblox/favorites и т.д.
-});
-
-// -----------------------------
 // Dynamic Page: Downloader
 // -----------------------------
 
@@ -1508,6 +1495,22 @@ const handleDownloaderError = (err, res) => {
     
     res.status(500).send(ERROR_MESSAGES.INTERNAL_ERROR);
 };
+
+// -----------------------------
+// Route Handlers: ScriptBlox
+// -----------------------------
+
+/**
+ * GET /scriptblox и любые вложенные страницы
+ * Например: /scriptblox, /scriptblox/create, /scriptblox/script/123 и т.д.
+ */
+app.get('/scriptblox/:path*', async (req, res) => {
+    try {
+        await scriptBloxPageService.serveScriptBloxPage(res);
+    } catch (err) {
+        handleScriptBloxPageError(err, res);
+    }
+});
 
 // -----------------------------
 // Кэш и Данные
