@@ -1308,27 +1308,12 @@ app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
 
 // -----------------------------
-// Dynamic Page: ScriptBlox
+// Dynamic Page: ScriptBlox (All subroutes)
 // -----------------------------
 const SCRIPTBLOX_HTML_PATH = path.join(PUBLIC_DIR, 'scriptblox', 'index.html');
 
-app.get('/scriptblox', (req, res) => {
-    res.sendFile(SCRIPTBLOX_HTML_PATH);
-});
-
-app.get('/scriptblox/my', (req, res) => {
-    res.sendFile(SCRIPTBLOX_HTML_PATH);
-});
-
-app.get('/scriptblox/create', (req, res) => {
-    res.sendFile(SCRIPTBLOX_HTML_PATH);
-});
-
-app.get('/scriptblox/favorites', (req, res) => {
-    res.sendFile(SCRIPTBLOX_HTML_PATH);
-});
-
-app.get('/scriptblox/script/:id', (req, res) => {
+// Перехватывает /scriptblox, /scriptblox/create, /scriptblox/script/123 и т.д.
+app.get('/scriptblox*', (req, res) => {
     res.sendFile(SCRIPTBLOX_HTML_PATH);
 });
 
