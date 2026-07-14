@@ -1014,6 +1014,12 @@ body {
                     </svg>
                     <span class="badge" id="chatBadge">0</span>
                 </button>
+                <button id="screenShareBtn" class="control-btn" title="Демонстрация экрана">
+                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                     </svg>
+                </button>
                 <button class="control-btn hangup" id="hangupBtn" title="Завершить звонок">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/>
@@ -1252,6 +1258,7 @@ body {
         videoBtn: $('videoBtn'),
         hangupBtn: $('hangupBtn'),
         chatToggleBtn: $('chatToggleBtn'),
+        screenShareBtn: $('screenShareBtn'),
         chatBadge: $('chatBadge'),
         micIcon: $('micIcon'),
         videoIcon: $('videoIcon'),
@@ -1357,6 +1364,119 @@ body {
         showToast._timer = setTimeout(() => {
             DOM.toast.classList.remove('visible');
         }, duration);
+    }
+
+        // ============================================
+    // Демонстрация экрана (Screen Sharing)
+    // ============================================
+    let screenStream = null;
+    let isScreenSharing = false;
+    let originalVideoTrack = null;
+
+    async function toggleScreenShare() {
+        try {
+            if (!isScreenSharing) {
+                await startScreenShare();
+            } else {
+                await stopScreenShare();
+            }
+        } catch (err) {
+            console.error('Screen share error:', err);
+            showToast('Ошибка демонстрации экрана', 'error');
+        }
+    }
+
+    async function startScreenShare() {
+        // Запрос демонстрации экрана
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: { cursor: "always", displaySurface: "monitor" },
+            audio: false
+        });
+
+        const screenTrack = screenStream.getVideoTracks()[0];
+        
+        // Сохраняем оригинальную камеру из State
+        if (State.localStream) {
+            const videoTracks = State.localStream.getVideoTracks();
+            if (videoTracks.length > 0) {
+                originalVideoTrack = videoTracks[0];
+                originalVideoTrack.enabled = false; // Отключаем камеру
+            }
+        }
+
+        // Добавляем screen track в локальный поток для предпросмотра
+        if (State.localStream && screenTrack) {
+            State.localStream.addTrack(screenTrack);
+            DOM.localVideo.srcObject = State.localStream;
+        }
+
+        // Заменяем трек в WebRTC соединении PeerJS
+        if (State.currentCall && State.currentCall.peerConnection) {
+            const pc = State.currentCall.peerConnection;
+            const senders = pc.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            
+            if (videoSender) {
+                await videoSender.replaceTrack(screenTrack);
+            }
+        }
+
+        isScreenSharing = true;
+        DOM.screenShareBtn.classList.add('active');
+        // Меняем иконку на "Стоп" (крестик)
+        DOM.screenShareBtn.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+
+        // Обработчик остановки демонстрации (когда пользователь нажимает "Остановить" в браузере)
+        screenTrack.onended = () => {
+            stopScreenShare();
+        };
+
+        showToast('Демонстрация экрана начата', 'success');
+    }
+
+    async function stopScreenShare() {
+        if (!isScreenSharing) return;
+
+        // Останавливаем screen track
+        if (screenStream) {
+            screenStream.getTracks().forEach(track => track.stop());
+            screenStream = null;
+        }
+
+        // Возвращаем камеру
+        if (State.localStream && originalVideoTrack) {
+            // Удаляем трек экрана из локального потока
+            const screenTracks = State.localStream.getVideoTracks().filter(t => t !== originalVideoTrack);
+            screenTracks.forEach(t => State.localStream.removeTrack(t));
+            
+            // Возвращаем и включаем оригинальный трек камеры
+            State.localStream.addTrack(originalVideoTrack);
+            originalVideoTrack.enabled = !State.isVideoOff; // Учитываем текущее состояние камеры
+            
+            DOM.localVideo.srcObject = State.localStream;
+            DOM.localPlaceholder.style.display = State.isVideoOff ? 'flex' : 'none';
+        }
+
+        // Возвращаем camera track в peer connection
+        if (State.currentCall && State.currentCall.peerConnection && originalVideoTrack) {
+            const pc = State.currentCall.peerConnection;
+            const senders = pc.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            
+            if (videoSender) {
+                await videoSender.replaceTrack(originalVideoTrack);
+                // Повторно применяем состояние mute/unmute для камеры
+                applyVideoState();
+            }
+        }
+
+        isScreenSharing = false;
+        DOM.screenShareBtn.classList.remove('active');
+        // Возвращаем исходную иконку монитора
+        DOM.screenShareBtn.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>';
+
+        originalVideoTrack = null;
+        showToast('Демонстрация экрана остановлена', 'info');
     }
 
     /**
@@ -1922,6 +2042,11 @@ body {
             } catch (e) {}
             State.dataConnection = null;
         }
+
+        // Остановка демонстрации экрана, если она активна
+        if (isScreenSharing) {
+            stopScreenShare();
+        }
         
         // Уничтожение PeerJS объекта
         if (State.peer) {
@@ -2171,6 +2296,8 @@ body {
         DOM.hangupBtn.addEventListener('click', () => handleHangup(true));
         DOM.chatToggleBtn.addEventListener('click', toggleChat);
         DOM.chatCloseBtn.addEventListener('click', toggleChat);
+        DOM.screenShareBtn.addEventListener('click', toggleScreenShare);
+
         
         // Поле ввода чата
         DOM.chatInput.addEventListener('input', () => {
