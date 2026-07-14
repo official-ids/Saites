@@ -1313,7 +1313,7 @@ app.use('/api/scriptblox', scriptbloxRouter);
 const SCRIPTBLOX_HTML_PATH = path.join(PUBLIC_DIR, 'scriptblox', 'index.html');
 
 // Перехватывает /scriptblox, /scriptblox/create, /scriptblox/script/123 и т.д.
-app.get('/scriptblox*', (req, res) => {
+app.get('/scriptblox(.*)', (req, res) => {
     res.sendFile(SCRIPTBLOX_HTML_PATH);
 });
 
