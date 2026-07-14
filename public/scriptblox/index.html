@@ -1322,26 +1322,56 @@ function renderGoogleButton() {
     const container = document.getElementById('googleSignInButton');
     if (!container) return;
     
-    if (googleIsInitialized && typeof google !== 'undefined' && google.accounts) {
-        container.innerHTML = '';
+    // Очищаем контейнер перед рендером
+    container.innerHTML = '';
+
+    // Проверяем, готова ли библиотека Google
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         try {
+            // Если библиотека готова, рендерим стандартную кнопку Google
             google.accounts.id.renderButton(container, {
                 theme: 'filled_black',
                 size: 'large',
                 text: 'signin_with',
                 shape: 'pill',
-                width: 200
+                width: 250 // Немного увеличим ширину для лучшего вида
             });
         } catch (err) {
             console.error('[Google Auth] Render failed:', err);
+            renderFallbackButton(container);
         }
     } else {
-        container.innerHTML = `
-            <button class="btn btn-primary" onclick="initGoogleAuth().then(() => renderGoogleButton())">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-                Войти через Google
-            </button>
-        `;
+        // Если библиотека ещё не готова, рендерим кастомную кнопку-заглушку
+        renderFallbackButton(container);
+    }
+}
+
+// Вспомогательная функция для отрисовки резервной интерактивной кнопки
+function renderFallbackButton(container) {
+    container.innerHTML = `
+        <button class="btn btn-primary" id="fallbackGoogleBtn" style="display: inline-flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+            </svg>
+            Войти через Google
+        </button>
+    `;
+    
+    // Навешиваем событие ручной инициализации при клике на заглушку
+    const btn = document.getElementById('fallbackGoogleBtn');
+    if (btn) {
+        btn.onclick = async () => {
+            btn.disabled = true;
+            btn.innerText = 'Загрузка...';
+            try {
+                await initGoogleAuth();
+                renderGoogleButton();
+            } catch (err) {
+                toast('Не удалось загрузить Google Auth', 'error');
+                btn.disabled = false;
+                btn.innerText = 'Войти через Google';
+            }
+        };
     }
 }
 
