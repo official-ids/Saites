@@ -261,16 +261,20 @@ body {
 
 .toolbar {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 24px;
-    gap: 16px;
-    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 32px;
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
+
 .search-box {
-    position: relative;
-    flex: 1;
-    max-width: 400px;
+    width: 100%;
+    max-width: 600px;
 }
 .search-box input {
     width: 100%;
@@ -299,8 +303,9 @@ body {
 }
 .filters {
     display: flex;
-    gap: 8px;
+    gap: 12px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 .filter-btn {
     padding: 8px 16px;
