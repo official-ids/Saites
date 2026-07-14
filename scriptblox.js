@@ -1,7 +1,7 @@
 // ============================================================
 // МОДУЛЬ: SCRIPTBLOX — ПЛАТФОРМА ОБМЕНА СКРИПТАМИ
 // Полноценный бэкенд с авторизацией, скриптами, комментариями
-// и системой рейтинга
+// системой рейтинга, уведомлениями, достижениями и модерацией
 // ============================================================
 
 const express = require('express');
@@ -9,10 +9,10 @@ const crypto = require('crypto');
 const cors = require('cors');
 const helmet = require('helmet');
 const { kv } = require('@vercel/kv');
-const { OAuth2Client } = require('google-auth-library'); // Добавлено для безопасности
+const { OAuth2Client } = require('google-auth-library');
 
 const router = express.Router();
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // Инициализация клиента Google
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ------------------------------------------------------------
 // MIDDLEWARE
@@ -35,6 +35,7 @@ router.use(express.json({ limit: '2mb' }));
 const K = {
     USERS: 'scriptblox:users',
     SCRIPTS: 'scriptblox:scripts',
+    SCRIPT_VERSIONS: (scriptId) => `scriptblox:script_versions:${scriptId}`,
     COMMENTS: 'scriptblox:comments',
     LIKES: 'scriptblox:likes',
     VIEWS: 'scriptblox:views',
@@ -44,10 +45,17 @@ const K = {
     GOOGLE_MAP: 'scriptblox:google_map',
     FAVORITES: 'scriptblox:favorites',
     REPORTS: 'scriptblox:reports',
+    NOTIFICATIONS: (userId) => `scriptblox:notifications:${userId}`,
+    SUBSCRIPTIONS: (userId) => `scriptblox:subscriptions:${userId}`,
+    FOLLOWERS: (userId) => `scriptblox:followers:${userId}`,
+    COLLECTIONS: (userId) => `scriptblox:collections:${userId}`,
+    ACHIEVEMENTS: (userId) => `scriptblox:achievements:${userId}`,
     ACTIVITY: (userId) => `scriptblox:activity:${userId}`,
     SCRIPT_HISTORY: (scriptId) => `scriptblox:script_history:${scriptId}`,
     USER_STATS: (userId) => `scriptblox:user_stats:${userId}`,
-    SCRIPT_STATS: (scriptId) => `scriptblox:script_stats:${scriptId}`
+    SCRIPT_STATS: (scriptId) => `scriptblox:script_stats:${scriptId}`,
+    TRENDING: 'scriptblox:trending',
+    MODERATION_QUEUE: 'scriptblox:moderation_queue'
 };
 
 // ------------------------------------------------------------
@@ -72,6 +80,12 @@ const CONFIG = {
     RATE_LIMIT_MAX: 100,
     SCRIPTS_PER_PAGE: 20,
     COMMENTS_PER_PAGE: 50,
+    NOTIFICATIONS_LIMIT: 100,
+    ACHIEVEMENTS_LIMIT: 50,
+    COLLECTIONS_MAX: 20,
+    COLLECTION_SCRIPTS_MAX: 100,
+    MAX_VERSIONS: 20,
+    AUTO_HIDE_REPORTS: 5,
     VALID_LANGUAGES: [
         'javascript', 'typescript', 'python', 'lua', 'ruby',
         'php', 'java', 'csharp', 'cpp', 'c', 'go', 'rust',
@@ -82,7 +96,15 @@ const CONFIG = {
         'scripts', 'tools', 'games', 'automation', 'web',
         'mobile', 'desktop', 'api', 'library', 'tutorial',
         'snippet', 'config', 'data', 'other'
-    ]
+    ],
+    ACHIEVEMENTS: {
+        FIRST_SCRIPT: { id: 'first_script', name: 'Первый скрипт', description: 'Опубликуйте первый скрипт', condition: (stats) => stats.scriptsCount >= 1 },
+        TEN_SCRIPTS: { id: 'ten_scripts', name: 'Десять скриптов', description: 'Опубликуйте 10 скриптов', condition: (stats) => stats.scriptsCount >= 10 },
+        HUNDRED_LIKES: { id: 'hundred_likes', name: 'Сотня лайков', description: 'Получите 100 лайков', condition: (stats) => stats.totalLikes >= 100 },
+        THOUSAND_VIEWS: { id: 'thousand_views', name: 'Тысяча просмотров', description: 'Наберите 1000 просмотров', condition: (stats) => stats.totalViews >= 1000 },
+        FIRST_COMMENT: { id: 'first_comment', name: 'Первый комментарий', description: 'Напишите первый комментарий', condition: (stats) => stats.totalComments >= 1 },
+        FIFTY_COMMENTS: { id: 'fifty_comments', name: 'Пятьдесят комментариев', description: 'Напишите 50 комментариев', condition: (stats) => stats.totalComments >= 50 }
+    }
 };
 
 // ------------------------------------------------------------
@@ -146,6 +168,24 @@ function getRemoteIp(req) {
            'unknown';
 }
 
+function extractSearchTerms(query) {
+    if (!query || typeof query !== 'string') return [];
+    return query.toLowerCase()
+        .split(/\s+/)
+        .filter(term => term.length >= 2)
+        .slice(0, 10);
+}
+
+function calculateTrendingScore(script) {
+    const age = Date.now() - new Date(script.createdAt).getTime();
+    const ageInHours = age / (1000 * 60 * 60);
+    const likes = script.stats?.likes || 0;
+    const views = script.stats?.views || 0;
+    const comments = script.stats?.comments || 0;
+    const score = (likes * 3 + views * 0.5 + comments * 2) / Math.pow(ageInHours + 2, 1.5);
+    return Math.round(score * 100) / 100;
+}
+
 // ------------------------------------------------------------
 // DEFAULT DATA FACTORIES
 // ------------------------------------------------------------
@@ -157,6 +197,8 @@ function createDefaultUserStats() {
         totalLikes: 0,
         totalComments: 0,
         favoritesCount: 0,
+        followersCount: 0,
+        followingCount: 0,
         joinedAt: now()
     };
 }
@@ -167,8 +209,26 @@ function createDefaultScriptStats() {
         likes: 0,
         comments: 0,
         favorites: 0,
+        forks: 0,
         createdAt: now(),
-        lastViewedAt: null
+        lastViewedAt: null,
+        trendingScore: 0
+    };
+}
+
+function createDefaultNotification() {
+    return {
+        id: generateId(),
+        type: null,
+        fromUserId: null,
+        fromUsername: null,
+        fromDisplayName: null,
+        fromAvatar: null,
+        scriptId: null,
+        scriptTitle: null,
+        commentId: null,
+        read: false,
+        createdAt: now()
     };
 }
 
@@ -179,12 +239,12 @@ function createDefaultScriptStats() {
 async function checkRateLimit(ip, action, maxRequests = CONFIG.RATE_LIMIT_MAX) {
     const key = `scriptblox:rate:${ip}:${action}`;
     const data = await kv.get(key);
-    const nowTime = timestamp();
+    const currentTime = timestamp();
 
-    if (!data || nowTime > data.resetAt) {
+    if (!data || currentTime > data.resetAt) {
         await kv.set(key, {
             count: 1,
-            resetAt: nowTime + CONFIG.RATE_LIMIT_WINDOW
+            resetAt: currentTime + CONFIG.RATE_LIMIT_WINDOW
         }, { ex: Math.ceil(CONFIG.RATE_LIMIT_WINDOW / 1000) });
         return true;
     }
@@ -194,7 +254,7 @@ async function checkRateLimit(ip, action, maxRequests = CONFIG.RATE_LIMIT_MAX) {
     }
 
     data.count++;
-    await kv.set(key, data, { ex: Math.ceil((data.resetAt - nowTime) / 1000) });
+    await kv.set(key, data, { ex: Math.ceil((data.resetAt - currentTime) / 1000) });
     return true;
 }
 
@@ -266,6 +326,89 @@ async function logActivity(userId, action, details = {}) {
 }
 
 // ------------------------------------------------------------
+// NOTIFICATIONS
+// ------------------------------------------------------------
+
+async function sendNotification(userId, notification) {
+    const key = K.NOTIFICATIONS(userId);
+    const notifications = await kv.get(key) || [];
+    
+    notifications.unshift(notification);
+    
+    if (notifications.length > CONFIG.NOTIFICATIONS_LIMIT) {
+        notifications.length = CONFIG.NOTIFICATIONS_LIMIT;
+    }
+    
+    await kv.set(key, notifications);
+}
+
+async function createNotification(type, fromUser, toUserId, data = {}) {
+    const notification = createDefaultNotification();
+    notification.type = type;
+    notification.fromUserId = fromUser.id;
+    notification.fromUsername = fromUser.username;
+    notification.fromDisplayName = fromUser.displayName;
+    notification.fromAvatar = fromUser.avatar;
+    
+    if (data.scriptId) {
+        notification.scriptId = data.scriptId;
+        notification.scriptTitle = data.scriptTitle;
+    }
+    if (data.commentId) {
+        notification.commentId = data.commentId;
+    }
+    
+    await sendNotification(toUserId, notification);
+}
+
+// ------------------------------------------------------------
+// ACHIEVEMENTS
+// ------------------------------------------------------------
+
+async function checkAndUnlockAchievements(userId, userStats) {
+    const key = K.ACHIEVEMENTS(userId);
+    const unlocked = await kv.get(key) || [];
+    const newlyUnlocked = [];
+    
+    for (const [id, achievement] of Object.entries(CONFIG.ACHIEVEMENTS)) {
+        if (unlocked.includes(id)) continue;
+        
+        try {
+            if (achievement.condition(userStats)) {
+                unlocked.push(id);
+                newlyUnlocked.push(achievement);
+            }
+        } catch (err) {
+            console.error('[scriptblox/achievements] Error checking achievement:', err);
+        }
+    }
+    
+    if (newlyUnlocked.length > 0) {
+        await kv.set(key, unlocked);
+    }
+    
+    return newlyUnlocked;
+}
+
+// ------------------------------------------------------------
+// TRENDING UPDATE
+// ------------------------------------------------------------
+
+async function updateTrendingScore(scriptId, script) {
+    const score = calculateTrendingScore(script);
+    script.stats = script.stats || createDefaultScriptStats();
+    script.stats.trendingScore = score;
+    
+    const trending = await kv.get(K.TRENDING) || {};
+    trending[scriptId] = {
+        score,
+        updatedAt: now()
+    };
+    
+    await kv.set(K.TRENDING, trending);
+}
+
+// ------------------------------------------------------------
 // API ROUTES
 // ------------------------------------------------------------
 
@@ -274,12 +417,12 @@ router.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         timestamp: now(),
-        version: '1.0.0'
+        version: '1.1.0'
     });
 });
 
 // ------------------------------------------------------------
-// AUTH: Google OAuth (БЕЗОПАСНАЯ ВЕРИФИКАЦИЯ)
+// AUTH: Google OAuth
 // ------------------------------------------------------------
 
 router.post('/auth/google', async (req, res) => {
@@ -293,7 +436,6 @@ router.post('/auth/google', async (req, res) => {
             });
         }
         
-        // БЕЗОПАСНОСТЬ: Верифицируем подпись JWT через официальную библиотеку Google
         let payload;
         try {
             const ticket = await googleClient.verifyIdToken({
@@ -332,17 +474,24 @@ router.post('/auth/google', async (req, res) => {
         if (!userId) {
             userId = generateId();
             
+            let username = name.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 30);
+            if (!username || username.length < 3) {
+                username = 'user_' + crypto.randomBytes(4).toString('hex');
+            }
+            
             user = {
                 id: userId,
                 googleId,
                 email,
-                username: name.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 30),
+                username,
                 displayName: name,
                 avatar: picture || null,
                 bio: '',
                 createdAt: now(),
                 updatedAt: now(),
-                stats: createDefaultUserStats()
+                stats: createDefaultUserStats(),
+                achievements: [],
+                role: 'user'
             };
             
             const users = await kv.get(K.USERS) || {};
@@ -491,7 +640,10 @@ router.post('/scripts', requireAuth, async (req, res) => {
         if (tags && Array.isArray(tags)) {
             for (const tag of tags.slice(0, CONFIG.TAGS_MAX_COUNT)) {
                 if (isValidTag(tag)) {
-                    processedTags.push(normalizeTag(tag));
+                    const normalized = normalizeTag(tag);
+                    if (!processedTags.includes(normalized)) {
+                        processedTags.push(normalized);
+                    }
                 }
             }
         }
@@ -507,14 +659,27 @@ router.post('/scripts', requireAuth, async (req, res) => {
             category,
             tags: processedTags,
             isPublic: true,
+            isModerated: false,
             createdAt: now(),
             updatedAt: now(),
-            stats: createDefaultScriptStats()
+            stats: createDefaultScriptStats(),
+            version: 1
         };
         
         const scripts = await kv.get(K.SCRIPTS) || {};
         scripts[scriptId] = script;
         await kv.set(K.SCRIPTS, scripts);
+        
+        // Сохраняем первую версию
+        const versionsKey = K.SCRIPT_VERSIONS(scriptId);
+        const versions = [{
+            version: 1,
+            content: script.content,
+            title: script.title,
+            description: script.description,
+            createdAt: now()
+        }];
+        await kv.set(versionsKey, versions);
         
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -524,6 +689,14 @@ router.post('/scripts', requireAuth, async (req, res) => {
             user.updatedAt = now();
             users[req.userId] = user;
             await kv.set(K.USERS, users);
+            
+            // Проверяем достижения
+            const newlyUnlocked = await checkAndUnlockAchievements(req.userId, user.stats);
+            if (newlyUnlocked.length > 0) {
+                await logActivity(req.userId, 'achievements_unlocked', {
+                    achievements: newlyUnlocked.map(a => a.id)
+                });
+            }
         }
         
         await logActivity(req.userId, 'script_created', { scriptId, title });
@@ -611,7 +784,7 @@ router.get('/scripts/:scriptId', optionalAuth, async (req, res) => {
 });
 
 // ------------------------------------------------------------
-// SCRIPTS: Update script
+// SCRIPTS: Update script (с версионированием)
 // ------------------------------------------------------------
 
 router.put('/scripts/:scriptId', requireAuth, async (req, res) => {
@@ -636,6 +809,10 @@ router.put('/scripts/:scriptId', requireAuth, async (req, res) => {
             });
         }
         
+        let hasChanges = false;
+        const oldContent = script.content;
+        const oldTitle = script.title;
+        
         if (title !== undefined) {
             if (title.length < CONFIG.SCRIPT_TITLE_MIN_LENGTH || 
                 title.length > CONFIG.SCRIPT_TITLE_MAX_LENGTH) {
@@ -645,6 +822,7 @@ router.put('/scripts/:scriptId', requireAuth, async (req, res) => {
                 });
             }
             script.title = sanitizeString(title);
+            if (script.title !== oldTitle) hasChanges = true;
         }
         
         if (content !== undefined) {
@@ -656,6 +834,7 @@ router.put('/scripts/:scriptId', requireAuth, async (req, res) => {
                 });
             }
             script.content = sanitizeScriptContent(content);
+            if (script.content !== oldContent) hasChanges = true;
         }
         
         if (description !== undefined) {
@@ -688,7 +867,10 @@ router.put('/scripts/:scriptId', requireAuth, async (req, res) => {
             const processedTags = [];
             for (const tag of tags.slice(0, CONFIG.TAGS_MAX_COUNT)) {
                 if (isValidTag(tag)) {
-                    processedTags.push(normalizeTag(tag));
+                    const normalized = normalizeTag(tag);
+                    if (!processedTags.includes(normalized)) {
+                        processedTags.push(normalized);
+                    }
                 }
             }
             script.tags = processedTags;
@@ -699,16 +881,148 @@ router.put('/scripts/:scriptId', requireAuth, async (req, res) => {
         }
         
         script.updatedAt = now();
+        script.version = (script.version || 1) + 1;
+        
         scripts[scriptId] = script;
         await kv.set(K.SCRIPTS, scripts);
         
-        await logActivity(req.userId, 'script_updated', { scriptId });
+        // Сохраняем версию если контент изменился
+        if (hasChanges) {
+            const versionsKey = K.SCRIPT_VERSIONS(scriptId);
+            const versions = await kv.get(versionsKey) || [];
+            
+            versions.unshift({
+                version: script.version,
+                content: script.content,
+                title: script.title,
+                description: script.description,
+                createdAt: now()
+            });
+            
+            if (versions.length > CONFIG.MAX_VERSIONS) {
+                versions.length = CONFIG.MAX_VERSIONS;
+            }
+            
+            await kv.set(versionsKey, versions);
+        }
         
-        res.json({ success: true });
+        await logActivity(req.userId, 'script_updated', { scriptId, version: script.version });
+        
+        res.json({ 
+            success: true,
+            version: script.version
+        });
     } catch (err) {
         console.error('[scriptblox/scripts/update]', err);
         res.status(500).json({
             error: 'Ошибка обновления скрипта',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// SCRIPTS: Get script versions
+// ------------------------------------------------------------
+
+router.get('/scripts/:scriptId/versions', requireAuth, async (req, res) => {
+    try {
+        const { scriptId } = req.params;
+        
+        const scripts = await kv.get(K.SCRIPTS) || {};
+        const script = scripts[scriptId];
+        
+        if (!script) {
+            return res.status(404).json({
+                error: 'Скрипт не найден',
+                code: 'SCRIPT_NOT_FOUND'
+            });
+        }
+        
+        if (script.authorId !== req.userId) {
+            return res.status(403).json({
+                error: 'Нет доступа',
+                code: 'FORBIDDEN'
+            });
+        }
+        
+        const versionsKey = K.SCRIPT_VERSIONS(scriptId);
+        const versions = await kv.get(versionsKey) || [];
+        
+        res.json({
+            versions: versions.map(v => ({
+                version: v.version,
+                title: v.title,
+                description: v.description,
+                createdAt: v.createdAt,
+                contentLength: v.content.length
+            })),
+            total: versions.length
+        });
+    } catch (err) {
+        console.error('[scriptblox/scripts/versions]', err);
+        res.status(500).json({
+            error: 'Ошибка получения версий',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// SCRIPTS: Get specific version
+// ------------------------------------------------------------
+
+router.get('/scripts/:scriptId/versions/:version', requireAuth, async (req, res) => {
+    try {
+        const { scriptId, version } = req.params;
+        const versionNum = parseInt(version);
+        
+        if (isNaN(versionNum) || versionNum < 1) {
+            return res.status(400).json({
+                error: 'Неверный номер версии',
+                code: 'INVALID_VERSION'
+            });
+        }
+        
+        const scripts = await kv.get(K.SCRIPTS) || {};
+        const script = scripts[scriptId];
+        
+        if (!script) {
+            return res.status(404).json({
+                error: 'Скрипт не найден',
+                code: 'SCRIPT_NOT_FOUND'
+            });
+        }
+        
+        if (script.authorId !== req.userId) {
+            return res.status(403).json({
+                error: 'Нет доступа',
+                code: 'FORBIDDEN'
+            });
+        }
+        
+        const versionsKey = K.SCRIPT_VERSIONS(scriptId);
+        const versions = await kv.get(versionsKey) || [];
+        const specificVersion = versions.find(v => v.version === versionNum);
+        
+        if (!specificVersion) {
+            return res.status(404).json({
+                error: 'Версия не найдена',
+                code: 'VERSION_NOT_FOUND'
+            });
+        }
+        
+        res.json({
+            version: specificVersion.version,
+            content: specificVersion.content,
+            title: specificVersion.title,
+            description: specificVersion.description,
+            createdAt: specificVersion.createdAt
+        });
+    } catch (err) {
+        console.error('[scriptblox/scripts/version]', err);
+        res.status(500).json({
+            error: 'Ошибка получения версии',
             code: 'INTERNAL_ERROR'
         });
     }
@@ -741,6 +1055,10 @@ router.delete('/scripts/:scriptId', requireAuth, async (req, res) => {
         
         delete scripts[scriptId];
         await kv.set(K.SCRIPTS, scripts);
+        
+        // Удаляем версии
+        const versionsKey = K.SCRIPT_VERSIONS(scriptId);
+        await kv.del(versionsKey);
         
         const users = await kv.get(K.USERS) || {};
         const user = users[req.userId];
@@ -778,7 +1096,8 @@ router.get('/scripts', optionalAuth, async (req, res) => {
             tag,
             search,
             sort = 'newest',
-            authorId
+            authorId,
+            trending
         } = req.query;
         
         const pageNum = Math.max(1, parseInt(page) || 1);
@@ -814,6 +1133,10 @@ router.get('/scripts', optionalAuth, async (req, res) => {
         } else if (sort === 'views') {
             filteredScripts.sort((a, b) => 
                 (b.stats?.views || 0) - (a.stats?.views || 0)
+            );
+        } else if (sort === 'trending') {
+            filteredScripts.sort((a, b) => 
+                (b.stats?.trendingScore || 0) - (a.stats?.trendingScore || 0)
             );
         }
         
@@ -888,6 +1211,139 @@ router.get('/scripts/my', requireAuth, async (req, res) => {
 });
 
 // ------------------------------------------------------------
+// SCRIPTS: Trending scripts
+// ------------------------------------------------------------
+
+router.get('/scripts/trending', optionalAuth, async (req, res) => {
+    try {
+        const { limit = 10 } = req.query;
+        const limitNum = Math.min(50, Math.max(1, parseInt(limit) || 10));
+        
+        const scripts = await kv.get(K.SCRIPTS) || {};
+        const users = await kv.get(K.USERS) || {};
+        
+        const trendingScripts = Object.values(scripts)
+            .filter(script => script.isPublic)
+            .sort((a, b) => 
+                (b.stats?.trendingScore || 0) - (a.stats?.trendingScore || 0)
+            )
+            .slice(0, limitNum);
+        
+        const scriptsWithAuthors = trendingScripts.map(script => {
+            const author = users[script.authorId];
+            return {
+                ...script,
+                author: author ? {
+                    id: author.id,
+                    username: author.username,
+                    displayName: author.displayName,
+                    avatar: author.avatar
+                } : null
+            };
+        });
+        
+        res.json({
+            scripts: scriptsWithAuthors,
+            total: scriptsWithAuthors.length
+        });
+    } catch (err) {
+        console.error('[scriptblox/scripts/trending]', err);
+        res.status(500).json({
+            error: 'Ошибка получения трендовых скриптов',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// SCRIPTS: Fork script
+// ------------------------------------------------------------
+
+router.post('/scripts/:scriptId/fork', requireAuth, async (req, res) => {
+    try {
+        const { scriptId } = req.params;
+        
+        const scripts = await kv.get(K.SCRIPTS) || {};
+        const originalScript = scripts[scriptId];
+        
+        if (!originalScript) {
+            return res.status(404).json({
+                error: 'Скрипт не найден',
+                code: 'SCRIPT_NOT_FOUND'
+            });
+        }
+        
+        if (originalScript.authorId === req.userId) {
+            return res.status(400).json({
+                error: 'Нельзя форкнуть свой скрипт',
+                code: 'SELF_FORK'
+            });
+        }
+        
+        const forkId = generateId();
+        const forkedScript = {
+            ...originalScript,
+            id: forkId,
+            authorId: req.userId,
+            forkedFrom: scriptId,
+            forkedFromTitle: originalScript.title,
+            createdAt: now(),
+            updatedAt: now(),
+            stats: createDefaultScriptStats(),
+            version: 1
+        };
+        
+        scripts[forkId] = forkedScript;
+        await kv.set(K.SCRIPTS, scripts);
+        
+        // Увеличиваем счётчик форков оригинала
+        originalScript.stats = originalScript.stats || createDefaultScriptStats();
+        originalScript.stats.forks = (originalScript.stats.forks || 0) + 1;
+        scripts[scriptId] = originalScript;
+        await kv.set(K.SCRIPTS, scripts);
+        
+        // Сохраняем первую версию форка
+        const versionsKey = K.SCRIPT_VERSIONS(forkId);
+        await kv.set(versionsKey, [{
+            version: 1,
+            content: forkedScript.content,
+            title: forkedScript.title,
+            description: forkedScript.description,
+            createdAt: now()
+        }]);
+        
+        const users = await kv.get(K.USERS) || {};
+        const user = users[req.userId];
+        if (user) {
+            user.stats = user.stats || createDefaultUserStats();
+            user.stats.scriptsCount = (user.stats.scriptsCount || 0) + 1;
+            users[req.userId] = user;
+            await kv.set(K.USERS, users);
+        }
+        
+        await logActivity(req.userId, 'script_forked', { 
+            scriptId: forkId, 
+            originalScriptId: scriptId 
+        });
+        
+        res.json({
+            success: true,
+            script: {
+                id: forkedScript.id,
+                title: forkedScript.title,
+                forkedFrom: scriptId
+            }
+        });
+    } catch (err) {
+        console.error('[scriptblox/scripts/fork]', err);
+        res.status(500).json({
+            error: 'Ошибка форка скрипта',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
 // COMMENTS: Add comment
 // ------------------------------------------------------------
 
@@ -954,6 +1410,22 @@ router.post('/scripts/:scriptId/comments', requireAuth, async (req, res) => {
             user.stats.totalComments = (user.stats.totalComments || 0) + 1;
             users[req.userId] = user;
             await kv.set(K.USERS, users);
+            
+            const newlyUnlocked = await checkAndUnlockAchievements(req.userId, user.stats);
+            if (newlyUnlocked.length > 0) {
+                await logActivity(req.userId, 'achievements_unlocked', {
+                    achievements: newlyUnlocked.map(a => a.id)
+                });
+            }
+        }
+        
+        // Уведомление автору скрипта
+        if (script.authorId !== req.userId && user) {
+            await createNotification('comment', user, script.authorId, {
+                scriptId,
+                scriptTitle: script.title,
+                commentId
+            });
         }
         
         await logActivity(req.userId, 'comment_added', { scriptId, commentId });
@@ -982,7 +1454,7 @@ router.post('/scripts/:scriptId/comments', requireAuth, async (req, res) => {
 router.get('/scripts/:scriptId/comments', optionalAuth, async (req, res) => {
     try {
         const { scriptId } = req.params;
-        const { page = 1, limit = CONFIG.COMMENTS_PER_PAGE } = req.query;
+        const { page = 1, limit = CONFIG.COMMENTS_PER_PAGE, sort = 'newest' } = req.query;
         
         const pageNum = Math.max(1, parseInt(page) || 1);
         const limitNum = Math.min(100, Math.max(1, parseInt(limit) || CONFIG.COMMENTS_PER_PAGE));
@@ -990,9 +1462,14 @@ router.get('/scripts/:scriptId/comments', optionalAuth, async (req, res) => {
         const comments = await kv.get(K.COMMENTS) || {};
         const users = await kv.get(K.USERS) || {};
         
-        const scriptComments = Object.values(comments)
-            .filter(comment => comment.scriptId === scriptId && !comment.parentId)
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        let scriptComments = Object.values(comments)
+            .filter(comment => comment.scriptId === scriptId && !comment.parentId);
+        
+        if (sort === 'popular') {
+            scriptComments.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        } else {
+            scriptComments.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }
         
         const start = (pageNum - 1) * limitNum;
         const end = start + limitNum;
@@ -1002,6 +1479,7 @@ router.get('/scripts/:scriptId/comments', optionalAuth, async (req, res) => {
             const author = users[comment.authorId];
             const replies = Object.values(comments)
                 .filter(reply => reply.parentId === comment.id)
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map(reply => {
                     const replyAuthor = users[reply.authorId];
                     return {
@@ -1023,7 +1501,8 @@ router.get('/scripts/:scriptId/comments', optionalAuth, async (req, res) => {
                     displayName: author.displayName,
                     avatar: author.avatar
                 } : null,
-                replies
+                replies,
+                repliesCount: replies.length
             };
         });
         
@@ -1196,12 +1675,30 @@ router.post('/scripts/:scriptId/like', requireAuth, async (req, res) => {
                 author.stats.totalLikes = (author.stats.totalLikes || 0) + 1;
                 users[script.authorId] = author;
                 await kv.set(K.USERS, users);
+                
+                const newlyUnlocked = await checkAndUnlockAchievements(script.authorId, author.stats);
+                if (newlyUnlocked.length > 0) {
+                    await logActivity(script.authorId, 'achievements_unlocked', {
+                        achievements: newlyUnlocked.map(a => a.id)
+                    });
+                }
+            }
+            
+            // Уведомление автору
+            const liker = users[req.userId];
+            if (liker && script.authorId !== req.userId) {
+                await createNotification('like', liker, script.authorId, {
+                    scriptId,
+                    scriptTitle: script.title
+                });
             }
         }
         
         await kv.set(K.LIKES, likes);
         scripts[scriptId] = script;
         await kv.set(K.SCRIPTS, scripts);
+        
+        await updateTrendingScore(scriptId, script);
         
         res.json({
             success: true,
@@ -1369,6 +1866,419 @@ router.get('/favorites', requireAuth, async (req, res) => {
 });
 
 // ------------------------------------------------------------
+// SUBSCRIPTIONS: Subscribe to user
+// ------------------------------------------------------------
+
+router.post('/subscriptions/:userId', requireAuth, async (req, res) => {
+    try {
+        const targetUserId = req.params.userId;
+        
+        if (targetUserId === req.userId) {
+            return res.status(400).json({
+                error: 'Нельзя подписаться на себя',
+                code: 'SELF_SUBSCRIBE'
+            });
+        }
+        
+        const users = await kv.get(K.USERS) || {};
+        const targetUser = users[targetUserId];
+        
+        if (!targetUser) {
+            return res.status(404).json({
+                error: 'Пользователь не найден',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+        
+        const subscriptionsKey = K.SUBSCRIPTIONS(req.userId);
+        const subscriptions = await kv.get(subscriptionsKey) || [];
+        
+        if (subscriptions.includes(targetUserId)) {
+            return res.status(400).json({
+                error: 'Вы уже подписаны',
+                code: 'ALREADY_SUBSCRIBED'
+            });
+        }
+        
+        subscriptions.push(targetUserId);
+        await kv.set(subscriptionsKey, subscriptions);
+        
+        const followersKey = K.FOLLOWERS(targetUserId);
+        const followers = await kv.get(followersKey) || [];
+        if (!followers.includes(req.userId)) {
+            followers.push(req.userId);
+            await kv.set(followersKey, followers);
+        }
+        
+        targetUser.stats = targetUser.stats || createDefaultUserStats();
+        targetUser.stats.followersCount = (targetUser.stats.followersCount || 0) + 1;
+        users[targetUserId] = targetUser;
+        await kv.set(K.USERS, users);
+        
+        const currentUser = users[req.userId];
+        if (currentUser) {
+            currentUser.stats = currentUser.stats || createDefaultUserStats();
+            currentUser.stats.followingCount = (currentUser.stats.followingCount || 0) + 1;
+            users[req.userId] = currentUser;
+            await kv.set(K.USERS, users);
+        }
+        
+        await createNotification('subscription', currentUser, targetUserId, {});
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[scriptblox/subscriptions/subscribe]', err);
+        res.status(500).json({
+            error: 'Ошибка подписки',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// SUBSCRIPTIONS: Unsubscribe from user
+// ------------------------------------------------------------
+
+router.delete('/subscriptions/:userId', requireAuth, async (req, res) => {
+    try {
+        const targetUserId = req.params.userId;
+        
+        const subscriptionsKey = K.SUBSCRIPTIONS(req.userId);
+        const subscriptions = await kv.get(subscriptionsKey) || [];
+        const index = subscriptions.indexOf(targetUserId);
+        
+        if (index === -1) {
+            return res.status(404).json({
+                error: 'Вы не подписаны',
+                code: 'NOT_SUBSCRIBED'
+            });
+        }
+        
+        subscriptions.splice(index, 1);
+        await kv.set(subscriptionsKey, subscriptions);
+        
+        const followersKey = K.FOLLOWERS(targetUserId);
+        const followers = await kv.get(followersKey) || [];
+        const followerIndex = followers.indexOf(req.userId);
+        if (followerIndex !== -1) {
+            followers.splice(followerIndex, 1);
+            await kv.set(followersKey, followers);
+        }
+        
+        const users = await kv.get(K.USERS) || {};
+        const targetUser = users[targetUserId];
+        if (targetUser) {
+            targetUser.stats = targetUser.stats || createDefaultUserStats();
+            targetUser.stats.followersCount = Math.max(0, (targetUser.stats.followersCount || 0) - 1);
+            users[targetUserId] = targetUser;
+            await kv.set(K.USERS, users);
+        }
+        
+        const currentUser = users[req.userId];
+        if (currentUser) {
+            currentUser.stats = currentUser.stats || createDefaultUserStats();
+            currentUser.stats.followingCount = Math.max(0, (currentUser.stats.followingCount || 0) - 1);
+            users[req.userId] = currentUser;
+            await kv.set(K.USERS, users);
+        }
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[scriptblox/subscriptions/unsubscribe]', err);
+        res.status(500).json({
+            error: 'Ошибка отписки',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// SUBSCRIPTIONS: Get my subscriptions
+// ------------------------------------------------------------
+
+router.get('/subscriptions', requireAuth, async (req, res) => {
+    try {
+        const subscriptionsKey = K.SUBSCRIPTIONS(req.userId);
+        const subscriptions = await kv.get(subscriptionsKey) || [];
+        
+        const users = await kv.get(K.USERS) || {};
+        
+        const subscribedUsers = subscriptions
+            .map(userId => users[userId])
+            .filter(Boolean)
+            .map(user => ({
+                id: user.id,
+                username: user.username,
+                displayName: user.displayName,
+                avatar: user.avatar,
+                stats: user.stats
+            }));
+        
+        res.json({
+            subscriptions: subscribedUsers,
+            total: subscribedUsers.length
+        });
+    } catch (err) {
+        console.error('[scriptblox/subscriptions/get]', err);
+        res.status(500).json({
+            error: 'Ошибка получения подписок',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// COLLECTIONS: Create collection
+// ------------------------------------------------------------
+
+router.post('/collections', requireAuth, async (req, res) => {
+    try {
+        const { name, description } = req.body;
+        
+        if (!name || name.length < 1 || name.length > 100) {
+            return res.status(400).json({
+                error: 'Название должно содержать от 1 до 100 символов',
+                code: 'INVALID_NAME'
+            });
+        }
+        
+        const collectionsKey = K.COLLECTIONS(req.userId);
+        const collections = await kv.get(collectionsKey) || [];
+        
+        if (collections.length >= CONFIG.COLLECTIONS_MAX) {
+            return res.status(400).json({
+                error: `Достигнут лимит коллекций (${CONFIG.COLLECTIONS_MAX})`,
+                code: 'COLLECTIONS_LIMIT_REACHED'
+            });
+        }
+        
+        const collection = {
+            id: generateId(),
+            name: sanitizeString(name),
+            description: description ? sanitizeString(description.slice(0, 500)) : '',
+            scriptIds: [],
+            createdAt: now(),
+            updatedAt: now()
+        };
+        
+        collections.push(collection);
+        await kv.set(collectionsKey, collections);
+        
+        res.json({
+            success: true,
+            collection: {
+                id: collection.id,
+                name: collection.name,
+                description: collection.description
+            }
+        });
+    } catch (err) {
+        console.error('[scriptblox/collections/create]', err);
+        res.status(500).json({
+            error: 'Ошибка создания коллекции',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// COLLECTIONS: Add script to collection
+// ------------------------------------------------------------
+
+router.post('/collections/:collectionId/scripts/:scriptId', requireAuth, async (req, res) => {
+    try {
+        const { collectionId, scriptId } = req.params;
+        
+        const collectionsKey = K.COLLECTIONS(req.userId);
+        const collections = await kv.get(collectionsKey) || [];
+        const collection = collections.find(c => c.id === collectionId);
+        
+        if (!collection) {
+            return res.status(404).json({
+                error: 'Коллекция не найдена',
+                code: 'COLLECTION_NOT_FOUND'
+            });
+        }
+        
+        if (collection.scriptIds.includes(scriptId)) {
+            return res.status(400).json({
+                error: 'Скрипт уже в коллекции',
+                code: 'ALREADY_IN_COLLECTION'
+            });
+        }
+        
+        if (collection.scriptIds.length >= CONFIG.COLLECTION_SCRIPTS_MAX) {
+            return res.status(400).json({
+                error: `Достигнут лимит скриптов в коллекции (${CONFIG.COLLECTION_SCRIPTS_MAX})`,
+                code: 'COLLECTION_SCRIPTS_LIMIT_REACHED'
+            });
+        }
+        
+        collection.scriptIds.push(scriptId);
+        collection.updatedAt = now();
+        await kv.set(collectionsKey, collections);
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[scriptblox/collections/add_script]', err);
+        res.status(500).json({
+            error: 'Ошибка добавления скрипта в коллекцию',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// COLLECTIONS: Get my collections
+// ------------------------------------------------------------
+
+router.get('/collections', requireAuth, async (req, res) => {
+    try {
+        const collectionsKey = K.COLLECTIONS(req.userId);
+        const collections = await kv.get(collectionsKey) || [];
+        
+        const scripts = await kv.get(K.SCRIPTS) || {};
+        
+        const collectionsWithScripts = collections.map(collection => ({
+            ...collection,
+            scripts: collection.scriptIds
+                .map(id => scripts[id])
+                .filter(Boolean)
+                .map(s => ({
+                    id: s.id,
+                    title: s.title,
+                    language: s.language
+                }))
+        }));
+        
+        res.json({
+            collections: collectionsWithScripts,
+            total: collectionsWithScripts.length
+        });
+    } catch (err) {
+        console.error('[scriptblox/collections/get]', err);
+        res.status(500).json({
+            error: 'Ошибка получения коллекций',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// NOTIFICATIONS: Get my notifications
+// ------------------------------------------------------------
+
+router.get('/notifications', requireAuth, async (req, res) => {
+    try {
+        const { unreadOnly = false } = req.query;
+        
+        const key = K.NOTIFICATIONS(req.userId);
+        let notifications = await kv.get(key) || [];
+        
+        if (unreadOnly === 'true') {
+            notifications = notifications.filter(n => !n.read);
+        }
+        
+        res.json({
+            notifications,
+            total: notifications.length,
+            unreadCount: notifications.filter(n => !n.read).length
+        });
+    } catch (err) {
+        console.error('[scriptblox/notifications/get]', err);
+        res.status(500).json({
+            error: 'Ошибка получения уведомлений',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// NOTIFICATIONS: Mark as read
+// ------------------------------------------------------------
+
+router.put('/notifications/:notificationId/read', requireAuth, async (req, res) => {
+    try {
+        const { notificationId } = req.params;
+        
+        const key = K.NOTIFICATIONS(req.userId);
+        const notifications = await kv.get(key) || [];
+        const notification = notifications.find(n => n.id === notificationId);
+        
+        if (!notification) {
+            return res.status(404).json({
+                error: 'Уведомление не найдено',
+                code: 'NOTIFICATION_NOT_FOUND'
+            });
+        }
+        
+        notification.read = true;
+        await kv.set(key, notifications);
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[scriptblox/notifications/mark_read]', err);
+        res.status(500).json({
+            error: 'Ошибка обновления уведомления',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// NOTIFICATIONS: Mark all as read
+// ------------------------------------------------------------
+
+router.put('/notifications/read-all', requireAuth, async (req, res) => {
+    try {
+        const key = K.NOTIFICATIONS(req.userId);
+        const notifications = await kv.get(key) || [];
+        
+        notifications.forEach(n => {
+            n.read = true;
+        });
+        
+        await kv.set(key, notifications);
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[scriptblox/notifications/read_all]', err);
+        res.status(500).json({
+            error: 'Ошибка обновления уведомлений',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
+// ACHIEVEMENTS: Get my achievements
+// ------------------------------------------------------------
+
+router.get('/achievements', requireAuth, async (req, res) => {
+    try {
+        const key = K.ACHIEVEMENTS(req.userId);
+        const unlockedIds = await kv.get(key) || [];
+        
+        const allAchievements = Object.values(CONFIG.ACHIEVEMENTS).map(a => ({
+            ...a,
+            unlocked: unlockedIds.includes(a.id)
+        }));
+        
+        res.json({
+            achievements: allAchievements,
+            unlockedCount: unlockedIds.length,
+            totalCount: allAchievements.length
+        });
+    } catch (err) {
+        console.error('[scriptblox/achievements/get]', err);
+        res.status(500).json({
+            error: 'Ошибка получения достижений',
+            code: 'INTERNAL_ERROR'
+        });
+    }
+});
+
+// ------------------------------------------------------------
 // USER: Get user profile
 // ------------------------------------------------------------
 
@@ -1391,6 +2301,13 @@ router.get('/users/:userId', optionalAuth, async (req, res) => {
             .filter(script => script.authorId === userId && script.isPublic)
             .length;
         
+        const followersKey = K.FOLLOWERS(userId);
+        const followers = await kv.get(followersKey) || [];
+        
+        const isSubscribed = req.userId ? 
+            (await kv.get(K.SUBSCRIPTIONS(req.userId)) || []).includes(userId) : 
+            false;
+        
         res.json({
             user: {
                 id: user.id,
@@ -1401,8 +2318,10 @@ router.get('/users/:userId', optionalAuth, async (req, res) => {
                 createdAt: user.createdAt,
                 stats: {
                     ...user.stats,
-                    scriptsCount: userScripts
-                }
+                    scriptsCount: userScripts,
+                    followersCount: followers.length
+                },
+                isSubscribed
             }
         });
     } catch (err) {
@@ -1516,6 +2435,7 @@ router.get('/search', optionalAuth, async (req, res) => {
         const users = await kv.get(K.USERS) || {};
         
         const searchLower = q.toLowerCase();
+        const searchTerms = extractSearchTerms(q);
         
         const results = Object.values(scripts)
             .filter(script => {
@@ -1620,6 +2540,24 @@ router.post('/reports', requireAuth, async (req, res) => {
         reports.push(report);
         await kv.set(K.REPORTS, reports);
         
+        // Авто-скрытие при достижении лимита жалоб
+        const scriptReports = reports.filter(r => r.scriptId === scriptId);
+        if (scriptReports.length >= CONFIG.AUTO_HIDE_REPORTS) {
+            script.isPublic = false;
+            script.isModerated = true;
+            scripts[scriptId] = script;
+            await kv.set(K.SCRIPTS, scripts);
+            
+            const moderationQueue = await kv.get(K.MODERATION_QUEUE) || [];
+            moderationQueue.push({
+                scriptId,
+                reason: 'auto_hidden',
+                reportsCount: scriptReports.length,
+                createdAt: now()
+            });
+            await kv.set(K.MODERATION_QUEUE, moderationQueue);
+        }
+        
         await logActivity(req.userId, 'report_submitted', { scriptId, reason });
         
         res.json({
@@ -1659,12 +2597,28 @@ router.get('/stats/:userId', async (req, res) => {
         
         const totalViews = userScripts.reduce((sum, s) => sum + (s.stats?.views || 0), 0);
         const totalLikes = userScripts.reduce((sum, s) => sum + (s.stats?.likes || 0), 0);
+        const totalComments = userScripts.reduce((sum, s) => sum + (s.stats?.comments || 0), 0);
+        const totalForks = userScripts.reduce((sum, s) => sum + (s.stats?.forks || 0), 0);
+        
+        const languageStats = {};
+        userScripts.forEach(s => {
+            languageStats[s.language] = (languageStats[s.language] || 0) + 1;
+        });
+        
+        const categoryStats = {};
+        userScripts.forEach(s => {
+            categoryStats[s.category] = (categoryStats[s.category] || 0) + 1;
+        });
         
         res.json({
             stats: {
                 scriptsCount: userScripts.length,
                 totalViews,
                 totalLikes,
+                totalComments,
+                totalForks,
+                languageStats,
+                categoryStats,
                 joinedAt: user.createdAt
             }
         });
@@ -1689,4 +2643,4 @@ router.use((err, req, res, next) => {
     });
 });
 
-module.exports = router;
+module.exports = router
