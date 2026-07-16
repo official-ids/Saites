@@ -13,8 +13,9 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
 :root {
     --bg-body: #000000;
@@ -27,6 +28,7 @@
     --text-tertiary: #636366;
     --accent: #0A84FF;
     --accent-hover: #409CFF;
+    --accent-gradient: linear-gradient(135deg, #0A84FF 0%, #5E5CE6 100%);
     --danger: #FF453A;
     --danger-hover: #FF6961;
     --success: #30D158;
@@ -36,6 +38,7 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 30px rgba(10, 132, 255, 0.3);
     --radius-lg: 22px;
     --radius-md: 14px;
     --radius-sm: 10px;
@@ -168,13 +171,13 @@ body {
     width: 64px;
     height: 64px;
     margin: 0 auto 24px;
-    background: linear-gradient(135deg, var(--accent) 0%, #5E5CE6 100%);
+    background: var(--accent-gradient);
     border-radius: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    box-shadow: 0 8px 24px rgba(10, 132, 255, 0.3);
+    box-shadow: var(--shadow-glow);
 }
 
 .lobby-icon svg { width: 30px; height: 30px; }
@@ -224,14 +227,13 @@ body {
 .btn svg { width: 16px; height: 16px; }
 
 .btn-primary {
-    background: var(--accent);
+    background: var(--accent-gradient);
     color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(10, 132, 255, 0.35);
+    box-shadow: var(--shadow-glow);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -886,9 +888,7 @@ body {
 <header class="header">
     <div class="header-inner">
         <a href="/" class="logo">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
+            <i data-lucide="zap"></i>
             <span class="logo-text">Oris Call</span>
         </a>
         <div class="header-status">
@@ -902,18 +902,14 @@ body {
 <div class="lobby" id="lobby">
     <div class="lobby-card">
         <div class="lobby-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
+            <i data-lucide="video"></i>
         </div>
         <h1>Видеозвонки</h1>
         <p class="lobby-subtitle">Защищённые звонки через WebRTC. Создайте комнату или присоединитесь к существующей.</p>
 
         <div class="section-label">Создать комнату</div>
         <button class="btn btn-primary" id="createRoomBtn">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
+            <i data-lucide="plus"></i>
             Создать новую комнату
         </button>
 
@@ -921,9 +917,7 @@ body {
             <div class="room-id-label">
                 <span>ID комнаты</span>
                 <span>
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                    </svg>
+                    <i data-lucide="copy"></i>
                     Скопировать
                 </span>
             </div>
@@ -936,9 +930,7 @@ body {
         <div class="join-row">
             <input type="text" class="input" id="joinRoomInput" placeholder="Введите ID" maxlength="6" autocomplete="off" spellcheck="false">
             <button class="btn btn-secondary" id="joinRoomBtn">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                </svg>
+                <i data-lucide="arrow-right"></i>
                 Войти
             </button>
         </div>
@@ -959,21 +951,15 @@ body {
                 <div class="video-wrapper" id="localVideoWrapper">
                     <video id="localVideo" autoplay muted playsinline class="mirrored"></video>
                     <div class="video-placeholder" id="localPlaceholder">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
+                        <i data-lucide="user"></i>
                         <span>Камера выключена</span>
                     </div>
                     <div class="video-label">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                        </svg>
+                        <i data-lucide="user"></i>
                         Вы
                     </div>
                     <div class="video-indicator" id="localMuteIndicator">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
-                        </svg>
+                        <i data-lucide="mic-off"></i>
                         Микрофон выключен
                     </div>
                 </div>
@@ -982,15 +968,11 @@ body {
                 <div class="video-wrapper" id="remoteVideoWrapper">
                     <video id="remoteVideo" autoplay playsinline></video>
                     <div class="video-placeholder" id="remotePlaceholder">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
+                        <i data-lucide="users"></i>
                         <span id="remotePlaceholderText">Ожидание собеседника...</span>
                     </div>
                     <div class="video-label" id="remoteLabel" style="display:none;">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                        <i data-lucide="user"></i>
                         Собеседник
                     </div>
                 </div>
@@ -999,31 +981,20 @@ body {
             <!-- Controls -->
             <div class="controls">
                 <button class="control-btn" id="muteBtn" title="Микрофон">
-                    <svg id="micIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                    </svg>
+                    <i data-lucide="mic"></i>
                 </button>
                 <button class="control-btn" id="videoBtn" title="Камера">
-                    <svg id="videoIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                    </svg>
+                    <i data-lucide="video"></i>
                 </button>
                 <button class="control-btn chat-toggle" id="chatToggleBtn" title="Чат">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                    </svg>
+                    <i data-lucide="message-circle"></i>
                     <span class="badge" id="chatBadge">0</span>
                 </button>
                 <button id="screenShareBtn" class="control-btn" title="Демонстрация экрана">
-                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                     </svg>
+                    <i data-lucide="monitor"></i>
                 </button>
                 <button class="control-btn hangup" id="hangupBtn" title="Завершить звонок">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/>
-                    </svg>
+                    <i data-lucide="phone-off"></i>
                 </button>
             </div>
         </div>
@@ -1033,16 +1004,12 @@ body {
             <div class="chat-header">
                 <div class="chat-header-title">Чат</div>
                 <button class="chat-close" id="chatCloseBtn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                    <i data-lucide="x"></i>
                 </button>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <div class="chat-empty" id="chatEmpty">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                    </svg>
+                    <i data-lucide="message-circle"></i>
                     <div class="title">Нет сообщений</div>
                     <div class="subtitle">Начните диалог с собеседником</div>
                 </div>
@@ -1050,9 +1017,7 @@ body {
             <div class="chat-input-container">
                 <textarea class="chat-input" id="chatInput" placeholder="Напишите сообщение..." rows="1"></textarea>
                 <button class="chat-send" id="chatSendBtn" disabled>
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                    </svg>
+                    <i data-lucide="send"></i>
                 </button>
             </div>
         </aside>
@@ -1069,56 +1034,28 @@ body {
 (function() {
     'use strict';
 
+    // Инициализация Lucide иконок
+    lucide.createIcons();
+
     // ============================================
     // Константы конфигурации
     // ============================================
     
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {number} Длина ID комнаты */
         ROOM_ID_LENGTH: 6,
-        
-        /** @type {string} Символы для генерации ID комнаты */
         ROOM_ID_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
-        
-        /** @type {number} Таймаут подключения к серверу PeerJS (мс) */
         PEER_CONNECTION_TIMEOUT: 12000,
-        
-        /** @type {number} Максимальная высота поля ввода чата (px) */
         CHAT_INPUT_MAX_HEIGHT: 120,
-        
-        /** @type {number} Задержка фокуса на поле ввода чата (мс) */
         CHAT_FOCUS_DELAY: 100,
-        
-        /** @type {number} Длительность toast-уведомления по умолчанию (мс) */
         TOAST_DURATION: 3000,
-        
-        /** @type {number} Длительность коротких уведомлений (мс) */
         TOAST_SHORT_DURATION: 1500,
-        
-        /** @type {number} Максимальное количество попыток применения состояния звонка */
         CALL_STATE_ATTEMPTS: 5,
-        
-        /** @type {number} Задержка между попытками применения состояния (мс) */
         CALL_STATE_RETRY_DELAY: 200,
-        
-        /** @type {number} Задержка применения состояния после подключения (мс) */
         CALL_STATE_INITIAL_DELAY: 500,
-        
-        /** @type {string} Префикс для ID участников */
         PEER_ID_PREFIX: 'oris-',
-        
-        /** @type {number} Максимальное значение счетчика непрочитанных */
         MAX_UNREAD_BADGE: 9
     };
 
-    /**
-     * Конфигурация серверов PeerJS (fallback)
-     * @constant {Array<Object>}
-     */
     const PEER_SERVERS = [
         { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
         { host: '1.peerjs.com', port: 443, secure: true, path: '/' },
@@ -1127,20 +1064,13 @@ body {
         { host: 'east.peerjs.com', port: 443, secure: true, path: '/' }
     ];
 
-    /**
-     * Конфигурация ICE серверов для WebRTC
-     * @constant {Object}
-     */
     const ICE_SERVERS = {
         iceServers: [
-            // STUN серверы Google
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
             { urls: 'stun:stun2.l.google.com:19302' },
             { urls: 'stun:stun3.l.google.com:19302' },
             { urls: 'stun:stun4.l.google.com:19302' },
-            
-            // TURN серверы для обхода симметричного NAT
             { 
                 urls: 'turn:openrelay.metered.ca:80',
                 username: 'openrelayprojectuser',
@@ -1162,57 +1092,20 @@ body {
         rtcpMuxPolicy: 'require'
     };
 
-    /**
-     * SVG иконки для UI
-     * @namespace
-     */
-    const ICONS = {
-        micOn: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>',
-        micOff: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>',
-        videoOn: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>',
-        videoOff: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m0 0l-3-3m3 3l-3 3M3 3l18 18"/>',
-        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
-        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
-        info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-    };
-
     // ============================================
     // Состояние приложения
     // ============================================
     
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
     const State = {
-        /** @type {Peer|null} PeerJS объект */
         peer: null,
-        
-        /** @type {MediaStream|null} Локальный медиа-поток */
         localStream: null,
-        
-        /** @type {MediaConnection|null} Текущий звонок */
         currentCall: null,
-        
-        /** @type {DataConnection|null} DataChannel для чата */
         dataConnection: null,
-        
-        /** @type {string|null} ID текущей комнаты */
         roomId: null,
-        
-        /** @type {boolean} Состояние микрофона (выключен/включен) */
         isMuted: false,
-        
-        /** @type {boolean} Состояние камеры (выключена/включена) */
         isVideoOff: false,
-        
-        /** @type {boolean} Открыта ли панель чата */
         isChatOpen: false,
-        
-        /** @type {number} Количество непрочитанных сообщений */
         unreadCount: 0,
-        
-        /** @type {boolean} Является ли пользователь хостом комнаты */
         isHost: false
     };
 
@@ -1220,19 +1113,9 @@ body {
     // DOM элементы
     // ============================================
     
-    /**
-     * Сокращение для document.getElementById
-     * @param {string} id - ID элемента
-     * @returns {HTMLElement|null}
-     */
     const $ = (id) => document.getElementById(id);
     
-    /**
-     * Кэш DOM элементов
-     * @namespace
-     */
     const DOM = {
-        // Lobby
         lobby: $('lobby'),
         createRoomBtn: $('createRoomBtn'),
         joinRoomInput: $('joinRoomInput'),
@@ -1243,7 +1126,6 @@ body {
         lobbyStatusIcon: $('lobbyStatusIcon'),
         lobbyStatusText: $('lobbyStatusText'),
         
-        // Call Screen
         callScreen: $('callScreen'),
         localVideo: $('localVideo'),
         remoteVideo: $('remoteVideo'),
@@ -1253,17 +1135,13 @@ body {
         remoteLabel: $('remoteLabel'),
         localMuteIndicator: $('localMuteIndicator'),
         
-        // Controls
         muteBtn: $('muteBtn'),
         videoBtn: $('videoBtn'),
         hangupBtn: $('hangupBtn'),
         chatToggleBtn: $('chatToggleBtn'),
         screenShareBtn: $('screenShareBtn'),
         chatBadge: $('chatBadge'),
-        micIcon: $('micIcon'),
-        videoIcon: $('videoIcon'),
         
-        // Chat Panel
         chatPanel: $('chatPanel'),
         chatCloseBtn: $('chatCloseBtn'),
         chatMessages: $('chatMessages'),
@@ -1271,11 +1149,9 @@ body {
         chatInput: $('chatInput'),
         chatSendBtn: $('chatSendBtn'),
         
-        // Status
         peerStatusDot: $('peerStatusDot'),
         peerStatusText: $('peerStatusText'),
         
-        // Toast
         toast: $('toast'),
         toastIcon: $('toastIcon'),
         toastText: $('toastText')
@@ -1285,10 +1161,6 @@ body {
     // Утилиты
     // ============================================
     
-    /**
-     * Генерация уникального ID комнаты
-     * @returns {string} ID комнаты длиной CONFIG.ROOM_ID_LENGTH
-     */
     function generateRoomId() {
         let result = '';
         for (let i = 0; i < CONFIG.ROOM_ID_LENGTH; i++) {
@@ -1299,11 +1171,6 @@ body {
         return result;
     }
 
-    /**
-     * Отображение статуса в лобби
-     * @param {string} message - Текст сообщения
-     * @param {string} type - Тип статуса: '' | 'success' | 'error'
-     */
     function showLobbyStatus(message, type = '') {
         DOM.lobbyStatus.classList.add('visible');
         DOM.lobbyStatus.classList.remove('success', 'error');
@@ -1312,53 +1179,34 @@ body {
             DOM.lobbyStatus.classList.add(type);
         }
         
-        // Установка иконки в зависимости от типа
         if (type === 'success') {
-            DOM.lobbyStatusIcon.innerHTML = `
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ${ICONS.success}
-                </svg>
-            `;
+            DOM.lobbyStatusIcon.innerHTML = '<i data-lucide="check-circle"></i>';
         } else if (type === 'error') {
-            DOM.lobbyStatusIcon.innerHTML = `
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    ${ICONS.error}
-                </svg>
-            `;
+            DOM.lobbyStatusIcon.innerHTML = '<i data-lucide="alert-circle"></i>';
         } else {
             DOM.lobbyStatusIcon.innerHTML = '<div class="spinner-small"></div>';
         }
         
+        lucide.createIcons();
         DOM.lobbyStatusText.textContent = message;
     }
 
-    /**
-     * Скрытие статуса в лобби
-     */
     function hideLobbyStatus() {
         DOM.lobbyStatus.classList.remove('visible');
     }
 
-    /**
-     * Отображение toast-уведомления
-     * @param {string} message - Текст уведомления
-     * @param {string} type - Тип: 'info' | 'success' | 'error'
-     * @param {number} duration - Длительность показа в мс
-     */
     function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
         const iconMap = {
-            success: ICONS.success,
-            error: ICONS.error,
-            info: ICONS.info
+            success: '<i data-lucide="check-circle"></i>',
+            error: '<i data-lucide="alert-circle"></i>',
+            info: '<i data-lucide="info"></i>'
         };
         
-        DOM.toastIcon.innerHTML = `
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                ${iconMap[type] || ICONS.info}
-            </svg>
-        `;
+        DOM.toastIcon.innerHTML = iconMap[type] || iconMap.info;
         DOM.toastText.textContent = message;
         DOM.toast.className = `toast ${type} visible`;
+        
+        lucide.createIcons();
         
         clearTimeout(showToast._timer);
         showToast._timer = setTimeout(() => {
@@ -1366,9 +1214,6 @@ body {
         }, duration);
     }
 
-        // ============================================
-    // Демонстрация экрана (Screen Sharing)
-    // ============================================
     let screenStream = null;
     let isScreenSharing = false;
     let originalVideoTrack = null;
@@ -1387,7 +1232,6 @@ body {
     }
 
     async function startScreenShare() {
-        // Запрос демонстрации экрана
         screenStream = await navigator.mediaDevices.getDisplayMedia({
             video: { cursor: "always", displaySurface: "monitor" },
             audio: false
@@ -1395,22 +1239,19 @@ body {
 
         const screenTrack = screenStream.getVideoTracks()[0];
         
-        // Сохраняем оригинальную камеру из State
         if (State.localStream) {
             const videoTracks = State.localStream.getVideoTracks();
             if (videoTracks.length > 0) {
                 originalVideoTrack = videoTracks[0];
-                originalVideoTrack.enabled = false; // Отключаем камеру
+                originalVideoTrack.enabled = false;
             }
         }
 
-        // Добавляем screen track в локальный поток для предпросмотра
         if (State.localStream && screenTrack) {
             State.localStream.addTrack(screenTrack);
             DOM.localVideo.srcObject = State.localStream;
         }
 
-        // Заменяем трек в WebRTC соединении PeerJS
         if (State.currentCall && State.currentCall.peerConnection) {
             const pc = State.currentCall.peerConnection;
             const senders = pc.getSenders();
@@ -1423,10 +1264,9 @@ body {
 
         isScreenSharing = true;
         DOM.screenShareBtn.classList.add('active');
-        // Меняем иконку на "Стоп" (крестик)
-        DOM.screenShareBtn.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+        DOM.screenShareBtn.innerHTML = '<i data-lucide="stop-circle"></i>';
+        lucide.createIcons();
 
-        // Обработчик остановки демонстрации (когда пользователь нажимает "Остановить" в браузере)
         screenTrack.onended = () => {
             stopScreenShare();
         };
@@ -1437,27 +1277,22 @@ body {
     async function stopScreenShare() {
         if (!isScreenSharing) return;
 
-        // Останавливаем screen track
         if (screenStream) {
             screenStream.getTracks().forEach(track => track.stop());
             screenStream = null;
         }
 
-        // Возвращаем камеру
         if (State.localStream && originalVideoTrack) {
-            // Удаляем трек экрана из локального потока
             const screenTracks = State.localStream.getVideoTracks().filter(t => t !== originalVideoTrack);
             screenTracks.forEach(t => State.localStream.removeTrack(t));
             
-            // Возвращаем и включаем оригинальный трек камеры
             State.localStream.addTrack(originalVideoTrack);
-            originalVideoTrack.enabled = !State.isVideoOff; // Учитываем текущее состояние камеры
+            originalVideoTrack.enabled = !State.isVideoOff;
             
             DOM.localVideo.srcObject = State.localStream;
             DOM.localPlaceholder.style.display = State.isVideoOff ? 'flex' : 'none';
         }
 
-        // Возвращаем camera track в peer connection
         if (State.currentCall && State.currentCall.peerConnection && originalVideoTrack) {
             const pc = State.currentCall.peerConnection;
             const senders = pc.getSenders();
@@ -1465,32 +1300,24 @@ body {
             
             if (videoSender) {
                 await videoSender.replaceTrack(originalVideoTrack);
-                // Повторно применяем состояние mute/unmute для камеры
                 applyVideoState();
             }
         }
 
         isScreenSharing = false;
         DOM.screenShareBtn.classList.remove('active');
-        // Возвращаем исходную иконку монитора
-        DOM.screenShareBtn.querySelector('svg').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>';
+        DOM.screenShareBtn.innerHTML = '<i data-lucide="monitor"></i>';
+        lucide.createIcons();
 
         originalVideoTrack = null;
         showToast('Демонстрация экрана остановлена', 'info');
     }
 
-    /**
-     * Копирование текста в буфер обмена
-     * @param {string} text - Текст для копирования
-     * @returns {Promise<boolean>} true если успешно
-     */
     async function copyToClipboard(text) {
-        // Попытка использовать современный API
         try {
             await navigator.clipboard.writeText(text);
             return true;
         } catch (err) {
-            // Fallback для старых браузеров
             const textarea = document.createElement('textarea');
             textarea.value = text;
             textarea.style.position = 'fixed';
@@ -1511,19 +1338,11 @@ body {
     }
 
     // ============================================
-    // PeerJS: создание и подключение
+    // PeerJS
     // ============================================
     
-    /**
-     * Создание PeerJS объекта с fallback на другие серверы
-     * @param {string|null} id - ID комнаты (для хоста)
-     * @param {number} serverIndex - Индекс сервера для попытки подключения
-     * @returns {Promise<Peer>} PeerJS объект
-     * @throws {Error} Если все серверы недоступны
-     */
     function createPeer(id = null, serverIndex = 0) {
         return new Promise((resolve, reject) => {
-            // Проверка: все серверы испробованы
             if (serverIndex >= PEER_SERVERS.length) {
                 reject(new Error(
                     'Все серверы PeerJS недоступны. Попробуйте позже или используйте другой браузер/сеть.'
@@ -1542,11 +1361,9 @@ body {
                 config: ICE_SERVERS
             };
 
-            // Создание ID с префиксом для хоста
             const peerId = id ? `${CONFIG.PEER_ID_PREFIX}${id}` : null;
             const peer = peerId ? new Peer(peerId, peerOptions) : new Peer(peerOptions);
 
-            // Таймаут подключения
             const connectionTimeout = setTimeout(() => {
                 console.warn(`[Peer] Timeout on ${server.host}, trying next server...`);
                 try {
@@ -1558,7 +1375,6 @@ body {
                     .catch(reject);
             }, CONFIG.PEER_CONNECTION_TIMEOUT);
 
-            // Обработчик успешного подключения
             peer.on('open', (openedId) => {
                 clearTimeout(connectionTimeout);
                 setPeerStatus('connected', `Подключено к ${server.host}`);
@@ -1566,12 +1382,10 @@ body {
                 resolve(peer);
             });
 
-            // Обработчик ошибок
             peer.on('error', (err) => {
                 clearTimeout(connectionTimeout);
                 console.error(`[Peer] Error on ${server.host}:`, err);
 
-                // Попытка переключения на следующий сервер для сетевых ошибок
                 const networkErrors = ['network', 'server-error', 'socket-error', 'socket-closed'];
                 if (networkErrors.includes(err.type)) {
                     try {
@@ -1585,7 +1399,6 @@ body {
                     return;
                 }
 
-                // Обработка специфичных ошибок
                 setPeerStatus('error', 'Ошибка соединения');
                 
                 let errorMessage;
@@ -1606,40 +1419,27 @@ body {
                 reject(new Error(errorMessage));
             });
 
-            // Обработчик отключения
             peer.on('disconnected', () => {
                 setPeerStatus('error', 'Отключено от сервера');
             });
 
-            // Обработчик закрытия
             peer.on('close', () => {
                 setPeerStatus('', 'Соединение закрыто');
             });
         });
     }
 
-    /**
-     * Установка статуса подключения в UI
-     * @param {string} state - Состояние: '' | 'connected' | 'error'
-     * @param {string} text - Текст статуса
-     */
     function setPeerStatus(state, text) {
         DOM.peerStatusDot.className = 'status-dot' + (state ? ` ${state}` : '');
         DOM.peerStatusText.textContent = text;
     }
 
     // ============================================
-    // Медиа: получение и управление потоками
+    // Медиа
     // ============================================
     
-    /**
-     * Получение локального медиа-потока с расширенными настройками
-     * @returns {Promise<MediaStream>} Медиа-поток с видео и аудио
-     * @throws {Error} Если доступ к медиа запрещен или устройства не найдены
-     */
     async function getLocalStream() {
         try {
-            // Расширенные constraints с усиленным эхоподавлением
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { 
                     width: { ideal: 1280 }, 
@@ -1651,7 +1451,6 @@ body {
                     echoCancellation: true, 
                     noiseSuppression: true,
                     autoGainControl: true,
-                    // Chrome-specific advanced constraints
                     googEchoCancellation: true,
                     googEchoCancellation2: true,
                     googNoiseSuppression: true,
@@ -1664,7 +1463,6 @@ body {
                 }
             });
             
-            // Применение дополнительных настроек к аудио-трекам
             stream.getAudioTracks().forEach(track => {
                 try {
                     const capabilities = track.getCapabilities?.() || {};
@@ -1692,7 +1490,6 @@ body {
         } catch (err) {
             console.error('[Media] Error:', err);
             
-            // Обработка специфичных ошибок доступа к медиа
             let errorMessage;
             switch (err.name) {
                 case 'NotAllowedError':
@@ -1715,20 +1512,12 @@ body {
         }
     }
 
-    /**
-     * Привязка локального потока к видео-элементу
-     * @param {MediaStream} stream - Локальный медиа-поток
-     */
     function attachLocalStream(stream) {
         State.localStream = stream;
         DOM.localVideo.srcObject = stream;
         DOM.localPlaceholder.style.display = 'none';
     }
 
-    /**
-     * Привязка удаленного потока к видео-элементу
-     * @param {MediaStream} stream - Удаленный медиа-поток
-     */
     function attachRemoteStream(stream) {
         DOM.remoteVideo.srcObject = stream;
         DOM.remotePlaceholder.style.display = 'none';
@@ -1736,45 +1525,33 @@ body {
     }
 
     // ============================================
-    // DataChannel: чат
+    // Чат
     // ============================================
     
-    /**
-     * Настройка DataConnection для чата
-     * @param {DataConnection} conn - PeerJS DataConnection
-     */
     function setupDataConnection(conn) {
         State.dataConnection = conn;
         
-        // Обработчик открытия соединения
         conn.on('open', () => {
             console.log('[Data] Connection opened');
             addSystemMessage('Соединение установлено');
         });
         
-        // Обработчик входящих данных
         conn.on('data', (data) => {
             if (data.type === 'chat') {
                 addChatMessage(data.text, 'received');
             }
         });
         
-        // Обработчик закрытия соединения
         conn.on('close', () => {
             console.log('[Data] Connection closed');
             addSystemMessage('Соединение закрыто');
         });
         
-        // Обработчик ошибок
         conn.on('error', (err) => {
             console.error('[Data] Error:', err);
         });
     }
 
-    /**
-     * Отправка сообщения в чат
-     * @param {string} text - Текст сообщения
-     */
     function sendChatMessage(text) {
         if (!State.dataConnection || !State.dataConnection.open) {
             showToast('Нет соединения с собеседником', 'error');
@@ -1790,11 +1567,6 @@ body {
         }
     }
 
-    /**
-     * Добавление сообщения в чат
-     * @param {string} text - Текст сообщения
-     * @param {string} type - Тип сообщения: 'sent' | 'received'
-     */
     function addChatMessage(text, type) {
         if (DOM.chatEmpty) {
             DOM.chatEmpty.style.display = 'none';
@@ -1805,20 +1577,14 @@ body {
         msg.textContent = text;
         DOM.chatMessages.appendChild(msg);
         
-        // Прокрутка к последнему сообщению
         DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
         
-        // Увеличение счетчика непрочитанных для входящих сообщений
         if (type === 'received' && !State.isChatOpen) {
             State.unreadCount++;
             updateChatBadge();
         }
     }
 
-    /**
-     * Добавление системного сообщения в чат
-     * @param {string} text - Текст системного сообщения
-     */
     function addSystemMessage(text) {
         if (DOM.chatEmpty) {
             DOM.chatEmpty.style.display = 'none';
@@ -1829,13 +1595,9 @@ body {
         msg.textContent = text;
         DOM.chatMessages.appendChild(msg);
         
-        // Прокрутка к последнему сообщению
         DOM.chatMessages.scrollTop = DOM.chatMessages.scrollHeight;
     }
 
-    /**
-     * Обновление бейджа непрочитанных сообщений
-     */
     function updateChatBadge() {
         if (State.unreadCount > 0) {
             const displayCount = State.unreadCount > CONFIG.MAX_UNREAD_BADGE 
@@ -1853,19 +1615,13 @@ body {
     // Управление звонком
     // ============================================
     
-    /**
-     * Начало звонка и настройка обработчиков
-     * @param {MediaConnection} call - PeerJS MediaConnection
-     */
     function startCall(call) {
         State.currentCall = call;
         
-        // Обработчик получения удаленного потока
         call.on('stream', (remoteStream) => {
             attachRemoteStream(remoteStream);
             showToast('Собеседник подключился', 'success');
             
-            // Применение состояния mute/video с повторными попытками
             let attempts = 0;
             const tryApplyState = () => {
                 if (State.currentCall?.peerConnection) {
@@ -1879,60 +1635,47 @@ body {
             tryApplyState();
         });
         
-        // Обработчик закрытия звонка
         call.on('close', () => {
             handleHangup(false);
         });
         
-        // Обработчик ошибок звонка
         call.on('error', (err) => {
             console.error('[Call] Error:', err);
             showToast('Ошибка звонка', 'error');
         });
         
-        // Применение состояния после небольшой задержки
         setTimeout(() => {
             applyAudioState();
             applyVideoState();
         }, CONFIG.CALL_STATE_INITIAL_DELAY);
     }
 
-    /**
-     * Создание комнаты (хост)
-     * @returns {Promise<void>}
-     */
     async function handleCreateRoom() {
         DOM.createRoomBtn.disabled = true;
         DOM.joinRoomBtn.disabled = true;
         showLobbyStatus('Запрос доступа к камере...');
         
         try {
-            // Получение локального медиа-потока
             const stream = await getLocalStream();
             attachLocalStream(stream);
             
-            // Генерация ID комнаты
             const roomId = generateRoomId();
             showLobbyStatus('Создание комнаты...');
             
-            // Создание PeerJS объекта
             State.peer = await createPeer(roomId);
             State.roomId = roomId;
             State.isHost = true;
             
-            // Обработчик входящих звонков
             State.peer.on('call', (call) => {
                 call.answer(State.localStream);
                 startCall(call);
                 enterCallScreen();
             });
             
-            // Обработчик входящих DataConnections
             State.peer.on('connection', (conn) => {
                 setupDataConnection(conn);
             });
             
-            // Отображение ID комнаты
             DOM.roomIdText.textContent = roomId;
             DOM.roomIdBox.classList.add('visible');
             showLobbyStatus('Ожидание собеседника...', 'success');
@@ -1940,11 +1683,9 @@ body {
             console.error('[Room] Create error:', err);
             showLobbyStatus(err.message || 'Не удалось подключиться к серверу. Попробуйте позже.', 'error');
             
-            // Восстановление состояния UI
             DOM.createRoomBtn.disabled = false;
             DOM.joinRoomBtn.disabled = false;
             
-            // Остановка медиа-потока при ошибке
             if (State.localStream) {
                 State.localStream.getTracks().forEach(t => t.stop());
                 State.localStream = null;
@@ -1954,14 +1695,9 @@ body {
         }
     }
 
-    /**
-     * Подключение к комнате (гость)
-     * @returns {Promise<void>}
-     */
     async function handleJoinRoom() {
         const input = DOM.joinRoomInput.value.trim().toUpperCase();
         
-        // Валидация ID
         if (!input || input.length !== CONFIG.ROOM_ID_LENGTH) {
             showLobbyStatus(`ID должен состоять из ${CONFIG.ROOM_ID_LENGTH} символов`, 'error');
             return;
@@ -1972,22 +1708,18 @@ body {
         showLobbyStatus('Запрос доступа к камере...');
         
         try {
-            // Получение локального медиа-потока
             const stream = await getLocalStream();
             attachLocalStream(stream);
             
             showLobbyStatus('Подключение к комнате...');
             
-            // Создание PeerJS объекта без ID
             State.peer = await createPeer();
             State.roomId = input;
             State.isHost = false;
             
-            // Создание DataConnection для чата
             const conn = State.peer.connect(`${CONFIG.PEER_ID_PREFIX}${input}`, { reliable: true });
             setupDataConnection(conn);
             
-            // Начало звонка
             const call = State.peer.call(`${CONFIG.PEER_ID_PREFIX}${input}`, State.localStream);
             if (!call) {
                 throw new Error('Не удалось начать звонок');
@@ -1999,11 +1731,9 @@ body {
             console.error('[Room] Join error:', err);
             showLobbyStatus(err.message || 'Не удалось подключиться к серверу. Попробуйте позже.', 'error');
             
-            // Восстановление состояния UI
             DOM.createRoomBtn.disabled = false;
             DOM.joinRoomBtn.disabled = false;
             
-            // Остановка медиа-потока при ошибке
             if (State.localStream) {
                 State.localStream.getTracks().forEach(t => t.stop());
                 State.localStream = null;
@@ -2013,21 +1743,13 @@ body {
         }
     }
 
-    /**
-     * Переход на экран звонка
-     */
     function enterCallScreen() {
         DOM.lobby.style.display = 'none';
         DOM.callScreen.classList.add('active');
         hideLobbyStatus();
     }
 
-    /**
-     * Завершение звонка и очистка ресурсов
-     * @param {boolean} notifyPeer - Уведомлять ли собеседника
-     */
     function handleHangup(notifyPeer = true) {
-        // Закрытие текущего звонка
         if (State.currentCall) {
             try {
                 State.currentCall.close();
@@ -2035,7 +1757,6 @@ body {
             State.currentCall = null;
         }
         
-        // Закрытие DataConnection
         if (State.dataConnection) {
             try {
                 State.dataConnection.close();
@@ -2043,12 +1764,10 @@ body {
             State.dataConnection = null;
         }
 
-        // Остановка демонстрации экрана, если она активна
         if (isScreenSharing) {
             stopScreenShare();
         }
         
-        // Уничтожение PeerJS объекта
         if (State.peer) {
             try {
                 State.peer.destroy();
@@ -2056,13 +1775,11 @@ body {
             State.peer = null;
         }
         
-        // Остановка локального медиа-потока
         if (State.localStream) {
             State.localStream.getTracks().forEach(t => t.stop());
             State.localStream = null;
         }
         
-        // Сброс состояния
         State.roomId = null;
         State.isMuted = false;
         State.isVideoOff = false;
@@ -2070,7 +1787,6 @@ body {
         State.unreadCount = 0;
         State.isHost = false;
         
-        // Сброс видео-элементов
         DOM.localVideo.srcObject = null;
         DOM.remoteVideo.srcObject = null;
         DOM.localPlaceholder.style.display = 'flex';
@@ -2078,12 +1794,10 @@ body {
         DOM.remoteLabel.style.display = 'none';
         DOM.remotePlaceholderText.textContent = 'Ожидание собеседника...';
         
-        // Возврат в лобби
         DOM.callScreen.classList.remove('active');
         DOM.chatPanel.classList.remove('active');
         DOM.lobby.style.display = 'flex';
         
-        // Сброс UI элементов
         DOM.roomIdBox.classList.remove('visible');
         DOM.createRoomBtn.disabled = false;
         DOM.joinRoomBtn.disabled = false;
@@ -2092,34 +1806,26 @@ body {
         hideLobbyStatus();
         setPeerStatus('', 'Готов к работе');
         
-        // Очистка чата
         DOM.chatMessages.innerHTML = '';
         DOM.chatMessages.appendChild(DOM.chatEmpty);
         DOM.chatEmpty.style.display = 'flex';
         updateChatBadge();
         
-        // Сброс кнопок управления
         resetControlButtons();
         
         showToast('Звонок завершён', 'info');
     }
 
-    /**
-     * Сброс кнопок управления в начальное состояние
-     */
     function resetControlButtons() {
         DOM.muteBtn.classList.remove('active');
         DOM.videoBtn.classList.remove('active');
         DOM.chatToggleBtn.classList.remove('active');
-        DOM.micIcon.innerHTML = ICONS.micOn;
-        DOM.videoIcon.innerHTML = ICONS.videoOn;
+        DOM.muteBtn.innerHTML = '<i data-lucide="mic"></i>';
+        DOM.videoBtn.innerHTML = '<i data-lucide="video"></i>';
         DOM.localMuteIndicator.classList.remove('visible');
+        lucide.createIcons();
     }
 
-    /**
-     * Применение состояния микрофона через RTCRtpSender
-     * Полностью останавливает передачу аудио на уровне RTP
-     */
     function applyAudioState() {
         if (!State.currentCall || !State.currentCall.peerConnection) {
             return;
@@ -2130,7 +1836,6 @@ body {
         
         senders.forEach(sender => {
             if (sender.track && sender.track.kind === 'audio') {
-                // Применение через setParameters (самый надёжный способ)
                 const params = sender.getParameters();
                 if (!params.encodings || params.encodings.length === 0) {
                     params.encodings = [{}];
@@ -2143,7 +1848,6 @@ body {
             }
         });
         
-        // Дополнительное отключение самого трека
         if (State.localStream) {
             State.localStream.getAudioTracks().forEach(t => {
                 t.enabled = !State.isMuted;
@@ -2151,9 +1855,6 @@ body {
         }
     }
 
-    /**
-     * Применение состояния камеры через RTCRtpSender
-     */
     function applyVideoState() {
         if (!State.currentCall || !State.currentCall.peerConnection) {
             return;
@@ -2176,7 +1877,6 @@ body {
             }
         });
         
-        // Дополнительное отключение трека
         if (State.localStream) {
             State.localStream.getVideoTracks().forEach(t => {
                 t.enabled = !State.isVideoOff;
@@ -2184,9 +1884,6 @@ body {
         }
     }
 
-    /**
-     * Переключение состояния микрофона
-     */
     function toggleMute() {
         if (!State.localStream) {
             return;
@@ -2194,13 +1891,12 @@ body {
         
         State.isMuted = !State.isMuted;
         
-        // Применение на уровне RTP
         applyAudioState();
         
-        // Обновление UI
         DOM.muteBtn.classList.toggle('active', State.isMuted);
-        DOM.micIcon.innerHTML = State.isMuted ? ICONS.micOff : ICONS.micOn;
+        DOM.muteBtn.innerHTML = State.isMuted ? '<i data-lucide="mic-off"></i>' : '<i data-lucide="mic"></i>';
         DOM.localMuteIndicator.classList.toggle('visible', State.isMuted);
+        lucide.createIcons();
         
         showToast(
             State.isMuted ? 'Микрофон выключен' : 'Микрофон включён',
@@ -2209,9 +1905,6 @@ body {
         );
     }
 
-    /**
-     * Переключение состояния камеры
-     */
     function toggleVideo() {
         if (!State.localStream) {
             return;
@@ -2219,13 +1912,12 @@ body {
         
         State.isVideoOff = !State.isVideoOff;
         
-        // Применение на уровне RTP
         applyVideoState();
         
-        // Обновление UI
         DOM.videoBtn.classList.toggle('active', State.isVideoOff);
-        DOM.videoIcon.innerHTML = State.isVideoOff ? ICONS.videoOff : ICONS.videoOn;
+        DOM.videoBtn.innerHTML = State.isVideoOff ? '<i data-lucide="video-off"></i>' : '<i data-lucide="video"></i>';
         DOM.localPlaceholder.style.display = State.isVideoOff ? 'flex' : 'none';
+        lucide.createIcons();
         
         showToast(
             State.isVideoOff ? 'Камера выключена' : 'Камера включена',
@@ -2234,9 +1926,6 @@ body {
         );
     }
 
-    /**
-     * Переключение панели чата
-     */
     function toggleChat() {
         State.isChatOpen = !State.isChatOpen;
         DOM.chatPanel.classList.toggle('active', State.isChatOpen);
@@ -2253,15 +1942,10 @@ body {
     // Обработчики событий
     // ============================================
     
-    /**
-     * Привязка всех обработчиков событий
-     */
     function bindEvents() {
-        // Кнопки лобби
         DOM.createRoomBtn.addEventListener('click', handleCreateRoom);
         DOM.joinRoomBtn.addEventListener('click', handleJoinRoom);
         
-        // Валидация ввода ID комнаты
         DOM.joinRoomInput.addEventListener('input', (e) => {
             e.target.value = e.target.value
                 .toUpperCase()
@@ -2269,14 +1953,12 @@ body {
                 .slice(0, CONFIG.ROOM_ID_LENGTH);
         });
         
-        // Поддержка Enter для подключения
         DOM.joinRoomInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 handleJoinRoom();
             }
         });
         
-        // Копирование ID комнаты по клику
         DOM.roomIdBox.addEventListener('click', async () => {
             const id = DOM.roomIdText.textContent;
             if (!id) {
@@ -2290,7 +1972,6 @@ body {
             );
         });
         
-        // Кнопки управления звонком
         DOM.muteBtn.addEventListener('click', toggleMute);
         DOM.videoBtn.addEventListener('click', toggleVideo);
         DOM.hangupBtn.addEventListener('click', () => handleHangup(true));
@@ -2298,12 +1979,9 @@ body {
         DOM.chatCloseBtn.addEventListener('click', toggleChat);
         DOM.screenShareBtn.addEventListener('click', toggleScreenShare);
 
-        
-        // Поле ввода чата
         DOM.chatInput.addEventListener('input', () => {
             DOM.chatSendBtn.disabled = !DOM.chatInput.value.trim();
             
-            // Автоматическое изменение высоты
             DOM.chatInput.style.height = 'auto';
             DOM.chatInput.style.height = Math.min(
                 DOM.chatInput.scrollHeight,
@@ -2311,7 +1989,6 @@ body {
             ) + 'px';
         });
         
-        // Отправка по Enter (без Shift)
         DOM.chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -2319,10 +1996,8 @@ body {
             }
         });
         
-        // Кнопка отправки сообщения
         DOM.chatSendBtn.addEventListener('click', sendCurrentMessage);
         
-        // Очистка ресурсов при закрытии страницы
         window.addEventListener('beforeunload', () => {
             if (State.localStream) {
                 State.localStream.getTracks().forEach(t => t.stop());
@@ -2335,9 +2010,6 @@ body {
         });
     }
 
-    /**
-     * Отправка текущего сообщения из поля ввода
-     */
     function sendCurrentMessage() {
         const text = DOM.chatInput.value.trim();
         if (!text) {
@@ -2354,14 +2026,10 @@ body {
     // Инициализация
     // ============================================
     
-    /**
-     * Инициализация приложения
-     */
     function init() {
         bindEvents();
         setPeerStatus('', 'Готов к работе');
         
-        // Проверка параметра room в URL
         const params = new URLSearchParams(window.location.search);
         const roomParam = params.get('room');
         
@@ -2370,7 +2038,6 @@ body {
         }
     }
 
-    // Запуск после загрузки DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
