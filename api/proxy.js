@@ -77,8 +77,7 @@ const MODULE_PATHS = {
     JSON_STUDIO: '../json_studio',
     REVIEW: '../review',
     GRADE: '../grade',
-    SCRIPTBLOX: '../scriptblox',
-    CHAT: '../chat'
+    SCRIPTBLOX: '../scriptblox'
 };
 
 /**
@@ -132,8 +131,6 @@ const reviewRouter = require(MODULE_PATHS.REVIEW);
 const gradeRouter = require(MODULE_PATHS.GRADE);
 
 const scriptbloxRouter = require(MODULE_PATHS.SCRIPTBLOX);
-const chatRouter = require(MODULE_PATHS.CHAT);
-
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1308,7 +1305,6 @@ app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
-app.use('/api/chat', chatRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
@@ -1528,19 +1524,6 @@ app.get('/scriptblox/script/:id', async (req, res) => {
     catch (err) { handleScriptBloxPageError(err, res); }
 });
 
-// -----------------------------
-// Route Handlers: P2P Chat
-// -----------------------------
-
-app.get('/chat', (req, res) => {
-    const filePath = path.join(PUBLIC_DIR, 'chat', 'index.html');
-    res.sendFile(filePath);
-});
-
-app.get('/chat/:code', (req, res) => {
-    const filePath = path.join(PUBLIC_DIR, 'chat', 'index.html');
-    res.sendFile(filePath);
-});
 
 // -----------------------------
 // Кэш и Данные
