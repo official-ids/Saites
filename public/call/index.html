@@ -1084,27 +1084,13 @@ body {
     const ICE_SERVERS = {
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' },
-            { 
-                urls: 'turn:openrelay.metered.ca:80',
-                username: 'openrelayprojectuser',
-                credential: 'openrelayprojectpass'
-            },
             { 
                 urls: 'turn:openrelay.metered.ca:443',
                 username: 'openrelayprojectuser',
                 credential: 'openrelayprojectpass'
-            },
-            { 
-                urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                username: 'openrelayprojectuser',
-                credential: 'openrelayprojectpass'
             }
         ],
-        iceCandidatePoolSize: 10,
+        iceCandidatePoolSize: 2,
         bundlePolicy: 'max-bundle',
         rtcpMuxPolicy: 'require'
     };
@@ -1280,6 +1266,7 @@ body {
         }
 
         isScreenSharing = true;
+        DOM.localVideo.classList.remove('mirrored');
         DOM.screenShareBtn.classList.add('active');
         DOM.screenShareBtn.innerHTML = '<i data-lucide="stop-circle"></i>';
         lucide.createIcons();
@@ -1322,6 +1309,7 @@ body {
         }
 
         isScreenSharing = false;
+        DOM.localVideo.classList.add('mirrored');
         DOM.screenShareBtn.classList.remove('active');
         DOM.screenShareBtn.innerHTML = '<i data-lucide="monitor"></i>';
         lucide.createIcons();
@@ -1805,6 +1793,7 @@ body {
         State.isHost = false;
         
         DOM.localVideo.srcObject = null;
+        DOM.localVideo.classList.add('mirrored');
         DOM.remoteVideo.srcObject = null;
         DOM.localPlaceholder.style.display = 'flex';
         DOM.remotePlaceholder.style.display = 'flex';
