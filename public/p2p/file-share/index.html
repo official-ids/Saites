@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P File Share</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #f5f5f7;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff3b30;
+            transition: all 0.3s ease;
+        }
+
+        .status.connected .status-dot {
+            background: #34c759;
+            box-shadow: 0 0 8px rgba(52, 199, 89, 0.5);
+        }
+
+        .your-id {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .your-id-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .your-id-value {
+            font-size: 18px;
+            font-weight: 600;
+            font-family: 'SF Mono', Monaco, monospace;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
+        .connect-section {
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e5e5e7;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .connect-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .connect-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .connect-btn:active {
+            transform: translateY(0);
+        }
+
+        .connect-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .drop-zone {
+            border: 2px dashed #d1d1d6;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .drop-zone:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .drop-zone.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .drop-zone-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .files-list {
+            margin-bottom: 24px;
+        }
+
+        .file-item {
+            background: #f5f5f7;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .file-icon {
+            font-size: 24px;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #ff3b30;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .file-remove:hover {
+            background: rgba(255, 59, 48, 0.1);
+        }
+
+        .send-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            display: none;
+        }
+
+        .progress-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e5e7;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .received-files {
+            margin-top: 24px;
+        }
+
+        .received-file {
+            background: linear-gradient(135deg, #34c759 0%, #30b350 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .download-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .download-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>P2P File Share</h1>
+        <p class="subtitle">Мгновенная передача файлов напрямую между устройствами</p>
+
+        <div class="status" id="status">
+            <div class="status-dot"></div>
+            <span id="statusText">Подключение к серверу...</span>
+        </div>
+
+        <div class="your-id">
+            <div class="your-id-label">Ваш ID для получения файлов:</div>
+            <div class="your-id-value" id="peerId">Генерация...</div>
+            <button class="copy-btn" id="copyBtn">Копировать ID</button>
+        </div>
+
+        <div class="connect-section">
+            <div class="input-group">
+                <input type="text" id="remotePeerId" placeholder="Введите ID получателя">
+                <button class="connect-btn" id="connectBtn">Подключиться</button>
+            </div>
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📁</div>
+            <div class="drop-zone-text">Перетащите файлы сюда или нажмите для выбора</div>
+            <input type="file" id="fileInput" class="file-input" multiple>
+        </div>
+
+        <div class="files-list" id="filesList"></div>
+
+        <button class="send-btn" id="sendBtn" disabled>Отправить файлы</button>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+        </div>
+
+        <div class="received-files" id="receivedFiles"></div>
+    </div>
+
+    <script>
+        const PEER_SERVER_CONFIG = {
+            host: 'peerjs-server-oris.onrender.com',
+            port: 443,
+            path: '/myapp',
+            secure: true
+        };
+
+        let peer = null;
+        let conn = null;
+        let selectedFiles = [];
+        let receivedFilesData = [];
+
+        // Инициализация PeerJS
+        function initPeer() {
+            peer = new Peer(undefined, PEER_SERVER_CONFIG);
+
+            peer.on('open', (id) => {
+                document.getElementById('peerId').textContent = id;
+                document.getElementById('status').classList.add('connected');
+                document.getElementById('statusText').textContent = 'Готов к работе';
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                document.getElementById('statusText').textContent = 'Ошибка: ' + err.type;
+            });
+
+            peer.on('disconnected', () => {
+                document.getElementById('status').classList.remove('connected');
+                document.getElementById('statusText').textContent = 'Отключено от сервера';
+            });
+        }
+
+        // Настройка соединения
+        function setupConnection() {
+            conn.on('open', () => {
+                document.getElementById('status').classList.add('connected');
+                document.getElementById('statusText').textContent = 'Подключено к ' + conn.peer;
+                document.getElementById('sendBtn').disabled = false;
+            });
+
+            conn.on('data', (data) => {
+                if (data.type === 'file') {
+                    handleReceivedFile(data);
+                }
+            });
+
+            conn.on('close', () => {
+                document.getElementById('status').classList.remove('connected');
+                document.getElementById('statusText').textContent = 'Соединение закрыто';
+                document.getElementById('sendBtn').disabled = true;
+            });
+
+            conn.on('error', (err) => {
+                console.error('Connection error:', err);
+                document.getElementById('statusText').textContent = 'Ошибка соединения';
+            });
+        }
+
+        // Подключение к другому пиру
+        function connectToPeer(remotePeerId) {
+            if (!remotePeerId) return;
+            
+            conn = peer.connect(remotePeerId);
+            setupConnection();
+        }
+
+        // Обработка выбранных файлов
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            renderFilesList();
+        }
+
+        // Отображение списка файлов
+        function renderFilesList() {
+            const filesList = document.getElementById('filesList');
+            filesList.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-icon">${getFileIcon(file.name)}</div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button class="file-remove" data-index="${index}">×</button>
+                `;
+                filesList.appendChild(fileItem);
+            });
+
+            document.querySelectorAll('.file-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedFiles.splice(index, 1);
+                    renderFilesList();
+                });
+            });
+        }
+
+        // Отправка файлов
+        async function sendFiles() {
+            if (!conn || selectedFiles.length === 0) return;
+
+            const progressSection = document.getElementById('progressSection');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressSection.classList.add('active');
+            document.getElementById('sendBtn').disabled = true;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const reader = new FileReader();
+                
+                await new Promise((resolve) => {
+                    reader.onload = (e) => {
+                        const data = {
+                            type: 'file',
+                            name: file.name,
+                            size: file.size,
+                            content: e.target.result
+                        };
+
+                        conn.send(data);
+                        
+                        const progress = ((i + 1) / selectedFiles.length) * 100;
+                        progressFill.style.width = progress + '%';
+                        progressText.textContent = `${i + 1} из ${selectedFiles.length} файлов (${Math.round(progress)}%)`;
+
+                        setTimeout(resolve, 100);
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            setTimeout(() => {
+                progressSection.classList.remove('active');
+                progressFill.style.width = '0%';
+                selectedFiles = [];
+                renderFilesList();
+                document.getElementById('sendBtn').disabled = false;
+            }, 2000);
+        }
+
+        // Обработка полученного файла
+        function handleReceivedFile(data) {
+            const blob = new Blob([data.content]);
+            const url = URL.createObjectURL(blob);
+            
+            receivedFilesData.push({
+                name: data.name,
+                size: data.size,
+                url: url
+            });
+
+            renderReceivedFiles();
+        }
+
+        // Отображение полученных файлов
+        function renderReceivedFiles() {
+            const receivedFiles = document.getElementById('receivedFiles');
+            receivedFiles.innerHTML = '';
+
+            receivedFilesData.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'received-file';
+                fileItem.innerHTML = `
+                    <div class="file-icon">✅</div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                    <a href="${file.url}" download="${file.name}" class="download-btn">Скачать</a>
+                `;
+                receivedFiles.appendChild(fileItem);
+            });
+        }
+
+        // Утилиты
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄',
+                'doc': '📝', 'docx': '📝',
+                'xls': '📊', 'xlsx': '📊',
+                'ppt': '📽️', 'pptx': '📽️',
+                'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️',
+                'mp3': '🎵', 'wav': '🎵',
+                'mp4': '🎬', 'avi': '🎬', 'mov': '🎬',
+                'zip': '🗜️', 'rar': '🗜️',
+                'txt': '📃'
+            };
+            return icons[ext] || '📎';
+        }
+
+        // Event Listeners
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const peerId = document.getElementById('peerId').textContent;
+            navigator.clipboard.writeText(peerId).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = 'Скопировано!';
+                setTimeout(() => btn.textContent = 'Копировать ID', 2000);
+            });
+        });
+
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            const remotePeerId = document.getElementById('remotePeerId').value.trim();
+            connectToPeer(remotePeerId);
+        });
+
+        document.getElementById('dropZone').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        document.getElementById('dropZone').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        });
+
+        document.getElementById('dropZone').addEventListener('dragleave', () => {
+            document.getElementById('dropZone').classList.remove('dragover');
+        });
+
+        document.getElementById('dropZone').addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        document.getElementById('sendBtn').addEventListener('click', sendFiles);
+
+        // Инициализация
+        initPeer();
+    </script>
+</body>
+</html>
