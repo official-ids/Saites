@@ -201,32 +201,6 @@ body {
 /* ============================================
    Actions (Исправление пропавших элементов)
    ============================================ */
-.actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.divider {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    color: var(--text-tertiary);
-    font-size: 0.9rem;
-    width: 100%;
-}
-
-.divider::before,
-.divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
 .join-form {
     display: flex;
     gap: 12px;
@@ -1104,11 +1078,7 @@ body {
     };
 
     const PEER_SERVERS = [
-        { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
-        { host: '1.peerjs.com', port: 443, secure: true, path: '/' },
-        { host: 'peerjs.com', port: 443, secure: true, path: '/peerjs' },
-        { host: 'west.peerjs.com', port: 443, secure: true, path: '/' },
-        { host: 'east.peerjs.com', port: 443, secure: true, path: '/' }
+        { host: 'peerjs-server-oris.onrender.com', port: 443, secure: true, path: '/myapp' }
     ];
 
     const ICE_SERVERS = {
