@@ -57,7 +57,9 @@
     { "source": "/api/(.*)", "destination": "/api/proxy" },
     { "source": "/downloader/:hash", "destination": "/api/proxy" },
     { "source": "/p/:slug", "destination": "/p" },
-    { "source": "/scriptblox/:path*", "destination": "/scriptblox" }
+    { "source": "/scriptblox/:path*", "destination": "/scriptblox" },
+    { "source": "/chat", "destination": "/chat" },
+    { "source": "/chat/:id*", "destination": "/chat" }
   ],
 
   "redirects": [

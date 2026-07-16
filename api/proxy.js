@@ -77,7 +77,8 @@ const MODULE_PATHS = {
     JSON_STUDIO: '../json_studio',
     REVIEW: '../review',
     GRADE: '../grade',
-    SCRIPTBLOX: '../scriptblox'
+    SCRIPTBLOX: '../scriptblox',
+    CHAT: '../chat'
 };
 
 /**
@@ -131,6 +132,7 @@ const reviewRouter = require(MODULE_PATHS.REVIEW);
 const gradeRouter = require(MODULE_PATHS.GRADE);
 
 const scriptbloxRouter = require(MODULE_PATHS.SCRIPTBLOX);
+const chatRouter = require(MODULE_PATHS.CHAT);
 
 
 // -----------------------------
@@ -1306,6 +1308,7 @@ app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
+app.use('/api/chat', chatRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
@@ -1523,6 +1526,20 @@ app.get('/scriptblox/favorites', async (req, res) => {
 app.get('/scriptblox/script/:id', async (req, res) => {
     try { await scriptBloxPageService.serveScriptBloxPage(res); } 
     catch (err) { handleScriptBloxPageError(err, res); }
+});
+
+// -----------------------------
+// Route Handlers: P2P Chat
+// -----------------------------
+
+app.get('/chat', (req, res) => {
+    const filePath = path.join(PUBLIC_DIR, 'chat', 'index.html');
+    res.sendFile(filePath);
+});
+
+app.get('/chat/:code', (req, res) => {
+    const filePath = path.join(PUBLIC_DIR, 'chat', 'index.html');
+    res.sendFile(filePath);
 });
 
 // -----------------------------
@@ -4630,12 +4647,69 @@ const ROOM_CLEANUP_INTERVAL = 10 * 60 * 1000; // 10 минут
 const ROOM_ID_LENGTH = 6;
 const MAX_PARTICIPANTS = 2;
 const MAX_ROOM_GENERATION_ATTEMPTS = 10;
+const MAX_ROOM_CREATION_PER_MINUTE = 10;
+const WS_PORT = process.env.WS_PORT || 3001;
 
 // Хранилище активных комнат (in-memory, сбрасывается при холодном старте)
 const activeRooms = new Map();
 
+// Хранилище WebSocket-соединений по комнатам
+const roomSockets = new Map(); // roomId -> Set<ws>
+
+// Rate limit для создания комнат
+const roomCreationLog = new Map(); // ip -> [{timestamp}]
+
 // -----------------------------
-// Room Management
+// Расширенная ICE-конфигурация с пулом серверов
+// -----------------------------
+
+const ICE_SERVER_POOL = {
+    iceServers: [
+        // Google STUN (основные)
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        
+        // Cloudflare STUN (резервные)
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        
+        // Twilio STUN (резервные)
+        { urls: 'stun:global.stun.twilio.com:3478' },
+        
+        // OpenRelay TURN (публичные, с ограничениями)
+        {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayprojectuser',
+            credential: 'openrelayprojectpass'
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayprojectuser',
+            credential: 'openrelayprojectpass'
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayprojectuser',
+            credential: 'openrelayprojectpass'
+        },
+        
+        // Дополнительный публичный TURN (если доступен)
+        {
+            urls: 'turn:turn.relay.metered.ca:443',
+            username: 'openrelayprojectuser',
+            credential: 'openrelayprojectpass'
+        }
+    ],
+    iceCandidatePoolSize: 10,
+    iceTransportPolicy: 'all',
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require'
+};
+
+// -----------------------------
+// Room Management (улучшенный)
 // -----------------------------
 
 /**
@@ -4649,7 +4723,6 @@ class RoomManager {
 
     /**
      * Генерация читаемого ID комнаты (без I, O, 0, 1)
-     * @returns {string} - Сгенерированный ID комнаты
      */
     generateRoomId() {
         const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -4662,7 +4735,6 @@ class RoomManager {
 
     /**
      * Создание новой комнаты с уникальным ID
-     * @returns {Object|null} - Объект комнаты или null при ошибке
      */
     createRoom() {
         let roomId;
@@ -4680,52 +4752,128 @@ class RoomManager {
             id: roomId,
             createdAt: Date.now(),
             expiresAt: Date.now() + ROOM_TTL,
-            participants: 0
+            participants: 0,
+            metadata: {
+                createdAt: new Date().toISOString(),
+                participantsList: [],
+                handRaised: new Set(),
+                messagesCount: 0
+            }
         };
 
         this.rooms.set(roomId, room);
+        roomSockets.set(roomId, new Set());
         return room;
     }
 
     /**
      * Проверка существования комнаты
-     * @param {string} roomId - ID комнаты
-     * @returns {Object|null} - Объект комнаты или null
      */
     getRoom(roomId) {
         return this.rooms.get(roomId) || null;
     }
 
     /**
-     * Добавление участника в комнату
-     * @param {string} roomId - ID комнаты
-     * @returns {Object|null} - Обновленный объект комнаты или null
+     * Получение полного состояния комнаты
      */
-    addParticipant(roomId) {
+    getRoomState(roomId) {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+        
+        return {
+            id: room.id,
+            participants: room.participants,
+            createdAt: room.metadata.createdAt,
+            expiresAt: room.expiresAt,
+            isFull: room.participants >= MAX_PARTICIPANTS,
+            participantsList: [...user.metadata.participantsList],
+            handRaised: [...room.metadata.handRaised]
+        };
+    }
+
+    /**
+     * Добавление участника в комнату
+     */
+    addParticipant(roomId, participantId = null) {
         const room = this.rooms.get(roomId);
         if (!room) return null;
 
         room.participants = Math.min(room.participants + 1, MAX_PARTICIPANTS);
+        
+        if (participantId) {
+            room.metadata.participantsList.push({
+                id: participantId,
+                joinedAt: Date.now()
+            });
+        }
+        
         return room;
     }
 
     /**
      * Удаление участника из комнаты
-     * @param {string} roomId - ID комнаты
-     * @returns {boolean} - true если комната существует
      */
-    removeParticipant(roomId) {
+    removeParticipant(roomId, participantId = null) {
         const room = this.rooms.get(roomId);
         if (!room) return false;
 
         room.participants = Math.max(room.participants - 1, 0);
         
+        if (participantId) {
+            room.metadata.participantsList = room.metadata.participantsList.filter(
+                p => p.id !== participantId
+            );
+            user.metadata.handRaised.delete(participantId);
+        }
+        
         // Удаляем комнату, если участников не осталось
         if (room.participants === 0) {
             this.rooms.delete(roomId);
+            const sockets = roomSockets.get(roomId);
+            if (sockets) {
+                sockets.forEach(ws => {
+                    try { ws.close(); } catch (e) {}
+                });
+                roomSockets.delete(roomId);
+            }
         }
         
         return true;
+    }
+
+    /**
+     * Переключение статуса "поднятой руки"
+     */
+    toggleHand(roomId, participantId) {
+        const room = this.rooms.get(roomId);
+        if (!room) return null;
+        
+        if (room.metadata.handRaised.has(participantId)) {
+            room.metadata.handRaised.delete(participantId);
+            return { raised: false };
+        } else {
+            room.metadata.handRaised.add(participantId);
+            return { raised: true };
+        }
+    }
+
+    /**
+     * Уведомление всех участников комнаты через WebSocket
+     */
+    broadcastToRoom(roomId, message, excludeWs = null) {
+        const sockets = roomSockets.get(roomId);
+        if (!sockets) return;
+        
+        const data = JSON.stringify(message);
+        sockets.forEach(ws => {
+            if (ws !== excludeWs && ws.readyState === 1) { // WebSocket.OPEN
+                try {
+                    ws.send(data);
+                } catch (e) {
+                    sockets.delete(ws);
+                }
+            }
+        });
     }
 
     /**
@@ -4734,8 +4882,15 @@ class RoomManager {
     cleanupExpiredRooms() {
         const now = Date.now();
         for (const [id, room] of this.rooms.entries()) {
-            if (now - room.createdAt > ROOM_TTL) {
+            if (now > room.expiresAt) {
                 this.rooms.delete(id);
+                const sockets = roomSockets.get(id);
+                if (sockets) {
+                    sockets.forEach(ws => {
+                        try { ws.close(1000, 'Room expired'); } catch (e) {}
+                    });
+                    roomSockets.delete(id);
+                }
             }
         }
     }
@@ -4757,26 +4912,206 @@ const roomManager = new RoomManager();
 // Validation Helpers
 // -----------------------------
 
-/**
- * Валидация формата ID комнаты
- * @param {string} roomId - ID комнаты для проверки
- * @returns {boolean} - true если формат корректен
- */
 const isValidRoomId = (roomId) => {
     return roomId && /^[A-Z0-9]{6}$/.test(roomId.toUpperCase());
 };
 
-/**
- * Нормализация ID комнаты к верхнему регистру
- * @param {string} roomId - ID комнаты
- * @returns {string} - ID в верхнем регистре
- */
 const normalizeRoomId = (roomId) => {
     return roomId ? roomId.toUpperCase() : '';
 };
 
+/**
+ * Rate limiting для создания комнат
+ */
+const checkRoomCreationRate = (ip) => {
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 минута
+    
+    if (!roomCreationLog.has(ip)) {
+        roomCreationLog.set(ip, []);
+    }
+    
+    const log = roomCreationLog.get(ip);
+    // Удаляем старые записи
+    while (log.length > 0 && now - log[0] > windowMs) {
+        log.shift();
+    }
+    
+    if (log.length >= MAX_ROOM_CREATION_PER_MINUTE) {
+        return false;
+    }
+    
+    log.push(now);
+    return true;
+};
+
 // -----------------------------
-// Route Handlers
+// WebSocket Server для real-time событий
+// -----------------------------
+
+let wss = null;
+
+/**
+ * Инициализация WebSocket-сервера
+ */
+const initWebSocketServer = () => {
+    try {
+        // Динамический импорт ws (если доступен)
+        let WebSocketServer;
+        try {
+            WebSocketServer = require('ws').Server;
+        } catch (e) {
+            console.warn('[Call] ws module not available, WebSocket features disabled');
+            return;
+        }
+        
+        wss = new WebSocketServer({ 
+            port: WS_PORT,
+            perMessageDeflate: false
+        });
+        
+        console.log(`[Call] WebSocket server listening on port ${WS_PORT}`);
+        
+        wss.on('connection', (ws, req) => {
+            let currentRoomId = null;
+            let participantId = null;
+            
+            ws.on('message', (rawMessage) => {
+                try {
+                    const message = JSON.parse(rawMessage.toString());
+                    
+                    // Валидация типа сообщения
+                    if (!message.type || typeof message.type !== 'string') {
+                        ws.send(JSON.stringify({ type: 'error', message: 'Invalid message type' }));
+                        return;
+                    }
+                    
+                    switch (message.type) {
+                        case 'join':
+                            // Подключение к комнате
+                            if (!message.roomId || !isValidRoomId(message.roomId)) {
+                                ws.send(JSON.stringify({ type: 'error', message: 'Invalid room ID' }));
+                                return;
+                            }
+                            
+                            const room = roomManager.getRoom(message.roomId);
+                            if (!room) {
+                                ws.send(JSON.stringify({ type: 'error', message: 'Room not found' }));
+                                return;
+                            }
+                            
+                            currentRoomId = message.roomId;
+                            participantId = message.participantId || `user_${Date.now()}`;
+                            
+                            // Добавляем в комнату
+                            const sockets = roomSockets.get(currentRoomId) || new Set();
+                            sockets.add(ws);
+                            roomSockets.set(currentRoomId, sockets);
+                            
+                            // Уведомляем других участников
+                            roomManager.broadcastToRoom(currentRoomId, {
+                                type: 'user-joined',
+                                participantId,
+                                timestamp: Date.now()
+                            }, ws);
+                            
+                            ws.send(JSON.stringify({
+                                type: 'joined',
+                                roomId: currentRoomId,
+                                participantId,
+                                participants: room.participants
+                            }));
+                            break;
+                            
+                        case 'leave':
+                            if (currentRoomId) {
+                                roomManager.removeParticipant(currentRoomId, participantId);
+                                roomManager.broadcastToRoom(currentRoomId, {
+                                    type: 'user-left',
+                                    participantId,
+                                    timestamp: Date.now()
+                                });
+                                
+                                const sockets = roomSockets.get(currentRoomId);
+                                if (sockets) sockets.delete(ws);
+                            }
+                            break;
+                            
+                        case 'hand-raise':
+                            if (currentRoomId && participantId) {
+                                const result = roomManager.toggleHand(currentRoomId, participantId);
+                                roomManager.broadcastToRoom(currentRoomId, {
+                                    type: 'hand-raise',
+                                    participantId,
+                                    raised: result.raised,
+                                    timestamp: Date.now()
+                                });
+                            }
+                            break;
+                            
+                        case 'chat':
+                            if (currentRoomId && participantId && message.text) {
+                                // Ограничение длины сообщения
+                                const text = String(message.text).slice(0, 2000);
+                                
+                                const room = roomManager.getRoom(currentRoomId);
+                                if (room) {
+                                    room.metadata.messagesCount++;
+                                }
+                                
+                                roomManager.broadcastToRoom(currentRoomId, {
+                                    type: 'chat',
+                                    participantId,
+                                    text,
+                                    timestamp: Date.now()
+                                });
+                            }
+                            break;
+                            
+                        case 'ping':
+                            ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
+                            break;
+                            
+                        default:
+                            ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
+                    }
+                } catch (err) {
+                    console.error('[Call WS] Message parse error:', err);
+                }
+            });
+            
+            ws.on('close', () => {
+                if (currentRoomId) {
+                    roomManager.removeParticipant(currentRoomId, participantId);
+                    roomManager.broadcastToRoom(currentRoomId, {
+                        type: 'user-left',
+                        participantId,
+                        timestamp: Date.now()
+                    });
+                    
+                    const sockets = roomSockets.get(currentRoomId);
+                    if (sockets) sockets.delete(ws);
+                }
+            });
+            
+            ws.on('error', (err) => {
+                console.error('[Call WS] Connection error:', err);
+            });
+        });
+        
+        wss.on('error', (err) => {
+            console.error('[Call WS] Server error:', err);
+        });
+    } catch (err) {
+        console.error('[Call] Failed to init WebSocket server:', err);
+    }
+};
+
+// Запуск WebSocket-сервера при загрузке модуля
+initWebSocketServer();
+
+// -----------------------------
+// Route Handlers (HTTP)
 // -----------------------------
 
 /**
@@ -4804,6 +5139,15 @@ app.get('/call/:id', (req, res) => {
  */
 app.post('/api/call/room', (req, res) => {
     try {
+        const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+        
+        // Rate limiting
+        if (!checkRoomCreationRate(clientIp)) {
+            return res.status(429).json({ 
+                error: 'Too many rooms created. Please wait.' 
+            });
+        }
+        
         const room = roomManager.createRoom();
         
         if (!room) {
@@ -4814,7 +5158,8 @@ app.post('/api/call/room', (req, res) => {
 
         res.json({ 
             roomId: room.id, 
-            expiresAt: room.expiresAt 
+            expiresAt: room.expiresAt,
+            wsPort: WS_PORT
         });
     } catch (err) {
         handleCallApiError('POST /api/call/room', err, res);
@@ -4836,22 +5181,43 @@ app.get('/api/call/check/:id', (req, res) => {
     res.json({
         exists: !!room,
         roomId,
-        createdAt: room?.createdAt || null
+        createdAt: room?.createdAt || null,
+        participants: room?.participants || 0,
+        isFull: room ? (room.participants >= MAX_PARTICIPANTS) : false
     });
+});
+
+/**
+ * GET /api/call/room/:id/state — полное состояние комнаты
+ */
+app.get('/api/call/room/:id/state', (req, res) => {
+    const roomId = normalizeRoomId(req.params.id);
+    
+    if (!isValidRoomId(roomId)) {
+        return res.status(400).json({ error: 'Invalid room ID' });
+    }
+    
+    const state = roomManager.getRoomState(roomId);
+    
+    if (!state) {
+        return res.status(404).json({ error: 'Room not found' });
+    }
+    
+    res.json(state);
 });
 
 /**
  * POST /api/call/join — отметить, что пользователь вошёл в комнату
  */
 app.post('/api/call/join', (req, res) => {
-    const { roomId } = req.body;
+    const { roomId, participantId } = req.body;
     const normalizedRoomId = normalizeRoomId(roomId);
     
     if (!isValidRoomId(normalizedRoomId)) {
         return res.status(400).json({ error: 'Invalid room ID' });
     }
     
-    const room = roomManager.addParticipant(normalizedRoomId);
+    const room = roomManager.addParticipant(normalizedRoomId, participantId);
     
     if (!room) {
         return res.status(404).json({ 
@@ -4861,7 +5227,8 @@ app.post('/api/call/join', (req, res) => {
     
     res.json({ 
         success: true, 
-        participants: room.participants 
+        participants: room.participants,
+        isFull: room.participants >= MAX_PARTICIPANTS
     });
 });
 
@@ -4869,16 +5236,23 @@ app.post('/api/call/join', (req, res) => {
  * POST /api/call/leave — отметить выход из комнаты
  */
 app.post('/api/call/leave', (req, res) => {
-    const { roomId } = req.body;
+    const { roomId, participantId } = req.body;
     
     if (!roomId) {
         return res.status(400).json({ error: 'roomId required' });
     }
     
     const normalizedRoomId = normalizeRoomId(roomId);
-    const success = roomManager.removeParticipant(normalizedRoomId);
+    const success = roomManager.removeParticipant(normalizedRoomId, participantId);
     
     res.json({ success });
+});
+
+/**
+ * GET /api/call/ice-config — получить расширенную ICE-конфигурацию
+ */
+app.get('/api/call/ice-config', (req, res) => {
+    res.json(ICE_SERVER_POOL);
 });
 
 // -----------------------------
@@ -4887,7 +5261,6 @@ app.post('/api/call/leave', (req, res) => {
 
 /**
  * Отдача HTML-страницы звонка с нужными заголовками
- * @param {Response} res - Express response объект
  */
 const serveCallPage = (res) => {
     const filePath = path.join(PUBLIC_DIR, 'call', 'index.html');
@@ -4905,9 +5278,6 @@ const serveCallPage = (res) => {
 
 /**
  * Обработчик ошибок API для Call routes
- * @param {string} endpoint - Название endpoint
- * @param {Error} err - Объект ошибки
- * @param {Response} res - Express response объект
  */
 const handleCallApiError = (endpoint, err, res) => {
     console.error(`[${endpoint}]`, err);
