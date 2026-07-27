@@ -77,53 +77,29 @@ const MODULE_PATHS = {
     JSON_STUDIO: '../json_studio',
     REVIEW: '../review',
     GRADE: '../grade',
-    SCRIPTBLOX: '../scriptblox'
+    SCRIPTBLOX: '../scriptblox',
+    CHECKREDIRECTS: '../check-redirect'
 };
 
 /**
- * Роутер для работы с новостями
+ * Роутеры для страниц
  */
 const newsRouter = require(MODULE_PATHS.NEWS);
 
-/**
- * Роутер для технической поддержки
- */
 const supportRouter = require(MODULE_PATHS.SUPPORT);
 
-/**
- * Роутер для загрузчика файлов
- */
 const downloaderRouter = require(MODULE_PATHS.DOWNLOADER);
 
-/**
- * Роутер для управления редиректами
- */
 const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
 
-/**
- * Роутер для уведомлений
- */
 const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
 
-
-/**
- * Роутер для roblox
- */
 const robloxRouter = require(MODULE_PATHS.ROBLOX);
 
-/**
- * Роутер для youtube
- */
 const youtubeRouter = require(MODULE_PATHS.YOUTUBE);
 
-/**
- * Роутер для monitor
- */
 const monitorRouter = require(MODULE_PATHS.MONITOR);
 
-/**
- * Роутер для Json Studio
- */
 const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
 
 const reviewRouter = require(MODULE_PATHS.REVIEW);
@@ -131,6 +107,8 @@ const reviewRouter = require(MODULE_PATHS.REVIEW);
 const gradeRouter = require(MODULE_PATHS.GRADE);
 
 const scriptbloxRouter = require(MODULE_PATHS.SCRIPTBLOX);
+
+const checkredirect = require(MODULE_PATHS.CHECKREDIRECTS);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1305,6 +1283,7 @@ app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
+app.use('/api/check-redirect', checkredirect);
 
 // -----------------------------
 // Dynamic Page: Downloader
