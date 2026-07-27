@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Murder Mystery 2</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root {
+    --bg: #000000;
+    --bg-elevated: #0a0a0a;
+    --surface: #111111;
+    --surface-hover: #1a1a1a;
+    --border: #1f1f1f;
+    --border-strong: #2a2a2a;
+    --text: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-tertiary: #666666;
+    --accent: #ffffff;
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ambient glow */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 60%;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 40px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.4s var(--ease);
+  }
+
+  .logo {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 28px;
+    height: 28px;
+    background: var(--text);
+    color: var(--bg);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px 6px 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: all 0.5s var(--spring);
+    pointer-events: none;
+  }
+
+  .user-chip.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    overflow: hidden;
+  }
+
+  .user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.4s var(--spring);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+  }
+
+  .btn-primary {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 40px rgba(255,255,255,0.15);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+  }
+
+  .btn-ghost:hover {
+    background: var(--surface);
+    border-color: var(--text);
+  }
+
+  .btn-google {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    padding: 10px 20px;
+  }
+
+  .btn-google:hover {
+    background: var(--surface-hover);
+    border-color: var(--text);
+  }
+
+  .btn-google svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-logout {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .btn-logout:hover {
+    color: var(--text);
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.8s var(--ease) 0.1s forwards;
+  }
+
+  .hero-eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--text);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero-title {
+    font-size: clamp(56px, 10vw, 140px);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    line-height: 0.95;
+    margin-bottom: 24px;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 1s var(--ease) 0.2s forwards;
+  }
+
+  .hero-title .accent {
+    background: linear-gradient(180deg, #ffffff 0%, #666666 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(16px, 1.5vw, 20px);
+    color: var(--text-secondary);
+    max-width: 560px;
+    line-height: 1.5;
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 1s var(--ease) 0.35s forwards;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeUp 1s var(--ease) 0.5s forwards;
+  }
+
+  .btn-play {
+    padding: 16px 36px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .btn-play svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* RATING SECTION */
+  .rating-section {
+    padding: 80px 40px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .rating-container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    font-size: 17px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .rating-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 48px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 48px;
+    align-items: center;
+    margin-bottom: 40px;
+    transition: all 0.4s var(--ease);
+  }
+
+  .rating-card:hover {
+    border-color: var(--border-strong);
+  }
+
+  .rating-summary {
+    text-align: center;
+    padding: 32px;
+    border-right: 1px solid var(--border);
+  }
+
+  .rating-number {
+    font-size: 88px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 12px;
+    background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .rating-stars {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    font-size: 20px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .rating-stars .empty {
+    color: var(--text-tertiary);
+  }
+
+  .rating-count {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .rating-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 40px;
+    gap: 16px;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  .bar-label {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .bar-track {
+    height: 6px;
+    background: var(--bg-elevated);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--text);
+    border-radius: 100px;
+    transition: width 1s var(--ease);
+  }
+
+  .bar-count {
+    color: var(--text-tertiary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* REVIEWS */
+  .reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .reviews-title {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .reviews-controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .select {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s var(--ease);
+    appearance: none;
+    padding-right: 32px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  .select:hover {
+    border-color: var(--border-strong);
+  }
+
+  .reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .review-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.4s var(--ease);
+    animation: fadeUp 0.5s var(--ease);
+  }
+
+  .review-card:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+  }
+
+  .review-top {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .review-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 15px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .review-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .review-meta {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .review-name {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+
+  .review-date {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .review-stars {
+    color: var(--text);
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .review-stars .empty {
+    color: var(--text-tertiary);
+  }
+
+  .review-text {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .review-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .review-action {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+    font-family: inherit;
+  }
+
+  .review-action:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  .review-action.danger:hover {
+    border-color: #ff4444;
+    color: #ff4444;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-tertiary);
+    background: var(--surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: 20px;
+  }
+
+  .empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+
+  /* LOGIN PROMPT */
+  .login-prompt {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .login-prompt-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .login-prompt h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .login-prompt p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  /* TOAST */
+  .toast-container {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 14px 18px;
+    min-width: 260px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    transform: translateX(400px);
+    transition: transform 0.5s var(--spring);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .toast.show { transform: translateX(0); }
+
+  .toast-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--text);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .hero { padding: 100px 20px 60px; }
+    .rating-section { padding: 60px 20px 80px; }
+    .rating-card {
+      grid-template-columns: 1fr;
+      padding: 32px 24px;
+      gap: 32px;
+    }
+    .rating-summary {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+    }
+    .rating-number { font-size: 64px; }
+    .reviews-header { flex-direction: column; align-items: stretch; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="logo">
+    <div class="logo-mark">M2</div>
+    <span>Murder Mystery 2</span>
+  </div>
+  <div class="nav-actions">
+    <div class="user-chip" id="userChip">
+      <div class="user-avatar" id="userAvatar"></div>
+      <span id="userName"></span>
+    </div>
+    <button class="btn btn-logout" id="logoutBtn" style="display:none;" onclick="logout()">Выйти</button>
+    <button class="btn btn-google" id="loginBtn" onclick="loginWithGoogle()">
+      <svg viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Войти через Google
+    </button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">
+    <div class="hero-eyebrow-dot"></div>
+    <span>Доступно в Roblox</span>
+  </div>
+  <h1 class="hero-title">
+    Murder<br><span class="accent">Mystery 2</span>
+  </h1>
+  <p class="hero-subtitle">
+    Детективная игра нового поколения. Найдите убийцу, раскройте тайну, станьте легендой.
+  </p>
+  <div class="hero-cta">
+    <button class="btn btn-primary btn-play" onclick="playGame()">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      Играть сейчас
+    </button>
+    <a href="#rating" class="btn btn-ghost">Оценить игру</a>
+  </div>
+</section>
+
+<section class="rating-section" id="rating">
+  <div class="rating-container">
+    <div class="section-header">
+      <div class="section-label">Рейтинг</div>
+      <h2 class="section-title">Оценка сообщества</h2>
+      <p class="section-desc">Честные отзывы от реальных игроков</p>
+    </div>
+
+    <div class="rating-card">
+      <div class="rating-summary">
+        <div class="rating-number" id="ratingNumber">0.0</div>
+        <div class="rating-stars" id="ratingStars">
+          <span class="empty">★</span><span class="empty">★</span><span class="empty">★</span><span class="empty">★</span><span class="empty">★</span>
+        </div>
+        <div class="rating-count" id="ratingCount">0 оценок</div>
+      </div>
+      <div class="rating-bars" id="ratingBars">
+        <div class="bar-row">
+          <div class="bar-label">5 ★</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar-count">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">4 ★</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar-count">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">3 ★</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar-count">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">2 ★</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar-count">0</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">1 ★</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+          <div class="bar-count">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reviews-header">
+      <h3 class="reviews-title">Отзывы игроков</h3>
+      <div class="reviews-controls">
+        <select class="select" id="filterSelect" onchange="renderReviews()">
+          <option value="all">Все оценки</option>
+          <option value="5">5 звёзд</option>
+          <option value="4">4 звезды</option>
+          <option value="3">3 звезды</option>
+          <option value="2">2 звезды</option>
+          <option value="1">1 звезда</option>
+        </select>
+        <select class="select" id="sortSelect" onchange="renderReviews()">
+          <option value="newest">Сначала новые</option>
+          <option value="oldest">Сначала старые</option>
+          <option value="highest">Высшая оценка</option>
+          <option value="lowest">Низшая оценка</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="loginPrompt" class="login-prompt" style="display:none;">
+      <div class="login-prompt-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13.8 12H3"/>
+        </svg>
+      </div>
+      <h3>Войдите, чтобы оставить отзыв</h3>
+      <p>Оценивайте игру и делитесь мнением с сообществом</p>
+      <button class="btn btn-primary" onclick="loginWithGoogle()">
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Войти через Google
+      </button>
+    </div>
+
+    <button class="btn btn-primary" id="writeReviewBtn" style="display:none; margin-bottom: 24px;" onclick="openReviewModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+      Написать отзыв
+    </button>
+
+    <div class="reviews-list" id="reviewsList"></div>
+  </div>
+</section>
+
+<footer>
+  <div>© 2026 Murder Mystery 2 · Фан-сайт · Все права принадлежат разработчикам</div>
+</footer>
+
+<!-- REVIEW MODAL -->
+<div id="reviewModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(20px); z-index:500; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:36px; max-width:500px; width:100%; max-height:90vh; overflow-y:auto; transform:scale(0.95); opacity:0; transition:all 0.4s var(--spring);" id="reviewModalContent">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h3 style="font-size:22px; font-weight:600;" id="modalTitle">Новый отзыв</h3>
+      <button onclick="closeReviewModal()" style="background:var(--bg-elevated); border:1px solid var(--border); width:32px; height:32px; border-radius:50%; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="reviewForm" onsubmit="submitReview(event)">
+      <div style="margin-bottom:20px;">
+        <label style="display:block; font-size:13px; color:var(--text-secondary); margin-bottom:10px;">Ваша оценка</label>
+        <div id="starPicker" style="display:flex; gap:6px; font-size:32px; cursor:pointer;">
+          <span data-val="1" style="color:var(--text-tertiary); transition:all 0.2s;">★</span>
+          <span data-val="2" style="color:var(--text-tertiary); transition:all 0.2s;">★</span>
+          <span data-val="3" style="color:var(--text-tertiary); transition:all 0.2s;">★</span>
+          <span data-val="4" style="color:var(--text-tertiary); transition:all 0.2s;">★</span>
+          <span data-val="5" style="color:var(--text-tertiary); transition:all 0.2s;">★</span>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block; font-size:13px; color:var(--text-secondary); margin-bottom:8px;">Отзыв</label>
+        <textarea id="reviewText" required style="width:100%; min-height:120px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:14px; padding:14px; color:var(--text); font-family:inherit; font-size:14px; resize:vertical; outline:none; transition:border-color 0.3s;" placeholder="Расскажите о своём опыте..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; padding:14px;">Опубликовать</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ============================================
+  // STATE
+  // ============================================
+  const state = {
+    user: JSON.parse(localStorage.getItem('mm2_user') || 'null'),
+    reviews: JSON.parse(localStorage.getItem('mm2_reviews') || '[]'),
+    selectedRating: 0,
+    editingId: null
+  };
+
+  // ============================================
+  // GOOGLE SIGN-IN
+  // ============================================
+  // ВАЖНО: Замените YOUR_CLIENT_ID на ваш реальный Client ID из Google Cloud Console
+  // Получить можно здесь: https://console.cloud.google.com/apis/credentials
+  const GOOGLE_CLIENT_ID = '479666067128-24dbdtd6qnebskivt7h0lnfm7mi683iu.apps.googleusercontent.com';
+
+  function initGoogle() {
+    if (typeof google === 'undefined' || !google.accounts) {
+      setTimeout(initGoogle, 200);
+      return;
+    }
+    try {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse
+      });
+    } catch (e) {
+      console.log('Google Sign-In init skipped (no valid client_id)');
+    }
+  }
+
+  function handleCredentialResponse(response) {
+    try {
+      const payload = parseJwt(response.credential);
+      const user = {
+        name: payload.name,
+        email: payload.email,
+        picture: payload.picture,
+        sub: payload.sub
+      };
+      state.user = user;
+      localStorage.setItem('mm2_user', JSON.stringify(user));
+      updateAuthUI();
+      showToast('Добро пожаловать, ' + user.name.split(' ')[0]);
+    } catch (e) {
+      showToast('Ошибка входа. Проверьте Client ID', 'error');
+    }
+  }
+
+  function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => 
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
+  function loginWithGoogle() {
+    if (!state.user) {
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+        try {
+          google.accounts.id.prompt();
+          return;
+        } catch (e) {
+          // fallback
+        }
+      }
+      // Fallback: demo mode if no valid client_id
+      showToast('Настройте Google Client ID для входа', 'error');
+    }
+  }
+
+  function logout() {
+    state.user = null;
+    localStorage.removeItem('mm2_user');
+    updateAuthUI();
+    showToast('Вы вышли из аккаунта');
+  }
+
+  function updateAuthUI() {
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userChip = document.getElementById('userChip');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const loginPrompt = document.getElementById('loginPrompt');
+    const writeBtn = document.getElementById('writeReviewBtn');
+
+    if (state.user) {
+      loginBtn.style.display = 'none';
+      logoutBtn.style.display = 'inline-flex';
+      userChip.classList.add('visible');
+      userName.textContent = state.user.name.split(' ')[0];
+      if (state.user.picture) {
+        userAvatar.innerHTML = `<img src="${state.user.picture}" alt="">`;
+      } else {
+        userAvatar.textContent = state.user.name.charAt(0).toUpperCase();
+      }
+      loginPrompt.style.display = 'none';
+      writeBtn.style.display = 'inline-flex';
+    } else {
+      loginBtn.style.display = 'inline-flex';
+      logoutBtn.style.display = 'none';
+      userChip.classList.remove('visible');
+      loginPrompt.style.display = 'block';
+      writeBtn.style.display = 'none';
+    }
+  }
+
+  // ============================================
+  // REVIEWS
+  // ============================================
+  function saveReviews() {
+    localStorage.setItem('mm2_reviews', JSON.stringify(state.reviews));
+  }
+
+  function renderReviews() {
+    const list = document.getElementById('reviewsList');
+    const filter = document.getElementById('filterSelect').value;
+    const sort = document.getElementById('sortSelect').value;
+
+    let filtered = [...state.reviews];
+    if (filter !== 'all') filtered = filtered.filter(r => r.rating === parseInt(filter));
+
+    filtered.sort((a, b) => {
+      if (sort === 'newest') return new Date(b.date) - new Date(a.date);
+      if (sort === 'oldest') return new Date(a.date) - new Date(b.date);
+      if (sort === 'highest') return b.rating - a.rating;
+      if (sort === 'lowest') return a.rating - b.rating;
+      return 0;
+    });
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <h3>Пока нет отзывов</h3>
+          <p>Будьте первым, кто поделится мнением</p>
+        </div>`;
+    } else {
+      list.innerHTML = filtered.map(r => {
+        const isOwner = state.user && state.user.sub === r.userId;
+        const stars = '★'.repeat(r.rating) + '<span class="empty">' + '★'.repeat(5 - r.rating) + '</span>';
+        const initial = r.name.charAt(0).toUpperCase();
+        const avatar = r.picture 
+          ? `<img src="${r.picture}" alt="">` 
+          : initial;
+        return `
+          <div class="review-card">
+            <div class="review-top">
+              <div class="review-avatar">${avatar}</div>
+              <div class="review-meta">
+                <div class="review-name">${escapeHtml(r.name)}</div>
+                <div class="review-date">${formatDate(r.date)}</div>
+              </div>
+              <div class="review-stars">${stars}</div>
+            </div>
+            <div class="review-text">${escapeHtml(r.text)}</div>
+            ${isOwner ? `
+              <div class="review-actions">
+                <button class="review-action" onclick="editReview('${r.id}')">Редактировать</button>
+                <button class="review-action danger" onclick="deleteReview('${r.id}')">Удалить</button>
+              </div>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    updateRatingSummary();
+  }
+
+  function updateRatingSummary() {
+    const total = state.reviews.length;
+    const avg = total > 0 ? state.reviews.reduce((s, r) => s + r.rating, 0) / total : 0;
+    
+    document.getElementById('ratingNumber').textContent = avg.toFixed(1);
+    document.getElementById('ratingCount').textContent = total + ' ' + pluralize(total, 'оценка', 'оценки', 'оценок');
+    
+    const full = Math.round(avg);
+    document.getElementById('ratingStars').innerHTML = 
+      Array.from({length: 5}, (_, i) => 
+        `<span${i >= full ? ' class="empty"' : ''}>★</span>`
+      ).join('');
+
+    const counts = [5, 4, 3, 2, 1].map(n => state.reviews.filter(r => r.rating === n).length);
+    const max = Math.max(...counts, 1);
+    document.querySelectorAll('#ratingBars .bar-row').forEach((row, i) => {
+      const pct = (counts[i] / max) * 100;
+      row.querySelector('.bar-fill').style.width = pct + '%';
+      row.querySelector('.bar-count').textContent = counts[i];
+    });
+  }
+
+  function pluralize(n, one, two, five) {
+    const mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return two;
+    return five;
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function formatDate(d) {
+    const date = new Date(d);
+    const now = new Date();
+    const diff = (now - date) / 1000;
+    if (diff < 60) return 'только что';
+    if (diff < 3600) return Math.floor(diff / 60) + ' мин. назад';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' ч. назад';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' дн. назад';
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  // ============================================
+  // REVIEW MODAL
+  // ============================================
+  function openReviewModal() {
+    if (!state.user) {
+      showToast('Войдите через Google', 'error');
+      return;
+    }
+    state.editingId = null;
+    state.selectedRating = 0;
+    document.getElementById('modalTitle').textContent = 'Новый отзыв';
+    document.getElementById('reviewText').value = '';
+    updateStarPicker();
+    const modal = document.getElementById('reviewModal');
+    const content = document.getElementById('reviewModalContent');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      content.style.transform = 'scale(1)';
+      content.style.opacity = '1';
+    });
+  }
+
+  function editReview(id) {
+    const review = state.reviews.find(r => r.id === id);
+    if (!review) return;
+    state.editingId = id;
+    state.selectedRating = review.rating;
+    document.getElementById('modalTitle').textContent = 'Редактировать отзыв';
+    document.getElementById('reviewText').value = review.text;
+    updateStarPicker();
+    const modal = document.getElementById('reviewModal');
+    const content = document.getElementById('reviewModalContent');
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      content.style.transform = 'scale(1)';
+      content.style.opacity = '1';
+    });
+  }
+
+  function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    const content = document.getElementById('reviewModalContent');
+    content.style.transform = 'scale(0.95)';
+    content.style.opacity = '0';
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+  }
+
+  function submitReview(e) {
+    e.preventDefault();
+    if (!state.user) return;
+    if (state.selectedRating === 0) {
+      showToast('Выберите оценку', 'error');
+      return;
+    }
+    const text = document.getElementById('reviewText').value.trim();
+    if (!text) {
+      showToast('Напишите отзыв', 'error');
+      return;
+    }
+
+    if (state.editingId) {
+      const review = state.reviews.find(r => r.id === state.editingId);
+      if (review) {
+        review.rating = state.selectedRating;
+        review.text = text;
+        review.date = new Date().toISOString();
+        showToast('Отзыв обновлён');
+      }
+    } else {
+      state.reviews.push({
+        id: Date.now().toString(),
+        userId: state.user.sub,
+        name: state.user.name,
+        picture: state.user.picture,
+        rating: state.selectedRating,
+        text: text,
+        date: new Date().toISOString()
+      });
+      showToast('Отзыв опубликован');
+    }
+
+    saveReviews();
+    renderReviews();
+    closeReviewModal();
+  }
+
+  function deleteReview(id) {
+    if (!confirm('Удалить отзыв?')) return;
+    state.reviews = state.reviews.filter(r => r.id !== id);
+    saveReviews();
+    renderReviews();
+    showToast('Отзыв удалён');
+  }
+
+  // Star picker
+  const starPicker = document.getElementById('starPicker');
+  starPicker.addEventListener('click', (e) => {
+    const star = e.target.closest('[data-val]');
+    if (!star) return;
+    state.selectedRating = parseInt(star.dataset.val);
+    updateStarPicker();
+  });
+  starPicker.addEventListener('mouseover', (e) => {
+    const star = e.target.closest('[data-val]');
+    if (!star) return;
+    highlightStars(parseInt(star.dataset.val));
+  });
+  starPicker.addEventListener('mouseleave', () => updateStarPicker());
+
+  function highlightStars(val) {
+    starPicker.querySelectorAll('[data-val]').forEach(s => {
+      s.style.color = parseInt(s.dataset.val) <= val ? 'var(--text)' : 'var(--text-tertiary)';
+      s.style.transform = parseInt(s.dataset.val) <= val ? 'scale(1.1)' : 'scale(1)';
+    });
+  }
+
+  function updateStarPicker() {
+    highlightStars(state.selectedRating);
+  }
+
+  // Close modal on backdrop
+  document.getElementById('reviewModal').addEventListener('click', (e) => {
+    if (e.target.id === 'reviewModal') closeReviewModal();
+  });
+
+  // ============================================
+  // PLAY GAME
+  // ============================================
+  function playGame() {
+    window.open('https://www.roblox.com/games/142823291/Murder-Mystery-2', '_blank');
+    showToast('Открываем игру...');
+  }
+
+  // ============================================
+  // TOAST
+  // ============================================
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <div class="toast-icon">${type === 'error' ? '!' : '✓'}</div>
+      <span>${message}</span>`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
+
+  // ============================================
+  // NAV SCROLL
+  // ============================================
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 20) {
+      nav.style.padding = '14px 40px';
+    } else {
+      nav.style.padding = '20px 40px';
+    }
+  });
+
+  // ============================================
+  // INIT
+  // ============================================
+  initGoogle();
+  updateAuthUI();
+  renderReviews();
+
+  // ESC to close modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeReviewModal();
+  });
+</script>
+
+</body>
+</html>
