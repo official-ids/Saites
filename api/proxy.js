@@ -77,8 +77,7 @@ const MODULE_PATHS = {
     JSON_STUDIO: '../json_studio',
     REVIEW: '../review',
     GRADE: '../grade',
-    SCRIPTBLOX: '../scriptblox',
-    RATES: '../rates'
+    SCRIPTBLOX: '../scriptblox'
 };
 
 /**
@@ -107,8 +106,6 @@ const reviewRouter = require(MODULE_PATHS.REVIEW);
 const gradeRouter = require(MODULE_PATHS.GRADE);
 
 const scriptbloxRouter = require(MODULE_PATHS.SCRIPTBLOX);
-
-const ratesRouter = require(MODULE_PATHS.RATES);
 
 // -----------------------------
 // Константы и Конфигурация
@@ -1283,7 +1280,6 @@ app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
-app.use('/api/rates', ratesRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader
