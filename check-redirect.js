@@ -14,7 +14,7 @@ app.get('/', (req, res) => {
 /**
  * Проверка цепочки редиректов
  */
-app.post('/api/check-redirect', async (req, res) => {
+app.post('/check-redirect', async (req, res) => {
     try {
         let { url } = req.body;
 
