@@ -219,6 +219,13 @@
                     body: JSON.stringify({ url: targetUrl })
                 });
 
+                // Защита: проверяем, что сервер действительно вернул JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const rawText = await response.text();
+                    throw new Error(`Сервер вернул не JSON. Проверь, запущен ли сервер. Ответ: ${rawText.substring(0, 150)}`);
+                }
+
                 const data = await response.json();
 
                 if (!response.ok) {
