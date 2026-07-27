@@ -1,0 +1,1807 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Диагностика устройств</title>
+<link rel="stylesheet" href="https://cdn.fontsource.org/npm/@fontsource/inter@5.0.0/index.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0d12;
+    --panel: #141821;
+    --panel-2: #1b2030;
+    --border: #262c3d;
+    --text: #e6e8ef;
+    --muted: #8a91a6;
+    --accent: #6c8cff;
+    --accent-2: #4fd1c5;
+    --danger: #ff5c7a;
+    --warn: #ffb454;
+    --ok: #4ade80;
+  }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+  }
+  body { display: flex; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 14px;
+    overflow-y: auto;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .logo-mark {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: grid; place-items: center;
+    color: #0b0d12; font-weight: 800;
+  }
+  .logo-text { font-weight: 700; letter-spacing: .2px; }
+  .logo-sub { font-size: 11px; color: var(--muted); }
+
+  .nav { display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 9px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    transition: background .15s, color .15s;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--panel-2); color: var(--text); }
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(108,140,255,.18), rgba(79,209,197,.08));
+    color: var(--text);
+    box-shadow: inset 0 0 0 1px rgba(108,140,255,.35);
+  }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .nav-dot {
+    margin-left: auto;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+  }
+  .nav-item.active .nav-dot { background: var(--ok); box-shadow: 0 0 10px var(--ok); }
+
+  /* Main */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 36px 60px;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .title { font-size: 26px; font-weight: 700; letter-spacing: .2px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .status-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ok); box-shadow: 0 0 10px var(--ok);
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+  .panel h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 240px; }
+
+  .stat {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .stat .value { font-size: 22px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .stat .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  button.btn {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all .15s;
+  }
+  button.btn:hover { border-color: var(--accent); color: var(--accent); }
+  button.btn.primary {
+    background: linear-gradient(135deg, var(--accent), #4a6cff);
+    border-color: transparent;
+    color: white;
+    font-weight: 600;
+  }
+  button.btn.primary:hover { filter: brightness(1.1); }
+  button.btn.danger { background: rgba(255,92,122,.15); border-color: rgba(255,92,122,.4); color: var(--danger); }
+
+  .view { display: none; animation: fade .25s ease; }
+  .view.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* Keyboard */
+  .kbd-grid {
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    gap: 4px;
+    font-size: 10px;
+  }
+  .key {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 0;
+    text-align: center;
+    color: var(--muted);
+    transition: all .08s;
+    font-family: 'Inter', monospace;
+    min-height: 34px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .key.pressed {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b0d12;
+    border-color: transparent;
+    box-shadow: 0 0 14px rgba(108,140,255,.5);
+    font-weight: 700;
+  }
+  .key.wide-1 { grid-column: span 1.5; }
+  .key.wide-2 { grid-column: span 2; }
+  .key.wide-3 { grid-column: span 3; }
+  .key.wide-4 { grid-column: span 4; }
+  .key.wide-5 { grid-column: span 5; }
+  .key.wide-6 { grid-column: span 6; }
+  .key.sp { grid-column: span 9; }
+  .key-log {
+    margin-top: 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-family: 'Inter', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .key-log span { color: var(--accent); font-weight: 600; }
+
+  /* Mouse */
+  .mouse-canvas {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    height: 260px;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  .mouse-canvas .crosshair {
+    position: absolute;
+    background: rgba(108,140,255,.25);
+    pointer-events: none;
+  }
+  .mouse-canvas .crosshair.h { left: 0; right: 0; height: 1px; }
+  .mouse-canvas .crosshair.v { top: 0; bottom: 0; width: 1px; }
+  .mouse-canvas .coords {
+    position: absolute; top: 10px; left: 12px;
+    font-family: 'Inter', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .mouse-visual {
+    width: 120px; margin: 0 auto;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px;
+  }
+  .mouse-btn {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    transition: all .1s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .mouse-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b0d12;
+    font-weight: 700;
+    border-color: transparent;
+    box-shadow: 0 0 14px rgba(108,140,255,.5);
+  }
+  .mouse-body {
+    width: 100%; height: 140px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 50% 50% 45% 45% / 30% 30% 70% 70%;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 4px;
+    position: relative;
+  }
+  .mouse-wheel {
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px; height: 22px;
+    background: var(--border);
+    border-radius: 5px;
+    z-index: 2;
+  }
+
+  /* CPS */
+  .cps-display {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .cps-value {
+    font-size: 96px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .cps-label { color: var(--muted); margin-top: 8px; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+  .cps-bar {
+    height: 10px;
+    background: var(--panel-2);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+  .cps-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    width: 0%;
+    transition: width .1s linear;
+  }
+
+  /* Audio */
+  .freq-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .freq-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 14px 10px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .freq-btn:hover { border-color: var(--accent); }
+  .freq-btn.playing {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b0d12;
+    border-color: transparent;
+    font-weight: 700;
+  }
+  .freq-btn small { display: block; color: var(--muted); font-size: 10px; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .freq-btn.playing small { color: rgba(11,13,18,.7); }
+
+  .channel-test { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .channel-btn {
+    padding: 24px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    transition: all .15s;
+  }
+  .channel-btn:hover { border-color: var(--accent); }
+  .channel-btn.playing {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b0d12;
+    font-weight: 700;
+  }
+  .channel-btn small { display: block; color: var(--muted); font-size: 11px; margin-top: 6px; }
+  .channel-btn.playing small { color: rgba(11,13,18,.7); }
+
+  /* Mic */
+  .mic-viz {
+    height: 160px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .mic-viz canvas { width: 100%; height: 100%; display: block; }
+  .level-bar {
+    height: 18px;
+    background: var(--panel-2);
+    border-radius: 9px;
+    overflow: hidden;
+    margin-top: 14px;
+    border: 1px solid var(--border);
+  }
+  .level-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ok), var(--warn) 70%, var(--danger));
+    width: 0%;
+    transition: width .05s linear;
+  }
+
+  /* Camera */
+  .cam-preview {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+  .cam-preview video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cam-placeholder {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Gamepad */
+  .gp-visual {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+  }
+  .gp-body {
+    width: 360px; height: 180px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 90px;
+    position: relative;
+  }
+  .gp-btn {
+    position: absolute;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    display: grid; place-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    transition: all .1s;
+  }
+  .gp-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #0b0d12;
+    font-weight: 700;
+    box-shadow: 0 0 14px rgba(108,140,255,.6);
+  }
+  .gp-stick {
+    position: absolute;
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+  }
+  .gp-stick::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    transition: transform .1s;
+  }
+
+  /* Display */
+  .color-test {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .color-box {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: transform .15s;
+  }
+  .color-box:hover { transform: scale(1.03); }
+
+  /* Network */
+  .net-speed {
+    display: flex; align-items: center; gap: 20px;
+    padding: 10px 0;
+  }
+  .net-speed .big {
+    font-size: 54px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .net-speed .unit { color: var(--muted); font-size: 13px; }
+
+  /* Battery */
+  .battery-visual {
+    width: 220px; height: 90px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    position: relative;
+    margin: 0 auto;
+    padding: 8px;
+  }
+  .battery-visual::after {
+    content: '';
+    position: absolute;
+    right: -8px; top: 50%;
+    transform: translateY(-50%);
+    width: 6px; height: 24px;
+    background: var(--border);
+    border-radius: 0 4px 4px 0;
+  }
+  .battery-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ok), var(--accent-2));
+    border-radius: 4px;
+    transition: width .3s;
+  }
+  .battery-pct {
+    position: absolute;
+    inset: 0;
+    display: grid; place-items: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    mix-blend-mode: difference;
+  }
+
+  /* Clipboard */
+  .clip-area {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'Inter', monospace;
+    font-size: 13px;
+    min-height: 80px;
+    color: var(--muted);
+    word-break: break-all;
+  }
+
+  /* Touch */
+  .touch-area {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    height: 280px;
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+  }
+  .touch-point {
+    position: absolute;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--accent), transparent 70%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    display: grid; place-items: center;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a4258; }
+
+  @media (max-width: 900px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; flex-direction: row; padding: 10px; overflow-x: auto; }
+    .logo { display: none; }
+    .nav { flex-direction: row; }
+    .nav-item { white-space: nowrap; }
+    .main { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">D</div>
+    <div>
+      <div class="logo-text">DiagBox</div>
+      <div class="logo-sub">Тестирование устройств</div>
+    </div>
+  </div>
+  <nav class="nav" id="nav"></nav>
+</aside>
+
+<main class="main">
+  <div class="header">
+    <div>
+      <div class="title" id="viewTitle">Клавиатура</div>
+      <div class="subtitle" id="viewSub">Проверка нажатий клавиш и мультитач</div>
+    </div>
+    <div class="status-pill"><span class="dot"></span><span id="statusText">Система активна</span></div>
+  </div>
+
+  <!-- KEYBOARD -->
+  <section class="view active" data-view="keyboard">
+    <div class="panel">
+      <h3>Виртуальная клавиатура</h3>
+      <div class="kbd-grid" id="kbdGrid"></div>
+      <div class="key-log" id="keyLog">Нажмите любую клавишу...</div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Последняя клавиша</h3>
+          <div class="stat">
+            <div class="label">Код</div>
+            <div class="value" id="lastKeyCode">—</div>
+            <div class="hint" id="lastKeyInfo">Ожидание нажатия</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Счётчик нажатий</h3>
+          <div class="stat">
+            <div class="label">Всего</div>
+            <div class="value" id="keyCount">0</div>
+            <div class="hint">С начала сессии</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Модификаторы</h3>
+          <div class="stat">
+            <div class="label">Активные</div>
+            <div class="value" id="modsActive">—</div>
+            <div class="hint">Shift / Ctrl / Alt / Meta</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOUSE -->
+  <section class="view" data-view="mouse">
+    <div class="row">
+      <div class="col" style="flex: 2;">
+        <div class="panel">
+          <h3>Зона отслеживания</h3>
+          <div class="mouse-canvas" id="mouseCanvas">
+            <div class="crosshair h" id="crossH"></div>
+            <div class="crosshair v" id="crossV"></div>
+            <div class="coords" id="mouseCoords">X: 0 · Y: 0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Кнопки мыши</h3>
+          <div class="mouse-visual">
+            <div class="mouse-body">
+              <div class="mouse-btn" id="mbLeft">L</div>
+              <div class="mouse-btn" id="mbRight">R</div>
+              <div class="mouse-btn" id="mbMid">M</div>
+              <div class="mouse-btn" id="mbBack">B</div>
+              <div class="mouse-wheel" id="mWheel"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Позиция</h3>
+          <div class="stat">
+            <div class="label">Координаты</div>
+            <div class="value" id="mousePos">0, 0</div>
+            <div class="hint" id="mouseRel">Относительно окна</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Клики</h3>
+          <div class="stat">
+            <div class="label">ЛКМ / ПКМ / СКМ</div>
+            <div class="value" id="clickCount">0 / 0 / 0</div>
+            <div class="hint">Двойных: <span id="dblCount">0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Прокрутка</h3>
+          <div class="stat">
+            <div class="label">Delta Y</div>
+            <div class="value" id="scrollDelta">0</div>
+            <div class="hint">Суммарно за сессию</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUTOCLICKER / CPS -->
+  <section class="view" data-view="autoclicker">
+    <div class="panel">
+      <h3>Тест скорости кликов (CPS)</h3>
+      <div class="cps-display">
+        <div class="cps-value" id="cpsValue">0.0</div>
+        <div class="cps-label">Кликов в секунду</div>
+        <div class="cps-bar"><div class="cps-bar-fill" id="cpsBar"></div></div>
+        <div style="margin-top:14px; color: var(--muted); font-size: 13px;">
+          Время: <span id="cpsTime" style="color: var(--text); font-weight: 600;">10.0</span> сек ·
+          Всего: <span id="cpsTotal" style="color: var(--text); font-weight: 600;">0</span>
+        </div>
+      </div>
+      <div style="display:flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn primary" id="cpsStart">Начать тест</button>
+        <button class="btn" id="cpsReset">Сбросить</button>
+      </div>
+      <div style="margin-top: 20px; padding: 14px; background: var(--panel-2); border-radius: 10px; border: 1px solid var(--border); font-size: 13px; color: var(--muted);">
+        После старта кликайте в любую область панели как можно быстрее. Тест длится 10 секунд.
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Рекорд сессии</h3>
+          <div class="stat">
+            <div class="label">Лучший CPS</div>
+            <div class="value" id="cpsBest">0.0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Средний интервал</h3>
+          <div class="stat">
+            <div class="label">Между кликами</div>
+            <div class="value" id="cpsInterval">— мс</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AUDIO / HEADPHONES -->
+  <section class="view" data-view="audio">
+    <div class="panel">
+      <h3>Тест частот</h3>
+      <div class="freq-btns" id="freqBtns">
+        <button class="freq-btn" data-freq="100">100<small>Низкие</small></button>
+        <button class="freq-btn" data-freq="250">250<small>Бас</small></button>
+        <button class="freq-btn" data-freq="500">500<small>Средние</small></button>
+        <button class="freq-btn" data-freq="1000">1000<small>Вокал</small></button>
+        <button class="freq-btn" data-freq="4000">4000<small>Верхние</small></button>
+        <button class="freq-btn" data-freq="8000">8000<small>Высокие</small></button>
+        <button class="freq-btn" data-freq="12000">12000<small>Писк</small></button>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <span style="color: var(--muted); font-size: 13px;">Громкость:</span>
+        <input type="range" id="audioVol" min="0" max="100" value="30" style="flex: 1; min-width: 160px;">
+        <span id="audioVolVal" style="color: var(--text); font-weight: 600; width: 40px; text-align: right;">30%</span>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Проверка каналов</h3>
+      <div class="channel-test">
+        <button class="channel-btn" data-channel="left">
+          Левый канал
+          <small>Звук только в левом наушнике</small>
+        </button>
+        <button class="channel-btn" data-channel="right">
+          Правый канал
+          <small>Звук только в правом наушнике</small>
+        </button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Проверка баланса</h3>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <span style="color: var(--muted); font-size: 13px;">Баланс:</span>
+        <span style="font-size: 12px;">Л</span>
+        <input type="range" id="audioBalance" min="-100" max="100" value="0" style="flex: 1; min-width: 200px;">
+        <span style="font-size: 12px;">П</span>
+        <button class="btn" id="balanceTest">Тест</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MICROPHONE -->
+  <section class="view" data-view="microphone">
+    <div class="panel">
+      <h3>Визуализация микрофона</h3>
+      <div class="mic-viz">
+        <canvas id="micCanvas"></canvas>
+      </div>
+      <div class="level-bar"><div class="level-fill" id="micLevel"></div></div>
+      <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn primary" id="micStart">Включить микрофон</button>
+        <button class="btn danger" id="micStop" disabled>Выключить</button>
+        <button class="btn" id="micRecord">Записать 3 сек</button>
+      </div>
+      <div id="micStatus" style="margin-top: 14px; font-size: 13px; color: var(--muted);">
+        Микрофон не активен. Нажмите "Включить" для начала теста.
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Пиковый уровень</h3>
+          <div class="stat">
+            <div class="label">Максимум</div>
+            <div class="value" id="micPeak">0%</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Устройство</h3>
+          <div class="stat">
+            <div class="label">Микрофон</div>
+            <div class="value" id="micDevice" style="font-size: 14px;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMERA -->
+  <section class="view" data-view="camera">
+    <div class="panel">
+      <h3>Превью камеры</h3>
+      <div class="cam-preview">
+        <video id="camVideo" autoplay playsinline muted></video>
+        <div class="cam-placeholder" id="camPlaceholder">Камера не активна</div>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn primary" id="camStart">Включить камеру</button>
+        <button class="btn danger" id="camStop" disabled>Выключить</button>
+        <button class="btn" id="camSwitch">Переключить</button>
+        <button class="btn" id="camShot" disabled>Снимок</button>
+      </div>
+      <div id="camStatus" style="margin-top: 14px; font-size: 13px; color: var(--muted);">
+        Выберите камеру и нажмите "Включить".
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Разрешение</h3>
+          <div class="stat">
+            <div class="label">Поток</div>
+            <div class="value" id="camRes">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Устройство</h3>
+          <div class="stat">
+            <div class="label">Камера</div>
+            <div class="value" id="camDevice" style="font-size: 14px;">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>FPS</h3>
+          <div class="stat">
+            <div class="label">Частота кадров</div>
+            <div class="value" id="camFps">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DISPLAY -->
+  <section class="view" data-view="display">
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Параметры экрана</h3>
+          <div class="stat">
+            <div class="label">Разрешение</div>
+            <div class="value" id="dispRes">—</div>
+            <div class="hint" id="dispAvail">Доступная область: —</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Плотность пикселей</h3>
+          <div class="stat">
+            <div class="label">DPR</div>
+            <div class="value" id="dispDpr">—</div>
+            <div class="hint" id="dispLogRes">Логическое: —</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Ориентация</h3>
+          <div class="stat">
+            <div class="label">Поворот</div>
+            <div class="value" id="dispOrient">—</div>
+            <div class="hint" id="dispType">Тип: —</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Тест цветов (клик для полноэкранного режима)</h3>
+      <div class="color-test">
+        <div class="color-box" style="background: #ff0000; color: white;" data-color="red">RED</div>
+        <div class="color-box" style="background: #00ff00; color: black;" data-color="green">GREEN</div>
+        <div class="color-box" style="background: #0000ff; color: white;" data-color="blue">BLUE</div>
+        <div class="color-box" style="background: #ffffff; color: black;" data-color="white">WHITE</div>
+        <div class="color-box" style="background: #000000; color: white; border-color: #333;" data-color="black">BLACK</div>
+        <div class="color-box" style="background: linear-gradient(135deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff); color: white;" data-color="gradient">GRADIENT</div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Тест мёртвых пикселей</h3>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn" id="deadPxStart">Запустить на весь экран</button>
+        <button class="btn" id="deadPxStop">Выйти</button>
+      </div>
+      <div style="margin-top: 10px; font-size: 13px; color: var(--muted);">
+        Экран будет последовательно заливать разными цветами. Осмотрите монитор на предмет битых пикселей.
+      </div>
+    </div>
+  </section>
+
+  <!-- NETWORK -->
+  <section class="view" data-view="network">
+    <div class="panel">
+      <h3>Скорость соединения</h3>
+      <div class="net-speed">
+        <div>
+          <div class="big" id="netSpeed">—</div>
+          <div class="unit">Мбит/с</div>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Прогресс теста</div>
+          <div class="cps-bar"><div class="cps-bar-fill" id="netBar"></div></div>
+          <div style="margin-top: 10px; font-size: 12px; color: var(--muted);" id="netStatus">Нажмите "Измерить" для запуска теста</div>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        <button class="btn primary" id="netStart">Измерить скорость</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Тип соединения</h3>
+          <div class="stat">
+            <div class="label">Effective type</div>
+            <div class="value" id="netType">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Задержка</h3>
+          <div class="stat">
+            <div class="label">RTT</div>
+            <div class="value" id="netRtt">— мс</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Статус</h3>
+          <div class="stat">
+            <div class="label">Online</div>
+            <div class="value" id="netOnline">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BATTERY -->
+  <section class="view" data-view="battery">
+    <div class="panel">
+      <h3>Состояние батареи</h3>
+      <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+        <div class="battery-visual">
+          <div class="battery-fill" id="batFill" style="width: 0%;"></div>
+          <div class="battery-pct" id="batPct">—%</div>
+        </div>
+        <div style="flex: 1; min-width: 240px;">
+          <div class="stat" style="margin-bottom: 10px;">
+            <div class="label">Статус</div>
+            <div class="value" id="batStatus" style="font-size: 18px;">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">Время до разряда / зарядки</div>
+            <div class="value" id="batTime" style="font-size: 18px;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GAMEPAD -->
+  <section class="view" data-view="gamepad">
+    <div class="panel">
+      <h3>Геймпад</h3>
+      <div class="gp-visual">
+        <div class="gp-body">
+          <div class="gp-stick" id="gpStickL" style="left: 60px; top: 50px;"></div>
+          <div class="gp-stick" id="gpStickR" style="right: 60px; top: 50px;"></div>
+          <div class="gp-btn" id="gp0" style="right: 130px; top: 80px;">A</div>
+          <div class="gp-btn" id="gp1" style="right: 95px; top: 60px;">B</div>
+          <div class="gp-btn" id="gp2" style="right: 165px; top: 60px;">X</div>
+          <div class="gp-btn" id="gp3" style="right: 130px; top: 40px;">Y</div>
+          <div class="gp-btn" id="gp4" style="left: 30px; top: 30px;">LB</div>
+          <div class="gp-btn" id="gp5" style="right: 30px; top: 30px;">RB</div>
+        </div>
+      </div>
+      <div id="gpStatus" style="text-align: center; color: var(--muted); font-size: 13px;">
+        Подключите геймпад и нажмите любую кнопку
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Устройство</h3>
+          <div class="stat">
+            <div class="label">Имя</div>
+            <div class="value" id="gpName" style="font-size: 14px;">Не подключен</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Оси</h3>
+          <div class="stat">
+            <div class="label">Стики</div>
+            <div class="value" id="gpAxes" style="font-size: 14px;">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOUCH -->
+  <section class="view" data-view="touch">
+    <div class="panel">
+      <h3>Мультитач зона</h3>
+      <div class="touch-area" id="touchArea">
+        <div style="position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; pointer-events: none;" id="touchHint">
+          Коснитесь экрана или проведите мышью
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="panel">
+          <h3>Точек касания</h3>
+          <div class="stat">
+            <div class="label">Максимум</div>
+            <div class="value" id="touchMax">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="panel">
+          <h3>Поддержка</h3>
+          <div class="stat">
+            <div class="label">Touch events</div>
+            <div class="value" id="touchSupport">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLIPBOARD -->
+  <section class="view" data-view="clipboard">
+    <div class="panel">
+      <h3>Буфер обмена</h3>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+        <button class="btn primary" id="clipRead">Прочитать</button>
+        <button class="btn" id="clipWrite">Записать тест</button>
+        <button class="btn" id="clipClear">Очистить</button>
+      </div>
+      <div class="clip-area" id="clipArea">Буфер обмена пуст или доступ не предоставлен</div>
+      <div style="margin-top: 10px; font-size: 12px; color: var(--muted);">
+        Для чтения может потребоваться разрешение браузера.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ============ Navigation ============
+const views = [
+  { id: 'keyboard', title: 'Клавиатура', sub: 'Проверка нажатий клавиш и мультитач', icon: '<path d="M3 7h18v10H3z M6 10h.01 M9 10h.01 M12 10h.01 M15 10h.01 M18 10h.01 M6 14h12"/>' },
+  { id: 'mouse', title: 'Мышь', sub: 'Координаты, клики, прокрутка', icon: '<path d="M7 3h10v18H7z M12 3v7 M7 10h10"/>' },
+  { id: 'autoclicker', title: 'Автокликер', sub: 'Тест CPS — клики в секунду', icon: '<path d="M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M16.24 16.24l2.83 2.83 M2 12h4 M18 12h4 M4.93 19.07l2.83-2.83 M16.24 7.76l2.83-2.83"/>' },
+  { id: 'audio', title: 'Наушники', sub: 'Тест частот и каналов', icon: '<path d="M3 12v7a2 2 0 002 2h2v-9H5a7 7 0 0114 0h-2v9h2a2 2 0 002-2v-7a9 9 0 00-18 0z"/>' },
+  { id: 'microphone', title: 'Микрофон', sub: 'Уровень звука и визуализация', icon: '<path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z M19 10v2a7 7 0 01-14 0v-2 M12 19v3"/>' },
+  { id: 'camera', title: 'Камера', sub: 'Превео и снимок', icon: '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z M12 17a4 4 0 100-8 4 4 0 000 8z"/>' },
+  { id: 'display', title: 'Экран', sub: 'Разрешение, цвета, битые пиксели', icon: '<path d="M2 4h20v13H2z M8 21h8 M12 17v4"/>' },
+  { id: 'network', title: 'Сеть', sub: 'Скорость и стабильность', icon: '<path d="M2 12l5-5 4 4 5-5 6 6 M22 20H2"/>' },
+  { id: 'battery', title: 'Батарея', sub: 'Уровень и статус зарядки', icon: '<path d="M4 7h14a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2z M22 11v4"/>' },
+  { id: 'gamepad', title: 'Геймпад', sub: 'Кнопки и стики контроллера', icon: '<path d="M6 11h4 M8 9v4 M15 12h.01 M18 10h.01 M17.32 5H6.68a4 4 0 00-3.98 3.69l-1.06 10A2 2 0 003.62 21h.24a2 2 0 001.98-1.72l.56-4.28h11.2l.56 4.28A2 2 0 0020.14 21h.24a2 2 0 001.98-2.31l-1.06-10A4 4 0 0017.32 5z"/>' },
+  { id: 'touch', title: 'Сенсор', sub: 'Мультитач зона', icon: '<path d="M9 11V6a3 3 0 016 0v5 M9 11a3 3 0 00-6 0v5a9 9 0 0018 0v-4a3 3 0 00-6 0 M9 11a3 3 0 016 0"/>' },
+  { id: 'clipboard', title: 'Буфер обмена', sub: 'Чтение и запись', icon: '<path d="M9 2h6v4H9z M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-2"/>' },
+];
+
+const nav = document.getElementById('nav');
+views.forEach((v, i) => {
+  const el = document.createElement('div');
+  el.className = 'nav-item' + (i === 0 ? ' active' : '');
+  el.dataset.view = v.id;
+  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${v.icon}</svg><span>${v.title}</span><span class="nav-dot"></span>`;
+  el.addEventListener('click', () => switchView(v.id));
+  nav.appendChild(el);
+});
+
+function switchView(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === id));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === id));
+  const v = views.find(x => x.id === id);
+  document.getElementById('viewTitle').textContent = v.title;
+  document.getElementById('viewSub').textContent = v.sub;
+}
+
+// ============ Keyboard ============
+const kbdLayout = [
+  ['Esc','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','PrtSc','Scroll','Pause'],
+  ['~','1','2','3','4','5','6','7','8','9','0','-','=','Back', 'wide-3'],
+  ['Tab','wide-2','Q','W','E','R','T','Y','U','I','O','P','[',']','\\','wide-2'],
+  ['Caps','wide-2','A','S','D','F','G','H','J','K','L',';','\'','Enter','wide-3'],
+  ['Shift','wide-3','Z','X','C','V','B','N','M',',','.','/','Shift','wide-5'],
+  ['Ctrl','wide-2','Win','wide-2','Alt','wide-2','Space','sp','Alt','wide-2','Fn','wide-2','Ctrl','wide-2']
+];
+
+const kbdGrid = document.getElementById('kbdGrid');
+const keyMap = {};
+kbdLayout.forEach(row => {
+  let i = 0;
+  while (i < row.length) {
+    const label = row[i];
+    const el = document.createElement('div');
+    el.className = 'key';
+    el.textContent = label;
+    if (row[i+1] && typeof row[i+1] === 'string' && row[i+1].startsWith('wide-')) {
+      el.classList.add(row[i+1]);
+      i++;
+    } else if (label === 'Space') {
+      el.classList.add('sp');
+    }
+    kbdGrid.appendChild(el);
+    keyMap[label.toLowerCase()] = el;
+    i++;
+  }
+});
+
+// Map codes to labels
+const codeToLabel = {
+  'Escape':'esc','F1':'f1','F2':'f2','F3':'f3','F4':'f4','F5':'f5','F6':'f6','F7':'f7','F8':'f8','F9':'f9','F10':'f10','F11':'f11','F12':'f12',
+  'Backquote':'~','Digit1':'1','Digit2':'2','Digit3':'3','Digit4':'4','Digit5':'5','Digit6':'6','Digit7':'7','Digit8':'8','Digit9':'9','Digit0':'0','Minus':'-','Equal':'=','Backspace':'back',
+  'Tab':'tab','KeyQ':'q','KeyW':'w','KeyE':'e','KeyR':'r','KeyT':'t','KeyY':'y','KeyU':'u','KeyI':'i','KeyO':'o','KeyP':'p','BracketLeft':'[','BracketRight':']','Backslash':'\\',
+  'CapsLock':'caps','KeyA':'a','KeyS':'s','KeyD':'d','KeyF':'f','KeyG':'g','KeyH':'h','KeyJ':'j','KeyK':'k','KeyL':'l','Semicolon':';','Quote':'\'','Enter':'enter',
+  'ShiftLeft':'shift','ShiftRight':'shift','KeyZ':'z','KeyX':'x','KeyC':'c','KeyV':'v','KeyB':'b','KeyN':'n','KeyM':'m','Comma':',','Period':'.','Slash':'/',
+  'ControlLeft':'ctrl','ControlRight':'ctrl','MetaLeft':'win','MetaRight':'win','AltLeft':'alt','AltRight':'alt','Space':'space','Fn':'fn',
+  'PrintScreen':'prtsc','ScrollLock':'scroll','Pause':'pause'
+};
+
+let keyCount = 0;
+const keyLog = document.getElementById('keyLog');
+const pressedKeys = new Set();
+
+document.addEventListener('keydown', (e) => {
+  e.preventDefault();
+  const label = codeToLabel[e.code] || e.key.toLowerCase();
+  const el = keyMap[label];
+  if (el && !pressedKeys.has(e.code)) {
+    el.classList.add('pressed');
+    pressedKeys.add(e.code);
+  }
+  keyCount++;
+  document.getElementById('keyCount').textContent = keyCount;
+  document.getElementById('lastKeyCode').textContent = e.code;
+  document.getElementById('lastKeyInfo').textContent = `Key: ${e.key} · Code: ${e.code}`;
+  const mods = [];
+  if (e.shiftKey) mods.push('Shift');
+  if (e.ctrlKey) mods.push('Ctrl');
+  if (e.altKey) mods.push('Alt');
+  if (e.metaKey) mods.push('Meta');
+  document.getElementById('modsActive').textContent = mods.length ? mods.join(' + ') : '—';
+  const entry = document.createElement('div');
+  entry.innerHTML = `<span>${e.code}</span> → ${e.key}${e.repeat ? ' (repeat)' : ''}`;
+  keyLog.appendChild(entry);
+  keyLog.scrollTop = keyLog.scrollHeight;
+  while (keyLog.children.length > 30) keyLog.removeChild(keyLog.firstChild);
+});
+document.addEventListener('keyup', (e) => {
+  const label = codeToLabel[e.code] || e.key.toLowerCase();
+  const el = keyMap[label];
+  if (el) el.classList.remove('pressed');
+  pressedKeys.delete(e.code);
+});
+
+// ============ Mouse ============
+const mouseCanvas = document.getElementById('mouseCanvas');
+const crossH = document.getElementById('crossH');
+const crossV = document.getElementById('crossV');
+const mouseCoords = document.getElementById('mouseCoords');
+let clicks = { l: 0, r: 0, m: 0 }, dblCount = 0, scrollTotal = 0;
+
+mouseCanvas.addEventListener('mousemove', (e) => {
+  const rect = mouseCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  crossH.style.top = y + 'px';
+  crossV.style.left = x + 'px';
+  mouseCoords.textContent = `X: ${Math.round(x)} · Y: ${Math.round(y)}`;
+  document.getElementById('mousePos').textContent = `${e.clientX}, ${e.clientY}`;
+});
+mouseCanvas.addEventListener('mousedown', (e) => {
+  if (e.button === 0) { clicks.l++; document.getElementById('mbLeft').classList.add('active'); }
+  if (e.button === 1) { clicks.m++; document.getElementById('mbMid').classList.add('active'); }
+  if (e.button === 2) { clicks.r++; document.getElementById('mbRight').classList.add('active'); }
+  document.getElementById('clickCount').textContent = `${clicks.l} / ${clicks.r} / ${clicks.m}`;
+});
+window.addEventListener('mouseup', () => {
+  ['mbLeft','mbRight','mbMid','mbBack'].forEach(id => document.getElementById(id).classList.remove('active'));
+});
+mouseCanvas.addEventListener('contextmenu', e => e.preventDefault());
+mouseCanvas.addEventListener('dblclick', () => {
+  dblCount++;
+  document.getElementById('dblCount').textContent = dblCount;
+});
+window.addEventListener('wheel', (e) => {
+  scrollTotal += e.deltaY;
+  document.getElementById('scrollDelta').textContent = scrollTotal;
+}, { passive: true });
+
+// ============ CPS Test ============
+let cpsState = { active: false, clicks: 0, start: 0, duration: 10000, best: 0, times: [] };
+const cpsStartBtn = document.getElementById('cpsStart');
+const cpsResetBtn = document.getElementById('cpsReset');
+
+cpsStartBtn.addEventListener('click', () => {
+  if (cpsState.active) return;
+  cpsState.active = true;
+  cpsState.clicks = 0;
+  cpsState.times = [];
+  cpsState.start = performance.now();
+  cpsStartBtn.disabled = true;
+  cpsStartBtn.textContent = 'Кликайте!';
+  requestAnimationFrame(cpsTick);
+});
+
+cpsResetBtn.addEventListener('click', () => {
+  cpsState.active = false;
+  cpsState.clicks = 0;
+  cpsState.times = [];
+  cpsState.start = 0;
+  document.getElementById('cpsValue').textContent = '0.0';
+  document.getElementById('cpsTotal').textContent = '0';
+  document.getElementById('cpsTime').textContent = '10.0';
+  document.getElementById('cpsBar').style.width = '0%';
+  document.getElementById('cpsInterval').textContent = '— мс';
+  cpsStartBtn.disabled = false;
+  cpsStartBtn.textContent = 'Начать тест';
+});
+
+function cpsTick() {
+  if (!cpsState.active) return;
+  const elapsed = performance.now() - cpsState.start;
+  const remaining = Math.max(0, cpsState.duration - elapsed);
+  document.getElementById('cpsTime').textContent = (remaining / 1000).toFixed(1);
+  document.getElementById('cpsBar').style.width = ((cpsState.duration - remaining) / cpsState.duration * 100) + '%';
+  const cps = elapsed > 0 ? (cpsState.clicks / (elapsed / 1000)) : 0;
+  document.getElementById('cpsValue').textContent = cps.toFixed(1);
+  if (remaining <= 0) {
+    cpsState.active = false;
+    cpsStartBtn.disabled = false;
+    cpsStartBtn.textContent = 'Начать тест';
+    if (cps > cpsState.best) {
+      cpsState.best = cps;
+      document.getElementById('cpsBest').textContent = cps.toFixed(1);
+    }
+    if (cpsState.times.length > 1) {
+      let sum = 0;
+      for (let i = 1; i < cpsState.times.length; i++) sum += cpsState.times[i] - cpsState.times[i-1];
+      document.getElementById('cpsInterval').textContent = Math.round(sum / (cpsState.times.length - 1)) + ' мс';
+    }
+    return;
+  }
+  requestAnimationFrame(cpsTick);
+}
+
+document.addEventListener('click', (e) => {
+  if (!cpsState.active) return;
+  if (e.target.closest('.view[data-view="autoclicker"]')) {
+    cpsState.clicks++;
+    cpsState.times.push(performance.now());
+    document.getElementById('cpsTotal').textContent = cpsState.clicks;
+  }
+});
+
+// ============ Audio ============
+let audioCtx = null;
+let currentOsc = null;
+let currentGain = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function stopSound() {
+  if (currentOsc) { try { currentOsc.stop(); } catch(e){} currentOsc = null; }
+  if (currentGain) { currentGain = null; }
+  document.querySelectorAll('.freq-btn, .channel-btn').forEach(b => b.classList.remove('playing'));
+}
+
+document.getElementById('freqBtns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.freq-btn');
+  if (!btn) return;
+  const wasPlaying = btn.classList.contains('playing');
+  stopSound();
+  if (wasPlaying) return;
+  const ctx = ensureAudio();
+  const freq = parseFloat(btn.dataset.freq);
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const vol = parseInt(document.getElementById('audioVol').value) / 100;
+  gain.gain.value = vol * 0.3;
+  osc.frequency.value = freq;
+  osc.type = 'sine';
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  currentOsc = osc;
+  currentGain = gain;
+  btn.classList.add('playing');
+  osc.onended = () => btn.classList.remove('playing');
+});
+
+document.getElementById('audioVol').addEventListener('input', (e) => {
+  document.getElementById('audioVolVal').textContent = e.target.value + '%';
+  if (currentGain) currentGain.gain.value = (parseInt(e.target.value) / 100) * 0.3;
+});
+
+document.querySelectorAll('.channel-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const wasPlaying = btn.classList.contains('playing');
+    stopSound();
+    if (wasPlaying) return;
+    const ctx = ensureAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const panner = ctx.createStereoPanner();
+    panner.pan.value = btn.dataset.channel === 'left' ? -1 : 1;
+    const vol = parseInt(document.getElementById('audioVol').value) / 100;
+    gain.gain.value = vol * 0.3;
+    osc.frequency.value = 440;
+    osc.type = 'sine';
+    osc.connect(gain).connect(panner).connect(ctx.destination);
+    osc.start();
+    currentOsc = osc;
+    currentGain = gain;
+    btn.classList.add('playing');
+    osc.onended = () => btn.classList.remove('playing');
+  });
+});
+
+document.getElementById('balanceTest').addEventListener('click', () => {
+  stopSound();
+  const ctx = ensureAudio();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const panner = ctx.createStereoPanner();
+  const bal = parseInt(document.getElementById('audioBalance').value) / 100;
+  panner.pan.value = bal;
+  const vol = parseInt(document.getElementById('audioVol').value) / 100;
+  gain.gain.value = vol * 0.3;
+  osc.frequency.value = 440;
+  osc.connect(gain).connect(panner).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 2);
+  currentOsc = osc;
+  currentGain = gain;
+});
+
+// ============ Microphone ============
+let micStream = null, micAnalyser = null, micData = null, micRaf = null;
+const micCanvas = document.getElementById('micCanvas');
+const micCtx2d = micCanvas.getContext('2d');
+let micPeak = 0;
+
+function resizeMicCanvas() {
+  micCanvas.width = micCanvas.offsetWidth;
+  micCanvas.height = micCanvas.offsetHeight;
+}
+window.addEventListener('resize', resizeMicCanvas);
+setTimeout(resizeMicCanvas, 100);
+
+function drawMic() {
+  if (!micAnalyser) return;
+  micRaf = requestAnimationFrame(drawMic);
+  micAnalyser.getByteTimeDomainData(micData);
+  const w = micCanvas.width, h = micCanvas.height;
+  micCtx2d.fillStyle = '#1b2030';
+  micCtx2d.fillRect(0, 0, w, h);
+  micCtx2d.lineWidth = 2;
+  micCtx2d.strokeStyle = '#6c8cff';
+  micCtx2d.beginPath();
+  const slice = w / micData.length;
+  let x = 0, maxVal = 0;
+  for (let i = 0; i < micData.length; i++) {
+    const v = micData[i] / 128.0;
+    const y = (v * h) / 2;
+    const diff = Math.abs(v - 1);
+    if (diff > maxVal) maxVal = diff;
+    if (i === 0) micCtx2d.moveTo(x, y);
+    else micCtx2d.lineTo(x, y);
+    x += slice;
+  }
+  micCtx2d.stroke();
+  const level = Math.min(100, maxVal * 200);
+  document.getElementById('micLevel').style.width = level + '%';
+  if (level > micPeak) {
+    micPeak = level;
+    document.getElementById('micPeak').textContent = Math.round(level) + '%';
+  }
+}
+
+document.getElementById('micStart').addEventListener('click', async () => {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const ctx = ensureAudio();
+    const src = ctx.createMediaStreamSource(micStream);
+    micAnalyser = ctx.createAnalyser();
+    micAnalyser.fftSize = 2048;
+    src.connect(micAnalyser);
+    micData = new Uint8Array(micAnalyser.fftSize);
+    const track = micStream.getAudioTracks()[0];
+    document.getElementById('micDevice').textContent = track.label || 'Микрофон по умолчанию';
+    document.getElementById('micStatus').textContent = 'Микрофон активен. Говорите в микрофон.';
+    document.getElementById('micStart').disabled = true;
+    document.getElementById('micStop').disabled = false;
+    drawMic();
+  } catch (e) {
+    document.getElementById('micStatus').textContent = 'Ошибка: ' + e.message;
+  }
+});
+
+document.getElementById('micStop').addEventListener('click', () => {
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (micRaf) cancelAnimationFrame(micRaf);
+  micStream = null; micAnalyser = null;
+  document.getElementById('micStatus').textContent = 'Микрофон отключен.';
+  document.getElementById('micStart').disabled = false;
+  document.getElementById('micStop').disabled = true;
+  micCtx2d.fillStyle = '#1b2030';
+  micCtx2d.fillRect(0, 0, micCanvas.width, micCanvas.height);
+  document.getElementById('micLevel').style.width = '0%';
+});
+
+document.getElementById('micRecord').addEventListener('click', async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream);
+    const chunks = [];
+    rec.ondataavailable = e => chunks.push(e.data);
+    rec.onstop = () => {
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'mic-test.webm'; a.click();
+      URL.revokeObjectURL(url);
+      stream.getTracks().forEach(t => t.stop());
+      document.getElementById('micStatus').textContent = 'Запись сохранена.';
+    };
+    rec.start();
+    document.getElementById('micStatus').textContent = 'Запись 3 секунды...';
+    setTimeout(() => rec.stop(), 3000);
+  } catch (e) {
+    document.getElementById('micStatus').textContent = 'Ошибка: ' + e.message;
+  }
+});
+
+// ============ Camera ============
+let camStream = null, camFacing = 'user';
+const camVideo = document.getElementById('camVideo');
+
+document.getElementById('camStart').addEventListener('click', async () => {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: camFacing }, audio: false });
+    camVideo.srcObject = camStream;
+    document.getElementById('camPlaceholder').style.display = 'none';
+    document.getElementById('camStart').disabled = true;
+    document.getElementById('camStop').disabled = false;
+    document.getElementById('camShot').disabled = false;
+    const track = camStream.getVideoTracks()[0];
+    document.getElementById('camDevice').textContent = track.label || 'Камера';
+    document.getElementById('camStatus').textContent = 'Камера активна.';
+    setTimeout(updateCamInfo, 500);
+  } catch (e) {
+    document.getElementById('camStatus').textContent = 'Ошибка: ' + e.message;
+  }
+});
+
+function updateCamInfo() {
+  if (!camStream) return;
+  const track = camStream.getVideoTracks()[0];
+  const settings = track.getSettings();
+  document.getElementById('camRes').textContent = `${settings.width || '?'} × ${settings.height || '?'}`;
+  document.getElementById('camFps').textContent = (settings.frameRate ? settings.frameRate.toFixed(1) : '—') + ' fps';
+}
+
+document.getElementById('camStop').addEventListener('click', () => {
+  if (camStream) camStream.getTracks().forEach(t => t.stop());
+  camStream = null;
+  camVideo.srcObject = null;
+  document.getElementById('camPlaceholder').style.display = 'grid';
+  document.getElementById('camStart').disabled = false;
+  document.getElementById('camStop').disabled = true;
+  document.getElementById('camShot').disabled = true;
+  document.getElementById('camStatus').textContent = 'Камера отключена.';
+  document.getElementById('camRes').textContent = '—';
+  document.getElementById('camFps').textContent = '—';
+});
+
+document.getElementById('camSwitch').addEventListener('click', async () => {
+  camFacing = camFacing === 'user' ? 'environment' : 'user';
+  if (camStream) {
+    document.getElementById('camStop').click();
+    setTimeout(() => document.getElementById('camStart').click(), 200);
+  }
+});
+
+document.getElementById('camShot').addEventListener('click', () => {
+  const c = document.createElement('canvas');
+  c.width = camVideo.videoWidth;
+  c.height = camVideo.videoHeight;
+  c.getContext('2d').drawImage(camVideo, 0, 0);
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = 'camera-shot.png';
+  a.click();
+});
+
+// ============ Display ============
+function updateDisplay() {
+  document.getElementById('dispRes').textContent = `${screen.width} × ${screen.height}`;
+  document.getElementById('dispAvail').textContent = `Доступная: ${screen.availWidth} × ${screen.availHeight}`;
+  document.getElementById('dispDpr').textContent = window.devicePixelRatio.toFixed(2);
+  document.getElementById('dispLogRes').textContent = `Логическое: ${window.innerWidth} × ${window.innerHeight}`;
+  const orient = screen.orientation;
+  if (orient) {
+    document.getElementById('dispOrient').textContent = orient.angle + '°';
+    document.getElementById('dispType').textContent = orient.type;
+  } else {
+    document.getElementById('dispOrient').textContent = window.innerWidth > window.innerHeight ? 'Ландшафт' : 'Портрет';
+  }
+}
+updateDisplay();
+window.addEventListener('resize', updateDisplay);
+if (screen.orientation) screen.orientation.addEventListener('change', updateDisplay);
+
+document.querySelectorAll('.color-box').forEach(box => {
+  box.addEventListener('click', () => {
+    const color = box.dataset.color;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position: fixed; inset: 0; z-index: 9999; background: ${box.style.background}; cursor: pointer; display: grid; place-items: center; color: ${box.style.color}; font-size: 18px; font-weight: 600; letter-spacing: 2px;`;
+    overlay.textContent = color.toUpperCase() + ' — клик для выхода';
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  });
+});
+
+let deadPxInterval = null;
+const deadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffffff', '#000000'];
+let deadIdx = 0;
+document.getElementById('deadPxStart').addEventListener('click', () => {
+  const overlay = document.createElement('div');
+  overlay.id = 'deadPxOverlay';
+  overlay.style.cssText = 'position: fixed; inset: 0; z-index: 9999; cursor: pointer;';
+  document.body.appendChild(overlay);
+  deadIdx = 0;
+  overlay.style.background = deadColors[0];
+  deadPxInterval = setInterval(() => {
+    deadIdx = (deadIdx + 1) % deadColors.length;
+    overlay.style.background = deadColors[deadIdx];
+  }, 1500);
+  overlay.addEventListener('click', stopDeadPx);
+});
+document.getElementById('deadPxStop').addEventListener('click', stopDeadPx);
+function stopDeadPx() {
+  if (deadPxInterval) { clearInterval(deadPxInterval); deadPxInterval = null; }
+  const o = document.getElementById('deadPxOverlay');
+  if (o) o.remove();
+}
+
+// ============ Network ============
+function updateNetInfo() {
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (conn) {
+    document.getElementById('netType').textContent = conn.effectiveType || '—';
+    document.getElementById('netRtt').textContent = (conn.rtt || '—') + ' мс';
+  } else {
+    document.getElementById('netType').textContent = 'Недоступно';
+    document.getElementById('netRtt').textContent = '—';
+  }
+  document.getElementById('netOnline').textContent = navigator.onLine ? 'Онлайн' : 'Оффлайн';
+}
+updateNetInfo();
+window.addEventListener('online', updateNetInfo);
+window.addEventListener('offline', updateNetInfo);
+
+document.getElementById('netStart').addEventListener('click', async () => {
+  const bar = document.getElementById('netBar');
+  const status = document.getElementById('netStatus');
+  const speedEl = document.getElementById('netSpeed');
+  bar.style.width = '0%';
+  status.textContent = 'Загрузка тестового файла...';
+  const url = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js?_=' + Date.now();
+  const start = performance.now();
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    const reader = res.body.getReader();
+    let total = 0;
+    const size = parseInt(res.headers.get('content-length') || '0');
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.length;
+      const pct = size ? (total / size * 100) : 50;
+      bar.style.width = pct + '%';
+      const elapsed = (performance.now() - start) / 1000;
+      const mbps = (total * 8) / (elapsed * 1000000);
+      speedEl.textContent = mbps.toFixed(2);
+    }
+    status.textContent = 'Тест завершён';
+  } catch (e) {
+    status.textContent = 'Ошибка: ' + e.message;
+  }
+});
+
+// ============ Battery ============
+async function updateBattery() {
+  if (!navigator.getBattery) {
+    document.getElementById('batStatus').textContent = 'API не поддерживается';
+    return;
+  }
+  const bat = await navigator.getBattery();
+  const render = () => {
+    const pct = Math.round(bat.level * 100);
+    document.getElementById('batPct').textContent = pct + '%';
+    document.getElementById('batFill').style.width = pct + '%';
+    document.getElementById('batStatus').textContent = bat.charging ? 'Заряжается' : 'Работа от батареи';
+    const time = bat.charging ? bat.chargingTime : bat.dischargingTime;
+    if (time && time !== Infinity && time > 0) {
+      const h = Math.floor(time / 3600);
+      const m = Math.floor((time % 3600) / 60);
+      document.getElementById('batTime').textContent = `${h} ч ${m} мин`;
+    } else {
+      document.getElementById('batTime').textContent = '—';
+    }
+  };
+  render();
+  bat.addEventListener('chargingchange', render);
+  bat.addEventListener('levelchange', render);
+  bat.addEventListener('chargingtimechange', render);
+  bat.addEventListener('dischargingtimechange', render);
+}
+updateBattery();
+
+// ============ Gamepad ============
+let gpIndex = null;
+window.addEventListener('gamepadconnected', (e) => {
+  gpIndex = e.gamepad.index;
+  document.getElementById('gpName').textContent = e.gamepad.id;
+  document.getElementById('gpStatus').textContent = 'Геймпад подключен';
+  gpLoop();
+});
+window.addEventListener('gamepaddisconnected', () => {
+  gpIndex = null;
+  document.getElementById('gpName').textContent = 'Не подключен';
+  document.getElementById('gpStatus').textContent = 'Геймпад отключен';
+  document.querySelectorAll('.gp-btn').forEach(b => b.classList.remove('active'));
+});
+
+function gpLoop() {
+  if (gpIndex === null) return;
+  requestAnimationFrame(gpLoop);
+  const gp = navigator.getGamepads()[gpIndex];
+  if (!gp) return;
+  gp.buttons.forEach((b, i) => {
+    const el = document.getElementById('gp' + i);
+    if (el) el.classList.toggle('active', b.pressed);
+  });
+  const sl = document.getElementById('gpStickL');
+  const sr = document.getElementById('gpStickR');
+  if (sl) sl.style.transform = `translate(${gp.axes[0] * 15}px, ${gp.axes[1] * 15}px)`;
+  if (sr) sr.style.transform = `translate(${(gp.axes[2] || 0) * 15}px, ${(gp.axes[3] || 0) * 15}px)`;
+  document.getElementById('gpAxes').textContent = gp.axes.map(a => a.toFixed(2)).join(' · ');
+}
+
+// ============ Touch ============
+const touchArea = document.getElementById('touchArea');
+const touchHint = document.getElementById('touchHint');
+let touchMax = 0;
+const touchPoints = new Map();
+
+document.getElementById('touchSupport').textContent = 'ontouchstart' in window ? 'Поддерживается' : 'Не обнаружено';
+
+function renderTouches() {
+  touchArea.querySelectorAll('.touch-point').forEach(p => p.remove());
+  touchPoints.forEach((data, id) => {
+    const el = document.createElement('div');
+    el.className = 'touch-point';
+    el.style.left = data.x + 'px';
+    el.style.top = data.y + 'px';
+    el.textContent = id;
+    touchArea.appendChild(el);
+  });
+}
+
+touchArea.addEventListener('touchstart', handleTouch, { passive: false });
+touchArea.addEventListener('touchmove', handleTouch, { passive: false });
+touchArea.addEventListener('touchend', handleTouchEnd);
+touchArea.addEventListener('touchcancel', handleTouchEnd);
+
+function handleTouch(e) {
+  e.preventDefault();
+  touchHint.style.display = 'none';
+  const rect = touchArea.getBoundingClientRect();
+  touchPoints.clear();
+  Array.from(e.touches).forEach((t, i) => {
+    touchPoints.set(i, { x: t.clientX - rect.left, y: t.clientY - rect.top });
+  });
+  if (touchPoints.size > touchMax) {
+    touchMax = touchPoints.size;
+    document.getElementById('touchMax').textContent = touchMax;
+  }
+  renderTouches();
+}
+function handleTouchEnd(e) {
+  if (e.touches.length === 0) {
+    touchPoints.clear();
+    renderTouches();
+  }
+}
+
+// Mouse fallback for non-touch
+let mouseDown = false;
+touchArea.addEventListener('mousedown', (e) => {
+  mouseDown = true;
+  touchHint.style.display = 'none';
+  const rect = touchArea.getBoundingClientRect();
+  touchPoints.set(0, { x: e.clientX - rect.left, y: e.clientY - rect.top });
+  renderTouches();
+});
+touchArea.addEventListener('mousemove', (e) => {
+  if (!mouseDown) return;
+  const rect = touchArea.getBoundingClientRect();
+  touchPoints.set(0, { x: e.clientX - rect.left, y: e.clientY - rect.top });
+  renderTouches();
+});
+window.addEventListener('mouseup', () => {
+  mouseDown = false;
+  touchPoints.clear();
+  renderTouches();
+});
+
+// ============ Clipboard ============
+document.getElementById('clipRead').addEventListener('click', async () => {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('clipArea').textContent = text || '(пусто)';
+  } catch (e) {
+    document.getElementById('clipArea').textContent = 'Доступ запрещен: ' + e.message;
+  }
+});
+document.getElementById('clipWrite').addEventListener('click', async () => {
+  try {
+    const text = 'DiagBox test — ' + new Date().toLocaleString('ru-RU');
+    await navigator.clipboard.writeText(text);
+    document.getElementById('clipArea').textContent = 'Записано: ' + text;
+  } catch (e) {
+    document.getElementById('clipArea').textContent = 'Ошибка: ' + e.message;
+  }
+});
+document.getElementById('clipClear').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText('');
+    document.getElementById('clipArea').textContent = 'Буфер очищен';
+  } catch (e) {
+    document.getElementById('clipArea').textContent = 'Ошибка: ' + e.message;
+  }
+});
+
+// Status ticker
+setInterval(() => {
+  const d = new Date();
+  document.getElementById('statusText').textContent = 'Система активна · ' + d.toLocaleTimeString('ru-RU');
+}, 1000);
+</script>
+</body>
+</html>
