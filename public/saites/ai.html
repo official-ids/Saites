@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Sites — Каталог сайтов, созданных с ИИ</title>
+<link rel="stylesheet" href="https://cdn.fontsource.org/npm/@fontsource/inter@5.0.0/index.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --fg: #0a0a0a;
+    --muted: #7a7a7a;
+    --border: #e5e5e5;
+    --border-strong: #0a0a0a;
+    --card-bg: #ffffff;
+    --card-hover: #0a0a0a;
+    --card-hover-fg: #ffffff;
+    --accent: #0a0a0a;
+  }
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    padding: 40px 24px 80px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-mark {
+    width: 44px; height: 44px;
+    background: var(--fg);
+    color: var(--bg);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -1px;
+  }
+  .brand-text h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .brand-text p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search {
+    position: relative;
+  }
+  .search input {
+    width: 280px;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 14px;
+    transition: all .15s;
+  }
+  .search input:focus {
+    outline: none;
+    border-color: var(--fg);
+  }
+  .search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px; height: 16px;
+    color: var(--muted);
+  }
+
+  .btn {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn:hover {
+    border-color: var(--fg);
+  }
+  .btn.primary {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .btn.primary:hover {
+    background: transparent;
+    color: var(--fg);
+  }
+  .btn svg { width: 14px; height: 14px; }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip:hover { color: var(--fg); border-color: var(--fg); }
+  .chip.active {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+
+  /* Stats */
+  .stats {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 32px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-item .num {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+  .stat-item .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.4,0,.2,1);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    animation: cardIn .4s ease backwards;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .card:hover {
+    background: var(--card-hover);
+    color: var(--card-hover-fg);
+    border-color: var(--card-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.12);
+  }
+  .card:hover .card-favicon {
+    background: var(--bg);
+  }
+  .card:hover .card-arrow {
+    transform: translate(3px, -3px);
+    opacity: 1;
+  }
+  .card:hover .card-url {
+    color: rgba(255,255,255,.7);
+  }
+  .card:hover .card-tag {
+    background: rgba(255,255,255,.15);
+    color: var(--bg);
+    border-color: rgba(255,255,255,.2);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .card-favicon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: #f5f5f5;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: background .25s;
+  }
+  .card-favicon img {
+    width: 28px; height: 28px;
+    object-fit: contain;
+  }
+  .card-favicon .fallback {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--fg);
+  }
+  .card:hover .card-favicon .fallback { color: var(--fg); }
+
+  .card-arrow {
+    width: 28px; height: 28px;
+    opacity: .3;
+    transition: all .25s;
+  }
+
+  .card-name {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+  .card-url {
+    font-size: 13px;
+    color: var(--muted);
+    transition: color .25s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 14px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card:hover .card-desc { color: rgba(255,255,255,.75); }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-tag {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f5f5f5;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 500;
+    transition: all .25s;
+  }
+  .card-date {
+    font-size: 11px;
+    color: var(--muted);
+    transition: color .25s;
+  }
+
+  .card-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(0,0,0,.06);
+    border: none;
+    cursor: pointer;
+    display: none;
+    place-items: center;
+    color: var(--muted);
+    transition: all .15s;
+    z-index: 2;
+  }
+  .card:hover .card-remove { display: grid; }
+  .card-remove:hover {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  /* Empty */
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+  }
+  .empty-icon {
+    width: 64px; height: 64px;
+    margin: 0 auto 16px;
+    opacity: .4;
+  }
+  .empty h3 {
+    font-size: 18px;
+    color: var(--fg);
+    margin-bottom: 6px;
+  }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-bg.open { display: flex; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 460px;
+    border: 1px solid var(--border);
+  }
+  .modal h2 {
+    font-size: 20px;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+  .modal p {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    font-weight: 500;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color .15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none;
+    border-color: var(--fg);
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 24px 16px 60px; }
+    .search input { width: 220px; }
+    .stats { gap: 20px; }
+    .stat-item .num { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <div class="brand-mark">AI</div>
+    <div class="brand-text">
+      <h1>AI Sites</h1>
+      <p>Каталог сайтов, созданных с помощью ИИ</p>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Поиск по названию или URL...">
+    </div>
+    <button class="btn primary" id="addBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Добавить
+    </button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat-item">
+    <div class="num" id="statTotal">0</div>
+    <div class="label">Всего сайтов</div>
+  </div>
+  <div class="stat-item">
+    <div class="num" id="statCategories">0</div>
+    <div class="label">Категорий</div>
+  </div>
+  <div class="stat-item">
+    <div class="num" id="statAdded">0</div>
+    <div class="label">Добавлено вами</div>
+  </div>
+</div>
+
+<div class="filters" id="filters"></div>
+
+<div class="grid" id="grid"></div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>Добавить сайт</h2>
+    <p>Заполните данные. Иконка подгрузится автоматически с сайта.</p>
+    <div class="field">
+      <label>Название</label>
+      <input type="text" id="fName" placeholder="Например: ChatGPT">
+    </div>
+    <div class="field">
+      <label>URL</label>
+      <input type="url" id="fUrl" placeholder="https://example.com">
+    </div>
+    <div class="field">
+      <label>Описание</label>
+      <textarea id="fDesc" placeholder="Коротко о сайте..."></textarea>
+    </div>
+    <div class="field">
+      <label>Категория</label>
+      <select id="fCat">
+        <option value="Чат">Чат</option>
+        <option value="Изображения">Изображения</option>
+        <option value="Видео">Видео</option>
+        <option value="Код">Код</option>
+        <option value="Текст">Текст</option>
+        <option value="Музыка">Музыка</option>
+        <option value="Другое">Другое</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelBtn">Отмена</button>
+      <button class="btn primary" id="saveBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  ДАННЫЕ — добавляй новые сайты просто в этот массив
+// ============================================================
+const SITES = [
+  {
+    name: 'ChatGPT',
+    url: 'https://chat.openai.com',
+    desc: 'Чат-бот от OpenAI на базе моделей GPT. Отвечает на вопросы, пишет тексты и код.',
+    category: 'Чат'
+  },
+  {
+    name: 'Claude',
+    url: 'https://claude.ai',
+    desc: 'ИИ-ассистент от Anthropic. Помогает с анализом, письмом и рассуждениями.',
+    category: 'Чат'
+  },
+  {
+    name: 'Midjourney',
+    url: 'https://midjourney.com',
+    desc: 'Генерация изображений по текстовому описанию через Discord.',
+    category: 'Изображения'
+  },
+  {
+    name: 'DALL·E',
+    url: 'https://openai.com/dall-e-3',
+    desc: 'Генератор изображений от OpenAI с высоким качеством и пониманием промптов.',
+    category: 'Изображения'
+  },
+  {
+    name: 'Suno',
+    url: 'https://suno.com',
+    desc: 'Создание полноценных песен с вокалом и музыкой по описанию.',
+    category: 'Музыка'
+  },
+  {
+    name: 'Udio',
+    url: 'https://udio.com',
+    desc: 'Генерация музыки высокого качества из текстовых промптов.',
+    category: 'Музыка'
+  },
+  {
+    name: 'Cursor',
+    url: 'https://cursor.com',
+    desc: 'Редактор кода с встроенным ИИ для написания и рефакторинга.',
+    category: 'Код'
+  },
+  {
+    name: 'GitHub Copilot',
+    url: 'https://github.com/features/copilot',
+    desc: 'ИИ-помощник для написания кода прямо в редакторе.',
+    category: 'Код'
+  },
+  {
+    name: 'Perplexity',
+    url: 'https://perplexity.ai',
+    desc: 'Поисковая система с ИИ, дающая ответы с источниками.',
+    category: 'Чат'
+  },
+  {
+    name: 'Runway',
+    url: 'https://runwayml.com',
+    desc: 'Генерация и редактирование видео с помощью ИИ.',
+    category: 'Видео'
+  },
+  {
+    name: 'Sora',
+    url: 'https://openai.com/sora',
+    desc: 'Видеогенератор от OpenAI, создающий реалистичные ролики.',
+    category: 'Видео'
+  },
+  {
+    name: 'Notion AI',
+    url: 'https://notion.com',
+    desc: 'ИИ-функции внутри Notion для письма, саммари и идей.',
+    category: 'Текст'
+  },
+  {
+    name: 'Jasper',
+    url: 'https://jasper.ai',
+    desc: 'Платформа для создания маркетинговых текстов с ИИ.',
+    category: 'Текст'
+  },
+  {
+    name: 'Leonardo',
+    url: 'https://leonardo.ai',
+    desc: 'Генерация изображений для игр и дизайна с тонкой настройкой.',
+    category: 'Изображения'
+  },
+  {
+    name: 'Gemini',
+    url: 'https://gemini.google.com',
+    desc: 'Мультимодальный ИИ от Google с доступом к поиску.',
+    category: 'Чат'
+  },
+  {
+    name: 'DeepL',
+    url: 'https://deepl.com',
+    desc: 'ИИ-переводчик с высоким качеством перевода.',
+    category: 'Текст'
+  }
+];
+
+// ============================================================
+//  ЛОГИКА — ниже не трогай, если просто добавляешь сайты
+// ============================================================
+
+const STORAGE_KEY = 'ai-sites-custom';
+let customSites = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let currentFilter = 'Все';
+let currentSearch = '';
+
+const grid = document.getElementById('grid');
+const filtersEl = document.getElementById('filters');
+const searchInput = document.getElementById('searchInput');
+
+function getAllSites() {
+  return [...SITES, ...customSites];
+}
+
+function getDomain(url) {
+  try {
+    return new URL(url).hostname.replace('www.', '');
+  } catch { return url; }
+}
+
+function getInitial(name) {
+  return (name || '?').trim().charAt(0).toUpperCase();
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+}
+
+function renderStats() {
+  const all = getAllSites();
+  const cats = new Set(all.map(s => s.category));
+  document.getElementById('statTotal').textContent = all.length;
+  document.getElementById('statCategories').textContent = cats.size;
+  document.getElementById('statAdded').textContent = customSites.length;
+}
+
+function renderFilters() {
+  const all = getAllSites();
+  const cats = ['Все', ...new Set(all.map(s => s.category))];
+  filtersEl.innerHTML = cats.map(c =>
+    `<button class="chip ${c === currentFilter ? 'active' : ''}" data-cat="${c}">${c}</button>`
+  ).join('');
+  filtersEl.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      currentFilter = chip.dataset.cat;
+      renderFilters();
+      renderGrid();
+    });
+  });
+}
+
+function renderGrid() {
+  const all = getAllSites();
+  let filtered = all;
+  if (currentFilter !== 'Все') {
+    filtered = filtered.filter(s => s.category === currentFilter);
+  }
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    filtered = filtered.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.url.toLowerCase().includes(q) ||
+      (s.desc || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty" style="grid-column: 1/-1;">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <h3>Ничего не найдено</h3>
+        <p>Попробуй изменить запрос или фильтр</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((site, i) => {
+    const domain = getDomain(site.url);
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    const isCustom = site._custom;
+    return `
+      <a class="card" href="${site.url}" target="_blank" rel="noopener" style="animation-delay: ${i * 30}ms">
+        ${isCustom ? `<button class="card-remove" data-id="${site._id}" title="Удалить">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>` : ''}
+        <div class="card-top">
+          <div class="card-favicon">
+            <img src="${faviconUrl}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+            <span class="fallback" style="display:none">${getInitial(site.name)}</span>
+          </div>
+          <svg class="card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 17 17 7M7 7h10v10"/>
+          </svg>
+        </div>
+        <div class="card-name">${site.name}</div>
+        <div class="card-url">${domain}</div>
+        ${site.desc ? `<div class="card-desc">${site.desc}</div>` : ''}
+        <div class="card-footer">
+          <span class="card-tag">${site.category}</span>
+          ${site._added ? `<span class="card-date">${formatDate(site._added)}</span>` : ''}
+        </div>
+      </a>
+    `;
+  }).join('');
+
+  // Удаление кастомных
+  grid.querySelectorAll('.card-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      customSites = customSites.filter(s => s._id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customSites));
+      renderAll();
+    });
+  });
+}
+
+function renderAll() {
+  renderStats();
+  renderFilters();
+  renderGrid();
+}
+
+// Поиск
+searchInput.addEventListener('input', (e) => {
+  currentSearch = e.target.value;
+  renderGrid();
+});
+
+// Модалка
+const modalBg = document.getElementById('modalBg');
+document.getElementById('addBtn').addEventListener('click', () => {
+  modalBg.classList.add('open');
+  document.getElementById('fName').focus();
+});
+document.getElementById('cancelBtn').addEventListener('click', () => {
+  modalBg.classList.remove('open');
+});
+modalBg.addEventListener('click', (e) => {
+  if (e.target === modalBg) modalBg.classList.remove('open');
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const name = document.getElementById('fName').value.trim();
+  let url = document.getElementById('fUrl').value.trim();
+  const desc = document.getElementById('fDesc').value.trim();
+  const category = document.getElementById('fCat').value;
+
+  if (!name || !url) {
+    alert('Заполни название и URL');
+    return;
+  }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+  customSites.push({
+    name, url, desc, category,
+    _custom: true,
+    _id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    _added: Date.now()
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(customSites));
+
+  document.getElementById('fName').value = '';
+  document.getElementById('fUrl').value = '';
+  document.getElementById('fDesc').value = '';
+  modalBg.classList.remove('open');
+  renderAll();
+});
+
+// Старт
+renderAll();
+</script>
+</body>
+</html>
