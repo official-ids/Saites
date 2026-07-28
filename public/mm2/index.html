@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Murder Mystery 2</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --bg: #000000;
@@ -907,12 +907,53 @@
   // ============================================
   // STATE
   // ============================================
-  const state = {
+  // ==========================================
+// FIREBASE НАСТРОЙКА (Твой реальный конфиг)
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCqH6z90XhpHgi07zvNuXdTG-m4co2nKL4",
+  authDomain: "oris-372c8.firebaseapp.com",
+  projectId: "oris-372c8",
+  storageBucket: "oris-372c8.firebasestorage.app",
+  messagingSenderId: "646060892033",
+  appId: "1:646060892033:web:206673de067ceb89021280",
+  measurementId: "G-4CBL2PNMQ7"
+};
+
+// Инициализация Firebase (используем compat версию, которая подключена в <head>)
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Функции для работы с облачной базой данных
+function saveReviewToCloud(review) {
+    return db.collection('reviews').doc(review.id).set(review);
+}
+
+function deleteReviewFromCloud(id) {
+    return db.collection('reviews').doc(id).delete();
+}
+
+function listenReviews() {
+    // Эта функция слушает базу данных в реальном времени. 
+    // Как только кто-то добавит отзыв, он мгновенно появится у всех.
+    db.collection('reviews').orderBy('date', 'desc').onSnapshot(snapshot => {
+        state.reviews = snapshot.docs.map(doc => doc.data());
+        renderReviews();
+    }, (error) => {
+        console.error("Ошибка Firestore:", error);
+        showToast("Ошибка подключения к базе данных", "error");
+    });
+}
+
+// ==========================================
+// СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+// ==========================================
+const state = {
     user: JSON.parse(localStorage.getItem('mm2_user') || 'null'),
-    reviews: [],
+    reviews: [], // Теперь массив пустой, он заполнится из облака через listenReviews()
     selectedRating: 0,
     editingId: null
-  };
+};
 
   // ============================================
   // GOOGLE SIGN-IN
@@ -1018,32 +1059,7 @@
   // ============================================
   // REVIEWS
   // ============================================
-const firebaseConfig = {
-    apiKey: "AIzaSyCqH6z90XhpHgi07zvNuXdTG-m4co2nKL4",
-    authDomain: "oris-372c8.firebaseapp.com",
-    projectId: "oris-372c8",
-    storageBucket: "oris-372c8.firebasestorage.app",
-    messagingSenderId: "646060892033",
-    appId: "1:646060892033:web:206673de067ceb89021280"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-function saveReviewToCloud(review) {
-    return db.collection('reviews').doc(review.id).set(review);
-}
-
-function deleteReviewFromCloud(id) {
-    return db.collection('reviews').doc(id).delete();
-}
-
-function listenReviews() {
-    db.collection('reviews').orderBy('date', 'desc').onSnapshot(snapshot => {
-        state.reviews = snapshot.docs.map(doc => doc.data());
-        renderReviews();
-    });
-}
-
+  
   function renderReviews() {
     const list = document.getElementById('reviewsList');
     const filter = document.getElementById('filterSelect').value;
@@ -1192,50 +1208,54 @@ function listenReviews() {
 
   function submitReview(e) {
     e.preventDefault();
-    if (!state.user) return;
+    if (!state.user) {
+        showToast('Войдите через Google', 'error');
+        return;
+    }
     if (state.selectedRating === 0) {
-      showToast('Выберите оценку', 'error');
-      return;
+        showToast('Выберите оценку', 'error');
+        return;
     }
     const text = document.getElementById('reviewText').value.trim();
     if (!text) {
-      showToast('Напишите отзыв', 'error');
-      return;
+        showToast('Напишите отзыв', 'error');
+        return;
     }
 
-    if (state.editingId) {
-      const review = state.reviews.find(r => r.id === state.editingId);
-      if (review) {
-        review.rating = state.selectedRating;
-        review.text = text;
-        review.date = new Date().toISOString();
-        showToast('Отзыв обновлён');
-      }
-    } else {
-      state.reviews.push({
-        id: Date.now().toString(),
+    const reviewData = {
+        id: state.editingId || Date.now().toString(),
         userId: state.user.sub,
         name: state.user.name,
-        picture: state.user.picture,
+        picture: state.user.picture || null,
         rating: state.selectedRating,
         text: text,
         date: new Date().toISOString()
-      });
-      showToast('Отзыв опубликован');
-    }
+    };
 
-    saveReviews();
-    renderReviews();
-    closeReviewModal();
-  }
+    // Сохраняем в облако!
+    saveReviewToCloud(reviewData).then(() => {
+        showToast(state.editingId ? 'Отзыв обновлён' : 'Отзыв опубликован');
+        closeReviewModal();
+        state.editingId = null;
+        document.getElementById('reviewText').value = '';
+        state.selectedRating = 0;
+        updateStarPicker();
+    }).catch(err => {
+        console.error(err);
+        showToast('Ошибка сохранения', 'error');
+    });
+}
 
   function deleteReview(id) {
-    if (!confirm('Удалить отзыв?')) return;
-    state.reviews = state.reviews.filter(r => r.id !== id);
-    saveReviews();
-    renderReviews();
-    showToast('Отзыв удалён');
-  }
+    if (!confirm('Удалить этот отзыв?')) return;
+    
+    deleteReviewFromCloud(id).then(() => {
+        showToast('Отзыв удалён');
+    }).catch(err => {
+        console.error(err);
+        showToast('Ошибка удаления', 'error');
+    });
+}
 
   // Star picker
   const starPicker = document.getElementById('starPicker');
@@ -1272,7 +1292,7 @@ function listenReviews() {
   // PLAY GAME
   // ============================================
   function playGame() {
-    window.open('https://www.roblox.com/games/142823291/Murder-Mystery-2', '_blank');
+    window.open('https://www.roblox.com/games/4623386907/Murder-Mystery-2', '_blank');
     showToast('Открываем игру...');
   }
 
