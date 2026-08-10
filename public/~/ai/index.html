@@ -333,6 +333,31 @@
   .btn-sm { padding: 6px 12px; font-size: 12.5px; border-radius: 9px; }
   .danger-text { color: var(--danger); }
 
+  /* ---------- ТЕМЫ ---------- */
+
+  .mode-tabs { overflow-x: auto; }
+  .mode-tab { white-space: nowrap; }
+  .themes-panel { overflow-y: auto; padding: 22px 18px; }
+  .themes-wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .theme-card { border: 1px solid var(--border); background: var(--input-bg); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .theme-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,108,255,.15); }
+  .theme-dots { display: flex; gap: 6px; }
+  .theme-dots span { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(128,128,128,.3); }
+  .theme-name { font-weight: 700; font-size: 14px; }
+  .theme-actions { display: flex; gap: 8px; margin-top: auto; }
+  .accent-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .accent-dot { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .12s; }
+  .accent-dot:hover { transform: scale(1.1); }
+  .accent-dot.active { border-color: var(--text); }
+  .theme-preview { border-radius: 14px; padding: 16px; border: 1px solid rgba(128,128,128,.25); margin: 12px 0; }
+  .tp-card { border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 9px; border: 1px solid; }
+  .tp-btn { border-radius: 9px; padding: 7px 14px; color: #fff; font-size: 12.5px; font-weight: 600; width: max-content; }
+  .tp-bubble { border-radius: 10px; padding: 8px 12px; font-size: 12.5px; width: max-content; max-width: 80%; }
+  .color-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+  .color-field label { font-size: 11.5px; color: var(--text-dim); display: block; margin-bottom: 5px; }
+  .color-field input[type="color"] { width: 100%; height: 38px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--input-bg); padding: 4px; cursor: pointer; }
+
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
     .setup-card { grid-template-columns: 1fr; max-width: 640px; }
@@ -459,6 +484,7 @@
       <button id="tabChat" class="mode-tab active" type="button"><span class="tab-chat-ic"></span> Чат</button>
       <button id="tabImages" class="mode-tab" type="button"><span class="tab-img-ic"></span> Изображения</button>
       <button id="tabPrompts" class="mode-tab" type="button"><span class="tab-prompt-ic"></span> Промпты</button>
+      <button id="tabThemes" class="mode-tab" type="button"><span class="tab-theme-ic"></span> Темы</button>
     </div>
 
     <section id="chatPanel" class="panel">
@@ -549,6 +575,46 @@
         <div id="promptLibrary" class="prompt-library"></div>
       </div>
     </section>
+        <section id="themesPanel" class="panel themes-panel hidden">
+      <div class="themes-wrap">
+        <div class="lib-head"><h3>Встроенные темы</h3></div>
+        <div id="builtinThemes" class="theme-grid"></div>
+        <div class="lib-head"><h3>Акцентный цвет</h3></div>
+        <div id="accentSwatches" class="accent-row"></div>
+        <div class="img-form">
+          <div class="field">
+            <label for="themeDescInput">Опиши тему своими словами</label>
+            <textarea id="themeDescInput" rows="2" placeholder="Например: тёплая осенняя тема в тонах кофе и тыквы"></textarea>
+          </div>
+          <div class="prompts-actions"><button id="genThemeBtn" class="btn btn-primary" type="button">Создать с помощью ИИ</button></div>
+          <div id="themePreviewWrap" class="hidden">
+            <div id="themePreview" class="theme-preview"></div>
+            <div class="prompts-actions">
+              <button id="applyThemeBtn" class="btn btn-primary" type="button">Принять</button>
+              <button id="saveThemeBtn" class="btn btn-ghost" type="button">Сохранить в мои темы</button>
+              <button id="rejectThemeBtn" class="btn btn-ghost" type="button">Отклонить</button>
+            </div>
+          </div>
+        </div>
+        <div class="lib-head"><h3>Ручной конструктор</h3></div>
+        <div class="img-form">
+          <div class="color-row">
+            <div class="color-field"><label>Фон</label><input id="mcBg" type="color" value="#0a0c12"></div>
+            <div class="color-field"><label>Панели</label><input id="mcPanel" type="color" value="#141824"></div>
+            <div class="color-field"><label>Текст</label><input id="mcText" type="color" value="#e6e9f2"></div>
+            <div class="color-field"><label>Акцент</label><input id="mcAccent" type="color" value="#7c6cff"></div>
+            <div class="color-field"><label>Акцент 2</label><input id="mcAccent2" type="color" value="#38bdf8"></div>
+          </div>
+          <div id="manualPreview" class="theme-preview"></div>
+          <div class="prompts-actions">
+            <button id="manualApplyBtn" class="btn btn-primary" type="button">Применить</button>
+            <button id="manualSaveBtn" class="btn btn-ghost" type="button">Сохранить</button>
+          </div>
+        </div>
+        <div class="lib-head"><h3>Мои темы</h3></div>
+        <div id="myThemes" class="theme-grid"></div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -621,7 +687,8 @@ var ICONS = {
   file: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
   speaker: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
   speakerOff: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
-  book: '<svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
+  book: '<svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  palette: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 2-1.5 3-3 3h-2a2 2 0 0 0-2 2c0 1 .5 1.5.5 2.5S14 22 12 22z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg>'
 };
 
 /* ---------- Провайдеры ---------- */
@@ -956,6 +1023,168 @@ async function improvePrompt() {
   }
   btn.disabled = false;
   btn.textContent = 'Улучшить с помощью ИИ';
+}
+/* ---------- Темы ---------- */
+var BUILTIN_THEMES = [
+  { id: 'dark', name: 'Тёмная (по умолчанию)', bg: '#0a0c12', bgSoft: '#0f1219', panel: '#141824', panel2: '#1a2030', inputBg: '#0d1017', border: 'rgba(148,163,184,.14)', borderStrong: 'rgba(148,163,184,.28)', text: '#e6e9f2', textDim: '#98a2b8', textFaint: '#67718a', accent: '#7c6cff', accent2: '#38bdf8' },
+  { id: 'light', name: 'Светлая', bg: '#f4f6fb', bgSoft: '#edf0f7', panel: '#ffffff', panel2: '#f8fafc', inputBg: '#f1f4f9', border: 'rgba(15,23,42,.08)', borderStrong: 'rgba(15,23,42,.18)', text: '#0f172a', textDim: '#475569', textFaint: '#8a94a6', accent: '#6d5cff', accent2: '#0ea5e9' }
+];
+var ACCENTS = [
+  { a: '#7c6cff', b: '#38bdf8' },
+  { a: '#10b981', b: '#22d3ee' },
+  { a: '#f97316', b: '#ef4444' },
+  { a: '#ec4899', b: '#a855f7' },
+  { a: '#f59e0b', b: '#eab308' },
+  { a: '#0ea5e9', b: '#6366f1' }
+];
+var pendingTheme = null;
+function normalizeTheme(obj, id) {
+  var base = BUILTIN_THEMES[0];
+  return {
+    id: id || ('custom-' + Date.now().toString(36)),
+    name: obj.name || 'Своя тема',
+    bg: obj.bg || base.bg,
+    bgSoft: obj.bgSoft || obj.bg || base.bgSoft,
+    panel: obj.panel || base.panel,
+    panel2: obj.panel2 || obj.panel || base.panel2,
+    inputBg: obj.inputBg || obj.panel || base.inputBg,
+    border: obj.border || 'rgba(128,128,128,.18)',
+    borderStrong: obj.borderStrong || 'rgba(128,128,128,.32)',
+    text: obj.text || base.text,
+    textDim: obj.textDim || obj.text || base.textDim,
+    textFaint: obj.textFaint || obj.textDim || base.textFaint,
+    accent: obj.accent || base.accent,
+    accent2: obj.accent2 || obj.accent || base.accent2
+  };
+}
+function themeToVars(t) {
+  return {
+    '--bg': t.bg, '--bg-soft': t.bgSoft, '--panel': t.panel, '--panel-2': t.panel2,
+    '--input-bg': t.inputBg, '--border': t.border, '--border-strong': t.borderStrong,
+    '--text': t.text, '--text-dim': t.textDim, '--text-faint': t.textFaint,
+    '--accent': t.accent, '--accent-2': t.accent2,
+    '--accent-grad': 'linear-gradient(135deg, ' + t.accent + ', ' + t.accent2 + ')'
+  };
+}
+function applyTheme(t, persist) {
+  var vars = themeToVars(t);
+  for (var k in vars) document.documentElement.style.setProperty(k, vars[k]);
+  state.currentTheme = t;
+  if (persist !== false) saveLS('aip_theme', t);
+  renderThemesTab();
+}
+function renderThemePreview(el, t) {
+  el.style.background = t.bg;
+  el.innerHTML =
+    '<div class="tp-card" style="background:' + t.panel + ';border-color:' + t.borderStrong + '">' +
+      '<div style="font-weight:700;color:' + t.text + '">Заголовок</div>' +
+      '<div style="color:' + t.textDim + ';font-size:12.5px">Так будет выглядеть текст в новой теме.</div>' +
+      '<div class="tp-bubble" style="background:' + t.accent + '22;border:1px solid ' + t.accent + '55;color:' + t.text + '">Сообщение</div>' +
+      '<div class="tp-btn" style="background:linear-gradient(135deg,' + t.accent + ',' + t.accent2 + ')">Кнопка</div>' +
+    '</div>';
+}
+function renderThemesTab() {
+  var box = $('builtinThemes');
+  box.innerHTML = '';
+  BUILTIN_THEMES.forEach(function (t) {
+    var card = document.createElement('div');
+    card.className = 'theme-card' + (state.currentTheme && state.currentTheme.id === t.id ? ' active' : '');
+    card.innerHTML =
+      '<div class="theme-name">' + escapeHtml(t.name) + '</div>' +
+      '<div class="theme-dots"><span style="background:' + t.bg + '"></span><span style="background:' + t.panel + '"></span><span style="background:' + t.accent + '"></span><span style="background:' + t.accent2 + '"></span></div>' +
+      '<div class="theme-actions"><button class="btn btn-ghost btn-sm" type="button" data-bapply="' + t.id + '">Применить</button></div>';
+    box.appendChild(card);
+  });
+  var sw = $('accentSwatches');
+  sw.innerHTML = '';
+  ACCENTS.forEach(function (ac) {
+    var d = document.createElement('button');
+    d.type = 'button';
+    d.className = 'accent-dot' + (state.currentTheme && state.currentTheme.accent === ac.a ? ' active' : '');
+    d.style.background = 'linear-gradient(135deg,' + ac.a + ',' + ac.b + ')';
+    d.setAttribute('data-accent', ac.a + '|' + ac.b);
+    sw.appendChild(d);
+  });
+  var my = $('myThemes');
+  var list = loadLS('aip_themes') || [];
+  my.innerHTML = '';
+  if (!list.length) {
+    my.innerHTML = '<div class="lib-empty">Пока нет сохранённых тем. Создай с помощью ИИ или вручную и нажми «Сохранить».</div>';
+  }
+  list.forEach(function (t) {
+    var card = document.createElement('div');
+    card.className = 'theme-card' + (state.currentTheme && state.currentTheme.id === t.id ? ' active' : '');
+    card.innerHTML =
+      '<div class="theme-name">' + escapeHtml(t.name || 'Моя тема') + '</div>' +
+      '<div class="theme-dots"><span style="background:' + t.bg + '"></span><span style="background:' + t.panel + '"></span><span style="background:' + t.accent + '"></span><span style="background:' + t.accent2 + '"></span></div>' +
+      '<div class="theme-actions">' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-tapply="' + t.id + '">Надеть</button>' +
+        '<button class="btn btn-ghost btn-sm danger-text" type="button" data-tdel="' + t.id + '">Удалить</button>' +
+      '</div>';
+    my.appendChild(card);
+  });
+}
+function buildThemeRequest(desc) {
+  var s = state.settings;
+  var prov = PROVIDERS[s.provider];
+  var sys = 'Ты дизайнер интерфейсов. По описанию придумай гармоничную цветовую схему и верни СТРОГО JSON без markdown и лишних слов с ключами: name, bg, panel, inputBg, text, textDim, accent, accent2. Все цвета в формате #hex. Фон и текст должны быть контрастными.';
+  if (prov.format === 'anthropic') {
+    return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: s.model, max_tokens: 1024, system: sys, messages: [{ role: 'user', content: desc }], stream: false, temperature: 0.8 }) };
+  }
+  if (prov.format === 'gemini') {
+    return { url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(s.model) + ':generateContent', headers: { 'content-type': 'application/json', 'x-goog-api-key': s.apiKey }, body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: desc }] }], generationConfig: { temperature: 0.8, maxOutputTokens: 1024 } }) };
+  }
+  return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey }, body: JSON.stringify({ model: s.model, messages: [{ role: 'system', content: sys }, { role: 'user', content: desc }], stream: false, temperature: 0.8 }) };
+}
+async function genTheme() {
+  var desc = $('themeDescInput').value.trim();
+  if (!desc) { toast('Опиши тему', 'error'); return; }
+  var btn = $('genThemeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Создаём...';
+  try {
+    var req = buildThemeRequest(desc);
+    var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
+    if (!resp.ok) throw new Error(await httpError(resp));
+    var data = await resp.json();
+    if (data.error) throw new Error(errorTextFromJson(data));
+    var text = extractFullText(data);
+    var m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Не удалось распознать тему в ответе');
+    pendingTheme = normalizeTheme(JSON.parse(m[0]));
+    renderThemePreview($('themePreview'), pendingTheme);
+    $('themePreviewWrap').classList.remove('hidden');
+  } catch (e) {
+    toast('Ошибка генерации темы: ' + (e && e.message ? e.message : e), 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Создать с помощью ИИ';
+}
+function readManualTheme() {
+  return normalizeTheme({
+    name: 'Моя тема',
+    bg: $('mcBg').value,
+    panel: $('mcPanel').value,
+    text: $('mcText').value,
+    accent: $('mcAccent').value,
+    accent2: $('mcAccent2').value
+  });
+}
+function syncManualInputs() {
+  var t = state.currentTheme || BUILTIN_THEMES[0];
+  if (/^#([0-9a-f]{6})$/i.test(t.bg)) $('mcBg').value = t.bg;
+  if (/^#([0-9a-f]{6})$/i.test(t.panel)) $('mcPanel').value = t.panel;
+  if (/^#([0-9a-f]{6})$/i.test(t.text)) $('mcText').value = t.text;
+  if (/^#([0-9a-f]{6})$/i.test(t.accent)) $('mcAccent').value = t.accent;
+  if (/^#([0-9a-f]{6})$/i.test(t.accent2)) $('mcAccent2').value = t.accent2;
+  renderThemePreview($('manualPreview'), readManualTheme());
+}
+function saveThemeToMy(t) {
+  var list = loadLS('aip_themes') || [];
+  list.unshift(t);
+  saveLS('aip_themes', list);
+  renderThemesTab();
+  toast('Тема сохранена в «Мои темы»', 'success');
 }
 function toChatWith(text) {
   setMode('chat');
@@ -1646,11 +1875,14 @@ function setMode(mode) {
   $('tabChat').classList.toggle('active', mode === 'chat');
   $('tabImages').classList.toggle('active', mode === 'images');
   $('tabPrompts').classList.toggle('active', mode === 'prompts');
+  $('tabThemes').classList.toggle('active', mode === 'themes');
   $('chatPanel').classList.toggle('hidden', mode !== 'chat');
   $('imagesPanel').classList.toggle('hidden', mode !== 'images');
   $('promptsPanel').classList.toggle('hidden', mode !== 'prompts');
+  $('themesPanel').classList.toggle('hidden', mode !== 'themes');
   if (mode === 'images') setupImageForm();
   if (mode === 'prompts') renderLibrary();
+  if (mode === 'themes') { syncManualInputs(); renderThemesTab(); }
 }
 function updateHeader() {
   var prov = PROVIDERS[state.settings.provider];
@@ -1778,6 +2010,7 @@ function init() {
   document.querySelector('.tab-chat-ic').innerHTML = ICONS.chat;
   document.querySelector('.tab-img-ic').innerHTML = ICONS.image;
   document.querySelector('.tab-prompt-ic').innerHTML = ICONS.book;
+  document.querySelector('.tab-prompt-ic').innerHTML = ICONS.book;
   $('menuBtn').innerHTML = ICONS.menu;
   $('exportBtn').innerHTML = ICONS.download;
   $('clearChatBtn').innerHTML = ICONS.trash;
@@ -1846,6 +2079,39 @@ function init() {
   $('tabChat').addEventListener('click', function () { setMode('chat'); });
   $('tabImages').addEventListener('click', function () { setMode('images'); });
   $('tabPrompts').addEventListener('click', function () { setMode('prompts'); });
+  $('tabThemes').addEventListener('click', function () { setMode('themes'); });
+  $('genThemeBtn').addEventListener('click', genTheme);
+  $('applyThemeBtn').addEventListener('click', function () { if (pendingTheme) { applyTheme(pendingTheme); toast('Тема применена: ' + pendingTheme.name, 'success'); } });
+  $('saveThemeBtn').addEventListener('click', function () { if (pendingTheme) saveThemeToMy(pendingTheme); });
+  $('rejectThemeBtn').addEventListener('click', function () { pendingTheme = null; $('themePreviewWrap').classList.add('hidden'); });
+  $('manualApplyBtn').addEventListener('click', function () { applyTheme(readManualTheme()); toast('Тема применена', 'success'); });
+  $('manualSaveBtn').addEventListener('click', function () { saveThemeToMy(readManualTheme()); });
+  ['mcBg', 'mcPanel', 'mcText', 'mcAccent', 'mcAccent2'].forEach(function (id) {
+    $(id).addEventListener('input', function () { renderThemePreview($('manualPreview'), readManualTheme()); });
+  });
+  $('themesPanel').addEventListener('click', function (e) {
+    var ba = e.target.closest('[data-bapply]');
+    var ac = e.target.closest('[data-accent]');
+    var ta = e.target.closest('[data-tapply]');
+    var td = e.target.closest('[data-tdel]');
+    if (ba) {
+      var id = ba.getAttribute('data-bapply');
+      for (var i = 0; i < BUILTIN_THEMES.length; i++) if (BUILTIN_THEMES[i].id === id) applyTheme(BUILTIN_THEMES[i]);
+    } else if (ac) {
+      var parts = ac.getAttribute('data-accent').split('|');
+      var t = normalizeTheme(JSON.parse(JSON.stringify(state.currentTheme || BUILTIN_THEMES[0])));
+      t.accent = parts[0];
+      t.accent2 = parts[1];
+      t.name = (state.currentTheme && state.currentTheme.name) || 'Тема';
+      applyTheme(t);
+    } else if (ta) {
+      var list = loadLS('aip_themes') || [];
+      for (var j = 0; j < list.length; j++) if (list[j].id === ta.getAttribute('data-tapply')) { applyTheme(list[j]); toast('Тема надета: ' + list[j].name, 'success'); break; }
+    } else if (td) {
+      saveLS('aip_themes', (loadLS('aip_themes') || []).filter(function (x) { return x.id !== td.getAttribute('data-tdel'); }));
+      renderThemesTab();
+    }
+  });
   $('improvePromptBtn').addEventListener('click', improvePrompt);
   $('copyImprovedBtn').addEventListener('click', function () {
     if (lastImprovedText) navigator.clipboard.writeText(lastImprovedText).then(function () { toast('Промпт скопирован', 'success'); });
@@ -1956,6 +2222,10 @@ function init() {
   $('modalSaveBtn').addEventListener('click', saveSettingsModal);
   $('settingsModal').addEventListener('click', function (e) { if (e.target === this) closeSettingsModal(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSettingsModal(); });
+
+  state.currentTheme = BUILTIN_THEMES[0];
+  var savedTheme = loadLS('aip_theme');
+  if (savedTheme && savedTheme.bg) applyTheme(savedTheme, false);
 
   /* автовход, если уже настроено */
   if (state.settings && state.settings.apiKey && state.settings.model) {
