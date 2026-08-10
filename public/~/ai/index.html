@@ -240,6 +240,7 @@
   .msg-act { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: 8px; color: var(--text-faint); }
   .msg-act:hover { color: var(--text); background: rgba(148,163,184,.12); }
   .msg-act.danger:hover { color: var(--danger); background: rgba(248,113,113,.12); }
+  .msg-act.speaking { color: var(--accent-2); background: rgba(56,189,248,.14); }
 
   .typing { display: inline-flex; gap: 5px; padding: 6px 2px; }
   .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); animation: blink 1.2s infinite ease-in-out; }
@@ -556,7 +557,9 @@ var ICONS = {
   key: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
   alert: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
   paperclip: '<svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
-  file: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
+  file: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  speaker: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
+  speakerOff: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
 };
 
 /* ---------- Провайдеры ---------- */
@@ -723,6 +726,47 @@ function enhanceCodeBlocks(container) {
   }
   var links = container.querySelectorAll('a[href]');
   for (var j = 0; j < links.length; j++) { links[j].setAttribute('target', '_blank'); links[j].setAttribute('rel', 'noopener'); }
+}
+
+/* ---------- Озвучка текста ---------- */
+var speakState = { currentId: null, timer: null };
+function stopSpeaking() {
+  if (speakState.timer) { clearInterval(speakState.timer); speakState.timer = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  speakState.currentId = null;
+  updateSpeakBtn();
+}
+function updateSpeakBtn() {
+  var btns = document.querySelectorAll('[data-act="speak"]');
+  for (var i = 0; i < btns.length; i++) {
+    var b = btns[i];
+    var row = b.closest('.msg');
+    var id = row ? row.getAttribute('data-id') : null;
+    var active = id === speakState.currentId;
+    b.innerHTML = active ? ICONS.speakerOff : ICONS.speaker;
+    b.classList.toggle('speaking', active);
+    b.title = active ? 'Остановить' : 'Озвучить';
+  }
+}
+function speakText(text, id) {
+  if (!('speechSynthesis' in window)) { toast('Браузер не поддерживает озвучку', 'error'); return; }
+  if (speakState.currentId === id) { stopSpeaking(); return; }
+  stopSpeaking();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ru-RU';
+  var voices = window.speechSynthesis.getVoices() || [];
+  for (var i = 0; i < voices.length; i++) {
+    if ((voices[i].lang || '').toLowerCase().indexOf('ru') === 0) { u.voice = voices[i]; break; }
+  }
+  u.onend = function () { if (speakState.timer) clearInterval(speakState.timer); speakState.timer = null; speakState.currentId = null; updateSpeakBtn(); };
+  u.onerror = u.onend;
+  speakState.currentId = id;
+  /* обход бага Chrome с остановкой длинной речи */
+  speakState.timer = setInterval(function () {
+    if (window.speechSynthesis.speaking) { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }
+  }, 10000);
+  updateSpeakBtn();
+  window.speechSynthesis.speak(u);
 }
 
 /* ---------- Сохранение настроек и диалогов ---------- */
@@ -1043,7 +1087,8 @@ function renderMessages() {
       if (m.streaming) contentHtml = typingHtml();
       else if (m.error) contentHtml = escapeHtml(m.content);
       else contentHtml = renderMarkdown(m.content);
-      var actions = '<button class="msg-act" data-act="copy" title="Копировать">' + ICONS.copy + '</button>';
+      var actions = '<button class="msg-act" data-act="copy" title="Копировать">' + ICONS.copy + '</button>' +
+      '<button class="msg-act" data-act="speak" title="Озвучить">' + ICONS.speaker + '</button>';
       if (m.id === lastAssistantId && !m.streaming) actions += '<button class="msg-act" data-act="regen" title="Сгенерировать заново">' + ICONS.refresh + '</button>';
       actions += '<button class="msg-act danger" data-act="del" title="Удалить">' + ICONS.trash + '</button>';
       row.innerHTML =
@@ -1057,6 +1102,7 @@ function renderMessages() {
     }
     list.appendChild(row);
   });
+  updateSpeakBtn();
 }
 
 function renderConvoList() {
@@ -1216,6 +1262,13 @@ function bindMessagesActions() {
       renderMessages();
     } else if (a === 'regen') {
       regenerateLast();
+    } else if (a === 'speak') {
+      var tmp = document.createElement('div');
+      tmp.innerHTML = renderMarkdown(msg.content);
+      var codeNodes = tmp.querySelectorAll('pre, .code-block');
+      for (var cn = 0; cn < codeNodes.length; cn++) codeNodes[cn].remove();
+      var speakTxt = (tmp.textContent || '').replace(/\s+/g, ' ').trim();
+      if (speakTxt) speakText(speakTxt, msg.id); else toast('Нечего озвучивать', 'error');
     }
   });
 }
