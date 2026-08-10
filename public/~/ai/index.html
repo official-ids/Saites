@@ -389,6 +389,24 @@
   .mic-support-list div { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dim); }
   .ok-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
 
+  /* ---------- СТАСТИСТИКА ---------- */
+  .stats-panel { overflow-y: auto; padding: 22px 18px; }
+  .stats-wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat-card { background: var(--input-bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+  .stat-value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
+  .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+  .stats-chart { display: flex; align-items: flex-end; gap: 6px; height: 170px; padding-top: 10px; }
+  .chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; min-width: 0; }
+  .chart-bar { width: 100%; max-width: 34px; border-radius: 6px 6px 2px 2px; background: var(--accent-grad); }
+  .chart-day { font-size: 10.5px; color: var(--text-faint); font-family: var(--mono); }
+  .chart-val { font-size: 10px; color: var(--text-dim); font-family: var(--mono); white-space: nowrap; }
+  .stats-top { display: flex; flex-direction: column; gap: 8px; }
+  .top-row { display: flex; align-items: center; gap: 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; }
+  .top-num { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+  .top-title { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-cost { font-family: var(--mono); font-size: 12px; color: var(--accent-2); white-space: nowrap; }
+
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
     .setup-card { grid-template-columns: 1fr; max-width: 640px; }
@@ -405,6 +423,8 @@
   }
   @media (min-width: 961px) { .topbar-brand-mobile { display: none; } }
   @media (max-width: 640px) {
+    .stats-chart { overflow-x: auto; }
+    .chart-col { min-width: 26px; }
     .provider-grid { grid-template-columns: 1fr; }
     .suggestions { grid-template-columns: 1fr; }
     .img-form-row { grid-template-columns: 1fr; }
@@ -527,6 +547,7 @@
       <button id="tabImages" class="mode-tab" type="button"><span class="tab-img-ic"></span> Изображения</button>
       <button id="tabPrompts" class="mode-tab" type="button"><span class="tab-prompt-ic"></span> Промпты</button>
       <button id="tabThemes" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 2-1.5 3-3 3h-2a2 2 0 0 0-2 2c0 1 .5 1.5.5 2.5S14 22 12 22z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg> Темы</button>
+      <button id="tabStats" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Статистика</button>
     </div>
 
     <section id="chatPanel" class="panel">
@@ -656,6 +677,17 @@
         </div>
         <div class="lib-head"><h3>Мои темы</h3></div>
         <div id="myThemes" class="theme-grid"></div>
+      </div>
+    </section>
+        <section id="statsPanel" class="panel stats-panel hidden">
+      <div class="stats-wrap">
+        <div id="statsCards" class="stats-cards"></div>
+        <div class="img-form">
+          <div class="lib-head"><h3>Стоимость за последние 14 дней</h3></div>
+          <div id="statsChart" class="stats-chart"></div>
+        </div>
+        <div class="lib-head"><h3>Самые дорогие диалоги</h3></div>
+        <div id="statsTop" class="stats-top"></div>
       </div>
     </section>
   </main>
@@ -1188,6 +1220,88 @@ async function improvePrompt() {
   }
   btn.disabled = false;
   btn.textContent = 'Улучшить с помощью ИИ';
+}
+/* ---------- Статистика ---------- */
+function computeStats() {
+  var days = {};
+  var perConvo = [];
+  var totalTin = 0, totalTout = 0, totalCost = 0, totalMsgs = 0;
+  state.conversations.forEach(function (c) {
+    var running = approxTokens(state.settings.systemPrompt || '');
+    var cCost = 0, cTok = 0;
+    (c.messages || []).forEach(function (m) {
+      var t = approxTokens(m.content);
+      if (m.role === 'assistant' && !m.error) {
+        var prov = m.provider || state.settings.provider;
+        var model = m.model || state.settings.model;
+        var p = priceFor(prov, model);
+        var cost = (running * p.inn + t * p.out) / 1000000;
+        totalTin += running;
+        totalTout += t;
+        totalCost += cost;
+        totalMsgs++;
+        cCost += cost;
+        cTok += running + t;
+        var d = new Date(m.ts || Date.now());
+        var key = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+        if (!days[key]) days[key] = { cost: 0, tokens: 0 };
+        days[key].cost += cost;
+        days[key].tokens += running + t;
+        running += t;
+      } else {
+        running += t;
+      }
+    });
+    perConvo.push({ title: c.title || 'Новый чат', cost: cCost, tokens: cTok });
+  });
+  return { days: days, perConvo: perConvo, totalTin: totalTin, totalTout: totalTout, totalCost: totalCost, totalMsgs: totalMsgs };
+}
+function fmtCost(v) { return '~$' + (v < 0.01 ? v.toFixed(4) : v.toFixed(3)); }
+function renderStats() {
+  var s = computeStats();
+  $('statsCards').innerHTML =
+    '<div class="stat-card"><div class="stat-value">' + fmtTokens(s.totalTin + s.totalTout) + '</div><div class="stat-label">Всего токенов</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + fmtCost(s.totalCost) + '</div><div class="stat-label">Всего потрачено</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + state.conversations.length + '</div><div class="stat-label">Диалогов</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + s.totalMsgs + '</div><div class="stat-label">Ответов ИИ</div></div>';
+  var chart = $('statsChart');
+  chart.innerHTML = '';
+  var buckets = [];
+  var max = 0;
+  for (var i = 13; i >= 0; i--) {
+    var d = new Date();
+    d.setDate(d.getDate() - i);
+    var key = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-bit'.replace('bit', 'month') });
+    var v = s.days[key] ? s.days[key].cost : 0;
+    buckets.push({ label: key, cost: v });
+    if (v > max) max = v;
+  }
+  buckets.forEach(function (b) {
+    var col = document.createElement('div');
+    col.className = 'chart-col';
+    var h = max > 0 ? Math.round((b.cost / max) * 110) : 0;
+    col.innerHTML =
+      '<span class="chart-val">' + (b.cost > 0 ? fmtCost(b.cost) : '') + '</span>' +
+      '<div class="chart-bar" style="height:' + Math.max(2, h) + 'px' + (b.cost === 0 ? ';opacity:.22' : '') + '"></div>' +
+      '<span class="chart-day">' + b.label + '</span>';
+    chart.appendChild(col);
+  });
+  var top = s.perConvo.filter(function (x) { return x.cost > 0; }).sort(function (a, b) { return b.cost - a.cost; }).slice(0, 5);
+  var topBox = $('statsTop');
+  topBox.innerHTML = '';
+  if (!top.length) {
+    topBox.innerHTML = '<div class="lib-empty">Данных пока нет — начните общаться, и статистика появится.</div>';
+    return;
+  }
+  top.forEach(function (t, i) {
+    var row = document.createElement('div');
+    row.className = 'top-row';
+    row.innerHTML =
+      '<span class="top-num">' + (i + 1) + '</span>' +
+      '<span class="top-title">' + escapeHtml(t.title) + '</span>' +
+      '<span class="top-cost">' + fmtTokens(t.tokens) + ' токенов · ' + fmtCost(t.cost) + '</span>';
+    topBox.appendChild(row);
+  });
 }
 /* ---------- Темы ---------- */
 var BUILTIN_THEMES = [
@@ -1866,7 +1980,7 @@ function sendUserMessage(text) {
 
 async function runAssistant() {
   var convo = currentConvo();
-  var am = { id: uid(), role: 'assistant', content: '', ts: Date.now(), streaming: true, model: state.settings.model };
+  var am = { id: uid(), role: 'assistant', content: '', ts: Date.now(), streaming: true, model: state.settings.model, provider: state.settings.provider };
   convo.messages.push(am);
   renderMessages();
   scrollBottom(false);
@@ -2196,13 +2310,16 @@ function setMode(mode) {
   $('tabImages').classList.toggle('active', mode === 'images');
   $('tabPrompts').classList.toggle('active', mode === 'prompts');
   $('tabThemes').classList.toggle('active', mode === 'themes');
+  $('tabStats').classList.toggle('active', mode === 'stats');
   $('chatPanel').classList.toggle('hidden', mode !== 'chat');
   $('imagesPanel').classList.toggle('hidden', mode !== 'images');
   $('promptsPanel').classList.toggle('hidden', mode !== 'prompts');
   $('themesPanel').classList.toggle('hidden', mode !== 'themes');
+  $('statsPanel').classList.toggle('hidden', mode !== 'stats');
   if (mode === 'images') setupImageForm();
   if (mode === 'prompts') renderLibrary();
   if (mode === 'themes') { syncManualInputs(); renderThemesTab(); }
+  if (mode === 'stats') renderStats();
 }
 function updateHeader() {
   var prov = PROVIDERS[state.settings.provider];
@@ -2402,6 +2519,7 @@ function init() {
   $('tabImages').addEventListener('click', function () { setMode('images'); });
   $('tabPrompts').addEventListener('click', function () { setMode('prompts'); });
   $('tabThemes').addEventListener('click', function () { setMode('themes'); });
+  $('tabStats').addEventListener('click', function () { setMode('stats'); });
   $('genThemeBtn').addEventListener('click', genTheme);
   $('applyThemeBtn').addEventListener('click', function () { if (pendingTheme) { applyTheme(pendingTheme); toast('Тема применена: ' + pendingTheme.name, 'success'); } });
   $('saveThemeBtn').addEventListener('click', function () { if (pendingTheme) saveThemeToMy(pendingTheme); });
