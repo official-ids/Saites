@@ -519,6 +519,14 @@
     <div class="field"><label for="modalMaxTokens">Максимум токенов (пусто — авто)</label><input id="modalMaxTokens" type="number" min="1"></div>
     <div class="field"><label for="modalSystemPrompt">Системный промпт</label><textarea id="modalSystemPrompt" rows="3"></textarea></div>
     <label class="check-row"><input id="modalStreamCheck" type="checkbox"> Потоковая генерация ответа</label>
+        <div class="field" style="margin-top:16px"><label for="modalTtsEngine">Движок озвучки</label>
+      <select id="modalTtsEngine">
+        <option value="browser">Системный голос (бесплатно)</option>
+        <option value="openai">Нейронный голос OpenAI (качественно)</option>
+      </select>
+    </div>
+    <div class="field"><label for="modalTtsVoice">Голос озвучки</label><select id="modalTtsVoice"></select></div>
+    <div class="field"><label for="modalTtsKey">OpenAI-ключ для озвучки (не нужен, если провайдер OpenAI)</label><input id="modalTtsKey" type="password" autocomplete="off" spellcheck="false"></div>
     <div class="modal-actions">
       <button id="modalCancelBtn" class="btn btn-ghost" type="button">Отмена</button>
       <button id="modalSaveBtn" class="btn btn-primary" type="button">Сохранить</button>
@@ -729,9 +737,10 @@ function enhanceCodeBlocks(container) {
 }
 
 /* ---------- Озвучка текста ---------- */
-var speakState = { currentId: null, timer: null };
+var speakState = { currentId: null, timer: null, audio: null };
 function stopSpeaking() {
   if (speakState.timer) { clearInterval(speakState.timer); speakState.timer = null; }
+  if (speakState.audio) { try { speakState.audio.pause(); } catch (e) {} speakState.audio = null; }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   speakState.currentId = null;
   updateSpeakBtn();
@@ -749,24 +758,88 @@ function updateSpeakBtn() {
   }
 }
 function speakText(text, id) {
+  if (state.settings.ttsEngine === 'openai') speakViaOpenAI(text, id);
+  else speakViaBrowser(text, id);
+}
+function speakViaBrowser(text, id) {
   if (!('speechSynthesis' in window)) { toast('Браузер не поддерживает озвучку', 'error'); return; }
   if (speakState.currentId === id) { stopSpeaking(); return; }
   stopSpeaking();
   var u = new SpeechSynthesisUtterance(text);
   u.lang = 'ru-RU';
   var voices = window.speechSynthesis.getVoices() || [];
-  for (var i = 0; i < voices.length; i++) {
-    if ((voices[i].lang || '').toLowerCase().indexOf('ru') === 0) { u.voice = voices[i]; break; }
+  var chosen = null;
+  var i;
+  if (state.settings.ttsVoice) {
+    for (i = 0; i < voices.length; i++) if (voices[i].voiceURI === state.settings.ttsVoice) { chosen = voices[i]; break; }
   }
+  if (!chosen) {
+    for (i = 0; i < voices.length; i++) if ((voices[i].lang || '').toLowerCase().indexOf('ru') === 0) { chosen = voices[i]; break; }
+  }
+  if (chosen) u.voice = chosen;
   u.onend = function () { if (speakState.timer) clearInterval(speakState.timer); speakState.timer = null; speakState.currentId = null; updateSpeakBtn(); };
   u.onerror = u.onend;
   speakState.currentId = id;
-  /* обход бага Chrome с остановкой длинной речи */
   speakState.timer = setInterval(function () {
     if (window.speechSynthesis.speaking) { window.speechSynthesis.pause(); window.speechSynthesis.resume(); }
   }, 10000);
   updateSpeakBtn();
   window.speechSynthesis.speak(u);
+}
+async function speakViaOpenAI(text, id) {
+  var key = (state.settings.ttsKey || '').trim() || (state.settings.provider === 'openai' ? state.settings.apiKey : '');
+  if (!key) { toast('Укажите OpenAI-ключ для озвучки в настройках', 'error'); return; }
+  if (speakState.currentId === id) { stopSpeaking(); return; }
+  stopSpeaking();
+  speakState.currentId = id;
+  updateSpeakBtn();
+  try {
+    var resp = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + key },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini-tts',
+        voice: state.settings.ttsVoice || 'nova',
+        input: text.slice(0, 4096),
+        instructions: 'Speak in Russian with a natural, friendly and clear tone.'
+      })
+    });
+    if (!resp.ok) throw new Error(await httpError(resp));
+    var blob = await resp.blob();
+    var url = URL.createObjectURL(blob);
+    var audio = new Audio(url);
+    speakState.audio = audio;
+    audio.onended = function () { URL.revokeObjectURL(url); speakState.audio = null; speakState.currentId = null; updateSpeakBtn(); };
+    audio.onerror = audio.onended;
+    await audio.play();
+  } catch (e) {
+    toast('Ошибка озвучки: ' + (e && e.message ? e.message : e), 'error');
+    speakState.currentId = null;
+    speakState.audio = null;
+    updateSpeakBtn();
+  }
+}
+function fillTtsVoices() {
+  var sel = $('modalTtsVoice');
+  if (!sel) return;
+  sel.innerHTML = '';
+  if ($('modalTtsEngine').value === 'openai') {
+    ['nova', 'alloy', 'shimmer', 'onyx', 'echo', 'fable', 'sage', 'coral'].forEach(function (v) {
+      var o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o);
+    });
+    sel.value = state.settings.ttsVoice || 'nova';
+  } else {
+    var voices = ('speechSynthesis' in window) ? (window.speechSynthesis.getVoices() || []) : [];
+    if (!voices.length) {
+      var o0 = document.createElement('option'); o0.value = ''; o0.textContent = 'Голос системы по умолчанию'; sel.appendChild(o0);
+    }
+    voices.forEach(function (v) {
+      var o = document.createElement('option'); o.value = v.voiceURI; o.textContent = v.name + ' (' + v.lang + ')'; sel.appendChild(o);
+    });
+    var cur = state.settings.ttsVoice || '';
+    sel.value = cur;
+    if (sel.value !== cur) sel.value = '';
+  }
 }
 
 /* ---------- Сохранение настроек и диалогов ---------- */
@@ -1475,6 +1548,9 @@ function openSettingsModal() {
   $('modalMaxTokens').value = s.maxTokens || '';
   $('modalSystemPrompt').value = s.systemPrompt || '';
   $('modalStreamCheck').checked = s.stream !== false;
+  $('modalTtsEngine').value = s.ttsEngine || 'browser';
+  $('modalTtsKey').value = s.ttsKey || '';
+  fillTtsVoices();
   $('settingsModal').classList.add('open');
 }
 function closeSettingsModal() { $('settingsModal').classList.remove('open'); }
@@ -1489,7 +1565,10 @@ function saveSettingsModal() {
     temperature: Number($('modalTempRange').value),
     maxTokens: $('modalMaxTokens').value ? Number($('modalMaxTokens').value) : 0,
     systemPrompt: $('modalSystemPrompt').value,
-    stream: $('modalStreamCheck').checked
+    stream: $('modalStreamCheck').checked,
+    ttsEngine: $('modalTtsEngine').value,
+    ttsVoice: $('modalTtsVoice').value,
+    ttsKey: $('modalTtsKey').value.trim()
   };
   saveSettings();
   updateHeader();
@@ -1694,6 +1773,12 @@ function init() {
 
   /* --- модалка --- */
   $('modalProviderSelect').addEventListener('change', function () { fillDatalist($('modalDatalist'), PROVIDERS[this.value].models); });
+  $('modalTtsEngine').addEventListener('change', fillTtsVoices);
+  if ('speechSynthesis' in window && window.speechSynthesis.addEventListener) {
+    window.speechSynthesis.addEventListener('voiceschanged', function () {
+      if ($('settingsModal').classList.contains('open')) fillTtsVoices();
+    });
+  }
   $('modalTempRange').addEventListener('input', function () { $('modalTempValue').textContent = Number(this.value).toFixed(1); });
   $('modalCloseBtn').addEventListener('click', closeSettingsModal);
   $('modalCancelBtn').addEventListener('click', closeSettingsModal);
