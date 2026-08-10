@@ -945,53 +945,63 @@ function speakViaBrowser(text, id) {
   window.speechSynthesis.speak(u);
 }
 /* ---------- Голосовой ввод ---------- */
-var recState = { rec: null, listening: false, base: '' };
+var recState = { rec: null, listening: false, base: '', session: '', interim: '' };
 function toggleMic() {
   var Ctor = window.SpeechRecognition || window.webkitSpeechRecognition || null;
   if (!Ctor) { toast('Браузер не поддерживает голосовой ввод', 'error'); return; }
   if (recState.listening) { stopMic(); return; }
+  recState.listening = true;
+  recState.base = $('msgInput').value ? $('msgInput').value.replace(/\s*$/, ' ') : '';
+  recState.session = '';
+  recState.interim = '';
+  $('micBtn').classList.add('listening');
+  startRecSession(Ctor);
+  toast('Слушаю — говорите', 'success');
+}
+function startRecSession(Ctor) {
   var rec = new Ctor();
   rec.lang = 'ru-RU';
   rec.interimResults = true;
-  rec.continuous = true;
+  rec.continuous = false;
   rec.maxAlternatives = 1;
-  recState.base = $('msgInput').value ? $('msgInput').value.replace(/\s*$/, ' ') : '';
-  recState.final = '';
-  recState.lastFinal = '';
+  recState.session = '';
   rec.onresult = function (e) {
-    var interim = '';
-    var start = (typeof e.resultIndex === 'number') ? e.resultIndex : 0;
-    for (var i = start; i < e.results.length; i++) {
-      var t = e.results[i][0].transcript;
-      if (e.results[i].isFinal) {
-        t = t.trim();
-        if (t && t !== recState.lastFinal) {
-          recState.final += t + ' ';
-          recState.lastFinal = t;
-        }
-      } else {
-        interim += t;
-      }
+    var fin = '';
+    var inter = '';
+    for (var i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) fin += e.results[i][0].transcript + ' ';
+      else inter += e.results[i][0].transcript;
     }
-    $('msgInput').value = (recState.base + recState.final + interim).replace(/\s+/g, ' ').trimStart();
-    autosize($('msgInput'));
+    if (fin) recState.session = fin;
+    recState.interim = inter;
+    paintMic();
   };
   rec.onerror = function (e) {
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('Нет доступа к микрофону', 'error');
-    else if (e.error !== 'aborted') toast('Ошибка голосового ввода: ' + e.error, 'error');
-    stopMic();
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { toast('Нет доступа к микрофону', 'error'); stopMic(); }
+    else if (e.error !== 'aborted' && e.error !== 'no-speech') toast('Ошибка голосового ввода: ' + e.error, 'error');
   };
-  rec.onend = function () { stopMic(); };
+  rec.onend = function () {
+    if (!recState.listening) return;
+    if (recState.session) recState.base += recState.session + ' ';
+    recState.session = '';
+    recState.interim = '';
+    paintMic();
+    try { startRecSession(Ctor); } catch (e) { stopMic(); }
+  };
   recState.rec = rec;
-  recState.listening = true;
-  $('micBtn').classList.add('listening');
-  try { rec.start(); } catch (e) { stopMic(); return; }
-  toast('Слушаю — говорите', 'success');
+  try { rec.start(); } catch (e) { stopMic(); }
+}
+function paintMic() {
+  $('msgInput').value = (recState.base + recState.session + recState.interim).replace(/\s+/g, ' ').trimStart();
+  autosize($('msgInput'));
 }
 function stopMic() {
-  if (recState.rec) { try { recState.rec.onend = null; recState.rec.stop(); } catch (e) {} }
-  recState.rec = null;
   recState.listening = false;
+  if (recState.session) { recState.base += recState.session + ' '; recState.session = ''; }
+  recState.interim = '';
+  if (recState.rec) { try { recState.rec.onend = null; recState.rec.onerror = null; recState.rec.stop(); } catch (e) {} }
+  recState.rec = null;
+  paintMic();
   var b = $('micBtn');
   if (b) b.classList.remove('listening');
 }
