@@ -156,7 +156,7 @@
 
   /* ---------- ЧАТ ---------- */
   .app { display: flex; height: 100dvh; overflow: hidden; }
-  .sidebar { width: 292px; flex: none; border-right: 1px solid var(--border); background: var(--bg-soft); display: flex; flex-direction: column; }
+  .sidebar { width: 292px; min-width: 292px; flex: 0 0 292px; border-right: 1px solid var(--border); background: var(--bg-soft); display: flex; flex-direction: column; }
   .sidebar-head { padding: 18px 18px 12px; display: flex; align-items: center; gap: 10px; }
   .brand-mini { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
   .brand-mini .mini-logo { width: 32px; height: 32px; border-radius: 9px; background: var(--accent-grad); display: flex; align-items: center; justify-content: center; color: #fff; }
@@ -484,7 +484,7 @@
       <button id="tabChat" class="mode-tab active" type="button"><span class="tab-chat-ic"></span> Чат</button>
       <button id="tabImages" class="mode-tab" type="button"><span class="tab-img-ic"></span> Изображения</button>
       <button id="tabPrompts" class="mode-tab" type="button"><span class="tab-prompt-ic"></span> Промпты</button>
-      <button id="tabThemes" class="mode-tab" type="button"><span class="tab-theme-ic"></span> Темы</button>
+      <button id="tabThemes" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 2-1.5 3-3 3h-2a2 2 0 0 0-2 2c0 1 .5 1.5.5 2.5S14 22 12 22z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg> Темы</button>
     </div>
 
     <section id="chatPanel" class="panel">
