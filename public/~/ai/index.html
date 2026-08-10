@@ -407,6 +407,11 @@
   .top-title { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .top-cost { font-family: var(--mono); font-size: 12px; color: var(--accent-2); white-space: nowrap; }
 
+  .sel-toolbar { position: fixed; z-index: 65; display: flex; gap: 6px; background: var(--panel-2); border: 1px solid var(--border-strong); border-radius: 12px; padding: 6px; box-shadow: 0 12px 34px rgba(0,0,0,.5); animation: riseIn .18s ease both; }
+  .sel-toolbar.hidden { display: none; }
+  .sel-toolbar button { background: transparent; border: none; border-radius: 8px; color: var(--text-dim); font-size: 12.5px; font-weight: 600; padding: 7px 11px; transition: background .13s, color .13s; white-space: nowrap; }
+  .sel-toolbar button:hover { background: rgba(124,108,255,.14); color: var(--text); }
+
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
     .setup-card { grid-template-columns: 1fr; max-width: 640px; }
@@ -760,6 +765,12 @@
       <button id="micModalOk" class="btn btn-primary" type="button">Понятно</button>
     </div>
   </div>
+</div>
+
+<div id="selToolbar" class="sel-toolbar hidden">
+  <button type="button" data-selact="translate">Перевести</button>
+  <button type="button" data-selact="explain">Объясни</button>
+  <button type="button" data-selact="short">Сделай короче</button>
 </div>
 
 <div id="toastContainer" class="toast-container"></div>
@@ -2129,6 +2140,56 @@ function startEditMessage(id) {
   });
 }
 
+/* ---------- Быстрые действия с выделенным текстом ---------- */
+var selState = { text: '', keep: false };
+function selectionInfo() {
+  var sel = window.getSelection();
+  if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
+  var text = sel.toString().trim();
+  if (!text || text.length < 3) return null;
+  var node = sel.anchorNode;
+  var el = node && node.nodeType === 3 ? node.parentElement : node;
+  if (!el || !el.closest) return null;
+  var content = el.closest('.msg-content');
+  if (!content) return null;
+  var row = content.closest('.msg');
+  if (!row || !row.classList.contains('assistant')) return null;
+  var rect = sel.getRangeAt(0).getBoundingClientRect();
+  if (!rect || (rect.width === 0 && rect.height === 0)) return null;
+  return { text: text, rect: rect };
+}
+function showSelToolbar(info) {
+  selState.text = info.text;
+  var tb = $('selToolbar');
+  tb.classList.remove('hidden');
+  var w = tb.offsetWidth, h = tb.offsetHeight;
+  var x = info.rect.left + info.rect.width / 2 - w / 2;
+  var y = info.rect.top - h - 10;
+  x = Math.max(10, Math.min(x, window.innerWidth - w - 10));
+  if (y < 70) y = info.rect.bottom + 10;
+  tb.style.left = x + 'px';
+  tb.style.top = y + 'px';
+}
+function hideSelToolbar() { $('selToolbar').classList.add('hidden'); selState.text = ''; }
+function checkSelection() {
+  if (selState.keep) return;
+  var info = selectionInfo();
+  if (info) showSelToolbar(info); else hideSelToolbar();
+}
+function selAction(kind) {
+  var text = selState.text;
+  selState.keep = false;
+  hideSelToolbar();
+  var sel = window.getSelection();
+  if (sel) sel.removeAllRanges();
+  if (!text) return;
+  var prompt = '';
+  if (kind === 'translate') prompt = 'Переведи следующий текст на русский язык, без пояснений:\n\n' + text;
+  else if (kind === 'explain') prompt = 'Объясни следующий текст простыми словами, кратко и по сути:\n\n' + text;
+  else prompt = 'Сделай следующий текст короче, сохранив главный смысл:\n\n' + text;
+  setMode('chat');
+  sendUserMessage(prompt);
+}
 /* ---------- Действия над сообщениями (делегирование) ---------- */
 function bindMessagesActions() {
   $('messagesList').addEventListener('click', function (e) {
@@ -2728,6 +2789,17 @@ function init() {
     var b = e.target.closest('[data-rm]');
     if (b) { state.pendingFiles.splice(Number(b.getAttribute('data-rm')), 1); renderPendingFiles(); }
   });
+  $('selToolbar').addEventListener('mousedown', function () { selState.keep = true; });
+  $('selToolbar').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-selact]');
+    if (b) selAction(b.getAttribute('data-selact'));
+  });
+  document.addEventListener('mousedown', function (e) {
+    if (!(e.target.closest && e.target.closest('#selToolbar'))) selState.keep = false;
+  });
+  document.addEventListener('mouseup', function () { setTimeout(checkSelection, 10); });
+  document.addEventListener('keyup', function () { setTimeout(checkSelection, 10); });
+  $('messagesScroll').addEventListener('scroll', hideSelToolbar);
 
   document.querySelectorAll('.suggestion').forEach(function (btn) {
     btn.addEventListener('click', function () {
