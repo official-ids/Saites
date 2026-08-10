@@ -466,6 +466,8 @@
   .docs-body th { background: rgba(148,163,184,.07); }
   .docs-body blockquote { border-left: 3px solid var(--accent); padding: 4px 14px; margin: 12px 0; color: var(--text-dim); background: rgba(124,108,255,.06); border-radius: 0 10px 10px 0; }
   .docs-body code:not(pre code) { font-family: var(--mono); font-size: 12.8px; background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.2); padding: 1.5px 6px; border-radius: 6px; }
+  .doc-ic { display: inline-flex; width: 14px; height: 14px; vertical-align: -2px; color: var(--accent-2); margin: 0 2px; }
+  .doc-ic .icon { width: 14px; height: 14px; }
   @media (max-width: 860px) {
     .docs-wrap { flex-direction: column; }
     .docs-side { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 200px; }
@@ -1774,7 +1776,7 @@ function buildDocsRequest() {
   var s = state.settings;
   var prov = PROVIDERS[s.provider];
   var stream = s.stream !== false;
-  var sys = 'Ты — ведущий технический писатель. Пиши документацию уровня лучших продуктов 2026 года: структурно, подробно и дружелюбно, на русском языке. Верни ТОЛЬКО Markdown без вступлений и пояснений.';
+  var sys = 'Ты — ведущий технический писатель. Пиши документацию уровня лучших продуктов 2026 года: структурно, подробно и дружелюбно, на русском языке. СТРОГО ЗАПРЕЩЕНО использовать эмодзи. Когда упоминаешь кнопку или элемент интерфейса, вставляй иконку в формате [[icon:имя]], где имя одно из: logo, send, stop, plus, trash, gear, copy, download, image, chat, menu, close, eye, eyeOff, refresh, external, chevron, key, alert, paperclip, file, speaker, speakerOff, book, palette, pin, pencil, mic, ghost, play. Верни ТОЛЬКО чистый Markdown: без вступлений, без пояснений и БЕЗ обрамления всего текста в код-блок (никаких ``` в начале и конце).';
   var user = PROJECT_BRIEF + '\nЗАДАЧА: составь полную документацию проекта по брифу выше. Обязательная структура: # AI Provider; ## Что это такое; ## Возможности (таблица); ## Быстрый старт; ## Подключение провайдеров (таблица: провайдер, где взять ключ, особенности) и примеры curl для трёх форматов API; ## Чат и сообщения (все кнопки и сценарии); ## Файлы и скриншоты; ## Голосовые функции; ## Генерация изображений; ## Библиотека промптов; ## Темы и оформление; ## Статистика и стоимость; ## Сравнение моделей; ## Бэкап и перенос; ## Документация (этот раздел); ## Горячие клавиши (таблица); ## Приватность и хранение данных (таблица localStorage-ключей); ## Руководство разработчика (ключевые функции кода, как добавить провайдера, JS-сниппеты); ## FAQ (не меньше 8 вопросов); ## Roadmap. Используй таблицы, списки, цитаты-подсказки и блоки кода. Пиши максимально подробно.';
   if (prov.format === 'anthropic') {
     return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: s.model, max_tokens: 16000, system: sys, messages: [{ role: 'user', content: user }], stream: stream, temperature: 0.5 }) };
@@ -1804,6 +1806,7 @@ async function generateDocs() {
       acc = await streamChat(req, function (txt) { acc = txt; });
     }
     if (!acc) throw new Error('Модель вернула пустой ответ');
+    acc = unwrapCodeFence(acc);
     saveLS('aip_docs', acc);
     renderDocs(acc);
     toast('Документация готова', 'success');
@@ -1814,14 +1817,29 @@ async function generateDocs() {
   $('docsSpinner').classList.add('hidden');
   $('docsEmpty').querySelector('h3').textContent = 'Документация проекта';
 }
+function unwrapCodeFence(text) {
+  var t = String(text || '').trim();
+  if (t.indexOf('```') === 0) {
+    t = t.replace(/^```[a-zA-Z0-9_-]*\s*\n/, '');
+    t = t.replace(/\n\s*```\s*$/, '');
+  }
+  return t;
+}
+function injectDocIcons(html) {
+  return html.replace(/\[\[\s*icon\s*:\s*([a-zA-Z0-9_-]+)\s*\]\]/g, function (m, name) {
+    return ICONS[name] ? '<span class="doc-ic">' + ICONS[name] + '</span>' : m;
+  });
+}
 function renderDocs(md) {
   $('docsEmpty').classList.add('hidden');
   var body = $('docsBody');
   body.classList.remove('hidden');
-  body.innerHTML = renderMarkdown(md);
+  var clean = unwrapCodeFence(md);
+  body.innerHTML = injectDocIcons(renderMarkdown(clean));
   enhanceCodeBlocks(body);
   buildDocsToc(body);
-  $('docsMain') && $('docsMain').scrollTo ? $('docsMain').scrollTo({ top: 0 }) : null;
+  var main = body.closest('.docs-main') || body.parentElement;
+  if (main && main.scrollTo) main.scrollTo({ top: 0 });
 }
 function buildDocsToc(body) {
   var toc = $('docsToc');
