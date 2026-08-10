@@ -187,6 +187,8 @@
   .pin-mark .icon { width: 12px; height: 12px; }
   .convo-empty { padding: 18px 12px; text-align: center; color: var(--text-faint); font-size: 12.5px; }
   .convo-rename-input { width: 100%; background: var(--input-bg); border: 1px solid var(--accent); border-radius: 7px; padding: 3px 7px; font-size: 13px; color: var(--text); outline: none; }
+  .edit-msg-input { width: 100%; min-height: 60px; background: transparent; border: none; outline: none; resize: vertical; color: var(--text); font-size: 14.5px; line-height: 1.5; font-family: var(--font); }
+  .edit-msg-bar { display: flex; gap: 8px; margin-top: 8px; }
   .sidebar-foot { border-top: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
   .side-btn { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; border-radius: 10px; padding: 10px 12px; color: var(--text-dim); font-size: 13.5px; font-weight: 600; text-align: left; transition: background .13s, color .13s; }
   .side-btn:hover { background: rgba(148,163,184,.08); color: var(--text); }
@@ -666,6 +668,7 @@
     </div>
     <div class="field"><label for="modalTtsVoice">Голос озвучки</label><select id="modalTtsVoice"></select></div>
     <div class="field"><label for="modalTtsKey">OpenAI-ключ для озвучки (не нужен, если провайдер OpenAI)</label><input id="modalTtsKey" type="password" autocomplete="off" spellcheck="false"></div>
+    <label class="check-row" style="margin-top:4px"><input id="modalAutoTts" type="checkbox"> Автоозвучка ответов</label>
     <div class="modal-actions">
       <button id="modalCancelBtn" class="btn btn-ghost" type="button">Отмена</button>
       <button id="modalSaveBtn" class="btn btn-primary" type="button">Сохранить</button>
@@ -1565,6 +1568,7 @@ function renderMessages() {
         '<div class="msg-bubble">' + escapeHtml(m.content) + attachHtml + '</div>' +
         '<div class="msg-actions">' +
           '<button class="msg-act" data-act="copy" title="Копировать">' + ICONS.copy + '</button>' +
+          '<button class="msg-act" data-act="edit" title="Редактировать">' + ICONS.pencil + '</button>' +
           '<button class="msg-act danger" data-act="del" title="Удалить">' + ICONS.trash + '</button>' +
         '</div>';
     } else {
@@ -1755,6 +1759,14 @@ async function runAssistant() {
   }
   am.streaming = false;
   setGenerating(false);
+  if (state.settings.autoTts && !am.error && am.content) {
+    var tmpT = document.createElement('div');
+    tmpT.innerHTML = renderMarkdown(am.content);
+    var codeT = tmpT.querySelectorAll('pre, .code-block');
+    for (var q2 = 0; q2 < codeT.length; q2++) codeT[q2].remove();
+    var speakable = (tmpT.textContent || '').replace(/\s+/g, ' ').trim();
+    if (speakable) speakText(speakable, am.id);
+  }
   convo.updatedAt = Date.now();
   renderMessages();
   renderConvoList();
@@ -1771,6 +1783,53 @@ function regenerateLast() {
   convo.messages.splice(idx, 1);
   renderMessages();
   runAssistant();
+}
+function startEditMessage(id) {
+  if (state.generating) return;
+  var convo = currentConvo();
+  var msg = null;
+  var idx = -1;
+  for (var i = 0; i < convo.messages.length; i++) if (convo.messages[i].id === id) { msg = convo.messages[i]; idx = i; break; }
+  if (!msg || msg.role !== 'user') return;
+  var row = $('messagesList').querySelector('.msg[data-id="' + id + '"]');
+  if (!row) return;
+  var bubble = row.querySelector('.msg-bubble');
+  var old = msg.content;
+  bubble.innerHTML = '';
+  var ta = document.createElement('textarea');
+  ta.className = 'edit-msg-input';
+  ta.value = old;
+  var bar = document.createElement('div');
+  bar.className = 'edit-msg-bar';
+  var saveB = document.createElement('button');
+  saveB.className = 'btn btn-primary btn-sm';
+  saveB.type = 'button';
+  saveB.textContent = 'Сохранить и перегенерировать';
+  var cancelB = document.createElement('button');
+  cancelB.className = 'btn btn-ghost btn-sm';
+  cancelB.type = 'button';
+  cancelB.textContent = 'Отмена';
+  bar.appendChild(saveB);
+  bar.appendChild(cancelB);
+  bubble.appendChild(ta);
+  bubble.appendChild(bar);
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  autosize(ta);
+  cancelB.addEventListener('click', function () { renderMessages(); });
+  saveB.addEventListener('click', function () {
+    var v = ta.value.trim();
+    if (!v) { toast('Пустое сообщение', 'error'); return; }
+    if (v === old) { renderMessages(); return; }
+    msg.content = v;
+    convo.messages = convo.messages.slice(0, idx + 1);
+    convo.updatedAt = Date.now();
+    saveConvos();
+    renderMessages();
+    renderConvoList();
+    scrollBottom(false);
+    runAssistant();
+  });
 }
 
 /* ---------- Действия над сообщениями (делегирование) ---------- */
@@ -1802,6 +1861,8 @@ function bindMessagesActions() {
       convo.messages = convo.messages.filter(function (m) { return m.id !== id; });
       saveConvos();
       renderMessages();
+    } else if (a === 'edit') {
+      startEditMessage(msg.id);
     } else if (a === 'regen') {
       regenerateLast();
     } else if (a === 'speak') {
@@ -2025,6 +2086,7 @@ function openSettingsModal() {
   $('modalStreamCheck').checked = s.stream !== false;
   $('modalTtsEngine').value = s.ttsEngine || 'browser';
   $('modalTtsKey').value = s.ttsKey || '';
+  $('modalAutoTts').checked = s.autoTts === true;
   fillTtsVoices();
   $('settingsModal').classList.add('open');
 }
@@ -2043,7 +2105,8 @@ function saveSettingsModal() {
     stream: $('modalStreamCheck').checked,
     ttsEngine: $('modalTtsEngine').value,
     ttsVoice: $('modalTtsVoice').value,
-    ttsKey: $('modalTtsKey').value.trim()
+    ttsKey: $('modalTtsKey').value.trim(),
+    autoTts: $('modalAutoTts').checked
   };
   saveSettings();
   updateHeader();
