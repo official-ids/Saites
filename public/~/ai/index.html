@@ -956,14 +956,24 @@ function toggleMic() {
   rec.continuous = true;
   rec.maxAlternatives = 1;
   recState.base = $('msgInput').value ? $('msgInput').value.replace(/\s*$/, ' ') : '';
+  recState.final = '';
+  recState.lastFinal = '';
   rec.onresult = function (e) {
-    var finalT = '';
     var interim = '';
-    for (var i = 0; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalT += e.results[i][0].transcript + ' ';
-      else interim += e.results[i][0].transcript;
+    var start = (typeof e.resultIndex === 'number') ? e.resultIndex : 0;
+    for (var i = start; i < e.results.length; i++) {
+      var t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        t = t.trim();
+        if (t && t !== recState.lastFinal) {
+          recState.final += t + ' ';
+          recState.lastFinal = t;
+        }
+      } else {
+        interim += t;
+      }
     }
-    $('msgInput').value = (recState.base + finalT + interim).trimStart();
+    $('msgInput').value = (recState.base + recState.final + interim).replace(/\s+/g, ' ').trimStart();
     autosize($('msgInput'));
   };
   rec.onerror = function (e) {
