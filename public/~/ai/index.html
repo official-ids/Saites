@@ -192,6 +192,8 @@
   .sidebar-foot { border-top: 1px solid var(--border); padding: 12px; display: flex; flex-direction: column; gap: 4px; }
   .side-btn { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: none; border-radius: 10px; padding: 10px 12px; color: var(--text-dim); font-size: 13.5px; font-weight: 600; text-align: left; transition: background .13s, color .13s; }
   .side-btn:hover { background: rgba(148,163,184,.08); color: var(--text); }
+  .side-btn.on { color: var(--accent-2); background: rgba(56,189,248,.1); }
+  .incognito-chip { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-2); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.3); border-radius: 99px; padding: 3px 10px; white-space: nowrap; }
   .sidebar-overlay { position: fixed; inset: 0; background: rgba(4,6,10,.6); backdrop-filter: blur(2px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .25s; }
 
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -412,6 +414,21 @@
   .sel-toolbar button { background: transparent; border: none; border-radius: 8px; color: var(--text-dim); font-size: 12.5px; font-weight: 600; padding: 7px 11px; transition: background .13s, color .13s; white-space: nowrap; }
   .sel-toolbar button:hover { background: rgba(124,108,255,.14); color: var(--text); }
 
+  .compare-panel { overflow-y: auto; padding: 22px 18px; }
+  .compare-wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .cmp-row { grid-template-columns: 1fr 1fr auto; }
+  .cmp-results { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .cmp-card { background: var(--input-bg); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; animation: msgIn .3s ease both; }
+  .cmp-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cmp-model { font-family: var(--mono); font-size: 12px; color: var(--accent-2); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.25); border-radius: 99px; padding: 3px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cmp-body { font-size: 14px; word-break: break-word; }
+  .cmp-body > *:first-child { margin-top: 0; }
+  .cmp-body > *:last-child { margin-bottom: 0; }
+  .cmp-body p { margin: 8px 0; }
+  .cmp-body ul, .cmp-body ol { margin: 8px 0; padding-left: 22px; }
+  .cmp-card.pending { min-height: 220px; align-items: center; justify-content: center; gap: 14px; color: var(--text-dim); font-size: 13px; }
+  @media (max-width: 860px) { .cmp-results { grid-template-columns: 1fr; } .cmp-row { grid-template-columns: 1fr; } }
+
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
     .setup-card { grid-template-columns: 1fr; max-width: 640px; }
@@ -442,6 +459,7 @@
     .mode-tab { padding: 8px 14px; font-size: 12.5px; }
     .model-chip { max-width: 120px; }
     .cost-chip { display: none; }
+    .incognito-chip { display: none; }
     .topbar { gap: 6px; padding: 0 8px; }
     .topbar-provider { min-width: 0; }
     #headerProviderName { font-size: 13px; }
@@ -525,6 +543,7 @@
     <div class="sidebar-label">Диалоги</div>
     <div id="convoList" class="convo-list"></div>
     <div class="sidebar-foot">
+      <button id="incognitoBtn" class="side-btn" type="button"><span class="sb-ghost"></span> Инкогнито-режим</button>
       <button id="settingsBtnSidebar" class="side-btn" type="button"><span class="sb-gear"></span> Настройки модели</button>
       <button id="changeProviderBtn" class="side-btn" type="button"><span class="sb-key"></span> Сменить провайдера</button>
     </div>
@@ -541,6 +560,7 @@
         <span class="sep"></span>
         <span id="headerModelChip" class="model-chip">gpt-5</span>
         <span id="costChip" class="cost-chip" title="Примерное число токенов и стоимость диалога"></span>
+        <span id="incognitoChip" class="incognito-chip hidden">Инкогнито</span>
       </div>
       <div class="topbar-right">
         <button id="exportBtn" class="icon-btn" type="button" title="Экспорт диалога в файл"></button>
@@ -555,6 +575,7 @@
       <button id="tabPrompts" class="mode-tab" type="button"><span class="tab-prompt-ic"></span> Промпты</button>
       <button id="tabThemes" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 2-1.5 3-3 3h-2a2 2 0 0 0-2 2c0 1 .5 1.5.5 2.5S14 22 12 22z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg> Темы</button>
       <button id="tabStats" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Статистика</button>
+      <button id="tabCompare" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg> Сравнение</button>
     </div>
 
     <section id="chatPanel" class="panel">
@@ -699,6 +720,23 @@
         <div id="statsTop" class="stats-top"></div>
       </div>
     </section>
+        <section id="comparePanel" class="panel compare-panel hidden">
+      <div class="compare-wrap">
+        <div class="img-form">
+          <div class="field">
+            <label for="cmpQuestion">Вопрос для обеих моделей</label>
+            <textarea id="cmpQuestion" rows="3" placeholder="Например: Объясни, что такое рекурсия, и приведи пример кода"></textarea>
+          </div>
+          <div class="img-form-row cmp-row">
+            <div class="field"><label for="cmpModelA">Модель A</label><select id="cmpModelA"></select></div>
+            <div class="field"><label for="cmpModelB">Модель B</label><select id="cmpModelB"></select></div>
+            <button id="cmpRunBtn" class="btn btn-primary" type="button">Сравнить</button>
+          </div>
+          <div class="field-hint">Один вопрос уходит двум моделям текущего провайдера параллельно — удобно выбирать, какая отвечает лучше.</div>
+        </div>
+        <div id="cmpResults" class="cmp-results"></div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -811,7 +849,8 @@ var ICONS = {
   palette: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 2-1.5 3-3 3h-2a2 2 0 0 0-2 2c0 1 .5 1.5.5 2.5S14 22 12 22z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg>',
   pin: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>',
   pencil: '<svg class="icon" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
-  mic: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>'
+  mic: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
+  ghost: '<svg class="icon" viewBox="0 0 24 24"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>'
 };
 
 /* ---------- Провайдеры ---------- */
@@ -923,7 +962,8 @@ var state = {
   mode: 'chat',
   images: [],
   pendingFiles: [],
-  setupProvider: 'openai'
+  setupProvider: 'openai',
+  incognito: false
 };
 
 /* ---------- Утилиты ---------- */
@@ -1486,10 +1526,96 @@ function toChatWith(text) {
   autosize($('msgInput'));
   $('msgInput').focus();
 }
-
+/* ---------- Сравнение моделей ---------- */
+function setupCompareForm() {
+  var prov = PROVIDERS[state.settings.provider];
+  var a = $('cmpModelA'), b = $('cmpModelB');
+  a.innerHTML = '';
+  b.innerHTML = '';
+  prov.models.forEach(function (m) {
+    var o1 = document.createElement('option'); o1.value = m; o1.textContent = m; a.appendChild(o1);
+    var o2 = document.createElement('option'); o2.value = m; o2.textContent = m; b.appendChild(o2);
+  });
+  a.value = prov.models.indexOf(state.settings.model) !== -1 ? state.settings.model : prov.models[0];
+  var second = null;
+  for (var i = 0; i < prov.models.length; i++) if (prov.models[i] !== a.value) { second = prov.models[i]; break; }
+  b.value = second || prov.models[0];
+}
+function buildCompareRequest(model, question) {
+  var s = state.settings;
+  var prov = PROVIDERS[s.provider];
+  var sys = (s.systemPrompt || '').trim();
+  var reason = isReasoningModel(model);
+  if (prov.format === 'anthropic') {
+    var ab = { model: model, max_tokens: s.maxTokens || 4096, messages: [{ role: 'user', content: question }], stream: false };
+    if (sys) ab.system = sys;
+    if (!reason) ab.temperature = 0.7;
+    return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify(ab) };
+  }
+  if (prov.format === 'gemini') {
+    var gb = { contents: [{ role: 'user', parts: [{ text: question }] }], generationConfig: { temperature: 0.7, maxOutputTokens: s.maxTokens || 8192 } };
+    if (sys) gb.systemInstruction = { parts: [{ text: sys }] };
+    return { url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', headers: { 'content-type': 'application/json', 'x-goog-api-key': s.apiKey }, body: JSON.stringify(gb) };
+  }
+  var msgs = sys ? [{ role: 'system', content: sys }, { role: 'user', content: question }] : [{ role: 'user', content: question }];
+  var ob = { model: model, messages: msgs, stream: false };
+  if (!reason) ob.temperature = 0.7;
+  if (s.maxTokens) { if (reason) ob.max_completion_tokens = Number(s.maxTokens); else ob.max_tokens = Number(s.maxTokens); }
+  return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey }, body: JSON.stringify(ob) };
+}
+async function runCompare() {
+  var q = $('cmpQuestion').value.trim();
+  if (!q) { toast('Введите вопрос для сравнения', 'error'); return; }
+  var mA = $('cmpModelA').value, mB = $('cmpModelB').value;
+  if (mA === mB) { toast('Выберите две разные модели', 'error'); return; }
+  var btn = $('cmpRunBtn');
+  btn.disabled = true;
+  var box = $('cmpResults');
+  box.innerHTML =
+    '<div class="cmp-card pending"><div class="spinner"></div><span>' + escapeHtml(mA) + ' думает...</span></div>' +
+    '<div class="cmp-card pending"><div class="spinner"></div><span>' + escapeHtml(mB) + ' думает...</span></div>';
+  var jobs = [mA, mB].map(function (model) {
+    return (async function () {
+      try {
+        var req = buildCompareRequest(model, q);
+        var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
+        if (!resp.ok) throw new Error(await httpError(resp));
+        var data = await resp.json();
+        if (data.error) throw new Error(errorTextFromJson(data));
+        return { model: model, text: extractFullText(data) };
+      } catch (e) {
+        return { model: model, error: e && e.message ? e.message : String(e) };
+      }
+    })();
+  });
+  var results = await Promise.all(jobs);
+  box.innerHTML = '';
+  results.forEach(function (r) {
+    var card = document.createElement('div');
+    card.className = 'cmp-card';
+    var head = '<div class="cmp-card-head"><span class="cmp-model">' + escapeHtml(r.model) + '</span>' +
+      (r.error ? '' : '<button class="msg-act" type="button" data-cmpcopy title="Копировать">' + ICONS.copy + '</button>') + '</div>';
+    var body = r.error
+      ? '<div class="cmp-body" style="color:var(--danger)">' + escapeHtml(r.error) + '</div>'
+      : '<div class="cmp-body">' + renderMarkdown(r.text || '(пустой ответ)') + '</div>';
+    card.innerHTML = head + body;
+    if (!r.error) {
+      card.querySelector('[data-cmpcopy]').addEventListener('click', function () {
+        navigator.clipboard.writeText(r.text).then(function () { toast('Ответ скопирован', 'success'); });
+      });
+      enhanceCodeBlocks(card);
+    }
+    box.appendChild(card);
+  });
+  btn.disabled = false;
+}
 /* ---------- Сохранение настроек и диалогов ---------- */
 function saveSettings() { saveLS('aip_settings', state.settings); }
-function saveConvos() { saveLS('aip_conversations', state.conversations); saveLS('aip_current', state.currentId); }
+function saveConvos() {
+  var toSave = state.conversations.filter(function (c) { return !c.incognito; });
+  saveLS('aip_conversations', toSave);
+  saveLS('aip_current', state.currentId);
+}
 function currentConvo() {
   for (var i = 0; i < state.conversations.length; i++) if (state.conversations[i].id === state.currentId) return state.conversations[i];
   return null;
@@ -1962,7 +2088,7 @@ function renderConvoList() {
     item.setAttribute('data-id', c.id);
     item.innerHTML =
       '<div class="convo-info">' +
-        '<div class="convo-title">' + (c.pinned ? '<span class="pin-mark">' + ICONS.pin + '</span>' : '') + escapeHtml(c.title || 'Новый чат') + '</div>' +
+        '<div class="convo-title">' + (c.pinned ? '<span class="pin-mark">' + ICONS.pin + '</span>' : '') + (c.incognito ? '<span class="pin-mark" title="Инкогнито">' + ICONS.ghost + '</span>' : '') + escapeHtml(c.title || 'Новый чат') + '</div>' +
         '<div class="convo-sub">' + escapeHtml(PROVIDERS[state.settings.provider].name) + ' · ' + fmtDate(c.updatedAt || c.createdAt) + '</div>' +
       '</div>' +
       '<div class="convo-btns">' +
@@ -1978,6 +2104,7 @@ function renderConvoList() {
 function ensureCurrent() {
   if (!currentConvo()) {
     var c = { id: uid(), title: 'Новый чат', createdAt: Date.now(), updatedAt: Date.now(), messages: [] };
+    if (state.incognito) c.incognito = true;
     state.conversations.push(c);
     state.currentId = c.id;
     saveConvos();
@@ -1985,6 +2112,7 @@ function ensureCurrent() {
 }
 function newConversation() {
   var c = { id: uid(), title: 'Новый чат', createdAt: Date.now(), updatedAt: Date.now(), messages: [] };
+  if (state.incognito) c.incognito = true;
   state.conversations.push(c);
   state.currentId = c.id;
   saveConvos();
@@ -2066,6 +2194,7 @@ async function runAssistant() {
   }
   am.streaming = false;
   if (!am.error) bumpUnread();
+  if (!am.error) autoTitle(convo.id);
   setGenerating(false);
   if (state.settings.autoTts && !am.error && am.content) {
     var tmpT = document.createElement('div');
@@ -2189,6 +2318,51 @@ function selAction(kind) {
   else prompt = 'Сделай следующий текст короче, сохранив главный смысл:\n\n' + text;
   setMode('chat');
   sendUserMessage(prompt);
+}
+/* ---------- Автозаголовки диалогов ---------- */
+function buildTitleRequest(userText, assistText) {
+  var s = state.settings;
+  var prov = PROVIDERS[s.provider];
+  var sys = 'Придумай короткое и точное название для диалога: 3-6 слов. Верни ТОЛЬКО текст названия — без кавычек, без точки в конце, без нумерации и без лишних слов.';
+  var user = 'Первое сообщение пользователя: ' + userText.slice(0, 600) + (assistText ? '\nНачало ответа ассистента: ' + assistText.slice(0, 300) : '');
+  var reason = isReasoningModel(s.model);
+  if (prov.format === 'anthropic') {
+    return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: s.model, max_tokens: 80, system: sys, messages: [{ role: 'user', content: user }], stream: false, temperature: 0.5 }) };
+  }
+  if (prov.format === 'gemini') {
+    return { url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(s.model) + ':generateContent', headers: { 'content-type': 'application/json', 'x-goog-api-key': s.apiKey }, body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: user }] }], generationConfig: { temperature: 0.5, maxOutputTokens: 80 } }) };
+  }
+  var body = { model: s.model, messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], stream: false };
+  if (!reason) body.temperature = 0.5;
+  if (reason) body.max_completion_tokens = 80; else body.max_tokens = 80;
+  return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey }, body: JSON.stringify(body) };
+}
+async function autoTitle(convoId) {
+  var convo = findConvo(convoId);
+  if (!convo || convo.autoTitled) return;
+  var firstUser = null, firstAssist = '';
+  for (var i = 0; i < convo.messages.length; i++) {
+    var m = convo.messages[i];
+    if (!firstUser && m.role === 'user') firstUser = m.content;
+    if (m.role === 'assistant' && !m.error && m.content) { firstAssist = m.content; break; }
+  }
+  if (!firstUser) return;
+  convo.autoTitled = true;
+  var before = convo.title;
+  try {
+    var req = buildTitleRequest(firstUser, firstAssist);
+    var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
+    if (!resp.ok) return;
+    var data = await resp.json();
+    if (data.error) return;
+    var t = (extractFullText(data) || '').trim();
+    t = t.replace(/^(название|title)\s*:\s*/i, '').replace(/["«»']/g, '').replace(/\.\s*$/, '').split('\n')[0].trim();
+    if (t && t.length <= 80 && convo.title === before) {
+      convo.title = t;
+      saveConvos();
+      renderConvoList();
+    }
+  } catch (e) {}
 }
 /* ---------- Действия над сообщениями (делегирование) ---------- */
 function bindMessagesActions() {
@@ -2414,15 +2588,18 @@ function setMode(mode) {
   $('tabPrompts').classList.toggle('active', mode === 'prompts');
   $('tabThemes').classList.toggle('active', mode === 'themes');
   $('tabStats').classList.toggle('active', mode === 'stats');
+  $('tabCompare').classList.toggle('active', mode === 'compare');
   $('chatPanel').classList.toggle('hidden', mode !== 'chat');
   $('imagesPanel').classList.toggle('hidden', mode !== 'images');
   $('promptsPanel').classList.toggle('hidden', mode !== 'prompts');
   $('themesPanel').classList.toggle('hidden', mode !== 'themes');
   $('statsPanel').classList.toggle('hidden', mode !== 'stats');
+  $('comparePanel').classList.toggle('hidden', mode !== 'compare');
   if (mode === 'images') setupImageForm();
   if (mode === 'prompts') renderLibrary();
   if (mode === 'themes') { syncManualInputs(); renderThemesTab(); }
   if (mode === 'stats') renderStats();
+  if (mode === 'compare') setupCompareForm();
 }
 function updateHeader() {
   var prov = PROVIDERS[state.settings.provider];
@@ -2521,6 +2698,17 @@ function showSetup() {
 /* ---------- Сайдбар (мобильный) ---------- */
 function openSidebar() { $('sidebar').classList.add('open'); $('sidebarOverlay').classList.add('show'); }
 function closeSidebar() { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('show'); }
+function toggleIncognito() {
+  state.incognito = !state.incognito;
+  updateIncognitoUi();
+  toast(state.incognito ? 'Инкогнито включён: новые диалоги не сохраняются' : 'Инкогнито выключен', state.incognito ? 'success' : undefined);
+}
+function updateIncognitoUi() {
+  var btn = $('incognitoBtn');
+  if (btn) btn.classList.toggle('on', state.incognito);
+  var chip = $('incognitoChip');
+  if (chip) chip.classList.toggle('hidden', !state.incognito);
+}
 
 /* ---------- Авторазмер textarea ---------- */
 function autosize(el) {
@@ -2614,6 +2802,9 @@ function init() {
   $('newChatBtn').addEventListener('click', newConversation);
   $('settingsBtnSidebar').addEventListener('click', function () { closeSidebar(); openSettingsModal(); });
   $('changeProviderBtn').addEventListener('click', function () { closeSidebar(); showSetup(); });
+  document.querySelector('.sb-ghost').innerHTML = ICONS.ghost;
+  $('incognitoBtn').addEventListener('click', toggleIncognito);
+  updateIncognitoUi();
   $('settingsBtnHeader').addEventListener('click', openSettingsModal);
   $('exportBtn').addEventListener('click', exportChat);
   $('clearChatBtn').addEventListener('click', function () {
@@ -2626,6 +2817,8 @@ function init() {
   $('tabPrompts').addEventListener('click', function () { setMode('prompts'); });
   $('tabThemes').addEventListener('click', function () { setMode('themes'); });
   $('tabStats').addEventListener('click', function () { setMode('stats'); });
+  $('tabCompare').addEventListener('click', function () { setMode('compare'); });
+  $('cmpRunBtn').addEventListener('click', runCompare);
   $('genThemeBtn').addEventListener('click', genTheme);
   $('applyThemeBtn').addEventListener('click', function () { if (pendingTheme) { applyTheme(pendingTheme); toast('Тема применена: ' + pendingTheme.name, 'success'); } });
   $('saveThemeBtn').addEventListener('click', function () { if (pendingTheme) saveThemeToMy(pendingTheme); });
