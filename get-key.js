@@ -1,6 +1,5 @@
-const express = require('express');
 const { kv } = require('@vercel/kv');
-const router = express.Router();
+const router = require('express').Router();
 
 // ============================================
 // Конфигурация
@@ -15,12 +14,8 @@ const CONFIG = {
 // ============================================
 // Утилиты
 // ============================================
-/**
- * Генерация случайного ключа
- * @returns {string} Случайный ключ
- */
 function generateKey() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Без похожих символов (I, O, 0, 1)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let result = '';
     for (let i = 0; i < CONFIG.KEY_LENGTH; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -28,9 +23,6 @@ function generateKey() {
     return result;
 }
 
-/**
- * Rate limiting для генерации ключей
- */
 async function checkRateLimit(ip) {
     const key = `ratelimit:getkey:${ip}`;
     const data = await kv.hgetall(key);
@@ -68,9 +60,9 @@ async function checkRateLimit(ip) {
 // ============================================
 
 /**
- * POST /api/get-key — получение нового ключа
+ * GET/POST /api/get-key — получение нового ключа
  */
-router.post('/', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const ip = req.ip || req.connection.remoteAddress || 'unknown';
         
@@ -131,6 +123,13 @@ router.post('/', async (req, res) => {
             message: 'Ошибка сервера при генерации ключа' 
         });
     }
+});
+
+// Также поддерживаем POST для совместимости
+router.post('/', async (req, res) => {
+    // Перенаправляем на GET обработчик
+    req.method = 'GET';
+    router.handle(req, res, () => {});
 });
 
 /**
