@@ -262,6 +262,7 @@
   .msg-act:hover { color: var(--text); background: rgba(148,163,184,.12); }
   .msg-act.danger:hover { color: var(--danger); background: rgba(248,113,113,.12); }
   .msg-act.speaking { color: var(--accent-2); background: rgba(56,189,248,.14); }
+  .msg-stats { color: var(--text-faint); font-family: var(--mono); font-size: 11px; }
 
   .typing { display: inline-flex; gap: 5px; padding: 6px 2px; }
   .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); animation: blink 1.2s infinite ease-in-out; }
@@ -321,6 +322,8 @@
   .toast .icon { color: inherit; }
   @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   .toast.out { opacity: 0; transform: translateY(8px); transition: .25s; }
+  .undo-btn { margin-left: auto; background: none; border: 1px solid var(--border-strong); color: var(--accent-2); border-radius: 8px; padding: 5px 12px; font-size: 12.5px; font-weight: 600; flex: none; transition: border-color .13s; }
+  .undo-btn:hover { border-color: var(--accent-2); }
 
   /* ---------- ФАЙЛЫ И МИКРОФОН ---------- */
 
@@ -428,6 +431,10 @@
   .cmp-body ul, .cmp-body ol { margin: 8px 0; padding-left: 22px; }
   .cmp-card.pending { min-height: 220px; align-items: center; justify-content: center; gap: 14px; color: var(--text-dim); font-size: 13px; }
   @media (max-width: 860px) { .cmp-results { grid-template-columns: 1fr; } .cmp-row { grid-template-columns: 1fr; } }
+
+  .backup-panel { overflow-y: auto; padding: 22px 18px; }
+  .backup-wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+  .backup-note { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
 
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
@@ -576,6 +583,7 @@
       <button id="tabThemes" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><path d="M12 22a10 10 0 1 1 10-10c0 2-1.5 3-3 3h-2a2 2 0 0 0-2 2c0 1 .5 1.5.5 2.5S14 22 12 22z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/><circle cx="17.5" cy="11.5" r="1"/></svg> Темы</button>
       <button id="tabStats" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Статистика</button>
       <button id="tabCompare" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg> Сравнение</button>
+      <button id="tabBackup" class="mode-tab" type="button"><svg class="icon" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Бэкап</button>
     </div>
 
     <section id="chatPanel" class="panel">
@@ -737,6 +745,21 @@
         <div id="cmpResults" class="cmp-results"></div>
       </div>
     </section>
+        <section id="backupPanel" class="panel backup-panel hidden">
+      <div class="backup-wrap">
+        <div class="lib-head"><h3>Полный бэкап</h3></div>
+        <p class="backup-note">В файл попадает всё: настройки провайдера включая API-ключ, все диалоги, библиотека промптов и собственные темы. Перенеси файл на другое устройство или в другой браузер и восстанови данные одной кнопкой. Не отправляй файл посторонним — внутри ключ.</p>
+        <div id="backupStats" class="stats-cards"></div>
+        <div class="img-form">
+          <div class="prompts-actions">
+            <button id="backupDownloadBtn" class="btn btn-primary" type="button">Скачать бэкап (JSON)</button>
+            <button id="backupRestoreBtn" class="btn btn-ghost" type="button">Восстановить из файла</button>
+            <input id="backupFileInput" type="file" accept="application/json,.json" class="hidden">
+          </div>
+          <div class="field-hint">При восстановлении текущие данные будут заменены данными из файла, страница перезагрузится.</div>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -769,6 +792,7 @@
     <div class="field"><label for="modalTtsVoice">Голос озвучки</label><select id="modalTtsVoice"></select></div>
     <div class="field"><label for="modalTtsKey">OpenAI-ключ для озвучки (не нужен, если провайдер OpenAI)</label><input id="modalTtsKey" type="password" autocomplete="off" spellcheck="false"></div>
     <label class="check-row" style="margin-top:4px"><input id="modalAutoTts" type="checkbox"> Автоозвучка ответов</label>
+    <label class="check-row" style="margin-top:4px"><input id="modalDoneSound" type="checkbox"> Звук, когда ответ готов (фоновая вкладка)</label>
     <div class="modal-actions">
       <button id="modalCancelBtn" class="btn btn-ghost" type="button">Отмена</button>
       <button id="modalSaveBtn" class="btn btn-primary" type="button">Сохранить</button>
@@ -850,7 +874,8 @@ var ICONS = {
   pin: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>',
   pencil: '<svg class="icon" viewBox="0 0 24 24"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>',
   mic: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>',
-  ghost: '<svg class="icon" viewBox="0 0 24 24"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>'
+  ghost: '<svg class="icon" viewBox="0 0 24 24"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 19l2.5 2.5L17 19l3 3V10a8 8 0 0 0-8-8z"/></svg>',
+  play: '<svg class="icon" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>'
 };
 
 /* ---------- Провайдеры ---------- */
@@ -1609,6 +1634,63 @@ async function runCompare() {
   });
   btn.disabled = false;
 }
+/* ---------- Бэкап ---------- */
+function collectBackup() {
+  return {
+    app: 'ai-provider',
+    version: 1,
+    ts: Date.now(),
+    settings: state.settings,
+    conversations: state.conversations,
+    currentId: state.currentId,
+    prompts: loadLS('aip_prompts') || [],
+    themes: loadLS('aip_themes') || [],
+    theme: state.currentTheme || loadLS('aip_theme')
+  };
+}
+function downloadBackup() {
+  var data = collectBackup();
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'ai-provider-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  toast('Бэкап скачан', 'success');
+}
+function renderBackupStats() {
+  var msgs = 0;
+  state.conversations.forEach(function (c) { msgs += (c.messages || []).length; });
+  $('backupStats').innerHTML =
+    '<div class="stat-card"><div class="stat-value">' + state.conversations.length + '</div><div class="stat-label">Диалогов</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + msgs + '</div><div class="stat-label">Сообщений</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + (loadLS('aip_prompts') || []).length + '</div><div class="stat-label">Промптов</div></div>' +
+    '<div class="stat-card"><div class="stat-value">' + (loadLS('aip_themes') || []).length + '</div><div class="stat-label">Своих тем</div></div>';
+}
+function restoreBackup(file) {
+  var reader = new FileReader();
+  reader.onload = function () {
+    try {
+      var data = JSON.parse(reader.result);
+      if (!data || data.app !== 'ai-provider') throw new Error('это не файл бэкапа AI Provider');
+      if (!confirm('Заменить текущие данные данными из бэкапа? Диалоги и настройки будут перезаписаны.')) return;
+      if (data.settings) saveLS('aip_settings', data.settings);
+      saveLS('aip_conversations', Array.isArray(data.conversations) ? data.conversations : []);
+      saveLS('aip_current', data.currentId || null);
+      if (Array.isArray(data.prompts)) saveLS('aip_prompts', data.prompts);
+      if (Array.isArray(data.themes)) saveLS('aip_themes', data.themes);
+      if (data.theme) saveLS('aip_theme', data.theme);
+      toast('Бэкап восстановлен, перезагрузка...', 'success');
+      setTimeout(function () { location.reload(); }, 700);
+    } catch (e) {
+      toast('Ошибка восстановления: ' + (e && e.message ? e.message : e), 'error');
+    }
+  };
+  reader.readAsText(file);
+}
 /* ---------- Сохранение настроек и диалогов ---------- */
 function saveSettings() { saveLS('aip_settings', state.settings); }
 function saveConvos() {
@@ -1884,7 +1966,7 @@ async function httpError(resp) {
 }
 
 /* ---------- Стриминг ---------- */
-async function streamChat(req, onDelta) {
+async function streamChat(req, onDelta, meta) {
   var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body, signal: state.abortCtrl ? state.abortCtrl.signal : undefined });
   if (!resp.ok) throw new Error(await httpError(resp));
   if (!resp.body) {
@@ -1910,8 +1992,13 @@ async function streamChat(req, onDelta) {
       var obj;
       try { obj = JSON.parse(payload); } catch (e) { continue; }
       if (obj.error) throw new Error(errorTextFromJson(obj));
-      var piece = extractDelta(obj);
-      if (piece) { acc += piece; onDelta(acc); }
+      if (meta) {
+      if (obj.choices && obj.choices[0] && obj.choices[0].finish_reason === 'length') meta.truncated = true;
+      if (obj.type === 'message_delta' && obj.delta && obj.delta.stop_reason === 'max_tokens') meta.truncated = true;
+      if (obj.candidates && obj.candidates[0] && obj.candidates[0].finishReason === 'MAX_TOKENS') meta.truncated = true;
+    }
+var piece = extractDelta(obj);
+if (piece) { acc += piece; onDelta(acc); }
     }
   }
   return acc;
@@ -1979,10 +2066,11 @@ function renderMessages() {
   empty.classList.add('hidden');
   var prov = PROVIDERS[state.settings.provider];
   var lastAssistantId = null;
-  for (var i = convo.messages.length - 1; i >= 0; i--) { if (convo.messages[i].role === 'assistant') { lastAssistantId = convo.messages[i].id; break; } }
+  for (var i = convo.messages.length - 1; i >= 0; i--) { if (convo.messages[i].role === 'assistant' && !convo.messages[i].hidden) { lastAssistantId = convo.messages[i].id; break; } }
 
-  convo.messages.forEach(function (m) {
-    var row = document.createElement('div');
+convo.messages.forEach(function (m) {
+if (m.hidden) return;
+var row = document.createElement('div');
     if (m.role === 'user') {
       row.className = 'msg user';
       row.setAttribute('data-id', m.id);
@@ -2009,14 +2097,17 @@ function renderMessages() {
       if (m.streaming) contentHtml = typingHtml();
       else if (m.error) contentHtml = escapeHtml(m.content);
       else contentHtml = renderMarkdown(m.content);
-      var actions = '<button class="msg-act" data-act="copy" title="Копировать">' + ICONS.copy + '</button>' +
-      '<button class="msg-act" data-act="speak" title="Озвучить">' + ICONS.speaker + '</button>';
-      if (m.id === lastAssistantId && !m.streaming) actions += '<button class="msg-act" data-act="regen" title="Сгенерировать заново">' + ICONS.refresh + '</button>';
-      actions += '<button class="msg-act danger" data-act="del" title="Удалить">' + ICONS.trash + '</button>';
+var actions = '<button class="msg-act" data-act="copy" title="Копировать">' + ICONS.copy + '</button>' +
+'<button class="msg-act" data-act="speak" title="Озвучить">' + ICONS.speaker + '</button>';
+if (m.id === lastAssistantId && !m.streaming) {
+actions += '<button class="msg-act' + (m.truncated ? ' speaking' : '') + '" data-act="continue" title="' + (m.truncated ? 'Ответ оборвался — продолжить' : 'Продолжить генерацию') + '">' + ICONS.play + '</button>';
+actions += '<button class="msg-act" data-act="regen" title="Сгенерировать заново">' + ICONS.refresh + '</button>';
+}
+actions += '<button class="msg-act danger" data-act="del" title="Удалить">' + ICONS.trash + '</button>';
       row.innerHTML =
         '<div class="msg-avatar"><span class="av-letter" style="color:' + prov.color + '">' + escapeHtml(prov.name.charAt(0)) + '</span><img class="av-logo" src="' + logoChain(state.settings.provider).src + '" data-alt="' + logoChain(state.settings.provider).alt + '" alt="" loading="lazy" onload="this.previousElementSibling.style.opacity=\'0\'" onerror="logoFallback(this)"></div>' +
         '<div class="msg-body">' +
-          '<div class="msg-head"><span class="msg-author">' + escapeHtml(prov.name) + (m.model ? ' · ' + escapeHtml(m.model) : '') + '</span><span>' + fmtTime(m.ts) + '</span></div>' +
+          '<div class="msg-head"><span class="msg-author">' + escapeHtml(prov.name) + (m.model ? ' · ' + escapeHtml(m.model) : '') + '</span><span>' + fmtTime(m.ts) + '</span>' + (m.stats ? '<span class="msg-stats">думала ' + m.stats.think.toFixed(1) + 's · ' + Math.round(m.stats.tps) + ' ток/с</span>' : '') + '</div>' +
           '<div class="msg-content">' + contentHtml + '</div>' +
           '<div class="msg-actions">' + actions + '</div>' +
         '</div>';
@@ -2131,12 +2222,42 @@ function openConversation(id) {
   closeSidebar();
   scrollBottom(false);
 }
+var pendingDelete = null;
 function deleteConversation(id) {
-  state.conversations = state.conversations.filter(function (c) { return c.id !== id; });
-  if (state.currentId === id) { state.currentId = null; ensureCurrent(); }
-  saveConvos();
-  renderConvoList();
-  renderMessages();
+var idx = -1;
+for (var i = 0; i < state.conversations.length; i++) if (state.conversations[i].id === id) { idx = i; break; }
+if (idx < 0) return;
+var convo = state.conversations[idx];
+state.conversations.splice(idx, 1);
+if (state.currentId === id) { state.currentId = null; ensureCurrent(); }
+saveConvos();
+renderConvoList();
+renderMessages();
+if (pendingDelete && pendingDelete.timer) clearTimeout(pendingDelete.timer);
+pendingDelete = { convo: convo, index: idx, timer: setTimeout(function () { pendingDelete = null; }, 5000) };
+showUndoToast();
+}
+function showUndoToast() {
+var box = $('toastContainer');
+var el = document.createElement('div');
+el.className = 'toast';
+el.innerHTML = ICONS.trash + '<span>Диалог удалён</span><button class="undo-btn" type="button">Отменить</button>';
+box.appendChild(el);
+var done = false;
+function kill() { if (done) return; done = true; el.classList.add('out'); setTimeout(function () { el.remove(); }, 300); }
+el.querySelector('.undo-btn').addEventListener('click', function () {
+if (!pendingDelete) { kill(); return; }
+clearTimeout(pendingDelete.timer);
+var convo = pendingDelete.convo;
+var at = Math.min(pendingDelete.index, state.conversations.length);
+state.conversations.splice(at, 0, convo);
+pendingDelete = null;
+saveConvos();
+renderConvoList();
+toast('Диалог восстановлен', 'success');
+kill();
+});
+setTimeout(kill, 5000);
 }
 
 /* ---------- Отправка сообщений ---------- */
@@ -2166,24 +2287,39 @@ async function runAssistant() {
   scrollBottom(false);
   setGenerating(true);
   var contentEl = $('messagesList').querySelector('[data-id="' + am.id + '"] .msg-content');
-  var acc = '';
-  var historyForReq = convo.messages.filter(function (m) { return m.id !== am.id; });
-  var req = buildChatRequest(historyForReq);
-  try {
-    if (state.settings.stream === false) {
-      var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
-      if (!resp.ok) throw new Error(await httpError(resp));
-      var data = await resp.json();
-      if (data.error) throw new Error(errorTextFromJson(data));
-      acc = extractFullText(data);
-    } else {
-      acc = await streamChat(req, function (txt) {
-        acc = txt;
-        if (contentEl) contentEl.textContent = txt;
-        scrollBottom(false);
-      });
-    }
-    am.content = acc || '(пустой ответ)';
+var acc = '';
+var meta = {};
+var t0 = performance.now();
+var firstAt = 0;
+var historyForReq = convo.messages.filter(function (m) { return m.id !== am.id; });
+var req = buildChatRequest(historyForReq);
+try {
+if (state.settings.stream === false) {
+var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
+if (!resp.ok) throw new Error(await httpError(resp));
+var data = await resp.json();
+if (data.error) throw new Error(errorTextFromJson(data));
+acc = extractFullText(data);
+firstAt = performance.now();
+if (data.choices && data.choices[0] && data.choices[0].finish_reason === 'length') meta.truncated = true;
+if (data.stop_reason === 'max_tokens') meta.truncated = true;
+if (data.candidates && data.candidates[0] && data.candidates[0].finishReason === 'MAX_TOKENS') meta.truncated = true;
+} else {
+acc = await streamChat(req, function (txt) {
+if (!firstAt) firstAt = performance.now();
+acc = txt;
+if (contentEl) contentEl.textContent = txt;
+scrollBottom(false);
+}, meta);
+}
+am.content = acc || '(пустой ответ)';
+am.truncated = !!meta.truncated;
+var tEnd = performance.now();
+am.stats = {
+think: Math.max(0, ((firstAt || tEnd) - t0) / 1000),
+total: Math.max(0, (tEnd - t0) / 1000),
+tps: approxTokens(acc) / Math.max(0.1, (tEnd - (firstAt || tEnd)) / 1000)
+};
   } catch (err) {
     if (err && err.name === 'AbortError') {
       am.content = acc || 'Генерация остановлена.';
@@ -2202,9 +2338,10 @@ async function runAssistant() {
     var codeT = tmpT.querySelectorAll('pre, .code-block');
     for (var q2 = 0; q2 < codeT.length; q2++) codeT[q2].remove();
     var speakable = (tmpT.textContent || '').replace(/\s+/g, ' ').trim();
-    if (speakable) speakText(speakable, am.id);
-  }
-  convo.updatedAt = Date.now();
+if (speakable) speakText(speakable, am.id);
+}
+if (state.settings.doneSound !== false) playDoneSound();
+convo.updatedAt = Date.now();
   renderMessages();
   renderConvoList();
   saveConvos();
@@ -2220,6 +2357,51 @@ function regenerateLast() {
   convo.messages.splice(idx, 1);
   renderMessages();
   runAssistant();
+}
+var CONTINUE_PROMPT = 'Продолжи свой предыдущий ответ ровно с того места, где он оборвался. Не повторяй уже написанное, без вступлений и повторов.';
+async function continueLast() {
+if (state.generating) return;
+var convo = currentConvo();
+var idx = -1;
+for (var i = convo.messages.length - 1; i >= 0; i--) { if (convo.messages[i].role === 'assistant' && !convo.messages[i].error && !convo.messages[i].hidden) { idx = i; break; } }
+if (idx < 0) return;
+var target = convo.messages[idx];
+var baseText = target.content;
+var hint = { id: uid(), role: 'user', content: CONTINUE_PROMPT, hidden: true };
+var am = { id: uid(), role: 'assistant', content: '', ts: Date.now(), streaming: true, hidden: true, model: state.settings.model, provider: state.settings.provider };
+convo.messages.push(hint);
+convo.messages.push(am);
+renderMessages();
+setGenerating(true);
+var targetEl = $('messagesList').querySelector('.msg[data-id="' + target.id + '"] .msg-content');
+if (targetEl) targetEl.textContent = baseText;
+var acc = '';
+var meta = {};
+try {
+var req = buildChatRequest(convo.messages.filter(function (m) { return m.id !== am.id; }));
+if (state.settings.stream === false) {
+var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
+if (!resp.ok) throw new Error(await httpError(resp));
+var data = await resp.json();
+if (data.error) throw new Error(errorTextFromJson(data));
+acc = extractFullText(data);
+if (data.choices && data.choices[0] && data.choices[0].finish_reason === 'length') meta.truncated = true;
+} else {
+acc = await streamChat(req, function (txt) { acc = txt; if (targetEl) targetEl.textContent = baseText + txt; scrollBottom(false); }, meta);
+}
+target.content = baseText + acc;
+target.truncated = !!meta.truncated;
+} catch (err) {
+if (acc) target.content = baseText + acc;
+if (!err || err.name !== 'AbortError') toast('Ошибка продолжения: ' + (err && err.message ? err.message : err), 'error');
+}
+convo.messages = convo.messages.filter(function (m) { return m.id !== hint.id && m.id !== am.id; });
+setGenerating(false);
+convo.updatedAt = Date.now();
+renderMessages();
+renderConvoList();
+saveConvos();
+scrollBottom(true);
 }
 function startEditMessage(id) {
   if (state.generating) return;
@@ -2395,8 +2577,11 @@ function bindMessagesActions() {
       renderMessages();
     } else if (a === 'edit') {
       startEditMessage(msg.id);
-    } else if (a === 'regen') {
-      regenerateLast();
+} else if (a === 'continue') {
+continueLast();
+} else if (a === 'regen') {
+regenerateLast();
+} else if (a === 'speak') {
     } else if (a === 'speak') {
       var tmp = document.createElement('div');
       tmp.innerHTML = renderMarkdown(msg.content);
@@ -2589,17 +2774,20 @@ function setMode(mode) {
   $('tabThemes').classList.toggle('active', mode === 'themes');
   $('tabStats').classList.toggle('active', mode === 'stats');
   $('tabCompare').classList.toggle('active', mode === 'compare');
+  $('tabBackup').classList.toggle('active', mode === 'backup');
   $('chatPanel').classList.toggle('hidden', mode !== 'chat');
   $('imagesPanel').classList.toggle('hidden', mode !== 'images');
   $('promptsPanel').classList.toggle('hidden', mode !== 'prompts');
   $('themesPanel').classList.toggle('hidden', mode !== 'themes');
   $('statsPanel').classList.toggle('hidden', mode !== 'stats');
   $('comparePanel').classList.toggle('hidden', mode !== 'compare');
+  $('backupPanel').classList.toggle('hidden', mode !== 'backup');
   if (mode === 'images') setupImageForm();
   if (mode === 'prompts') renderLibrary();
   if (mode === 'themes') { syncManualInputs(); renderThemesTab(); }
   if (mode === 'stats') renderStats();
   if (mode === 'compare') setupCompareForm();
+  if (mode === 'backup') renderBackupStats();
 }
 function updateHeader() {
   var prov = PROVIDERS[state.settings.provider];
@@ -2625,6 +2813,7 @@ function openSettingsModal() {
   $('modalTtsEngine').value = s.ttsEngine || 'browser';
   $('modalTtsKey').value = s.ttsKey || '';
   $('modalAutoTts').checked = s.autoTts === true;
+  $('modalDoneSound').checked = s.doneSound !== false;
   fillTtsVoices();
   $('settingsModal').classList.add('open');
 }
@@ -2644,8 +2833,9 @@ function saveSettingsModal() {
     ttsEngine: $('modalTtsEngine').value,
     ttsVoice: $('modalTtsVoice').value,
     ttsKey: $('modalTtsKey').value.trim(),
-    autoTts: $('modalAutoTts').checked
-  };
+    autoTts: $('modalAutoTts').checked,
+    doneSound: $('modalDoneSound').checked
+};
   saveSettings();
   updateHeader();
   renderConvoList();
@@ -2661,8 +2851,9 @@ function exportChat() {
   lines.push('Провайдер: ' + PROVIDERS[state.settings.provider].name + ' | Модель: ' + state.settings.model);
   lines.push('Дата: ' + new Date().toLocaleString('ru-RU'));
   lines.push('========================================');
-  convo.messages.forEach(function (m) {
-    lines.push('');
+convo.messages.forEach(function (m) {
+if (m.hidden) return;
+lines.push('');
     lines.push((m.role === 'user' ? 'Пользователь' : 'Ассистент') + ' [' + fmtTime(m.ts) + ']:');
     lines.push(m.content);
   });
@@ -2716,6 +2907,38 @@ function autosize(el) {
   el.style.height = Math.min(el.scrollHeight, 180) + 'px';
 }
 
+/* ---------- Звук при готовности ответа ---------- */
+function ensureAudioCtx() {
+var Ctx = window.AudioContext || window.webkitAudioContext;
+if (!Ctx) return null;
+if (!state.audioCtx) { try { state.audioCtx = new Ctx(); } catch (e) { return null; } }
+if (state.audioCtx.state === 'suspended') { state.audioCtx.resume().catch(function () {}); }
+return state.audioCtx;
+}
+function playDoneSound() {
+if (!document.hidden) return;
+var ctx = ensureAudioCtx();
+if (!ctx) return;
+try {
+var now = ctx.currentTime;
+var notes = [880, 1320];
+for (var i = 0; i < notes.length; i++) {
+var o = ctx.createOscillator();
+var g = ctx.createGain();
+o.type = 'sine';
+o.frequency.value = notes[i];
+var t = now + i * 0.12;
+g.gain.setValueAtTime(0.0001, t);
+g.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+o.connect(g);
+g.connect(ctx.destination);
+o.start(t);
+o.stop(t + 0.4);
+}
+} catch (e) {}
+}
+
 /* ============================================================
    ИНИЦИАЛИЗАЦИЯ
    ============================================================ */
@@ -2748,6 +2971,7 @@ function init() {
   $('modalCloseBtn').innerHTML = ICONS.close;
   $('imgUnsupIcon').innerHTML = ICONS.image;
   $('sendBtn').innerHTML = ICONS.send;
+  ['click', 'keydown'].forEach(function (ev) { document.addEventListener(ev, function () { ensureAudioCtx(); }, { once: true }); });
   $('messagesScroll').addEventListener('scroll', updateScrollUi);
   $('scrollDownBtn').addEventListener('click', jumpToBottom);
   $('newMsgChip').addEventListener('click', jumpToBottom);
@@ -2819,6 +3043,10 @@ function init() {
   $('tabStats').addEventListener('click', function () { setMode('stats'); });
   $('tabCompare').addEventListener('click', function () { setMode('compare'); });
   $('cmpRunBtn').addEventListener('click', runCompare);
+  $('tabBackup').addEventListener('click', function () { setMode('backup'); });
+  $('backupDownloadBtn').addEventListener('click', downloadBackup);
+  $('backupRestoreBtn').addEventListener('click', function () { $('backupFileInput').click(); });
+  $('backupFileInput').addEventListener('change', function () { if (this.files && this.files[0]) restoreBackup(this.files[0]); this.value = ''; });
   $('genThemeBtn').addEventListener('click', genTheme);
   $('applyThemeBtn').addEventListener('click', function () { if (pendingTheme) { applyTheme(pendingTheme); toast('Тема применена: ' + pendingTheme.name, 'success'); } });
   $('saveThemeBtn').addEventListener('click', function () { if (pendingTheme) saveThemeToMy(pendingTheme); });
