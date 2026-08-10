@@ -423,6 +423,8 @@
   }
   @media (min-width: 961px) { .topbar-brand-mobile { display: none; } }
   @media (max-width: 640px) {
+    .new-msg-chip { right: 12px; bottom: 118px; }
+    .scroll-down-btn { bottom: 10px; }
     .stats-chart { overflow-x: auto; }
     .chart-col { min-width: 26px; }
     .provider-grid { grid-template-columns: 1fr; }
@@ -564,6 +566,8 @@
           </div>
         </div>
         <div id="messagesList" class="messages-list"></div>
+        <button id="scrollDownBtn" class="scroll-down-btn hidden" type="button" title="Вниз"><span class="sd-arrow"></span></button>
+        <button id="newMsgChip" class="new-msg-chip hidden" type="button"></button>
       </div>
       <div class="composer-wrap">
           <div id="pendingFiles" class="pending-files hidden"></div>
@@ -1271,7 +1275,7 @@ function renderStats() {
   for (var i = 13; i >= 0; i--) {
     var d = new Date();
     d.setDate(d.getDate() - i);
-    var key = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-bit'.replace('bit', 'month') });
+    var key = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     var v = s.days[key] ? s.days[key].cost : 0;
     buckets.push({ label: key, cost: v });
     if (v > max) max = v;
@@ -1791,6 +1795,42 @@ function scrollBottom(smooth) {
   var sc = $('messagesScroll');
   sc.scrollTo({ top: sc.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
 }
+var scrollState = { unread: 0, atBottom: true };
+function isNearBottom() {
+  var sc = $('messagesScroll');
+  return (sc.scrollHeight - sc.scrollTop - sc.clientHeight) < 80;
+}
+function updateScrollUi() {
+  var near = isNearBottom();
+  scrollState.atBottom = near;
+  var btn = $('scrollDownBtn');
+  if (btn) btn.classList.toggle('hidden', near);
+  if (near && scrollState.unread > 0) {
+    scrollState.unread = 0;
+    renderNewMsgChip();
+  }
+}
+function bumpUnread() {
+  if (scrollState.atBottom || state.generating) return;
+  scrollState.unread++;
+  renderNewMsgChip();
+}
+function renderNewMsgChip() {
+  var chip = $('newMsgChip');
+  if (!chip) return;
+  if (scrollState.unread > 0) {
+    chip.textContent = scrollState.unread + (scrollState.unread === 1 ? ' новое сообщение' : (scrollState.unread < 5 ? ' новых сообщения' : ' новых сообщений'));
+    chip.classList.remove('hidden');
+  } else {
+    chip.classList.add('hidden');
+  }
+}
+function jumpToBottom() {
+  scrollState.unread = 0;
+  renderNewMsgChip();
+  var sc = $('messagesScroll');
+  sc.scrollTo({ top: sc.scrollHeight, behavior: 'smooth' });
+}
 function typingHtml() { return '<div class="typing"><span></span><span></span><span></span></div>'; }
 
 function renderMessages() {
@@ -1849,6 +1889,7 @@ function renderMessages() {
   });
   updateSpeakBtn();
   updateCostChip();
+  updateScrollUi();
 }
 
 function findConvo(id) {
@@ -2013,6 +2054,7 @@ async function runAssistant() {
     }
   }
   am.streaming = false;
+  if (!am.error) bumpUnread();
   setGenerating(false);
   if (state.settings.autoTts && !am.error && am.content) {
     var tmpT = document.createElement('div');
@@ -2457,6 +2499,9 @@ function init() {
   $('modalCloseBtn').innerHTML = ICONS.close;
   $('imgUnsupIcon').innerHTML = ICONS.image;
   $('sendBtn').innerHTML = ICONS.send;
+  $('messagesScroll').addEventListener('scroll', updateScrollUi);
+  $('scrollDownBtn').addEventListener('click', jumpToBottom);
+  $('newMsgChip').addEventListener('click', jumpToBottom);
 
   /* загрузка сохранённого */
   state.settings = loadLS('aip_settings');
