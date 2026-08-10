@@ -315,6 +315,24 @@
   .msg-attach img { max-width: 220px; max-height: 220px; border-radius: 12px; border: 1px solid var(--border); }
   .msg-file-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-dim); background: rgba(56,189,248,.08); border: 1px solid rgba(56,189,248,.25); border-radius: 8px; padding: 5px 10px; }
 
+  /* ---------- ПРОМТ ---------- */
+  .prompts-panel { overflow-y: auto; padding: 22px 18px; }
+  .prompts-wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  .prompts-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .improved-text { background: var(--input-bg); border: 1px solid var(--border-strong); border-radius: 12px; padding: 14px 16px; font-size: 14px; white-space: pre-wrap; max-height: 320px; overflow-y: auto; }
+  .lib-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .lib-head h3 { font-size: 17px; font-weight: 700; }
+  .lib-empty { border: 1px dashed var(--border-strong); border-radius: 14px; padding: 26px; text-align: center; color: var(--text-faint); font-size: 13.5px; grid-column: 1 / -1; }
+  .prompt-library { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .prompt-card { background: var(--input-bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; animation: msgIn .25s ease both; }
+  .prompt-card-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+  .prompt-title { font-weight: 700; font-size: 14px; }
+  .prompt-date { font-size: 11.5px; color: var(--text-faint); }
+  .prompt-text { font-size: 13px; color: var(--text-dim); white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 5; line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  .prompt-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; border-radius: 9px; }
+  .danger-text { color: var(--danger); }
+
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
     .setup-card { grid-template-columns: 1fr; max-width: 640px; }
@@ -333,6 +351,7 @@
     .provider-grid { grid-template-columns: 1fr; }
     .suggestions { grid-template-columns: 1fr; }
     .img-form-row { grid-template-columns: 1fr; }
+    .prompt-library { grid-template-columns: 1fr; }
     .msg.user .msg-bubble { max-width: 92%; }
     .messages-scroll { padding: 18px 12px 12px; }
     .mode-tabs { padding: 10px 10px 0; }
@@ -439,6 +458,7 @@
     <div class="mode-tabs">
       <button id="tabChat" class="mode-tab active" type="button"><span class="tab-chat-ic"></span> Чат</button>
       <button id="tabImages" class="mode-tab" type="button"><span class="tab-img-ic"></span> Изображения</button>
+      <button id="tabPrompts" class="mode-tab" type="button"><span class="tab-prompt-ic"></span> Промпты</button>
     </div>
 
     <section id="chatPanel" class="panel">
@@ -494,6 +514,39 @@
           </div>
         </div>
         <div id="imgGallery" class="img-gallery"></div>
+      </div>
+    </section>
+        <section id="promptsPanel" class="panel prompts-panel hidden">
+      <div class="prompts-wrap">
+        <div class="img-form">
+          <div class="field">
+            <label for="promptRawInput">Опиши задачу своими словами</label>
+            <textarea id="promptRawInput" rows="3" placeholder="Например: напиши продающий пост для кофейни"></textarea>
+          </div>
+          <div class="prompts-actions">
+            <button id="improvePromptBtn" class="btn btn-primary" type="button">Улучшить с помощью ИИ</button>
+          </div>
+          <div id="improvedWrap" class="hidden">
+            <div class="field" style="margin-top:15px"><label>Готовый промт</label>
+              <div id="improvedText" class="improved-text"></div>
+            </div>
+            <div class="prompts-actions">
+              <button id="copyImprovedBtn" class="btn btn-ghost" type="button">Копировать</button>
+              <button id="saveImprovedBtn" class="btn btn-ghost" type="button">В библиотеку</button>
+              <button id="toChatImprovedBtn" class="btn btn-primary" type="button">Отправить в чат</button>
+            </div>
+          </div>
+        </div>
+        <div class="lib-head">
+          <h3>Библиотека промптов</h3>
+          <button id="addPromptToggle" class="btn btn-ghost" type="button">Добавить вручную</button>
+        </div>
+        <div id="addPromptForm" class="img-form hidden">
+          <div class="field"><label for="addPromptTitle">Название</label><input id="addPromptTitle" type="text" placeholder="Например: Пост для блога"></div>
+          <div class="field"><label for="addPromptText">Текст промпта</label><textarea id="addPromptText" rows="3"></textarea></div>
+          <div class="prompts-actions"><button id="addPromptSaveBtn" class="btn btn-primary" type="button">Сохранить</button></div>
+        </div>
+        <div id="promptLibrary" class="prompt-library"></div>
       </div>
     </section>
   </main>
@@ -567,7 +620,8 @@ var ICONS = {
   paperclip: '<svg class="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
   file: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
   speaker: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>',
-  speakerOff: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
+  speakerOff: '<svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+  book: '<svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
 };
 
 /* ---------- Провайдеры ---------- */
@@ -840,6 +894,74 @@ function fillTtsVoices() {
     sel.value = cur;
     if (sel.value !== cur) sel.value = '';
   }
+}
+
+/* ---------- Библиотека промптов ---------- */
+var lastImprovedText = '';
+function loadPrompts() { return loadLS('aip_prompts') || []; }
+function savePrompts(list) { saveLS('aip_prompts', list); }
+function renderLibrary() {
+  var box = $('promptLibrary');
+  var list = loadPrompts();
+  box.innerHTML = '';
+  if (!list.length) {
+    box.innerHTML = '<div class="lib-empty">Библиотека пуста. Улучши промт выше или добавь свой вручную.</div>';
+    return;
+  }
+  list.forEach(function (p) {
+    var card = document.createElement('div');
+    card.className = 'prompt-card';
+    card.innerHTML =
+      '<div class="prompt-card-head"><span class="prompt-title">' + escapeHtml(p.title) + '</span><span class="prompt-date">' + fmtDate(p.ts) + '</span></div>' +
+      '<div class="prompt-text">' + escapeHtml(p.text) + '</div>' +
+      '<div class="prompt-actions">' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-pcopy="' + p.id + '">Копировать</button>' +
+        '<button class="btn btn-ghost btn-sm" type="button" data-psend="' + p.id + '">В чат</button>' +
+        '<button class="btn btn-ghost btn-sm danger-text" type="button" data-pdel="' + p.id + '">Удалить</button>' +
+      '</div>';
+    box.appendChild(card);
+  });
+}
+function buildImproverRequest(raw) {
+  var s = state.settings;
+  var prov = PROVIDERS[s.provider];
+  var sys = 'Ты промт-инженер. Перепиши промт пользователя так, чтобы он давал максимальный результат от языковой модели: ясная цель, роль, контекст, формат и критерии ответа. Не выполняй сам промт. Верни ТОЛЬКО текст готового улучшенного промпта без вступлений.';
+  if (prov.format === 'anthropic') {
+    return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: s.model, max_tokens: 2048, system: sys, messages: [{ role: 'user', content: raw }], stream: false, temperature: 0.7 }) };
+  }
+  if (prov.format === 'gemini') {
+    return { url: 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(s.model) + ':generateContent', headers: { 'content-type': 'application/json', 'x-goog-api-key': s.apiKey }, body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: [{ role: 'user', parts: [{ text: raw }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 2048 } }) };
+  }
+  return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'authorization': 'Bearer ' + s.apiKey }, body: JSON.stringify({ model: s.model, messages: [{ role: 'system', content: sys }, { role: 'user', content: raw }], stream: false, temperature: 0.7 }) };
+}
+async function improvePrompt() {
+  var raw = $('promptRawInput').value.trim();
+  if (!raw) { toast('Опиши задачу для промпта', 'error'); return; }
+  var btn = $('improvePromptBtn');
+  btn.disabled = true;
+  btn.textContent = 'Улучшаем...';
+  try {
+    var req = buildImproverRequest(raw);
+    var resp = await fetch(req.url, { method: 'POST', headers: req.headers, body: req.body });
+    if (!resp.ok) throw new Error(await httpError(resp));
+    var data = await resp.json();
+    if (data.error) throw new Error(errorTextFromJson(data));
+    var out = extractFullText(data).trim();
+    if (!out) throw new Error('Модель вернула пустой ответ');
+    lastImprovedText = out;
+    $('improvedText').textContent = out;
+    $('improvedWrap').classList.remove('hidden');
+  } catch (e) {
+    toast('Ошибка улучшения: ' + (e && e.message ? e.message : e), 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Улучшить с помощью ИИ';
+}
+function toChatWith(text) {
+  setMode('chat');
+  $('msgInput').value = text;
+  autosize($('msgInput'));
+  $('msgInput').focus();
 }
 
 /* ---------- Сохранение настроек и диалогов ---------- */
@@ -1523,9 +1645,12 @@ function setMode(mode) {
   state.mode = mode;
   $('tabChat').classList.toggle('active', mode === 'chat');
   $('tabImages').classList.toggle('active', mode === 'images');
+  $('tabPrompts').classList.toggle('active', mode === 'prompts');
   $('chatPanel').classList.toggle('hidden', mode !== 'chat');
   $('imagesPanel').classList.toggle('hidden', mode !== 'images');
+  $('promptsPanel').classList.toggle('hidden', mode !== 'prompts');
   if (mode === 'images') setupImageForm();
+  if (mode === 'prompts') renderLibrary();
 }
 function updateHeader() {
   var prov = PROVIDERS[state.settings.provider];
@@ -1652,6 +1777,7 @@ function init() {
   document.querySelector('.sb-key').innerHTML = ICONS.key;
   document.querySelector('.tab-chat-ic').innerHTML = ICONS.chat;
   document.querySelector('.tab-img-ic').innerHTML = ICONS.image;
+  document.querySelector('.tab-prompt-ic').innerHTML = ICONS.book;
   $('menuBtn').innerHTML = ICONS.menu;
   $('exportBtn').innerHTML = ICONS.download;
   $('clearChatBtn').innerHTML = ICONS.trash;
@@ -1719,6 +1845,51 @@ function init() {
   });
   $('tabChat').addEventListener('click', function () { setMode('chat'); });
   $('tabImages').addEventListener('click', function () { setMode('images'); });
+  $('tabPrompts').addEventListener('click', function () { setMode('prompts'); });
+  $('improvePromptBtn').addEventListener('click', improvePrompt);
+  $('copyImprovedBtn').addEventListener('click', function () {
+    if (lastImprovedText) navigator.clipboard.writeText(lastImprovedText).then(function () { toast('Промпт скопирован', 'success'); });
+  });
+  $('saveImprovedBtn').addEventListener('click', function () {
+    if (!lastImprovedText) return;
+    var list = loadPrompts();
+    var raw = $('promptRawInput').value.trim();
+    list.unshift({ id: uid(), title: raw ? (raw.length > 40 ? raw.slice(0, 40) + '...' : raw) : 'Промпт', text: lastImprovedText, ts: Date.now() });
+    savePrompts(list);
+    renderLibrary();
+    toast('Сохранено в библиотеку', 'success');
+  });
+  $('toChatImprovedBtn').addEventListener('click', function () { if (lastImprovedText) toChatWith(lastImprovedText); });
+  $('addPromptToggle').addEventListener('click', function () { $('addPromptForm').classList.toggle('hidden'); });
+  $('addPromptSaveBtn').addEventListener('click', function () {
+    var text = $('addPromptText').value.trim();
+    if (!text) { toast('Введите текст промпта', 'error'); return; }
+    var list = loadPrompts();
+    list.unshift({ id: uid(), title: $('addPromptTitle').value.trim() || 'Промпт', text: text, ts: Date.now() });
+    savePrompts(list);
+    $('addPromptTitle').value = '';
+    $('addPromptText').value = '';
+    $('addPromptForm').classList.add('hidden');
+    renderLibrary();
+    toast('Промпт сохранён', 'success');
+  });
+  $('promptLibrary').addEventListener('click', function (e) {
+    var list = loadPrompts();
+    function find(id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+    var c = e.target.closest('[data-pcopy]');
+    var s2 = e.target.closest('[data-psend]');
+    var d = e.target.closest('[data-pdel]');
+    if (c) {
+      var p = find(c.getAttribute('data-pcopy'));
+      if (p) navigator.clipboard.writeText(p.text).then(function () { toast('Промпт скопирован', 'success'); });
+    } else if (s2) {
+      var p2 = find(s2.getAttribute('data-psend'));
+      if (p2) toChatWith(p2.text);
+    } else if (d) {
+      savePrompts(list.filter(function (x) { return x.id !== d.getAttribute('data-pdel'); }));
+      renderLibrary();
+    }
+  });
 
   $('convoList').addEventListener('click', function (e) {
     var del = e.target.closest('[data-del]');
