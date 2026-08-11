@@ -888,7 +888,7 @@
         <div id="payBlock" class="img-form hidden">
           <div class="lib-head"><h3>Оплата и активация</h3></div>
           <ol class="pay-steps">
-            <li>Переведи <strong id="paySum">30 руб</strong> любым способом: карта <span class="pay-req" id="payCard"></span>, СБП <span class="pay-req" id="paySbp"></span> или ЮMoney <span class="pay-req" id="payYoo"></span>.</li>
+            <li>Переведи <strong id="paySum">30 руб</strong> на ЮMoney <span class="pay-req" id="payYoo"></span>.</li>
             <li>Отправь скриншот чека в Telegram <a id="payTg" href="#" target="_blank" rel="noopener"></a> и укажи своё кодовое слово.</li>
             <li>Получи код активации и вставь его ниже — подписка включится сразу, а при покупке нового кода срок продлевается.</li>
           </ol>
@@ -3094,6 +3094,7 @@ $('tabStats').classList.toggle('active', mode === 'stats');
 $('tabCompare').classList.toggle('active', mode === 'compare');
 $('tabBackup').classList.toggle('active', mode === 'backup');
 $('tabSubs').classList.toggle('active', mode === 'subs');
+$('tabDocs').classList.toggle('active', mode === 'docs');
 $('chatPanel').classList.toggle('hidden', mode !== 'chat');
 $('imagesPanel').classList.toggle('hidden', mode !== 'images');
 $('promptsPanel').classList.toggle('hidden', mode !== 'prompts');
@@ -3102,6 +3103,7 @@ $('statsPanel').classList.toggle('hidden', mode !== 'stats');
 $('comparePanel').classList.toggle('hidden', mode !== 'compare');
 $('backupPanel').classList.toggle('hidden', mode !== 'backup');
 $('subsPanel').classList.toggle('hidden', mode !== 'subs');
+$('docsPanel').classList.toggle('hidden', mode !== 'docs');
 var pro = isPro();
 PRO_MODES.forEach(function (m) {
 var lock = $('lock-' + m);
@@ -3114,13 +3116,11 @@ if (mode === 'stats') renderStats();
 if (mode === 'compare') setupCompareForm();
 if (mode === 'backup') renderBackupStats();
 if (mode === 'subs') renderSubs();
+if (mode === 'docs') {
+var md = loadLS('aip_docs');
+if (md) renderDocs(md);
+else { $('docsEmpty').classList.remove('hidden'); $('docsBody').classList.add('hidden'); $('docsToc').innerHTML = ''; }
 }
-function updateHeader() {
-  var prov = PROVIDERS[state.settings.provider];
-  $('headerDot').style.background = prov.color;
-  $('headerDot').style.color = prov.color;
-  $('headerProviderName').textContent = prov.name;
-  $('headerModelChip').textContent = state.settings.model;
 }
 function openSettingsModal() {
   var s = state.settings;
@@ -3375,8 +3375,6 @@ function init() {
   $('backupRestoreBtn').addEventListener('click', function () { $('backupFileInput').click(); });
   $('backupFileInput').addEventListener('change', function () { if (this.files && this.files[0]) restoreBackup(this.files[0]); this.value = ''; });
   makeLocks();
-$('payCard').textContent = PAY_CONFIG.card;
-$('paySbp').textContent = PAY_CONFIG.sbp;
 $('payYoo').textContent = PAY_CONFIG.yoomoney;
 $('payTg').href = PAY_CONFIG.telegram;
 $('payTg').textContent = PAY_CONFIG.telegramLabel;
