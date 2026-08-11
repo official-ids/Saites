@@ -3122,6 +3122,13 @@ if (md) renderDocs(md);
 else { $('docsEmpty').classList.remove('hidden'); $('docsBody').classList.add('hidden'); $('docsToc').innerHTML = ''; }
 }
 }
+function updateHeader() {
+var prov = PROVIDERS[state.settings.provider];
+$('headerDot').style.background = prov.color;
+$('headerDot').style.color = prov.color;
+$('headerProviderName').textContent = prov.name;
+$('headerModelChip').textContent = state.settings.model;
+}
 function openSettingsModal() {
   var s = state.settings;
   var sel = $('modalProviderSelect');
