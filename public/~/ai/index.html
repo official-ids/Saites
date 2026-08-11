@@ -390,6 +390,7 @@
   .mic-browser-row strong { color: var(--text); font-weight: 600; text-align: right; }
   .mic-browser-row .mic-no { color: var(--danger); }
   .mic-note { font-size: 13.5px; color: var(--text-dim); margin: 12px 0; line-height: 1.6; }
+  .mobile-warn-ic { width: 42px; height: 42px; color: var(--danger); display: block; margin: 0 auto 12px; }
   .mic-support-list { display: flex; flex-direction: column; gap: 8px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; }
   .mic-support-list div { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-dim); }
   .ok-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
@@ -1013,6 +1014,20 @@
 <div class="tour-actions">
 <button id="tourSkip" class="btn btn-ghost btn-sm" type="button">Пропустить</button>
 <button id="tourNext" class="btn btn-primary btn-sm" type="button">Далее</button>
+</div>
+</div>
+</div>
+
+<div id="mobileWarnModal" class="modal-backdrop">
+<div class="modal">
+<div class="modal-head">
+<h3>Сайт оптимизирован для ПК</h3>
+<button id="mobileWarnClose" class="icon-btn" type="button" title="Закрыть"></button>
+</div>
+<svg class="icon mobile-warn-ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+<p class="mic-note" style="margin-top:0">Сайт адаптирован и создан в первую очередь для компьютера. На телефонах и планшетах возможны баги — для комфортной работы лучше перейти на ПК-устройство.</p>
+<div class="modal-actions">
+<button id="mobileWarnOk" class="btn btn-primary" type="button">Понятно, продолжить</button>
 </div>
 </div>
 </div>
@@ -3787,6 +3802,22 @@ sendUserMessage(prompt);
   $('modalSaveBtn').addEventListener('click', saveSettingsModal);
   $('settingsModal').addEventListener('click', function (e) { if (e.target === this) closeSettingsModal(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSettingsModal(); });
+
+  /* предупреждение для мобильных */
+function isMobileDevice() {
+return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+}
+function closeMobileWarn() {
+$('mobileWarnModal').classList.remove('open');
+try { sessionStorage.setItem('aip_mobile_warned', '1'); } catch (e) {}
+}
+$('mobileWarnClose').innerHTML = ICONS.close;
+$('mobileWarnClose').addEventListener('click', closeMobileWarn);
+$('mobileWarnOk').addEventListener('click', closeMobileWarn);
+$('mobileWarnModal').addEventListener('click', function (e) { if (e.target === this) closeMobileWarn(); });
+var warned = false;
+try { warned = !!sessionStorage.getItem('aip_mobile_warned'); } catch (e) {}
+if (isMobileDevice() && !warned) $('mobileWarnModal').classList.add('open');
 
   state.currentTheme = BUILTIN_THEMES[0];
   var savedTheme = loadLS('aip_theme');
