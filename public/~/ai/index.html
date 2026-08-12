@@ -121,7 +121,8 @@
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   .setup-brand { padding: 44px 40px; border-right: 1px solid var(--border); background: linear-gradient(160deg, rgba(124,108,255,.1), transparent 55%); display: flex; flex-direction: column; gap: 18px; }
   .brand-logo { width: 52px; height: 52px; border-radius: 15px; background: var(--accent-grad); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 10px 30px rgba(96,108,255,.45); }
-  .logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+  .logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; filter: var(--logo-filter, none); }
+  .tp-code { border-radius: 8px; padding: 8px 10px; font-family: var(--mono); font-size: 11.5px; width: max-content; }
   .brand-logo .icon { width: 26px; height: 26px; }
   .setup-brand h1 { font-size: 30px; font-weight: 700; letter-spacing: -.02em; }
   .setup-brand h1 span { background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -246,11 +247,11 @@
   .msg-content ul, .msg-content ol { margin: 8px 0; padding-left: 22px; }
   .msg-content li { margin: 4px 0; }
   .msg-content code:not(pre code) { font-family: var(--mono); font-size: 12.8px; background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.2); padding: 1.5px 6px; border-radius: 6px; }
-  .code-block { margin: 10px 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #0b0e15; }
-  .code-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 13px; background: rgba(148,163,184,.07); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); }
-  .copy-code-btn { background: none; border: 1px solid var(--border-strong); border-radius: 7px; color: var(--text-dim); font-size: 11.5px; padding: 3px 10px; transition: color .13s, border-color .13s; }
-  .copy-code-btn:hover { color: var(--text); border-color: var(--text-faint); }
-  .code-block pre { padding: 13px 15px; overflow-x: auto; font-family: var(--mono); font-size: 12.8px; line-height: 1.6; background: transparent; }
+  .code-block { margin: 10px 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--code-bg, #0b0e15); }
+  .code-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 13px; background: rgba(128,128,128,.08); border-bottom: 1px solid rgba(128,128,128,.2); font-family: var(--mono); font-size: 11.5px; color: var(--code-text, #e6e9f2); }
+  .copy-code-btn { background: none; border: 1px solid rgba(128,128,128,.35); border-radius: 7px; color: var(--code-text, #e6e9f2); font-size: 11.5px; padding: 3px 10px; opacity: .8; transition: opacity .13s; }
+  .copy-code-btn:hover { opacity: 1; }
+  .code-block pre { padding: 13px 15px; overflow-x: auto; font-family: var(--mono); font-size: 12.8px; line-height: 1.6; background: transparent; color: var(--code-text, #e6e9f2); }
   .msg-content blockquote { border-left: 3px solid var(--accent); padding: 2px 14px; margin: 10px 0; color: var(--text-dim); }
   .msg-content table { border-collapse: collapse; margin: 10px 0; font-size: 13.5px; }
   .msg-content th, .msg-content td { border: 1px solid var(--border-strong); padding: 6px 11px; }
@@ -799,7 +800,13 @@
             <div class="color-field"><label>Текст</label><input id="mcText" type="color" value="#e6e9f2"></div>
             <div class="color-field"><label>Акцент</label><input id="mcAccent" type="color" value="#7c6cff"></div>
             <div class="color-field"><label>Акцент 2</label><input id="mcAccent2" type="color" value="#38bdf8"></div>
-          </div>
+        </div>
+          <div class="color-row">
+          <div class="color-field"><label>Фон кода</label><input id="mcCodeBg" type="color" value="#0b0e15"></div>
+          <div class="color-field"><label>Тон логотипа <span id="mcLogoHueVal">0°</span></label><input id="mcLogoHue" type="range" min="0" max="360" value="0"></div>
+          <div class="color-field"><label>Насыщенность <span id="mcLogoSatVal">100%</span></label><input id="mcLogoSat" type="range" min="0" max="200" value="100"></div>
+          <div class="color-field"><label>Яркость <span id="mcLogoBriVal">100%</span></label><input id="mcLogoBri" type="range" min="40" max="160" value="100"></div>
+         </div>
           <div id="manualPreview" class="theme-preview"></div>
           <div class="prompts-actions">
             <button id="manualApplyBtn" class="btn btn-primary" type="button">Применить</button>
@@ -1647,18 +1654,37 @@ function normalizeTheme(obj, id) {
     text: obj.text || base.text,
     textDim: obj.textDim || obj.text || base.textDim,
     textFaint: obj.textFaint || obj.textDim || base.textFaint,
+    codeBg: obj.codeBg || base.codeBg || '#0b0e15',
+    logoHue: obj.logoHue != null ? Number(obj.logoHue) : 0,
+    logoSat: obj.logoSat != null ? Number(obj.logoSat) : 100,
+    logoBri: obj.logoBri != null ? Number(obj.logoBri) : 100,
     accent: obj.accent || base.accent,
     accent2: obj.accent2 || obj.accent || base.accent2
   };
 }
+function codeTextColor(hex) {
+var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
+if (!m) return '#e6e9f2';
+var r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16);
+return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#0f172a' : '#e6e9f2';
+}
+function logoFilterOf(t) {
+var h = Number(t.logoHue) || 0;
+var s = t.logoSat == null ? 100 : Number(t.logoSat);
+var b = t.logoBri == null ? 100 : Number(t.logoBri);
+return 'hue-rotate(' + h + 'deg) saturate(' + s + '%) brightness(' + b + '%)';
+}
 function themeToVars(t) {
-  return {
-    '--bg': t.bg, '--bg-soft': t.bgSoft, '--panel': t.panel, '--panel-2': t.panel2,
-    '--input-bg': t.inputBg, '--border': t.border, '--border-strong': t.borderStrong,
-    '--text': t.text, '--text-dim': t.textDim, '--text-faint': t.textFaint,
-    '--accent': t.accent, '--accent-2': t.accent2,
-    '--accent-grad': 'linear-gradient(135deg, ' + t.accent + ', ' + t.accent2 + ')'
-  };
+return {
+'--bg': t.bg, '--bg-soft': t.bgSoft, '--panel': t.panel, '--panel-2': t.panel2,
+'--input-bg': t.inputBg, '--border': t.border, '--border-strong': t.borderStrong,
+'--text': t.text, '--text-dim': t.textDim, '--text-faint': t.textFaint,
+'--accent': t.accent, '--accent-2': t.accent2,
+'--accent-grad': 'linear-gradient(135deg, ' + t.accent + ', ' + t.accent2 + ')',
+'--code-bg': t.codeBg || '#0b0e15',
+'--code-text': codeTextColor(t.codeBg || '#0b0e15'),
+'--logo-filter': logoFilterOf(t)
+};
 }
 function applyTheme(t, persist) {
   var vars = themeToVars(t);
@@ -1668,14 +1694,18 @@ function applyTheme(t, persist) {
   renderThemesTab();
 }
 function renderThemePreview(el, t) {
-  el.style.background = t.bg;
-  el.innerHTML =
-    '<div class="tp-card" style="background:' + t.panel + ';border-color:' + t.borderStrong + '">' +
-      '<div style="font-weight:700;color:' + t.text + '">Заголовок</div>' +
-      '<div style="color:' + t.textDim + ';font-size:12.5px">Так будет выглядеть текст в новой теме.</div>' +
-      '<div class="tp-bubble" style="background:' + t.accent + '22;border:1px solid ' + t.accent + '55;color:' + t.text + '">Сообщение</div>' +
-      '<div class="tp-btn" style="background:linear-gradient(135deg,' + t.accent + ',' + t.accent2 + ')">Кнопка</div>' +
-    '</div>';
+el.style.background = t.bg;
+var logoImg = $('emptyLogo') ? $('emptyLogo').querySelector('img') : null;
+var logoSrc = logoImg ? logoImg.src : '';
+el.innerHTML =
+'<div class="tp-card" style="background:' + t.panel + ';border-color:' + t.borderStrong + '">' +
+'<div style="font-weight:700;color:' + t.text + '">Заголовок</div>' +
+'<div style="color:' + t.textDim + ';font-size:12.5px">Так будет выглядеть текст в новой теме.</div>' +
+'<div class="tp-bubble" style="background:' + t.accent + '22;border:1px solid ' + t.accent + '55;color:' + t.text + '">Сообщение</div>' +
+'<div class="tp-code" style="background:' + (t.codeBg || '#0b0e15') + ';color:' + codeTextColor(t.codeBg || '#0b0e15') + '">$ ai provider --run</div>' +
+(logoSrc ? '<img src="' + logoSrc + '" alt="" style="width:44px;height:44px;border-radius:10px;filter:' + logoFilterOf(t) + '">' : '') +
+'<div class="tp-btn" style="background:linear-gradient(135deg,' + t.accent + ',' + t.accent2 + ')">Кнопка</div>' +
+'</div>';
 }
 function renderThemesTab() {
   var box = $('builtinThemes');
@@ -1721,7 +1751,7 @@ function renderThemesTab() {
 function buildThemeRequest(desc) {
   var s = state.settings;
   var prov = PROVIDERS[s.provider];
-  var sys = 'Ты дизайнер интерфейсов. По описанию придумай гармоничную цветовую схему и верни СТРОГО JSON без markdown и лишних слов с ключами: name, bg, panel, inputBg, text, textDim, accent, accent2. Все цвета в формате #hex. Фон и текст должны быть контрастными.';
+  var sys = 'Ты дизайнер интерфейсов. По описанию придумай гармоничную цветовую схему и верни СТРОГО JSON без markdown и лишних слов с ключами: name, bg, panel, inputBg, text, textDim, accent, accent2, codeBg, logoHue, logoSat, logoBri. Все цвета в формате #hex. Фон и текст должны быть контрастными. codeBg — фон код-блоков: обычно тёмный, но гармонирующий с темой. logoHue (0-360), logoSat (40-200), logoBri (40-160) — параметры CSS-фильтра hue-rotate/saturate/brightness, чтобы перекрасить сине-фиолетовый логотип под тему.';
   if (prov.format === 'anthropic') {
     return { url: prov.chatUrl, headers: { 'content-type': 'application/json', 'x-api-key': s.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify({ model: s.model, max_tokens: 1024, system: sys, messages: [{ role: 'user', content: desc }], stream: false, temperature: 0.8 }) };
   }
@@ -1755,23 +1785,34 @@ async function genTheme() {
   btn.textContent = 'Создать с помощью ИИ';
 }
 function readManualTheme() {
-  return normalizeTheme({
-    name: 'Моя тема',
-    bg: $('mcBg').value,
-    panel: $('mcPanel').value,
-    text: $('mcText').value,
-    accent: $('mcAccent').value,
-    accent2: $('mcAccent2').value
-  });
+return normalizeTheme({
+name: 'Моя тема',
+bg: $('mcBg').value,
+panel: $('mcPanel').value,
+text: $('mcText').value,
+accent: $('mcAccent').value,
+accent2: $('mcAccent2').value,
+codeBg: $('mcCodeBg').value,
+logoHue: $('mcLogoHue').value,
+logoSat: $('mcLogoSat').value,
+logoBri: $('mcLogoBri').value
+});
 }
 function syncManualInputs() {
-  var t = state.currentTheme || BUILTIN_THEMES[0];
-  if (/^#([0-9a-f]{6})$/i.test(t.bg)) $('mcBg').value = t.bg;
-  if (/^#([0-9a-f]{6})$/i.test(t.panel)) $('mcPanel').value = t.panel;
-  if (/^#([0-9a-f]{6})$/i.test(t.text)) $('mcText').value = t.text;
-  if (/^#([0-9a-f]{6})$/i.test(t.accent)) $('mcAccent').value = t.accent;
-  if (/^#([0-9a-f]{6})$/i.test(t.accent2)) $('mcAccent2').value = t.accent2;
-  renderThemePreview($('manualPreview'), readManualTheme());
+var t = state.currentTheme || BUILTIN_THEMES[0];
+if (/^#([0-9a-f]{6})$/i.test(t.bg)) $('mcBg').value = t.bg;
+if (/^#([0-9a-f]{6})$/i.test(t.panel)) $('mcPanel').value = t.panel;
+if (/^#([0-9a-f]{6})$/i.test(t.text)) $('mcText').value = t.text;
+if (/^#([0-9a-f]{6})$/i.test(t.accent)) $('mcAccent').value = t.accent;
+if (/^#([0-9a-f]{6})$/i.test(t.accent2)) $('mcAccent2').value = t.accent2;
+$('mcCodeBg').value = /^#([0-9a-f]{6})$/i.test(t.codeBg || '') ? t.codeBg : '#0b0e15';
+$('mcLogoHue').value = t.logoHue == null ? 0 : t.logoHue;
+$('mcLogoSat').value = t.logoSat == null ? 100 : t.logoSat;
+$('mcLogoBri').value = t.logoBri == null ? 100 : t.logoBri;
+$('mcLogoHueVal').textContent = $('mcLogoHue').value + '°';
+$('mcLogoSatVal').textContent = $('mcLogoSat').value + '%';
+$('mcLogoBriVal').textContent = $('mcLogoBri').value + '%';
+renderThemePreview($('manualPreview'), readManualTheme());
 }
 function saveThemeToMy(t) {
   var list = loadLS('aip_themes') || [];
@@ -3800,9 +3841,17 @@ $('codeInput').addEventListener('keydown', function (e) { if (e.key === 'Enter')
   $('rejectThemeBtn').addEventListener('click', function () { pendingTheme = null; $('themePreviewWrap').classList.add('hidden'); });
   $('manualApplyBtn').addEventListener('click', function () { applyTheme(readManualTheme()); toast('Тема применена', 'success'); });
   $('manualSaveBtn').addEventListener('click', function () { saveThemeToMy(readManualTheme()); });
-  ['mcBg', 'mcPanel', 'mcText', 'mcAccent', 'mcAccent2'].forEach(function (id) {
+  ['mcBg', 'mcPanel', 'mcText', 'mcAccent', 'mcAccent2', 'mcCodeBg'].forEach(function (id) {
     $(id).addEventListener('input', function () { renderThemePreview($('manualPreview'), readManualTheme()); });
   });
+  ['mcLogoHue', 'mcLogoSat', 'mcLogoBri'].forEach(function (id) {
+$(id).addEventListener('input', function () {
+$('mcLogoHueVal').textContent = $('mcLogoHue').value + '°';
+$('mcLogoSatVal').textContent = $('mcLogoSat').value + '%';
+$('mcLogoBriVal').textContent = $('mcLogoBri').value + '%';
+renderThemePreview($('manualPreview'), readManualTheme());
+});
+});
   $('themesPanel').addEventListener('click', function (e) {
     var ba = e.target.closest('[data-bapply]');
     var ac = e.target.closest('[data-accent]');
