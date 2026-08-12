@@ -527,6 +527,11 @@
 .cmd-item .cmd-hint { margin-left: auto; font-size: 11px; color: var(--text-faint); font-family: var(--mono); }
 .cmd-empty { padding: 14px; text-align: center; color: var(--text-faint); font-size: 13px; }
 
+/* ---------- ЛОГОТИП БЕЗ КВАДРАТА ---------- */
+.brand-logo, .brand-mini .mini-logo, .empty-logo { background: none; box-shadow: none; border-radius: 0; }
+.logo-img { object-fit: contain; border-radius: 0; }
+#mobLogo { border-radius: 0; overflow: visible; }
+
   /* ---------- АДАПТИВ ---------- */
   @media (max-width: 1020px) {
     .setup-card { grid-template-columns: 1fr; max-width: 640px; }
