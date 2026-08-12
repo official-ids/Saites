@@ -507,8 +507,15 @@
   .pay-req { font-family: var(--mono); font-size: 12px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; display: inline-block; user-select: all; }
   @media (max-width: 760px) { .subs-grid { grid-template-columns: 1fr; } }
 
-.tour-overlay { position: fixed; inset: 0; z-index: 80; }
-.tour-spot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 100vmax rgba(4,6,10,.72), 0 0 0 2px var(--accent); transition: left .3s ease, top .3s ease, width .3s ease, height .3s ease; }
+.tour-overlay { position: fixed; inset: 0; z-index: 80; background: rgba(4,6,10,.72);
+-webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+-webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+-webkit-mask-size: 100% var(--hy,0px), var(--hx,0px) var(--hh,0px), calc(100% - var(--hx,0px) - var(--hw,0px)) var(--hh,0px), 100% calc(100% - var(--hy,0px) - var(--hh,0px));
+mask-size: 100% var(--hy,0px), var(--hx,0px) var(--hh,0px), calc(100% - var(--hx,0px) - var(--hw,0px)) var(--hh,0px), 100% calc(100% - var(--hy,0px) - var(--hh,0px));
+-webkit-mask-position: 0 0, 0 var(--hy,0px), 100% var(--hy,0px), 0 100%;
+mask-position: 0 0, 0 var(--hy,0px), 100% var(--hy,0px), 0 100%; }
+.tour-spot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 2px var(--accent); transition: left .3s ease, top .3s ease, width .3s ease, height .3s ease; }
 .tour-card { position: fixed; width: min(340px, calc(100vw - 24px)); background: var(--panel-2); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
 .tour-step { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 6px; }
 .tour-card h3 { font-size: 16px; margin-bottom: 6px; }
@@ -3499,6 +3506,11 @@ spot.style.left = (r.left - pad) + 'px';
 spot.style.top = (r.top - pad) + 'px';
 spot.style.width = (r.width + pad * 2) + 'px';
 spot.style.height = (r.height + pad * 2) + 'px';
+var ov = $('tourOverlay');
+ov.style.setProperty('--hx', (r.left - pad) + 'px');
+ov.style.setProperty('--hy', (r.top - pad) + 'px');
+ov.style.setProperty('--hw', (r.width + pad * 2) + 'px');
+ov.style.setProperty('--hh', (r.height + pad * 2) + 'px');
 var card = $('tourCard');
 var cardH = card.offsetHeight || 220;
 var top = r.bottom + 14;
