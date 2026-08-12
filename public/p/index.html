@@ -247,6 +247,113 @@
             padding: 16px 0 80px;
         }
 
+        /* Дополнительные стили для AI-ассистента */
+.ai-examples {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.examples-title {
+    width: 100%;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.example-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s var(--transition);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.example-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+    margin: 20px 0 10px;
+    line-height: 1.3;
+}
+
+.markdown-body h1 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 8px;
+}
+
+.markdown-body h2 {
+    font-size: 1.3rem;
+}
+
+.markdown-body h3 {
+    font-size: 1.1rem;
+}
+
+.markdown-body p {
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin-bottom: 16px;
+    padding-left: 20px;
+}
+
+.markdown-body li {
+    margin-bottom: 8px;
+}
+
+.markdown-body code {
+    background: var(--border-light);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.9em;
+}
+
+.markdown-body pre {
+    background: var(--bg-card);
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-light);
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.9em;
+}
+
+.markdown-body a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.markdown-body a:hover {
+    text-decoration: underline;
+}
+
+.error {
+    color: #ff3b30;
+    padding: 12px;
+    background: rgba(255, 59, 48, 0.1);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid #ff3b30;
+}
+
+
         .preview {
             width: 100%;
             aspect-ratio: 16 / 9;
@@ -701,46 +808,47 @@
             </div>
         </main>
 
-        <!-- AI Assistant Section -->
-        <section id="ai-assistant" class="glass-effect animated fade-in-up" style="animation-delay: 0.6s;">
-            <div class="ai-header">
-                <h2>AI-ассистент</h2>
-                <p class="ai-description">Задайте вопрос по проекту или попросите пересказать информацию</p>
-            </div>
+<!-- AI Assistant Section -->
+<section id="ai-assistant" class="glass-effect animated fade-in-up" style="animation-delay: 0.6s;">
+    <div class="ai-header">
+        <h2>AI-ассистент</h2>
+        <p class="ai-description">Задайте вопрос по проекту или попросите объяснить/пересказать информацию</p>
+    </div>
 
-            <div class="ai-input-container">
-                <textarea
-                    id="ai-prompt"
-                    class="ai-textarea glass-effect"
-                    placeholder="Например: 'Объясни как работает этот инструмент' или 'Перескажи описание проекта простыми словами'"
-                    rows="3"
-                ></textarea>
-                <button id="ai-submit" class="glass-effect" aria-label="Отправить вопрос">
+    <div class="ai-input-container">
+        <textarea
+            id="ai-prompt"
+            class="ai-textarea glass-effect"
+            placeholder="Например: 'Объясни как работает этот инструмент' или 'Перескажи описание проекта простыми словами'"
+            rows="3"
+        ></textarea>
+        <button id="ai-submit" class="glass-effect" aria-label="Отправить вопрос">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+        </button>
+    </div>
+
+    <div id="ai-response" class="ai-response glass-effect hidden">
+        <div class="ai-response-header">
+            <span class="ai-status">Готов ответить на ваш вопрос</span>
+            <div class="ai-actions">
+                <button id="ai-copy" class="ai-button-small" aria-label="Скопировать ответ">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </button>
+                <button id="ai-regenerate" class="ai-button-small" aria-label="Перегенерировать ответ">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20L20 4"/>
                     </svg>
                 </button>
             </div>
+        </div>
+        <div id="ai-response-content" class="markdown-body"></div>
+    </div>
+</section>
 
-            <div id="ai-response" class="ai-response glass-effect hidden">
-                <div class="ai-response-header">
-                    <span class="ai-status">Генерирую ответ...</span>
-                    <div class="ai-actions">
-                        <button id="ai-copy" class="ai-button-small" aria-label="Скопировать ответ">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
-                        </button>
-                        <button id="ai-regenerate" class="ai-button-small" aria-label="Перегенерировать ответ">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20L20 4"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div id="ai-response-content"></div>
-            </div>
-        </section>
     </div>
 
     <script>
@@ -998,6 +1106,196 @@
                 copyBtn.addEventListener('click', copyResponse);
                 regenerateBtn.addEventListener('click', regenerateResponse);
             }
+
+            // Улучшенная функция форматирования Markdown
+function renderMarkdown(text) {
+    // Создаем временный элемент для рендеринга
+    const tempDiv = document.createElement('div');
+
+    // Обрабатываем заголовки
+    text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+
+    // Обрабатываем жирный и курсив
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Обрабатываем код
+    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+
+    // Обрабатываем блоки кода
+    text = text.replace(/```([\s\S]*?)```/g, (match, code) => {
+        return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+    });
+
+    // Обрабатываем списки
+    text = text.replace(/^\s*\*\s+(.*$)/gm, '<li>$1</li>');
+    text = text.replace(/<li>.*<\/li>/g, (match) => `<ul>${match}</ul>`);
+
+    // Обрабатываем абзацы
+    text = text.replace(/\n\n/g, '</p><p>');
+    text = text.replace(/\n/g, '<br>');
+
+    // Обрабатываем ссылки
+    text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // Устанавливаем обработанный текст
+    tempDiv.innerHTML = `<p>${text}</p>`;
+
+    // Очищаем пустые элементы
+    tempDiv.querySelectorAll('p').forEach(p => {
+        if (p.textContent.trim() === '') {
+            p.remove();
+        }
+    });
+
+    return tempDiv.innerHTML;
+}
+
+// Инициализация AI-ассистента
+function initAIAssistant(project) {
+    const promptInput = document.getElementById('ai-prompt');
+    const submitBtn = document.getElementById('ai-submit');
+    const responseContainer = document.getElementById('ai-response');
+    const responseContent = document.getElementById('ai-response-content');
+    const copyBtn = document.getElementById('ai-copy');
+    const regenerateBtn = document.getElementById('ai-regenerate');
+    const statusElement = document.querySelector('.ai-status');
+
+    let lastPrompt = '';
+    let lastResponse = '';
+
+    // Обновляем статус
+    function updateStatus(text) {
+        statusElement.textContent = text;
+    }
+
+    // Обработка отправки запроса
+    async function handleSubmit() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+
+        lastPrompt = prompt;
+        promptInput.value = '';
+        promptInput.disabled = true;
+        submitBtn.disabled = true;
+        updateStatus('Генерирую ответ...');
+
+        responseContainer.classList.remove('hidden');
+        responseContent.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+
+        try {
+            const projectInfo = {
+                title: project.title,
+                description: project.desc,
+                category: project.category,
+                url: project.url,
+                domain: getDomain(project.url)
+            };
+
+            const response = await askMistral(prompt, projectInfo);
+            lastResponse = response;
+            responseContent.innerHTML = renderMarkdown(response);
+            updateStatus('Ответ готов');
+        } catch (error) {
+            responseContent.innerHTML = `<div class="error">Не удалось получить ответ: ${error.message}</div>`;
+            updateStatus('Ошибка при генерации');
+        } finally {
+            promptInput.disabled = false;
+            submitBtn.disabled = false;
+        }
+    }
+
+    // Копирование ответа
+    function copyResponse() {
+        if (!lastResponse) return;
+
+        navigator.clipboard.writeText(lastResponse).then(() => {
+            copyBtn.innerHTML = `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            `;
+            updateStatus('Ответ скопирован');
+
+            setTimeout(() => {
+                copyBtn.innerHTML = `
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                `;
+                updateStatus('Готов к новым вопросам');
+            }, 2000);
+        });
+    }
+
+    // Перегенерация ответа
+    async function regenerateResponse() {
+        if (!lastPrompt) return;
+
+        updateStatus('Генерирую новый ответ...');
+        responseContent.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+
+        try {
+            const projectInfo = {
+                title: project.title,
+                description: project.desc,
+                category: project.category,
+                url: project.url,
+                domain: getDomain(project.url)
+            };
+
+            const response = await askMistral(lastPrompt, projectInfo);
+            lastResponse = response;
+            responseContent.innerHTML = renderMarkdown(response);
+            updateStatus('Новый ответ готов');
+        } catch (error) {
+            responseContent.innerHTML = `<div class="error">Не удалось получить ответ: ${error.message}</div>`;
+            updateStatus('Ошибка при генерации');
+        }
+    }
+
+    // Обработчики событий
+    submitBtn.addEventListener('click', handleSubmit);
+    promptInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit();
+        }
+    });
+
+    copyBtn.addEventListener('click', copyResponse);
+    regenerateBtn.addEventListener('click', regenerateResponse);
+
+    // Примеры вопросов
+    const examples = [
+        "Объясни как работает этот инструмент",
+        "Какие основные функции у этого проекта?",
+        "Перескажи описание проекта простыми словами",
+        "Какие преимущества у этого сервиса?",
+        "Для каких задач подходит этот инструмент?"
+    ];
+
+    // Показываем примеры вопросов
+    const examplesContainer = document.createElement('div');
+    examplesContainer.className = 'ai-examples';
+    examplesContainer.innerHTML = '<p class="examples-title">Примеры вопросов:</p>';
+
+    examples.forEach(example => {
+        const btn = document.createElement('button');
+        btn.className = 'example-btn glass-effect';
+        btn.textContent = example;
+        btn.addEventListener('click', () => {
+            promptInput.value = example;
+            promptInput.focus();
+        });
+        examplesContainer.appendChild(btn);
+    });
+
+    document.querySelector('.ai-input-container').after(examplesContainer);
+}
+
 
             // Render functions
             function render(site) {
