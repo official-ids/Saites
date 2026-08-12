@@ -3844,7 +3844,7 @@ $('codeInput').addEventListener('keydown', function (e) { if (e.key === 'Enter')
     var mod = e.ctrlKey || e.metaKey;
     var k = (e.key || '').toLowerCase();
     var chatVisible = !$('chatScreen').classList.contains('hidden');
-    if (mod && e.shiftKey && (k === 'p' || k === 'з')) { e.preventDefault(); if (cmdState.open) closePalette(); else openPalette(); return; }
+    if (mod && e.altKey && e.code === 'KeyP') { e.preventDefault(); if (cmdState.open) closePalette(); else openPalette(); return; }
     if (mod && (k === 'k' || k === 'л')) { if (chatVisible) { e.preventDefault(); newConversation(); } return; }
     if (mod && (k === 'b' || k === 'и')) { if (chatVisible) { e.preventDefault(); if ($('sidebar').classList.contains('open')) closeSidebar(); else openSidebar(); } return; }
     if (mod && e.key === 'Enter') { if (chatVisible) { e.preventDefault(); $('sendBtn').click(); } return; }
