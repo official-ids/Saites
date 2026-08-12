@@ -22,9 +22,10 @@
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://api.mistral.ai">
 
-    <!-- Fonts with display=swap for better performance -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Theme initialization -->
     <script>
@@ -42,36 +43,47 @@
 
     <style>
         :root {
+            /* Glassmorphism variables */
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-blur: 16px;
+            --glass-brightness: brightness(1.1);
+
             /* Light theme colors */
-            --bg-body: #F5F5F7;
-            --bg-card: #FFFFFF;
-            --bg-elevated: #FFFFFF;
-            --text-primary: #1D1D1F;
-            --text-secondary: #6E6E73;
-            --text-tertiary: #AEAEB2;
-            --accent: #0071E3;
-            --accent-hover: #0077ED;
+            --bg-body: rgba(245, 245, 247, 0.8);
+            --bg-card: rgba(255, 255, 255, 0.7);
+            --bg-elevated: rgba(255, 255, 255, 0.85);
+            --text-primary: rgba(0, 0, 0, 0.85);
+            --text-secondary: rgba(0, 0, 0, 0.6);
+            --text-tertiary: rgba(0, 0, 0, 0.4);
+            --accent: rgba(0, 113, 227, 0.9);
+            --accent-hover: rgba(0, 119, 237, 1);
             --border-light: rgba(0, 0, 0, 0.06);
             --border: rgba(0, 0, 0, 0.1);
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
             --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
             --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
-            --radius-lg: 20px;
-            --radius-md: 14px;
-            --radius-sm: 10px;
-            --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --transition: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         :root[data-theme="dark"] {
+            --glass-bg: rgba(28, 28, 30, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: 20px;
+            --glass-brightness: brightness(0.95);
+
             /* Dark theme colors */
-            --bg-body: #000000;
-            --bg-card: #1C1C1E;
-            --bg-elevated: #2C2C2E;
-            --text-primary: #F5F5F7;
-            --text-secondary: #86868B;
-            --text-tertiary: #636366;
-            --accent: #0A84FF;
-            --accent-hover: #409CFF;
+            --bg-body: rgba(0, 0, 0, 0.8);
+            --bg-card: rgba(28, 28, 30, 0.7);
+            --bg-elevated: rgba(44, 44, 46, 0.85);
+            --text-primary: rgba(245, 245, 247, 0.95);
+            --text-secondary: rgba(134, 134, 139, 0.8);
+            --text-tertiary: rgba(99, 99, 102, 0.6);
+            --accent: rgba(10, 132, 255, 0.9);
+            --accent-hover: rgba(64, 156, 255, 1);
             --border-light: rgba(255, 255, 255, 0.08);
             --border: rgba(255, 255, 255, 0.12);
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -81,15 +93,19 @@
 
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme]) {
-                /* Apply dark theme if system prefers dark and no theme is set */
-                --bg-body: #000000;
-                --bg-card: #1C1C1E;
-                --bg-elevated: #2C2C2E;
-                --text-primary: #F5F5F7;
-                --text-secondary: #86868B;
-                --text-tertiary: #636366;
-                --accent: #0A84FF;
-                --accent-hover: #409CFF;
+                --glass-bg: rgba(28, 28, 30, 0.7);
+                --glass-border: rgba(255, 255, 255, 0.1);
+                --glass-blur: 20px;
+                --glass-brightness: brightness(0.95);
+
+                --bg-body: rgba(0, 0, 0, 0.8);
+                --bg-card: rgba(28, 28, 30, 0.7);
+                --bg-elevated: rgba(44, 44, 46, 0.85);
+                --text-primary: rgba(245, 245, 247, 0.95);
+                --text-secondary: rgba(134, 134, 139, 0.8);
+                --text-tertiary: rgba(99, 99, 102, 0.6);
+                --accent: rgba(10, 132, 255, 0.9);
+                --accent-hover: rgba(64, 156, 255, 1);
                 --border-light: rgba(255, 255, 255, 0.08);
                 --border: rgba(255, 255, 255, 0.12);
                 --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -111,6 +127,8 @@
 
         body {
             background-color: var(--bg-body);
+            background-image: radial-gradient(circle at 1px 1px, var(--border-light) 1px, transparent 0);
+            background-size: 20px 20px;
             color: var(--text-primary);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.5;
@@ -119,7 +137,7 @@
             transition: background-color 0.3s var(--transition), color 0.3s var(--transition);
         }
 
-        /* Focus styles for accessibility */
+        /* Focus styles */
         :focus-visible {
             outline: 2px solid var(--accent);
             outline-offset: 2px;
@@ -145,12 +163,25 @@
             border: 0;
         }
 
+        /* Glassmorphism effect */
+        .glass-effect {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            filter: var(--glass-brightness);
+        }
+
         /* Header styles */
         .topbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 22px 0;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         .brand {
@@ -188,9 +219,11 @@
             font-size: 0.9rem;
             font-weight: 500;
             padding: 8px 14px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--border-light);
             border-radius: 999px;
             transition: all 0.2s var(--transition);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .back-link:hover {
@@ -219,11 +252,15 @@
             aspect-ratio: 16 / 9;
             border-radius: var(--radius-lg);
             overflow: hidden;
-            border: 1px solid var(--border-light);
-            box-shadow: var(--shadow-md);
+            box-shadow: var(--shadow-lg);
             background: var(--bg-card);
             margin-bottom: 28px;
             position: relative;
+            transition: transform 0.3s var(--transition);
+        }
+
+        .preview:hover {
+            transform: scale(1.01);
         }
 
         .preview img {
@@ -266,6 +303,8 @@
             border-radius: 999px;
             margin-bottom: 16px;
             transition: all 0.2s var(--transition);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .category-badge:hover {
@@ -315,6 +354,8 @@
             transition: all 0.2s var(--transition);
             border: none;
             cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .open-btn:hover {
@@ -343,6 +384,8 @@
             border: 1px solid var(--border-light);
             border-radius: 999px;
             transition: all 0.2s var(--transition);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .domain-chip:hover {
@@ -381,6 +424,193 @@
             to { transform: rotate(360deg); }
         }
 
+        /* AI Assistant Styles */
+        #ai-assistant {
+            margin-top: 40px;
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            transition: all 0.3s var(--transition);
+        }
+
+        #ai-assistant h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .ai-description {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .ai-input-container {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .ai-textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            resize: none;
+            min-height: 100px;
+            transition: all 0.2s var(--transition);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .ai-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        #ai-submit {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s var(--transition);
+        }
+
+        #ai-submit:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+        }
+
+        #ai-submit svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .ai-response {
+            border-radius: var(--radius-md);
+            padding: 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            transition: all 0.3s var(--transition);
+        }
+
+        .ai-response.hidden {
+            display: none;
+        }
+
+        .ai-response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .ai-status {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .ai-button-small {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s var(--transition);
+        }
+
+        .ai-button-small:hover {
+            background: var(--border-light);
+            color: var(--accent);
+        }
+
+        #ai-response-content {
+            line-height: 1.6;
+            color: var(--text-primary);
+            white-space: pre-line;
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3 {
+            margin: 20px 0 10px;
+            font-weight: 600;
+        }
+
+        .markdown-content h1 {
+            font-size: 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 8px;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.3rem;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.1rem;
+        }
+
+        .markdown-content p {
+            margin-bottom: 16px;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin-bottom: 16px;
+            padding-left: 20px;
+        }
+
+        .markdown-content li {
+            margin-bottom: 8px;
+        }
+
+        .markdown-content code {
+            background: var(--border-light);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        .markdown-content pre {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-light);
+        }
+
+        .markdown-content a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .markdown-content a:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive styles */
         @media (max-width: 600px) {
             .container {
@@ -402,6 +632,10 @@
             .state {
                 padding: 60px 20px;
             }
+
+            #ai-assistant {
+                padding: 16px;
+            }
         }
 
         @media (max-width: 400px) {
@@ -414,6 +648,32 @@
                 padding: 10px 18px;
                 font-size: 0.9rem;
             }
+
+            .ai-textarea {
+                padding: 12px 16px;
+            }
+        }
+
+        /* Animation classes */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animated {
+            animation-duration: 0.6s;
+            animation-fill-mode: both;
+            animation-timing-function: var(--transition);
+        }
+
+        .fade-in-up {
+            animation-name: fadeInUp;
         }
     </style>
 </head>
@@ -440,6 +700,47 @@
                 <p>Загрузка проекта…</p>
             </div>
         </main>
+
+        <!-- AI Assistant Section -->
+        <section id="ai-assistant" class="glass-effect animated fade-in-up" style="animation-delay: 0.6s;">
+            <div class="ai-header">
+                <h2>AI-ассистент</h2>
+                <p class="ai-description">Задайте вопрос по проекту или попросите пересказать информацию</p>
+            </div>
+
+            <div class="ai-input-container">
+                <textarea
+                    id="ai-prompt"
+                    class="ai-textarea glass-effect"
+                    placeholder="Например: 'Объясни как работает этот инструмент' или 'Перескажи описание проекта простыми словами'"
+                    rows="3"
+                ></textarea>
+                <button id="ai-submit" class="glass-effect" aria-label="Отправить вопрос">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="ai-response" class="ai-response glass-effect hidden">
+                <div class="ai-response-header">
+                    <span class="ai-status">Генерирую ответ...</span>
+                    <div class="ai-actions">
+                        <button id="ai-copy" class="ai-button-small" aria-label="Скопировать ответ">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                        </button>
+                        <button id="ai-regenerate" class="ai-button-small" aria-label="Перегенерировать ответ">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M20 20v-5h-5M4 20L20 4"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="ai-response-content"></div>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -493,6 +794,19 @@
             // Icons
             const OPEN_ICON = 'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14';
 
+            // AI Configuration
+            const AI_CONFIG = {
+                apiKey: '7K4CtEv7BlV0xxLLnmpmaHFPp3nA15Kn',
+                model: 'mistral-tiny',
+                maxTokens: 500,
+                temperature: 0.7,
+                systemPrompt: `Ты - помощник по проектам в каталоге Oris.
+                Твоя задача - объяснять, пересказывать и отвечать на вопросы о проектах максимально кратко и понятно.
+                Используй простой язык, избегай сложных терминов.
+                Если вопрос не относится к проекту, вежливо откажись отвечать.
+                Форматируй ответ в markdown с заголовками, списками и выделением кода.`
+            };
+
             // Utility functions
             function escapeHtml(str) {
                 if (str == null) return '';
@@ -537,6 +851,152 @@
                 const parts = window.location.pathname.split('/').filter(Boolean);
                 const last = parts[parts.length - 1] || '';
                 return decodeURIComponent(last).toLowerCase();
+            }
+
+            // AI Assistant functions
+            async function askMistral(prompt, projectInfo) {
+                try {
+                    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${AI_CONFIG.apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: AI_CONFIG.model,
+                            messages: [
+                                {
+                                    role: 'system',
+                                    content: AI_CONFIG.systemPrompt + `\n\nИнформация о проекте: ${JSON.stringify(projectInfo)}`
+                                },
+                                {
+                                    role: 'user',
+                                    content: prompt
+                                }
+                            ],
+                            max_tokens: AI_CONFIG.maxTokens,
+                            temperature: AI_CONFIG.temperature,
+                            stream: false
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Mistral API error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    return data.choices[0].message.content.trim();
+                } catch (error) {
+                    console.error('Ошибка при обращении к Mistral API:', error);
+                    return `Извините, не удалось получить ответ. Пожалуйста, попробуйте позже.\n\nОшибка: ${error.message}`;
+                }
+            }
+
+            function formatResponse(text) {
+                // Простая конвертация Markdown в HTML
+                return text
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/`(.*?)`/g, '<code>$1</code>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/^\s+|\s+$/g, '');
+            }
+
+            function initAIAssistant(project) {
+                const promptInput = document.getElementById('ai-prompt');
+                const submitBtn = document.getElementById('ai-submit');
+                const responseContainer = document.getElementById('ai-response');
+                const responseContent = document.getElementById('ai-response-content');
+                const copyBtn = document.getElementById('ai-copy');
+                const regenerateBtn = document.getElementById('ai-regenerate');
+
+                let lastPrompt = '';
+                let lastResponse = '';
+
+                async function handleSubmit() {
+                    const prompt = promptInput.value.trim();
+                    if (!prompt) return;
+
+                    lastPrompt = prompt;
+                    promptInput.value = '';
+                    promptInput.disabled = true;
+                    submitBtn.disabled = true;
+
+                    responseContainer.classList.remove('hidden');
+                    responseContent.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+
+                    try {
+                        const projectInfo = {
+                            title: project.title,
+                            description: project.desc,
+                            category: project.category,
+                            url: project.url
+                        };
+
+                        const response = await askMistral(prompt, projectInfo);
+                        lastResponse = response;
+                        responseContent.innerHTML = `<div class="markdown-content">${formatResponse(response)}</div>`;
+                    } catch (error) {
+                        responseContent.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
+                    } finally {
+                        promptInput.disabled = false;
+                        submitBtn.disabled = false;
+                    }
+                }
+
+                function copyResponse() {
+                    if (!lastResponse) return;
+
+                    navigator.clipboard.writeText(lastResponse).then(() => {
+                        copyBtn.innerHTML = `
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        `;
+                        setTimeout(() => {
+                            copyBtn.innerHTML = `
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                            `;
+                        }, 2000);
+                    });
+                }
+
+                async function regenerateResponse() {
+                    if (!lastPrompt) return;
+
+                    responseContent.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
+                    try {
+                        const projectInfo = {
+                            title: project.title,
+                            description: project.desc,
+                            category: project.category,
+                            url: project.url
+                        };
+
+                        const response = await askMistral(lastPrompt, projectInfo);
+                        lastResponse = response;
+                        responseContent.innerHTML = `<div class="markdown-content">${formatResponse(response)}</div>`;
+                    } catch (error) {
+                        responseContent.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
+                    }
+                }
+
+                submitBtn.addEventListener('click', handleSubmit);
+                promptInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit();
+                    }
+                });
+
+                copyBtn.addEventListener('click', copyResponse);
+                regenerateBtn.addEventListener('click', regenerateResponse);
             }
 
             // Render functions
@@ -602,6 +1062,11 @@
                         </div>
                     `;
                 });
+
+                // Initialize AI assistant
+                setTimeout(() => {
+                    initAIAssistant(site);
+                }, 100);
             }
 
             function renderNotFound() {
