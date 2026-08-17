@@ -2251,6 +2251,21 @@ function updateCostChip() {
   chip.textContent = fmtTokens(tin + tout) + ' токенов · ~$' + (cost < 0.01 ? cost.toFixed(4) : cost.toFixed(3));
 }
 
+/* ---------- Предупреждение о дорогих запросах ---------- */
+var COST_WARN_USD = 0.5;
+function guardExpensive() {
+var convo = currentConvo();
+if (!convo) return true;
+var s = state.settings;
+var p = priceFor(s.provider, s.model);
+var tin = approxTokens(s.systemPrompt || '');
+(convo.messages || []).forEach(function (m) { tin += approxTokens(m.content || ''); });
+var toutEst = Math.min(Number(s.maxTokens) || 4096, 4096);
+var cost = (tin * p.inn + toutEst * p.out) / 1000000;
+if (cost < COST_WARN_USD) return true;
+return confirm('Дорогой запрос: примерно $' + cost.toFixed(2) + ' за этот запрос (контекст ' + fmtTokens(tin) + ' токенов). Отправить?');
+}
+
 /* ---------- Прикрепление файлов ---------- */
 var TEXT_EXT = /\.(txt|md|js|ts|py|html|css|json|csv|log|xml|yml|yaml)$/i;
 function b64part(dataUrl) { return String(dataUrl).split(',')[1] || ''; }
@@ -2709,6 +2724,7 @@ setTimeout(kill, 5000);
 function sendUserMessage(text) {
   stopMic();
   if (state.generating) return;
+  if (!guardExpensive()) return;
   var convo = currentConvo();
 var msg = { id: uid(), role: 'user', content: text, ts: Date.now() };
 if (state.replyTo) { msg.replyTo = state.replyTo; state.replyTo = null; renderReplyPreview(); }
@@ -2796,6 +2812,7 @@ convo.updatedAt = Date.now();
 
 function regenerateLast() {
   if (state.generating) return;
+  if (!guardExpensive()) return;
   var convo = currentConvo();
   var idx = -1;
   for (var i = convo.messages.length - 1; i >= 0; i--) { if (convo.messages[i].role === 'assistant') { idx = i; break; } }
@@ -2807,6 +2824,7 @@ function regenerateLast() {
 var CONTINUE_PROMPT = 'Продолжи свой предыдущий ответ ровно с того места, где он оборвался. Не повторяй уже написанное, без вступлений и повторов.';
 async function continueLast() {
 if (state.generating) return;
+if (!guardExpensive()) return;
 var convo = currentConvo();
 var idx = -1;
 for (var i = convo.messages.length - 1; i >= 0; i--) { if (convo.messages[i].role === 'assistant' && !convo.messages[i].error && !convo.messages[i].hidden) { idx = i; break; } }
