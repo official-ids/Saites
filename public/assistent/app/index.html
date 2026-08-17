@@ -1285,6 +1285,13 @@ var state = {
   incognito: false
 };
 
+/* ---------- Переход с лендинга ---------- */
+var landingQuery = null;
+(function () {
+var m = location.hash.match(/#q=([^&]+)/);
+if (m) { try { landingQuery = decodeURIComponent(m[1]); } catch (e) {} history.replaceState(null, '', location.pathname + location.search); }
+})();
+
 /* ---------- Утилиты ---------- */
 function $(id) { return document.getElementById(id); }
 function uid() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -3534,15 +3541,27 @@ function closeExportMenu() { $('exportMenu').classList.add('hidden'); }
 
 /* ---------- Навигация между экранами ---------- */
 function showChat() {
-$('setupScreen').classList.add('hidden');
-$('chatScreen').classList.remove('hidden');
-ensureCurrent();
-updateHeader();
-renderConvoList();
-renderMessages();
-setupImageForm();
-scrollBottom(false);
-if (!loadLS('aip_tutorial_done')) setTimeout(startTour, 700);
+    $('setupScreen').classList.add('hidden');
+    $('chatScreen').classList.remove('hidden');
+    ensureCurrent();
+    updateHeader();
+    renderConvoList();
+    renderMessages();
+    setupImageForm();
+    scrollBottom(false);
+    
+    // 1. Если был передан запрос извне (например, из URL-параметров), вставляем его в поле ввода
+    if (typeof landingQuery !== 'undefined' && landingQuery) {
+        $('msgInput').value = landingQuery;
+        autosize($('msgInput'));
+        $('msgInput').focus();
+        landingQuery = null; // Очищаем, чтобы не срабатывало при повторных вызовах
+    }
+    
+    // 2. Запускаем туториал, если пользователь видит приложение впервые
+    if (!loadLS('aip_tutorial_done')) {
+        setTimeout(startTour, 700);
+    }
 }
 function showSetup() {
   $('chatScreen').classList.add('hidden');
