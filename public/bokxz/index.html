@@ -1,0 +1,3550 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Bokxz - конструктор сайтов на основе описания через ИИ.">
+<title>Bokxz - AI конструктор сайтов</title>
+<link rel="icon" type="image/png" href="https://oris-flax.vercel.app/~/assets/bokxz-logo.png">
+<style>
+/* ============================================================
+   BOKXZ - СТИЛИ
+   Разделы:
+   01. Переменные и сброс
+   02. Базовая типографика и утилиты
+   03. Кнопки
+   04. Поля ввода
+   05. Верхняя панель
+   06. Экран авторизации
+   07. Рабочая область (сетка)
+   08. Панель композера
+   09. Лимиты
+   10. Список сайтов
+   11. Превью (браузерная рамка)
+   12. Рекомендации и журнал
+   13. Модальные окна
+   14. Уведомления (тосты)
+   15. Анимации
+   16. Адаптивность
+   ============================================================ */
+
+/* ---------- 01. Переменные и сброс ---------- */
+:root {
+    --bg: #f1efe9;
+    --bg-soft: #e6e4da;
+    --paper: #ffffff;
+    --ink: #16181d;
+    --ink-soft: #4b5058;
+    --ink-faint: #8b9099;
+    --line: #16181d;
+    --accent: #ff4d00;
+    --accent-soft: #ffe1d3;
+    --green: #0d7a4f;
+    --green-soft: #d8efe2;
+    --red: #c62f2f;
+    --red-soft: #fadfdd;
+    --blue: #2447d6;
+    --blue-soft: #dfe6ff;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow-hard: 6px 6px 0 rgba(22, 24, 29, 0.92);
+    --shadow-hard-sm: 3px 3px 0 rgba(22, 24, 29, 0.92);
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-ui);
+    background-color: var(--bg);
+    background-image:
+        linear-gradient(rgba(22, 24, 29, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(22, 24, 29, 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+input,
+textarea {
+    font-family: inherit;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+::selection {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+}
+
+/* ---------- 02. Базовая типографика и утилиты ---------- */
+.mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.02em;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--paper);
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.badge-accent {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--ink);
+}
+
+.badge-green {
+    background: var(--green-soft);
+    color: var(--green);
+}
+
+.badge-blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    display: inline-block;
+    animation: dotPulse 2s ease-in-out infinite;
+}
+
+.dot-off {
+    background: var(--ink-faint);
+    animation: none;
+}
+
+.section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.section-label::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border: 1.5px solid var(--ink);
+    display: inline-block;
+}
+
+.panel {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-hard);
+}
+
+.panel-pad {
+    padding: 20px;
+}
+
+.hint-line {
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.55;
+}
+
+/* ---------- 03. Кнопки ---------- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    background: var(--paper);
+    color: var(--ink);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    box-shadow: var(--shadow-hard-sm);
+    user-select: none;
+    text-align: center;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 rgba(22, 24, 29, 0.92);
+}
+
+.btn:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 rgba(22, 24, 29, 0.92);
+}
+
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+.btn-dark {
+    background: var(--ink);
+    color: #ffffff;
+}
+
+.btn-green {
+    background: var(--green);
+    color: #ffffff;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.btn-sm {
+    padding: 7px 12px;
+    font-size: 12.5px;
+    box-shadow: 2px 2px 0 rgba(22, 24, 29, 0.92);
+}
+
+.btn-ghost {
+    background: transparent;
+    box-shadow: none;
+    border-color: transparent;
+    color: var(--ink-soft);
+}
+
+.btn-ghost:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+    background: var(--bg-soft);
+    color: var(--ink);
+}
+
+.btn.is-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+.btn.is-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius-sm);
+    background: var(--paper);
+    color: var(--ink);
+    transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    flex: none;
+}
+
+.icon-btn:hover {
+    background: var(--ink);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.icon-btn-danger:hover {
+    background: var(--red);
+    border-color: var(--red);
+}
+
+.icon-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- 04. Поля ввода ---------- */
+.field {
+    margin-bottom: 16px;
+}
+
+.field-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    color: var(--ink-soft);
+}
+
+.field-input,
+.field-textarea {
+    width: 100%;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    background: #fdfdfa;
+    padding: 11px 13px;
+    font-size: 14.5px;
+    color: var(--ink);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.field-input::placeholder,
+.field-textarea::placeholder {
+    color: var(--ink-faint);
+}
+
+.field-input:focus,
+.field-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 3px 3px 0 rgba(255, 77, 0, 0.35);
+    background: #ffffff;
+}
+
+.field-input.is-invalid,
+.field-textarea.is-invalid {
+    border-color: var(--red);
+    box-shadow: 3px 3px 0 rgba(198, 47, 47, 0.25);
+}
+
+.field-textarea {
+    resize: vertical;
+    min-height: 150px;
+    line-height: 1.55;
+}
+
+.field-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.field-counter {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+.field-counter.is-over {
+    color: var(--red);
+    font-weight: 700;
+}
+
+.form-error {
+    border: 1.5px solid var(--red);
+    background: var(--red-soft);
+    color: var(--red);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+
+.form-note {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 12px;
+    line-height: 1.55;
+}
+
+/* ---------- 05. Верхняя панель ---------- */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--ink);
+}
+
+.brand-mark {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    background: var(--ink);
+    color: #ffffff;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-hard-sm);
+}
+
+.brand-mark span {
+    color: var(--accent);
+}
+
+.brand-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    padding: 6px 14px;
+    background: var(--bg-soft);
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 240px;
+}
+
+.user-chip .user-email {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- 06. Экран авторизации ---------- */
+.auth-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+}
+
+.auth-shell {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+    max-width: 1080px;
+    width: 100%;
+    align-items: center;
+}
+
+.auth-brand .brand-mark {
+    font-size: 28px;
+    display: inline-block;
+    margin-bottom: 28px;
+}
+
+.auth-title {
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1.04;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 18px;
+}
+
+.auth-title em {
+    font-style: normal;
+    background: var(--accent);
+    color: #ffffff;
+    padding: 0 10px;
+    border-radius: 6px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.auth-sub {
+    font-size: 16px;
+    color: var(--ink-soft);
+    max-width: 46ch;
+    margin-bottom: 30px;
+}
+
+.steps {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.steps li {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 12px 16px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper);
+    box-shadow: var(--shadow-hard-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.steps li:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 rgba(22, 24, 29, 0.92);
+}
+
+.step-num {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--accent);
+    flex: none;
+}
+
+.step-text b {
+    display: block;
+    font-size: 14.5px;
+}
+
+.step-text span {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+}
+
+.auth-limits-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    border-left: 4px solid var(--accent);
+    padding: 8px 0 8px 14px;
+    line-height: 1.6;
+}
+
+.auth-card {
+    padding: 28px;
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 22px;
+}
+
+.auth-tab {
+    border: none;
+    background: var(--paper);
+    padding: 11px 8px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.auth-tab + .auth-tab {
+    border-left: 2px solid var(--ink);
+}
+
+.auth-tab.is-active {
+    background: var(--ink);
+    color: #ffffff;
+}
+
+.auth-tab:not(.is-active):hover {
+    background: var(--bg-soft);
+    color: var(--ink);
+}
+
+.auth-mode-hint {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--ink-faint);
+    border: 1.5px dashed var(--ink-faint);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    line-height: 1.55;
+}
+
+/* ---------- 07. Рабочая область ---------- */
+.workspace {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 24px;
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+    align-items: start;
+}
+
+.composer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: sticky;
+    top: 84px;
+}
+
+.stage-col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+/* ---------- 08. Панель композера ---------- */
+.editor-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1.5px dashed var(--ink-faint);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+    background: var(--bg);
+}
+
+.editor-status b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 190px;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 18px;
+}
+
+.chip {
+    border: 1.5px solid var(--ink);
+    background: var(--bg);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.chip:hover {
+    background: var(--accent);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.composer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.composer-actions-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* ---------- 09. Лимиты ---------- */
+.limits-panel {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.limits-panel.is-blocked {
+    border-color: var(--red);
+    box-shadow: 6px 6px 0 rgba(198, 47, 47, 0.55);
+    animation: shake 0.45s ease;
+}
+
+.limit-row {
+    margin-bottom: 14px;
+}
+
+.limit-row:last-of-type {
+    margin-bottom: 10px;
+}
+
+.limit-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    gap: 10px;
+}
+
+.limit-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+}
+
+.limit-value {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.limit-value.is-full {
+    color: var(--red);
+}
+
+.limit-bar {
+    height: 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--bg-soft);
+    overflow: hidden;
+}
+
+.limit-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--green);
+    border-radius: 999px;
+    transition: width 0.5s ease, background-color 0.3s ease;
+}
+
+.limit-fill.is-warn {
+    background: var(--accent);
+}
+
+.limit-fill.is-full {
+    background: var(--red);
+}
+
+.limit-timer {
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    border-top: 1.5px dashed var(--ink-faint);
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.limit-timer b {
+    color: var(--ink);
+}
+
+/* ---------- 10. Список сайтов ---------- */
+.sites-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.site-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    background: var(--paper);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.site-item:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 rgba(22, 24, 29, 0.85);
+}
+
+.site-item.is-active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    box-shadow: 3px 3px 0 rgba(255, 77, 0, 0.5);
+}
+
+.site-item-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.site-item-title {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.site-item-meta {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin-top: 2px;
+}
+
+.sites-empty {
+    font-size: 13px;
+    color: var(--ink-faint);
+    border: 1.5px dashed var(--ink-faint);
+    border-radius: var(--radius-sm);
+    padding: 18px 14px;
+    text-align: center;
+    line-height: 1.55;
+}
+
+/* ---------- 11. Превью ---------- */
+.browser {
+    overflow: hidden;
+}
+
+.browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--ink);
+    background: var(--bg-soft);
+    flex-wrap: wrap;
+}
+
+.browser-dots {
+    display: flex;
+    gap: 6px;
+    flex: none;
+}
+
+.browser-dots span {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+}
+
+.browser-dots span:nth-child(1) {
+    background: #ff5f57;
+}
+
+.browser-dots span:nth-child(2) {
+    background: #febc2e;
+}
+
+.browser-dots span:nth-child(3) {
+    background: #28c840;
+}
+
+.browser-url {
+    flex: 1;
+    min-width: 140px;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    background: #ffffff;
+    padding: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stage-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 2px solid var(--ink);
+    background: var(--paper);
+    flex-wrap: wrap;
+}
+
+.device-switch {
+    display: inline-flex;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.device-btn {
+    border: none;
+    background: var(--paper);
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    border-right: 1.5px solid var(--ink);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.device-btn:last-child {
+    border-right: none;
+}
+
+.device-btn.is-active {
+    background: var(--ink);
+    color: #ffffff;
+}
+
+.device-btn:not(.is-active):hover {
+    background: var(--bg-soft);
+}
+
+.stage-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.viewport {
+    background:
+        repeating-linear-gradient(45deg, rgba(22, 24, 29, 0.04) 0 10px, transparent 10px 20px),
+        var(--bg-soft);
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 480px;
+}
+
+.preview-frame-box {
+    width: 100%;
+    max-width: 100%;
+    background: #ffffff;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    transition: max-width 0.35s ease;
+    position: relative;
+}
+
+.viewport--tablet .preview-frame-box {
+    max-width: 800px;
+}
+
+.viewport--mobile .preview-frame-box {
+    max-width: 400px;
+}
+
+.preview-frame {
+    width: 100%;
+    height: 560px;
+    border: none;
+    display: block;
+    background: #ffffff;
+}
+
+.preview-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    text-align: center;
+    padding: 24px;
+    background: #ffffff;
+}
+
+.preview-empty-mark {
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 40px;
+    background: var(--bg-soft);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    padding: 10px 22px;
+    box-shadow: var(--shadow-hard-sm);
+}
+
+.preview-empty-mark span {
+    color: var(--accent);
+}
+
+.preview-empty p {
+    max-width: 42ch;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+}
+
+/* ---------- 12. Рекомендации и журнал ---------- */
+.notes-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.notes-list li {
+    position: relative;
+    padding: 10px 12px 10px 34px;
+    border: 1.5px solid var(--ink);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    font-size: 13.5px;
+    line-height: 1.5;
+    animation: riseIn 0.35s ease both;
+}
+
+.notes-list li::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 16px;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border: 1.5px solid var(--ink);
+}
+
+.notes-list li:nth-child(even)::before {
+    background: var(--blue);
+}
+
+.notes-list li:nth-child(1) { animation-delay: 0.02s; }
+.notes-list li:nth-child(2) { animation-delay: 0.08s; }
+.notes-list li:nth-child(3) { animation-delay: 0.14s; }
+.notes-list li:nth-child(4) { animation-delay: 0.20s; }
+.notes-list li:nth-child(5) { animation-delay: 0.26s; }
+.notes-list li:nth-child(6) { animation-delay: 0.32s; }
+
+.notes-empty {
+    font-size: 13.5px;
+    color: var(--ink-faint);
+    border: 1.5px dashed var(--ink-faint);
+    border-radius: var(--radius-sm);
+    padding: 18px 14px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.notes-meta {
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    border-top: 1.5px dashed var(--ink-faint);
+    padding-top: 10px;
+}
+
+.log-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.log-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    border: 1px solid var(--bg-soft);
+    animation: riseIn 0.25s ease both;
+}
+
+.log-time {
+    color: var(--ink-faint);
+    flex: none;
+}
+
+.log-mode {
+    flex: 1;
+    color: var(--ink);
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.log-status {
+    flex: none;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--ink);
+}
+
+.log-status.is-ok {
+    background: var(--green-soft);
+    color: var(--green);
+}
+
+.log-status.is-fail {
+    background: var(--red-soft);
+    color: var(--red);
+}
+
+.log-empty {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding: 8px 2px;
+}
+
+.app-footer {
+    padding: 10px 24px 30px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+}
+
+/* ---------- 13. Модальные окна ---------- */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 24, 29, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 90;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal {
+    width: 100%;
+    max-width: 760px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    animation: riseIn 0.25s ease;
+}
+
+.modal-small {
+    max-width: 440px;
+}
+
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 2px solid var(--ink);
+}
+
+.modal-title {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modal-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 2px solid var(--ink);
+    flex-wrap: wrap;
+}
+
+.code-area {
+    width: 100%;
+    min-height: 320px;
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    background: #101216;
+    color: #d7e0d9;
+    resize: vertical;
+    white-space: pre;
+}
+
+.code-area:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.confirm-text {
+    font-size: 14.5px;
+    line-height: 1.6;
+}
+
+/* ---------- 14. Уведомления ---------- */
+.toast-stack {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 120;
+    max-width: min(380px, calc(100vw - 40px));
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-hard-sm);
+    padding: 12px 14px;
+    transform: translateY(14px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.toast.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast-label {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    margin-top: 1px;
+}
+
+.toast-success .toast-label {
+    background: var(--green-soft);
+    color: var(--green);
+}
+
+.toast-error .toast-label {
+    background: var(--red-soft);
+    color: var(--red);
+}
+
+.toast-info .toast-label {
+    background: var(--blue-soft);
+    color: var(--blue);
+}
+
+.toast-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.toast-close {
+    flex: none;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--ink-faint);
+    padding: 2px;
+}
+
+.toast-close:hover {
+    color: var(--ink);
+}
+
+/* ---------- 15. Анимации ---------- */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes riseIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.65); opacity: 0.55; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+}
+
+.view-enter {
+    animation: riseIn 0.35s ease both;
+}
+
+/* ---------- 16. Адаптивность ---------- */
+@media (max-width: 1180px) {
+    .workspace {
+        grid-template-columns: 340px minmax(0, 1fr);
+        gap: 18px;
+    }
+}
+
+@media (max-width: 1020px) {
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .composer-col {
+        position: static;
+    }
+
+    .auth-shell {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .auth-brand {
+        text-align: left;
+    }
+}
+
+@media (max-width: 720px) {
+    .topbar {
+        padding: 10px 14px;
+    }
+
+    .brand-tag {
+        display: none;
+    }
+
+    .workspace {
+        padding: 14px;
+        gap: 14px;
+    }
+
+    .panel-pad {
+        padding: 16px;
+    }
+
+    .auth-wrap {
+        padding: 24px 14px;
+    }
+
+    .auth-card {
+        padding: 20px;
+    }
+
+    .preview-frame {
+        height: 440px;
+    }
+
+    .viewport {
+        padding: 12px;
+        min-height: 400px;
+    }
+
+    .stage-toolbar {
+        justify-content: center;
+    }
+
+    .composer-actions-row {
+        grid-template-columns: 1fr;
+    }
+
+    .user-chip {
+        max-width: 170px;
+    }
+
+    .toast-stack {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        max-width: none;
+    }
+}
+
+@media (max-width: 440px) {
+    .brand-mark {
+        font-size: 18px;
+    }
+
+    .auth-title {
+        font-size: 30px;
+    }
+
+    .steps li {
+        padding: 10px 12px;
+    }
+
+    .device-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .btn {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .preview-frame {
+        height: 400px;
+    }
+
+    .modal-foot {
+        flex-direction: column-reverse;
+    }
+
+    .modal-foot .btn {
+        width: 100%;
+    }
+}
+
+/* ---------- Режимы обновления ---------- */
+.mode-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mode-option {
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    padding: 16px;
+    background: var(--paper);
+    text-align: left;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    box-shadow: var(--shadow-hard-sm);
+    width: 100%;
+    cursor: pointer;
+}
+
+.mode-option:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 rgba(22, 24, 29, 0.92);
+    background: var(--bg-soft);
+}
+
+.mode-option-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.mode-option-desc {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+}
+
+/* ---------- Кликабельные рекомендации ---------- */
+.notes-list.clickable li {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    padding-right: 36px;
+}
+
+.notes-list.clickable li::after {
+    content: "→";
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 700;
+    color: var(--ink-faint);
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.notes-list.clickable li:hover {
+    background: var(--accent-soft);
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 rgba(255, 77, 0, 0.5);
+}
+
+.notes-list.clickable li:hover::after {
+    color: var(--accent);
+    transform: translateY(-50%) translateX(4px);
+}
+
+.spark {
+    color: var(--accent);
+    animation: sparkle 2s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2) rotate(15deg); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ЭКРАН АВТОРИЗАЦИИ
+     ============================================================ -->
+<section id="authView" class="auth-wrap view-enter">
+    <div class="auth-shell">
+        <aside class="auth-brand">
+            <div class="brand-mark">BOKXZ<span>*</span></div>
+            <h1 class="auth-title">Сайт начинается <em>с одной фразы</em></h1>
+            <p class="auth-sub">
+                Bokxz - конструктор, в котором вы описываете сайт словами,
+                а искусственный интеллект верстает готовую страницу,
+                помогает править её и подсказывает, что можно улучшить.
+            </p>
+            <ol class="steps">
+                <li>
+                    <span class="step-num">01</span>
+                    <span class="step-text">
+                        <b>Опишите идею</b>
+                        <span>Тема, разделы, настроение - в свободной форме.</span>
+                    </span>
+                </li>
+                <li>
+                    <span class="step-num">02</span>
+                    <span class="step-text">
+                        <b>Получите сайт</b>
+                        <span>Mistral сгенерирует полный HTML со стилями и скриптами.</span>
+                    </span>
+                </li>
+                <li>
+                    <span class="step-num">03</span>
+                    <span class="step-text">
+                        <b>Правьте и улучшайте</b>
+                        <span>Обновления по описанию, поиск багов и рекомендации ИИ.</span>
+                    </span>
+                </li>
+            </ol>
+            <div class="auth-limits-note">
+                <span class="badge">Лимиты</span>
+                <span>
+                    2 новых сайта и 100 правок в сутки на пользователя.
+                    Счётчики обнуляются автоматически в 00:00 UTC.
+                </span>
+            </div>
+        </aside>
+
+        <div class="auth-card panel">
+            <div class="auth-tabs" role="tablist">
+                <button type="button" id="tabLogin" class="auth-tab is-active">Вход</button>
+                <button type="button" id="tabRegister" class="auth-tab">Регистрация</button>
+            </div>
+
+            <!-- Форма входа -->
+            <form id="loginForm" novalidate>
+                <div id="loginError" class="form-error" hidden></div>
+                <div class="field">
+                    <label class="field-label" for="loginEmail">Email</label>
+                    <input class="field-input" type="email" id="loginEmail"
+                           placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="loginPassword">Пароль</label>
+                    <input class="field-input" type="password" id="loginPassword"
+                           placeholder="Ваш пароль" autocomplete="current-password">
+                </div>
+                <button type="submit" id="loginSubmit" class="btn btn-primary btn-block">Войти</button>
+                <p class="form-note">
+                    Нет аккаунта? Переключитесь на вкладку "Регистрация" - это займёт меньше минуты.
+                </p>
+            </form>
+
+            <!-- Форма регистрации -->
+            <form id="registerForm" novalidate hidden>
+                <div id="registerError" class="form-error" hidden></div>
+                <div class="field">
+                    <label class="field-label" for="registerName">Имя</label>
+                    <input class="field-input" type="text" id="registerName"
+                           placeholder="Как к вам обращаться" autocomplete="name">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="registerEmail">Email</label>
+                    <input class="field-input" type="email" id="registerEmail"
+                           placeholder="you@example.com" autocomplete="email">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="registerPassword">Пароль</label>
+                    <input class="field-input" type="password" id="registerPassword"
+                           placeholder="Минимум 6 символов" autocomplete="new-password">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="registerPassword2">Повторите пароль</label>
+                    <input class="field-input" type="password" id="registerPassword2"
+                           placeholder="Ещё раз" autocomplete="new-password">
+                </div>
+                <button type="submit" id="registerSubmit" class="btn btn-primary btn-block">Создать аккаунт</button>
+                <p class="form-note">
+                    Регистрируясь, вы соглашаетесь с лимитами сервиса:
+                    2 сайта и 100 правок в сутки.
+                </p>
+            </form>
+
+            <div id="authModeHint" class="auth-mode-hint" hidden></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     РАБОЧАЯ ОБЛАСТЬ (после входа)
+     ============================================================ -->
+<div id="appView" hidden>
+    <header class="topbar">
+        <a class="brand" href="#" onclick="return false;">
+            <span class="brand-mark">BOKXZ<span class="spark">*</span></span>
+            <span class="brand-tag">AI конструктор сайтов</span>
+        </a>
+        <div class="topbar-right">
+            <span class="badge badge-blue" id="backendBadge">
+                <span class="dot" id="backendDot"></span>
+                <span id="backendLabel">Подключение</span>
+            </span>
+            <span class="user-chip">
+                <span class="mono">USER:</span>
+                <span class="user-email" id="topbarUserEmail"></span>
+            </span>
+            <button type="button" class="btn btn-sm" id="logoutButton">Выйти</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Левая колонка: композер, лимиты, список сайтов -->
+        <aside class="composer-col">
+            <section class="panel panel-pad">
+                <div class="panel-head">
+                    <h2 class="panel-title">Композер</h2>
+                    <span class="badge badge-accent">MISTRAL</span>
+                </div>
+
+                <div class="editor-status">
+                    <span>Редактируется:</span>
+                    <b id="editorStatusName">новый сайт</b>
+                    <button type="button" class="btn btn-ghost btn-sm" id="editorResetButton" title="Сбросить редактор">Сброс</button>
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="siteTitle">Название сайта</label>
+                    <input class="field-input" type="text" id="siteTitle"
+                           placeholder="Например: Кофейня "Утро"" maxlength="80">
+                </div>
+
+                <div class="field field-row">
+                    <label class="field-label" for="siteDesc" style="margin-bottom:0;">Описание</label>
+                    <span class="field-counter" id="descCounter">0 / 1500</span>
+                </div>
+                <div class="field">
+                    <textarea class="field-textarea" id="siteDesc" maxlength="1500"
+                        placeholder="Опишите сайт: тематика, разделы, стиль, цвета, какие блоки нужны. Чем подробнее описание, тем точнее результат."></textarea>
+                </div>
+
+                <div class="section-label">Быстрые примеры</div>
+                <div class="chips">
+                    <button type="button" class="chip" data-sample="Лендинг уютной кофейни: меню с ценами, фото-блок, часы работы и форма брони столика. Тёплые коричневые и кремовые тона.">Кофейня</button>
+                    <button type="button" class="chip" data-sample="Портфолио фотографа: большая галерея, блок обо мне, услуги и контакты. Минимализм, много воздуха, тёмный фон.">Портфолио</button>
+                    <button type="button" class="chip" data-sample="Промо-страница мобильного приложения для учёта финансов: преимущества, скриншоты-заглушки, кнопки скачивания, отзывы. Яркий современный стиль.">Приложение</button>
+                    <button type="button" class="chip" data-sample="Страница-визитка мастера маникюра: услуги с ценами, примеры работ, запись через форму, карта проезда. Нежные пастельные цвета.">Визитка</button>
+                </div>
+
+                <div class="composer-actions">
+                    <button type="button" class="btn btn-primary btn-block" id="createButton">Создать сайт</button>
+                    <div class="composer-actions-row">
+                        <button type="button" class="btn btn-dark" id="updateButton">Обновить сайт</button>
+                        <button type="button" class="btn btn-green" id="fixButton">Исправить баги</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel panel-pad limits-panel" id="limitsPanel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Лимиты на сутки</h2>
+                    <span class="badge">UTC</span>
+                </div>
+
+                <div class="limit-row">
+                    <div class="limit-top">
+                        <span class="limit-name">Создано сайтов</span>
+                        <span class="limit-value" id="limitSitesValue">0 / 2</span>
+                    </div>
+                    <div class="limit-bar">
+                        <div class="limit-fill" id="limitSitesFill"></div>
+                    </div>
+                </div>
+
+                <div class="limit-row">
+                    <div class="limit-top">
+                        <span class="limit-name">Правок сегодня</span>
+                        <span class="limit-value" id="limitEditsValue">0 / 100</span>
+                    </div>
+                    <div class="limit-bar">
+                        <div class="limit-fill" id="limitEditsFill"></div>
+                    </div>
+                </div>
+
+                <div class="limit-timer">
+                    <span>Сброс в 00:00 UTC</span>
+                    <b id="limitTimerValue">--:--:--</b>
+                </div>
+            </section>
+
+            <section class="panel panel-pad">
+                <div class="panel-head">
+                    <h2 class="panel-title">Мои сайты</h2>
+                    <span class="badge" id="sitesCountBadge">0</span>
+                </div>
+                <ul class="sites-list" id="sitesList"></ul>
+                <div class="sites-empty" id="sitesEmpty">
+                    Пока пусто. Опишите сайт в композере
+                    и нажмите "Создать сайт".
+                </div>
+            </section>
+        </aside>
+
+        <!-- Правая колонка: превью, рекомендации, журнал -->
+        <section class="stage-col">
+            <div class="panel browser">
+                <div class="browser-bar">
+                    <div class="browser-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div class="browser-url mono" id="browserUrl">bokxz.app/preview</div>
+                    <span class="badge" id="previewStatusBadge">Ожидание</span>
+                </div>
+
+                <div class="stage-toolbar">
+                    <div class="device-switch" role="group" aria-label="Ширина превью">
+                        <button type="button" class="device-btn is-active" data-device="desktop">Десктоп</button>
+                        <button type="button" class="device-btn" data-device="tablet">Планшет</button>
+                        <button type="button" class="device-btn" data-device="mobile">Телефон</button>
+                    </div>
+                    <div class="stage-actions">
+                        <button type="button" class="btn btn-sm" id="openTabButton" disabled>
+                            Открыть в новой вкладке
+                        </button>
+                        <button type="button" class="btn btn-sm" id="downloadButton" disabled>
+                            Скачать HTML
+                        </button>
+                        <button type="button" class="btn btn-sm" id="showCodeButton" disabled>
+                            Код
+                        </button>
+                    </div>
+                </div>
+
+                <div class="viewport viewport--desktop" id="viewport">
+                    <div class="preview-frame-box">
+                        <iframe class="preview-frame" id="previewFrame"
+                                title="Предпросмотр сайта"
+                                sandbox="allow-scripts allow-modals"></iframe>
+                        <div class="preview-empty" id="previewEmpty">
+                            <div class="preview-empty-mark">BOKXZ<span>*</span></div>
+                            <p>
+                                Здесь появится сгенерированный сайт.
+                                Опишите, что вам нужно, в композере слева
+                                и нажмите "Создать сайт".
+                            </p>
+                            <span class="hint-line mono">MISTRAL API / GENERATE / PREVIEW</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="panel panel-pad">
+                <div class="panel-head">
+                    <h2 class="panel-title">Рекомендации ИИ</h2>
+                    <span class="badge badge-green" id="notesModeBadge">Ожидание</span>
+                </div>
+                <div id="notesBody">
+                    <div class="notes-empty">
+                        После создания или правки сайта здесь появятся советы:
+                        что можно улучшить в дизайне и какие баги вероятны.
+                    </div>
+                </div>
+                <div class="notes-meta" id="notesMeta" hidden></div>
+            </section>
+
+            <section class="panel panel-pad">
+                <div class="panel-head">
+                    <h2 class="panel-title">Журнал запросов</h2>
+                    <button type="button" class="btn btn-ghost btn-sm" id="clearLogButton">Очистить</button>
+                </div>
+                <ul class="log-list" id="logList"></ul>
+                <div class="log-empty" id="logEmpty">Запросов ещё не было.</div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        BOKXZ * ГЕНЕРАТИВНЫЙ КОНСТРУКТОР * ЛИМИТЫ СБРАСЫВАЮТСЯ В 00:00 UTC * MISTRRAL POWERED
+    </footer>
+</div>
+
+<!-- ============================================================
+     МОДАЛЬНОЕ ОКНО: ПРОСМОТР КОДА
+     ============================================================ -->
+<div class="modal-backdrop" id="codeModal" hidden>
+    <div class="modal panel">
+        <div class="modal-head">
+            <h3 class="modal-title">HTML код сайта</h3>
+            <button type="button" class="icon-btn" id="codeModalClose" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <textarea class="code-area" id="codeArea" readonly spellcheck="false"></textarea>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" id="copyCodeButton">Скопировать код</button>
+            <button type="button" class="btn btn-dark" id="codeModalDone">Готово</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     МОДАЛЬНОЕ ОКНО: ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ
+     ============================================================ -->
+<div class="modal-backdrop" id="confirmModal" hidden>
+    <div class="modal modal-small panel">
+        <div class="modal-head">
+            <h3 class="modal-title">Подтверждение</h3>
+            <button type="button" class="icon-btn" id="confirmModalClose" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="confirm-text" id="confirmText">Вы уверены?</p>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" id="confirmNoButton">Отмена</button>
+            <button type="button" class="btn btn-primary" id="confirmYesButton">Да, продолжить</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     МОДАЛЬНОЕ ОКНО: ВЫБОР РЕЖИМА ОБНОВЛЕНИЯ
+     ============================================================ -->
+<div class="modal-backdrop" id="modeModal" hidden>
+    <div class="modal modal-small panel">
+        <div class="modal-head">
+            <h3 class="modal-title" id="modeModalTitle">Выберите режим</h3>
+            <button type="button" class="icon-btn" id="modeModalClose" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="mode-options">
+                <button type="button" class="mode-option" data-mode="auto">
+                    <div class="mode-option-title">Авто режим</div>
+                    <div class="mode-option-desc">ИИ сам проанализирует сайт и внесёт оптимальные изменения</div>
+                </button>
+                <button type="button" class="mode-option" data-mode="manual">
+                    <div class="mode-option-title">Ручной режим</div>
+                    <div class="mode-option-desc">Опишите конкретные изменения, которые нужно внести</div>
+                </button>
+            </div>
+            <div id="manualInputWrap" hidden>
+                <div class="field" style="margin-top:16px;">
+                    <textarea class="field-textarea" id="manualPrompt" 
+                        placeholder="Опишите, что именно нужно изменить..." 
+                        style="min-height:100px;"></textarea>
+                </div>
+                <button type="button" class="btn btn-primary btn-block" id="manualSubmit">Применить изменения</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно логов изменений -->
+<div class="modal-backdrop" id="changesModal" hidden>
+    <div class="modal panel">
+        <div class="modal-head">
+            <h3 class="modal-title">Что было изменено</h3>
+            <button type="button" class="icon-btn" id="changesModalClose" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <ul class="notes-list" id="changesList"></ul>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" id="changesModalDone">Готово</button>
+        </div>
+    </div>
+</div>
+
+<!-- Контейнер уведомлений -->
+<div class="toast-stack" id="toastStack"></div>
+
+<noscript>
+    <div style="padding:24px;text-align:center;font-family:sans-serif;">
+        Для работы Bokxz необходимо включить JavaScript.
+    </div>
+</noscript>
+
+<!-- Единственная внешняя зависимость: клиент Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* ============================================================
+   BOKXZ - ЛОГИКА ПРИЛОЖЕНИЯ
+   Разделы:
+   A. Конфигурация
+   B. Утилиты
+   C. Слой данных (Supabase + локальный запасной режим)
+   D. Состояние приложения
+   E. Уведомления и модальные окна
+   F. Авторизация
+   G. Лимиты (2 сайта / 100 правок в сутки, сброс 00:00 UTC)
+   H. Mistral API: промпты, запрос, разбор ответа
+   I. Генерация / обновление / исправление сайтов
+   J. Превью, устройства, экспорт кода
+   K. Список сайтов
+   L. Журнал запросов
+   M. Привязка событий и инициализация
+   ============================================================ */
+
+/* ---------- A. Конфигурация ---------- */
+
+/*
+   Схема базы данных Supabase (выполнить в SQL editor проекта):
+
+   create table if not exists public.bokxz_sites (
+       id uuid primary key,
+       user_id uuid not null,
+       title text not null default 'Без названия',
+       description text not null default '',
+       html text not null default '',
+       edits_count integer not null default 0,
+       created_at timestamptz not null default now()
+   );
+
+   create table if not exists public.bokxz_limits (
+       user_id uuid not null,
+       day text not null,
+       sites integer not null default 0,
+       edits integer not null default 0,
+       primary key (user_id, day)
+   );
+
+   alter table public.bokxz_sites enable row level security;
+   alter table public.bokxz_limits enable row level security;
+
+   create policy "sites own all" on public.bokxz_sites
+       for all using (auth.uid() = user_id)
+       with check (auth.uid() = user_id);
+
+   create policy "limits own all" on public.bokxz_limits
+       for all using (auth.uid() = user_id)
+       with check (auth.uid() = user_id);
+
+   ВНИМАНИЕ: вставьте anon ключ вашего проекта Supabase
+   в константу SUPABASE_ANON_KEY ниже. Пока ключ не указан,
+   приложение работает в локальном режиме (данные в браузере).
+*/
+
+const CONFIG = {
+    SUPABASE_URL: "https://lrxrbixtfxdtegvdcohu.supabase.co",
+    SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxyeHJiaXh0ZnhkdGVndmRjb2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MDM1MjUsImV4cCI6MjEwMjM3OTUyNX0.C-_RBCaRVRyxN_ecIb65DDiLnwxCQNd4cywqGTuOXGU",
+    MISTRAL_API_KEY: "PsIawkT6hq1vdDAe0T0EJwDyAnTffQiW",
+    MISTRAL_URL: "https://api.mistral.ai/v1/chat/completions",
+    MISTRAL_MODEL: "mistral-small-latest",
+    LIMIT_SITES_PER_DAY: 2,
+    LIMIT_EDITS_PER_DAY: 100,
+    DESC_MAX: 1500
+};
+
+/* ---------- B. Утилиты ---------- */
+
+function $(selector, root) {
+    return (root || document).querySelector(selector);
+}
+
+function $all(selector, root) {
+    return Array.from((root || document).querySelectorAll(selector));
+}
+
+function uid() {
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+}
+
+function utcDay() {
+    const d = new Date();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return d.getUTCFullYear() + "-" + m + "-" + day;
+}
+
+function simpleHash(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    }
+    return "h" + (h >>> 0).toString(36);
+}
+
+function formatDate(iso) {
+    try {
+        return new Date(iso).toLocaleString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    } catch (e) {
+        return "";
+    }
+}
+
+function formatClock(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = String(Math.floor(total / 3600)).padStart(2, "0");
+    const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+    const s = String(total % 60).padStart(2, "0");
+    return h + ":" + m + ":" + s;
+}
+
+function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+}
+
+function deriveTitle(description) {
+    const words = description.split(/\s+/).filter(Boolean).slice(0, 5).join(" ");
+    return words.length > 42 ? words.slice(0, 42) + "..." : (words || "Без названия");
+}
+
+function lsGet(key, fallback) {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function lsSet(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        /* переполнение хранилища игнорируем */
+    }
+}
+
+function setButtonLoading(button, isLoading) {
+    if (!button) return;
+    if (isLoading) {
+        if (!button.dataset.originalLabel) {
+            button.dataset.originalLabel = button.textContent;
+        }
+        button.classList.add("is-loading");
+        button.disabled = true;
+    } else {
+        button.classList.remove("is-loading");
+        button.disabled = false;
+    }
+}
+
+function restoreButtonLabel(button) {
+    if (button && button.dataset.originalLabel) {
+        button.textContent = button.dataset.originalLabel;
+    }
+}
+
+function translateAuthError(error) {
+    const m = (error && error.message) || String(error);
+    if (/invalid login credentials/i.test(m)) return "Неверный email или пароль.";
+    if (/already registered/i.test(m)) return "Пользователь с таким email уже зарегистрирован.";
+    if (/email not confirmed/i.test(m)) return "Email не подтверждён. Проверьте почтовый ящик.";
+    if (/at least 6 characters/i.test(m)) return "Пароль должен содержать минимум 6 символов.";
+    if (/rate limit/i.test(m)) return "Слишком много попыток. Подождите минуту и повторите.";
+    if (/failed to fetch|network/i.test(m)) return "Нет соединения с сервером Supabase.";
+    return m;
+}
+
+/* ---------- C. Слой данных ---------- */
+
+const DB = {
+    mode: "local",
+    sb: null,
+
+    init() {
+        if (CONFIG.SUPABASE_ANON_KEY && window.supabase && typeof window.supabase.createClient === "function") {
+            try {
+                this.sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+                this.mode = "supabase";
+            } catch (e) {
+                this.mode = "local";
+            }
+        } else {
+            this.mode = "local";
+        }
+    },
+
+    /* --- Аутентификация --- */
+
+    async signUp(name, email, password) {
+        const cleanEmail = email.trim().toLowerCase();
+        if (this.mode === "supabase") {
+            const { data, error } = await this.sb.auth.signUp({
+                email: cleanEmail,
+                password: password,
+                options: { data: { name: name } }
+            });
+            if (error) throw new Error(translateAuthError(error));
+            if (!data.session) {
+                return { needConfirm: true, user: data.user };
+            }
+            return { needConfirm: false, user: data.user };
+        }
+        const users = lsGet("bokxz_users", []);
+        if (users.some(u => u.email === cleanEmail)) {
+            throw new Error("Пользователь с таким email уже зарегистрирован.");
+        }
+        const user = {
+            id: uid(),
+            email: cleanEmail,
+            name: name,
+            hash: simpleHash(password + "::" + cleanEmail)
+        };
+        users.push(user);
+        lsSet("bokxz_users", users);
+        lsSet("bokxz_session", { userId: user.id, email: user.email, name: user.name });
+        return { needConfirm: false, user: user };
+    },
+
+    async signIn(email, password) {
+        const cleanEmail = email.trim().toLowerCase();
+        if (this.mode === "supabase") {
+            const { data, error } = await this.sb.auth.signInWithPassword({
+                email: cleanEmail,
+                password: password
+            });
+            if (error) throw new Error(translateAuthError(error));
+            return data.user;
+        }
+        const users = lsGet("bokxz_users", []);
+        const found = users.find(u => u.email === cleanEmail);
+        if (!found) throw new Error("Неверный email или пароль.");
+        if (found.hash !== simpleHash(password + "::" + cleanEmail)) {
+            throw new Error("Неверный email или пароль.");
+        }
+        lsSet("bokxz_session", { userId: found.id, email: found.email, name: found.name });
+        return found;
+    },
+
+    async signOut() {
+        if (this.mode === "supabase") {
+            try {
+                await this.sb.auth.signOut();
+            } catch (e) {
+                /* игнорируем ошибки сети при выходе */
+            }
+        }
+        localStorage.removeItem("bokxz_session");
+    },
+
+    async getSession() {
+        if (this.mode === "supabase") {
+            const { data } = await this.sb.auth.getSession();
+            const u = data && data.session && data.session.user;
+            if (!u) return null;
+            const meta = u.user_metadata || {};
+            return { id: u.id, email: u.email, name: meta.name || "" };
+        }
+        const s = lsGet("bokxz_session", null);
+        if (!s) return null;
+        return { id: s.userId, email: s.email, name: s.name || "" };
+    },
+
+    /* --- Сайты --- */
+
+    async listSites(userId) {
+        if (this.mode === "supabase") {
+            const { data, error } = await this.sb
+                .from("bokxz_sites")
+                .select("*")
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false });
+            if (error) throw error;
+            return data || [];
+        }
+        return lsGet("bokxz_sites_" + userId, []);
+    },
+
+    async createSite(userId, site) {
+        if (this.mode === "supabase") {
+            const payload = {
+                id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : uid(),
+                user_id: userId,
+                title: site.title,
+                description: site.description,
+                html: site.html,
+                edits_count: 0
+            };
+            const { data, error } = await this.sb
+                .from("bokxz_sites")
+                .insert(payload)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+        const row = {
+            id: uid(),
+            user_id: userId,
+            title: site.title,
+            description: site.description,
+            html: site.html,
+            edits_count: 0,
+            created_at: new Date().toISOString()
+        };
+        const list = lsGet("bokxz_sites_" + userId, []);
+        list.unshift(row);
+        lsSet("bokxz_sites_" + userId, list);
+        return row;
+    },
+
+    async updateSite(userId, id, patch) {
+        if (this.mode === "supabase") {
+            const { data, error } = await this.sb
+                .from("bokxz_sites")
+                .update(patch)
+                .eq("id", id)
+                .select()
+                .single();
+            if (error) throw error;
+            return data;
+        }
+        const list = lsGet("bokxz_sites_" + userId, []);
+        const index = list.findIndex(s => s.id === id);
+        if (index === -1) throw new Error("Сайт не найден.");
+        list[index] = Object.assign({}, list[index], patch);
+        lsSet("bokxz_sites_" + userId, list);
+        return list[index];
+    },
+
+    async deleteSite(userId, id) {
+        if (this.mode === "supabase") {
+            const { error } = await this.sb
+                .from("bokxz_sites")
+                .delete()
+                .eq("id", id);
+            if (error) throw error;
+            return;
+        }
+        const list = lsGet("bokxz_sites_" + userId, []).filter(s => s.id !== id);
+        lsSet("bokxz_sites_" + userId, list);
+    },
+
+    /* --- Лимиты --- */
+
+    async getLimits(userId, day) {
+        if (this.mode === "supabase") {
+            const { data, error } = await this.sb
+                .from("bokxz_limits")
+                .select("*")
+                .eq("user_id", userId)
+                .eq("day", day)
+                .maybeSingle();
+            if (error) throw error;
+            return { sites: data ? (data.sites || 0) : 0, edits: data ? (data.edits || 0) : 0 };
+        }
+        const obj = lsGet("bokxz_limits_" + userId, null);
+        if (!obj || obj.day !== day) return { sites: 0, edits: 0 };
+        return { sites: obj.sites || 0, edits: obj.edits || 0 };
+    },
+
+    async bumpLimit(userId, day, field) {
+        if (this.mode === "supabase") {
+            const current = await this.getLimits(userId, day);
+            const patch = {};
+            patch[field] = (current[field] || 0) + 1;
+            const { data, error } = await this.sb
+                .from("bokxz_limits")
+                .update(patch)
+                .eq("user_id", userId)
+                .eq("day", day)
+                .select();
+            if (error) throw error;
+            if (!data || data.length === 0) {
+                const row = {
+                    user_id: userId,
+                    day: day,
+                    sites: field === "sites" ? 1 : 0,
+                    edits: field === "edits" ? 1 : 0
+                };
+                const { error: insertError } = await this.sb.from("bokxz_limits").insert(row);
+                if (insertError) throw insertError;
+            }
+            return;
+        }
+        const obj = lsGet("bokxz_limits_" + userId, { day: day, sites: 0, edits: 0 });
+        if (obj.day !== day) {
+            obj.day = day;
+            obj.sites = 0;
+            obj.edits = 0;
+        }
+        obj[field] = (obj[field] || 0) + 1;
+        lsSet("bokxz_limits_" + userId, obj);
+    }
+};
+
+/* Запасной локальный учёт лимитов, если таблицы Supabase недоступны */
+let limitsFallback = false;
+
+function fallbackLimitsGet(userId, day) {
+    const obj = lsGet("bokxz_limits_fb_" + userId, null);
+    if (!obj || obj.day !== day) return { sites: 0, edits: 0 };
+    return { sites: obj.sites || 0, edits: obj.edits || 0 };
+}
+
+function fallbackLimitsBump(userId, day, field) {
+    const obj = lsGet("bokxz_limits_fb_" + userId, { day: day, sites: 0, edits: 0 });
+    if (obj.day !== day) {
+        obj.day = day;
+        obj.sites = 0;
+        obj.edits = 0;
+    }
+    obj[field] = (obj[field] || 0) + 1;
+    lsSet("bokxz_limits_fb_" + userId, obj);
+}
+
+/* ---------- D. Состояние приложения ---------- */
+
+const state = {
+    user: null,
+    sites: [],
+    currentSiteId: null,
+    currentHtml: "",
+    busy: false,
+    limits: { day: utcDay(), sites: 0, edits: 0 }
+};
+
+let confirmCallback = null;
+let lastBlobUrl = null;
+let clockInterval = null;
+
+/* ---------- E. Уведомления и модальные окна ---------- */
+
+function toast(message, type) {
+    const stack = $("#toastStack");
+    const el = document.createElement("div");
+    el.className = "toast toast-" + (type || "info");
+
+    const label = document.createElement("span");
+    label.className = "toast-label";
+    label.textContent = type === "success" ? "ОК" : (type === "error" ? "Ошибка" : "Инфо");
+
+    const text = document.createElement("span");
+    text.className = "toast-text";
+    text.textContent = message;
+
+    const close = document.createElement("button");
+    close.className = "toast-close";
+    close.type = "button";
+    close.setAttribute("aria-label", "Закрыть уведомление");
+    close.innerHTML = "&times;";
+    close.addEventListener("click", () => dismiss());
+
+    el.appendChild(label);
+    el.appendChild(text);
+    el.appendChild(close);
+    stack.appendChild(el);
+
+    requestAnimationFrame(() => el.classList.add("is-visible"));
+
+    let dismissed = false;
+    function dismiss() {
+        if (dismissed) return;
+        dismissed = true;
+        el.classList.remove("is-visible");
+        setTimeout(() => el.remove(), 320);
+    }
+    setTimeout(dismiss, 5600);
+}
+
+function openConfirm(message, onYes) {
+    confirmCallback = onYes;
+    $("#confirmText").textContent = message;
+    $("#confirmModal").hidden = false;
+}
+
+function closeConfirm() {
+    confirmCallback = null;
+    $("#confirmModal").hidden = true;
+}
+
+function openCodeModal(html) {
+    $("#codeArea").value = html;
+    $("#codeModal").hidden = false;
+}
+
+function closeCodeModal() {
+    $("#codeModal").hidden = true;
+}
+
+/* ---------- F. Авторизация ---------- */
+
+function showAuthView() {
+    $("#appView").hidden = true;
+    $("#authView").hidden = false;
+    $("#authView").classList.remove("view-enter");
+    void $("#authView").offsetWidth;
+    $("#authView").classList.add("view-enter");
+    renderAuthModeHint();
+}
+
+function renderAuthModeHint() {
+    const hint = $("#authModeHint");
+    if (DB.mode === "supabase") {
+        hint.hidden = true;
+        hint.textContent = "";
+    } else {
+        hint.hidden = false;
+        hint.textContent =
+            "Supabase не подключён: не указан SUPABASE_ANON_KEY в начале скрипта. " +
+            "Пока аккаунты и сайты хранятся локально в этом браузере. " +
+            "Вставьте anon ключ проекта, чтобы включить облачное хранилище.";
+    }
+}
+
+function setTab(which) {
+    const isLogin = which === "login";
+    $("#tabLogin").classList.toggle("is-active", isLogin);
+    $("#tabRegister").classList.toggle("is-active", !isLogin);
+    $("#loginForm").hidden = !isLogin;
+    $("#registerForm").hidden = isLogin;
+    hideFormError("loginError");
+    hideFormError("registerError");
+}
+
+function showFormError(id, message) {
+    const box = $("#" + id);
+    box.textContent = message;
+    box.hidden = false;
+}
+
+function hideFormError(id) {
+    const box = $("#" + id);
+    box.textContent = "";
+    box.hidden = true;
+}
+
+function markInvalid(input, invalid) {
+    input.classList.toggle("is-invalid", invalid);
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+    hideFormError("loginError");
+
+    const emailInput = $("#loginEmail");
+    const passwordInput = $("#loginPassword");
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    let valid = true;
+    if (!isValidEmail(email)) {
+        markInvalid(emailInput, true);
+        valid = false;
+    } else {
+        markInvalid(emailInput, false);
+    }
+    if (password.length < 1) {
+        markInvalid(passwordInput, true);
+        valid = false;
+    } else {
+        markInvalid(passwordInput, false);
+    }
+    if (!valid) {
+        showFormError("loginError", "Проверьте корректность email и пароля.");
+        return;
+    }
+
+    const button = $("#loginSubmit");
+    setButtonLoading(button, true);
+    try {
+        const user = await DB.signIn(email, password);
+        state.user = { id: user.id, email: user.email, name: (user.user_metadata && user.user_metadata.name) || user.name || "" };
+        toast("С возвращением в Bokxz.", "success");
+        await enterApp();
+    } catch (err) {
+        showFormError("loginError", err.message || "Не удалось войти.");
+    } finally {
+        setButtonLoading(button, false);
+        restoreButtonLabel(button);
+    }
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+    hideFormError("registerError");
+
+    const nameInput = $("#registerName");
+    const emailInput = $("#registerEmail");
+    const passInput = $("#registerPassword");
+    const pass2Input = $("#registerPassword2");
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passInput.value;
+    const password2 = pass2Input.value;
+
+    markInvalid(nameInput, name.length < 2);
+    markInvalid(emailInput, !isValidEmail(email));
+    markInvalid(passInput, password.length < 6);
+    markInvalid(pass2Input, password2 !== password || password2.length === 0);
+
+    if (name.length < 2) {
+        showFormError("registerError", "Имя должно содержать минимум 2 символа.");
+        return;
+    }
+    if (!isValidEmail(email)) {
+        showFormError("registerError", "Введите корректный email.");
+        return;
+    }
+    if (password.length < 6) {
+        showFormError("registerError", "Пароль должен содержать минимум 6 символов.");
+        return;
+    }
+    if (password !== password2) {
+        showFormError("registerError", "Пароли не совпадают.");
+        return;
+    }
+
+    const button = $("#registerSubmit");
+    setButtonLoading(button, true);
+    try {
+        const result = await DB.signUp(name, email, password);
+        if (result.needConfirm) {
+            toast("Аккаунт создан. Подтвердите email по ссылке из письма и войдите.", "info");
+            setTab("login");
+            $("#loginEmail").value = email;
+        } else {
+            state.user = { id: result.user.id, email: result.user.email, name: name };
+            toast("Аккаунт создан. Добро пожаловать в Bokxz.", "success");
+            await enterApp();
+        }
+    } catch (err) {
+        showFormError("registerError", err.message || "Не удалось зарегистрироваться.");
+    } finally {
+        setButtonLoading(button, false);
+        restoreButtonLabel(button);
+    }
+}
+
+async function handleLogout() {
+    await DB.signOut();
+    state.user = null;
+    state.sites = [];
+    state.currentSiteId = null;
+    state.currentHtml = "";
+    toast("Вы вышли из аккаунта.", "info");
+    showAuthView();
+}
+
+async function enterApp() {
+    $("#authView").hidden = true;
+    $("#appView").hidden = false;
+    $("#appView").classList.remove("view-enter");
+    void $("#appView").offsetWidth;
+    $("#appView").classList.add("view-enter");
+
+    $("#topbarUserEmail").textContent = state.user.email;
+    updateBackendBadge();
+
+    await loadLimits(true);
+    await refreshSites();
+    resetEditor();
+    startClock();
+}
+
+function updateBackendBadge() {
+    const label = $("#backendLabel");
+    const dot = $("#backendDot");
+    if (DB.mode === "supabase") {
+        label.textContent = "SUPABASE ONLINE";
+        dot.classList.remove("dot-off");
+    } else {
+        label.textContent = "LOCAL MODE";
+        dot.classList.add("dot-off");
+    }
+}
+
+/* ---------- G. Лимиты ---------- */
+
+async function loadLimits(force) {
+    const day = utcDay();
+    if (!state.user) return state.limits;
+    if (!force && state.limits && state.limits.day === day) return state.limits;
+
+    let data;
+    try {
+        data = await DB.getLimits(state.user.id, day);
+    } catch (e) {
+        if (!limitsFallback) {
+            limitsFallback = true;
+            toast("Таблица лимитов Supabase недоступна. Учёт ведётся локально для этой сессии.", "error");
+        }
+        data = fallbackLimitsGet(state.user.id, day);
+    }
+    state.limits = { day: day, sites: data.sites, edits: data.edits };
+    renderLimits();
+    return state.limits;
+}
+
+async function consumeLimit(kind) {
+    const day = state.limits.day;
+    try {
+        await DB.bumpLimit(state.user.id, day, kind);
+    } catch (e) {
+        if (!limitsFallback) {
+            limitsFallback = true;
+            toast("Таблица лимитов Supabase недоступна. Учёт ведётся локально.", "error");
+        }
+        fallbackLimitsBump(state.user.id, day, kind);
+    }
+    state.limits[kind] = (state.limits[kind] || 0) + 1;
+    renderLimits();
+}
+
+function limitReached(kind) {
+    if (kind === "sites") return state.limits.sites >= CONFIG.LIMIT_SITES_PER_DAY;
+    return state.limits.edits >= CONFIG.LIMIT_EDITS_PER_DAY;
+}
+
+function renderLimits() {
+    const sitesValue = $("#limitSitesValue");
+    const editsValue = $("#limitEditsValue");
+    const sitesFill = $("#limitSitesFill");
+    const editsFill = $("#limitEditsFill");
+    if (!sitesValue) return;
+
+    const s = state.limits.sites;
+    const e = state.limits.edits;
+    const sMax = CONFIG.LIMIT_SITES_PER_DAY;
+    const eMax = CONFIG.LIMIT_EDITS_PER_DAY;
+
+    sitesValue.textContent = s + " / " + sMax;
+    editsValue.textContent = e + " / " + eMax;
+    sitesValue.classList.toggle("is-full", s >= sMax);
+    editsValue.classList.toggle("is-full", e >= eMax);
+
+    sitesFill.style.width = Math.min(100, (s / sMax) * 100) + "%";
+    editsFill.style.width = Math.min(100, (e / eMax) * 100) + "%";
+
+    sitesFill.classList.toggle("is-full", s >= sMax);
+    sitesFill.classList.toggle("is-warn", s < sMax && s > 0);
+    editsFill.classList.toggle("is-full", e >= eMax);
+    editsFill.classList.toggle("is-warn", e >= eMax * 0.8 && e < eMax);
+}
+
+function msUntilUtcMidnight() {
+    const now = new Date();
+    const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0);
+    return next - now.getTime();
+}
+
+function blockByLimit(kind) {
+    const panel = $("#limitsPanel");
+    panel.classList.add("is-blocked");
+    setTimeout(() => panel.classList.remove("is-blocked"), 1700);
+
+    if (kind === "sites") {
+        toast(
+            "Достигнут лимит: не более " + CONFIG.LIMIT_SITES_PER_DAY +
+            " созданных сайтов в сутки. Следующий сайт можно создать после 00:00 UTC (через " +
+            formatClock(msUntilUtcMidnight()) + ").",
+            "error"
+        );
+    } else {
+        toast(
+            "Достигнут лимит: не более " + CONFIG.LIMIT_EDITS_PER_DAY +
+            " правок в сутки. Правки снова станут доступны после 00:00 UTC (через " +
+            formatClock(msUntilUtcMidnight()) + ").",
+            "error"
+        );
+    }
+}
+
+function startClock() {
+    if (clockInterval) clearInterval(clockInterval);
+    let currentDay = utcDay();
+    clockInterval = setInterval(() => {
+        const el = $("#limitTimerValue");
+        if (el) el.textContent = formatClock(msUntilUtcMidnight());
+        const day = utcDay();
+        if (day !== currentDay) {
+            currentDay = day;
+            loadLimits(true).then(() => {
+                toast("Новые сутки по UTC: лимиты сайтов и правок обнулены.", "success");
+            });
+        }
+    }, 1000);
+    const el = $("#limitTimerValue");
+    if (el) el.textContent = formatClock(msUntilUtcMidnight());
+}
+
+/* ---------- H. Mistral API ---------- */
+
+function baseFormatRules() {
+    return [
+        "Формат ответа - строго по шаблону, без пояснений вне маркеров:",
+        "===HTML_START===",
+        "полный HTML документ",
+        "===HTML_END===",
+        "===NOTES_START===",
+        "список рекомендаций на русском языке",
+        "===NOTES_END===",
+        "",
+        "Требования к HTML:",
+        "- Полный документ: <!DOCTYPE html>, <html lang=\"ru\">, meta charset и meta viewport.",
+        "- Все стили внутри <style>, все скрипты внутри <script>, без внешних библиотек и шрифтов.",
+        "- Адаптивная вёрстка: страница должна корректно выглядеть на телефоне, планшете и десктопе.",
+        "- Современный аккуратный дизайн: продуманная типографика, палитра, отступы.",
+        "- Никаких эмодзи в коде и в текстах страницы.",
+        "- Тексты страницы на языке описания, если не указано иное."
+    ].join("\n");
+}
+
+function systemPromptCreate() {
+    return [
+        "Ты - профессиональный веб-дизайнер и верстальщик сервиса Bokxz.",
+        "По текстовому описанию пользователя ты создаёшь готовый одностраничный сайт.",
+        "",
+        baseFormatRules(),
+        "",
+        "Требования к блоку рекомендаций:",
+        "- 3-6 коротких пунктов.",
+        "- Что можно улучшить в дизайне, структуре и содержимом.",
+        "- Какие возможные баги или слабые места есть в коде."
+    ].join("\n");
+}
+
+function systemPromptUpdate() {
+    return [
+        "Ты - профессиональный веб-дизайнер сервиса Bokxz.",
+        "Пользователь передаёт текущий HTML сайта между маркерами ===CURRENT_HTML_START=== и ===CURRENT_HTML_END===",
+        "и описание правки. Внеси изменения по описанию и верни ПОЛНЫЙ обновлённый документ целиком.",
+        "Сохраняй всё, что не требуется менять.",
+        "",
+        baseFormatRules(),
+        "",
+        "Требования к блоку рекомендаций (ТОЛЬКО советы на будущее):",
+        "- Что ещё можно улучшить в дизайне, структуре или содержимом сайта.",
+        "- Какие возможные баги или слабые места остались в коде.",
+        "- Какие функции или блоки можно добавить для улучшения сайта.",
+        "- НЕ пиши здесь, что ты изменил или исправил в текущем запросе.",
+        "- Пиши только предложения для будущих улучшений."
+    ].join("\n");
+}
+
+function systemPromptFix() {
+    return [
+        "Ты - инженер по качеству и верстальщик сервиса Bokxz.",
+        "Пользователь передаёт HTML сайта между маркерами ===CURRENT_HTML_START=== и ===CURRENT_HTML_END===",
+        "Проанализируй код: невалидная разметка, ошибки JavaScript, сломанная адаптивность,",
+        "проблемы доступности и логики. Верни полностью исправленный документ.",
+        "",
+        baseFormatRules(),
+        "",
+        "Требования к блоку рекомендаций (ТОЛЬКО советы на будущее):",
+        "- Какие ещё улучшения можно внести в код и дизайн.",
+        "- Какие риски или потенциальные проблемы остались после исправлений.",
+        "- Какие дополнительные проверки или оптимизации можно провести.",
+        "- НЕ перечисляй здесь найденные и исправленные ошибки.",
+        "- Пиши только предложения для дальнейшей работы."
+    ].join("\n");
+}
+
+function userPromptUpdate(description, html) {
+    return "Описание правки:\n" + description +
+        "\n\n===CURRENT_HTML_START===\n" + html + "\n===CURRENT_HTML_END===";
+}
+
+function userPromptFix(html) {
+    return "Найди и исправь баги в этом коде сайта.\n\n" +
+        "===CURRENT_HTML_START===\n" + html + "\n===CURRENT_HTML_END===";
+}
+
+async function callMistral(messages) {
+    const response = await fetch(CONFIG.MISTRAL_URL, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + CONFIG.MISTRAL_API_KEY
+        },
+        body: JSON.stringify({
+            model: CONFIG.MISTRAL_MODEL,
+            messages: messages,
+            temperature: 0.35
+        })
+    });
+
+    if (!response.ok) {
+        let detail = "";
+        try {
+            const j = await response.json();
+            detail = j.message || (j.error && j.error.message) || "";
+        } catch (e) {
+            /* тело ответа не JSON */
+        }
+        if (response.status === 401) {
+            throw new Error("Mistral API отклонил ключ доступа (401).");
+        }
+        if (response.status === 429) {
+            throw new Error("Mistral API: превышен лимит запросов (429). Повторите позже.");
+        }
+        throw new Error("Mistral API вернул ошибку " + response.status + (detail ? ": " + detail : "."));
+    }
+
+    const json = await response.json();
+    const content = json && json.choices && json.choices[0] &&
+        json.choices[0].message && json.choices[0].message.content;
+    if (!content) {
+        throw new Error("Mistral вернул пустой ответ.");
+    }
+    return content.trim();
+}
+
+function extractBetween(text, start, end) {
+    const s = text.indexOf(start);
+    if (s === -1) return null;
+    const e = text.indexOf(end, s + start.length);
+    if (e === -1) return null;
+    return text.slice(s + start.length, e).trim();
+}
+
+function parseAiResponse(text) {
+    let html = extractBetween(text, "===HTML_START===", "===HTML_END===");
+    const notes = extractBetween(text, "===NOTES_START===", "===NOTES_END===");
+
+    if (!html) {
+        const fence = text.match(/```(?:html)?\s*([\s\S]*?)```/i);
+        if (fence && fence[1]) html = fence[1].trim();
+    }
+    if (!html && /<!DOCTYPE html>/i.test(text)) {
+        html = text.trim();
+    }
+    if (html) {
+        html = html.replace(/^```(?:html)?\s*/i, "").replace(/```\s*$/, "").trim();
+    }
+    return { html: html || "", notes: notes || "" };
+}
+
+/* ---------- I. Генерация / обновление / исправление ---------- */
+
+function modeLabel(mode) {
+    if (mode === "create") return "Создание";
+    if (mode === "update") return "Обновление";
+    return "Исправление багов";
+}
+
+function setBusy(busy, mode) {
+    state.busy = busy;
+    const create = $("#createButton");
+    const update = $("#updateButton");
+    const fix = $("#fixButton");
+
+    if (busy) {
+        create.disabled = true;
+        update.disabled = true;
+        fix.disabled = true;
+        const active = mode === "create" ? create : (mode === "update" ? update : fix);
+        setButtonLoading(active, true);
+        $("#previewStatusBadge").textContent = "Генерация";
+    } else {
+        create.disabled = false;
+        update.disabled = false;
+        fix.disabled = false;
+        setButtonLoading(create, false);
+        setButtonLoading(update, false);
+        setButtonLoading(fix, false);
+        restoreButtonLabel(create);
+        restoreButtonLabel(update);
+        restoreButtonLabel(fix);
+        $("#previewStatusBadge").textContent = state.currentHtml ? "Готово" : "Ожидание";
+    }
+}
+
+async function runGeneration(mode) {
+    if (!state.user) return;
+    if (state.busy) {
+        toast("Дождитесь завершения текущей операции.", "info");
+        return;
+    }
+
+    const description = $("#siteDesc").value.trim();
+
+    if (mode === "create") {
+        if (description.length < 10) {
+            toast("Опишите сайт подробнее - минимум 10 символов.", "error");
+            return;
+        }
+        if (limitReached("sites")) {
+            blockByLimit("sites");
+            return;
+        }
+    } else {
+        if (!state.currentSiteId) {
+            toast("Сначала выберите сайт в списке слева или создайте новый.", "error");
+            return;
+        }
+        if (mode === "update" && description.length < 3) {
+            toast("Опишите в поле описания, что именно нужно изменить.", "error");
+            return;
+        }
+        if (limitReached("edits")) {
+            blockByLimit("edits");
+            return;
+        }
+    }
+
+    setBusy(true, mode);
+    const startedAt = Date.now();
+    let messages;
+
+    try {
+        if (mode === "create") {
+            messages = [
+                { role: "system", content: systemPromptCreate() },
+                { role: "user", content: "Описание сайта:\n" + description }
+            ];
+        } else {
+            const site = state.sites.find(s => s.id === state.currentSiteId);
+            if (!site) throw new Error("Выбранный сайт не найден. Обновите список.");
+            if (mode === "update") {
+                messages = [
+                    { role: "system", content: systemPromptUpdate() },
+                    { role: "user", content: userPromptUpdate(description, site.html) }
+                ];
+            } else {
+                messages = [
+                    { role: "system", content: systemPromptFix() },
+                    { role: "user", content: userPromptFix(site.html) }
+                ];
+            }
+        }
+
+        const raw = await callMistral(messages);
+        const parsed = parseAiResponse(raw);
+        if (!parsed.html) {
+            throw new Error("Не удалось выделить HTML из ответа ИИ. Попробуйте ещё раз.");
+        }
+
+        if (mode === "create") {
+            const titleInput = $("#siteTitle");
+            const title = titleInput.value.trim() || deriveTitle(description);
+            const row = await DB.createSite(state.user.id, {
+                title: title,
+                description: description,
+                html: parsed.html
+            });
+            state.sites.unshift(row);
+            await consumeLimit("sites");
+            selectSite(row.id);
+            toast("Сайт создан и сохранён.", "success");
+        } else {
+            const site = state.sites.find(s => s.id === state.currentSiteId);
+            const patch = {
+                html: parsed.html,
+                edits_count: (site.edits_count || 0) + 1
+            };
+            if (mode === "update") {
+                patch.description = description;
+            }
+            const updated = await DB.updateSite(state.user.id, site.id, patch);
+            Object.assign(site, updated);
+            await consumeLimit("edits");
+            state.currentHtml = updated.html;
+            renderPreview(updated.html);
+            if (mode === "update") {
+                toast("Сайт обновлён по вашему описанию.", "success");
+            } else {
+                toast("Код проверен ИИ, найденные баги исправлены.", "success");
+            }
+        }
+
+        renderSitesList();
+        renderNotes(parsed.notes, mode, Date.now() - startedAt);
+        addLog(modeLabel(mode), true);
+    } catch (err) {
+        console.error(err);
+        toast(err.message || "Произошла неизвестная ошибка.", "error");
+        addLog(modeLabel(mode), false);
+    } finally {
+        setBusy(false);
+        loadLimits(true);
+    }
+}
+
+/* ---------- J. Превью, устройства, экспорт ---------- */
+
+function renderPreview(html) {
+    state.currentHtml = html;
+    const frame = $("#previewFrame");
+    const empty = $("#previewEmpty");
+    empty.hidden = true;
+    frame.srcdoc = html;
+
+    const slug = ($("#siteTitle").value.trim() || "site")
+        .toLowerCase()
+        .replace(/[^a-zа-яё0-9]+/gi, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 40) || "site";
+    $("#browserUrl").textContent = "bokxz.app/preview/" + slug;
+    $("#previewStatusBadge").textContent = "Готово";
+
+    $("#openTabButton").disabled = false;
+    $("#downloadButton").disabled = false;
+    $("#showCodeButton").disabled = false;
+}
+
+function setDevice(device) {
+    const viewport = $("#viewport");
+    viewport.classList.remove("viewport--desktop", "viewport--tablet", "viewport--mobile");
+    viewport.classList.add("viewport--" + device);
+    $all(".device-btn").forEach(btn => {
+        btn.classList.toggle("is-active", btn.dataset.device === device);
+    });
+}
+
+function makeBlobUrl() {
+    if (lastBlobUrl) {
+        URL.revokeObjectURL(lastBlobUrl);
+        lastBlobUrl = null;
+    }
+    const blob = new Blob([state.currentHtml], { type: "text/html;charset=utf-8" });
+    lastBlobUrl = URL.createObjectURL(blob);
+    return lastBlobUrl;
+}
+
+function openInNewTab() {
+    if (!state.currentHtml) return;
+    window.open(makeBlobUrl(), "_blank");
+}
+
+function downloadHtml() {
+    if (!state.currentHtml) return;
+    const a = document.createElement("a");
+    const title = ($("#siteTitle").value.trim() || "bokxz-site").replace(/\s+/g, "-").toLowerCase();
+    a.href = makeBlobUrl();
+    a.download = title + ".html";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast("Файл HTML выгружен.", "success");
+}
+
+async function copyCode() {
+    const area = $("#codeArea");
+    try {
+        await navigator.clipboard.writeText(area.value);
+        toast("Код скопирован в буфер обмена.", "success");
+    } catch (e) {
+        area.focus();
+        area.select();
+        try {
+            document.execCommand("copy");
+            toast("Код скопирован в буфер обмена.", "success");
+        } catch (e2) {
+            toast("Не удалось скопировать автоматически. Выделите код вручную.", "error");
+        }
+    }
+}
+
+/* ---------- K. Список сайтов ---------- */
+
+async function refreshSites() {
+    try {
+        state.sites = await DB.listSites(state.user.id);
+    } catch (err) {
+        console.error(err);
+        state.sites = [];
+        toast(
+            "Не удалось загрузить список сайтов из Supabase. Проверьте, что таблица bokxz_sites создана (SQL схема в начале скрипта).",
+            "error"
+        );
+    }
+    renderSitesList();
+}
+
+function renderSitesList() {
+    const list = $("#sitesList");
+    const empty = $("#sitesEmpty");
+    const counter = $("#sitesCountBadge");
+    list.innerHTML = "";
+    counter.textContent = String(state.sites.length);
+    empty.hidden = state.sites.length > 0;
+
+    state.sites.forEach(site => {
+        const item = document.createElement("li");
+        item.className = "site-item" + (site.id === state.currentSiteId ? " is-active" : "");
+
+        const main = document.createElement("div");
+        main.className = "site-item-main";
+
+        const title = document.createElement("span");
+        title.className = "site-item-title";
+        title.textContent = site.title || "Без названия";
+
+        const meta = document.createElement("span");
+        meta.className = "site-item-meta";
+        meta.textContent = formatDate(site.created_at) + " * правок: " + (site.edits_count || 0);
+
+        main.appendChild(title);
+        main.appendChild(meta);
+
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "icon-btn icon-btn-danger";
+        del.setAttribute("aria-label", "Удалить сайт");
+        del.title = "Удалить сайт";
+        del.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M4 7h16M9 7V5h6v2m-8 0l1 13h8l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        del.addEventListener("click", ev => {
+            ev.stopPropagation();
+            requestDeleteSite(site.id, site.title);
+        });
+
+        item.appendChild(main);
+        item.appendChild(del);
+        item.addEventListener("click", () => selectSite(site.id));
+        list.appendChild(item);
+    });
+}
+
+function selectSite(id) {
+    const site = state.sites.find(s => s.id === id);
+    if (!site) return;
+    state.currentSiteId = id;
+    $("#siteTitle").value = site.title || "";
+    $("#siteDesc").value = site.description || "";
+    updateDescCounter();
+    $("#editorStatusName").textContent = site.title || "Без названия";
+    renderPreview(site.html);
+    renderSitesList();
+}
+
+function resetEditor() {
+    state.currentSiteId = null;
+    state.currentHtml = "";
+    $("#siteTitle").value = "";
+    $("#siteDesc").value = "";
+    updateDescCounter();
+    $("#editorStatusName").textContent = "новый сайт";
+    $("#previewFrame").srcdoc = "";
+    $("#previewEmpty").hidden = false;
+    $("#browserUrl").textContent = "bokxz.app/preview";
+    $("#previewStatusBadge").textContent = "Ожидание";
+    $("#openTabButton").disabled = true;
+    $("#downloadButton").disabled = true;
+    $("#showCodeButton").disabled = true;
+    renderSitesList();
+}
+
+function requestDeleteSite(id, title) {
+    openConfirm('Удалить сайт "' + (title || "Без названия") + '"? Действие нельзя отменить.', async () => {
+        try {
+            await DB.deleteSite(state.user.id, id);
+            state.sites = state.sites.filter(s => s.id !== id);
+            if (state.currentSiteId === id) {
+                resetEditor();
+            }
+            renderSitesList();
+            toast("Сайт удалён.", "success");
+        } catch (err) {
+            toast(err.message || "Не удалось удалить сайт.", "error");
+        }
+    });
+}
+
+/* ---------- L. Журнал запросов ---------- */
+
+function addLog(mode, ok) {
+    const list = $("#logList");
+    const empty = $("#logEmpty");
+    empty.hidden = true;
+
+    const item = document.createElement("li");
+    item.className = "log-item";
+
+    const time = document.createElement("span");
+    time.className = "log-time";
+    time.textContent = new Date().toLocaleTimeString("ru-RU");
+
+    const modeEl = document.createElement("span");
+    modeEl.className = "log-mode";
+    modeEl.textContent = mode;
+
+    const status = document.createElement("span");
+    status.className = "log-status " + (ok ? "is-ok" : "is-fail");
+    status.textContent = ok ? "успешно" : "ошибка";
+
+    item.appendChild(time);
+    item.appendChild(modeEl);
+    item.appendChild(status);
+    list.prepend(item);
+
+    while (list.children.length > 12) {
+        list.removeChild(list.lastChild);
+    }
+}
+
+function clearLog() {
+    $("#logList").innerHTML = "";
+    $("#logEmpty").hidden = false;
+}
+
+/* ---------- Рекомендации ИИ ---------- */
+
+function renderNotes(notesText, mode, durationMs) {
+    const body = $("#notesBody");
+    const meta = $("#notesMeta");
+    const badge = $("#notesModeBadge");
+    body.innerHTML = "";
+    badge.textContent = modeLabel(mode);
+
+    const lines = (notesText || "")
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(s => s.replace(/^([-*]|\d+[.)])\s*/, ""));
+
+    // Разделяем на "изменения" и "рекомендации"
+    const changes = [];
+    const recommendations = [];
+    
+    lines.forEach(line => {
+        const lower = line.toLowerCase();
+        if (lower.includes("изменен") || lower.includes("исправлен") || 
+            lower.includes("добавлен") || lower.includes("удален") ||
+            lower.includes("обновлен") || lower.includes("changed") ||
+            lower.includes("fixed") || lower.includes("added")) {
+            changes.push(line);
+        } else {
+            recommendations.push(line);
+        }
+    });
+
+    // Показываем изменения в отдельной модалке
+    if (changes.length > 0) {
+        const changesList = $("#changesList");
+        changesList.innerHTML = "";
+        changes.forEach(line => {
+            const li = document.createElement("li");
+            li.textContent = line;
+            changesList.appendChild(li);
+        });
+        $("#changesModal").hidden = false;
+    }
+
+    // Показываем рекомендации как кликабельные
+    if (recommendations.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "notes-empty";
+        empty.textContent = "ИИ не вернул рекомендаций для этого запроса.";
+        body.appendChild(empty);
+        meta.hidden = true;
+        return;
+    }
+
+    const ul = document.createElement("ul");
+    ul.className = "notes-list clickable";
+    recommendations.forEach(line => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        li.addEventListener("click", () => {
+            openConfirm(
+                'Применить рекомендацию: "' + line + '"?',
+                async () => await applyRecommendation(line)
+            );
+        });
+        ul.appendChild(li);
+    });
+    body.appendChild(ul);
+
+    meta.hidden = false;
+    meta.textContent =
+        "Режим: " + modeLabel(mode) +
+        " * время ответа: " + (durationMs / 1000).toFixed(1) + " c" +
+        " * модель: " + CONFIG.MISTRAL_MODEL +
+        (changes.length > 0 ? " * изменений: " + changes.length : "");
+}
+
+async function applyRecommendation(recommendation) {
+    if (!state.currentSiteId || !state.currentHtml) {
+        toast("Нет активного сайта для применения рекомендации.", "error");
+        return;
+    }
+    
+    $("#siteDesc").value = recommendation;
+    updateDescCounter();
+    
+    // Автоматически запускаем обновление
+    await runGeneration("update");
+}
+
+/* ---------- M. Привязка событий и инициализация ---------- */
+
+function updateDescCounter() {
+    const area = $("#siteDesc");
+    const counter = $("#descCounter");
+    const len = area.value.length;
+    counter.textContent = len + " / " + CONFIG.DESC_MAX;
+    counter.classList.toggle("is-over", len >= CONFIG.DESC_MAX);
+}
+
+function bindEvents() {
+    /* Вкладки авторизации */
+    $("#tabLogin").addEventListener("click", () => setTab("login"));
+    $("#tabRegister").addEventListener("click", () => setTab("register"));
+    $("#loginForm").addEventListener("submit", handleLogin);
+    $("#registerForm").addEventListener("submit", handleRegister);
+    $("#logoutButton").addEventListener("click", handleLogout);
+
+    /* Композер */
+    $("#siteDesc").addEventListener("input", updateDescCounter);
+    $("#siteTitle").addEventListener("input", () => {
+        if (!state.currentSiteId) {
+            $("#editorStatusName").textContent = $("#siteTitle").value.trim() || "новый сайт";
+        }
+    });
+
+    $all(".chip").forEach(chip => {
+        chip.addEventListener("click", () => {
+            const area = $("#siteDesc");
+            area.value = chip.dataset.sample || "";
+            updateDescCounter();
+            area.focus();
+        });
+    });
+
+    $("#createButton").addEventListener("click", () => runGeneration("create"));
+let pendingMode = null;
+
+$("#updateButton").addEventListener("click", () => {
+    pendingMode = "update";
+    $("#modeModalTitle").textContent = "Обновление сайта";
+    $("#manualInputWrap").hidden = true;
+    $("#modeModal").hidden = false;
+});
+
+$("#fixButton").addEventListener("click", () => {
+    pendingMode = "fix";
+    $("#modeModalTitle").textContent = "Исправление багов";
+    $("#manualInputWrap").hidden = true;
+    $("#modeModal").hidden = false;
+});
+
+$all(".mode-option").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const mode = btn.dataset.mode;
+        if (mode === "auto") {
+            $("#modeModal").hidden = true;
+            runGeneration(pendingMode);
+        } else {
+            $("#manualInputWrap").hidden = false;
+            $("#manualPrompt").value = "";
+            $("#manualPrompt").focus();
+        }
+    });
+});
+
+$("#manualSubmit").addEventListener("click", async () => {
+    const prompt = $("#manualPrompt").value.trim();
+    if (prompt.length < 3) {
+        toast("Опишите изменения подробнее.", "error");
+        return;
+    }
+    $("#siteDesc").value = prompt;
+    updateDescCounter();
+    $("#modeModal").hidden = true;
+    await runGeneration(pendingMode);
+});
+
+$("#modeModalClose").addEventListener("click", () => {
+    $("#modeModal").hidden = true;
+});
+
+$("#changesModalClose").addEventListener("click", () => {
+    $("#changesModal").hidden = true;
+});
+
+$("#changesModalDone").addEventListener("click", () => {
+    $("#changesModal").hidden = true;
+});
+    $("#editorResetButton").addEventListener("click", () => {
+        resetEditor();
+        toast("Редактор сброшен: можно создавать новый сайт.", "info");
+    });
+
+    /* Превью */
+    $all(".device-btn").forEach(btn => {
+        btn.addEventListener("click", () => setDevice(btn.dataset.device));
+    });
+    $("#openTabButton").addEventListener("click", openInNewTab);
+    $("#downloadButton").addEventListener("click", downloadHtml);
+    $("#showCodeButton").addEventListener("click", () => openCodeModal(state.currentHtml));
+
+    /* Модальные окна */
+    $("#codeModalClose").addEventListener("click", closeCodeModal);
+    $("#codeModalDone").addEventListener("click", closeCodeModal);
+    $("#copyCodeButton").addEventListener("click", copyCode);
+    $("#confirmModalClose").addEventListener("click", closeConfirm);
+    $("#confirmNoButton").addEventListener("click", closeConfirm);
+    $("#confirmYesButton").addEventListener("click", () => {
+        const cb = confirmCallback;
+        closeConfirm();
+        if (typeof cb === "function") cb();
+    });
+    document.addEventListener("keydown", ev => {
+        if (ev.key === "Escape") {
+            closeConfirm();
+            closeCodeModal();
+        }
+    });
+    $("#codeModal").addEventListener("click", ev => {
+        if (ev.target === $("#codeModal")) closeCodeModal();
+    });
+    $("#confirmModal").addEventListener("click", ev => {
+        if (ev.target === $("#confirmModal")) closeConfirm();
+    });
+
+    /* Журнал */
+    $("#clearLogButton").addEventListener("click", clearLog);
+}
+
+async function init() {
+    DB.init();
+    bindEvents();
+    updateDescCounter();
+    updateBackendBadge();
+    renderAuthModeHint();
+
+    try {
+        const session = await DB.getSession();
+        if (session) {
+            state.user = session;
+            await enterApp();
+            return;
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    showAuthView();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
