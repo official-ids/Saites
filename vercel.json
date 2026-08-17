@@ -40,6 +40,14 @@
       ]
     },
     {
+  "source": "/bokxz/auth/callback",
+  "headers": [
+    { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" },
+    { "key": "Pragma", "value": "no-cache" },
+    { "key": "Expires", "value": "0" }
+  ]
+},
+    {
       "source": "/(.*)\\.(png|jpg|jpeg|gif|svg|ico|webp|woff2|woff|ttf|css|js)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
@@ -64,6 +72,7 @@
     { "source": "/658234/", "destination": "/658234", "permanent": true },
     { "source": "/r/:slug", "destination": "/api/redirects/:slug", "permanent": false },
     { "source": "/downloader", "destination": "/admin", "permanent": false },
-    { "source": "/index.html", "destination": "/", "permanent": true }
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/bokxz/auth/callback.html", "destination": "/bokxz/auth/callback", "permanent": true }
   ]
 }
