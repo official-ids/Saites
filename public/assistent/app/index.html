@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0c12">
 <title>AI Provider — единый клиент для ИИ</title>
-<link rel="icon" type="image/png" href="https://oris-flax.vercel.app/~/ai/assets/ai-logo.png">
+<link rel="icon" type="image/png" href="https://oris-flax.vercel.app/~/assets/ai-logo.png">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/500.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/600.css">
@@ -1042,6 +1042,7 @@ mask-position: 0 0, 0 var(--hy,0px), 100% var(--hy,0px), 0 100%; }
 </div>
 
 <div id="selToolbar" class="sel-toolbar hidden">
+  <button type="button" data-selact="reply">Цитировать</button>
   <button type="button" data-selact="translate">Перевести</button>
   <button type="button" data-selact="explain">Объясни</button>
   <button type="button" data-selact="short">Сделай короче</button>
@@ -2912,10 +2913,11 @@ function selectionInfo() {
   if (!row || !row.classList.contains('assistant')) return null;
   var rect = sel.getRangeAt(0).getBoundingClientRect();
   if (!rect || (rect.width === 0 && rect.height === 0)) return null;
-  return { text: text, rect: rect };
+  return { text: text, rect: rect, msgId: row.getAttribute('data-id') };
 }
 function showSelToolbar(info) {
   selState.text = info.text;
+  selState.msgId = info.msgId;
   var tb = $('selToolbar');
   tb.classList.remove('hidden');
   var w = tb.offsetWidth, h = tb.offsetHeight;
@@ -2934,11 +2936,19 @@ function checkSelection() {
 }
 function selAction(kind) {
 var text = selState.text;
+var msgId = selState.msgId;
 selState.keep = false;
 hideSelToolbar();
 var sel = window.getSelection();
 if (sel) sel.removeAllRanges();
 if (!text) return;
+if (kind === 'reply') {
+var convo = currentConvo();
+for (var i = 0; i < convo.messages.length; i++) {
+if (convo.messages[i].id === msgId) { startReply(convo.messages[i], text); break; }
+}
+return;
+}
 if (kind === 'translate') { openTranslateModal(text); return; }
 var prompt = '';
 if (kind === 'explain') prompt = 'Объясни следующий текст простыми словами, кратко и по сути:\n\n' + text;
@@ -3064,7 +3074,18 @@ return;
       saveConvos();
       renderMessages();
 } else if (a === 'reply') {
-startReply(msg);
+var selTxt = '';
+var sel0 = window.getSelection();
+if (sel0 && !sel0.isCollapsed) {
+var st0 = sel0.toString().trim();
+if (st0) {
+var node0 = sel0.anchorNode;
+var el0 = node0 && node0.nodeType === 3 ? node0.parentElement : node0;
+var row0 = el0 && el0.closest ? el0.closest('.msg') : null;
+if (row0 && row0.getAttribute('data-id') === msg.id) selTxt = st0;
+}
+}
+startReply(msg, selTxt);
 } else if (a === 'edit') {
 startEditMessage(msg.id);
 } else if (a === 'continue') {
@@ -3538,8 +3559,9 @@ function quoteHtml(m) {
 if (!m.replyTo) return '';
 return '<div class="msg-quote" data-goto="' + (m.replyTo.id || '') + '"><span class="msg-quote-role">' + escapeHtml(m.replyTo.name || (m.replyTo.role === 'user' ? 'Вы' : 'Ассистент')) + '</span><span class="msg-quote-text">' + escapeHtml(m.replyTo.excerpt || '') + '</span></div>';
 }
-function startReply(msg) {
-state.replyTo = { id: msg.id, role: msg.role, name: msg.role === 'user' ? 'Вы' : PROVIDERS[state.settings.provider].name, excerpt: excerptOf(msg) };
+function startReply(msg, selectedText) {
+var ex = (selectedText || '').trim() || excerptOf(msg);
+state.replyTo = { id: msg.id, role: msg.role, name: msg.role === 'user' ? 'Вы' : PROVIDERS[state.settings.provider].name, excerpt: ex.slice(0, 140) };
 renderReplyPreview();
 $('msgInput').focus();
 }
@@ -3800,7 +3822,7 @@ return;
 }
 
   /* статичные иконки */
-  var LOGO_URL = 'https://oris-flax.vercel.app/~/ai/assets/ai-logo.png'; // сюда можно вставить любую ссылку на свой логотип
+  var LOGO_URL = 'https://oris-flax.vercel.app/~/assets/ai-logo.png'; // сюда можно вставить любую ссылку на свой логотип
   var LOGO_HTML = '<img class="logo-img" src="' + LOGO_URL + '" alt="AI Provider">';
   $('brandLogoIcon').innerHTML = LOGO_HTML;
   $('sideLogo').innerHTML = LOGO_HTML;
