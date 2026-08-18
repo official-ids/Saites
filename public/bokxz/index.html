@@ -2196,7 +2196,10 @@ const DB = {
             const { data, error } = await this.sb.auth.signUp({
                 email: cleanEmail,
                 password: password,
-                options: { data: { name: name } }
+                options: {
+                    data: { name: name },
+                    emailRedirectTo: 'https://oris-flax.vercel.app/bokxz/auth/callback'
+                }
             });
             if (error) throw new Error(translateAuthError(error));
             if (!data.session) {
