@@ -1577,6 +1577,86 @@ textarea {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.6; transform: scale(1.2) rotate(15deg); }
 }
+
+/* ---------- Настройки музыки ---------- */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--bg-soft);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-hard-sm);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-hard-sm);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+    transform: scale(1.1);
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+    transform: scale(1.1);
+}/* ---------- Настройки музыки ---------- */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--bg-soft);
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-hard-sm);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: var(--shadow-hard-sm);
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+    transform: scale(1.1);
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+    transform: scale(1.1);
+}
 </style>
 </head>
 <body>
@@ -1704,13 +1784,19 @@ textarea {
                 <span class="mono">USER:</span>
                 <span class="user-email" id="topbarUserEmail"></span>
             </span>
-            <button type="button" class="icon-btn" id="musicToggle" title="Включить фоновую музыку" aria-label="Фоновая музыка">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
-             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-               <line x1="23" y1="9" x2="17" y2="15"></line>
-               <line x1="17" y1="9" x2="23" y2="15"></line>
-              </svg>
-            </button>
+            <button type="button" class="icon-btn" id="musicSettingsButton" title="Настройки музыки" aria-label="Настройки музыки">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+</button>
+<button type="button" class="icon-btn" id="musicToggle" title="Включить фоновую музыку" aria-label="Фоновая музыка">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <line x1="23" y1="9" x2="17" y2="15"></line>
+        <line x1="17" y1="9" x2="23" y2="15"></line>
+    </svg>
+</button>
             <button type="button" class="btn btn-sm" id="logoutButton">Выйти</button>
         </div>
     </header>
@@ -1987,12 +2073,61 @@ textarea {
     </div>
 </div>
 
+<div class="modal-backdrop" id="musicSettingsModal" hidden>
+    <div class="modal modal-small panel">
+        <div class="modal-head">
+            <h3 class="modal-title">Настройки фоновой музыки</h3>
+            <button type="button" class="icon-btn" id="musicSettingsClose" aria-label="Закрыть">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label class="field-label">Источник музыки</label>
+                <div class="mode-options">
+                    <button type="button" class="mode-option" data-music-source="system">
+                        <div class="mode-option-title">Системная музыка</div>
+                        <div class="mode-option-desc">Использовать встроенный спокойный трек</div>
+                    </button>
+                    <button type="button" class="mode-option" data-music-source="url">
+                        <div class="mode-option-title">URL аудиофайла</div>
+                        <div class="mode-option-desc">Указать прямую ссылку на MP3</div>
+                    </button>
+                    <button type="button" class="mode-option" data-music-source="upload">
+                        <div class="mode-option-title">Загрузить свой файл</div>
+                        <div class="mode-option-desc">Выбрать аудиофайл с компьютера</div>
+                    </button>
+                </div>
+            </div>
+
+            <div id="musicUrlInput" class="field" hidden>
+                <label class="field-label" for="musicUrl">URL аудиофайла</label>
+                <input class="field-input" type="url" id="musicUrl" placeholder="https://example.com/music.mp3">
+            </div>
+
+            <div id="musicUploadInput" class="field" hidden>
+                <label class="field-label" for="musicFile">Выберите файл</label>
+                <input class="field-input" type="file" id="musicFile" accept="audio/*">
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="musicVolume">Громкость: <span id="musicVolumeValue">15</span>%</label>
+                <input type="range" id="musicVolume" min="0" max="100" value="15" style="width:100%;cursor:pointer;">
+            </div>
+        </div>
+        <div class="modal-foot">
+            <button type="button" class="btn" id="musicSettingsCancel">Отмена</button>
+            <button type="button" class="btn btn-primary" id="musicSettingsSave">Сохранить</button>
+        </div>
+    </div>
+</div>
+
 <!-- Контейнер уведомлений -->
 <div class="toast-stack" id="toastStack"></div>
 
-<audio id="bgMusic" loop preload="none">
-    <source src="https://oris-flax.vercel.app/~/assets/aimbet.mp3" type="audio/mpeg">
-</audio>
+<audio id="bgMusic" loop preload="none"></audio>
 
 <noscript>
     <div style="padding:24px;text-align:center;font-family:sans-serif;">
@@ -3537,13 +3672,43 @@ $("#changesModalDone").addEventListener("click", () => {
     /* Журнал */
     $("#clearLogButton").addEventListener("click", clearLog);
 
-        /* Фоновая музыка */
+        /* Настройки музыки */
     const bgMusic = $("#bgMusic");
     const musicToggle = $("#musicToggle");
+    const musicSettingsButton = $("#musicSettingsButton");
+    const musicSettingsModal = $("#musicSettingsModal");
+    const musicVolume = $("#musicVolume");
+    const musicVolumeValue = $("#musicVolumeValue");
+    const musicUrl = $("#musicUrl");
+    const musicFile = $("#musicFile");
+    const musicUrlInput = $("#musicUrlInput");
+    const musicUploadInput = $("#musicUploadInput");
+    
     let isMusicPlaying = false;
+    let musicSettings = JSON.parse(localStorage.getItem("bokxz_music_settings") || "null") || {
+        source: "system",
+        url: "",
+        volume: 15
+    };
+
+    function applyMusicSettings() {
+        if (!bgMusic) return;
+        
+        bgMusic.volume = musicSettings.volume / 100;
+        
+        if (musicSettings.source === "system") {
+            bgMusic.src = "/assets/ambient.mp3"; // Путь к системной музыке
+        } else if (musicSettings.source === "url" && musicSettings.url) {
+            bgMusic.src = musicSettings.url;
+        } else if (musicSettings.source === "upload" && musicSettings.uploadedFile) {
+            bgMusic.src = musicSettings.uploadedFile;
+        }
+        
+        bgMusic.load();
+    }
 
     if (bgMusic && musicToggle) {
-        bgMusic.volume = 0.15; // Уровень громкости 15% (тихо и спокойно)
+        applyMusicSettings();
         
         musicToggle.addEventListener("click", () => {
             if (isMusicPlaying) {
@@ -3551,11 +3716,76 @@ $("#changesModalDone").addEventListener("click", () => {
                 musicToggle.querySelector("svg").innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
                 musicToggle.title = "Включить фоновую музыку";
             } else {
-                bgMusic.play().catch(() => toast("Не удалось воспроизвести аудио", "error"));
+                bgMusic.play().catch(() => toast("Не удалось воспроизвести аудио. Проверьте настройки музыки.", "error"));
                 musicToggle.querySelector("svg").innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
                 musicToggle.title = "Выключить фоновую музыку";
             }
             isMusicPlaying = !isMusicPlaying;
+        });
+    }
+
+    if (musicSettingsButton && musicSettingsModal) {
+        musicSettingsButton.addEventListener("click", () => {
+            musicSettingsModal.hidden = false;
+            musicVolume.value = musicSettings.volume;
+            musicVolumeValue.textContent = musicSettings.volume;
+            musicUrl.value = musicSettings.url || "";
+            
+            $all(".mode-option", musicSettingsModal).forEach(btn => {
+                btn.classList.toggle("is-active", btn.dataset.musicSource === musicSettings.source);
+            });
+            
+            musicUrlInput.hidden = musicSettings.source !== "url";
+            musicUploadInput.hidden = musicSettings.source !== "upload";
+        });
+
+        $all(".mode-option", musicSettingsModal).forEach(btn => {
+            btn.addEventListener("click", () => {
+                const source = btn.dataset.musicSource;
+                musicSettings.source = source;
+                
+                $all(".mode-option", musicSettingsModal).forEach(b => b.classList.remove("is-active"));
+                btn.classList.add("is-active");
+                
+                musicUrlInput.hidden = source !== "url";
+                musicUploadInput.hidden = source !== "upload";
+            });
+        });
+
+        musicVolume.addEventListener("input", () => {
+            const val = parseInt(musicVolume.value);
+            musicVolumeValue.textContent = val;
+            musicSettings.volume = val;
+            if (bgMusic) bgMusic.volume = val / 100;
+        });
+
+        musicFile.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    musicSettings.uploadedFile = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        $("#musicSettingsSave").addEventListener("click", () => {
+            if (musicSettings.source === "url") {
+                musicSettings.url = musicUrl.value.trim();
+            }
+            localStorage.setItem("bokxz_music_settings", JSON.stringify(musicSettings));
+            applyMusicSettings();
+            musicSettingsModal.hidden = true;
+            toast("Настройки музыки сохранены.", "success");
+        });
+
+        $("#musicSettingsCancel").addEventListener("click", () => {
+            musicSettingsModal.hidden = true;
+        });
+
+        $("#musicSettingsClose").addEventListener("click", () => {
+            musicSettingsModal.hidden = true;
         });
     }
 }
