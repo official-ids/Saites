@@ -3697,7 +3697,7 @@ $("#changesModalDone").addEventListener("click", () => {
         bgMusic.volume = musicSettings.volume / 100;
         
         if (musicSettings.source === "system") {
-            bgMusic.src = "/assets/ambient.mp3"; // Путь к системной музыке
+            bgMusic.src = "https://oris-flax.vercel.app/~/assets/ambient.mp3"; // Путь к системной музыке
         } else if (musicSettings.source === "url" && musicSettings.url) {
             bgMusic.src = musicSettings.url;
         } else if (musicSettings.source === "upload" && musicSettings.uploadedFile) {
