@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MisG Studio — Конструктор каруселей v2.0</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.8/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.18/400.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--black:#000000;--white:#ffffff;
+--g50:#fafafa;--g100:#f5f5f5;--g150:#ededed;--g200:#e5e5e5;--g300:#d4d4d4;--g400:#a3a3a3;
+--g500:#737373;--g600:#525252;--g700:#404040;--g800:#262626;--g900:#171717;
+--r-sm:6px;--r-md:10px;--r-lg:16px;
+--sh-sm:0 1px 3px rgba(0,0,0,.08);--sh-md:0 4px 16px rgba(0,0,0,.10);--sh-lg:0 12px 44px rgba(0,0,0,.18);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--white);color:var(--black);line-height:1.55;min-height:100vh}
+button{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--g300);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:var(--g400)}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ================= HEADER ================= */
+.header{background:var(--black);color:var(--white);padding:0 2rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 14px rgba(0,0,0,.25)}
+.header-content{max-width:1440px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;height:64px;gap:1rem}
+.logo{display:flex;align-items:center;gap:.75rem;cursor:default;user-select:none}
+.logo-icon{width:36px;height:36px;background:var(--white);border-radius:9px;position:relative;flex-shrink:0}
+.logo-icon::before{content:'';position:absolute;width:18px;height:18px;border:3px solid var(--black);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.logo-icon::after{content:'';position:absolute;width:7px;height:7px;background:var(--black);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.logo-text{font-size:1.35rem;font-weight:700;letter-spacing:-.5px}
+.logo-ver{font-size:.65rem;background:var(--g800);border:1px solid var(--g600);padding:2px 7px;border-radius:20px;color:var(--g300);margin-left:.25rem;font-weight:600}
+.header-nav{display:flex;gap:.25rem;align-items:center}
+.nav-link{color:var(--g300);text-decoration:none;font-size:.85rem;padding:.5rem .8rem;border-radius:var(--r-sm);cursor:pointer;transition:all .15s;border:none;background:none;font-weight:500}
+.nav-link:hover{color:var(--white);background:var(--g800)}
+.nav-link.icon-btn{display:flex;align-items:center;gap:.4rem}
+.save-status{font-size:.72rem;color:var(--g400);padding:.3rem .7rem;border:1px solid var(--g700);border-radius:20px;white-space:nowrap}
+.kbd-hint{font-size:.68rem;color:var(--g500);border:1px solid var(--g700);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace}
+
+/* ================= LAYOUT ================= */
+.container{max-width:1440px;margin:0 auto;padding:1.75rem 2rem 6rem}
+.page-title-row{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.page-title{font-size:1.7rem;font-weight:700;letter-spacing:-.8px}
+.page-sub{color:var(--g500);font-size:.9rem;margin-top:.2rem}
+
+/* ================= PROGRESS ================= */
+.progress-bar{display:flex;justify-content:space-between;margin-bottom:2.25rem;position:relative;padding:0 2rem}
+.progress-bar::before{content:'';position:absolute;top:21px;left:3rem;right:3rem;height:2px;background:var(--g200);z-index:0}
+.progress-fill{position:absolute;top:21px;left:3rem;height:2px;background:var(--black);z-index:0;transition:width .4s ease}
+.progress-step{display:flex;flex-direction:column;align-items:center;gap:.55rem;position:relative;z-index:1;flex:1;cursor:pointer}
+.step-circle{width:42px;height:42px;border-radius:50%;background:var(--white);border:2px solid var(--g300);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--g400);transition:all .25s;font-size:.95rem}
+.progress-step:hover .step-circle{border-color:var(--g600)}
+.step-circle.active{background:var(--black);color:var(--white);border-color:var(--black);box-shadow:0 0 0 5px rgba(0,0,0,.08)}
+.step-circle.completed{background:var(--g700);color:var(--white);border-color:var(--g700)}
+.step-label{font-size:.82rem;color:var(--g500);font-weight:500}
+.step-label.active{color:var(--black);font-weight:600}
+.step-sublabel{font-size:.68rem;color:var(--g400);margin-top:-.35rem}
+
+/* ================= STEPS ================= */
+.step-content{display:none;animation:fadeIn .3s ease}
+.step-content.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ================= BUTTONS ================= */
+.btn{padding:.7rem 1.4rem;border:none;border-radius:var(--r-md);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .18s;background:var(--black);color:var(--white);display:inline-flex;align-items:center;gap:.5rem;justify-content:center}
+.btn:hover{background:var(--g800);transform:translateY(-1px);box-shadow:var(--sh-md)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{background:var(--g300);color:var(--g500);cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--white);color:var(--black);border:2px solid var(--black)}
+.btn-secondary:hover{background:var(--g100)}
+.btn-ghost{background:transparent;color:var(--black);border:2px solid var(--g300)}
+.btn-ghost:hover{border-color:var(--black);background:var(--g50)}
+.btn-sm{padding:.45rem .9rem;font-size:.8rem;border-radius:var(--r-sm)}
+.btn-danger{background:var(--white);color:#b91c1c;border:2px solid #b91c1c}
+.btn-danger:hover{background:#fef2f2}
+
+/* ================= UPLOAD ================= */
+.upload-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap}
+.img-stats{font-size:.85rem;color:var(--g500);display:flex;gap:1.25rem;flex-wrap:wrap}
+.img-stats b{color:var(--black)}
+.upload-section{display:grid;grid-template-columns:1.4fr 1fr;gap:1.25rem;margin-bottom:1.75rem}
+.upload-box{border:2px dashed var(--g300);border-radius:var(--r-lg);padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .25s;background:var(--g50)}
+.upload-box:hover{border-color:var(--black);background:var(--g100)}
+.upload-box.dragover{border-color:var(--black);background:var(--g150);transform:scale(1.01)}
+.upload-box.url-box{display:flex;flex-direction:column;justify-content:center}
+.upload-icon{width:56px;height:56px;margin:0 auto 1rem;background:var(--black);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.upload-icon svg{width:26px;height:26px;fill:var(--white)}
+.upload-title{font-size:1.1rem;font-weight:600;margin-bottom:.3rem}
+.upload-description{color:var(--g500);font-size:.85rem}
+.upload-extra{margin-top:1.1rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+.chip-btn{padding:.4rem .85rem;border:1.5px solid var(--g300);background:var(--white);border-radius:20px;font-size:.75rem;cursor:pointer;transition:all .15s;font-weight:500;color:var(--g600)}
+.chip-btn:hover{border-color:var(--black);color:var(--black)}
+
+/* ================= IMAGE GRID ================= */
+.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1rem}
+.img-card{position:relative;aspect-ratio:1;border-radius:var(--r-md);overflow:hidden;border:2px solid var(--g200);background:var(--g100);cursor:grab;transition:all .2s;animation:fadeIn .3s}
+.img-card:hover{border-color:var(--black);box-shadow:var(--sh-md)}
+.img-card.dragging{opacity:.35;cursor:grabbing}
+.img-card.drag-over{border-color:var(--black);border-style:dashed;transform:scale(.97)}
+.img-card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.img-num{position:absolute;top:.5rem;left:.5rem;background:var(--black);color:var(--white);font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px;z-index:3}
+.img-badges{position:absolute;top:.5rem;right:.5rem;display:flex;flex-direction:column;gap:.3rem;z-index:3;align-items:flex-end}
+.img-badge{background:rgba(0,0,0,.75);color:#fff;font-size:.6rem;padding:2px 7px;border-radius:4px;font-weight:600;letter-spacing:.3px}
+.img-info{position:absolute;left:0;right:0;bottom:0;padding:1.6rem .6rem .5rem;background:linear-gradient(transparent,rgba(0,0,0,.8));color:#fff;font-size:.7rem;z-index:2;transform:translateY(100%);transition:transform .2s}
+.img-card:hover .img-info{transform:translateY(0)}
+.img-info .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.img-actions{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:.4rem;background:rgba(0,0,0,.45);opacity:0;transition:opacity .2s;z-index:4}
+.img-card:hover .img-actions{opacity:1}
+.mini-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--white);color:var(--black);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:.9rem}
+.mini-btn:hover{transform:scale(1.12);background:var(--g100)}
+.mini-btn.danger:hover{background:#b91c1c;color:#fff}
+.mini-btn svg{width:15px;height:15px;fill:currentColor}
+.empty-state{text-align:center;padding:3.5rem 2rem;color:var(--g500);border:2px dashed var(--g200);border-radius:var(--r-lg)}
+.empty-state-icon{font-size:2.5rem;margin-bottom:.75rem;opacity:.35}
+.empty-state h3{color:var(--g700);margin-bottom:.3rem;font-weight:600}
+
+/* ================= SETTINGS ================= */
+.settings-toolbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.presets-row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.presets-label{font-size:.8rem;font-weight:600;color:var(--g600);margin-right:.25rem}
+.preset-btn{padding:.5rem 1rem;border:2px solid var(--g200);background:var(--white);border-radius:var(--r-md);font-size:.8rem;cursor:pointer;transition:all .18s;font-weight:600}
+.preset-btn:hover{border-color:var(--black);transform:translateY(-1px);box-shadow:var(--sh-sm)}
+.tools-row{display:flex;gap:.4rem}
+.tab-bar{display:flex;gap:.25rem;border-bottom:2px solid var(--g200);margin-bottom:1.5rem;overflow-x:auto}
+.stab{padding:.75rem 1.15rem;border:none;background:none;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--g500);border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:all .18s;white-space:nowrap;display:flex;align-items:center;gap:.45rem}
+.stab:hover{color:var(--black)}
+.stab.active{color:var(--black);border-bottom-color:var(--black)}
+.stab .cnt{font-size:.62rem;background:var(--g150);padding:1px 7px;border-radius:10px;color:var(--g600);font-weight:700}
+.stab.active .cnt{background:var(--black);color:var(--white)}
+.spanel{display:none;animation:fadeIn .25s}
+.spanel.active{display:block}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.25rem}
+.setting-card{background:var(--white);padding:1.4rem;border-radius:var(--r-lg);border:2px solid var(--g200);transition:border-color .2s}
+.setting-card:hover{border-color:var(--g300)}
+.setting-title{font-size:.95rem;font-weight:700;margin-bottom:1.1rem;display:flex;align-items:center;gap:.55rem;padding-bottom:.75rem;border-bottom:1px solid var(--g150)}
+.setting-title .dot{width:8px;height:8px;background:var(--black);border-radius:2px}
+.setting-control{display:flex;flex-direction:column;gap:.85rem}
+.control-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;min-height:30px}
+.control-label{font-size:.84rem;color:var(--g700);font-weight:500}
+.control-sub{font-size:.68rem;color:var(--g400);display:block;margin-top:1px}
+.toggle{position:relative;width:46px;height:25px;background:var(--g300);border-radius:13px;cursor:pointer;transition:background .25s;flex-shrink:0}
+.toggle::after{content:'';position:absolute;width:19px;height:19px;background:var(--white);border-radius:50%;top:3px;left:3px;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.toggle.on{background:var(--black)}
+.toggle.on::after{transform:translateX(21px)}
+.range-wrap{display:flex;align-items:center;gap:.6rem;min-width:170px}
+.range-slider{flex:1;height:5px;border-radius:3px;background:var(--g200);outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--black);cursor:pointer;transition:transform .15s}
+.range-slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.range-slider::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--black);cursor:pointer;border:none}
+.val{font-size:.72rem;font-weight:700;color:var(--g600);background:var(--g100);padding:2px 8px;border-radius:5px;min-width:52px;text-align:center;font-family:'JetBrains Mono',monospace}
+.select-input{padding:.45rem .6rem;border:2px solid var(--g200);border-radius:var(--r-sm);font-size:.82rem;background:var(--white);cursor:pointer;font-family:inherit;color:var(--black);transition:border-color .15s;max-width:170px}
+.select-input:hover{border-color:var(--g400)}
+.select-input:focus{outline:none;border-color:var(--black)}
+.color-wrap{display:flex;align-items:center;gap:.5rem}
+.color-input{width:38px;height:30px;border:2px solid var(--g200);border-radius:var(--r-sm);cursor:pointer;padding:2px;background:var(--white)}
+.color-hex{font-size:.7rem;font-family:'JetBrains Mono',monospace;color:var(--g500)}
+
+/* ================= PREVIEW ================= */
+.preview-toolbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.device-switch{display:flex;background:var(--g100);border:2px solid var(--g200);border-radius:var(--r-md);padding:3px;gap:3px}
+.device-btn{padding:.45rem 1rem;border:none;background:transparent;border-radius:var(--r-sm);font-size:.8rem;font-weight:600;cursor:pointer;color:var(--g600);transition:all .15s;display:flex;align-items:center;gap:.4rem}
+.device-btn.active{background:var(--white);color:var(--black);box-shadow:var(--sh-sm)}
+.preview-canvas{background:var(--g100);border-radius:var(--r-lg);padding:2.5rem 1.5rem;min-height:560px;display:flex;justify-content:center;align-items:flex-start;border:2px solid var(--g200);background-image:radial-gradient(var(--g200) 1px,transparent 1px);background-size:22px 22px;transition:background-color .3s}
+.preview-canvas.dark{background-color:var(--g800);background-image:radial-gradient(var(--g700) 1px,transparent 1px)}
+.preview-frame{width:100%;max-width:1000px;transition:max-width .4s ease;background:transparent}
+.preview-frame iframe{width:100%;height:600px;border:none;display:block;border-radius:var(--r-sm)}
+.preview-note{margin-top:1rem;font-size:.78rem;color:var(--g500);text-align:center}
+
+/* ================= PUBLISH ================= */
+.publish-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:1.25rem}
+.pub-card{background:var(--white);border:2px solid var(--g200);border-radius:var(--r-lg);padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
+.pub-card h3{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:.55rem}
+.pub-card h3 .dot{width:8px;height:8px;background:var(--black);border-radius:2px}
+.short-link-display{background:var(--g900);color:var(--white);border-radius:var(--r-md);padding:1rem 1.25rem;font-family:'JetBrains Mono',monospace;font-size:.95rem;display:flex;align-items:center;gap:.6rem;justify-content:center;letter-spacing:.3px}
+.short-link-display .accent{color:#86efac;font-weight:700}
+.pub-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.qr-box{display:flex;gap:1.25rem;align-items:center;background:var(--g50);border:2px solid var(--g150);border-radius:var(--r-md);padding:1rem}
+.qr-frame{background:#fff;padding:8px;border:1px solid var(--g200);border-radius:var(--r-sm);flex-shrink:0}
+.qr-meta{font-size:.78rem;color:var(--g600);line-height:1.6}
+.qr-meta b{color:var(--black)}
+.code-area{width:100%;min-height:110px;background:var(--g900);color:#e5e5e5;border:none;border-radius:var(--r-md);padding:1rem;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.55;resize:vertical}
+.code-area:focus{outline:2px solid var(--g600)}
+.stat-row{display:flex;justify-content:space-between;padding:.55rem 0;border-bottom:1px solid var(--g150);font-size:.82rem}
+.stat-row:last-child{border-bottom:none}
+.stat-row span:first-child{color:var(--g500)}
+.stat-row span:last-child{font-weight:600;font-family:'JetBrains Mono',monospace}
+.pub-tip{background:var(--g50);border-left:3px solid var(--black);padding:.75rem 1rem;font-size:.78rem;color:var(--g600);border-radius:0 var(--r-sm) var(--r-sm) 0}
+
+/* ================= STEP NAV ================= */
+.step-navigation{display:flex;justify-content:space-between;margin-top:2.5rem;padding-top:1.75rem;border-top:2px solid var(--g150);gap:1rem}
+
+/* ================= MODALS ================= */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(2px)}
+.modal.open{display:flex;animation:fadeIn .2s}
+.modal-box{background:var(--white);border-radius:var(--r-lg);max-width:540px;width:100%;padding:1.75rem;max-height:88vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:popIn .25s ease}
+.modal-box.wide{max-width:760px}
+@keyframes popIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.15rem}
+.modal-head h3{font-size:1.1rem;font-weight:700}
+.modal-close{background:var(--g100);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--g600)}
+.modal-close:hover{background:var(--black);color:var(--white);transform:rotate(90deg)}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--g700);margin-bottom:.35rem}
+.field input[type=text],.field input[type=url],.field textarea,.field select{width:100%;padding:.65rem .8rem;border:2px solid var(--g200);border-radius:var(--r-sm);font-size:.88rem;font-family:inherit;transition:border-color .15s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--black)}
+.field textarea{resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.78rem}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.modal-foot{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.25rem}
+
+/* features modal */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.4rem}
+.feat-item{display:flex;gap:.55rem;font-size:.78rem;color:var(--g700);padding:.45rem .6rem;background:var(--g50);border-radius:var(--r-sm);align-items:flex-start;line-height:1.4}
+.feat-item .n{font-family:'JetBrains Mono',monospace;font-size:.65rem;font-weight:700;color:var(--white);background:var(--black);border-radius:4px;padding:1px 5px;flex-shrink:0;margin-top:1px}
+
+/* ================= COMMAND PALETTE ================= */
+.palette{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:1300;justify-content:center;padding-top:12vh;backdrop-filter:blur(2px)}
+.palette.open{display:flex}
+.palette-box{background:var(--white);width:100%;max-width:560px;height:fit-content;border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);animation:popIn .2s}
+.palette-input{width:100%;padding:1.1rem 1.25rem;border:none;font-size:1rem;font-family:inherit;border-bottom:2px solid var(--g150)}
+.palette-input:focus{outline:none}
+.palette-list{max-height:340px;overflow-y:auto;padding:.4rem}
+.palette-item{padding:.65rem .9rem;border-radius:var(--r-sm);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:.87rem;gap:1rem}
+.palette-item .cat{font-size:.65rem;color:var(--g400);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.palette-item.selected,.palette-item:hover{background:var(--g100)}
+.palette-empty{padding:1.5rem;text-align:center;color:var(--g400);font-size:.85rem}
+
+/* ================= AI CHAT ================= */
+.ai-chat{position:fixed;bottom:1.5rem;right:1.5rem;width:400px;max-width:calc(100vw - 2rem);background:var(--white);border-radius:var(--r-lg);box-shadow:var(--sh-lg);overflow:hidden;z-index:1000;display:none;flex-direction:column;height:560px;max-height:calc(100vh - 3rem);border:2px solid var(--g200)}
+.ai-chat.open{display:flex;animation:popIn .25s}
+.chat-header{background:var(--black);color:var(--white);padding:.9rem 1.25rem;display:flex;justify-content:space-between;align-items:center}
+.chat-title{font-size:.95rem;font-weight:600;display:flex;align-items:center;gap:.6rem}
+.chat-title .pulse{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.chat-close{background:none;border:none;color:var(--white);cursor:pointer;font-size:1.4rem;line-height:1;opacity:.7;transition:opacity .15s}
+.chat-close:hover{opacity:1}
+.chat-messages{flex:1;overflow-y:auto;padding:1.15rem;display:flex;flex-direction:column;gap:.9rem;background:var(--g50)}
+.chat-message{display:flex;gap:.6rem;animation:fadeIn .25s}
+.chat-message.user{flex-direction:row-reverse}
+.message-avatar{width:30px;height:30px;border-radius:50%;background:var(--g200);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.68rem;flex-shrink:0}
+.chat-message.user .message-avatar{background:var(--black);color:var(--white)}
+.message-content{background:var(--white);padding:.65rem .9rem;border-radius:12px 12px 12px 3px;max-width:280px;font-size:.84rem;line-height:1.5;border:1px solid var(--g150);white-space:pre-wrap}
+.chat-message.user .message-content{background:var(--black);color:var(--white);border-radius:12px 12px 3px 12px;border:none}
+.chat-chips{padding:.6rem 1rem 0;display:flex;gap:.4rem;flex-wrap:wrap;background:var(--g50)}
+.chat-chip{padding:.32rem .7rem;border:1.5px solid var(--g200);background:var(--white);border-radius:20px;font-size:.7rem;cursor:pointer;transition:all .15s;color:var(--g600)}
+.chat-chip:hover{border-color:var(--black);color:var(--black)}
+.chat-input-area{padding:.85rem 1rem;border-top:1px solid var(--g200);display:flex;gap:.6rem;background:var(--white)}
+.chat-input{flex:1;padding:.6rem .85rem;border:2px solid var(--g200);border-radius:var(--r-md);font-size:.85rem;resize:none;font-family:inherit;max-height:90px}
+.chat-input:focus{outline:none;border-color:var(--black)}
+.chat-send{padding:.6rem 1.15rem;background:var(--black);color:var(--white);border:none;border-radius:var(--r-md);cursor:pointer;font-weight:600;font-size:.82rem;transition:background .15s}
+.chat-send:hover{background:var(--g800)}
+.ai-toggle{position:fixed;bottom:1.5rem;right:1.5rem;width:58px;height:58px;background:var(--black);color:var(--white);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-lg);transition:all .25s;z-index:999}
+.ai-toggle:hover{transform:scale(1.08) rotate(-4deg)}
+.ai-toggle.hidden{display:none}
+.ai-toggle .badge{position:absolute;top:-2px;right:-2px;width:14px;height:14px;background:#fff;border:3px solid var(--black);border-radius:50%}
+
+/* ================= TOASTS ================= */
+.toasts{position:fixed;bottom:1.5rem;left:1.5rem;z-index:1400;display:flex;flex-direction:column;gap:.6rem;max-width:340px}
+.toast{background:var(--black);color:var(--white);padding:.75rem 1.1rem;border-radius:var(--r-md);font-size:.83rem;box-shadow:var(--sh-lg);display:flex;gap:.6rem;align-items:center;animation:toastIn .3s ease;font-weight:500}
+.toast.light{background:var(--white);color:var(--black);border:2px solid var(--black)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:translateX(0)}}
+.toast.out{animation:toastOut .3s forwards}
+@keyframes toastOut{to{opacity:0;transform:translateX(-24px)}}
+
+/* ================= MISC ================= */
+.loading{display:inline-block;width:16px;height:16px;border:2.5px solid var(--g300);border-top-color:var(--black);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer{max-width:1440px;margin:0 auto;padding:1.5rem 2rem;border-top:2px solid var(--g150);display:flex;justify-content:space-between;align-items:center;color:var(--g400);font-size:.78rem;flex-wrap:wrap;gap:.75rem}
+.footer b{color:var(--g700)}
+.linklike{background:none;border:none;color:var(--g600);cursor:pointer;text-decoration:underline;font-size:.78rem}
+.linklike:hover{color:var(--black)}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width:900px){
+.upload-section{grid-template-columns:1fr}
+.settings-grid{grid-template-columns:1fr}
+.header{padding:0 1rem}
+.container{padding:1.25rem 1rem 5rem}
+.header-nav .kbd-hint,.header-nav .save-status{display:none}
+.progress-bar{padding:0 .5rem}
+.progress-bar::before,.progress-fill{left:1.5rem;right:1.5rem}
+.step-sublabel{display:none}
+.step-label{font-size:.7rem}
+.field-row{grid-template-columns:1fr}
+.control-row{flex-wrap:wrap}
+.ai-chat{width:calc(100vw - 2rem);right:1rem;bottom:1rem;height:70vh}
+.ai-toggle{right:1rem;bottom:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<header class="header">
+<div class="header-content">
+<div class="logo">
+<div class="logo-icon"></div>
+<div class="logo-text">MisG</div>
+<span class="logo-ver">STUDIO v2.0</span>
+</div>
+<nav class="header-nav">
+<span class="save-status" id="saveStatus">не сохранено</span>
+<button class="nav-link" onclick="undo()" title="Отменить (Ctrl+Z)">Отменить</button>
+<button class="nav-link" onclick="redo()" title="Повторить (Ctrl+Shift+Z)">Повторить</button>
+<button class="nav-link" onclick="saveNow(true)">Сохранить</button>
+<button class="nav-link" onclick="showFeatures()">Возможности</button>
+<button class="nav-link" onclick="resetAll()">Новый проект</button>
+<button class="nav-link icon-btn" onclick="toggleAIChat()">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/></svg>
+AI Помощник
+</button>
+<button class="nav-link" onclick="openPalette()" title="Командная палитра"><span class="kbd-hint">Ctrl K</span></button>
+</nav>
+</div>
+</header>
+
+<!-- ==================== MAIN ==================== -->
+<div class="container">
+
+<div class="page-title-row">
+<div>
+<div class="page-title">Конструктор каруселей</div>
+<div class="page-sub">Загрузите изображения, настройте 60+ параметров и получите короткую ссылку на виджет</div>
+</div>
+<button class="btn btn-ghost btn-sm" onclick="showFeatures()">Что нового в v2.0 — 60 функций</button>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar" id="progressBar">
+<div class="progress-fill" id="progressFill" style="width:0%"></div>
+<div class="progress-step" onclick="goToStep(1)"><div class="step-circle active" data-step="1">1</div><div class="step-label active">Загрузка</div><div class="step-sublabel">фото и ссылки</div></div>
+<div class="progress-step" onclick="goToStep(2)"><div class="step-circle" data-step="2">2</div><div class="step-label">Настройки</div><div class="step-sublabel">60+ параметров</div></div>
+<div class="progress-step" onclick="goToStep(3)"><div class="step-circle" data-step="3">3</div><div class="step-label">Предпросмотр</div><div class="step-sublabel">живой рендер</div></div>
+<div class="progress-step" onclick="goToStep(4)"><div class="step-circle" data-step="4">4</div><div class="step-label">Публикация</div><div class="step-sublabel">короткая ссылка</div></div>
+</div>
+
+<!-- ============ STEP 1: UPLOAD ============ -->
+<div class="step-content active" id="step1">
+<div class="upload-toolbar">
+<div class="img-stats" id="imgStats"><span>Изображений: <b>0</b></span><span>Размер: <b>0 KB</b></span></div>
+<div style="display:flex;gap:.5rem">
+<button class="btn btn-ghost btn-sm" onclick="addDemoImages()">Демо-набор</button>
+<button class="btn btn-danger btn-sm" id="clearAllBtn" style="display:none" onclick="clearAllImages()">Очистить все</button>
+</div>
+</div>
+
+<div class="upload-section">
+<div class="upload-box" id="dropZone">
+<div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg></div>
+<div class="upload-title">Перетащите файлы сюда</div>
+<div class="upload-description">или нажмите для выбора — JPG, PNG, WebP, GIF, AVIF</div>
+<input type="file" id="fileInput" multiple accept="image/*" style="display:none">
+<div class="upload-extra">
+<span class="chip-btn">до 50 файлов</span>
+<span class="chip-btn">автосжатие отключено</span>
+<span class="chip-btn">порядок можно менять</span>
+</div>
+</div>
+<div class="upload-box url-box" onclick="openUrlModal()">
+<div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></div>
+<div class="upload-title">Вставить URL</div>
+<div class="upload-description">Добавить изображения по ссылкам, каждая с новой строки</div>
+<div class="upload-extra"><span class="chip-btn">https://</span><span class="chip-btn">пакетная вставка</span></div>
+</div>
+</div>
+
+<div id="imageGridWrap">
+<div class="empty-state" id="emptyState">
+<div class="empty-state-icon">&#9634;&#9635;&#9634;</div>
+<h3>Пока пусто</h3>
+<p>Загрузите изображения или вставьте ссылки, чтобы начать</p>
+</div>
+<div class="image-grid" id="imageGrid"></div>
+</div>
+
+<div class="step-navigation">
+<div></div>
+<button class="btn" onclick="nextStep()" id="nextBtn1" disabled>Далее: настройки</button>
+</div>
+</div>
+
+<!-- ============ STEP 2: SETTINGS ============ -->
+<div class="step-content" id="step2">
+
+<div class="settings-toolbar">
+<div class="presets-row">
+<span class="presets-label">Пресеты:</span>
+<button class="preset-btn" onclick="applyPreset('minimal')">Минимал</button>
+<button class="preset-btn" onclick="applyPreset('elegant')">Элегант</button>
+<button class="preset-btn" onclick="applyPreset('bold')">Смелый</button>
+<button class="preset-btn" onclick="applyPreset('gallery')">Галерея</button>
+<button class="preset-btn" onclick="applyPreset('cinema')">Кино</button>
+</div>
+<div class="tools-row">
+<button class="btn btn-ghost btn-sm" onclick="exportConfig()">Экспорт JSON</button>
+<button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">Импорт JSON</button>
+<input type="file" id="importFile" accept=".json" style="display:none">
+<button class="btn btn-danger btn-sm" onclick="resetSettings()">Сброс настроек</button>
+</div>
+</div>
+
+<div class="tab-bar" id="settingsTabs">
+<button class="stab active" data-tab="nav">Навигация <span class="cnt">13</span></button>
+<button class="stab" data-tab="play">Автослайд <span class="cnt">9</span></button>
+<button class="stab" data-tab="trans">Переходы <span class="cnt">6</span></button>
+<button class="stab" data-tab="look">Внешний вид <span class="cnt">19</span></button>
+<button class="stab" data-tab="touch">Интерактив <span class="cnt">7</span></button>
+<button class="stab" data-tab="adv">Продвинутое <span class="cnt">6</span></button>
+</div>
+
+<!-- TAB: NAV -->
+<div class="spanel active" id="panel-nav">
+<div class="settings-grid">
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Стрелки</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Показывать стрелки</span><div class="toggle on" data-key="showArrows"></div></div>
+<div class="control-row"><span class="control-label">Стиль стрелок</span><select class="select-input" data-key="arrowStyle"><option value="circle">Круглые</option><option value="square">Квадратные</option><option value="ghost">Прозрачные</option></select></div>
+<div class="control-row"><span class="control-label">Расположение</span><select class="select-input" data-key="arrowPosition"><option value="inside">Внутри</option><option value="outside">Снаружи</option></select></div>
+<div class="control-row"><span class="control-label">Цвет стрелок</span><div class="color-wrap"><input type="color" class="color-input" data-key="arrowColor" value="#000000"><span class="color-hex" data-hex="arrowColor">#000000</span></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Точки</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Показывать точки</span><div class="toggle on" data-key="showDots"></div></div>
+<div class="control-row"><span class="control-label">Стиль точек</span><select class="select-input" data-key="dotStyle"><option value="circle">Круглые</option><option value="line">Линии</option><option value="square">Квадратные</option></select></div>
+<div class="control-row"><span class="control-label">Позиция</span><select class="select-input" data-key="dotPosition"><option value="bottom">Снизу</option><option value="top">Сверху</option></select></div>
+<div class="control-row"><span class="control-label">Цвет точек</span><div class="color-wrap"><input type="color" class="color-input" data-key="dotColor" value="#ffffff"><span class="color-hex" data-hex="dotColor">#ffffff</span></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Индикаторы</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Счётчик (1 / 5)<span class="control-sub">номер текущего слайда</span></span><div class="toggle" data-key="showCounter"></div></div>
+<div class="control-row"><span class="control-label">Позиция счётчика</span><select class="select-input" data-key="counterPosition"><option value="tl">Слева сверху</option><option value="tr">Справа сверху</option><option value="bl">Слева снизу</option><option value="br">Справа снизу</option></select></div>
+<div class="control-row"><span class="control-label">Полоса прогресса<span class="control-sub">заполняется по мере просмотра</span></span><div class="toggle" data-key="showProgress"></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Миниатюры</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Лента миниатюр<span class="control-sub">кликабельные превью под каруселью</span></span><div class="toggle" data-key="showThumbs"></div></div>
+<div class="control-row"><span class="control-label">Высота миниатюр</span><div class="range-wrap"><input type="range" class="range-slider" data-key="thumbHeight" min="40" max="120" value="64" step="4"><span class="val" data-val="thumbHeight"></span></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB: PLAY -->
+<div class="spanel" id="panel-play">
+<div class="settings-grid">
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Автопрокрутка</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Включить автопрокрутку</span><div class="toggle" data-key="autoPlay"></div></div>
+<div class="control-row"><span class="control-label">Интервал показа</span><div class="range-wrap"><input type="range" class="range-slider" data-key="autoInterval" min="1" max="15" value="3" step="0.5"><span class="val" data-val="autoInterval"></span></div></div>
+<div class="control-row"><span class="control-label">Направление</span><select class="select-input" data-key="autoDirection"><option value="next">Вперёд</option><option value="prev">Назад</option></select></div>
+<div class="control-row"><span class="control-label">Кольцо-таймер<span class="control-sub">визуальный индикатор автопрокрутки</span></span><div class="toggle" data-key="showRing"></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Поведение</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Пауза при наведении</span><div class="toggle on" data-key="pauseOnHover"></div></div>
+<div class="control-row"><span class="control-label">Пауза вне экрана<span class="control-sub">остановка, если виджет не виден</span></span><div class="toggle on" data-key="pauseHidden"></div></div>
+<div class="control-row"><span class="control-label">Остановка на последнем</span><div class="toggle" data-key="stopAtEnd"></div></div>
+<div class="control-row"><span class="control-label">Бесконечный цикл</span><div class="toggle on" data-key="loop"></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Порядок показа</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Стартовый слайд</span><div class="range-wrap"><input type="range" class="range-slider" data-key="startSlide" min="0" max="20" value="0" step="1"><span class="val" data-val="startSlide"></span></div></div>
+<div class="control-row"><span class="control-label">Перемешать случайно<span class="control-sub">порядок определяется при генерации</span></span><div class="toggle" data-key="shuffle"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB: TRANS -->
+<div class="spanel" id="panel-trans">
+<div class="settings-grid">
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Эффект перехода</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Тип эффекта</span><select class="select-input" data-key="effect"><option value="slide">Слайд</option><option value="fade">Затухание</option><option value="zoom">Зум</option><option value="flip">3D переворот</option></select></div>
+<div class="control-row"><span class="control-label">Длительность</span><div class="range-wrap"><input type="range" class="range-slider" data-key="speed" min="100" max="1500" value="500" step="50"><span class="val" data-val="speed"></span></div></div>
+<div class="control-row"><span class="control-label">Сглаживание</span><select class="select-input" data-key="easing"><option value="linear">Линейное</option><option value="ease">Ease</option><option value="ease-in">Ease-in</option><option value="ease-out">Ease-out</option><option value="ease-in-out">Ease-in-out</option><option value="cubic-bezier(0.68,-0.55,0.27,1.55)">Пружина</option></select></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Эффект Кен Бёрнса</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Медленное приближение<span class="control-sub">кинематографичный зум фото</span></span><div class="toggle" data-key="kenBurns"></div></div>
+<div class="control-row"><span class="control-label">Интенсивность зума</span><div class="range-wrap"><input type="range" class="range-slider" data-key="kbIntensity" min="1.02" max="1.35" value="1.12" step="0.01"><span class="val" data-val="kbIntensity"></span></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB: LOOK -->
+<div class="spanel" id="panel-look">
+<div class="settings-grid">
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Геометрия</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Соотношение сторон</span><select class="select-input" data-key="aspectRatio"><option value="16/9">16:9</option><option value="21/9">21:9</option><option value="4/3">4:3</option><option value="3/2">3:2</option><option value="1/1">1:1</option><option value="auto">Авто</option></select></div>
+<div class="control-row"><span class="control-label">Макс. ширина</span><div class="range-wrap"><input type="range" class="range-slider" data-key="maxWidth" min="300" max="1400" value="900" step="20"><span class="val" data-val="maxWidth"></span></div></div>
+<div class="control-row"><span class="control-label">Внешний отступ</span><div class="range-wrap"><input type="range" class="range-slider" data-key="padding" min="0" max="60" value="16" step="2"><span class="val" data-val="padding"></span></div></div>
+<div class="control-row"><span class="control-label">Скругление углов</span><div class="range-wrap"><input type="range" class="range-slider" data-key="radius" min="0" max="60" value="12" step="1"><span class="val" data-val="radius"></span></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Рамка и тень</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Тень</span><select class="select-input" data-key="shadow"><option value="none">Нет</option><option value="soft">Мягкая</option><option value="medium" selected>Средняя</option><option value="strong">Сильная</option></select></div>
+<div class="control-row"><span class="control-label">Рамка</span><div class="toggle" data-key="borderOn"></div></div>
+<div class="control-row"><span class="control-label">Цвет рамки</span><div class="color-wrap"><input type="color" class="color-input" data-key="borderColor" value="#000000"><span class="color-hex" data-hex="borderColor">#000000</span></div></div>
+<div class="control-row"><span class="control-label">Толщина рамки</span><div class="range-wrap"><input type="range" class="range-slider" data-key="borderWidth" min="1" max="8" value="2" step="1"><span class="val" data-val="borderWidth"></span></div></div>
+<div class="control-row"><span class="control-label">Фон страницы виджета</span><div class="color-wrap"><input type="color" class="color-input" data-key="pageBg" value="#ffffff"><span class="color-hex" data-hex="pageBg">#ffffff</span></div></div>
+<div class="control-row"><span class="control-label">Фон карусели</span><div class="color-wrap"><input type="color" class="color-input" data-key="bgColor" value="#000000"><span class="color-hex" data-hex="bgColor">#000000</span></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Затемнение (оверлей)</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Включить оверлей<span class="control-sub">затемнение поверх фото для читаемости текста</span></span><div class="toggle" data-key="overlayOn"></div></div>
+<div class="control-row"><span class="control-label">Цвет оверлея</span><div class="color-wrap"><input type="color" class="color-input" data-key="overlayColor" value="#000000"><span class="color-hex" data-hex="overlayColor">#000000</span></div></div>
+<div class="control-row"><span class="control-label">Прозрачность</span><div class="range-wrap"><input type="range" class="range-slider" data-key="overlayOpacity" min="0" max="90" value="30" step="5"><span class="val" data-val="overlayOpacity"></span></div></div>
+<div class="control-row"><span class="control-label">Градиент снизу<span class="control-sub">вместо сплошного затемнения</span></span><div class="toggle on" data-key="overlayGradient"></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Подписи и фильтр</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Показывать подписи<span class="control-sub">текст задаётся для каждого фото</span></span><div class="toggle on" data-key="captionsOn"></div></div>
+<div class="control-row"><span class="control-label">Позиция подписи</span><select class="select-input" data-key="captionPos"><option value="bottom">Снизу</option><option value="center">По центру</option><option value="top">Сверху</option></select></div>
+<div class="control-row"><span class="control-label">Фон подписи</span><div class="color-wrap"><input type="color" class="color-input" data-key="captionBg" value="#000000"><span class="color-hex" data-hex="captionBg">#000000</span></div></div>
+<div class="control-row"><span class="control-label">Фильтр изображений</span><select class="select-input" data-key="imgFilter"><option value="none">Без фильтра</option><option value="grayscale">Чёрно-белый</option><option value="sepia">Сепия</option><option value="vivid">Насыщенный</option><option value="cool">Холодный</option><option value="warm">Тёплый</option><option value="dramatic">Драматичный</option><option value="invert">Инверсия</option></select></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Вписывание</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Режим вписывания</span><select class="select-input" data-key="fitMode"><option value="cover">Обрезать (cover)</option><option value="contain">Целиком (contain)</option></select></div>
+<div class="control-row"><span class="control-label">Точка фокуса по умолчанию</span><select class="select-input" data-key="posDefault"><option value="center">Центр</option><option value="top">Верх</option><option value="bottom">Низ</option><option value="left">Лево</option><option value="right">Право</option></select></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB: TOUCH -->
+<div class="spanel" id="panel-touch">
+<div class="settings-grid">
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Свайп и перетаскивание</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Свайп на сенсорных</span><div class="toggle on" data-key="swipeOn"></div></div>
+<div class="control-row"><span class="control-label">Порог свайпа</span><div class="range-wrap"><input type="range" class="range-slider" data-key="swipeThreshold" min="20" max="150" value="50" step="5"><span class="val" data-val="swipeThreshold"></span></div></div>
+<div class="control-row"><span class="control-label">Перетаскивание мышью<span class="control-sub">drag мышкой на десктопе</span></span><div class="toggle on" data-key="dragOn"></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Действия</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Клавиатурная навигация<span class="control-sub">стрелки влево и вправо</span></span><div class="toggle on" data-key="keysOn"></div></div>
+<div class="control-row"><span class="control-label">Клик — следующий слайд</span><div class="toggle" data-key="clickNav"></div></div>
+<div class="control-row"><span class="control-label">Лайтбокс<span class="control-sub">полноэкранный просмотр по клику</span></span><div class="toggle on" data-key="lightboxOn"></div></div>
+<div class="control-row"><span class="control-label">Кнопка полного экрана</span><div class="toggle on" data-key="fullscreenOn"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- TAB: ADV -->
+<div class="spanel" id="panel-adv">
+<div class="settings-grid">
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Производительность</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">Ленивая загрузка<span class="control-sub">loading=lazy для изображений</span></span><div class="toggle on" data-key="lazyOn"></div></div>
+<div class="control-row"><span class="control-label">Предзагрузка соседних<span class="control-sub">приоритет для следующего слайда</span></span><div class="toggle" data-key="preloadOn"></div></div>
+<div class="control-row"><span class="control-label">Учитывать reduced motion<span class="control-sub">отключает анимации по настройке ОС</span></span><div class="toggle" data-key="reducedMotion"></div></div>
+</div>
+</div>
+<div class="setting-card">
+<div class="setting-title"><span class="dot"></span>Доступность и язык</div>
+<div class="setting-control">
+<div class="control-row"><span class="control-label">ARIA-разметка<span class="control-sub">роли и подписи для скринридеров</span></span><div class="toggle on" data-key="ariaOn"></div></div>
+<div class="control-row"><span class="control-label">Режим RTL<span class="control-sub">письмо справа налево</span></span><div class="toggle" data-key="rtl"></div></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="step-navigation">
+<button class="btn btn-secondary" onclick="prevStep()">Назад</button>
+<button class="btn" onclick="nextStep()">Далее: предпросмотр</button>
+</div>
+</div>
+
+<!-- ============ STEP 3: PREVIEW ============ -->
+<div class="step-content" id="step3">
+<div class="preview-toolbar">
+<div class="device-switch">
+<button class="device-btn" data-device="375" onclick="setDevice(this,375)">Мобильный</button>
+<button class="device-btn" data-device="768" onclick="setDevice(this,768)">Планшет</button>
+<button class="device-btn active" data-device="1000" onclick="setDevice(this,1000)">Десктоп</button>
+</div>
+<div style="display:flex;gap:.5rem">
+<button class="btn btn-ghost btn-sm" onclick="togglePreviewBg(this)">Тёмный фон</button>
+<button class="btn btn-ghost btn-sm" onclick="renderPreview(true)">Обновить</button>
+<button class="btn btn-sm" onclick="openFullscreenPreview()">Открыть в новой вкладке</button>
+</div>
+</div>
+<div class="preview-canvas" id="previewCanvas">
+<div class="preview-frame" id="previewFrame" style="max-width:1000px">
+<iframe id="previewIframe" title="Предпросмотр карусели"></iframe>
+</div>
+</div>
+<div class="preview-note">Предпросмотр генерирует тот же код, что получит пользователь. Все настройки применяются в реальном времени.</div>
+<div class="step-navigation">
+<button class="btn btn-secondary" onclick="prevStep()">Назад</button>
+<button class="btn" onclick="nextStep()">Далее: публикация</button>
+</div>
+</div>
+
+<!-- ============ STEP 4: PUBLISH ============ -->
+<div class="step-content" id="step4">
+<div class="publish-grid">
+
+<div class="pub-card">
+<h3><span class="dot"></span>Короткая ссылка</h3>
+<div class="pub-tip">Виджет сохраняется в хранилище и становится доступен по короткому адресу вместо длинного кода.</div>
+<div class="short-link-display">
+https://oris-flax.vercel.app/misg/widget/<span class="accent" id="shortCodeDisplay">----</span>
+</div>
+<div class="pub-actions">
+<button class="btn btn-sm" onclick="copyShortLink()">Копировать ссылку</button>
+<button class="btn btn-ghost btn-sm" onclick="regenerateShort()">Новый код</button>
+<button class="btn btn-ghost btn-sm" onclick="openWidget()">Открыть виджет</button>
+</div>
+<div class="qr-box">
+<div class="qr-frame" id="qrTarget"></div>
+<div class="qr-meta">
+<b>QR-код виджета</b><br>
+Сканируйте камерой телефона, чтобы открыть карусель по короткой ссылке.<br>
+Код: <b id="qrCodeMeta">—</b>
+</div>
+</div>
+</div>
+
+<div class="pub-card">
+<h3><span class="dot"></span>Код для встраивания</h3>
+<div class="pub-tip">Вставьте этот iframe в любую страницу, CMS или конструктор сайтов.</div>
+<textarea class="code-area" id="embedCode" readonly spellcheck="false"></textarea>
+<div class="pub-actions">
+<button class="btn btn-sm" onclick="copyEmbed()">Копировать iframe</button>
+<button class="btn btn-ghost btn-sm" onclick="copyText(buildWidgetHTML(),'HTML-код скопирован')">Копировать полный HTML</button>
+</div>
+</div>
+
+<div class="pub-card">
+<h3><span class="dot"></span>Файлы</h3>
+<div class="pub-actions">
+<button class="btn btn-sm" onclick="downloadHTML()">Скачать HTML-файл</button>
+<button class="btn btn-ghost btn-sm" onclick="downloadJSON()">Скачать конфиг JSON</button>
+</div>
+<div>
+<div class="stat-row"><span>Изображений в виджете</span><span id="statImages">0</span></div>
+<div class="stat-row"><span>Общий вес изображений</span><span id="statWeight">0 KB</span></div>
+<div class="stat-row"><span>Размер HTML виджета</span><span id="statHtml">0 KB</span></div>
+<div class="stat-row"><span>Размер конфига</span><span id="statConfig">0 KB</span></div>
+<div class="stat-row"><span>Активных функций</span><span id="statFeatures">0</span></div>
+<div class="stat-row"><span>Версия виджета</span><span>misg-widget 2.0</span></div>
+</div>
+</div>
+
+<div class="pub-card">
+<h3><span class="dot"></span>Информация</h3>
+<div class="pub-tip">Короткая ссылка создаётся мгновенно. Код из 4 символов уникален, его можно перевыпустить в любой момент. Виджет работает автономно: без внешних библиотек и зависимостей.</div>
+<div class="pub-tip">Если вы измените настройки после публикации, нажмите «Обновить виджет», чтобы перезаписать содержимое по текущему коду.</div>
+<div class="pub-actions">
+<button class="btn btn-sm" onclick="updatePublished()">Обновить виджет</button>
+<button class="btn btn-ghost btn-sm" onclick="showFeatures()">Список всех функций</button>
+</div>
+</div>
+
+</div>
+<div class="step-navigation">
+<button class="btn btn-secondary" onclick="prevStep()">Назад</button>
+<button class="btn" onclick="resetAll()">Новый проект</button>
+</div>
+</div>
+
+</div>
+
+<!-- ==================== FOOTER ==================== -->
+<div class="footer">
+<span><b>MisG Studio</b> — конструктор каруселей. Работает локально в вашем браузере.</span>
+<span>Сочетания клавиш: <b>Ctrl K</b> палитра &nbsp;·&nbsp; <b>Ctrl S</b> сохранить &nbsp;·&nbsp; <b>Ctrl Z</b> отменить</span>
+</div>
+
+<!-- ==================== URL MODAL ==================== -->
+<div class="modal" id="urlModal">
+<div class="modal-box">
+<div class="modal-head"><h3>Вставить URL изображений</h3><button class="modal-close" onclick="closeModal('urlModal')">&times;</button></div>
+<div class="field">
+<label>Ссылки, каждая с новой строки</label>
+<textarea id="urlInput" rows="6" placeholder="https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"></textarea>
+</div>
+<div class="modal-foot">
+<button class="btn btn-secondary" onclick="closeModal('urlModal')">Отмена</button>
+<button class="btn" onclick="addUrls()">Добавить</button>
+</div>
+</div>
+</div>
+
+<!-- ==================== IMAGE EDITOR MODAL ==================== -->
+<div class="modal" id="editModal">
+<div class="modal-box wide">
+<div class="modal-head"><h3 id="editModalTitle">Настройка изображения</h3><button class="modal-close" onclick="closeModal('editModal')">&times;</button></div>
+<div style="display:grid;grid-template-columns:200px 1fr;gap:1.5rem" id="editGrid">
+<div>
+<div style="aspect-ratio:1;border-radius:10px;overflow:hidden;border:2px solid var(--g200);background:var(--g100)">
+<img id="editPreviewImg" src="" alt="" style="width:100%;height:100%;object-fit:cover">
+</div>
+<div style="font-size:.7rem;color:var(--g400);margin-top:.5rem;text-align:center" id="editFileName">—</div>
+</div>
+<div>
+<div class="field"><label>Подпись (отображается в карусели)</label><input type="text" id="editCaption" placeholder="Например: Закат на побережье"></div>
+<div class="field"><label>Alt-текст (для доступности и SEO)</label><input type="text" id="editAlt" placeholder="Описание изображения"></div>
+<div class="field"><label>Ссылка при клике (необязательно)</label><input type="url" id="editLink" placeholder="https://..."></div>
+<div class="field-row">
+<div class="field"><label>Открывать ссылку</label><select id="editTarget"><option value="_self">В этом окне</option><option value="_blank">В новой вкладке</option></select></div>
+<div class="field"><label>Поворот</label><select id="editRotate"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
+</div>
+<div class="field"><label>Точка фокуса</label><select id="editPos"><option value="">По умолчанию (из настроек)</option><option value="center">Центр</option><option value="top">Верх</option><option value="bottom">Низ</option><option value="left">Лево</option><option value="right">Право</option><option value="top left">Верх-лево</option><option value="top right">Верх-право</option><option value="bottom left">Низ-лево</option><option value="bottom right">Низ-право</option></select></div>
+</div>
+</div>
+<div class="modal-foot">
+<button class="btn btn-secondary" onclick="closeModal('editModal')">Отмена</button>
+<button class="btn" onclick="saveImageEdit()">Сохранить</button>
+</div>
+</div>
+</div>
+
+<!-- ==================== FEATURES MODAL ==================== -->
+<div class="modal" id="featuresModal">
+<div class="modal-box wide">
+<div class="modal-head"><h3>MisG Studio v2.0 — более 60 функций</h3><button class="modal-close" onclick="closeModal('featuresModal')">&times;</button></div>
+<div class="feat-grid" id="featuresGrid"></div>
+<div class="modal-foot"><button class="btn" onclick="closeModal('featuresModal')">Понятно</button></div>
+</div>
+</div>
+
+<!-- ==================== CONFIRM MODAL ==================== -->
+<div class="modal" id="confirmModal">
+<div class="modal-box" style="max-width:420px">
+<div class="modal-head"><h3 id="confirmTitle">Подтверждение</h3><button class="modal-close" onclick="closeModal('confirmModal')">&times;</button></div>
+<p id="confirmText" style="color:var(--g600);font-size:.9rem"></p>
+<div class="modal-foot">
+<button class="btn btn-secondary" onclick="closeModal('confirmModal')">Отмена</button>
+<button class="btn" id="confirmOk">Подтвердить</button>
+</div>
+</div>
+</div>
+
+<!-- ==================== COMMAND PALETTE ==================== -->
+<div class="palette" id="palette">
+<div class="palette-box">
+<input class="palette-input" id="paletteInput" placeholder="Введите команду... (например: пресет, сохранить, шаг)">
+<div class="palette-list" id="paletteList"></div>
+</div>
+</div>
+
+<!-- ==================== AI CHAT ==================== -->
+<button class="ai-toggle" id="aiToggle" onclick="toggleAIChat()" title="AI Помощник">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zM8 11a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+<span class="badge"></span>
+</button>
+
+<div class="ai-chat" id="aiChat">
+<div class="chat-header">
+<div class="chat-title"><span class="pulse"></span>MisG AI — помощник</div>
+<button class="chat-close" onclick="toggleAIChat()">&times;</button>
+</div>
+<div class="chat-messages" id="chatMessages">
+<div class="chat-message">
+<div class="message-avatar">AI</div>
+<div class="message-content">Привет! Я MisG AI. Могу не только отвечать на вопросы, но и сам менять настройки карусели. Напишите, например: «включи автопрокрутку 4 секунды» или «сделай эффект затухания».</div>
+</div>
+</div>
+<div class="chat-chips">
+<span class="chat-chip" onclick="chatChip(this)">Включи автопрокрутку 4 сек</span>
+<span class="chat-chip" onclick="chatChip(this)">Эффект затухания</span>
+<span class="chat-chip" onclick="chatChip(this)">Покажи миниатюры</span>
+<span class="chat-chip" onclick="chatChip(this)">Пресет Кино</span>
+<span class="chat-chip" onclick="chatChip(this)">Что ты умеешь?</span>
+</div>
+<div class="chat-input-area">
+<textarea class="chat-input" id="chatInput" placeholder="Напишите команду или вопрос..." rows="1"></textarea>
+<button class="chat-send" onclick="sendMessage()">Отправить</button>
+</div>
+</div>
+
+<!-- ==================== TOASTS ==================== -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* ================================================================
+   MisG Studio v2.0 — Конструктор каруселей
+   Более 60 функций. Полностью локальная работа.
+================================================================ */
+
+/* ---------------- УТИЛИТЫ ---------------- */
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function debounce(fn, ms){ let t; return function(){ clearTimeout(t); const args=arguments; t=setTimeout(function(){ fn.apply(null,args); }, ms); }; }
+function fmtBytes(n){ if(n<1024) return n+' B'; if(n<1048576) return (n/1024).toFixed(1)+' KB'; return (n/1048576).toFixed(2)+' MB'; }
+function hexToRgba(hex, a){ const h = hex.replace('#',''); const r = parseInt(h.substring(0,2),16); const g = parseInt(h.substring(2,4),16); const b = parseInt(h.substring(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function genShortCode(){ const alpha='23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; let out=''; for(let i=0;i<4;i++){ out += alpha[Math.floor(Math.random()*alpha.length)]; } return out; }
+
+function toast(msg, light){
+  const box = $('#toasts');
+  const t = document.createElement('div');
+  t.className = 'toast' + (light ? ' light' : '');
+  t.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>' + esc(msg);
+  box.appendChild(t);
+  setTimeout(function(){ t.classList.add('out'); setTimeout(function(){ t.remove(); }, 320); }, 2600);
+}
+
+function copyText(text, msg){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast(msg || 'Скопировано'); }, function(){ fallbackCopy(text, msg); });
+  } else { fallbackCopy(text, msg); }
+}
+function fallbackCopy(text, msg){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast(msg || 'Скопировано'); }catch(e){ toast('Не удалось скопировать'); }
+  document.body.removeChild(ta);
+}
+
+/* ---------------- СОСТОЯНИЕ ---------------- */
+const DEFAULTS = {
+  showArrows:true, arrowStyle:'circle', arrowPosition:'inside', arrowColor:'#000000',
+  showDots:true, dotStyle:'circle', dotPosition:'bottom', dotColor:'#ffffff',
+  showCounter:false, counterPosition:'br', showProgress:false,
+  showThumbs:false, thumbHeight:64,
+  autoPlay:false, autoInterval:3, autoDirection:'next', pauseOnHover:true, pauseHidden:true,
+  stopAtEnd:false, loop:true, startSlide:0, shuffle:false, showRing:false,
+  effect:'slide', speed:500, easing:'ease', kenBurns:false, kbIntensity:1.12,
+  aspectRatio:'16/9', maxWidth:900, padding:16, radius:12,
+  shadow:'medium', borderOn:false, borderColor:'#000000', borderWidth:2,
+  pageBg:'#ffffff', bgColor:'#000000',
+  overlayOn:false, overlayColor:'#000000', overlayOpacity:30, overlayGradient:true,
+  captionsOn:true, captionPos:'bottom', captionBg:'#000000',
+  imgFilter:'none', fitMode:'cover', posDefault:'center',
+  swipeOn:true, swipeThreshold:50, dragOn:true, keysOn:true, clickNav:false,
+  lightboxOn:true, fullscreenOn:true,
+  lazyOn:true, preloadOn:false, reducedMotion:false, ariaOn:true, rtl:false
+};
+
+const state = {
+  images: [],
+  settings: Object.assign({}, DEFAULTS),
+  shortCode: null,
+  dirty: false
+};
+
+let history = [];
+let historyIndex = -1;
+const HISTORY_LIMIT = 15;
+let suppressHistory = false;
+
+/* ---------------- ИСТОРИЯ (UNDO/REDO) ---------------- */
+function snapshot(){
+  try{
+    return JSON.stringify({ settings: state.settings, images: state.images });
+  }catch(e){ return null; }
+}
+function pushHistory(){
+  if(suppressHistory) return;
+  const snap = snapshot();
+  if(!snap) return;
+  history = history.slice(0, historyIndex + 1);
+  history.push(snap);
+  if(history.length > HISTORY_LIMIT) history.shift();
+  historyIndex = history.length - 1;
+}
+function restore(snap){
+  try{
+    const data = JSON.parse(snap);
+    suppressHistory = true;
+    state.settings = Object.assign({}, DEFAULTS, data.settings);
+    state.images = data.images || [];
+    syncUI();
+    renderImageGrid();
+    updateNextButton();
+    schedulePreviewRefresh();
+    suppressHistory = false;
+    markDirty();
+  }catch(e){ toast('Ошибка восстановления'); }
+}
+function undo(){
+  if(historyIndex > 0){ historyIndex--; restore(history[historyIndex]); toast('Отменено', true); }
+  else toast('Нечего отменять', true);
+}
+function redo(){
+  if(historyIndex < history.length - 1){ historyIndex++; restore(history[historyIndex]); toast('Повторено', true); }
+  else toast('Нечего повторить', true);
+}
+
+/* ---------------- СОХРАНЕНИЕ ПРОЕКТА ---------------- */
+const STORE_KEY = 'misg_project_v2';
+const saveProject = debounce(function(){ saveNow(false); }, 900);
+function saveNow(manual){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify({ settings: state.settings, images: state.images, shortCode: state.shortCode }));
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    $('#saveStatus').textContent = 'сохранено ' + hh + ':' + mm;
+    state.dirty = false;
+    if(manual) toast('Проект сохранён');
+  }catch(e){
+    $('#saveStatus').textContent = 'ошибка сохранения';
+    if(manual) toast('Не удалось сохранить: изображения слишком большие', true);
+  }
+}
+function loadProject(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(!data || !data.settings) return false;
+    state.settings = Object.assign({}, DEFAULTS, data.settings);
+    state.images = data.images || [];
+    state.shortCode = data.shortCode || null;
+    return state.images.length > 0;
+  }catch(e){ return false; }
+}
+function markDirty(){ state.dirty = true; saveProject(); }
+
+/* ---------------- ПРИВЯЗКА КОНТРОЛОВ ---------------- */
+const RANGE_FORMAT = {
+  thumbHeight: function(v){ return v + ' px'; },
+  autoInterval: function(v){ return v + ' с'; },
+  startSlide: function(v){ return String(Number(v)+1); },
+  speed: function(v){ return v + ' мс'; },
+  kbIntensity: function(v){ return 'x' + Number(v).toFixed(2); },
+  maxWidth: function(v){ return v + ' px'; },
+  padding: function(v){ return v + ' px'; },
+  radius: function(v){ return v + ' px'; },
+  borderWidth: function(v){ return v + ' px'; },
+  overlayOpacity: function(v){ return v + ' %'; },
+  swipeThreshold: function(v){ return v + ' px'; }
+};
+
+function updateBadge(key){
+  const el = document.querySelector('[data-val="'+key+'"]');
+  if(!el) return;
+  const input = document.querySelector('input[data-key="'+key+'"]');
+  if(!input) return;
+  const fmt = RANGE_FORMAT[key] || function(v){ return String(v); };
+  el.textContent = fmt(input.value);
+}
+function updateAllBadges(){
+  $all('.range-slider[data-key]').forEach(function(inp){ updateBadge(inp.dataset.key); });
+}
+function updateHexLabels(){
+  $all('.color-input[data-key]').forEach(function(inp){
+    const lab = document.querySelector('[data-hex="'+inp.dataset.key+'"]');
+    if(lab) lab.textContent = inp.value;
+  });
+}
+
+function bindControls(){
+  $all('.toggle[data-key]').forEach(function(t){
+    t.addEventListener('click', function(){
+      const key = t.dataset.key;
+      t.classList.toggle('on');
+      state.settings[key] = t.classList.contains('on');
+      pushHistory();
+      onSettingChanged();
+    });
+  });
+  $all('.range-slider[data-key]').forEach(function(r){
+    const apply = function(){
+      const key = r.dataset.key;
+      state.settings[key] = parseFloat(r.value);
+      updateBadge(key);
+      markDirty();
+      schedulePreviewRefresh();
+    };
+    r.addEventListener('input', apply);
+    r.addEventListener('change', function(){ pushHistory(); });
+  });
+  $all('select.select-input[data-key]').forEach(function(s){
+    s.addEventListener('change', function(){
+      state.settings[s.dataset.key] = s.value;
+      pushHistory();
+      onSettingChanged();
+    });
+  });
+  $all('.color-input[data-key]').forEach(function(c){
+    c.addEventListener('input', function(){
+      state.settings[c.dataset.key] = c.value;
+      const lab = document.querySelector('[data-hex="'+c.dataset.key+'"]');
+      if(lab) lab.textContent = c.value;
+      markDirty();
+      schedulePreviewRefresh();
+    });
+    c.addEventListener('change', function(){ pushHistory(); });
+  });
+}
+
+function syncUI(){
+  $all('.toggle[data-key]').forEach(function(t){
+    t.classList.toggle('on', !!state.settings[t.dataset.key]);
+  });
+  $all('input.range-slider[data-key], input[type=range][data-key]').forEach(function(r){
+    if(state.settings[r.dataset.key] !== undefined){
+      r.value = state.settings[r.dataset.key];
+    }
+  });
+  $all('select.select-input[data-key]').forEach(function(s){
+    if(state.settings[s.dataset.key] !== undefined){
+      s.value = state.settings[s.dataset.key];
+    }
+  });
+  $all('.color-input[data-key]').forEach(function(c){
+    if(state.settings[c.dataset.key] !== undefined){
+      c.value = state.settings[c.dataset.key];
+    }
+  });
+  updateAllBadges();
+  updateHexLabels();
+}
+
+function onSettingChanged(){
+  markDirty();
+  schedulePreviewRefresh();
+}
+const schedulePreviewRefresh = debounce(function(){
+  if(currentStep === 3) renderPreview(false);
+}, 450);
+
+/* ---------------- ВКЛАДКИ НАСТРОЕК ---------------- */
+function bindTabs(){
+  $all('.stab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      $all('.stab').forEach(function(t){ t.classList.remove('active'); });
+      $all('.spanel').forEach(function(p){ p.classList.remove('active'); });
+      tab.classList.add('active');
+      $('#panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+/* ---------------- ЗАГРУЗКА ИЗОБРАЖЕНИЙ ---------------- */
+const dropZone = $('#dropZone');
+const fileInput = $('#fileInput');
+
+dropZone.addEventListener('click', function(){ fileInput.click(); });
+dropZone.addEventListener('dragover', function(e){ e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', function(){ dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', function(e){
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', function(e){ handleFiles(e.target.files); fileInput.value=''; });
+
+function handleFiles(files){
+  const list = Array.from(files).filter(function(f){ return f.type.startsWith('image/'); });
+  if(list.length === 0) return;
+  let added = 0;
+  list.forEach(function(file){
+    if(state.images.length >= 50){ toast('Максимум 50 изображений', true); return; }
+    const reader = new FileReader();
+    reader.onload = function(e){
+      state.images.push({
+        id: uid(),
+        src: e.target.result,
+        name: file.name,
+        size: file.size,
+        alt: '',
+        caption: '',
+        link: '',
+        target: '_blank',
+        rotate: 0,
+        pos: ''
+      });
+      added++;
+      renderImageGrid();
+      updateNextButton();
+      markDirty();
+    };
+    reader.readAsDataURL(file);
+  });
+  setTimeout(function(){
+    if(added > 0){ pushHistory(); toast('Добавлено изображений: ' + added); }
+  }, 400);
+}
+
+function openUrlModal(){ $('#urlModal').classList.add('open'); $('#urlInput').focus(); }
+function addUrls(){
+  const raw = $('#urlInput').value;
+  const urls = raw.split('\n').map(function(u){ return u.trim(); }).filter(function(u){ return u.length > 3; });
+  if(urls.length === 0){ toast('Введите хотя бы одну ссылку', true); return; }
+  urls.forEach(function(u){
+    if(state.images.length >= 50) return;
+    const name = u.split('/').pop().split('?')[0] || 'image';
+    state.images.push({ id: uid(), src: u, name: name, size: 0, alt: '', caption: '', link: '', target: '_blank', rotate: 0, pos: '' });
+  });
+  $('#urlInput').value = '';
+  closeModal('urlModal');
+  renderImageGrid();
+  updateNextButton();
+  pushHistory();
+  markDirty();
+  toast('Добавлено по ссылкам: ' + urls.length);
+}
+
+function addDemoImages(){
+  const palette2 = [
+    ['Горный хребет на рассвете', '#111827', '#6b7280'],
+    ['Океанская волна', '#0c4a6e', '#38bdf8'],
+    ['Пустынные дюны', '#78350f', '#fbbf24'],
+    ['Ночной город', '#000000', '#404040'],
+    ['Лес в тумане', '#14532d', '#86efac'],
+    ['Северное сияние', '#1e1b4b', '#22d3ee']
+  ];
+  palette2.forEach(function(p, i){
+    const cv = document.createElement('canvas');
+    cv.width = 960; cv.height = 540;
+    const ctx = cv.getContext('2d');
+    const grad = ctx.createLinearGradient(0,0,960,540);
+    grad.addColorStop(0, p[1]); grad.addColorStop(1, p[2]);
+    ctx.fillStyle = grad; ctx.fillRect(0,0,960,540);
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    for(let k=0;k<6;k++){
+      ctx.beginPath();
+      ctx.arc(Math.random()*960, Math.random()*540, 40+Math.random()*130, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '600 44px Inter, sans-serif';
+    ctx.fillText('MisG · слайд ' + (i+1), 60, 480);
+    state.images.push({
+      id: uid(), src: cv.toDataURL('image/jpeg', 0.85), name: p[0] + '.jpg', size: 48000 + i*7000,
+      alt: p[0], caption: p[0], link: '', target: '_blank', rotate: 0, pos: ''
+    });
+  });
+  renderImageGrid();
+  updateNextButton();
+  pushHistory();
+  markDirty();
+  toast('Демо-набор из 6 изображений добавлен');
+}
+
+/* ---------------- СЕТКА ИЗОБРАЖЕНИЙ ---------------- */
+let dragSrcIndex = null;
+
+function renderImageGrid(){
+  const grid = $('#imageGrid');
+  const empty = $('#emptyState');
+  empty.style.display = state.images.length ? 'none' : 'block';
+  $('#clearAllBtn').style.display = state.images.length ? 'inline-flex' : 'none';
+
+  grid.innerHTML = '';
+  state.images.forEach(function(img, idx){
+    const card = document.createElement('div');
+    card.className = 'img-card';
+    card.draggable = true;
+    card.dataset.idx = idx;
+
+    const badges = [];
+    if(img.caption) badges.push('<span class="img-badge">подпись</span>');
+    if(img.link) badges.push('<span class="img-badge">ссылка</span>');
+    if(img.rotate) badges.push('<span class="img-badge">' + img.rotate + '°</span>');
+
+    card.innerHTML =
+      '<span class="img-num">' + (idx+1) + '</span>' +
+      '<div class="img-badges">' + badges.join('') + '</div>' +
+      '<img src="' + img.src + '" alt="' + esc(img.name) + '" style="transform:rotate(' + (img.rotate||0) + 'deg)">' +
+      '<div class="img-info"><div class="nm">' + esc(img.name) + '</div><div>' + fmtBytes(img.size || 0) + '</div></div>' +
+      '<div class="img-actions">' +
+        '<button class="mini-btn" title="Редактировать" data-act="edit"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>' +
+        '<button class="mini-btn" title="Дублировать" data-act="dup"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg></button>' +
+        '<button class="mini-btn" title="Влево" data-act="left"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>' +
+        '<button class="mini-btn" title="Вправо" data-act="right"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg></button>' +
+        '<button class="mini-btn danger" title="Удалить" data-act="del"><svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>' +
+      '</div>';
+
+    card.addEventListener('click', function(e){
+      const btn = e.target.closest('[data-act]');
+      if(!btn){ openImageEditor(idx); return; }
+      e.stopPropagation();
+      const act = btn.dataset.act;
+      if(act === 'edit') openImageEditor(idx);
+      if(act === 'dup') duplicateImage(idx);
+      if(act === 'left') moveImage(idx, -1);
+      if(act === 'right') moveImage(idx, 1);
+      if(act === 'del') removeImage(idx);
+    });
+
+    card.addEventListener('dragstart', function(e){
+      dragSrcIndex = idx;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', function(){ card.classList.remove('dragging'); });
+    card.addEventListener('dragover', function(e){ e.preventDefault(); card.classList.add('drag-over'); });
+    card.addEventListener('dragleave', function(){ card.classList.remove('drag-over'); });
+    card.addEventListener('drop', function(e){
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      if(dragSrcIndex === null || dragSrcIndex === idx) return;
+      const moved = state.images.splice(dragSrcIndex, 1)[0];
+      state.images.splice(idx, 0, moved);
+      dragSrcIndex = null;
+      renderImageGrid();
+      pushHistory();
+      markDirty();
+      toast('Порядок изменён');
+    });
+
+    grid.appendChild(card);
+  });
+
+  const total = state.images.reduce(function(s, im){ return s + (im.size || 0); }, 0);
+  $('#imgStats').innerHTML = '<span>Изображений: <b>' + state.images.length + '</b></span><span>Размер: <b>' + fmtBytes(total) + '</b></span>';
+}
+
+function removeImage(idx){
+  state.images.splice(idx, 1);
+  renderImageGrid();
+  updateNextButton();
+  pushHistory();
+  markDirty();
+}
+function duplicateImage(idx){
+  const copy = Object.assign({}, state.images[idx], { id: uid() });
+  state.images.splice(idx + 1, 0, copy);
+  renderImageGrid();
+  updateNextButton();
+  pushHistory();
+  markDirty();
+  toast('Изображение продублировано');
+}
+function moveImage(idx, dir){
+  const j = idx + dir;
+  if(j < 0 || j >= state.images.length) return;
+  const tmp = state.images[idx];
+  state.images[idx] = state.images[j];
+  state.images[j] = tmp;
+  renderImageGrid();
+  pushHistory();
+  markDirty();
+}
+function clearAllImages(){
+  askConfirm('Удалить все изображения?', 'Все загруженные изображения будут удалены из проекта.', function(){
+    state.images = [];
+    renderImageGrid();
+    updateNextButton();
+    pushHistory();
+    markDirty();
+    toast('Все изображения удалены');
+  });
+}
+function updateNextButton(){
+  $('#nextBtn1').disabled = state.images.length === 0;
+}
+
+/* ---------------- РЕДАКТОР ИЗОБРАЖЕНИЯ ---------------- */
+let editingIndex = -1;
+function openImageEditor(idx){
+  editingIndex = idx;
+  const img = state.images[idx];
+  $('#editModalTitle').textContent = 'Изображение ' + (idx+1) + ' из ' + state.images.length;
+  $('#editPreviewImg').src = img.src;
+  $('#editFileName').textContent = img.name;
+  $('#editCaption').value = img.caption || '';
+  $('#editAlt').value = img.alt || '';
+  $('#editLink').value = img.link || '';
+  $('#editTarget').value = img.target || '_blank';
+  $('#editRotate').value = String(img.rotate || 0);
+  $('#editPos').value = img.pos || '';
+  $('#editModal').classList.add('open');
+}
+function saveImageEdit(){
+  if(editingIndex < 0) return;
+  const img = state.images[editingIndex];
+  img.caption = $('#editCaption').value.trim();
+  img.alt = $('#editAlt').value.trim();
+  img.link = $('#editLink').value.trim();
+  img.target = $('#editTarget').value;
+  img.rotate = parseInt($('#editRotate').value, 10) || 0;
+  img.pos = $('#editPos').value;
+  closeModal('editModal');
+  renderImageGrid();
+  pushHistory();
+  markDirty();
+  toast('Изменение сохранено');
+}
+
+/* ---------------- ШАГИ ---------------- */
+let currentStep = 1;
+function goToStep(n){
+  if(n === currentStep) return;
+  if(n > 1 && state.images.length === 0){ toast('Сначала добавьте изображения', true); return; }
+  if(n > currentStep + 1){ goToStep(currentStep + 1); return; }
+  currentStep = n;
+  updateStepUI();
+  if(n === 3) renderPreview(true);
+  if(n === 4) preparePublish();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function nextStep(){ if(currentStep < 4) goToStep(currentStep + 1); }
+function prevStep(){ if(currentStep > 1) goToStep(currentStep - 1); }
+
+function updateStepUI(){
+  $all('.step-circle').forEach(function(c, i){
+    c.classList.remove('active','completed');
+    if(i + 1 === currentStep) c.classList.add('active');
+    else if(i + 1 < currentStep){ c.classList.add('completed'); c.textContent = '✓'; }
+    else c.textContent = String(i + 1);
+  });
+  $all('.step-label').forEach(function(l, i){ l.classList.toggle('active', i + 1 === currentStep); });
+  $all('.step-content').forEach(function(c, i){ c.classList.toggle('active', i + 1 === currentStep); });
+  $('#progressFill').style.width = ((currentStep - 1) / 3 * 100) + '%';
+}
+
+/* ---------------- ПРЕСЕТЫ ---------------- */
+const PRESETS = {
+  minimal: { showArrows:true, arrowStyle:'ghost', arrowPosition:'inside', showDots:true, dotStyle:'line', radius:0, shadow:'none', captionsOn:false, showCounter:true, imgFilter:'none', effect:'fade', speed:400, overlayOn:false, showProgress:false, showThumbs:false, kenBurns:false, borderOn:false },
+  elegant: { effect:'fade', speed:800, easing:'ease-in-out', radius:4, shadow:'soft', borderOn:true, borderColor:'#000000', borderWidth:1, dotStyle:'line', captionsOn:true, overlayOn:true, overlayOpacity:25, overlayGradient:true, kenBurns:true, kbIntensity:1.08, showCounter:false, showThumbs:false },
+  bold: { radius:24, shadow:'strong', effect:'zoom', speed:600, arrowStyle:'square', showCounter:true, counterPosition:'tl', showProgress:true, captionsOn:true, overlayOn:true, overlayOpacity:35, dotStyle:'square', showThumbs:false },
+  gallery: { showThumbs:true, thumbHeight:64, arrowStyle:'circle', arrowPosition:'inside', showDots:false, showCounter:true, counterPosition:'br', radius:8, fitMode:'contain', bgColor:'#ffffff', pageBg:'#f5f5f5', effect:'slide', captionsOn:false },
+  cinema: { aspectRatio:'21/9', kenBurns:true, kbIntensity:1.15, overlayOn:true, overlayOpacity:40, overlayGradient:true, captionsOn:true, captionPos:'bottom', speed:900, easing:'ease-in-out', autoPlay:true, autoInterval:5, showRing:true, arrowStyle:'ghost', showDots:false, showProgress:true, radius:0, shadow:'strong' }
+};
+function applyPreset(name){
+  const p = PRESETS[name];
+  if(!p) return;
+  Object.assign(state.settings, p);
+  syncUI();
+  pushHistory();
+  onSettingChanged();
+  const titles = { minimal:'Минимал', elegant:'Элегант', bold:'Смелый', gallery:'Галерея', cinema:'Кино' };
+  toast('Пресет применён: ' + titles[name]);
+}
+function resetSettings(){
+  askConfirm('Сбросить все настройки?', 'Все параметры вернутся к значениям по умолчанию.', function(){
+    state.settings = Object.assign({}, DEFAULTS);
+    syncUI();
+    pushHistory();
+    onSettingChanged();
+    toast('Настройки сброшены');
+  });
+}
+
+/* ---------------- ЭКСПОРТ/ИМПОРТ КОНФИГА ---------------- */
+function exportConfig(){
+  const cfg = { version: 2, exported: new Date().toISOString(), settings: state.settings, images: state.images };
+  const json = JSON.stringify(cfg, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'misg-config.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Конфигурация выгружена');
+}
+function bindImport(){
+  $('#importFile').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        const cfg = JSON.parse(ev.target.result);
+        if(cfg.settings) state.settings = Object.assign({}, DEFAULTS, cfg.settings);
+        if(Array.isArray(cfg.images) && cfg.images.length) state.images = cfg.images;
+        syncUI();
+        renderImageGrid();
+        updateNextButton();
+        pushHistory();
+        markDirty();
+        toast('Конфигурация импортирована');
+      }catch(err){ toast('Неверный файл конфигурации', true); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+}
+
+/* ================================================================
+   ГЕНЕРАТОР ВИДЖЕТА — ядро системы
+================================================================ */
+const FILTERS = {
+  none:'', grayscale:'grayscale(1)', sepia:'sepia(0.75)', vivid:'saturate(1.5) contrast(1.08)',
+  cool:'hue-rotate(18deg) saturate(1.1)', warm:'sepia(0.28) saturate(1.3)',
+  dramatic:'contrast(1.3) brightness(0.92) saturate(1.2)', invert:'invert(1)'
+};
+const SHADOWS = { none:'none', soft:'0 2px 10px rgba(0,0,0,0.12)', medium:'0 6px 24px rgba(0,0,0,0.18)', strong:'0 14px 48px rgba(0,0,0,0.30)' };
+
+function buildWidgetHTML(){
+  const s = state.settings;
+  const total = state.images.length;
+  const stacked = s.effect !== 'slide';
+  const filterCss = FILTERS[s.imgFilter] || '';
+  const easing = s.easing;
+  const reduced = s.reducedMotion;
+
+  let seq = state.images.map(function(_, i){ return i; });
+  if(s.shuffle){
+    for(let i = seq.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = seq[i]; seq[i] = seq[j]; seq[j] = t;
+    }
+  }
+  const startIdx = clamp(Math.floor(s.startSlide || 0), 0, Math.max(0, total - 1));
+
+  const slidesHtml = seq.map(function(origIdx, pos){
+    const im = state.images[origIdx];
+    const alt = esc(im.alt || im.name || ('Слайд ' + (pos+1)));
+    const posCss = im.pos ? im.pos : s.posDefault;
+    const rot = im.rotate ? 'transform:rotate(' + im.rotate + 'deg) scale(' + (im.rotate % 180 === 0 ? 1 : 1.01) + ');' : '';
+    const loading = s.lazyOn ? 'lazy' : 'eager';
+    const cap = (s.captionsOn && im.caption) ? '<div class="mg-cap">' + esc(im.caption) + '</div>' : '';
+    let imgTag = '<img src="' + im.src + '" alt="' + alt + '" loading="' + loading + '" draggable="false" style="object-position:' + posCss + ';' + rot + '">';
+    if(im.link){
+      imgTag = '<a class="mg-link" href="' + esc(im.link) + '" target="' + esc(im.target || '_blank') + '" rel="noopener">' + imgTag + '</a>';
+    }
+    return '<div class="mg-slide' + (pos === startIdx ? ' act' : '') + '" data-i="' + pos + '">' + imgTag + cap + '</div>';
+  }).join('\n');
+
+  const dotsHtml = seq.map(function(_, i){
+    return '<button class="mg-dot' + (i === startIdx ? ' on' : '') + '" data-i="' + i + '" aria-label="Слайд ' + (i+1) + '"></button>';
+  }).join('');
+
+  const thumbsHtml = seq.map(function(_, i){
+    const im = state.images[seq[i]];
+    return '<button class="mg-th' + (i === startIdx ? ' on' : '') + '" data-i="' + i + '"><img src="' + im.src + '" alt=""></button>';
+  }).join('');
+
+  const aspectCss = s.aspectRatio === 'auto' ? 'aspect-ratio:auto;height:' + Math.round(s.maxWidth * 9/16) + 'px;max-height:70vh;' : 'aspect-ratio:' + s.aspectRatio + ';';
+  const shadowCss = s.shadow !== 'none' ? 'box-shadow:' + SHADOWS[s.shadow] + ';' : '';
+  const borderCss = s.borderOn ? 'border:' + s.borderWidth + 'px solid ' + s.borderColor + ';' : '';
+  const overlayStyle = s.overlayOn
+    ? (s.overlayGradient
+        ? 'background:linear-gradient(180deg, transparent 30%, ' + hexToRgba(s.overlayColor, s.overlayOpacity/100) + ' 100%);'
+        : 'background:' + hexToRgba(s.overlayColor, s.overlayOpacity/100) + ';')
+    : 'display:none;';
+  const padX = s.padding + (s.arrowPosition === 'outside' ? 54 : 0);
+  const arrowRadius = s.arrowStyle === 'square' ? '6px' : '50%';
+  const arrowBg = s.arrowStyle === 'ghost' ? 'rgba(0,0,0,0.25)' : s.arrowColor;
+  const arrowFg = s.arrowStyle === 'ghost' ? '#ffffff' : contrastColor(s.arrowColor);
+  const dotRadius = s.dotStyle === 'square' ? '2px' : (s.dotStyle === 'circle' ? '50%' : '2px');
+  const dotW = s.dotStyle === 'line' ? '22px' : '9px';
+  const dotH = s.dotStyle === 'line' ? '4px' : '9px';
+
+  function contrastColor(hex){
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+    return (r*299 + g*587 + b*114) / 1000 > 150 ? '#000000' : '#ffffff';
+  }
+
+  const ariaAttrs = s.ariaOn ? ' role="region" aria-roledescription="карусель" aria-label="Карусель изображений MisG"' : '';
+
+  const css = [
+    '*{margin:0;padding:0;box-sizing:border-box}',
+    'html,body{min-height:100%}',
+    'body{background:' + s.pageBg + ';font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;display:flex;justify-content:center;align-items:flex-start;padding:' + s.padding + 'px ' + padX + 'px}',
+    '.mgw{position:relative;width:100%;max-width:' + s.maxWidth + 'px}',
+    '.mg{position:relative;overflow:hidden;border-radius:' + s.radius + 'px;background:' + s.bgColor + ';' + shadowCss + borderCss + '}',
+    '.mg-stage{position:relative;width:100%;' + aspectCss + 'overflow:hidden}',
+    '.mg-track{display:flex;height:100%;transition:transform ' + s.speed + 'ms ' + easing + '}',
+    '.mg-slide{position:relative;flex:0 0 100%;height:100%;overflow:hidden}',
+    '.mg-slide img{width:100%;height:100%;object-fit:' + s.fitMode + ';display:block;' + (filterCss ? 'filter:' + filterCss + ';' : '') + '}',
+    '.mg-link{display:block;width:100%;height:100%}',
+    s.kenBurns ? ('.mg-slide.act img{animation:mgkb ' + Math.max(4, s.autoInterval + 3) + 's ease-in-out infinite alternate}@keyframes mgkb{from{transform:scale(1)}to{transform:scale(' + s.kbIntensity + ')}}') : '',
+    '.mg-ov{position:absolute;inset:0;z-index:2;pointer-events:none;' + overlayStyle + '}',
+    '.mg-cap{position:absolute;left:0;right:0;z-index:3;padding:16px 22px;color:#fff;font-size:15px;font-weight:600;line-height:1.4;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.5)}',
+    '.mg-cap.cap-bottom{bottom:0;background:linear-gradient(transparent,' + hexToRgba(s.captionBg, 0.72) + ')}',
+    '.mg-cap.cap-top{top:0;background:linear-gradient(' + hexToRgba(s.captionBg, 0.72) + ',transparent)}',
+    '.mg-cap.cap-center{top:50%;transform:translateY(-50%);text-align:center;font-size:22px;background:transparent}',
+    '.mg-nav{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border:none;border-radius:' + arrowRadius + ';background:' + arrowBg + ';color:' + arrowFg + ';cursor:pointer;display:' + (s.showArrows ? 'flex' : 'none') + ';align-items:center;justify-content:center;z-index:8;font-size:20px;line-height:1;transition:opacity .2s,transform .2s;opacity:.85}',
+    '.mg-nav:hover{opacity:1;transform:translateY(-50%) scale(1.07)}',
+    '.mg-nav.prev{left:' + (s.arrowPosition === 'inside' ? '14px' : '-50px') + '}',
+    '.mg-nav.next{right:' + (s.arrowPosition === 'inside' ? '14px' : '-50px') + '}',
+    '.mg-dots{position:absolute;' + (s.dotPosition === 'top' ? 'top:12px' : 'bottom:12px') + ';left:50%;transform:translateX(-50%);display:' + (s.showDots ? 'flex' : 'none') + ';gap:7px;z-index:8;flex-wrap:wrap;justify-content:center;max-width:85%}',
+    '.mg-dot{width:' + dotW + ';height:' + dotH + ';border-radius:' + dotRadius + ';background:' + s.dotColor + ';opacity:.45;border:none;cursor:pointer;padding:0;transition:all .25s}',
+    '.mg-dot.on{opacity:1;transform:scale(1.25)}',
+    '.mg-counter{position:absolute;z-index:8;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;display:' + (s.showCounter ? 'block' : 'none') + ';font-variant-numeric:tabular-nums}',
+    '.mg-counter.c-tl{top:12px;left:12px}.mg-counter.c-tr{top:12px;right:12px}.mg-counter.c-bl{bottom:12px;left:12px}.mg-counter.c-br{bottom:12px;right:12px}',
+    '.mg-progress{position:absolute;top:0;left:0;height:3px;width:0;background:#fff;z-index:9;display:' + (s.showProgress ? 'block' : 'none') + ';transition:width .35s ease;box-shadow:0 0 6px rgba(0,0,0,.4)}',
+    '.mg-ring{position:absolute;top:12px;right:' + (s.showCounter && s.counterPosition === 'tr' ? '70px' : '12px') + ';width:26px;height:26px;z-index:9;display:' + (s.showRing && s.autoPlay ? 'block' : 'none') + '}',
+    '.mg-ring circle{fill:none;stroke:rgba(255,255,255,.9);stroke-width:2.5;stroke-dasharray:63;stroke-dashoffset:63;transform:rotate(-90deg);transform-origin:center}',
+    '.mg-ring.run circle{animation:mgring ' + s.autoInterval + 's linear forwards}@keyframes mgring{to{stroke-dashoffset:0}}',
+    '.mg-fs{position:absolute;bottom:12px;right:' + (s.showCounter && s.counterPosition === 'br' ? '70px' : '12px') + ';width:34px;height:34px;border:none;border-radius:8px;background:rgba(0,0,0,.5);color:#fff;cursor:pointer;display:' + (s.fullscreenOn ? 'flex' : 'none') + ';align-items:center;justify-content:center;z-index:8;transition:background .2s}',
+    '.mg-fs:hover{background:rgba(0,0,0,.75)}',
+    '.mg-thumbs{display:' + (s.showThumbs ? 'flex' : 'none') + ';gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:4px}',
+    '.mg-th{flex:0 0 auto;width:' + Math.round(s.thumbHeight * 1.5) + 'px;height:' + s.thumbHeight + 'px;border:2px solid transparent;border-radius:6px;padding:0;cursor:pointer;opacity:.55;transition:all .2s;background:none;overflow:hidden}',
+    '.mg-th img{width:100%;height:100%;object-fit:cover;display:block}',
+    '.mg-th.on{opacity:1;border-color:#000}',
+    '.mg-lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}',
+    '.mg-lb.open{display:flex}',
+    '.mg-lb img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:6px}',
+    '.mg-lb-bar{display:flex;gap:18px;align-items:center;color:#fff;font-size:13px}',
+    '.mg-lb button{background:rgba(255,255,255,.12);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:18px}',
+    '.mg-lb button:hover{background:rgba(255,255,255,.25)}',
+    stacked ? '.mg-track{display:block;height:100%}' : '',
+    stacked ? '.mg-slide{position:absolute;inset:0;opacity:0;z-index:0;transition:opacity ' + s.speed + 'ms ' + easing + ';pointer-events:none}' : '',
+    stacked ? '.mg-slide.act{opacity:1;z-index:2;pointer-events:auto}' : '',
+    (stacked && s.effect === 'zoom') ? '.mg-slide img{transform:scale(1.12);transition:transform ' + s.speed + 'ms ' + easing + '}.mg-slide.act img{transform:scale(1)}' : '',
+    (stacked && s.effect === 'flip') ? '.mg-stage{perspective:1200px}.mg-slide{transform:rotateY(85deg);backface-visibility:hidden;transition:transform ' + s.speed + 'ms ' + easing + ',opacity ' + s.speed + 'ms ' + easing + '}.mg-slide.act{transform:rotateY(0)}' : '',
+    reduced ? '*{transition:none!important;animation:none!important}' : '',
+    '@media (max-width:520px){.mg-nav{width:34px;height:34px;font-size:16px}.mg-nav.prev{left:8px}.mg-nav.next{right:8px}.mg-cap{font-size:13px;padding:12px 14px}}'
+  ].filter(Boolean).join('\n');
+
+  const js = [
+    'var wrap=document.getElementById("mgw");',
+    'var stage=document.getElementById("mgstage");',
+    'var track=document.getElementById("mgtrack");',
+    'var slides=document.querySelectorAll(".mg-slide");',
+    'var dots=document.querySelectorAll(".mg-dot");',
+    'var thumbs=document.querySelectorAll(".mg-th");',
+    'var counter=document.getElementById("mgcounter");',
+    'var progress=document.getElementById("mgprogress");',
+    'var ring=document.getElementById("mgring");',
+    'var total=slides.length;',
+    'var current=' + startIdx + ';',
+    'var rtl=' + (s.rtl ? 'true' : 'false') + ';',
+    'var stacked=' + (stacked ? 'true' : 'false') + ';',
+    'var timer=null;',
+    'var paused=false;',
+    'function render(){',
+    '  if(stacked){for(var i2=0;i2<total;i2++){slides[i2].classList.toggle("act",i2===current);}}',
+    '  else{track.style.transform="translateX("+((rtl?1:-1)*current*-100)+"%)";}',
+    '  for(var d=0;d<dots.length;d++){dots[d].classList.toggle("on",d===current);}',
+    '  for(var t=0;t<thumbs.length;t++){thumbs[t].classList.toggle("on",t===current);if(t===current&&thumbs[t].scrollIntoView){thumbs[t].scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});}}',
+    '  if(counter){counter.textContent=(current+1)+" / "+total;}',
+    '  if(progress){progress.style.width=(((current+1)/total)*100)+"%";}',
+    '  if(ring){ring.classList.remove("run");void ring.offsetWidth;ring.classList.add("run");}',
+    '}',
+    'function goTo(i){',
+    '  if(i<0){i=' + (s.loop ? 'total-1' : '0') + ';}',
+    '  if(i>=total){i=' + (s.loop ? '0' : 'total-1') + ';}',
+    '  current=i;render();',
+    '}',
+    'function next(){',
+    '  if(current>=total-1 && !' + s.loop + '){' + (s.stopAtEnd ? 'stopAuto();return;' : '') + '}',
+    '  goTo(current+1);',
+    '}',
+    'function prev(){goTo(current-1);}',
+    'function startAuto(){',
+    '  if(!' + s.autoPlay + ')return;',
+    '  stopAuto();',
+    '  timer=setInterval(function(){if(paused)return;if("' + s.autoDirection + '"==="next"){next();}else{prev();}},' + Math.round(s.autoInterval * 1000) + ');',
+    '}',
+    'function stopAuto(){if(timer){clearInterval(timer);timer=null;}}',
+    s.pauseOnHover ? 'wrap.addEventListener("mouseenter",function(){paused=true;});wrap.addEventListener("mouseleave",function(){paused=false;});' : '',
+    s.pauseHidden ? 'document.addEventListener("visibilitychange",function(){paused=document.hidden;});' : '',
+    'var prevBtn=document.getElementById("mgprev");var nextBtn=document.getElementById("mgnext");',
+    'if(prevBtn){prevBtn.addEventListener("click",function(){prev();});}',
+    'if(nextBtn){nextBtn.addEventListener("click",function(){next();});}',
+    'for(var di=0;di<dots.length;di++){(function(k){dots[k].addEventListener("click",function(){goTo(k);});})(di);}',
+    'for(var ti=0;ti<thumbs.length;ti++){(function(k){thumbs[k].addEventListener("click",function(){goTo(k);});})(ti);}',
+    s.swipeOn ? [
+      'var tx0=0,ty0=0;',
+      'stage.addEventListener("touchstart",function(e){tx0=e.changedTouches[0].clientX;ty0=e.changedTouches[0].clientY;},{passive:true});',
+      'stage.addEventListener("touchend",function(e){',
+      '  var dx=e.changedTouches[0].clientX-tx0;var dy=e.changedTouches[0].clientY-ty0;',
+      '  if(Math.abs(dx)>' + s.swipeThreshold + '&&Math.abs(dx)>Math.abs(dy)){',
+      '    if((dx<0)!==rtl){next();}else{prev();}',
+      '  }',
+      '},{passive:true});'
+    ].join('\n') : '',
+    s.dragOn ? [
+      'var dragging=false,dx0=0;',
+      'stage.addEventListener("mousedown",function(e){dragging=true;dx0=e.clientX;stage.style.cursor="grabbing";e.preventDefault();});',
+      'window.addEventListener("mouseup",function(e){',
+      '  if(!dragging)return;dragging=false;stage.style.cursor="";',
+      '  var ddx=e.clientX-dx0;',
+      '  if(Math.abs(ddx)>' + s.swipeThreshold + '){if((ddx<0)!==rtl){next();}else{prev();}}',
+      '});'
+    ].join('\n') : '',
+    s.keysOn ? 'document.addEventListener("keydown",function(e){if(e.key==="ArrowLeft"){if(!rtl){prev();}else{next();}}if(e.key==="ArrowRight"){if(!rtl){next();}else{prev();}}});' : '',
+    s.lightboxOn ? [
+      'var lb=document.getElementById("mglb");var lbImg=document.getElementById("mglbimg");var lbCount=document.getElementById("mglbcount");',
+      'function openLb(i){lbImg.src=slides[i].querySelector("img").src;lbCount.textContent=(i+1)+" / "+total;lb.classList.add("open");}',
+      'for(var si=0;si<slides.length;si++){(function(k){slides[k].addEventListener("click",function(e){if(e.target.closest("a"))return;openLb(k);});})(si);}',
+      'document.getElementById("mglbclose").addEventListener("click",function(){lb.classList.remove("open");});',
+      'document.getElementById("mglbnext").addEventListener("click",function(){var n2=(current+1)%total;goTo(n2);openLb(n2);});',
+      'document.getElementById("mglbprev").addEventListener("click",function(){var n3=(current-1+total)%total;goTo(n3);openLb(n3);});',
+      'lb.addEventListener("click",function(e){if(e.target===lb){lb.classList.remove("open");}});',
+      'document.addEventListener("keydown",function(e){if(e.key==="Escape"){lb.classList.remove("open");}});'
+    ].join('\n') : (s.clickNav ? 'stage.addEventListener("click",function(e){if(e.target.closest("a"))return;next();});' : ''),
+    (s.lightboxOn && s.clickNav) ? 'stage.addEventListener("click",function(e){if(e.target.closest("a"))return;next();});' : '',
+    s.fullscreenOn ? 'document.getElementById("mgfs").addEventListener("click",function(){if(!document.fullscreenElement){wrap.requestFullscreen&&wrap.requestFullscreen();}else{document.exitFullscreen();}});' : '',
+    s.preloadOn ? 'function preloadNear(){var nx=(current+1)%total;var im=new Image();var t2=slides[nx].querySelector("img");if(t2){im.src=t2.src;}}preloadNear();' : '',
+    'render();startAuto();'
+  ].filter(Boolean).join('\n');
+
+  const html = '<!DOCTYPE html>\n<html lang="ru"' + (s.rtl ? ' dir="rtl"' : '') + '>\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>MisG Carousel Widget</title>\n<style>\n' + css + '\n</style>\n</head>\n<body>\n' +
+    '<div class="mgw" id="mgw"' + ariaAttrs + '>\n' +
+    '  <div class="mg" id="mgroot">\n' +
+    '    <div class="mg-progress" id="mgprogress"></div>\n' +
+    '    <div class="mg-stage" id="mgstage">\n' +
+    '      <div class="mg-track" id="mgtrack">\n' + slidesHtml + '\n      </div>\n' +
+    '      <div class="mg-ov"></div>\n' +
+    '    </div>\n' +
+    '    <button class="mg-nav prev" id="mgprev" aria-label="Предыдущий слайд">&#8249;</button>\n' +
+    '    <button class="mg-nav next" id="mgnext" aria-label="Следующий слайд">&#8250;</button>\n' +
+    '    <div class="mg-dots">' + dotsHtml + '</div>\n' +
+    '    <div class="mg-counter c-' + s.counterPosition + '" id="mgcounter"></div>\n' +
+    '    <div class="mg-ring" id="mgring"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10"></circle></svg></div>\n' +
+    '    <button class="mg-fs" id="mgfs" aria-label="Полный экран"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>\n' +
+    '  </div>\n' +
+    '  <div class="mg-thumbs">' + thumbsHtml + '</div>\n' +
+    '</div>\n' +
+    (s.lightboxOn ? '<div class="mg-lb" id="mglb"><img id="mglbimg" src="" alt=""><div class="mg-lb-bar"><button id="mglbprev" aria-label="Назад">&#8249;</button><span id="mglbcount"></span><button id="mglbnext" aria-label="Вперёд">&#8250;</button><button id="mglbclose" aria-label="Закрыть">&times;</button></div></div>\n' : '') +
+    '<script>\n' + js + '\n<' + '/script>\n</body>\n</html>';
+
+  return html;
+}
+
+/* ---------------- ПРЕДПРОСМОТР ---------------- */
+function renderPreview(force){
+  if(state.images.length === 0) return;
+  const frame = $('#previewIframe');
+  frame.srcdoc = buildWidgetHTML();
+  if(force) toast('Предпросмотр обновлён', true);
+}
+function setDevice(btn, width){
+  $all('.device-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  $('#previewFrame').style.maxWidth = width + 'px';
+}
+function togglePreviewBg(btn){
+  btn.classList.toggle('active');
+  $('#previewCanvas').classList.toggle('dark');
+  btn.textContent = $('#previewCanvas').classList.contains('dark') ? 'Светлый фон' : 'Тёмный фон';
+}
+function openFullscreenPreview(){
+  if(state.images.length === 0){ toast('Нет изображений', true); return; }
+  const blob = new Blob([buildWidgetHTML()], { type: 'text/html' });
+  window.open(URL.createObjectURL(blob), '_blank');
+}
+
+/* ---------------- ПУБЛИКАЦИЯ ---------------- */
+function widgetHeight(){
+  const s = state.settings;
+  let h;
+  if(s.aspectRatio === 'auto'){ h = Math.round(s.maxWidth * 9/16); }
+  else{
+    const parts = s.aspectRatio.split('/');
+    h = Math.round(s.maxWidth * Number(parts[1]) / Number(parts[0]));
+  }
+  h += s.padding * 2;
+  if(s.showThumbs) h += s.thumbHeight + 20;
+  return h;
+}
+function buildEmbedCode(){
+  const code = state.shortCode || '----';
+  const s = state.settings;
+  return '<iframe src="https://oris-flax.vercel.app/misg/widget/' + code + '"' +
+    ' width="100%" height="' + widgetHeight() + '" loading="lazy"' +
+    ' style="border:none;display:block;max-width:' + (s.maxWidth + s.padding * 2) + 'px;margin:0 auto"' +
+    ' title="MisG Carousel"></iframe>';
+}
+function preparePublish(){
+  if(!state.shortCode){ state.shortCode = genShortCode(); }
+  saveWidgetStore();
+  refreshPublishUI();
+}
+function saveWidgetStore(){
+  try{
+    const html = buildWidgetHTML();
+    localStorage.setItem('misg_widget_' + state.shortCode, html);
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem('misg_widgets') || '[]'); }catch(e){ list = []; }
+    if(list.indexOf(state.shortCode) === -1){ list.push(state.shortCode); localStorage.setItem('misg_widgets', JSON.stringify(list)); }
+  }catch(e){
+    toast('Хранилище переполнено — виджет доступен только локально', true);
+  }
+}
+function refreshPublishUI(){
+  $('#shortCodeDisplay').textContent = state.shortCode || '----';
+  $('#qrCodeMeta').textContent = state.shortCode || '—';
+  $('#embedCode').value = buildEmbedCode();
+
+  const html = buildWidgetHTML();
+  const cfgJson = JSON.stringify({ version:2, settings: state.settings, imageCount: state.images.length });
+  const total = state.images.reduce(function(s2, im){ return s2 + (im.size || Math.round(im.src.length * 0.75)); }, 0);
+
+  $('#statImages').textContent = state.images.length;
+  $('#statWeight').textContent = fmtBytes(total);
+  $('#statHtml').textContent = fmtBytes(new Blob([html]).size);
+  $('#statConfig').textContent = fmtBytes(new Blob([cfgJson]).size);
+
+  let active = 0;
+  const s = state.settings;
+  const flags = [s.showArrows, s.showDots, s.showCounter, s.showProgress, s.showThumbs, s.autoPlay, s.showRing,
+    s.pauseOnHover, s.pauseHidden, s.loop, s.kenBurns, s.overlayOn, s.captionsOn, s.borderOn, s.swipeOn,
+    s.dragOn, s.keysOn, s.clickNav, s.lightboxOn, s.fullscreenOn, s.lazyOn, s.ariaOn, s.rtl, s.reducedMotion, s.shuffle];
+  flags.forEach(function(f){ if(f) active++; });
+  $('#statFeatures').textContent = active + ' из ' + flags.length;
+
+  renderQR();
+}
+function renderQR(){
+  const target = $('#qrTarget');
+  target.innerHTML = '';
+  if(typeof QRCode === 'undefined'){
+    target.innerHTML = '<div style="width:110px;height:110px;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#a3a3a3;text-align:center">QR недоступен офлайн</div>';
+    return;
+  }
+  new QRCode(target, {
+    text: 'https://oris-flax.vercel.app/misg/widget/' + (state.shortCode || '----'),
+    width: 110, height: 110, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M
+  });
+}
+function copyShortLink(){
+  copyText('https://oris-flax.vercel.app/misg/widget/' + state.shortCode, 'Короткая ссылка скопирована');
+}
+function copyEmbed(){
+  copyText($('#embedCode').value, 'iframe-код скопирован');
+}
+function regenerateShort(){
+  state.shortCode = genShortCode();
+  saveWidgetStore();
+  refreshPublishUI();
+  saveNow(false);
+  toast('Новый код виджета: ' + state.shortCode);
+}
+function openWidget(){
+  const html = localStorage.getItem('misg_widget_' + state.shortCode) || buildWidgetHTML();
+  const blob = new Blob([html], { type: 'text/html' });
+  window.open(URL.createObjectURL(blob), '_blank');
+  toast('Виджет открыт (локальная демонстрация)', true);
+}
+function updatePublished(){
+  saveWidgetStore();
+  refreshPublishUI();
+  toast('Виджет обновлён по адресу /widget/' + state.shortCode);
+}
+function downloadHTML(){
+  const blob = new Blob([buildWidgetHTML()], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'misg-carousel-' + (state.shortCode || 'widget') + '.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('HTML-файл скачан');
+}
+function downloadJSON(){
+  const cfg = { version: 2, shortcode: state.shortCode, settings: state.settings, images: state.images };
+  const blob = new Blob([JSON.stringify(cfg, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'misg-widget-config.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Конфигурация скачана');
+}
+
+/* ---------------- МОДАЛКИ ---------------- */
+function closeModal(id){ $('#' + id).classList.remove('open'); }
+let confirmCb = null;
+function askConfirm(title, text, cb){
+  $('#confirmTitle').textContent = title;
+  $('#confirmText').textContent = text;
+  confirmCb = cb;
+  $('#confirmModal').classList.add('open');
+}
+$('#confirmOk').addEventListener('click', function(){
+  closeModal('confirmModal');
+  if(confirmCb) confirmCb();
+  confirmCb = null;
+});
+$all('.modal').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target === m) m.classList.remove('open'); });
+});
+
+function resetAll(){
+  askConfirm('Новый проект', 'Все изображения, настройки и текущая короткая ссылка будут сброшены.', function(){
+    state.images = [];
+    state.settings = Object.assign({}, DEFAULTS);
+    state.shortCode = null;
+    currentStep = 1;
+    history = []; historyIndex = -1;
+    syncUI();
+    renderImageGrid();
+    updateNextButton();
+    updateStepUI();
+    try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+    $('#saveStatus').textContent = 'не сохранено';
+    toast('Создан новый проект');
+    window.scrollTo({ top: 0 });
+  });
+}
+
+/* ---------------- СПИСОК ФУНКЦИЙ ---------------- */
+const FEATURES = [
+  'Загрузка файлов перетаскиванием (drag-and-drop)',
+  'Пакетная загрузка до 50 изображений',
+  'Добавление изображений по ссылкам',
+  'Демо-набор из 6 изображений одним кликом',
+  'Сортировка изображений перетаскиванием',
+  'Дублирование изображения',
+  'Сдвиг изображения влево и вправо',
+  'Индивидуальный редактор каждого фото',
+  'Подпись к каждому слайду',
+  'Alt-текст для SEO и доступности',
+  'Персональная ссылка на каждом слайде',
+  'Выбор цели ссылки: окно или вкладка',
+  'Поворот изображения на 90, 180, 270 градусов',
+  'Точка фокуса для каждого фото (9 позиций)',
+  'Счётчик изображений и общего веса',
+  '5 готовых пресетов: Минимал, Элегант, Смелый, Галерея, Кино',
+  'Стили стрелок: круглые, квадратные, прозрачные',
+  'Стрелки внутри или снаружи карусели',
+  'Цвет стрелок с автоподбором контраста',
+  'Стили точек: круглые, линии, квадратные',
+  'Позиция точек сверху или снизу',
+  'Цвет точек',
+  'Счётчик слайдов с 4 позициями',
+  'Полоса прогресса просмотра',
+  'Лента кликабельных миниатюр с автопрокруткой',
+  'Автопрокрутка с интервалом 1–15 секунд',
+  'Направление автопрокрутки вперёд или назад',
+  'Кольцо-таймер автопрокрутки',
+  'Пауза при наведении курсора',
+  'Пауза когда виджет вне экрана',
+  'Остановка на последнем слайде',
+  'Бесконечный цикл',
+  'Стартовый слайд',
+  'Случайное перемешивание порядка',
+  'Эффекты: слайд, затухание, зум, 3D переворот',
+  'Длительность перехода 100–1500 мс',
+  '6 вариантов сглаживания включая пружину',
+  'Эффект Кен Бёрнса с настройкой интенсивности',
+  'Соотношения сторон: 21:9, 16:9, 4:3, 3:2, 1:1, авто',
+  'Ширина, отступы и скругление углов',
+  '4 уровня тени',
+  'Рамка с цветом и толщиной',
+  'Цвет фона страницы и карусели',
+  'Оверлей с цветом, прозрачностью и градиентом',
+  'Подписи с 3 позициями и своим фоном',
+  '8 фильтров изображений: ч/б, сепия, тёплый и др.',
+  'Режимы вписывания cover и contain',
+  'Свайп с настраиваемым порогом',
+  'Перетаскивание мышью на десктопе',
+  'Клавиатурная навигация стрелками',
+  'Лайтбокс с полноэкранным просмотром',
+  'Кнопка полного экрана в виджете',
+  'Ленивая загрузка изображений',
+  'Предзагрузка соседних слайдов',
+  'Поддержка reduced motion',
+  'ARIA-разметка для скринридеров',
+  'Режим письма справа налево (RTL)',
+  'Живой предпросмотр в iframe',
+  'Режимы устройств: мобильный, планшет, десктоп',
+  'Открытие предпросмотра в новой вкладке',
+  'Короткая ссылка вида /misg/widget/7Sb1',
+  'QR-код виджета',
+  'iframe-код для встраивания',
+  'Скачивание готового HTML-файла',
+  'Экспорт и импорт конфигурации JSON',
+  'Отмена и повтор действий (Undo/Redo)',
+  'Автосохранение проекта в браузере',
+  'Командная палитра Ctrl+K',
+  'AI-помощник, меняющий настройки командами',
+  'Горячие клавиши Ctrl+S, Ctrl+Z, Ctrl+K'
+];
+function showFeatures(){
+  const grid = $('#featuresGrid');
+  if(!grid.children.length){
+    grid.innerHTML = FEATURES.map(function(f, i){
+      return '<div class="feat-item"><span class="n">' + (i+1) + '</span><span>' + esc(f) + '</span></div>';
+    }).join('');
+  }
+  $('#featuresModal').classList.add('open');
+}
+
+/* ---------------- КОМАНДНАЯ ПАЛИТРА ---------------- */
+const PALETTE_ACTIONS = [
+  { label: 'Шаг 1: Загрузка изображений', cat: 'Навигация', run: function(){ goToStep(1); } },
+  { label: 'Шаг 2: Настройки карусели', cat: 'Навигация', run: function(){ goToStep(2); } },
+  { label: 'Шаг 3: Предпросмотр', cat: 'Навигация', run: function(){ goToStep(3); } },
+  { label: 'Шаг 4: Публикация', cat: 'Навигация', run: function(){ goToStep(4); } },
+  { label: 'Пресет: Минимал', cat: 'Пресеты', run: function(){ applyPreset('minimal'); } },
+  { label: 'Пресет: Элегант', cat: 'Пресеты', run: function(){ applyPreset('elegant'); } },
+  { label: 'Пресет: Смелый', cat: 'Пресеты', run: function(){ applyPreset('bold'); } },
+  { label: 'Пресет: Галерея', cat: 'Пресеты', run: function(){ applyPreset('gallery'); } },
+  { label: 'Пресет: Кино', cat: 'Пресеты', run: function(){ applyPreset('cinema'); } },
+  { label: 'Включить автопрокрутку', cat: 'Настройки', run: function(){ state.settings.autoPlay = true; syncUI(); pushHistory(); onSettingChanged(); toast('Автопрокрутка включена'); } },
+  { label: 'Выключить автопрокрутку', cat: 'Настройки', run: function(){ state.settings.autoPlay = false; syncUI(); pushHistory(); onSettingChanged(); toast('Автопрокрутка выключена'); } },
+  { label: 'Показать миниатюры', cat: 'Настройки', run: function(){ state.settings.showThumbs = true; syncUI(); pushHistory(); onSettingChanged(); toast('Миниатюры включены'); } },
+  { label: 'Добавить демо-набор изображений', cat: 'Изображения', run: addDemoImages },
+  { label: 'Очистить все изображения', cat: 'Изображения', run: clearAllImages },
+  { label: 'Сохранить проект', cat: 'Проект', run: function(){ saveNow(true); } },
+  { label: 'Новый проект', cat: 'Проект', run: resetAll },
+  { label: 'Открыть AI-помощник', cat: 'Проект', run: toggleAIChat },
+  { label: 'Список всех функций', cat: 'Проект', run: showFeatures },
+  { label: 'Экспорт конфигурации JSON', cat: 'Проект', run: exportConfig },
+  { label: 'Обновить предпросмотр', cat: 'Навигация', run: function(){ renderPreview(true); } },
+  { label: 'Открыть виджет в новой вкладке', cat: 'Публикация', run: openWidget },
+  { label: 'Перевыпустить короткую ссылку', cat: 'Публикация', run: function(){ state.shortCode = genShortCode(); saveWidgetStore(); toast('Новый код: ' + state.shortCode); } }
+];
+let paletteSel = 0;
+function openPalette(){
+  $('#palette').classList.add('open');
+  $('#paletteInput').value = '';
+  renderPalette('');
+  setTimeout(function(){ $('#paletteInput').focus(); }, 30);
+}
+function closePalette(){ $('#palette').classList.remove('open'); }
+function renderPalette(query){
+  const q = query.toLowerCase().trim();
+  const list = PALETTE_ACTIONS.filter(function(a){ return !q || a.label.toLowerCase().indexOf(q) !== -1; });
+  paletteSel = 0;
+  const box = $('#paletteList');
+  if(!list.length){ box.innerHTML = '<div class="palette-empty">Ничего не найдено</div>'; return; }
+  box.innerHTML = list.map(function(a, i){
+    return '<div class="palette-item' + (i === 0 ? ' selected' : '') + '" data-i="' + i + '"><span>' + esc(a.label) + '</span><span class="cat">' + esc(a.cat) + '</span></div>';
+  }).join('');
+  box._items = list;
+  $all('.palette-item').forEach(function(el){
+    el.addEventListener('click', function(){ runPaletteItem(Number(el.dataset.i)); });
+  });
+}
+function runPaletteItem(i){
+  const items = $('#paletteList')._items || [];
+  if(!items[i]) return;
+  closePalette();
+  items[i].run();
+}
+$('#paletteInput').addEventListener('input', function(e){ renderPalette(e.target.value); });
+$('#paletteInput').addEventListener('keydown', function(e){
+  const items = $all('.palette-item');
+  if(e.key === 'ArrowDown'){ e.preventDefault(); paletteSel = Math.min(paletteSel + 1, items.length - 1); markPalette(items); }
+  else if(e.key === 'ArrowUp'){ e.preventDefault(); paletteSel = Math.max(paletteSel - 1, 0); markPalette(items); }
+  else if(e.key === 'Enter'){ e.preventDefault(); runPaletteItem(paletteSel); }
+  else if(e.key === 'Escape'){ closePalette(); }
+});
+function markPalette(items){
+  items.forEach(function(el, i){ el.classList.toggle('selected', i === paletteSel); });
+}
+$('#palette').addEventListener('click', function(e){ if(e.target.id === 'palette') closePalette(); });
+
+/* ---------------- AI ПОМОЩНИК (локальный движок) ---------------- */
+function toggleAIChat(){
+  const chat = $('#aiChat');
+  const tg = $('#aiToggle');
+  const open = chat.classList.toggle('open');
+  tg.classList.toggle('hidden', open);
+  if(open) $('#chatInput').focus();
+}
+function chatChip(el){
+  $('#chatInput').value = el.textContent;
+  sendMessage();
+}
+function addChatMessage(text, sender){
+  const box = $('#chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-message ' + sender;
+  const av = document.createElement('div');
+  av.className = 'message-avatar';
+  av.textContent = sender === 'user' ? 'Вы' : 'AI';
+  const ct = document.createElement('div');
+  ct.className = 'message-content';
+  ct.textContent = text;
+  div.appendChild(av);
+  div.appendChild(ct);
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+function sendMessage(){
+  const input = $('#chatInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  addChatMessage(msg, 'user');
+  input.value = '';
+  setTimeout(function(){
+    const reply = aiEngine(msg.toLowerCase(), msg);
+    addChatMessage(reply.text, 'ai');
+    if(reply.applied){
+      syncUI();
+      pushHistory();
+      onSettingChanged();
+    }
+  }, 380 + Math.random() * 420);
+}
+$('#chatInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
+});
+
+const COLOR_NAMES = {
+  'черн': '#000000', 'бел': '#ffffff', 'красн': '#dc2626', 'син': '#2563eb', 'голуб': '#38bdf8',
+  'зелён': '#16a34a', 'зелен': '#16a34a', 'жёлт': '#eab308', 'желт': '#eab308', 'фиолет': '#7c3aed',
+  'сер': '#6b7280', 'розов': '#ec4899', 'оранж': '#ea580c'
+};
+function parseNumber(text){
+  const m = text.match(/(\d+[.,]?\d*)/);
+  return m ? parseFloat(m[1].replace(',', '.')) : null;
+}
+function findColor(text){
+  for(const k in COLOR_NAMES){ if(text.indexOf(k) !== -1) return COLOR_NAMES[k]; }
+  return null;
+}
+
+function aiEngine(low, original){
+  const s = state.settings;
+  const num = parseNumber(low);
+  const color = findColor(low);
+  const has = function(w){ return low.indexOf(w) !== -1; };
+
+  if(has('привет') || has('здравств') || has('добрый')){
+    return { text: 'Привет! Я MisG AI. Могу менять настройки карусели прямо по вашим командам. Например: «включи автопрокрутку 5 секунд», «скругление 24», «покажи миниатюры», «пресет Кино».' };
+  }
+  if(has('что ты умеешь') || has('помощь') || has('что можешь') || has('help')){
+    return { text: 'Я понимаю команды:\n— автопрокрутка вкл/выкл и интервал\n— стрелки, точки, счётчик, прогресс, миниатюры\n— эффект: слайд, затухание, зум, переворот\n— скругление, тень, рамка, ширина\n— оверлей, подписи, фильтры, фон\n— пресеты: Минимал, Элегант, Смелый, Галерея, Кино\nПросто напишите, что изменить.' };
+  }
+
+  const presets = [
+    ['минимал', 'minimal'], ['элегант', 'elegant'], ['смел', 'bold'], ['галере', 'gallery'], ['кино', 'cinema']
+  ];
+  for(const p of presets){
+    if(has(p[0])){
+      applyPreset(p[1]);
+      return { text: 'Готово: применён пресет. Проверьте предпросмотр, при необходимости поправьте детали.', applied: false };
+    }
+  }
+
+  if(has('автопрокрут') || has('автоплей') || has('автоматическ')){
+    if(has('выкл') || has('убери') || has('отключ')){
+      s.autoPlay = false;
+      return { text: 'Автопрокрутка выключена.', applied: true };
+    }
+    s.autoPlay = true;
+    if(num !== null && num >= 1 && num <= 15) s.autoInterval = num;
+    return { text: 'Автопрокрутка включена, интервал ' + s.autoInterval + ' с. Если хотите паузу при наведении — она уже активна по умолчанию.', applied: true };
+  }
+  if(has('интервал') && num !== null){
+    s.autoPlay = true;
+    s.autoInterval = clamp(num, 1, 15);
+    return { text: 'Интервал автопрокрутки: ' + s.autoInterval + ' с.', applied: true };
+  }
+
+  if(has('точк') || has('индикатор')){
+    if(has('убери') || has('скрой') || has('выкл')){ s.showDots = false; return { text: 'Точки скрыты.', applied: true }; }
+    if(has('лини')){ s.showDots = true; s.dotStyle = 'line'; return { text: 'Точки включены, стиль — линии.', applied: true }; }
+    if(has('квадрат')){ s.showDots = true; s.dotStyle = 'square'; return { text: 'Точки включены, стиль — квадраты.', applied: true }; }
+    s.showDots = true;
+    return { text: 'Точки включены.', applied: true };
+  }
+  if(has('стрелк')){
+    if(has('убери') || has('скрой') || has('выкл')){ s.showArrows = false; return { text: 'Стрелки скрыты.', applied: true }; }
+    if(has('квадрат')){ s.showArrows = true; s.arrowStyle = 'square'; return { text: 'Стрелки включены, стиль — квадратные.', applied: true }; }
+    if(has('прозрач') || has('ghost')){ s.showArrows = true; s.arrowStyle = 'ghost'; return { text: 'Стрелки включены, стиль — прозрачные.', applied: true }; }
+    s.showArrows = true;
+    return { text: 'Стрелки включены.', applied: true };
+  }
+  if(has('счётчик') || has('счетчик') || has('номер')){
+    if(has('убери') || has('скрой') || has('выкл')){ s.showCounter = false; return { text: 'Счётчик скрыт.', applied: true }; }
+    s.showCounter = true;
+    return { text: 'Счётчик слайдов включён.', applied: true };
+  }
+  if(has('прогресс')){
+    if(has('убери') || has('скрой') || has('выкл')){ s.showProgress = false; return { text: 'Полоса прогресса скрыта.', applied: true }; }
+    s.showProgress = true;
+    return { text: 'Полоса прогресса включена.', applied: true };
+  }
+  if(has('миниатюр') || has('превьюш') || has('тамбнейл')){
+    if(has('убери') || has('скрой') || has('выкл')){ s.showThumbs = false; return { text: 'Лента миниатюр скрыта.', applied: true }; }
+    s.showThumbs = true;
+    return { text: 'Лента миниатюр включена под каруселью.', applied: true };
+  }
+
+  if(has('эффект') || has('переход') || has('анимац')){
+    if(has('затух') || has('фейд') || has('fade')){ s.effect = 'fade'; return { text: 'Эффект перехода: затухание.', applied: true }; }
+    if(has('зум') || has('увеличен') || has('zoom')){ s.effect = 'zoom'; return { text: 'Эффект перехода: зум.', applied: true }; }
+    if(has('флип') || has('переворот') || has('3d') || has('3д')){ s.effect = 'flip'; return { text: 'Эффект перехода: 3D переворот.', applied: true }; }
+    if(has('слайд')){ s.effect = 'slide'; return { text: 'Эффект перехода: классический слайд.', applied: true }; }
+    return { text: 'Доступные эффекты: слайд, затухание, зум, 3D переворот. Напишите нужный.' };
+  }
+
+  if(has('скруглен') || has('скругл') || has('радиус')){
+    if(num !== null){ s.radius = clamp(Math.round(num), 0, 60); return { text: 'Скругление углов: ' + s.radius + ' px.', applied: true }; }
+    return { text: 'Укажите число пикселей, например «скругление 20».', applied: false };
+  }
+  if(has('ширин')){
+    if(num !== null){ s.maxWidth = clamp(Math.round(num), 300, 1400); return { text: 'Максимальная ширина: ' + s.maxWidth + ' px.', applied: true }; }
+  }
+  if(has('скорост')){
+    if(num !== null){ s.speed = clamp(Math.round(num), 100, 1500); return { text: 'Длительность перехода: ' + s.speed + ' мс.', applied: true }; }
+  }
+
+  if(has('тен')){
+    if(has('убери') || has('выкл') || has('нет')){ s.shadow = 'none'; return { text: 'Тень убрана.', applied: true }; }
+    if(has('сильн')){ s.shadow = 'strong'; return { text: 'Тень: сильная.', applied: true }; }
+    if(has('мягк')){ s.shadow = 'soft'; return { text: 'Тень: мягкая.', applied: true }; }
+    s.shadow = 'medium';
+    return { text: 'Тень: средняя.', applied: true };
+  }
+  if(has('рамк')){
+    if(has('убери') || has('выкл')){ s.borderOn = false; return { text: 'Рамка убрана.', applied: true }; }
+    s.borderOn = true;
+    if(color) s.borderColor = color;
+    return { text: 'Рамка включена' + (color ? ', цвет обновлён' : '') + '.', applied: true };
+  }
+  if(has('оверлей') || has('затемн')){
+    if(has('убери') || has('выкл') || has('скрой')){ s.overlayOn = false; return { text: 'Оверлей выключен.', applied: true }; }
+    s.overlayOn = true;
+    if(num !== null) s.overlayOpacity = clamp(Math.round(num), 0, 90);
+    return { text: 'Оверлей включён, прозрачность ' + s.overlayOpacity + ' %.', applied: true };
+  }
+  if(has('подпис')){
+    if(has('убери') || has('выкл') || has('скрой')){ s.captionsOn = false; return { text: 'Подписи скрыты. Их можно задать для каждого фото на шаге 1.', applied: true }; }
+    s.captionsOn = true;
+    return { text: 'Подписи включены. Текст задаётся в редакторе каждого изображения.', applied: true };
+  }
+  if(has('фильтр') || has('чёрно-бел') || has('черно-бел') || has('сепи')){
+    if(has('чёрно') || has('черно') || has('чб')){ s.imgFilter = 'grayscale'; return { text: 'Фильтр: чёрно-белый.', applied: true }; }
+    if(has('сепи')){ s.imgFilter = 'sepia'; return { text: 'Фильтр: сепия.', applied: true }; }
+    if(has('убери') || has('выкл')){ s.imgFilter = 'none'; return { text: 'Фильтр снят.', applied: true }; }
+    if(has('тёпл') || has('тепл')){ s.imgFilter = 'warm'; return { text: 'Фильтр: тёплый.', applied: true }; }
+    if(has('холод')){ s.imgFilter = 'cool'; return { text: 'Фильтр: холодный.', applied: true }; }
+    if(has('драм')){ s.imgFilter = 'dramatic'; return { text: 'Фильтр: драматичный.', applied: true }; }
+    s.imgFilter = 'vivid';
+    return { text: 'Фильтр: насыщенный.', applied: true };
+  }
+  if(has('фон') && color){
+    s.pageBg = color;
+    return { text: 'Фон страницы виджета обновлён.', applied: true };
+  }
+  if(has('соотношен') || has('пропорц')){
+    if(has('21')){ s.aspectRatio = '21/9'; return { text: 'Соотношение сторон: 21:9.', applied: true }; }
+    if(has('4:3') || has('4 к 3')){ s.aspectRatio = '4/3'; return { text: 'Соотношение сторон: 4:3.', applied: true }; }
+    if(has('квадрат') || has('1:1')){ s.aspectRatio = '1/1'; return { text: 'Соотношение сторон: 1:1.', applied: true }; }
+    s.aspectRatio = '16/9';
+    return { text: 'Соотношение сторон: 16:9.', applied: true };
+  }
+  if(has('лайтбокс')){
+    if(has('выкл') || has('убери')){ s.lightboxOn = false; return { text: 'Лайтбокс выключен.', applied: true }; }
+    s.lightboxOn = true;
+    return { text: 'Лайтбокс включён: клик по слайду откроет полноэкранный просмотр.', applied: true };
+  }
+  if(has('полноэкран')){
+    if(has('выкл') || has('убери')){ s.fullscreenOn = false; return { text: 'Кнопка полного экрана скрыта.', applied: true }; }
+    s.fullscreenOn = true;
+    return { text: 'Кнопка полного экрана включена.', applied: true };
+  }
+  if(has('перемеша')){
+    s.shuffle = true;
+    return { text: 'Порядок слайдов будет перемешан при каждой генерации.', applied: true };
+  }
+  if(has('кен') || has('бернс') || has('приближен')){
+    if(has('выкл') || has('убери')){ s.kenBurns = false; return { text: 'Эффект Кен Бёрнса выключен.', applied: true }; }
+    s.kenBurns = true;
+    return { text: 'Эффект Кен Бёрнса включён: плавное приближение фото.', applied: true };
+  }
+  if(has('бесконечн')){
+    if(has('выкл')){ s.loop = false; return { text: 'Бесконечный цикл выключен.', applied: true }; }
+    s.loop = true;
+    return { text: 'Бесконечный цикл включён.', applied: true };
+  }
+  if(has('ссылк') && has('как')){
+    return { text: 'После публикации на шаге 4 вы получите короткую ссылку вида https://oris-flax.vercel.app/misg/widget/7Sb1 и QR-код.' };
+  }
+  if(has('спасибо') || has('благодар')){
+    return { text: 'Пожалуйста! Если что-то ещё понадобится — пишите.' };
+  }
+  return { text: 'Я пока не понял команду. Попробуйте, например:\n— «включи автопрокрутку 4 секунды»\n— «эффект затухания»\n— «скругление 20»\n— «покажи миниатюры»\n— «пресет Кино»\nИли напишите «помощь».' };
+}
+
+/* ---------------- ГОРЯЧИЕ КЛАВИШИ ---------------- */
+document.addEventListener('keydown', function(e){
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  const typing = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+    e.preventDefault();
+    if($('#palette').classList.contains('open')) closePalette(); else openPalette();
+    return;
+  }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){
+    e.preventDefault();
+    saveNow(true);
+    return;
+  }
+  if(typing) return;
+  if((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z'){ e.preventDefault(); undo(); }
+  else if((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')){ e.preventDefault(); redo(); }
+  else if(e.key === 'Escape'){
+    $all('.modal.open').forEach(function(m){ m.classList.remove('open'); });
+    closePalette();
+    if($('#aiChat').classList.contains('open')) toggleAIChat();
+  }
+});
+
+/* ---------------- ИНИЦИАЛИЗАЦИЯ ---------------- */
+function init(){
+  bindControls();
+  bindTabs();
+  bindImport();
+  const restored = loadProject();
+  syncUI();
+  renderImageGrid();
+  updateNextButton();
+  updateStepUI();
+  if(restored){
+    toast('Проект восстановлен из автосохранения');
+    $('#saveStatus').textContent = 'восстановлено';
+  }
+  pushHistory();
+}
+init();
+</script>
+</body>
+</html>
