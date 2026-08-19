@@ -783,6 +783,10 @@
             animation-name: fadeInUp;
         }
     </style>
+    <!-- Библиотека для парсинга Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Библиотека для очистки HTML от XSS-атак (безопасность) -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -904,7 +908,7 @@
 
             // AI Configuration
             const AI_CONFIG = {
-                apiKey: '7K4CtEv7BlV0xxLLnmpmaHFPp3nA15Kn',
+                apiKey: 'zQiNwsaQ3InH8kAyVEopfG43zZY50xSX',
                 model: 'mistral-tiny',
                 maxTokens: 500,
                 temperature: 0.7,
@@ -1107,52 +1111,6 @@
                 regenerateBtn.addEventListener('click', regenerateResponse);
             }
 
-            // Улучшенная функция форматирования Markdown
-function renderMarkdown(text) {
-    // Создаем временный элемент для рендеринга
-    const tempDiv = document.createElement('div');
-
-    // Обрабатываем заголовки
-    text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
-    text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
-    text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
-
-    // Обрабатываем жирный и курсив
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-    // Обрабатываем код
-    text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-
-    // Обрабатываем блоки кода
-    text = text.replace(/```([\s\S]*?)```/g, (match, code) => {
-        return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
-    });
-
-    // Обрабатываем списки
-    text = text.replace(/^\s*\*\s+(.*$)/gm, '<li>$1</li>');
-    text = text.replace(/<li>.*<\/li>/g, (match) => `<ul>${match}</ul>`);
-
-    // Обрабатываем абзацы
-    text = text.replace(/\n\n/g, '</p><p>');
-    text = text.replace(/\n/g, '<br>');
-
-    // Обрабатываем ссылки
-    text = text.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-    // Устанавливаем обработанный текст
-    tempDiv.innerHTML = `<p>${text}</p>`;
-
-    // Очищаем пустые элементы
-    tempDiv.querySelectorAll('p').forEach(p => {
-        if (p.textContent.trim() === '') {
-            p.remove();
-        }
-    });
-
-    return tempDiv.innerHTML;
-}
-
 // Инициализация AI-ассистента
 function initAIAssistant(project) {
     const promptInput = document.getElementById('ai-prompt');
@@ -1196,7 +1154,12 @@ function initAIAssistant(project) {
 
             const response = await askMistral(prompt, projectInfo);
             lastResponse = response;
-            responseContent.innerHTML = renderMarkdown(response);
+            
+            // Парсим Markdown в HTML и очищаем от вредоносного кода
+            const rawHtml = marked.parse(response);
+            const cleanHtml = DOMPurify.sanitize(rawHtml);
+            responseContent.innerHTML = cleanHtml;
+            
             updateStatus('Ответ готов');
         } catch (error) {
             responseContent.innerHTML = `<div class="error">Не удалось получить ответ: ${error.message}</div>`;
@@ -1248,7 +1211,11 @@ function initAIAssistant(project) {
 
             const response = await askMistral(lastPrompt, projectInfo);
             lastResponse = response;
-            responseContent.innerHTML = renderMarkdown(response);
+            
+            const rawHtml = marked.parse(response);
+            const cleanHtml = DOMPurify.sanitize(rawHtml);
+            responseContent.innerHTML = cleanHtml;
+            
             updateStatus('Новый ответ готов');
         } catch (error) {
             responseContent.innerHTML = `<div class="error">Не удалось получить ответ: ${error.message}</div>`;
@@ -1307,9 +1274,13 @@ function initAIAssistant(project) {
                 const slug = projectSlug(site.url);
                 const letter = (site.title || '?').trim().charAt(0).toUpperCase() || '?';
 
+                // 1. Сначала формируем URL для скриншота (ВНЕ шаблонной строки!)
+                const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url&overlay.browser=dark`;
+
                 // Update document title and meta tags
                 document.title = `${title} · Oris`;
-                document.querySelector('meta[name="description"]').setAttribute('content', desc);
+                const metaDesc = document.querySelector('meta[name="description"]');
+                if (metaDesc) metaDesc.setAttribute('content', desc);
 
                 // Update Open Graph tags
                 const ogTitle = document.querySelector('meta[property="og:title"]');
@@ -1318,14 +1289,14 @@ function initAIAssistant(project) {
 
                 if (ogTitle) ogTitle.setAttribute('content', `${title} · Oris`);
                 if (ogDescription) ogDescription.setAttribute('content', desc);
-                if (ogImage) ogImage.setAttribute('content', `${window.location.origin}/p/shots/${slug}.png`);
+                if (ogImage) ogImage.setAttribute('content', screenshotApiUrl);
 
-                // Create content HTML
+                // 2. Теперь используем переменную внутри шаблонной строки через ${screenshotApiUrl}
                 const content = document.getElementById('content');
                 content.innerHTML = `
                     <article>
                         <div class="preview" role="img" aria-label="Превью проекта ${title}">
-                            <img id="shot" src="/p/shots/${slug}.png" alt="Превью проекта ${title}" loading="lazy">
+                            <img id="shot" src="${screenshotApiUrl}" alt="Превью проекта ${title}" loading="lazy">
                         </div>
                         <div class="category-badge" style="--cat-color:${meta.color};--cat-bg:${meta.color}1a">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -1350,16 +1321,18 @@ function initAIAssistant(project) {
                     </article>
                 `;
 
-                // Handle image error
+                // Handle image error (если Microlink не сможет сделать скриншот, покажем заглушку)
                 const img = document.getElementById('shot');
-                img.addEventListener('error', () => {
-                    const wrap = img.parentElement;
-                    wrap.innerHTML = `
-                        <div class="preview-fallback" style="--ph-color:${meta.color}" aria-label="Превью проекта ${title}">
-                            <span>${escapeHtml(letter)}</span>
-                        </div>
-                    `;
-                });
+                if (img) {
+                    img.addEventListener('error', () => {
+                        const wrap = img.parentElement;
+                        wrap.innerHTML = `
+                            <div class="preview-fallback" style="--ph-color:${meta.color}" aria-label="Превью проекта ${title}">
+                                <span>${escapeHtml(letter)}</span>
+                            </div>
+                        `;
+                    });
+                }
 
                 // Initialize AI assistant
                 setTimeout(() => {

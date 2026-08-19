@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Inspector</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%232997ff' rx='20'/><rect x='25' y='30' width='50' height='35' rx='4' fill='none' stroke='white' stroke-width='6'/><path d='M40 65 h20' stroke='white' stroke-width='6'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --bg-glass-hover: rgba(255, 255, 255, 0.06);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #f5f5f7;
+            --text-secondary: #a1a1a6;
+            --text-tertiary: #6e6e73;
+            --accent: #2997ff;
+            --accent-hover: #0077ed;
+            --success: #30d158;
+            --warning: #ffd60a;
+            --error: #ff453a;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --radius-2xl: 24px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-gradient::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(41, 151, 255, 0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(120, 80, 255, 0.03) 0%, transparent 50%);
+            animation: bgShift 20s ease-in-out infinite;
+        }
+
+        @keyframes bgShift {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(2%, -1%) rotate(1deg); }
+            66% { transform: translate(-1%, 2%) rotate(-1deg); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px 100px;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 0 50px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        header h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #f5f5f7 0%, #a1a1a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 16px 24px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            animation: scaleIn 0.6s ease;
+        }
+
+        .stat-item .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-item .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 4px;
+        }
+
+        .search-bar {
+            max-width: 500px;
+            margin: 30px auto;
+            position: relative;
+            animation: fadeInUp 0.8s ease 0.2s both;
+        }
+
+        .search-bar svg {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #a1a1a6;
+            opacity: 0.7;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: relative;
+            z-index: 1;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 0 3px rgba(41, 151, 255, 0.1);
+        }
+
+        .search-bar input:focus ~ svg {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .categories-nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+            padding: 0 10px;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        .cat-btn {
+            padding: 8px 16px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 100px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            white-space: nowrap;
+        }
+
+        .cat-btn:hover, .cat-btn.active {
+            background: rgba(41, 151, 255, 0.1);
+            border-color: rgba(41, 151, 255, 0.3);
+            color: var(--accent);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 20px 12px 100px;
+            }
+            header {
+                padding: 40px 0 30px;
+            }
+            .stats-bar {
+                gap: 12px;
+            }
+            .stat-item {
+                padding: 12px 18px;
+            }
+        }
+
+        .card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease both;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            background: var(--bg-glass-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(41, 151, 255, 0.1);
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        .card-icon svg {
+            width: 16px;
+            height: 16px;
+            color: var(--accent);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .card-count {
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 100px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            gap: 12px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+            min-width: 0;
+        }
+
+        .info-value {
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            text-align: right;
+            word-break: break-all;
+            font-weight: 500;
+            max-width: 60%;
+        }
+
+        .info-value.mono {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.72rem;
+        }
+
+        .info-value.truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 100px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(48, 209, 88, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(255, 214, 10, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-error {
+            background: rgba(255, 69, 58, 0.1);
+            color: var(--error);
+        }
+
+        .badge-info {
+            background: rgba(41, 151, 255, 0.1);
+            color: var(--accent);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 100px;
+            background: linear-gradient(90deg, var(--accent), #5ac8fa);
+            transition: width 1s ease;
+        }
+
+        /* Chat Widget */
+        .chat-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+        }
+
+        .chat-toggle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #5856d6);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 24px rgba(41, 151, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 32px rgba(41, 151, 255, 0.4);
+        }
+
+        .chat-toggle svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+
+        .chat-toggle.open svg {
+            transform: rotate(90deg);
+        }
+
+        .chat-panel {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 380px;
+            max-width: calc(100vw - 48px);
+            height: 520px;
+            max-height: calc(100vh - 140px);
+            background: rgba(28, 28, 30, 0.95);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-2xl);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-panel.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #5856d6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-header-avatar svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+
+        .chat-header-info h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .chat-header-info p {
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+        }
+
+        .chat-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .chat-msg.bot {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-msg.user {
+            align-self: flex-end;
+            background: var(--accent);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-msg.loading {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 14px;
+        }
+
+        .chat-msg.loading .dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .chat-msg.loading .dots span {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            animation: dotPulse 1.4s ease-in-out infinite;
+        }
+
+        .chat-msg.loading .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .chat-msg.loading .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: 100px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .chat-input-area button {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .chat-input-area button:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+        }
+
+        .chat-input-area button svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+
+        .api-key-section {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .api-key-section input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-family: 'SF Mono', monospace;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .api-key-section input:focus {
+            border-color: var(--accent);
+        }
+
+        .api-key-section label {
+            font-size: 0.68rem;
+            color: var(--text-tertiary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 480px) {
+            .chat-panel {
+                width: calc(100vw - 24px);
+                right: -12px;
+                height: calc(100vh - 120px);
+            }
+            .chat-widget {
+                bottom: 16px;
+                right: 16px;
+            }
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius-sm);
+            height: 14px;
+            margin: 6px 0;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .export-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 100px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-family: inherit;
+            cursor: pointer;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .export-btn:hover {
+            background: rgba(41, 151, 255, 0.1);
+            border-color: rgba(41, 151, 255, 0.3);
+            color: var(--accent);
+        }
+
+        .export-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .section-hidden {
+            display: none;
+        }
+
+                .chat-msg.bot {
+            white-space: normal;
+        }
+
+        .chat-msg.bot h1,
+        .chat-msg.bot h2,
+        .chat-msg.bot h3 {
+            margin: 8px 0 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .chat-msg.bot p {
+            margin: 4px 0;
+        }
+
+        .chat-msg.bot ul,
+        .chat-msg.bot ol {
+            margin: 4px 0;
+            padding-left: 20px;
+        }
+
+        .chat-msg.bot li {
+            margin: 2px 0;
+        }
+
+        .chat-msg.bot code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.75rem;
+        }
+
+        .chat-msg.bot pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .chat-msg.bot pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .chat-msg.bot strong {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-msg.bot em {
+            font-style: italic;
+        }
+
+        .chat-msg.bot a {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        .chat-msg.bot blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 10px;
+            margin: 8px 0;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <button class="export-btn" onclick="exportData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Export JSON
+    </button>
+
+    <div class="container">
+        <header>
+            <h1>Device Inspector</h1>
+            <p>Полная информация о вашем устройстве в реальном времени</p>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalParams">0</div>
+                    <div class="stat-label">Параметров</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCategories">0</div>
+                    <div class="stat-label">Категорий</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="scanTime">0ms</div>
+                    <div class="stat-label">Время скана</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="searchInput" placeholder="Поиск по параметрам...">
+        </div>
+
+        <div class="categories-nav" id="categoriesNav"></div>
+
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- Chat Widget -->
+    <div class="chat-widget">
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">
+                <div class="chat-header-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0110 10c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+                </div>
+                <div class="chat-header-info">
+                    <h3>AI Ассистент</h3>
+                    <p>Powered by Mistral AI</p>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-msg bot">Здравствуйте! Я могу ответить на вопросы о вашем устройстве. Введите API ключ Mistral и задайте вопрос.</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="Спросите о вашем устройстве...">
+                <button onclick="sendMessage()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+            </div>
+        </div>
+        <button class="chat-toggle" id="chatToggle" onclick="toggleChat()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </button>
+    </div>
+
+    <script>
+    let allData = {};
+    let totalParamCount = 0;
+
+    function getIcon(type) {
+        const icons = {
+            system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+            browser: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>',
+            screen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+            network: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>',
+            hardware: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>',
+            gpu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 12h.01M18 12h.01"/></svg>',
+            storage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
+            battery: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 13v-2"/><path d="M11 10v4M9 12h4"/></svg>',
+            media: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+            location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+            input: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M6 16h12"/></svg>',
+            security: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            performance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+            fingerprint: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12c0-3.5 2.5-6 6-6 1 0 2 .3 2.8.8"/><path d="M12 12v7.5"/><path d="M9.5 12C9.7 9.8 10.7 8 12 8c1.8 0 3 1.5 3 3.5 0 1.6-.6 3.5-1.5 5"/></svg>',
+            connectivity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.4M16.2 7.8c2.3 2.3 2.3 6.1 0 8.4M19.1 4.9C23 8.8 23 15.2 19.1 19.1M12 12h.01"/></svg>',
+            timezone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+            fonts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
+            webgl: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>'
+        };
+        return icons[type] || icons.system;
+    }
+
+    async function collectAllData() {
+        const startTime = performance.now();
+        const data = {};
+
+        // 1. System Information
+        data['Система'] = {
+            icon: 'system',
+            items: {}
+        };
+        const sysItems = data['Система'].items;
+        sysItems['User Agent'] = navigator.userAgent;
+        sysItems['Platform'] = navigator.platform || 'N/A';
+        sysItems['Vendor'] = navigator.vendor || 'N/A';
+        sysItems['App Name'] = navigator.appName;
+        sysItems['App Version'] = navigator.appVersion;
+        sysItems['App Code Name'] = navigator.appCodeName;
+        sysItems['Product'] = navigator.product || 'N/A';
+        sysItems['Product Sub'] = navigator.productSub || 'N/A';
+        sysItems['Language'] = navigator.language;
+        sysItems['Languages'] = navigator.languages ? navigator.languages.join(', ') : 'N/A';
+        sysItems['Online'] = navigator.onLine ? 'Да' : 'Нет';
+        sysItems['Cookie Enabled'] = navigator.cookieEnabled ? 'Да' : 'Нет';
+        sysItems['Do Not Track'] = navigator.doNotTrack || window.doNotTrack || 'Не установлено';
+        sysItems['PDF Viewer'] = navigator.pdfViewerEnabled ? 'Да' : 'Нет';
+        sysItems['Hardware Concurrency'] = (navigator.hardwareConcurrency || 'N/A') + ' потоков';
+        sysItems['Max Touch Points'] = navigator.maxTouchPoints || 0;
+        sysItems['Device Memory'] = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A';
+        sysItems['Java Enabled'] = (() => { try { return navigator.javaEnabled() ? 'Да' : 'Нет'; } catch(e) { return 'N/A'; } })();
+        sysItems['Pointer Count'] = navigator.maxTouchPoints || 0;
+        sysItems['Webdriver'] = navigator.webdriver ? 'Да' : 'Нет';
+        sysItems['Build ID'] = (() => { try { return navigator.buildID || 'N/A'; } catch(e) { return 'N/A'; } })();
+        sysItems['OS CPU'] = navigator.oscpu || 'N/A';
+        sysItems['Service Worker Supported'] = 'serviceWorker' in navigator ? 'Да' : 'Нет';
+        sysItems['Share API Supported'] = 'share' in navigator ? 'Да' : 'Нет';
+        sysItems['Clipboard API'] = 'clipboard' in navigator ? 'Да' : 'Нет';
+        sysItems['Geolocation API'] = 'geolocation' in navigator ? 'Да' : 'Нет';
+        sysItems['Notifications API'] = 'Notification' in window ? 'Да' : 'Нет';
+        sysItems['Permissions API'] = 'permissions' in navigator ? 'Да' : 'Нет';
+        sysItems['Media Devices API'] = 'mediaDevices' in navigator ? 'Да' : 'Нет';
+        sysItems['Bluetooth API'] = 'bluetooth' in navigator ? 'Да' : 'Нет';
+        sysItems['USB API'] = 'usb' in navigator ? 'Да' : 'Нет';
+        sysItems['Gamepad API'] = 'getGamepads' in navigator ? 'Да' : 'Нет';
+        sysItems['Vibration API'] = 'vibrate' in navigator ? 'Да' : 'Нет';
+        sysItems['Wake Lock API'] = 'wakeLock' in navigator ? 'Да' : 'Нет';
+        sysItems['Presentation API'] = 'presentation' in navigator ? 'Да' : 'Нет';
+        sysItems['Web Speech API'] = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window ? 'Да' : 'Нет';
+        sysItems['WebRTC'] = 'RTCPeerConnection' in window ? 'Да' : 'Нет';
+        sysItems['IndexedDB'] = 'indexedDB' in window ? 'Да' : 'Нет';
+        sysItems['Cache API'] = 'caches' in window ? 'Да' : 'Нет';
+        sysItems['Web Workers'] = 'Worker' in window ? 'Да' : 'Нет';
+        sysItems['WebAssembly'] = 'WebAssembly' in window ? 'Да' : 'Нет';
+        sysItems['Intersection Observer'] = 'IntersectionObserver' in window ? 'Да' : 'Нет';
+        sysItems['Resize Observer'] = 'ResizeObserver' in window ? 'Да' : 'Нет';
+        sysItems['Mutation Observer'] = 'MutationObserver' in window ? 'Да' : 'Нет';
+        sysItems['Performance Observer'] = 'PerformanceObserver' in window ? 'Да' : 'Нет';
+
+        // 2. Browser Details
+        data['Браузер'] = {
+            icon: 'browser',
+            items: {}
+        };
+        const brItems = data['Браузер'].items;
+        brItems['Browser Name'] = detectBrowser();
+        brItems['Browser Version'] = detectBrowserVersion();
+        brItems['Engine'] = detectEngine();
+        brItems['Is Mobile'] = /Mobi|Android/i.test(navigator.userAgent) ? 'Да' : 'Нет';
+        brItems['Is Tablet'] = /Tablet|iPad/i.test(navigator.userAgent) ? 'Да' : 'Нет';
+        brItems['Is Desktop'] = !/Mobi|Android|Tablet|iPad/i.test(navigator.userAgent) ? 'Да' : 'Нет';
+        brItems['User Agent Length'] = navigator.userAgent.length + ' символов';
+        brItems['Plural Rules'] = 'Intl' in window ? 'Да' : 'Нет';
+        brItems['Intl DateTimeFormat'] = 'Intl' in window && 'DateTimeFormat' in Intl ? 'Да' : 'Нет';
+        brItems['Intl NumberFormat'] = 'Intl' in window && 'NumberFormat' in Intl ? 'Да' : 'Нет';
+        brItems['Intl Collator'] = 'Intl' in window && 'Collator' in Intl ? 'Да' : 'Нет';
+        brItems['Fetch API'] = 'fetch' in window ? 'Да' : 'Нет';
+        brItems['XMLHttpRequest'] = 'XMLHttpRequest' in window ? 'Да' : 'Нет';
+        brItems['WebSocket'] = 'WebSocket' in window ? 'Да' : 'Нет';
+        brItems['EventSource (SSE)'] = 'EventSource' in window ? 'Да' : 'Нет';
+        brItems['BroadcastChannel'] = 'BroadcastChannel' in window ? 'Да' : 'Нет';
+        brItems['History API'] = 'history' in window && 'pushState' in history ? 'Да' : 'Нет';
+        brItems['Page Visibility'] = 'visibilityState' in document ? 'Да' : 'Нет';
+        brItems['Fullscreen API'] = 'fullscreenEnabled' in document ? 'Да' : 'Нет';
+        brItems['Picture-in-Picture'] = 'pictureInPictureEnabled' in document ? 'Да' : 'Нет';
+        brItems['Picture-in-Picture (Video)'] = 'HTMLVideoElement' in window && 'pictureInPictureEnabled' in document ? 'Да' : 'Нет';
+        brItems['Picture-in-Picture (Canvas)'] = 'HTMLCanvasElement' in window && typeof document.createElement('canvas').transferControlToOffscreen === 'function' ? 'Да' : 'Нет';
+        brItems['Web Animations'] = 'animate' in (document.createElement('div')) ? 'Да' : 'Нет';
+        brItems['CSS Custom Properties'] = CSS.supports && CSS.supports('--a', '0') ? 'Да' : 'Нет';
+        brItems['CSS Grid'] = CSS.supports && CSS.supports('display', 'grid') ? 'Да' : 'Нет';
+        brItems['CSS Flexbox'] = CSS.supports && CSS.supports('display', 'flex') ? 'Да' : 'Нет';
+        brItems['CSS Container Queries'] = CSS.supports && CSS.supports('container-type', 'inline-size') ? 'Да' : 'Нет';
+        brItems['CSS Nesting'] = CSS.supports && CSS.supports('selector(&)') ? 'Да' : 'Нет';
+        brItems['CSS :has()'] = CSS.supports && CSS.supports('selector(:has(*))') ? 'Да' : 'Нет';
+        brItems['CSS Subgrid'] = CSS.supports && CSS.supports('grid-template-columns', 'subgrid') ? 'Да' : 'Нет';
+        brItems['Web Components'] = 'customElements' in window ? 'Да' : 'Нет';
+        brItems['Shadow DOM'] = 'attachShadow' in (document.createElement('div')) ? 'Да' : 'Нет';
+        brItems['Template Element'] = 'content' in document.createElement('template') ? 'Да' : 'Нет';
+        brItems['Dialog Element'] = 'HTMLDialogElement' in window ? 'Да' : 'Нет';
+        brItems['Popover API'] = 'popover' in (document.createElement('div')) ? 'Да' : 'Нет';
+        brItems['View Transitions'] = 'startViewTransition' in document ? 'Да' : 'Нет';
+        brItems['Scroll Animation'] = 'animate' in (document.createElement('div')) && CSS.supports('animation-range', '0% 100%') ? 'Да' : 'Нет';
+        brItems['Declarative Shadow DOM'] = 'ShadowRoot' in window && 'DeclarativeShadowRoot' in window ? 'Да' : 'Нет';
+        brItems['Compression Streams'] = 'CompressionStream' in window ? 'Да' : 'Нет';
+        brItems['Web Crypto'] = 'crypto' in window && 'subtle' in crypto ? 'Да' : 'Нет';
+        brItems['Structured Clone'] = typeof structuredClone === 'function' ? 'Да' : 'Нет';
+        brItems['AbortController'] = 'AbortController' in window ? 'Да' : 'Нет';
+
+        // 3. Screen
+        data['Экран'] = {
+            icon: 'screen',
+            items: {}
+        };
+        const scItems = data['Экран'].items;
+        scItems['Screen Width'] = screen.width + 'px';
+        scItems['Screen Height'] = screen.height + 'px';
+        scItems['Available Width'] = screen.availWidth + 'px';
+        scItems['Available Height'] = screen.availHeight + 'px';
+        scItems['Color Depth'] = screen.colorDepth + ' bit';
+        scItems['Pixel Depth'] = screen.pixelDepth + ' bit';
+        scItems['Device Pixel Ratio'] = window.devicePixelRatio + 'x';
+        scItems['Viewport Width'] = window.innerWidth + 'px';
+        scItems['Viewport Height'] = window.innerHeight + 'px';
+        scItems['Outer Width'] = window.outerWidth + 'px';
+        scItems['Outer Height'] = window.outerHeight + 'px';
+        scItems['Screen X'] = window.screenX + 'px';
+        scItems['Screen Y'] = window.screenY + 'px';
+        scItems['Orientation'] = screen.orientation ? screen.orientation.type : 'N/A';
+        scItems['Orientation Angle'] = screen.orientation ? screen.orientation.angle + '°' : 'N/A';
+        scItems['Effective Type'] = (screen.orientation && screen.orientation.type.includes('portrait')) ? 'Портрет' : 'Ландшафт';
+        scItems['Is Landscape'] = window.innerWidth > window.innerHeight ? 'Да' : 'Нет';
+        scItems['Actual Screen Width (CSS)'] = window.innerWidth + 'px';
+        scItems['Actual Screen Height (CSS)'] = window.innerHeight + 'px';
+        scItems['Physical Width'] = Math.round(screen.width * window.devicePixelRatio) + 'px';
+        scItems['Physical Height'] = Math.round(screen.height * window.devicePixelRatio) + 'px';
+        scItems['Scroll X'] = window.scrollX + 'px';
+        scItems['Scroll Y'] = window.scrollY + 'px';
+        scItems['Page Offset X'] = window.pageXOffset + 'px';
+        scItems['Page Offset Y'] = window.pageYOffset + 'px';
+
+        // 4. Network
+        data['Сеть'] = {
+            icon: 'network',
+            items: {}
+        };
+        const netItems = data['Сеть'].items;
+        if (navigator.connection) {
+            const conn = navigator.connection;
+            netItems['Effective Type'] = conn.effectiveType || 'N/A';
+            netItems['Downlink'] = conn.downlink ? conn.downlink + ' Mbps' : 'N/A';
+            netItems['RTT'] = conn.rtt ? conn.rtt + ' ms' : 'N/A';
+            netItems['Save Data'] = conn.saveData ? 'Да' : 'Нет';
+            netItems['Type'] = conn.type || 'N/A';
+        } else {
+            netItems['Connection API'] = 'Не поддерживается';
+        }
+        netItems['Online Status'] = navigator.onLine ? 'Онлайн' : 'Оффлайн';
+        netItems['Protocol'] = location.protocol;
+        netItems['Host'] = location.host || 'N/A';
+        netItems['Hostname'] = location.hostname || 'N/A';
+        netItems['Port'] = location.port || 'Default';
+        netItems['Secure Context'] = window.isSecureContext ? 'Да' : 'Нет';
+        netItems['HTTPS'] = location.protocol === 'https:' ? 'Да' : 'Нет';
+
+        // IP Address (Пуленепробиваемая версия с кэшем и двойным fallback)
+        try {
+            const CACHE_KEY = 'di_ip_cache_v2';
+            const CACHE_TIME = 15 * 60 * 1000; // 15 минут кэша
+            
+            // 1. Проверяем кэш, чтобы не спамить API при обновлениях страницы
+            const cached = sessionStorage.getItem(CACHE_KEY);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Date.now() - parsed.timestamp < CACHE_TIME) {
+                    Object.assign(netItems, parsed.data);
+                    // Прерываем выполнение, данные взяты из кэша, запросы не идут
+                } else {
+                    sessionStorage.removeItem(CACHE_KEY);
+                }
+            }
+
+            // 2. Если кэша нет или он устарел, пробуем получить данные
+            if (!netItems['City'] || netItems['City'] === 'N/A' || netItems['City'].includes('Лимит')) {
+                let geoData = null;
+
+                // Попытка 1: ipapi.co (стандартный)
+                try {
+                    const res1 = await fetch('https://ipapi.co/json/');
+                    if (res1.ok) {
+                        const data = await res1.json();
+                        if (!data.error) geoData = data;
+                    }
+                } catch (e) { /* Игнорируем, переходим к fallback */ }
+
+                // Попытка 2: ip-api.com (если первый заблокировал, этот почти всегда работает, у него очень высокие лимиты)
+                if (!geoData) {
+                    try {
+                        // Используем http, так как ip-api.com бесплатно не поддерживает https, но для определения IP это безопасно
+                        const res2 = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,isp,query,timezone,currency');
+                        if (res2.ok) {
+                            const data = await res2.json();
+                            if (data.status === 'success') geoData = data;
+                        }
+                    } catch (e) { /* Игнорируем */ }
+                }
+
+                // 3. Обрабатываем результат
+                if (geoData) {
+                    netItems['IP Address'] = geoData.ip || geoData.query || 'N/A';
+                    netItems['City'] = geoData.city || geoData.regionName || 'N/A';
+                    netItems['Region'] = geoData.region || geoData.regionName || 'N/A';
+                    netItems['Country'] = geoData.country || geoData.country_name || 'N/A';
+                    netItems['Country Code'] = geoData.countryCode || geoData.country_code || 'N/A';
+                    netItems['ISP'] = geoData.isp || geoData.org || 'N/A';
+                    netItems['Timezone (IP)'] = geoData.timezone || 'N/A';
+                    netItems['Currency'] = geoData.currency || 'N/A';
+                    
+                    // Сохраняем в кэш
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+                        timestamp: Date.now(),
+                        data: {
+                            'IP Address': netItems['IP Address'],
+                            'City': netItems['City'],
+                            'Region': netItems['Region'],
+                            'Country': netItems['Country'],
+                            'Country Code': netItems['Country Code'],
+                            'ISP': netItems['ISP'],
+                            'Timezone (IP)': netItems['Timezone (IP)'],
+                            'Currency': netItems['Currency']
+                        }
+                    }));
+                } else {
+                    // Если оба API вернули отказ (реальный бан по IP)
+                    netItems['IP Address'] = 'Определен, но геоданные скрыты';
+                    netItems['City'] = 'Лимит бесплатных API исчерпан';
+                    netItems['Region'] = 'Попробуйте через 15 минут';
+                    netItems['Country'] = 'Или отключите блокировщики рекламы';
+                }
+            }
+        } catch(e) {
+            netItems['IP Address'] = 'Ошибка сети';
+        }
+
+        // 5. Hardware
+        data['Железо'] = {
+            icon: 'hardware',
+            items: {}
+        };
+        const hwItems = data['Железо'].items;
+        hwItems['CPU Cores'] = navigator.hardwareConcurrency || 'N/A';
+        hwItems['Logical Processors'] = navigator.hardwareConcurrency || 'N/A';
+        hwItems['Device Memory'] = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A';
+        hwItems['Max Touch Points'] = navigator.maxTouchPoints || 0;
+        hwItems['Touch Support'] = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) ? 'Да' : 'Нет';
+        hwItems['Pointer Type'] = window.matchMedia('(pointer: fine)').matches ? 'Точный (мышь)' : window.matchMedia('(pointer: coarse)').matches ? 'Грубый (тач)' : 'Нет';
+        hwItems['Hover Support'] = window.matchMedia('(hover: hover)').matches ? 'Да' : 'Нет';
+        hwItems['Any Hover'] = window.matchMedia('(any-hover: hover)').matches ? 'Да' : 'Нет';
+        hwItems['Any Pointer'] = window.matchMedia('(any-pointer: fine)').matches ? 'Точный' : window.matchMedia('(any-pointer: coarse)').matches ? 'Грубый' : 'Нет';
+        hwItems['Color Gamut'] = window.matchMedia('(color-gamut: rec2100)').matches ? 'Rec.2100' : window.matchMedia('(color-gamut: p3)').matches ? 'P3' : window.matchMedia('(color-gamut: srgb)').matches ? 'sRGB' : 'N/A';
+        hwItems['HDR Support'] = window.matchMedia('(dynamic-range: high)').matches ? 'Да' : 'Нет';
+        hwItems['Inverted Colors'] = window.matchMedia('(inverted-colors: inverted)').matches ? 'Да' : 'Нет';
+        hwItems['Prefers Reduced Motion'] = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'Да' : 'Нет';
+        hwItems['Prefers Reduced Transparency'] = window.matchMedia('(prefers-reduced-transparency: reduce)').matches ? 'Да' : 'Нет';
+        hwItems['Prefers Contrast'] = window.matchMedia('(prefers-contrast: more)').matches ? 'Высокая' : window.matchMedia('(prefers-contrast: less)').matches ? 'Низкая' : 'Обычная';
+        hwItems['Forced Colors'] = window.matchMedia('(forced-colors: active)').matches ? 'Да' : 'Нет';
+        hwItems['Color Scheme'] = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Тёмная' : 'Светлая';
+
+        // 6. GPU / WebGL
+        data['Графика (GPU)'] = {
+            icon: 'gpu',
+            items: {}
+        };
+        const gpuItems = data['Графика (GPU)'].items;
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                // Используем стандартные свойства вместо устаревшего WEBGL_debug_renderer_info
+                // Это полностью убирает предупреждение Firefox о депрекации
+                gpuItems['GPU Vendor'] = gl.getParameter(gl.VENDOR) || 'N/A';
+                gpuItems['GPU Renderer'] = gl.getParameter(gl.RENDERER) || 'N/A';
+                
+                gpuItems['WebGL Version'] = gl.getParameter(gl.VERSION);
+                gpuItems['GLSL Version'] = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+                gpuItems['WebGL Vendor'] = gl.getParameter(gl.VENDOR);
+                gpuItems['WebGL Renderer'] = gl.getParameter(gl.RENDERER);
+                gpuItems['Max Texture Size'] = gl.getParameter(gl.MAX_TEXTURE_SIZE) + 'px';
+                
+                const vpDims = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+                gpuItems['Max Viewport Dims'] = (vpDims && vpDims.length >= 2) ? vpDims[0] + 'x' + vpDims[1] : 'N/A';
+                
+                gpuItems['Max Renderbuffer Size'] = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) + 'px';
+                gpuItems['Max Vertex Attribs'] = gl.getParameter(gl.MAX_VERTEX_ATTRIBS);
+                gpuItems['Max Vertex Uniform Vectors'] = gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS);
+                gpuItems['Max Fragment Uniform Vectors'] = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS);
+                gpuItems['Max Varying Vectors'] = gl.getParameter(gl.MAX_VARYING_VECTORS);
+                gpuItems['Max Combined Texture Units'] = gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+                gpuItems['Max Vertex Texture Units'] = gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+                gpuItems['Max Texture Image Units'] = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+                gpuItems['Max Cube Map Texture Size'] = gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE) + 'px';
+                
+                const lineWidth = gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE);
+                gpuItems['Aliased Line Width Range'] = (lineWidth && lineWidth.length >= 2) ? lineWidth[0] + ' - ' + lineWidth[1] : 'N/A';
+                
+                const pointSize = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE);
+                gpuItems['Aliased Point Size Range'] = (pointSize && pointSize.length >= 2) ? pointSize[0] + ' - ' + pointSize[1] : 'N/A';
+
+                // Безопасное получение параметров, которые могут отсутствовать в WebGL 1 
+                // (предотвращает ошибку "Invalid enum value 0" при передаче undefined)
+                const safeGetParam = (param) => {
+                    try {
+                        return (param !== undefined) ? gl.getParameter(param) : 'N/A';
+                    } catch (e) {
+                        return 'N/A';
+                    }
+                };
+
+                gpuItems['Max Samples'] = safeGetParam(gl.MAX_SAMPLES);
+                const max3D = safeGetParam(gl.MAX_3D_TEXTURE_SIZE);
+                gpuItems['Max 3D Texture Size'] = max3D !== 'N/A' ? max3D + 'px' : 'N/A';
+                gpuItems['Max Draw Buffers'] = safeGetParam(gl.MAX_DRAW_BUFFERS);
+                gpuItems['Max Color Attachments'] = safeGetParam(gl.MAX_COLOR_ATTACHMENTS);
+                
+                gpuItems['Max Elements Vertices'] = gl.getParameter(gl.MAX_ELEMENTS_VERTICES);
+                gpuItems['Max Elements Indices'] = gl.getParameter(gl.MAX_ELEMENTS_INDICES);
+
+                // Extensions
+                const extensions = gl.getSupportedExtensions();
+                gpuItems['Extensions Count'] = extensions ? extensions.length : 0;
+                gpuItems['Extensions List'] = extensions ? extensions.slice(0, 20).join(', ') + (extensions.length > 20 ? '...' : '') : 'N/A';
+                gpuItems['EXT_color_buffer_float'] = extensions && extensions.includes('EXT_color_buffer_float') ? 'Да' : 'Нет';
+                gpuItems['EXT_texture_filter_anisotropic'] = extensions && extensions.includes('EXT_texture_filter_anisotropic') ? 'Да' : 'Нет';
+                gpuItems['OES_texture_float_linear'] = extensions && extensions.includes('OES_texture_float_linear') ? 'Да' : 'Нет';
+                gpuItems['WEBGL_compressed_texture_s3tc'] = extensions && extensions.includes('WEBGL_compressed_texture_s3tc') ? 'Да' : 'Нет';
+                gpuItems['WEBGL_compressed_texture_astc'] = extensions && extensions.includes('WEBGL_compressed_texture_astc') ? 'Да' : 'Нет';
+                gpuItems['WEBGL_compressed_texture_etc'] = extensions && extensions.includes('WEBGL_compressed_texture_etc') ? 'Да' : 'Нет';
+                gpuItems['WEBGL_multi_draw'] = extensions && extensions.includes('WEBGL_multi_draw') ? 'Да' : 'Нет';
+            } else {
+                gpuItems['WebGL'] = 'Не поддерживается';
+            }
+        } catch(e) {
+            gpuItems['WebGL Error'] = e.message;
+        }
+
+        // 7. Battery
+        data['Батарея'] = {
+            icon: 'battery',
+            items: {}
+        };
+        const batItems = data['Батарея'].items;
+        try {
+            if (navigator.getBattery) {
+                const battery = await navigator.getBattery();
+                batItems['Battery Level'] = Math.round(battery.level * 100) + '%';
+                batItems['Charging'] = battery.charging ? 'Да' : 'Нет';
+                batItems['Charging Time'] = battery.chargingTime === Infinity ? 'N/A' : (battery.chargingTime ? Math.round(battery.chargingTime / 60) + ' мин' : 'Полная');
+                batItems['Discharging Time'] = battery.dischargingTime === Infinity ? 'N/A' : (battery.dischargingTime ? Math.round(battery.dischargingTime / 60) + ' мин' : 'N/A');
+                batItems['Battery API'] = 'Поддерживается';
+            } else {
+                batItems['Battery API'] = 'Не поддерживается';
+            }
+        } catch(e) {
+            batItems['Battery API'] = 'Не поддерживается или заблокировано';
+        }
+
+        // 8. Media Devices
+        data['Медиа Устройства'] = {
+            icon: 'media',
+            items: {}
+        };
+        const mediaItems = data['Медиа Устройства'].items;
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(d => d.kind === 'audioinput');
+                const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+                const videoInputs = devices.filter(d => d.kind === 'videoinput');
+                mediaItems['Всего устройств'] = devices.length;
+                mediaItems['Микрофоны'] = audioInputs.length;
+                mediaItems['Динамики'] = audioOutputs.length;
+                mediaItems['Камеры'] = videoInputs.length;
+                devices.forEach((d, i) => {
+                    mediaItems[`Устройство ${i+1} (${d.kind})`] = d.label || 'Не идентифицировано (нет разрешения)';
+                });
+            } else {
+                mediaItems['Media Devices API'] = 'Не поддерживается';
+            }
+        } catch(e) {
+            mediaItems['Ошибка'] = e.message;
+        }
+
+        // 9. Timezone & Locale
+        data['Время и Локаль'] = {
+            icon: 'timezone',
+            items: {}
+        };
+        const tzItems = data['Время и Локаль'].items;
+        tzItems['Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        tzItems['Timezone Offset'] = 'UTC' + (new Date().getTimezoneOffset() > 0 ? '-' : '+') + Math.abs(new Date().getTimezoneOffset() / 60);
+        tzItems['Local Time'] = new Date().toLocaleString();
+        tzItems['UTC Time'] = new Date().toUTCString();
+        tzItems['ISO Time'] = new Date().toISOString();
+        tzItems['Unix Timestamp'] = Math.floor(Date.now() / 1000);
+        tzItems['Locale'] = navigator.language;
+        tzItems['Locales'] = navigator.languages ? navigator.languages.join(', ') : navigator.language;
+        tzItems['Date Format'] = new Intl.DateTimeFormat(navigator.language).format(new Date());
+        tzItems['Number Format'] = new Intl.NumberFormat(navigator.language).format(1234567.89);
+        tzItems['Currency Format'] = new Intl.NumberFormat(navigator.language, { style: 'currency', currency: 'USD' }).format(1234.56);
+        tzItems['Calendar'] = Intl.DateTimeFormat().resolvedOptions().calendar;
+        tzItems['Numbering System'] = Intl.DateTimeFormat().resolvedOptions().numberingSystem;
+        tzItems['First Day of Week'] = (() => { try { const fmt = new Intl.DateTimeFormat(navigator.language, { weekday: 'long' }); return fmt.resolvedOptions().locale; } catch(e) { return 'N/A'; } })();
+        tzItems['Performance Now'] = performance.now().toFixed(3) + ' ms';
+        tzItems['Time Origin'] = performance.timeOrigin ? performance.timeOrigin.toFixed(3) + ' ms' : 'N/A';
+
+        // 10. Storage
+        data['Хранилище'] = {
+            icon: 'storage',
+            items: {}
+        };
+        const storItems = data['Хранилище'].items;
+        storItems['LocalStorage'] = 'localStorage' in window ? 'Доступно' : 'Недоступно';
+        storItems['SessionStorage'] = 'sessionStorage' in window ? 'Доступно' : 'Недоступно';
+        storItems['IndexedDB'] = 'indexedDB' in window ? 'Доступно' : 'Недоступно';
+        storItems['Cache API'] = 'caches' in window ? 'Доступно' : 'Недоступно';
+        storItems['Cookies'] = navigator.cookieEnabled ? 'Включены' : 'Выключены';
+        try {
+            storItems['LocalStorage Usage'] = (() => {
+                let size = 0;
+                for (let key in localStorage) {
+                    if (localStorage.hasOwnProperty(key)) {
+                        size += localStorage[key].length + key.length;
+                    }
+                }
+                return (size / 1024).toFixed(2) + ' KB';
+            })();
+        } catch(e) { storItems['LocalStorage Usage'] = 'N/A'; }
+        try {
+            storItems['SessionStorage Usage'] = (() => {
+                let size = 0;
+                for (let key in sessionStorage) {
+                    if (sessionStorage.hasOwnProperty(key)) {
+                        size += sessionStorage[key].length + key.length;
+                    }
+                }
+                return (size / 1024).toFixed(2) + ' KB';
+            })();
+        } catch(e) { storItems['SessionStorage Usage'] = 'N/A'; }
+        storItems['LocalStorage Keys Count'] = localStorage.length;
+        storItems['SessionStorage Keys Count'] = sessionStorage.length;
+        if (navigator.storage && navigator.storage.estimate) {
+            try {
+                const est = await navigator.storage.estimate();
+                storItems['Storage Quota'] = (est.quota / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+                storItems['Storage Used'] = (est.usage / (1024 * 1024)).toFixed(2) + ' MB';
+                storItems['Storage Usage %'] = ((est.usage / est.quota) * 100).toFixed(4) + '%';
+            } catch(e) {}
+        }
+        storItems['Persistent Storage'] = navigator.storage && navigator.storage.persist ? 'API доступно' : 'Недоступно';
+
+        // 11. Performance
+        data['Производительность'] = {
+            icon: 'performance',
+            items: {}
+        };
+        const perfItems = data['Производительность'].items;
+        if (performance.timing) {
+            const t = performance.timing;
+            perfItems['Navigation Start'] = t.navigationStart ? new Date(t.navigationStart).toLocaleTimeString() : 'N/A';
+            perfItems['DOM Interactive'] = t.domInteractive ? (t.domInteractive - t.navigationStart) + ' ms' : 'N/A';
+            perfItems['DOM Complete'] = t.domComplete ? (t.domComplete - t.navigationStart) + ' ms' : 'N/A';
+            perfItems['DOM Content Loaded'] = t.domContentLoadedEventEnd ? (t.domContentLoadedEventEnd - t.navigationStart) + ' ms' : 'N/A';
+            perfItems['Load Event End'] = t.loadEventEnd ? (t.loadEventEnd - t.navigationStart) + ' ms' : 'N/A';
+            perfItems['Connect Time'] = t.connectEnd && t.connectStart ? (t.connectEnd - t.connectStart) + ' ms' : 'N/A';
+            perfItems['DNS Lookup'] = t.domainLookupEnd && t.domainLookupStart ? (t.domainLookupEnd - t.domainLookupStart) + ' ms' : 'N/A';
+            perfItems['Request Time'] = t.responseEnd && t.requestStart ? (t.responseEnd - t.requestStart) + ' ms' : 'N/A';
+            perfItems['Response Time'] = t.responseEnd && t.responseStart ? (t.responseEnd - t.responseStart) + ' ms' : 'N/A';
+            perfItems['Redirect Time'] = t.redirectEnd && t.redirectStart ? (t.redirectEnd - t.redirectStart) + ' ms' : 'N/A';
+            perfItems['Unload Time'] = t.unloadEventEnd && t.unloadEventStart ? (t.unloadEventEnd - t.unloadEventStart) + ' ms' : 'N/A';
+        }
+        if (performance.memory) {
+            perfItems['JS Heap Size Limit'] = (performance.memory.jsHeapSizeLimit / (1024 * 1024)).toFixed(2) + ' MB';
+            perfItems['JS Heap Total Size'] = (performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(2) + ' MB';
+            perfItems['JS Heap Used Size'] = (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        perfItems['Navigation Type'] = (() => {
+            const entries = performance.getEntriesByType('navigation');
+            if (entries.length > 0) return entries[0].type;
+            return 'N/A';
+        })();
+        perfItems['Transfer Size'] = (() => {
+            const entries = performance.getEntriesByType('navigation');
+            return entries.length > 0 ? (entries[0].transferSize / 1024).toFixed(2) + ' KB' : 'N/A';
+        })();
+        perfItems['Encoded Body Size'] = (() => {
+            const entries = performance.getEntriesByType('navigation');
+            return entries.length > 0 ? (entries[0].encodedBodySize / 1024).toFixed(2) + ' KB' : 'N/A';
+        })();
+        perfItems['Decoded Body Size'] = (() => {
+            const entries = performance.getEntriesByType('navigation');
+            return entries.length > 0 ? (entries[0].decodedBodySize / 1024).toFixed(2) + ' KB' : 'N/A';
+        })();
+        perfItems['Resources Loaded'] = performance.getEntriesByType('resource').length;
+        perfItems['Total Resources Size'] = (() => {
+            const resources = performance.getEntriesByType('resource');
+            const total = resources.reduce((sum, r) => sum + (r.transferSize || 0), 0);
+            return (total / 1024).toFixed(2) + ' KB';
+        })();
+        perfItems['Server Timing'] = (() => {
+            const entries = performance.getEntriesByType('navigation');
+            if (entries.length > 0 && entries[0].serverTiming) {
+                return entries[0].serverTiming.map(st => `${st.name}: ${st.duration}ms`).join(', ') || 'N/A';
+            }
+            return 'N/A';
+        })();
+        perfItems['Protocol'] = (() => {
+            const entries = performance.getEntriesByType('navigation');
+            return entries.length > 0 ? entries[0].nextHopProtocol : 'N/A';
+        })();
+
+        // 12. Canvas Fingerprint
+        data['Canvas Fingerprint'] = {
+            icon: 'fingerprint',
+            items: {}
+        };
+        const fpItems = data['Canvas Fingerprint'].items;
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 50;
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = "14px 'Arial'";
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125, 1, 62, 20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('Device Inspector 🔍', 2, 15);
+            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.fillText('Device Inspector 🔍', 4, 17);
+            const dataUrl = canvas.toDataURL();
+            const hash = simpleHash(dataUrl);
+            fpItems['Canvas Hash'] = hash;
+            fpItems['Canvas Data URL Length'] = dataUrl.length + ' символов';
+            fpItems['Canvas Type'] = canvas.toDataURL().split(';')[0].split(':')[1];
+            fpItems['Canvas Winding'] = 'yes';
+        } catch(e) {
+            fpItems['Canvas'] = 'Не поддерживается';
+        }
+
+        // Audio fingerprint
+        try {
+            const audioCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+            const oscillator = audioCtx.createOscillator();
+            oscillator.type = 'triangle';
+            oscillator.frequency.setValueAtTime(10000, audioCtx.currentTime);
+            const compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-50, audioCtx.currentTime);
+            compressor.knee.setValueAtTime(40, audioCtx.currentTime);
+            compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+            compressor.attack.setValueAtTime(0, audioCtx.currentTime);
+            compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+            oscillator.connect(compressor);
+            compressor.connect(audioCtx.destination);
+            oscillator.start(0);
+            const renderedBuffer = await audioCtx.startRendering();
+            const samples = renderedBuffer.getChannelData(0);
+            let sum = 0;
+            for (let i = 4500; i < 5000; i++) {
+                sum += Math.abs(samples[i]);
+            }
+            fpItems['Audio Fingerprint'] = sum.toFixed(6);
+            fpItems['Audio Context Sample Rate'] = audioCtx.sampleRate + ' Hz';
+            fpItems['Audio State'] = audioCtx.state;
+        } catch(e) {
+            fpItems['Audio Fingerprint'] = 'Не поддерживается';
+        }
+
+        // WebRTC fingerprint
+        try {
+            const pc = new RTCPeerConnection();
+            pc.createDataChannel('test');
+            const offer = await pc.createOffer();
+            fpItems['WebRTC SDP Length'] = offer.sdp ? offer.sdp.length + ' символов' : 'N/A';
+            fpItems['WebRTC ICE Candidates'] = offer.sdp ? (offer.sdp.match(/candidate/g) || []).length : 0;
+            pc.close();
+        } catch(e) {
+            fpItems['WebRTC Fingerprint'] = 'Не поддерживается';
+        }
+
+        // 13. Fonts Detection
+        data['Шрифты'] = {
+            icon: 'fonts',
+            items: {}
+        };
+        const fontItems = data['Шрифты'].items;
+        const testFonts = [
+            'Arial', 'Arial Black', 'Calibri', 'Cambria', 'Comic Sans MS',
+            'Consolas', 'Courier New', 'Georgia', 'Helvetica', 'Impact',
+            'Lucida Console', 'Lucida Sans Unicode', 'Palatino Linotype',
+            'Segoe UI', 'Tahoma', 'Times New Roman', 'Trebuchet MS',
+            'Verdana', 'Menlo', 'Monaco', 'SF Pro Display', 'SF Pro Text',
+            'Roboto', 'Open Sans', 'Lato', 'Montserrat', 'Ubuntu',
+            'Noto Sans', 'Noto Serif', 'Source Code Pro', 'Fira Code',
+            'Inter', 'Poppins', 'Raleway', 'Oswald', 'Playfair Display',
+            'PT Sans', 'PT Serif', 'Nunito', 'Quicksand', 'Work Sans',
+            'IBM Plex Sans', 'IBM Plex Mono', 'JetBrains Mono',
+            'Cascadia Code', 'Fira Sans', 'Source Sans Pro',
+            'Avenir', 'Helvetica Neue', 'San Francisco', 'System UI',
+            'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'
+        ];
+        const baseFonts = ['monospace', 'sans-serif', 'serif'];
+        const testString = 'mmmmmmmmmmlli';
+        const testSize = '72px';
+        const span = document.createElement('span');
+        span.style.fontSize = testSize;
+        span.style.position = 'absolute';
+        span.style.left = '-9999px';
+        span.textContent = testString;
+        document.body.appendChild(span);
+
+        const baseWidths = {};
+        baseFonts.forEach(font => {
+            span.style.fontFamily = font;
+            baseWidths[font] = { w: span.offsetWidth, h: span.offsetHeight };
+        });
+
+        const detectedFonts = [];
+        testFonts.forEach(font => {
+            let detected = false;
+            baseFonts.forEach(base => {
+                span.style.fontFamily = `'${font}', ${base}`;
+                if (span.offsetWidth !== baseWidths[base].w || span.offsetHeight !== baseWidths[base].h) {
+                    detected = true;
+                }
+            });
+            if (detected) detectedFonts.push(font);
+            fontItems[font] = detected ? 'Доступен' : 'Недоступен';
+        });
+        document.body.removeChild(span);
+        fontItems['Обнаружено шрифтов'] = detectedFonts.length + ' из ' + testFonts.length;
+        fontItems['Доступные шрифты'] = detectedFonts.join(', ');
+
+        // 14. Input Devices
+        data['Устройства Ввода'] = {
+            icon: 'input',
+            items: {}
+        };
+        const inputItems = data['Устройства Ввода'].items;
+        inputItems['Touch Support'] = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) ? 'Да' : 'Нет';
+        inputItems['Max Touch Points'] = navigator.maxTouchPoints || 0;
+        inputItems['Mouse Support'] = window.matchMedia('(pointer: fine)').matches ? 'Да' : 'Нет';
+        inputItems['Keyboard'] = 'Да';
+        inputItems['Gamepad API'] = 'getGamepads' in navigator ? 'Доступно' : 'Недоступно';
+        try {
+            const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+            const gpArr = Array.from(gamepads).filter(g => g !== null);
+            inputItems['Connected Gamepads'] = gpArr.length;
+            gpArr.forEach((gp, i) => {
+                inputItems[`Gamepad ${i+1} ID`] = gp.id;
+                inputItems[`Gamepad ${i+1} Buttons`] = gp.buttons.length;
+                inputItems[`Gamepad ${i+1} Axes`] = gp.axes.length;
+            });
+        } catch(e) {}
+        inputItems['Pointer Events'] = 'PointerEvent' in window ? 'Да' : 'Нет';
+        inputItems['Pen/Touch Type'] = window.matchMedia('(pointer: fine)').matches ? 'Точный' : window.matchMedia('(pointer: coarse)').matches ? 'Грубый' : 'N/A';
+        inputItems['Keyboard Layout'] = (() => {
+            if (navigator.keyboard && navigator.keyboard.getLayoutMap) {
+                return 'API доступно';
+            }
+            return 'N/A';
+        })();
+        inputItems['Gamepad Vibration'] = 'vibrate' in (navigator.getGamepads ? (navigator.getGamepads()[0] || {}) : {}) ? 'Да' : 'N/A';
+
+        // 15. Security
+        data['Безопасность'] = {
+            icon: 'security',
+            items: {}
+        };
+        const secItems = data['Безопасность'].items;
+        secItems['Secure Context'] = window.isSecureContext ? 'Да' : 'Нет';
+        secItems['HTTPS'] = location.protocol === 'https:' ? 'Да' : 'Нет';
+        secItems['Protocol'] = location.protocol;
+        secItems['Cross-Origin Isolated'] = window.crossOriginIsolated ? 'Да' : 'Нет';
+        secItems['COOP'] = 'crossOriginIsolated: ' + (window.crossOriginIsolated ? 'true' : 'false');
+        secItems['SubtleCrypto'] = crypto.subtle ? 'Доступно' : 'Недоступно';
+        secItems['Crypto RandomUUID'] = crypto.randomUUID ? 'Доступно' : 'Недоступно';
+        secItems['Generated UUID'] = crypto.randomUUID ? crypto.randomUUID() : 'N/A';
+        secItems['Content Security Policy'] = (() => {
+            const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            return meta ? meta.content : 'Не установлен';
+        })();
+        secItems['Referrer Policy'] = (() => {
+            const meta = document.querySelector('meta[name="referrer"]');
+            return meta ? meta.content : 'По умолчанию';
+        })();
+        secItems['X-Frame-Options'] = 'Проверяется через заголовки';
+        secItems['Service Worker'] = 'serviceWorker' in navigator ? 'Доступно' : 'Недоступно';
+        secItems['Credential Management'] = 'credentials' in navigator ? 'Да' : 'Нет';
+        secItems['WebAuthn'] = 'PublicKeyCredential' in window ? 'Да' : 'Нет';
+        secItems['Secure Payment'] = 'PaymentRequest' in window ? 'Да' : 'Нет';
+
+        // 16. Connectivity
+        data['Подключения'] = {
+            icon: 'connectivity',
+            items: {}
+        };
+        const connItems = data['Подключения'].items;
+        connItems['Bluetooth API'] = 'bluetooth' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['USB API'] = 'usb' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['Serial API'] = 'serial' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['HID API'] = 'hid' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['NFC API'] = 'NDEFReader' in window ? 'Доступно' : 'Недоступно';
+        connItems['WebRTC'] = 'RTCPeerConnection' in window ? 'Доступно' : 'Недоступно';
+        connItems['WebSocket'] = 'WebSocket' in window ? 'Доступно' : 'Недоступно';
+        connItems['Server-Sent Events'] = 'EventSource' in window ? 'Доступно' : 'Недоступно';
+        connItems['BroadcastChannel'] = 'BroadcastChannel' in window ? 'Доступно' : 'Недоступно';
+        connItems['WebTransport'] = 'WebTransport' in window ? 'Доступно' : 'Недоступно';
+        connItems['Web Share'] = 'share' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['Web Share (Files)'] = 'canShare' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['Wake Lock'] = 'wakeLock' in navigator ? 'Доступно' : 'Недоступно';
+        connItems['Ambient Light Sensor'] = 'AmbientLightSensor' in window ? 'Доступно' : 'Недоступно';
+        connItems['Accelerometer'] = 'Accelerometer' in window ? 'Доступно' : 'Недоступно';
+        connItems['Gyroscope'] = 'Gyroscope' in window ? 'Доступно' : 'Недоступно';
+        connItems['Magnetometer'] = 'Magnetometer' in window ? 'Доступно' : 'Недоступно';
+        connItems['Device Orientation'] = 'DeviceOrientationEvent' in window ? 'Доступно' : 'Недоступно';
+        connItems['Device Motion'] = 'DeviceMotionEvent' in window ? 'Доступно' : 'Недоступно';
+        connItems['Vibration'] = 'vibrate' in navigator ? 'Доступно' : 'Недоступно';
+
+        // 17. Additional WebGL2
+        data['WebGL2 Детали'] = {
+            icon: 'webgl',
+            items: {}
+        };
+        const wgl2Items = data['WebGL2 Детали'].items;
+        try {
+            const canvas2 = document.createElement('canvas');
+            const gl2 = canvas2.getContext('webgl2');
+            if (gl2) {
+                wgl2Items['WebGL2 Supported'] = 'Да';
+                wgl2Items['WebGL2 Version'] = gl2.getParameter(gl2.VERSION);
+                
+                // Безопасное получение параметров с проверкой на undefined
+                const safeGet = (param) => {
+                    try {
+                        if (param === undefined) return 'N/A';
+                        const val = gl2.getParameter(param);
+                        return val !== null && val !== undefined ? val : 'N/A';
+                    } catch(e) { return 'N/A'; }
+                };
+
+                wgl2Items['Max 3D Texture Size'] = safeGet(gl2.MAX_3D_TEXTURE_SIZE) + 'px';
+                wgl2Items['Max Array Texture Layers'] = safeGet(gl2.MAX_ARRAY_TEXTURE_LAYERS);
+                wgl2Items['Max Color Attachments'] = safeGet(gl2.MAX_COLOR_ATTACHMENTS);
+                wgl2Items['Max Draw Buffers'] = safeGet(gl2.MAX_DRAW_BUFFERS);
+                wgl2Items['Max Samples'] = safeGet(gl2.MAX_SAMPLES);
+                wgl2Items['Max Transform Feedback Sep Attribs'] = safeGet(gl2.MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS);
+                wgl2Items['Max Uniform Buffer Bindings'] = safeGet(gl2.MAX_UNIFORM_BUFFER_BINDINGS);
+                wgl2Items['Max Uniform Block Size'] = safeGet(gl2.MAX_UNIFORM_BLOCK_SIZE);
+                wgl2Items['Uniform Buffer Offset Alignment'] = safeGet(gl2.UNIFORM_BUFFER_OFFSET_ALIGNMENT);
+                wgl2Items['Max Vertex Output Components'] = safeGet(gl2.MAX_VERTEX_OUTPUT_COMPONENTS);
+                wgl2Items['Max Fragment Input Components'] = safeGet(gl2.MAX_FRAGMENT_INPUT_COMPONENTS);
+                wgl2Items['Max Texture LOD Bias'] = safeGet(gl2.MAX_TEXTURE_LOD_BIAS);
+                wgl2Items['Min Program Texel Offset'] = safeGet(gl2.MIN_PROGRAM_TEXEL_OFFSET);
+                wgl2Items['Max Program Texel Offset'] = safeGet(gl2.MAX_PROGRAM_TEXEL_OFFSET);
+                wgl2Items['Max Element Index'] = safeGet(gl2.MAX_ELEMENT_INDEX);
+                wgl2Items['Red Bits'] = safeGet(gl2.RED_BITS);
+                wgl2Items['Green Bits'] = safeGet(gl2.GREEN_BITS);
+                wgl2Items['Blue Bits'] = safeGet(gl2.BLUE_BITS);
+                wgl2Items['Alpha Bits'] = safeGet(gl2.ALPHA_BITS);
+                wgl2Items['Depth Bits'] = safeGet(gl2.DEPTH_BITS);
+                wgl2Items['Stencil Bits'] = safeGet(gl2.STENCIL_BITS);
+                wgl2Items['Subpixel Bits'] = safeGet(gl2.SUBPIXEL_BITS);
+                
+                const vpDims = safeGet(gl2.MAX_VIEWPORT_DIMS);
+                wgl2Items['Max Viewport Dims'] = Array.isArray(vpDims) ? vpDims[0] + 'x' + vpDims[1] : 'N/A';
+            } else {
+                wgl2Items['WebGL2'] = 'Не поддерживается';
+            }
+        } catch(e) {
+            wgl2Items['WebGL2 Error'] = e.message;
+        }
+
+        // 18. Document & Page
+        data['Документ'] = {
+            icon: 'system',
+            items: {}
+        };
+        const docItems = data['Документ'].items;
+        docItems['Document Title'] = document.title;
+        docItems['Document URL'] = document.URL;
+        docItems['Document Base URI'] = document.baseURI;
+        docItems['Document Character Set'] = document.characterSet;
+        docItems['Document Content Type'] = document.contentType;
+        docItems['Document Ready State'] = document.readyState;
+        docItems['Document Compat Mode'] = document.compatMode;
+        docItems['Document Design Mode'] = document.designMode;
+        docItems['Referrer'] = document.referrer || 'Нет';
+        docItems['Last Modified'] = document.lastModified;
+        docItems['Hidden'] = document.hidden ? 'Да' : 'Нет';
+        docItems['Visibility State'] = document.visibilityState;
+        docItems['Fullscreen Element'] = document.fullscreenElement ? 'Да' : 'Нет';
+        docItems['Picture-in-Picture Element'] = document.pictureInPictureElement ? 'Да' : 'Нет';
+        docItems['DOM Elements Count'] = document.querySelectorAll('*').length;
+        docItems['Scripts Count'] = document.querySelectorAll('script').length;
+        docItems['Stylesheets Count'] = document.styleSheets.length;
+        docItems['Images Count'] = document.images.length;
+        docItems['Links Count'] = document.links.length;
+        docItems['Forms Count'] = document.forms.length;
+        docItems['IFrames Count'] = document.querySelectorAll('iframe').length;
+        docItems['Cookies Count'] = document.cookie ? document.cookie.split(';').length : 0;
+        docItems['Cookie String Length'] = document.cookie.length + ' символов';
+
+        // 19. Window Properties
+        data['Окно'] = {
+            icon: 'screen',
+            items: {}
+        };
+        const winItems = data['Окно'].items;
+        winItems['Window Name'] = window.name || 'Пусто';
+        winItems['Window Opener'] = window.opener ? 'Да' : 'Нет';
+        winItems['Is Framed'] = window.self !== window.top ? 'Да' : 'Нет';
+        winItems['Frames Count'] = window.length;
+        winItems['History Length'] = history.length;
+        winItems['Scroll Max X'] = (() => { try { return (document.documentElement.scrollWidth - window.innerWidth) + 'px'; } catch(e) { return 'N/A'; } })();
+        winItems['Scroll Max Y'] = (() => { try { return (document.documentElement.scrollHeight - window.innerHeight) + 'px'; } catch(e) { return 'N/A'; } })();
+        winItems['Device Pixel Ratio'] = window.devicePixelRatio;
+        winItems['Visual Viewport Width'] = window.visualViewport ? window.visualViewport.width + 'px' : 'N/A';
+        winItems['Visual Viewport Height'] = window.visualViewport ? window.visualViewport.height + 'px' : 'N/A';
+        winItems['Visual Viewport Scale'] = window.visualViewport ? window.visualViewport.scale + 'x' : 'N/A';
+        winItems['Visual Viewport Offset Left'] = window.visualViewport ? window.visualViewport.offsetLeft + 'px' : 'N/A';
+        winItems['Visual Viewport Offset Top'] = window.visualViewport ? window.visualViewport.offsetTop + 'px' : 'N/A';
+        winItems['Visual Viewport Page Left'] = window.visualViewport ? window.visualViewport.pageLeft + 'px' : 'N/A';
+        winItems['Visual Viewport Page Top'] = window.visualViewport ? window.visualViewport.pageTop + 'px' : 'N/A';
+        winItems['Inner Width'] = window.innerWidth + 'px';
+        winItems['Inner Height'] = window.innerHeight + 'px';
+        winItems['Outer Width'] = window.outerWidth + 'px';
+        winItems['Outer Height'] = window.outerHeight + 'px';
+        winItems['Screen Left'] = window.screenLeft + 'px';
+        winItems['Screen Top'] = window.screenTop + 'px';
+        winItems['Screen X'] = window.screenX + 'px';
+        winItems['Screen Y'] = window.screenY + 'px';
+        winItems['Device Pixel Ratio'] = window.devicePixelRatio + 'x';
+        winItems['Match Media Dark'] = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Да' : 'Нет';
+        winItems['Match Media Print'] = window.matchMedia('print').matches ? 'Да' : 'Нет';
+        winItems['Match Media Speech'] = window.matchMedia('speech').matches ? 'Да' : 'Нет';
+        winItems['Match Media Pointer'] = window.matchMedia('(pointer)').matches ? 'Да' : 'Нет';
+
+        // 20. OS Detection
+        data['Операционная Система'] = {
+            icon: 'system',
+            items: {}
+        };
+        const osItems = data['Операционная Система'].items;
+        osItems['OS'] = detectOS();
+        osItems['OS Version'] = detectOSVersion();
+        osItems['Architecture'] = detectArchitecture();
+        osItems['Device Type'] = detectDeviceType();
+        osItems['Is Bot'] = /bot|crawler|spider|crawling/i.test(navigator.userAgent) ? 'Да' : 'Нет';
+        osItems['Is Emulator'] = /Android.*Mobile.*Safari/i.test(navigator.userAgent) && /Emulator/i.test(navigator.userAgent) ? 'Возможно' : 'Нет';
+        osItems['Platform'] = navigator.platform || 'N/A';
+        osItems['User Agent Data'] = (() => {
+            if (navigator.userAgentData) {
+                return 'Доступно';
+            }
+            return 'Недоступно';
+        })();
+        if (navigator.userAgentData) {
+            osItems['UA Brand'] = navigator.userAgentData.brands ? navigator.userAgentData.brands.map(b => b.brand + ' ' + b.version).join(', ') : 'N/A';
+            osItems['UA Mobile'] = navigator.userAgentData.mobile ? 'Да' : 'Нет';
+            osItems['UA Platform'] = navigator.userAgentData.platform || 'N/A';
+        }
+
+        // 21. Permissions
+        data['Разрешения'] = {
+            icon: 'security',
+            items: {}
+        };
+        const permItems = data['Разрешения'].items;
+        const permissions = ['geolocation', 'notifications', 'camera', 'microphone', 'accelerometer', 'gyroscope', 'magnetometer', 'clipboard-read', 'clipboard-write', 'payment-handler', 'background-sync', 'bluetooth', 'persistent-storage'];
+        if (navigator.permissions && navigator.permissions.query) {
+            for (const perm of permissions) {
+                try {
+                    const status = await navigator.permissions.query({ name: perm });
+                    permItems[perm] = status.state;
+                } catch(e) {
+                    permItems[perm] = 'N/A';
+                }
+            }
+        } else {
+            permItems['Permissions API'] = 'Не поддерживается';
+        }
+
+        // 22. Media Capabilities
+        data['Медиа Возможности'] = {
+            icon: 'media',
+            items: {}
+        };
+        const mcItems = data['Медиа Возможности'].items;
+        mcItems['Audio Element'] = 'Audio' in window ? 'Да' : 'Нет';
+        mcItems['Video Element'] = 'HTMLVideoElement' in window ? 'Да' : 'Нет';
+        mcItems['Web Audio API'] = 'AudioContext' in window || 'webkitAudioContext' in window ? 'Да' : 'Нет';
+        mcItems['Media Recorder'] = 'MediaRecorder' in window ? 'Да' : 'Нет';
+        mcItems['Media Source'] = 'MediaSource' in window ? 'Да' : 'Нет';
+        mcItems['Media Session'] = 'mediaSession' in navigator ? 'Да' : 'Нет';
+        mcItems['Media Capabilities'] = 'mediaCapabilities' in navigator ? 'Да' : 'Нет';
+        mcItems['Speech Synthesis'] = 'speechSynthesis' in window ? 'Да' : 'Нет';
+        mcItems['Speech Recognition'] = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window ? 'Да' : 'Нет';
+        try {
+            const audioEl = document.createElement('audio');
+            mcItems['MP3 Support'] = !!audioEl.canPlayType('audio/mpeg') ? 'Да' : 'Нет';
+            mcItems['OGG Audio Support'] = !!audioEl.canPlayType('audio/ogg') ? 'Да' : 'Нет';
+            mcItems['WAV Support'] = !!audioEl.canPlayType('audio/wav') ? 'Да' : 'Нет';
+            mcItems['AAC Support'] = !!audioEl.canPlayType('audio/aac') ? 'Да' : 'Нет';
+            mcItems['FLAC Support'] = !!audioEl.canPlayType('audio/flac') ? 'Да' : 'Нет';
+            mcItems['Opus Support'] = !!audioEl.canPlayType('audio/ogg; codecs="opus"') ? 'Да' : 'Нет';
+        } catch(e) {}
+        try {
+            const videoEl = document.createElement('video');
+            mcItems['MP4 Support'] = !!videoEl.canPlayType('video/mp4') ? 'Да' : 'Нет';
+            mcItems['WebM Support'] = !!videoEl.canPlayType('video/webm') ? 'Да' : 'Нет';
+            mcItems['OGG Video Support'] = !!videoEl.canPlayType('video/ogg') ? 'Да' : 'Нет';
+            mcItems['HLS Support'] = !!videoEl.canPlayType('application/vnd.apple.mpegurl') ? 'Да' : 'Нет';
+        } catch(e) {}
+        try {
+            const synth = window.speechSynthesis;
+            if (synth) {
+                const voices = synth.getVoices();
+                mcItems['Speech Voices Count'] = voices.length;
+                const langs = [...new Set(voices.map(v => v.lang))];
+                mcItems['Speech Languages'] = langs.slice(0, 10).join(', ') + (langs.length > 10 ? '...' : '');
+            }
+        } catch(e) {}
+
+        // 23. Sensors
+        data['Сенсоры'] = {
+            icon: 'hardware',
+            items: {}
+        };
+        const senItems = data['Сенсоры'].items;
+        senItems['Accelerometer'] = 'Accelerometer' in window ? 'Доступно' : 'Недоступно';
+        senItems['Gyroscope'] = 'Gyroscope' in window ? 'Доступно' : 'Недоступно';
+        senItems['Magnetometer'] = 'Magnetometer' in window ? 'Доступно' : 'Недоступно';
+        senItems['Ambient Light'] = 'AmbientLightSensor' in window ? 'Доступно' : 'Недоступно';
+        senItems['Absolute Orientation'] = 'AbsoluteOrientationSensor' in window ? 'Доступно' : 'Недоступно';
+        senItems['Relative Orientation'] = 'RelativeOrientationSensor' in window ? 'Доступно' : 'Недоступно';
+        senItems['Gravity Sensor'] = 'GravitySensor' in window ? 'Доступно' : 'Недоступно';
+        senItems['Linear Acceleration'] = 'LinearAccelerationSensor' in window ? 'Доступно' : 'Недоступно';
+        senItems['Device Orientation'] = 'DeviceOrientationEvent' in window ? 'Доступно' : 'Недоступно';
+        senItems['Device Motion'] = 'DeviceMotionEvent' in window ? 'Доступно' : 'Недоступно';
+        senItems['Proximity'] = 'ondeviceproximity' in window ? 'Доступно' : 'Недоступно';
+        senItems['Barometer'] = 'PressureSensor' in window ? 'Доступно' : 'Недоступно';
+
+        // 24. Rendering & Display
+        data['Рендеринг'] = {
+            icon: 'gpu',
+            items: {}
+        };
+        const rendItems = data['Рендеринг'].items;
+        rendItems['Color Depth'] = screen.colorDepth + ' bit';
+        rendItems['Pixel Depth'] = screen.pixelDepth + ' bit';
+        rendItems['Device Pixel Ratio'] = window.devicePixelRatio + 'x';
+        rendItems['Color Gamut'] = window.matchMedia('(color-gamut: rec2100)').matches ? 'Rec.2100' : window.matchMedia('(color-gamut: p3)').matches ? 'Display P3' : window.matchMedia('(color-gamut: srgb)').matches ? 'sRGB' : 'N/A';
+        rendItems['HDR'] = window.matchMedia('(dynamic-range: high)').matches ? 'Да' : 'Нет';
+        rendItems['Color Scheme'] = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Тёмная' : 'Светлая';
+        rendItems['Contrast Preference'] = window.matchMedia('(prefers-contrast: more)').matches ? 'Высокий' : window.matchMedia('(prefers-contrast: less)').matches ? 'Низкий' : window.matchMedia('(prefers-contrast: forced)').matches ? 'Принудительный' : 'Обычный';
+        rendItems['Reduced Motion'] = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'Да' : 'Нет';
+        rendItems['Reduced Transparency'] = window.matchMedia('(prefers-reduced-transparency: reduce)').matches ? 'Да' : 'Нет';
+        rendItems['Inverted Colors'] = window.matchMedia('(inverted-colors: inverted)').matches ? 'Да' : 'Нет';
+        rendItems['Forced Colors'] = window.matchMedia('(forced-colors: active)').matches ? 'Да' : 'Нет';
+        rendItems['Scripting'] = window.matchMedia('(scripting)').matches ? 'Включено' : 'Отключено';
+        rendItems['Update Frequency'] = window.matchMedia('(update: fast)').matches ? 'Быстрое' : window.matchMedia('(update: slow)').matches ? 'Медленное' : window.matchMedia('(update: none)').matches ? 'Нет' : 'N/A';
+        rendItems['Overflow Block'] = window.matchMedia('(overflow-block: scroll)').matches ? 'Scroll' : window.matchMedia('(overflow-block: paged)').matches ? 'Paged' : window.matchMedia('(overflow-block: none)').matches ? 'None' : 'N/A';
+        rendItems['Overflow Inline'] = window.matchMedia('(overflow-inline: scroll)').matches ? 'Scroll' : window.matchMedia('(overflow-inline: none)').matches ? 'None' : 'N/A';
+        rendItems['Display Mode'] = window.matchMedia('(display-mode: standalone)').matches ? 'Standalone' : window.matchMedia('(display-mode: fullscreen)').matches ? 'Fullscreen' : window.matchMedia('(display-mode: minimal-ui)').matches ? 'Minimal UI' : 'Browser';
+        rendItems['Canvas 2D'] = 'CanvasRenderingContext2D' in window ? 'Да' : 'Нет';
+        rendItems['OffscreenCanvas'] = 'OffscreenCanvas' in window ? 'Да' : 'Нет';
+        rendItems['WebGPU'] = 'gpu' in navigator ? 'Да' : 'Нет';
+
+        // Count total
+        totalParamCount = 0;
+        Object.values(data).forEach(cat => {
+            totalParamCount += Object.keys(cat.items).length;
+        });
+
+        const endTime = performance.now();
+        const elapsed = Math.round(endTime - startTime);
+
+        return { data, elapsed };
+    }
+
+    function detectBrowser() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Firefox')) return 'Firefox';
+        if (ua.includes('SamsungBrowser')) return 'Samsung Internet';
+        if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera';
+        if (ua.includes('Edg')) return 'Microsoft Edge';
+        if (ua.includes('Chrome')) return 'Google Chrome';
+        if (ua.includes('Safari')) return 'Safari';
+        if (ua.includes('MSIE') || ua.includes('Trident')) return 'Internet Explorer';
+        return 'Unknown';
+    }
+
+    function detectBrowserVersion() {
+        const ua = navigator.userAgent;
+        let match;
+        if (match = ua.match(/Firefox\/(\d+)/)) return match[1];
+        if (match = ua.match(/Edg\/(\d+)/)) return match[1];
+        if (match = ua.match(/Chrome\/(\d+)/)) return match[1];
+        if (match = ua.match(/Version\/(\d+)/)) return match[1];
+        if (match = ua.match(/OPR\/(\d+)/)) return match[1];
+        if (match = ua.match(/SamsungBrowser\/(\d+)/)) return match[1];
+        return 'N/A';
+    }
+
+    function detectEngine() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Gecko/')) return 'Gecko';
+        if (ua.includes('AppleWebKit/')) return 'WebKit/Blink';
+        if (ua.includes('Trident/')) return 'Trident';
+        return 'Unknown';
+    }
+
+    function detectOS() {
+        const ua = navigator.userAgent;
+        if (ua.includes('Win')) return 'Windows';
+        if (ua.includes('Mac')) return 'macOS';
+        if (ua.includes('Linux') && !ua.includes('Android')) return 'Linux';
+        if (ua.includes('Android')) return 'Android';
+        if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+        if (ua.includes('CrOS')) return 'Chrome OS';
+        return 'Unknown';
+    }
+
+    function detectOSVersion() {
+        const ua = navigator.userAgent;
+        let match;
+        if (match = ua.match(/Windows NT (\d+\.\d+)/)) {
+            const versions = { '10.0': '10/11', '6.3': '8.1', '6.2': '8', '6.1': '7', '6.0': 'Vista', '5.1': 'XP' };
+            return versions[match[1]] || match[1];
+        }
+        if (match = ua.match(/Mac OS X ([\d_]+)/)) return match[1].replace(/_/g, '.');
+        if (match = ua.match(/Android ([\d.]+)/)) return match[1];
+        if (match = ua.match(/OS ([\d_]+)/)) return match[1].replace(/_/g, '.');
+        return 'N/A';
+    }
+
+    function detectArchitecture() {
+        const ua = navigator.userAgent;
+        if (ua.includes('x86_64') || ua.includes('x64') || ua.includes('Win64') || ua.includes('WOW64') || ua.includes('amd64')) return 'x86-64 (64-bit)';
+        if (ua.includes('aarch64') || ua.includes('arm64')) return 'ARM64';
+        if (ua.includes('arm')) return 'ARM';
+        if (ua.includes('x86') || ua.includes('i386') || ua.includes('i686')) return 'x86 (32-bit)';
+        return 'N/A';
+    }
+
+    function detectDeviceType() {
+        const ua = navigator.userAgent;
+        if (/iPad|Tablet/i.test(ua)) return 'Планшет';
+        if (/Mobi|Android.*Mobile|iPhone|iPod/i.test(ua)) return 'Мобильный';
+        return 'Десктоп';
+    }
+
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(16).padStart(8, '0');
+    }
+
+    function renderData(data) {
+        const grid = document.getElementById('grid');
+        const nav = document.getElementById('categoriesNav');
+        grid.innerHTML = '';
+        nav.innerHTML = '';
+
+        // Category buttons
+        const allBtn = document.createElement('button');
+        allBtn.className = 'cat-btn active';
+        allBtn.textContent = 'Все';
+        allBtn.onclick = () => filterCategory('all', allBtn);
+        nav.appendChild(allBtn);
+
+        Object.entries(data).forEach(([category, catData], index) => {
+            const btn = document.createElement('button');
+            btn.className = 'cat-btn';
+            btn.textContent = category;
+            btn.onclick = () => filterCategory(category, btn);
+            nav.appendChild(btn);
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.category = category;
+            card.style.animationDelay = `${index * 0.05}s`;
+
+            const itemCount = Object.keys(catData.items).length;
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="card-icon">${getIcon(catData.icon)}</div>
+                    <div class="card-title">${category}</div>
+                    <div class="card-count">${itemCount}</div>
+                </div>
+                <div class="card-content">
+                    ${Object.entries(catData.items).map(([key, value]) => `
+                        <div class="info-row">
+                            <span class="info-label">${key}</span>
+                            <span class="info-value ${typeof value === 'string' && value.length > 50 ? 'mono' : ''}">${formatValue(key, value)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        // Update stats
+        document.getElementById('totalParams').textContent = totalParamCount;
+        document.getElementById('totalCategories').textContent = Object.keys(data).length;
+    }
+
+    function formatValue(key, value) {
+        if (typeof value === 'boolean') return value ? '<span class="badge badge-success">Да</span>' : '<span class="badge badge-error">Нет</span>';
+        if (value === 'Да' || value === 'Доступно' || value === 'Поддерживается' || value === 'Включены' || value === 'Онлайн') return `<span class="badge badge-success">${value}</span>`;
+        if (value === 'Нет' || value === 'Недоступно' || value === 'Не поддерживается' || value === 'Выключены' || value === 'Оффлайн') return `<span class="badge badge-error">${value}</span>`;
+        if (value === 'N/A' || value === 'Не установлено') return `<span class="badge badge-warning">${value}</span>`;
+        if (value === 'granted') return `<span class="badge badge-success">${value}</span>`;
+        if (value === 'denied') return `<span class="badge badge-error">${value}</span>`;
+        if (value === 'prompt') return `<span class="badge badge-info">${value}</span>`;
+        if (typeof value === 'string' && value.length > 80) return `<span title="${value.replace(/"/g, '&quot;')}">${value.substring(0, 80)}...</span>`;
+        return String(value);
+    }
+
+    function filterCategory(category, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.card').forEach(card => {
+            if (category === 'all' || card.dataset.category === category) {
+                card.classList.remove('section-hidden');
+            } else {
+                card.classList.add('section-hidden');
+            }
+        });
+    }
+
+    // Search
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.card').forEach(card => {
+            const rows = card.querySelectorAll('.info-row');
+            let hasMatch = false;
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    row.style.display = '';
+                    hasMatch = true;
+                } else {
+                    row.style.display = query ? 'none' : '';
+                }
+            });
+            if (!query) {
+                card.classList.remove('section-hidden');
+                rows.forEach(row => row.style.display = '');
+            } else if (!hasMatch) {
+                card.classList.add('section-hidden');
+            } else {
+                card.classList.remove('section-hidden');
+            }
+        });
+    });
+
+    // Export
+    function exportData() {
+        const json = JSON.stringify(allData, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `device-inspector-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // Chat
+    function toggleChat() {
+        const panel = document.getElementById('chatPanel');
+        const toggle = document.getElementById('chatToggle');
+        panel.classList.toggle('open');
+        toggle.classList.toggle('open');
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const messages = document.getElementById('chatMessages');
+        const text = input.value.trim();
+        const apiKey = 'zQiNwsaQ3InH8kAyVEopfG43zZY50xSX'; // Системный API-ключ
+
+        if (!text) return;
+
+        addMessage(text, 'user');
+        input.value = '';
+
+        // Индикатор загрузки
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-msg loading';
+        loadingDiv.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+        messages.appendChild(loadingDiv);
+        messages.scrollTop = messages.scrollHeight;
+
+        try {
+            // Формирование контекста из собранных данных устройства
+            let contextData = 'Информация об устройстве пользователя:\n\n';
+            Object.entries(allData).forEach(([category, catData]) => {
+                contextData += `## ${category}\n`;
+                Object.entries(catData.items).forEach(([key, value]) => {
+                    contextData += `- ${key}: ${value}\n`;
+                });
+                contextData += '\n';
+            });
+
+            const systemPrompt = `Ты — AI ассистент, который помогает пользователю разобраться в информации о его устройстве. Ты имеешь доступ к полному отчёту об устройстве пользователя. Отвечай на русском языке, кратко и по делу. Если вопрос не связан с устройством, всё равно попробуй помочь.
+
+${contextData}`;
+
+            const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'mistral-small-latest',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: text }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 1024
+                })
+            });
+
+            loadingDiv.remove();
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                addMessage(`Ошибка: ${err.message || 'Неверный запрос или превышен лимит'}`, 'bot');
+                return;
+            }
+
+            const result = await response.json();
+            const reply = result.choices[0].message.content;
+            addMessage(reply, 'bot');
+        } catch(e) {
+            loadingDiv.remove();
+            addMessage(`Ошибка подключения: ${e.message}`, 'bot');
+        }
+    }
+
+    function addMessage(text, type) {
+        const messages = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = `chat-msg ${type}`;
+        
+        if (type === 'bot' && typeof marked !== 'undefined') {
+            // Рендерим Markdown для ответов бота
+            div.innerHTML = marked.parse(text);
+        } else {
+            // Для пользовательских сообщений просто текст (безопасность от XSS)
+            div.textContent = text;
+        }
+        
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // Init
+    async function init() {
+        const { data, elapsed } = await collectAllData();
+        allData = data;
+        renderData(data);
+        document.getElementById('scanTime').textContent = elapsed + 'ms';
+    }
+
+    init();
+    </script>
+</body>
+</html>
