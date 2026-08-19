@@ -910,7 +910,7 @@
             const AI_CONFIG = {
                 apiKey: 'zQiNwsaQ3InH8kAyVEopfG43zZY50xSX',
                 model: 'mistral-tiny',
-                maxTokens: 500,
+                maxTokens: 2048,
                 temperature: 0.7,
                 systemPrompt: `Ты - помощник по проектам в каталоге Oris.
                 Твоя задача - объяснять, пересказывать и отвечать на вопросы о проектах максимально кратко и понятно.
@@ -1018,98 +1018,6 @@
                     .replace(/^\s+|\s+$/g, '');
             }
 
-            function initAIAssistant(project) {
-                const promptInput = document.getElementById('ai-prompt');
-                const submitBtn = document.getElementById('ai-submit');
-                const responseContainer = document.getElementById('ai-response');
-                const responseContent = document.getElementById('ai-response-content');
-                const copyBtn = document.getElementById('ai-copy');
-                const regenerateBtn = document.getElementById('ai-regenerate');
-
-                let lastPrompt = '';
-                let lastResponse = '';
-
-                async function handleSubmit() {
-                    const prompt = promptInput.value.trim();
-                    if (!prompt) return;
-
-                    lastPrompt = prompt;
-                    promptInput.value = '';
-                    promptInput.disabled = true;
-                    submitBtn.disabled = true;
-
-                    responseContainer.classList.remove('hidden');
-                    responseContent.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-
-                    try {
-                        const projectInfo = {
-                            title: project.title,
-                            description: project.desc,
-                            category: project.category,
-                            url: project.url
-                        };
-
-                        const response = await askMistral(prompt, projectInfo);
-                        lastResponse = response;
-                        responseContent.innerHTML = `<div class="markdown-content">${formatResponse(response)}</div>`;
-                    } catch (error) {
-                        responseContent.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
-                    } finally {
-                        promptInput.disabled = false;
-                        submitBtn.disabled = false;
-                    }
-                }
-
-                function copyResponse() {
-                    if (!lastResponse) return;
-
-                    navigator.clipboard.writeText(lastResponse).then(() => {
-                        copyBtn.innerHTML = `
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        `;
-                        setTimeout(() => {
-                            copyBtn.innerHTML = `
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                            `;
-                        }, 2000);
-                    });
-                }
-
-                async function regenerateResponse() {
-                    if (!lastPrompt) return;
-
-                    responseContent.innerHTML = '<div class="spinner" style="margin: 20px auto;"></div>';
-                    try {
-                        const projectInfo = {
-                            title: project.title,
-                            description: project.desc,
-                            category: project.category,
-                            url: project.url
-                        };
-
-                        const response = await askMistral(lastPrompt, projectInfo);
-                        lastResponse = response;
-                        responseContent.innerHTML = `<div class="markdown-content">${formatResponse(response)}</div>`;
-                    } catch (error) {
-                        responseContent.innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
-                    }
-                }
-
-                submitBtn.addEventListener('click', handleSubmit);
-                promptInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit();
-                    }
-                });
-
-                copyBtn.addEventListener('click', copyResponse);
-                regenerateBtn.addEventListener('click', regenerateResponse);
-            }
 
 // Инициализация AI-ассистента
 function initAIAssistant(project) {
