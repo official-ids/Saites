@@ -3,202 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>~/ - Invalid Path</title>
+    <title>Доступ отклонен</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-            background: #000;
-            color: #00ff00;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-        }
-
-        .terminal {
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            max-width: 800px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 255, 0, 0.1);
-            animation: terminalFadeIn 0.6s ease-out;
-        }
-
-        @keyframes terminalFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .terminal-header {
-            background: #1a1a1a;
-            padding: 12px 16px;
-            border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 8px 8px 0 0;
-        }
-
-        .terminal-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #ff5f56;
-        }
-
-        .terminal-dot:nth-child(2) {
-            background: #ffbd2e;
-        }
-
-        .terminal-dot:nth-child(3) {
-            background: #27c93f;
-        }
-
-        .terminal-title {
-            color: #666;
-            font-size: 13px;
-            margin-left: 8px;
-        }
-
-        .terminal-body {
-            padding: 24px;
-            line-height: 1.8;
-        }
-
-        .prompt {
-            color: #00ff00;
-            margin-bottom: 8px;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 49% { opacity: 1; }
-            50%, 100% { opacity: 0; }
-        }
-
-        .error-line {
-            color: #ff6b6b;
-            margin-bottom: 16px;
-            animation: slideIn 0.4s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .info-line {
-            color: #888;
-            margin-bottom: 8px;
-            animation: slideIn 0.5s ease-out;
-        }
-
-        .example {
-            color: #00ff00;
-            background: #1a1a1a;
-            padding: 12px 16px;
-            border-left: 3px solid #00ff00;
-            margin: 16px 0;
-            font-size: 15px;
-            animation: slideIn 0.6s ease-out;
-        }
-
-        .separator {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
             color: #333;
-            margin: 20px 0;
-            animation: slideIn 0.7s ease-out;
         }
-
-        .description {
-            color: #aaa;
-            margin-bottom: 12px;
-            animation: slideIn 0.8s ease-out;
-        }
-
-        .highlight {
-            color: #00ff00;
-            font-weight: 600;
-        }
-
-        .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 16px;
-            background: #00ff00;
-            animation: blink 1s infinite;
-            vertical-align: middle;
-            margin-left: 4px;
+        
+        .message {
+            font-size: 2rem;
+            font-weight: 500;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div class="terminal">
-        <div class="terminal-header">
-            <div class="terminal-dot"></div>
-            <div class="terminal-dot"></div>
-            <div class="terminal-dot"></div>
-            <span class="terminal-title">bash - 80x24</span>
-        </div>
-        <div class="terminal-body">
-            <div class="prompt">$ cd /~/<span class="cursor"></span></div>
-            
-            <div class="error-line">
-                bash: /~/: Is a directory, not a page
-            </div>
-
-            <div class="info-line">
-                Error: Invalid path. You need to specify a page name after /~/
-            </div>
-
-            <div class="separator">────────────────────────────────────────</div>
-
-            <div class="description">
-                The <span class="highlight">/~/</span> route is for personal pages.
-            </div>
-
-            <div class="description">
-                Think of it like <span class="highlight">/news</span> for blog posts,
-            </div>
-            <div class="description">
-                but <span class="highlight">/~/</span> is for individual user pages.
-            </div>
-
-            <div class="separator">────────────────────────────────────────</div>
-
-            <div class="description">Correct usage:</div>
-            
-            <div class="example">
-                example.vercel.app/~/<span class="highlight">oris</span>
-            </div>
-
-            <div class="description">
-                Where <span class="highlight">oris</span> is the page name.
-            </div>
-
-            <div class="separator">────────────────────────────────────────</div>
-
-            <div class="prompt">$ <span class="cursor"></span></div>
-        </div>
-    </div>
+    <div class="message">Доступ отклонен</div>
 </body>
 </html>
