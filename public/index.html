@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Oris Projects - Каталог проектов команды Oris.">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 
@@ -14,63 +15,70 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
     
     <style>
 :root {
     --bg-body: #F5F5F7;
     --bg-card: #FFFFFF;
     --bg-elevated: #FFFFFF;
+    --bg-sunken: #E8E8ED;
+    --bg-input: rgba(0, 0, 0, 0.04);
     --text-primary: #1D1D1F;
     --text-secondary: #6E6E73;
     --text-tertiary: #AEAEB2;
     --accent: #0071E3;
     --accent-hover: #0077ED;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-glow: rgba(0, 113, 227, 0.25);
+    --danger: #FF3B30;
+    --danger-soft: rgba(255, 59, 48, 0.12);
+    --success: #34C759;
+    --success-soft: rgba(52, 199, 89, 0.12);
+    --warning: #FF9F0A;
+    --warning-soft: rgba(255, 159, 10, 0.12);
+    --purple: #AF52DE;
+    --purple-soft: rgba(175, 82, 222, 0.12);
+    --teal: #5AC8FA;
     --border-light: rgba(0, 0, 0, 0.06);
     --border: rgba(0, 0, 0, 0.1);
+    --border-strong: rgba(0, 0, 0, 0.15);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
     --radius-lg: 20px;
     --radius-md: 14px;
     --radius-sm: 10px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
     --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-color: rgba(0, 0, 0, 0.04);
 }
 
-:root[data-theme="dark"] {
+[data-theme="dark"] {
     --bg-body: #000000;
     --bg-card: #1C1C1E;
     --bg-elevated: #2C2C2E;
+    --bg-sunken: #0A0A0A;
+    --bg-input: rgba(255, 255, 255, 0.06);
     --text-primary: #F5F5F7;
-    --text-secondary: #86868B;
+    --text-secondary: #A1A1A6;
     --text-tertiary: #636366;
     --accent: #0A84FF;
     --accent-hover: #409CFF;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-glow: rgba(10, 132, 255, 0.4);
     --border-light: rgba(255, 255, 255, 0.08);
     --border: rgba(255, 255, 255, 0.12);
+    --border-strong: rgba(255, 255, 255, 0.18);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) {
-        --bg-body: #000000;
-        --bg-card: #1C1C1E;
-        --bg-elevated: #2C2C2E;
-        --text-primary: #F5F5F7;
-        --text-secondary: #86868B;
-        --text-tertiary: #636366;
-        --accent: #0A84FF;
-        --accent-hover: #409CFF;
-        --border-light: rgba(255, 255, 255, 0.08);
-        --border: rgba(255, 255, 255, 0.12);
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-        --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
-    }
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
 
 * {
@@ -80,21 +88,87 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+html { scroll-behavior: smooth; }
+
 body {
     background-color: var(--bg-body);
     color: var(--text-primary);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--font-stack);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    position: relative;
+}
+
+/* Background grid */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    animation: gridShift 30s linear infinite;
+}
+@keyframes gridShift {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 48px 48px, 48px 48px; }
+}
+
+/* Floating orbs */
+.bg-orbs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 20s ease-in-out infinite;
+}
+[data-theme="dark"] .orb { opacity: 0.25; }
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    animation-duration: 25s;
+}
+.orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    bottom: -200px; left: -200px;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+.orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+    top: 50%; left: 30%;
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 24px;
+    position: relative;
+    z-index: 1;
 }
 
 /* ============================================
@@ -105,7 +179,7 @@ body {
     top: 12px;
     z-index: 100;
     max-width: 1100px;
-    margin: 0 auto;
+    margin: 12px auto 0;
     padding: 0;
     background: rgba(245, 245, 247, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
@@ -115,23 +189,25 @@ body {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
+    position: relative;
 }
-
-:root[data-theme="dark"] .site-header {
+[data-theme="dark"] .site-header {
     background: rgba(28, 28, 30, 0.72);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .site-header {
-        background: rgba(28, 28, 30, 0.72);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
+.header-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    width: 0%;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--accent-glow);
+    z-index: 2;
 }
 
-/* ============================================
-   HEADER INNER
-   ============================================ */
 .header-inner {
     max-width: 100%;
     margin: 0;
@@ -143,9 +219,6 @@ body {
     gap: 16px;
 }
 
-/* ============================================
-   LOGO
-   ============================================ */
 .header-logo {
     display: flex;
     align-items: center;
@@ -158,9 +231,7 @@ body {
     transition: opacity 0.2s ease;
     flex-shrink: 0;
 }
-
 .header-logo:hover { opacity: 0.75; }
-
 .header-logo-icon {
     width: 28px;
     height: 28px;
@@ -169,7 +240,6 @@ body {
     padding: 4px;
     box-shadow: var(--shadow-sm);
 }
-
 .header-logo-text {
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
     background-clip: text;
@@ -177,9 +247,6 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
-/* ============================================
-   DESKTOP NAV
-   ============================================ */
 .header-nav {
     display: flex;
     align-items: center;
@@ -187,7 +254,6 @@ body {
     flex: 1;
     justify-content: center;
 }
-
 .header-nav-link {
     padding: 7px 14px;
     border-radius: 99px;
@@ -197,23 +263,31 @@ body {
     text-decoration: none;
     transition: all 0.2s ease;
     white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
-
 .header-nav-link:hover {
     color: var(--text-primary);
     background: var(--border-light);
 }
-
 .header-nav-link.active {
     color: var(--text-primary);
     background: var(--bg-card);
     box-shadow: var(--shadow-sm);
     font-weight: 600;
 }
+.header-nav-link .nav-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
 
-/* ============================================
-   ACTIONS
-   ============================================ */
 .header-actions {
     display: flex;
     align-items: center;
@@ -235,19 +309,14 @@ body {
     transition: all 0.25s var(--transition);
     box-shadow: 0 2px 8px rgba(10, 132, 255, 0.25);
 }
-
 .header-btn-add:hover {
     background: var(--accent-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(10, 132, 255, 0.35);
 }
-
 .header-btn-add:active { transform: scale(0.97); }
 
-/* ============================================
-   THEME TOGGLE
-   ============================================ */
-.header-theme-toggle {
+.icon-btn {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -261,26 +330,33 @@ body {
     transition: all 0.25s ease;
     box-shadow: var(--shadow-sm);
     flex-shrink: 0;
+    position: relative;
 }
-
-.header-theme-toggle:hover {
+.icon-btn:hover {
     color: var(--text-primary);
     border-color: var(--border);
     transform: rotate(15deg);
 }
+.icon-btn svg { width: 16px; height: 16px; }
+.icon-btn .kbd-hint {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    font-family: var(--mono-stack);
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.icon-btn:hover .kbd-hint { opacity: 1; }
 
 .theme-icon-dark { display: none; }
-:root[data-theme="dark"] .theme-icon-light { display: none; }
-:root[data-theme="dark"] .theme-icon-dark { display: block; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: block; }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .theme-icon-light { display: none; }
-    :root:not([data-theme]) .theme-icon-dark { display: block; }
-}
-
-/* ============================================
-   MOBILE TOGGLE
-   ============================================ */
 .header-mobile-toggle {
     display: none;
     width: 36px;
@@ -295,12 +371,8 @@ body {
     transition: all 0.2s ease;
     flex-shrink: 0;
 }
-
 .header-mobile-toggle:hover { background: var(--border-light); }
 
-/* ============================================
-   MOBILE MENU
-   ============================================ */
 .header-mobile-menu {
     display: none;
     flex-direction: column;
@@ -309,9 +381,7 @@ body {
     background: var(--bg-card);
     animation: slideDown 0.25s var(--transition);
 }
-
 .header-mobile-menu.active { display: flex; }
-
 .header-mobile-link {
     padding: 12px 14px;
     border-radius: var(--radius-sm);
@@ -321,23 +391,19 @@ body {
     font-weight: 500;
     transition: all 0.2s ease;
 }
-
 .header-mobile-link:hover {
     background: var(--border-light);
     color: var(--text-primary);
 }
-
 .header-mobile-link.active {
     background: var(--border-light);
     color: var(--text-primary);
     font-weight: 600;
 }
-
 .header-mobile-link.accent {
     color: var(--accent);
     font-weight: 600;
 }
-
 .header-mobile-divider {
     height: 1px;
     background: var(--border-light);
@@ -352,24 +418,9 @@ body {
     padding: 60px 24px 30px;
     opacity: 0;
     animation: fadeIn 0.8s var(--transition) forwards;
+    position: relative;
 }
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ============================================
-   OLD HEADER (Hero title)
-   ============================================ */
-header {
-    text-align: center;
-    padding: 80px 24px 40px;
-    opacity: 0;
-    animation: fadeIn 0.8s var(--transition) forwards;
-}
-
-h1 {
+.hero h1 {
     font-size: clamp(2.5rem, 6vw, 4.5rem);
     font-weight: 800;
     letter-spacing: -0.035em;
@@ -378,9 +429,61 @@ h1 {
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    min-height: 1.1em;
+    display: inline-block;
+    cursor: default;
+    position: relative;
 }
-
-p.subtitle {
+.hero h1.glitch::before,
+.hero h1.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+.hero h1.glitch::before {
+    animation: glitch1 0.4s ease;
+    -webkit-text-fill-color: var(--danger);
+}
+.hero h1.glitch::after {
+    animation: glitch2 0.4s ease;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes glitch1 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.8; transform: translate(-3px, 1px); }
+    40% { opacity: 0.6; transform: translate(2px, -1px); }
+    60% { opacity: 0.4; transform: translate(-1px, 2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.6; transform: translate(3px, -1px); }
+    40% { opacity: 0.4; transform: translate(-2px, 1px); }
+    60% { opacity: 0.3; transform: translate(1px, -2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+.typewriter-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--accent);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes blink {
+    50% { opacity: 0; }
+}
+.hero .subtitle {
     color: var(--text-secondary);
     font-size: 1.25rem;
     font-weight: 400;
@@ -398,7 +501,6 @@ p.subtitle {
     margin: 0 auto 48px;
     perspective: 1000px;
 }
-
 .banner {
     width: 100%;
     height: auto;
@@ -410,12 +512,10 @@ p.subtitle {
     transition: transform 0.6s var(--transition), box-shadow 0.6s var(--transition);
     background: var(--bg-card);
 }
-
 .banner:hover {
     transform: scale(1.01) translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
-
 .banner-fallback {
     display: none;
     width: 100%;
@@ -443,9 +543,7 @@ p.subtitle {
     opacity: 0;
     animation: fadeIn 0.8s 0.2s var(--transition) forwards;
 }
-
 .stats-bar::-webkit-scrollbar { display: none; }
-
 .stat-chip {
     display: flex;
     align-items: center;
@@ -459,13 +557,20 @@ p.subtitle {
     color: var(--text-secondary);
     white-space: nowrap;
     box-shadow: var(--shadow-sm);
+    transition: all 0.25s ease;
 }
-
+.stat-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border);
+}
 .stat-chip strong {
     color: var(--text-primary);
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--mono-stack);
+    font-size: 0.85rem;
 }
-
 .stat-chip svg { width: 16px; height: 16px; }
 
 /* ============================================
@@ -481,23 +586,36 @@ p.subtitle {
     opacity: 0;
     animation: fadeIn 0.8s 0.2s var(--transition) forwards;
 }
-
 .section-title {
     font-size: 1.75rem;
     font-weight: 700;
     letter-spacing: -0.025em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-
+.section-title .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4);
+    animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+}
 .toolbar-actions {
     display: flex;
     gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .search-box {
     position: relative;
 }
-
 .search-box input {
     background: var(--bg-card);
     border: 1px solid var(--border-light);
@@ -510,15 +628,14 @@ p.subtitle {
     transition: all 0.25s var(--transition);
     box-shadow: var(--shadow-sm);
 }
-
+.search-box input::placeholder { color: var(--text-tertiary); }
 .search-box input:focus {
     outline: none;
     border-color: var(--accent);
     width: 280px;
-    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
-
-.search-box svg {
+.search-box svg.search-icon-main {
     position: absolute;
     left: 14px;
     top: 50%;
@@ -527,6 +644,83 @@ p.subtitle {
     height: 16px;
     color: var(--text-tertiary);
     pointer-events: none;
+    transition: color 0.2s ease;
+}
+.search-box input:focus ~ svg.search-icon-main { color: var(--accent); }
+.search-kbd {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    font-weight: 600;
+}
+.search-box input:focus ~ .search-kbd { opacity: 0; }
+
+/* View toggle */
+.view-toggle {
+    display: flex;
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: 99px;
+    padding: 3px;
+    gap: 2px;
+}
+.view-toggle-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.view-toggle-btn:hover { color: var(--text-primary); }
+.view-toggle-btn.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+.view-toggle-btn svg { width: 14px; height: 14px; }
+
+/* Sort select */
+.sort-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    padding: 10px 32px 10px 14px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.25s var(--transition);
+    box-shadow: var(--shadow-sm);
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+.sort-select:hover {
+    border-color: var(--border);
+    transform: translateY(-1px);
+}
+.sort-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .refresh-btn {
@@ -545,7 +739,6 @@ p.subtitle {
     align-items: center;
     gap: 8px;
 }
-
 .refresh-btn:hover {
     background: var(--accent);
     color: white;
@@ -553,10 +746,8 @@ p.subtitle {
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
-
 .refresh-btn:active { transform: scale(0.96); }
 .refresh-btn:disabled { opacity: 0.6; cursor: wait; pointer-events: none; }
-
 .refresh-icon { width: 16px; height: 16px; transition: transform 0.5s ease; }
 .refresh-btn.spinning .refresh-icon { transform: rotate(360deg); }
 
@@ -572,9 +763,7 @@ p.subtitle {
     opacity: 0;
     animation: fadeIn 0.8s 0.3s var(--transition) forwards;
 }
-
 .category-filters::-webkit-scrollbar { display: none; }
-
 .filter-chip {
     display: flex;
     align-items: center;
@@ -592,30 +781,27 @@ p.subtitle {
     white-space: nowrap;
     box-shadow: var(--shadow-sm);
 }
-
 .filter-chip:hover {
     border-color: var(--border);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
-
 .filter-chip.active {
     background: var(--accent);
     color: white;
     border-color: var(--accent);
-    box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
-
 .filter-chip svg { width: 14px; height: 14px; }
-
 .filter-count {
     background: rgba(0, 0, 0, 0.1);
     padding: 2px 7px;
     border-radius: 99px;
     font-size: 0.72rem;
     font-weight: 600;
+    font-family: var(--mono-stack);
 }
-
+[data-theme="dark"] .filter-count { background: rgba(255, 255, 255, 0.15); }
 .filter-chip.active .filter-count {
     background: rgba(255, 255, 255, 0.25);
 }
@@ -629,6 +815,34 @@ p.subtitle {
     gap: 20px;
     margin-bottom: 100px;
     min-height: 200px;
+}
+.grid.list-view {
+    grid-template-columns: 1fr;
+}
+.grid.list-view .card {
+    flex-direction: row;
+    min-height: auto;
+    padding: 20px;
+    gap: 20px;
+}
+.grid.list-view .card-header {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+.grid.list-view .card-desc {
+    margin-bottom: 0;
+    flex-grow: 1;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+.grid.list-view .card-footer {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
 }
 
 .card {
@@ -648,14 +862,12 @@ p.subtitle {
     opacity: 0;
     animation: cardEntrance 0.5s var(--transition) forwards;
 }
-
 .card:hover {
     transform: translateY(-6px) scale(1.01);
     box-shadow: var(--shadow-lg);
     border-color: var(--border);
     z-index: 2;
 }
-
 .card::before {
     content: '';
     position: absolute;
@@ -667,8 +879,47 @@ p.subtitle {
     opacity: 0;
     transition: opacity 0.3s ease;
 }
-
 .card:hover::before { opacity: 1; }
+
+/* Favorite button */
+.card-fav {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    z-index: 3;
+    opacity: 0;
+    transform: scale(0.8);
+}
+.card:hover .card-fav {
+    opacity: 1;
+    transform: scale(1);
+}
+.card-fav:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+.card-fav.active {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    opacity: 1;
+    transform: scale(1);
+}
+.card-fav.active svg { fill: var(--danger); }
+.card-fav svg { width: 16px; height: 16px; transition: transform 0.2s ease; }
+.card-fav:hover svg { transform: scale(1.15); }
 
 .card-header {
     display: flex;
@@ -676,7 +927,6 @@ p.subtitle {
     gap: 14px;
     margin-bottom: 14px;
 }
-
 .card-icon {
     width: 44px;
     height: 44px;
@@ -689,13 +939,9 @@ p.subtitle {
     flex-shrink: 0;
     transition: transform 0.3s var(--transition);
 }
-
 .card:hover .card-icon { transform: scale(1.08) rotate(-3deg); }
-
 .card-icon svg { width: 22px; height: 22px; }
-
 .card-title-wrap { flex: 1; min-width: 0; }
-
 .card-title {
     font-size: 1.25rem;
     font-weight: 700;
@@ -704,7 +950,6 @@ p.subtitle {
     line-height: 1.25;
     color: var(--text-primary);
 }
-
 .card-category {
     display: inline-flex;
     align-items: center;
@@ -718,7 +963,6 @@ p.subtitle {
     background: var(--category-bg, rgba(0, 113, 227, 0.1));
     border-radius: 99px;
 }
-
 .card-desc {
     color: var(--text-secondary);
     font-size: 0.92rem;
@@ -731,7 +975,6 @@ p.subtitle {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
 .card-footer {
     display: flex;
     align-items: center;
@@ -740,7 +983,6 @@ p.subtitle {
     padding-top: 14px;
     border-top: 1px solid var(--border-light);
 }
-
 .card-link {
     color: var(--accent);
     font-size: 0.88rem;
@@ -749,27 +991,23 @@ p.subtitle {
     align-items: center;
     gap: 6px;
 }
-
 .card-link svg {
     transition: transform 0.3s ease;
     width: 14px;
     height: 14px;
 }
-
 .card:hover .card-link svg { transform: translateX(4px); }
-
 .card-domain {
     font-size: 0.75rem;
     color: var(--text-tertiary);
     font-weight: 500;
+    font-family: var(--mono-stack);
 }
-
 .card-footer-right {
     display: flex;
     align-items: center;
     gap: 12px;
 }
-
 .card-details {
     font-size: 0.82rem;
     font-weight: 600;
@@ -778,9 +1016,10 @@ p.subtitle {
     border: 1px solid var(--border);
     padding: 4px 10px;
     border-radius: 999px;
+    background: transparent;
+    font-family: inherit;
     transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
-
 .card-details:hover {
     color: var(--accent);
     border-color: var(--accent);
@@ -798,7 +1037,6 @@ p.subtitle {
     padding: 80px 20px;
     text-align: center;
 }
-
 .spinner {
     width: 36px;
     height: 36px;
@@ -808,23 +1046,17 @@ p.subtitle {
     animation: spin 0.8s linear infinite;
     margin-bottom: 20px;
 }
-
 .status-text {
     color: var(--text-secondary);
     font-size: 1rem;
 }
+.error-state { color: var(--danger); }
 
-.error-state { color: #FF3B30; }
-
-/* ============================================
-   EMPTY STATE
-   ============================================ */
 .empty-state {
     grid-column: 1 / -1;
     text-align: center;
     padding: 60px 20px;
 }
-
 .empty-state svg {
     width: 56px;
     height: 56px;
@@ -832,14 +1064,12 @@ p.subtitle {
     margin-bottom: 16px;
     opacity: 0.5;
 }
-
 .empty-state h3 {
     font-size: 1.2rem;
     font-weight: 600;
     margin-bottom: 8px;
     color: var(--text-primary);
 }
-
 .empty-state p {
     color: var(--text-secondary);
     font-size: 0.95rem;
@@ -862,12 +1092,10 @@ p.subtitle {
     transition: opacity 0.3s ease;
     padding: 20px;
 }
-
 .modal-overlay.active {
     display: flex;
     opacity: 1;
 }
-
 .modal-content {
     background: var(--bg-card);
     width: 100%;
@@ -875,18 +1103,16 @@ p.subtitle {
     max-height: 85vh;
     padding: 40px;
     border-radius: 24px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     overflow-y: auto;
     position: relative;
     transform: scale(0.95) translateY(10px);
     transition: transform 0.3s var(--transition);
     border: 1px solid var(--border-light);
 }
-
 .modal-overlay.active .modal-content {
     transform: scale(1) translateY(0);
 }
-
 .modal-close {
     position: absolute;
     top: 20px;
@@ -895,7 +1121,7 @@ p.subtitle {
     height: 32px;
     border-radius: 50%;
     background: var(--bg-body);
-    border: none;
+    border: 1px solid var(--border-light);
     cursor: pointer;
     color: var(--text-secondary);
     display: flex;
@@ -904,12 +1130,10 @@ p.subtitle {
     transition: all 0.2s;
     font-size: 18px;
 }
-
 .modal-close:hover {
     background: var(--border-light);
     color: var(--text-primary);
 }
-
 .modal-title {
     font-size: 1.8rem;
     font-weight: 700;
@@ -917,31 +1141,485 @@ p.subtitle {
     letter-spacing: -0.02em;
     padding-right: 40px;
 }
-
 .modal-text {
     color: var(--text-secondary);
     font-size: 1rem;
     line-height: 1.7;
 }
-
 .modal-text h3 {
     color: var(--text-primary);
     font-size: 1.1rem;
     font-weight: 600;
     margin: 24px 0 12px;
 }
-
 .modal-text a {
     color: var(--accent);
     text-decoration: none;
     border-bottom: 1px solid transparent;
     transition: border-color 0.2s;
 }
-
 .modal-text a:hover { border-bottom-color: var(--accent); }
 
+/* Project detail modal */
+.detail-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-light);
+}
+.detail-modal-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.detail-modal-icon svg { width: 28px; height: 28px; }
+.detail-modal-title-wrap { flex: 1; min-width: 0; }
+.detail-modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+.detail-modal-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
+    border-radius: 99px;
+}
+.detail-modal-desc {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+.detail-modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.detail-btn {
+    padding: 10px 18px;
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s var(--transition);
+}
+.detail-btn svg { width: 14px; height: 14px; }
+.detail-btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.detail-btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--accent-glow);
+}
+.detail-btn-secondary {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.detail-btn-secondary:hover {
+    background: var(--bg-elevated);
+    border-color: var(--accent);
+}
+
+/* Tech panel inside modal */
+.detail-tech {
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-family: var(--mono-stack);
+    font-size: 0.78rem;
+}
+.detail-tech-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.detail-tech-title svg { width: 12px; height: 12px; }
+.detail-tech-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border-light);
+    gap: 12px;
+}
+.detail-tech-row:last-child { border-bottom: none; }
+.detail-tech-key { color: var(--text-tertiary); }
+.detail-tech-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: right;
+    word-break: break-all;
+}
+
 /* ============================================
-   FLOATING FOOTER (macOS/Oris style)
+   COMMAND PALETTE (Cmd+K)
+   ============================================ */
+.cmdk-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 15vh;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.cmdk-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.cmdk-dialog {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    transition: transform 0.25s var(--bounce);
+}
+.cmdk-overlay.active .cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+.cmdk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+}
+.cmdk-input-wrap svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.cmdk-input::placeholder { color: var(--text-tertiary); }
+.cmdk-esc {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.cmdk-group-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 12px 6px;
+}
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+.cmdk-item:hover,
+.cmdk-item.focused {
+    background: var(--bg-input);
+}
+.cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cmdk-item-icon svg { width: 16px; height: 16px; }
+.cmdk-item-info { flex: 1; min-width: 0; }
+.cmdk-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.cmdk-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.cmdk-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ============================================
+   TOAST
+   ============================================ */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    padding: 14px 20px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.92rem;
+    font-weight: 500;
+    pointer-events: auto;
+    animation: toastIn 0.3s var(--bounce);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    color: var(--text-primary);
+}
+.toast.removing { animation: toastOut 0.25s ease forwards; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+.toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.toast-icon.success { color: var(--success); }
+.toast-icon.info { color: var(--accent); }
+.toast-icon.warning { color: var(--warning); }
+.toast-icon.error { color: var(--danger); }
+.toast-message { flex: 1; }
+
+/* ============================================
+   HOTKEY HINTS
+   ============================================ */
+.hotkey-hints {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.hotkey-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.hotkey-hint:hover { opacity: 1; }
+kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 var(--border-strong);
+}
+
+/* ============================================
+   AD BANNER
+   ============================================ */
+.ad-banner {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 500px;
+    width: calc(100% - 32px);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-lg);
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--border-light);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.ad-banner.hidden {
+    opacity: 0;
+    transform: translate(-50%, 100px);
+    pointer-events: none;
+}
+.ad-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: var(--border-light);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background 0.2s ease;
+}
+.ad-close:hover {
+    background: var(--border);
+    color: var(--text-primary);
+}
+.ad-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+.ad-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.ad-text { flex: 1; min-width: 0; }
+.ad-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: var(--text-primary);
+}
+.ad-description {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.ad-button {
+    background: var(--accent);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+.ad-button:hover { background: var(--accent-hover); }
+
+/* ============================================
+   FLOATING FOOTER
    ============================================ */
 .site-footer {
     max-width: 1100px;
@@ -955,25 +1633,16 @@ p.subtitle {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
 }
-
-:root[data-theme="dark"] .site-footer {
+[data-theme="dark"] .site-footer {
     background: rgba(28, 28, 30, 0.72);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) .site-footer {
-        background: rgba(28, 28, 30, 0.72);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-}
+.footer-inner { padding: 40px 32px 24px; }
 
-.footer-inner {
-    padding: 40px 32px 24px;
-}
-
-/* Top section */
 .footer-top {
     display: grid;
     grid-template-columns: 240px 1fr;
@@ -982,13 +1651,11 @@ p.subtitle {
     border-bottom: 1px solid var(--border-light);
 }
 
-/* Brand section */
 .footer-brand-section {
     display: flex;
     flex-direction: column;
     gap: 16px;
 }
-
 .footer-logo {
     display: flex;
     align-items: center;
@@ -1000,9 +1667,7 @@ p.subtitle {
     letter-spacing: -0.02em;
     transition: opacity 0.2s ease;
 }
-
 .footer-logo:hover { opacity: 0.75; }
-
 .footer-logo-icon {
     width: 32px;
     height: 32px;
@@ -1011,27 +1676,23 @@ p.subtitle {
     padding: 4px;
     box-shadow: var(--shadow-sm);
 }
-
 .footer-logo-text {
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-
 .footer-tagline {
     font-size: 0.88rem;
     color: var(--text-secondary);
     line-height: 1.5;
     margin: 0;
 }
-
 .footer-social {
     display: flex;
     gap: 8px;
     margin-top: 8px;
 }
-
 .footer-social-link {
     width: 36px;
     height: 36px;
@@ -1044,8 +1705,8 @@ p.subtitle {
     justify-content: center;
     transition: all 0.25s ease;
     box-shadow: var(--shadow-sm);
+    text-decoration: none;
 }
-
 .footer-social-link:hover {
     color: var(--accent);
     border-color: var(--accent);
@@ -1053,14 +1714,11 @@ p.subtitle {
     box-shadow: var(--shadow-md);
 }
 
-/* Footer columns */
 .footer-columns {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 }
-
-/* Accordion sections */
 .footer-section {
     border: 1px solid var(--border-light);
     border-radius: 12px;
@@ -1068,12 +1726,10 @@ p.subtitle {
     overflow: hidden;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-
 .footer-section:hover {
     border-color: var(--border);
     box-shadow: var(--shadow-sm);
 }
-
 .footer-section-toggle {
     width: 100%;
     display: flex;
@@ -1090,39 +1746,30 @@ p.subtitle {
     transition: background 0.2s ease;
     text-align: left;
 }
-
-.footer-section-toggle:hover {
-    background: var(--border-light);
-}
-
+.footer-section-toggle:hover { background: var(--border-light); }
 .footer-section-toggle:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
 }
-
 .footer-chevron {
     flex-shrink: 0;
-    transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform 0.3s var(--transition);
     color: var(--text-tertiary);
 }
-
 .footer-section-toggle[aria-expanded="true"] .footer-chevron {
     transform: rotate(90deg);
     color: var(--accent);
 }
-
 .footer-section-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: max-height 0.35s var(--transition);
     padding: 0 16px;
 }
-
 .footer-section-toggle[aria-expanded="true"] + .footer-section-content {
     max-height: 400px;
     padding: 0 16px 16px;
 }
-
 .footer-section-content a {
     display: flex;
     align-items: center;
@@ -1133,22 +1780,16 @@ p.subtitle {
     font-size: 0.88rem;
     transition: color 0.2s ease, transform 0.2s ease;
 }
-
 .footer-section-content a:hover {
     color: var(--accent);
     transform: translateX(4px);
 }
-
 .footer-external-icon {
     opacity: 0.5;
     transition: opacity 0.2s ease;
 }
+.footer-section-content a:hover .footer-external-icon { opacity: 1; }
 
-.footer-section-content a:hover .footer-external-icon {
-    opacity: 1;
-}
-
-/* Bottom section */
 .footer-bottom {
     display: flex;
     justify-content: space-between;
@@ -1157,7 +1798,6 @@ p.subtitle {
     gap: 16px;
     flex-wrap: wrap;
 }
-
 .footer-bottom-left,
 .footer-bottom-right {
     display: flex;
@@ -1165,7 +1805,6 @@ p.subtitle {
     gap: 12px;
     flex-wrap: wrap;
 }
-
 .footer-brand {
     display: flex;
     align-items: center;
@@ -1173,33 +1812,26 @@ p.subtitle {
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
-
 .footer-brand-icon {
     width: 16px;
     height: 16px;
     color: var(--accent);
 }
-
 .footer-divider {
     color: var(--text-tertiary);
     opacity: 0.5;
 }
-
 .footer-made {
     font-size: 0.8rem;
     color: var(--text-tertiary);
 }
-
 .footer-legal-link {
     font-size: 0.82rem;
     color: var(--text-secondary);
     text-decoration: none;
     transition: color 0.2s ease;
 }
-
-.footer-legal-link:hover {
-    color: var(--accent);
-}
+.footer-legal-link:hover { color: var(--accent); }
 
 /* ============================================
    RESPONSIVE
@@ -1209,49 +1841,58 @@ p.subtitle {
         max-width: calc(100% - 32px);
         margin: 60px 16px 16px;
     }
-    
-    .footer-top {
-        grid-template-columns: 1fr;
-        gap: 24px;
-    }
-    
-    .footer-columns {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .footer-top { grid-template-columns: 1fr; gap: 24px; }
+    .footer-columns { grid-template-columns: repeat(2, 1fr); }
+    .header-nav { display: none; }
+    .header-btn-add span { display: none; }
+    .header-btn-add { padding: 8px 12px; }
+    .header-mobile-toggle { display: flex; }
+    .header-inner { padding: 0 16px; }
+}
+
+@media (max-width: 768px) {
+    .hero { padding: 60px 20px 30px; }
+    .banner { aspect-ratio: 16/9; }
+    .grid { grid-template-columns: 1fr; gap: 16px; }
+    .modal-content { padding: 30px 24px; }
+    .search-box input { width: 160px; }
+    .search-box input:focus { width: 200px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .toolbar-actions { justify-content: space-between; }
+    .hotkey-hints { display: none; }
+    .toast-container { bottom: 16px; right: 16px; left: 16px; }
+    .toast { min-width: 0; max-width: 100%; }
 }
 
 @media (max-width: 600px) {
-    .footer-inner {
-        padding: 28px 20px 20px;
-    }
-    
-    .footer-columns {
-        grid-template-columns: 1fr;
-    }
-    
-    .footer-bottom {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-    
-    .footer-bottom-right {
-        width: 100%;
-        justify-content: flex-start;
-    }
+    .footer-inner { padding: 28px 20px 20px; }
+    .footer-columns { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .footer-bottom-right { width: 100%; justify-content: flex-start; }
 }
 
 @media (max-width: 480px) {
+    .hero h1 { font-size: 2.2rem; }
+    .section-title { font-size: 1.4rem; }
+    .card { padding: 22px; }
+    .header-inner { padding: 0 12px; }
+    .header-logo-text { display: none; }
+    .header-logo-icon { width: 32px; height: 32px; }
+    .site-header {
+        top: 8px;
+        max-width: calc(100% - 16px);
+        margin: 8px 8px 0;
+        border-radius: 14px;
+    }
+    .header-btn-add { padding: 8px 10px; }
+    .icon-btn { width: 32px; height: 32px; }
+    .header-mobile-toggle { width: 32px; height: 32px; }
     .site-footer {
         max-width: calc(100% - 16px);
         margin: 40px 8px 8px;
         border-radius: 16px;
     }
-    
-    .footer-social-link {
-        width: 32px;
-        height: 32px;
-    }
+    .footer-social-link { width: 32px; height: 32px; }
 }
 
 /* ============================================
@@ -1261,91 +1902,47 @@ p.subtitle {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 @keyframes cardEntrance {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-/* ============================================
-   RESPONSIVE: 1200px
-   ============================================ */
-@media (max-width: 1200px) {
-    .site-header {
-        max-width: calc(100% - 32px);
-        margin: 0 16px;
-    }
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(142, 142, 147, 0.3);
+    border-radius: 10px;
+    border: 2px solid var(--bg-body);
 }
+::-webkit-scrollbar-thumb:hover { background: rgba(142, 142, 147, 0.5); }
 
-/* ============================================
-   RESPONSIVE: 900px
-   ============================================ */
-@media (max-width: 900px) {
-    .header-nav { display: none; }
-    .header-btn-add span { display: none; }
-    .header-btn-add { padding: 8px 12px; }
-    .header-mobile-toggle { display: flex; }
-    
-    .header-inner {
-        padding: 0 16px;
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
-}
-
-/* ============================================
-   RESPONSIVE: 768px
-   ============================================ */
-@media (max-width: 768px) {
-    header { padding: 60px 20px 30px; }
-    .banner { aspect-ratio: 16/9; }
-    .grid { grid-template-columns: 1fr; gap: 16px; }
-    .modal-content { padding: 30px 24px; }
-    .search-box input { width: 160px; }
-    .search-box input:focus { width: 200px; }
-    .toolbar { flex-direction: column; align-items: stretch; }
-    .toolbar-actions { justify-content: space-between; }
-}
-
-/* ============================================
-   RESPONSIVE: 480px
-   ============================================ */
-@media (max-width: 480px) {
-    /* Typography */
-    h1 { font-size: 2.2rem; }
-    .section-title { font-size: 1.4rem; }
-
-    /* Cards */
-    .card { padding: 22px; }
-
-    /* Header */
-    .header-inner { padding: 0 12px; }
-    .header-logo-text { display: none; }
-    .header-logo-icon { width: 32px; height: 32px; }
-
-    /* Hero */
-    .hero { padding: 40px 16px 20px; }
-
-    /* Floating Site Header */
-    .site-header {
-        top: 8px;
-        max-width: calc(100% - 16px);
-        margin: 0 8px;
-        border-radius: 14px;
-    }
-
-    /* Buttons */
-    .header-btn-add { padding: 8px 10px; }
-    .header-theme-toggle { width: 32px; height: 32px; }
-    .header-mobile-toggle { width: 32px; height: 32px; }
 }
     </style>
 </head>
 <body>
 
-    <!-- Sticky Header -->
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<!-- Sticky Header -->
 <header class="site-header" id="siteHeader">
     <div class="header-inner">
         <a href="/" class="header-logo">
@@ -1354,14 +1951,20 @@ p.subtitle {
         </a>
 
         <nav class="header-nav" id="headerNav">
-            <a href="/" class="header-nav-link active">Проекты</a>
-            <a href="/news" class="header-nav-link">Новости</a>
-            <a href="/status" class="header-nav-link">Статус</a>
-            <a href="/rest" class="header-nav-link">API</a>
-            <a href="/changelog" class="header-nav-link">Changelog</a>
+            <a href="/" class="header-nav-link active">Проекты <span class="nav-kbd">1</span></a>
+            <a href="/news" class="header-nav-link">Новости <span class="nav-kbd">2</span></a>
+            <a href="/status" class="header-nav-link">Статус <span class="nav-kbd">3</span></a>
+            <a href="/rest" class="header-nav-link">API <span class="nav-kbd">4</span></a>
+            <a href="/changelog" class="header-nav-link">Changelog <span class="nav-kbd">5</span></a>
         </nav>
 
         <div class="header-actions">
+            <button class="icon-btn" id="cmdkBtn" aria-label="Командная палитра">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="kbd-hint">⌘K</span>
+            </button>
             <a href="/add" class="header-btn-add">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
@@ -1369,13 +1972,14 @@ p.subtitle {
                 <span>Добавить сайт</span>
             </a>
 
-            <button class="header-theme-toggle" id="themeToggle" aria-label="Сменить тему">
-                <svg class="theme-icon-light" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button class="icon-btn" id="themeToggle" aria-label="Сменить тему">
+                <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
-                <svg class="theme-icon-dark" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
+                <span class="kbd-hint">T</span>
             </button>
 
             <button class="header-mobile-toggle" id="mobileMenuToggle" aria-label="Меню">
@@ -1396,263 +2000,181 @@ p.subtitle {
         <div class="header-mobile-divider"></div>
         <a href="/add" class="header-mobile-link accent">+ Добавить сайт</a>
     </div>
+
+    <div class="header-progress" id="headerProgress"></div>
 </header>
 
-<!-- Рекламный баннер (можно вставить перед </main> или после <header>) -->
+<!-- Ad Banner -->
 <div id="adBanner" class="ad-banner">
     <button class="ad-close" aria-label="Закрыть рекламу">&times;</button>
-
     <div class="ad-content">
         <img src="https://oris-flax.vercel.app/~/assets/bokxz-logo.png" alt="Аватар проекта" class="ad-avatar" onerror="this.src='/favicon.svg';">
-
         <div class="ad-text">
             <h3 class="ad-title">Bokxz</h3>
             <p class="ad-description">Генерируй сайты с помощью Bokxz. ИИ сделает сайт за минуту.</p>
         </div>
-
         <a href="https://oris-flax.vercel.app/bokxz" class="ad-button" target="_blank" rel="noopener noreferrer">Открыть</a>
     </div>
 </div>
 
-<style>
-/* Стили для рекламного баннера */
-.ad-banner {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 500px;
-    width: calc(100% - 32px);
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    padding: 16px;
-    box-shadow: var(--shadow-lg);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border: 1px solid var(--border-light);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.ad-banner.hidden {
-    opacity: 0;
-    transform: translate(-50%, 100px);
-    pointer-events: none;
-}
-
-.ad-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    background: var(--border-light);
-    border: none;
-    border-radius: 50%;
-    color: var(--text-secondary);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    transition: background 0.2s ease;
-}
-
-.ad-close:hover {
-    background: var(--border);
-    color: var(--text-primary);
-}
-
-.ad-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
-}
-
-.ad-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.ad-text {
-    flex: 1;
-    min-width: 0;
-}
-
-.ad-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 4px 0;
-    color: var(--text-primary);
-}
-
-.ad-description {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.4;
-    display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.ad-button {
-    background: var(--accent);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.2s ease;
-    flex-shrink: 0;
-}
-
-.ad-button:hover {
-    background: var(--accent-hover);
-}
-</style>
-
-<script>
-(function() {
-    'use strict';
-
-    const adBanner = document.getElementById('adBanner');
-    if (!adBanner) return;
-
-    const closeButton = adBanner.querySelector('.ad-close');
-
-    // Показываем баннер при загрузке
-    adBanner.classList.remove('hidden');
-
-    // Закрытие баннера
-    closeButton.addEventListener('click', () => {
-        adBanner.classList.add('hidden');
-        // Сохраняем состояние в localStorage (опционально, если не нужно сохранять)
-        // localStorage.setItem('adBannerClosed', 'true');
-    });
-
-    // Опционально: проверка localStorage при загрузке
-    // if (localStorage.getItem('adBannerClosed') === 'true') {
-    //     adBanner.classList.add('hidden');
-    // }
-})();
-</script>
-
-
-<!-- Hero Section (отдельно от хэдера) -->
+<!-- Hero Section -->
 <section class="hero">
-    <h1>Oris</h1>
+    <h1 id="heroTitle" data-text="Oris"></h1>
     <p class="subtitle">Инновационные решения и цифровые проекты</p>
 </section>
 
-    <main class="container">
-        <div class="banner-wrapper">
-            <img 
-                src="banner.png" 
-                alt="Oris Projects Banner" 
-                class="banner" 
-                id="bannerImg"
-                onerror="this.style.display='none'; document.getElementById('bannerFallback').style.display='flex';"
-            >
-            <div id="bannerFallback" class="banner-fallback" role="img" aria-label="Oris Banner placeholder">
-                Oris Ecosystem
-            </div>
+<main class="container">
+    <div class="banner-wrapper">
+        <img 
+            src="banner.png" 
+            alt="Oris Projects Banner" 
+            class="banner" 
+            id="bannerImg"
+            onerror="this.style.display='none'; document.getElementById('bannerFallback').style.display='flex';"
+        >
+        <div id="bannerFallback" class="banner-fallback" role="img" aria-label="Oris Banner placeholder">
+            Oris Ecosystem
         </div>
+    </div>
 
-        <div class="stats-bar" id="statsBar">
-            <div class="stat-chip">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                <span>Всего проектов: <strong id="totalCount">0</strong></span>
-            </div>
-            <div class="stat-chip">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                <span>Категорий: <strong id="categoryCount">0</strong></span>
-            </div>
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-chip">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+            <span>Всего проектов: <strong id="totalCount">0</strong></span>
         </div>
+        <div class="stat-chip">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            <span>Категорий: <strong id="categoryCount">0</strong></span>
+        </div>
+        <div class="stat-chip">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span>Избранное: <strong id="favCount">0</strong></span>
+        </div>
+    </div>
 
-        <div class="toolbar">
-            <div class="section-title">Проекты</div>
-            <div class="toolbar-actions">
-                <div class="search-box">
+    <div class="toolbar">
+        <div class="section-title">
+            <span>Проекты</span>
+            <span class="live-dot" title="Обновлено только что"></span>
+        </div>
+        <div class="toolbar-actions">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Поиск проектов..." autocomplete="off">
+                <svg class="search-icon-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <span class="search-kbd">/</span>
+            </div>
+            <select class="sort-select" id="sortSelect">
+                <option value="default">По умолчанию</option>
+                <option value="name-asc">По имени (А-Я)</option>
+                <option value="name-desc">По имени (Я-А)</option>
+                <option value="category">По категории</option>
+            </select>
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" id="viewGrid" aria-label="Сетка">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
                     </svg>
-                    <input type="text" id="searchInput" placeholder="Поиск..." autocomplete="off">
-                </div>
-                <button class="refresh-btn" id="refreshBtn" title="Обновить данные">
-                    <svg class="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </button>
+                <button class="view-toggle-btn" id="viewList" aria-label="Список">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
-                    <span>Обновить</span>
                 </button>
             </div>
-        </div>
-
-        <div class="category-filters" id="categoryFilters"></div>
-
-        <div id="sitesGrid" class="grid"></div>
-    </main>
-
-    <!-- Privacy Modal -->
-    <div class="modal-overlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
-        <div class="modal-content">
-            <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
-            <h2 class="modal-title" id="privacyTitle">Конфиденциальность</h2>
-            <div class="modal-text">
-                <p>В Oris мы ставим безопасность данных на первое место. Наша архитектура построена по принципу Privacy by Design.</p>
-                <h3>Сбор информации</h3>
-                <p>Мы не используем трекеры третьих сторон. Аналитика собирается исключительно в агрегированном виде для улучшения производительности сервисов.</p>
-                <h3>Безопасность</h3>
-                <p>Все соединения зашифрованы с использованием современных протоколов TLS. Данные пользователей никогда не передаются в открытом виде.</p>
-                <h3>Контакты</h3>
-                <p>По вопросам защиты данных: <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a></p>
-            </div>
+            <button class="refresh-btn" id="refreshBtn" title="Обновить данные">
+                <svg class="refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span>Обновить</span>
+            </button>
         </div>
     </div>
 
-    <!-- Terms Modal -->
-    <div class="modal-overlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
-        <div class="modal-content">
-            <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
-            <h2 class="modal-title" id="termsTitle">Условия использования</h2>
-            <div class="modal-text">
-                <p>Используя продукты Oris, вы соглашаетесь с настоящими условиями. Мы стремимся предоставлять стабильные и безопасные инструменты.</p>
-                <h3>Лицензирование</h3>
-                <p>Открытые компоненты распространяются под лицензией MIT. Проприетарное ПО защищено международными законами об авторском праве.</p>
-                <h3>Ограничение ответственности</h3>
-                <p>Сервисы предоставляются «как есть». Рекомендуем регулярно создавать резервные копии важных данных при работе с нашими инструментами.</p>
-            </div>
+    <div class="category-filters" id="categoryFilters"></div>
+
+    <div id="sitesGrid" class="grid"></div>
+</main>
+
+<!-- Privacy Modal -->
+<div class="modal-overlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <div class="modal-content">
+        <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
+        <h2 class="modal-title" id="privacyTitle">Конфиденциальность</h2>
+        <div class="modal-text">
+            <p>В Oris мы ставим безопасность данных на первое место. Наша архитектура построена по принципу Privacy by Design.</p>
+            <h3>Сбор информации</h3>
+            <p>Мы не используем трекеры третьих сторон. Аналитика собирается исключительно в агрегированном виде для улучшения производительности сервисов.</p>
+            <h3>Безопасность</h3>
+            <p>Все соединения зашифрованы с использованием современных протоколов TLS. Данные пользователей никогда не передаются в открытом виде.</p>
+            <h3>Контакты</h3>
+            <p>По вопросам защиты данных: <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a></p>
         </div>
     </div>
+</div>
 
-    <!-- Collaboration Modal -->
-    <div class="modal-overlay" id="collabModal" role="dialog" aria-modal="true" aria-labelledby="collabTitle">
-        <div class="modal-content">
-            <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
-            <h2 class="modal-title" id="collabTitle">Партнёрство</h2>
-            <div class="modal-text">
-                <p>Oris открыт для сотрудничества с технологическими лидерами и независимыми разработчиками.</p>
-                <h3>Каналы связи</h3>
-                <p>
-                    • Telegram: <a href="https://t.me/VoraxisBOT" target="_blank" rel="noopener noreferrer">@VoraxisBOT</a><br>
-                    • Email: <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a><br>
-                    • GitHub: <a href="https://github.com/official-ids/Saites" target="_blank" rel="noopener noreferrer">Official Repository</a>
-                </p>
-                <p>Мы рассматриваем все предложения в течение 24 часов.</p>
-            </div>
+<!-- Terms Modal -->
+<div class="modal-overlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+    <div class="modal-content">
+        <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
+        <h2 class="modal-title" id="termsTitle">Условия использования</h2>
+        <div class="modal-text">
+            <p>Используя продукты Oris, вы соглашаетесь с настоящими условиями. Мы стремимся предоставлять стабильные и безопасные инструменты.</p>
+            <h3>Лицензирование</h3>
+            <p>Открытые компоненты распространяются под лицензией MIT. Проприетарное ПО защищено международными законами об авторском праве.</p>
+            <h3>Ограничение ответственности</h3>
+            <p>Сервисы предоставляются «как есть». Рекомендуем регулярно создавать резервные копии важных данных при работе с нашими инструментами.</p>
         </div>
     </div>
+</div>
 
-    <!-- Floating Footer -->
+<!-- Collaboration Modal -->
+<div class="modal-overlay" id="collabModal" role="dialog" aria-modal="true" aria-labelledby="collabTitle">
+    <div class="modal-content">
+        <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
+        <h2 class="modal-title" id="collabTitle">Партнёрство</h2>
+        <div class="modal-text">
+            <p>Oris открыт для сотрудничества с технологическими лидерами и независимыми разработчиками.</p>
+            <h3>Каналы связи</h3>
+            <p>
+                • Telegram: <a href="https://t.me/VoraxisBOT" target="_blank" rel="noopener noreferrer">@VoraxisBOT</a><br>
+                • Email: <a href="mailto:di44avolod@ya.ru">di44avolod@ya.ru</a><br>
+                • GitHub: <a href="https://github.com/official-ids/Saites" target="_blank" rel="noopener noreferrer">Official Repository</a>
+            </p>
+            <p>Мы рассматриваем все предложения в течение 24 часов.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Project Detail Modal -->
+<div class="modal-overlay" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-content" id="detailContent">
+        <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
+        <!-- Content injected by JS -->
+    </div>
+</div>
+
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск проектов, разделов, действий..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Footer -->
 <footer class="site-footer">
     <div class="footer-inner">
         <div class="footer-top">
@@ -1676,7 +2198,6 @@ p.subtitle {
             </div>
 
             <div class="footer-columns">
-                <!-- Секция: Oris -->
                 <div class="footer-section">
                     <button class="footer-section-toggle" aria-expanded="false">
                         <span>Oris</span>
@@ -1690,8 +2211,6 @@ p.subtitle {
                         <a href="#" data-modal="collabModal">Сотрудничество</a>
                     </div>
                 </div>
-
-                <!-- Секция: Проекты -->
                 <div class="footer-section">
                     <button class="footer-section-toggle" aria-expanded="false">
                         <span>Проекты</span>
@@ -1713,8 +2232,6 @@ p.subtitle {
                         </a>
                     </div>
                 </div>
-
-                <!-- Секция: Поддержка -->
                 <div class="footer-section">
                     <button class="footer-section-toggle" aria-expanded="false">
                         <span>Поддержка</span>
@@ -1739,8 +2256,6 @@ p.subtitle {
                         <a href="/help">Центр помощи</a>
                     </div>
                 </div>
-
-                <!-- Секция: Ресурсы -->
                 <div class="footer-section">
                     <button class="footer-section-toggle" aria-expanded="false">
                         <span>Ресурсы</span>
@@ -1779,66 +2294,47 @@ p.subtitle {
     </div>
 </footer>
 
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>/</kbd> поиск</div>
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>R</kbd> обновить</div>
+    <div class="hotkey-hint"><kbd>V</kbd> вид</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
+
 <script>
 (function() {
     'use strict';
 
     // ============================================
-    // Константы конфигурации
+    // Configuration
     // ============================================
-    
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {number} Задержка анимации между карточками (с) */
         CARD_ANIMATION_DELAY_STEP: 0.04,
-        
-        /** @type {number} Минимальная задержка перед отображением данных (мс) */
         MIN_LOADING_DELAY: 500,
-        
-        /** @type {number} Длительность анимации закрытия модального окна (мс) */
         MODAL_CLOSE_DURATION: 300,
-        
-        /** @type {string} API endpoint для получения списка сайтов */
+        TOAST_DURATION: 3500,
         SITES_API_ENDPOINT: '/api/sites',
-        
-        /** @type {string} API endpoint для принудительной перезагрузки сайтов */
         SITES_RELOAD_ENDPOINT: '/api/sites/reload',
-        
-        /** @type {string} CSS класс для активных фильтров */
         ACTIVE_CLASS: 'active',
-        
-        /** @type {string} CSS класс для вращающейся кнопки */
         SPINNING_CLASS: 'spinning',
-        
-        /** @type {string} CSS класс для активных модальных окон */
         MODAL_ACTIVE_CLASS: 'active',
-        
-        /** @type {string} CSS класс для состояния ошибки */
         ERROR_STATE_CLASS: 'error-state',
-        
-        /** @type {string} Категория по умолчанию */
         DEFAULT_CATEGORY: 'other',
-        
-        /** @type {string} Значение "все категории" */
         ALL_CATEGORIES: 'all',
-        
-        /** @type {string} CSS переменная для цвета категории */
         CATEGORY_COLOR_VAR: '--category-color',
-        
-        /** @type {string} CSS переменная для фона категории */
         CATEGORY_BG_VAR: '--category-bg',
-        
-        /** @type {string} Прозрачность для фона категории (hex) */
-        CATEGORY_BG_OPACITY: '18'
+        CATEGORY_BG_OPACITY: '18',
+        FAV_KEY: 'oris-favorites',
+        VIEW_KEY: 'oris-view',
+        SORT_KEY: 'oris-sort'
     };
 
-    /**
-     * Сообщения для UI
-     * @constant {Object<string, string>}
-     */
     const MESSAGES = {
         loading: 'Загрузка экосистемы...',
         empty: 'Проекты временно недоступны',
@@ -1847,17 +2343,14 @@ p.subtitle {
         notFoundHint: 'Попробуйте изменить запрос или выбрать другую категорию',
         noDescription: 'Описание отсутствует',
         noTitle: 'Без названия',
-        open: 'Открыть'
+        open: 'Открыть',
+        refreshSuccess: 'Данные обновлены',
+        refreshFail: 'Не удалось обновить',
+        copied: 'Ссылка скопирована',
+        addedToFav: 'Добавлено в избранное',
+        removedFromFav: 'Удалено из избранного'
     };
 
-    // ============================================
-    // Метаданные категорий
-    // ============================================
-    
-    /**
-     * Метаданные категорий проектов (иконки, цвета, метки)
-     * @constant {Object<string, {label: string, icon: string, color: string}>}
-     */
     const CATEGORY_META = {
         tools: {
             label: 'Инструменты',
@@ -1901,266 +2394,273 @@ p.subtitle {
         }
     };
 
-    /**
-     * SVG иконка для фильтра "Все"
-     * @constant {string}
-     */
     const ALL_FILTER_ICON = 'M4 6h16M4 12h16M4 18h16';
-
-    /**
-     * SVG иконка для кнопки "Открыть"
-     * @constant {string}
-     */
     const OPEN_ICON = 'M17 8l4 4m0 0l-4 4m4-4H3';
-
-    /**
-     * SVG иконка для состояния "не найдено"
-     * @constant {string}
-     */
     const NOT_FOUND_ICON = 'M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
 
     // ============================================
-    // Состояние приложения
+    // State
     // ============================================
-    
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
     const State = {
-        /** @type {Array<Object>} Список проектов */
         sites: [],
-        
-        /** @type {Object<string, number>} Счётчики проектов по категориям */
         categories: {},
-        
-        /** @type {string} Активная категория */
         activeCategory: CONFIG.ALL_CATEGORIES,
-        
-        /** @type {string} Поисковый запрос */
-        searchQuery: ''
+        searchQuery: '',
+        sortBy: 'default',
+        viewMode: 'grid',
+        favorites: new Set(),
+        cmdkFocusedIndex: -1
     };
 
     // ============================================
-    // DOM элементы
+    // DOM Cache
     // ============================================
-    
-    /**
-     * Кэш DOM элементов
-     * @namespace
-     */
     const DOM = {
-        /** @type {HTMLElement|null} Сетка проектов */
         grid: document.getElementById('sitesGrid'),
-        
-        /** @type {HTMLElement|null} Кнопка обновления */
         refreshBtn: document.getElementById('refreshBtn'),
-        
-        /** @type {HTMLElement|null} Поле поиска */
         searchInput: document.getElementById('searchInput'),
-        
-        /** @type {HTMLElement|null} Контейнер фильтров категорий */
         categoryFilters: document.getElementById('categoryFilters'),
-        
-        /** @type {HTMLElement|null} Элемент общего счётчика */
         totalCount: document.getElementById('totalCount'),
-        
-        /** @type {HTMLElement|null} Элемент счётчика категорий */
         categoryCount: document.getElementById('categoryCount'),
-        
-        /** @type {HTMLElement|null} Элемент текущего года */
-        yearSpan: document.getElementById('currentYear')
+        favCount: document.getElementById('favCount'),
+        yearSpan: document.getElementById('currentYear'),
+        sortSelect: document.getElementById('sortSelect'),
+        viewGrid: document.getElementById('viewGrid'),
+        viewList: document.getElementById('viewList'),
+        heroTitle: document.getElementById('heroTitle'),
+        headerProgress: document.getElementById('headerProgress'),
+        toastContainer: document.getElementById('toastContainer'),
+        cmdkOverlay: document.getElementById('cmdkOverlay'),
+        cmdkInput: document.getElementById('cmdkInput'),
+        cmdkResults: document.getElementById('cmdkResults'),
+        cmdkBtn: document.getElementById('cmdkBtn'),
+        detailModal: document.getElementById('detailModal'),
+        detailContent: document.getElementById('detailContent')
     };
 
     // ============================================
-    // Утилиты безопасности
+    // Security
     // ============================================
-    
-    /**
-     * Утилиты безопасности для защиты от XSS-атак
-     * @namespace
-     */
     const Security = {
-        /**
-         * Разрешённые протоколы для URL
-         * @constant {Array<string>}
-         */
         SAFE_PROTOCOLS: ['http:', 'https:'],
-
-        /**
-         * Карта соответствия символов HTML-сущностям
-         * @type {Object<string, string>}
-         */
-        HTML_ESCAPE_MAP: {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        },
-
-        /**
-         * Санитизация URL — проверка безопасного протокола
-         * 
-         * @param {string} url - URL для проверки
-         * @returns {string} - Безопасный URL или '#' если небезопасен
-         * 
-         * @example
-         * Security.sanitizeUrl('https://example.com'); // 'https://example.com/'
-         * Security.sanitizeUrl('javascript:alert(1)'); // '#'
-         */
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' },
         sanitizeUrl(url) {
             if (!url) return '#';
-            
             try {
                 const parsed = new URL(url, window.location.origin);
-                
-                if (!this.SAFE_PROTOCOLS.includes(parsed.protocol)) {
-                    console.warn(`[Security] Blocked unsafe protocol: ${parsed.protocol}`);
-                    return '#';
-                }
-                
+                if (!this.SAFE_PROTOCOLS.includes(parsed.protocol)) return '#';
                 return parsed.href;
-            } catch (error) {
-                return '#';
-            }
+            } catch { return '#'; }
         },
-
-        /**
-         * Экранирование HTML-сущностей в строке
-         * 
-         * @param {string|number|null|undefined} str - Исходная строка
-         * @returns {string} - Строка с экранированными HTML-сущностями
-         */
         escapeHtml(str) {
             if (!str) return '';
-            
-            return String(str).replace(/[&<>"']/g, (match) => {
-                return this.HTML_ESCAPE_MAP[match];
-            });
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
         },
-
-        /**
-         * Извлечение домена из URL
-         * 
-         * @param {string} url - URL для извлечения домена
-         * @returns {string} - Домен без 'www.' или пустая строка
-         * 
-         * @example
-         * Security.getDomain('https://www.example.com/path'); // 'example.com'
-         */
         getDomain(url) {
-            try {
-                return new URL(url).hostname.replace('www.', '');
-            } catch {
-                return '';
-            }
+            try { return new URL(url).hostname.replace('www.', ''); } catch { return ''; }
         },
-
-        /**
-         * Стабильный слаг проекта из его URL (последний сегмент пути или хост).
-         *
-         * @param {string} url - URL проекта
-         * @returns {string} - Слаг для страницы /p/:slug или ''
-         */
         slug(url) {
             try {
                 const parsed = new URL(url, window.location.origin);
                 const seg = parsed.pathname.split('/').filter(Boolean).pop();
                 if (seg) return encodeURIComponent(seg.toLowerCase());
                 return encodeURIComponent(parsed.hostname.replace(/^www\./, ''));
-            } catch {
-                return '';
-            }
+            } catch { return ''; }
         }
     };
 
     // ============================================
-    // Система модальных окон
+    // Toast System
     // ============================================
-    
-    /**
-     * Менеджер модальных окон
-     * @namespace
-     */
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
+    }
+
+    // ============================================
+    // Theme System
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem('oris-theme', theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.dataset.theme;
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = current === 'dark' || (!current && systemDark);
+        const newTheme = isDark ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`Тема изменена на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem('oris-theme'); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    }
+
+    // ============================================
+    // Favorites System
+    // ============================================
+    function loadFavorites() {
+        try {
+            const saved = localStorage.getItem(CONFIG.FAV_KEY);
+            if (saved) State.favorites = new Set(JSON.parse(saved));
+        } catch (e) {}
+        updateFavCount();
+    }
+
+    function saveFavorites() {
+        try {
+            localStorage.setItem(CONFIG.FAV_KEY, JSON.stringify([...State.favorites]));
+        } catch (e) {}
+        updateFavCount();
+    }
+
+    function toggleFavorite(url) {
+        if (State.favorites.has(url)) {
+            State.favorites.delete(url);
+            showToast(MESSAGES.removedFromFav, 'info', 2000);
+        } else {
+            State.favorites.add(url);
+            showToast(MESSAGES.addedToFav, 'success', 2000);
+        }
+        saveFavorites();
+        App.renderGrid();
+    }
+
+    function updateFavCount() {
+        if (DOM.favCount) DOM.favCount.textContent = State.favorites.size;
+    }
+
+    // ============================================
+    // View & Sort
+    // ============================================
+    function applyViewMode(mode) {
+        State.viewMode = mode;
+        DOM.grid.classList.toggle('list-view', mode === 'list');
+        DOM.viewGrid.classList.toggle('active', mode === 'grid');
+        DOM.viewList.classList.toggle('active', mode === 'list');
+        try { localStorage.setItem(CONFIG.VIEW_KEY, mode); } catch (e) {}
+    }
+
+    function applySort(sortBy) {
+        State.sortBy = sortBy;
+        try { localStorage.setItem(CONFIG.SORT_KEY, sortBy); } catch (e) {}
+        App.renderGrid();
+    }
+
+    function initViewSort() {
+        let savedView = 'grid', savedSort = 'default';
+        try {
+            savedView = localStorage.getItem(CONFIG.VIEW_KEY) || 'grid';
+            savedSort = localStorage.getItem(CONFIG.SORT_KEY) || 'default';
+        } catch (e) {}
+        applyViewMode(savedView);
+        DOM.sortSelect.value = savedSort;
+        State.sortBy = savedSort;
+
+        DOM.viewGrid.addEventListener('click', () => applyViewMode('grid'));
+        DOM.viewList.addEventListener('click', () => applyViewMode('list'));
+        DOM.sortSelect.addEventListener('change', (e) => applySort(e.target.value));
+    }
+
+    // ============================================
+    // Typewriter + Glitch
+    // ============================================
+    function typewriter(element, text, speed = 50) {
+        element.textContent = '';
+        element.setAttribute('data-text', '');
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                element.insertBefore(document.createTextNode(text[i]), cursor);
+                element.setAttribute('data-text', text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => cursor.remove(), 2000);
+            }
+        }, speed);
+    }
+
+    function triggerGlitch() {
+        DOM.heroTitle.classList.add('glitch');
+        setTimeout(() => DOM.heroTitle.classList.remove('glitch'), 400);
+    }
+
+    function initHero() {
+        setTimeout(() => {
+            typewriter(DOM.heroTitle, 'Oris');
+        }, 300);
+        DOM.heroTitle.addEventListener('click', triggerGlitch);
+        setInterval(triggerGlitch, 6000);
+    }
+
+    // ============================================
+    // Modal Manager
+    // ============================================
     const ModalManager = {
-        /**
-         * Инициализация обработчиков событий модальных окон
-         */
         init() {
-            // Обработка кликов для открытия/закрытия
             document.addEventListener('click', (event) => {
-                // Открытие модального окна
                 const trigger = event.target.closest('[data-modal]');
                 if (trigger) {
                     event.preventDefault();
                     this.open(trigger.dataset.modal);
                     return;
                 }
-
-                // Закрытие через кнопку
                 const closer = event.target.closest('[data-close-modal]');
                 if (closer) {
                     const overlay = closer.closest('.modal-overlay');
-                    if (overlay) {
-                        this.close(overlay.id);
-                    }
+                    if (overlay) this.close(overlay.id);
                     return;
                 }
-
-                // Закрытие через клик по оверлею
                 if (event.target.classList.contains('modal-overlay') && 
                     event.target.classList.contains(CONFIG.MODAL_ACTIVE_CLASS)) {
                     this.close(event.target.id);
                 }
             });
-
-            // Закрытие по Escape
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape') {
                     const activeModal = document.querySelector(`.modal-overlay.${CONFIG.MODAL_ACTIVE_CLASS}`);
-                    if (activeModal) {
-                        this.close(activeModal.id);
-                    }
+                    if (activeModal) this.close(activeModal.id);
                 }
             });
         },
-
-        /**
-         * Открытие модального окна
-         * 
-         * @param {string} id - ID модального окна
-         */
         open(id) {
             const modal = document.getElementById(id);
             if (!modal) return;
-
             modal.style.display = 'flex';
-            
-            // Force reflow для корректной работы CSS transitions
             void modal.offsetWidth;
-            
             modal.classList.add(CONFIG.MODAL_ACTIVE_CLASS);
             document.body.style.overflow = 'hidden';
-
-            // Фокус на первом интерактивном элементе
-            const firstFocusable = modal.querySelector('button, [href], input, select, textarea');
-            if (firstFocusable) {
-                firstFocusable.focus();
-            }
         },
-
-        /**
-         * Закрытие модального окна
-         * 
-         * @param {string} id - ID модального окна
-         */
         close(id) {
             const modal = document.getElementById(id);
             if (!modal) return;
-
             modal.classList.remove(CONFIG.MODAL_ACTIVE_CLASS);
-            
             setTimeout(() => {
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
@@ -2169,73 +2669,298 @@ p.subtitle {
     };
 
     // ============================================
-    // Основное приложение
+    // Project Detail Modal
     // ============================================
-    
-    /**
-     * Основной модуль приложения
-     * @namespace
-     */
-    const App = {
-        // ----------------------------------------
-        // Инициализация
-        // ----------------------------------------
-        
-        /**
-         * Инициализация приложения
-         */
-        init() {
-            ModalManager.init();
-            
-            // Установка текущего года
-            if (DOM.yearSpan) {
-                DOM.yearSpan.textContent = new Date().getFullYear();
-            }
+    function showProjectDetail(site) {
+        const meta = CATEGORY_META[site.category || CONFIG.DEFAULT_CATEGORY] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY];
+        const safeUrl = Security.sanitizeUrl(site.url);
+        const domain = Security.getDomain(site.url);
+        const slug = Security.slug(site.url);
+        const now = new Date();
 
-            // Привязка обработчиков событий
-            this.bindEvents();
-            
-            // Первоначальная загрузка данных
-            this.loadProjects();
-        },
+        DOM.detailContent.innerHTML = `
+            <button class="modal-close" aria-label="Закрыть" data-close-modal>&times;</button>
+            <div class="detail-modal-header">
+                <div class="detail-modal-icon" style="background: ${meta.color}18; color: ${meta.color};">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/>
+                    </svg>
+                </div>
+                <div class="detail-modal-title-wrap">
+                    <h2 class="detail-modal-title" id="detailTitle">${Security.escapeHtml(site.title || MESSAGES.noTitle)}</h2>
+                    <div class="detail-modal-category" style="background: ${meta.color}18; color: ${meta.color};">
+                        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${meta.icon}"/>
+                        </svg>
+                        ${meta.label}
+                    </div>
+                </div>
+            </div>
+            <p class="detail-modal-desc">${Security.escapeHtml(site.desc || MESSAGES.noDescription)}</p>
+            <div class="detail-modal-actions">
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="detail-btn detail-btn-primary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${OPEN_ICON}"/></svg>
+                    Открыть сайт
+                </a>
+                <button class="detail-btn detail-btn-secondary" id="copyLinkBtn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    Копировать ссылку
+                </button>
+                <button class="detail-btn detail-btn-secondary" id="toggleFavBtn">
+                    <svg fill="${State.favorites.has(site.url) ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    ${State.favorites.has(site.url) ? 'В избранном' : 'В избранное'}
+                </button>
+            </div>
+            <div class="detail-tech">
+                <div class="detail-tech-title">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    Technical Details
+                </div>
+                <div class="detail-tech-row">
+                    <span class="detail-tech-key">URL</span>
+                    <span class="detail-tech-value">${Security.escapeHtml(domain)}</span>
+                </div>
+                <div class="detail-tech-row">
+                    <span class="detail-tech-key">Category</span>
+                    <span class="detail-tech-value">${meta.label}</span>
+                </div>
+                ${slug ? `<div class="detail-tech-row">
+                    <span class="detail-tech-key">Slug</span>
+                    <span class="detail-tech-value">${slug}</span>
+                </div>` : ''}
+                <div class="detail-tech-row">
+                    <span class="detail-tech-key">Protocol</span>
+                    <span class="detail-tech-value">${safeUrl.startsWith('https') ? 'HTTPS' : 'HTTP'}</span>
+                </div>
+                <div class="detail-tech-row">
+                    <span class="detail-tech-key">Viewed</span>
+                    <span class="detail-tech-value">${now.toLocaleString('ru-RU')}</span>
+                </div>
+            </div>
+        `;
 
-        /**
-         * Привязка всех обработчиков событий
-         */
-        bindEvents() {
-            // Кнопка обновления
-            if (DOM.refreshBtn) {
-                DOM.refreshBtn.addEventListener('click', () => {
-                    this.loadProjects(true);
+        ModalManager.open('detailModal');
+
+        // Bind actions
+        setTimeout(() => {
+            const copyBtn = document.getElementById('copyLinkBtn');
+            const favBtn = document.getElementById('toggleFavBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(safeUrl);
+                        showToast(MESSAGES.copied, 'success', 2000);
+                    } catch (e) {
+                        showToast('Не удалось скопировать', 'error');
+                    }
                 });
             }
+            if (favBtn) {
+                favBtn.addEventListener('click', () => {
+                    toggleFavorite(site.url);
+                    ModalManager.close('detailModal');
+                });
+            }
+        }, 50);
+    }
 
-            // Поле поиска
+    // ============================================
+    // Command Palette
+    // ============================================
+    function openCmdk() {
+        DOM.cmdkOverlay.classList.add(CONFIG.MODAL_ACTIVE_CLASS);
+        DOM.cmdkOverlay.style.display = 'flex';
+        DOM.cmdkInput.value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => DOM.cmdkInput.focus(), 50);
+        renderCmdkResults('');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCmdk() {
+        DOM.cmdkOverlay.classList.remove(CONFIG.MODAL_ACTIVE_CLASS);
+        setTimeout(() => {
+            DOM.cmdkOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 200);
+    }
+
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); } },
+            { type: 'action', title: 'Обновить данные', desc: 'Перезагрузить список проектов', kbd: 'R', action: () => { App.loadProjects(true); closeCmdk(); } },
+            { type: 'action', title: 'Переключить вид', desc: 'Сетка или список', kbd: 'V', action: () => { applyViewMode(State.viewMode === 'grid' ? 'list' : 'grid'); closeCmdk(); } },
+            { type: 'nav', title: 'Добавить сайт', desc: 'Форма добавления проекта', url: '/add', kbd: 'A' },
+            { type: 'nav', title: 'Новости', desc: 'Новости платформы', url: '/news', kbd: '2' },
+            { type: 'nav', title: 'Статус', desc: 'Статус сервисов', url: '/status', kbd: '3' },
+            { type: 'nav', title: 'API Reference', desc: 'Документация REST API', url: '/rest', kbd: '4' },
+            { type: 'nav', title: 'Changelog', desc: 'История изменений', url: '/changelog', kbd: '5' }
+        ];
+
+        const projects = State.sites.slice(0, 50).map(s => ({
+            type: 'project',
+            title: s.title || MESSAGES.noTitle,
+            desc: s.desc || MESSAGES.noDescription,
+            url: s.url,
+            site: s
+        }));
+
+        let filteredActions = actions;
+        let filteredProjects = projects;
+        if (q) {
+            filteredActions = actions.filter(a => 
+                a.title.toLowerCase().includes(q) || 
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+            filteredProjects = projects.filter(p => 
+                p.title.toLowerCase().includes(q) || 
+                (p.desc && p.desc.toLowerCase().includes(q)) ||
+                p.url.toLowerCase().includes(q)
+            );
+        }
+
+        const items = [];
+        if (filteredActions.length > 0) {
+            items.push({ group: 'Действия', entries: filteredActions });
+        }
+        if (filteredProjects.length > 0) {
+            items.push({ group: 'Проекты', entries: filteredProjects });
+        }
+
+        if (items.length === 0) {
+            DOM.cmdkResults.innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const meta = entry.site ? (CATEGORY_META[entry.site.category || CONFIG.DEFAULT_CATEGORY] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY]) : null;
+                const iconBg = meta ? meta.color + '18' : 'var(--accent-soft)';
+                const iconColor = meta ? meta.color : 'var(--accent)';
+                const iconPath = meta ? meta.icon : 'M13 10V3L4 14h7v7l9-11h-7z';
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}" data-cmdk-type="${entry.type}" data-cmdk-url="${entry.url || ''}">
+                        <div class="cmdk-item-icon" style="background: ${iconBg}; color: ${iconColor};">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+
+        DOM.cmdkResults.innerHTML = html;
+
+        // Bind clicks
+        DOM.cmdkResults.querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
+
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'project' && entry.site) {
+                        closeCmdk();
+                        showProjectDetail(entry.site);
+                    } else if (entry.url) {
+                        window.location.href = entry.url;
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function initCmdk() {
+        DOM.cmdkBtn.addEventListener('click', openCmdk);
+        DOM.cmdkOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cmdkOverlay) closeCmdk();
+        });
+        DOM.cmdkInput.addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        DOM.cmdkInput.addEventListener('keydown', (e) => {
+            const items = DOM.cmdkResults.querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // ============================================
+    // Main App
+    // ============================================
+    const App = {
+        init() {
+            ModalManager.init();
+            if (DOM.yearSpan) DOM.yearSpan.textContent = new Date().getFullYear();
+            loadFavorites();
+            initViewSort();
+            initHero();
+            initCmdk();
+            this.bindEvents();
+            this.loadProjects();
+            setTimeout(() => {
+                showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+            }, 1200);
+        },
+
+        bindEvents() {
+            if (DOM.refreshBtn) {
+                DOM.refreshBtn.addEventListener('click', () => this.loadProjects(true));
+            }
             if (DOM.searchInput) {
-                DOM.searchInput.addEventListener('input', (event) => {
-                    State.searchQuery = event.target.value.toLowerCase().trim();
+                DOM.searchInput.addEventListener('input', (e) => {
+                    State.searchQuery = e.target.value.toLowerCase().trim();
                     this.renderGrid();
                 });
             }
         },
 
-        // ----------------------------------------
-        // Отображение состояний
-        // ----------------------------------------
-        
-        /**
-         * Отображение статуса (загрузка/ошибка/пусто)
-         * 
-         * @param {string} message - Текст сообщения
-         * @param {string} type - Тип статуса: 'loading' | 'error' | 'empty'
-         */
         renderStatus(message, type = 'loading') {
             const isError = type === 'error';
             const isLoading = type === 'loading';
-            
             const spinnerHtml = isLoading ? '<div class="spinner"></div>' : '';
             const errorClass = isError ? CONFIG.ERROR_STATE_CLASS : '';
-
             DOM.grid.innerHTML = `
                 <div class="status-container">
                     ${spinnerHtml}
@@ -2244,9 +2969,6 @@ p.subtitle {
             `;
         },
 
-        /**
-         * Отображение пустого состояния (ничего не найдено)
-         */
         renderEmpty() {
             DOM.grid.innerHTML = `
                 <div class="empty-state">
@@ -2259,46 +2981,22 @@ p.subtitle {
             `;
         },
 
-        // ----------------------------------------
-        // Фильтры и категории
-        // ----------------------------------------
-        
-        /**
-         * Подсчёт количества проектов по категориям
-         * 
-         * @returns {Object<string, number>} Счётчики по категориям
-         */
         countProjectsByCategory() {
             const counts = {};
-            
             State.sites.forEach(site => {
                 const category = site.category || CONFIG.DEFAULT_CATEGORY;
                 counts[category] = (counts[category] || 0) + 1;
             });
-            
             return counts;
         },
 
-        /**
-         * Получение списка уникальных категорий
-         * 
-         * @param {Object<string, number>} counts - Счётчики по категориям
-         * @returns {Array<string>} Список уникальных категорий
-         */
         getUniqueCategories(counts) {
             return Object.keys(counts).filter(category => CATEGORY_META[category]);
         },
 
-        /**
-         * Создание HTML для кнопки фильтра "Все"
-         * 
-         * @param {number} totalCount - Общее количество проектов
-         * @returns {string} HTML кнопки
-         */
         createAllFilterButton(totalCount) {
             const isActive = State.activeCategory === CONFIG.ALL_CATEGORIES;
             const activeClass = isActive ? CONFIG.ACTIVE_CLASS : '';
-
             return `
                 <button class="filter-chip ${activeClass}" data-category="${CONFIG.ALL_CATEGORIES}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2310,19 +3008,11 @@ p.subtitle {
             `;
         },
 
-        /**
-         * Создание HTML для кнопки фильтра категории
-         * 
-         * @param {string} category - Ключ категории
-         * @param {number} count - Количество проектов в категории
-         * @returns {string} HTML кнопки
-         */
         createCategoryFilterButton(category, count) {
             const meta = CATEGORY_META[category] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY];
             const isActive = State.activeCategory === category;
             const activeClass = isActive ? CONFIG.ACTIVE_CLASS : '';
             const activeStyle = isActive ? `background:${meta.color};border-color:${meta.color};` : '';
-
             return `
                 <button class="filter-chip ${activeClass}" data-category="${category}" style="${activeStyle}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2334,25 +3024,16 @@ p.subtitle {
             `;
         },
 
-        /**
-         * Построение и отображение фильтров категорий
-         */
         buildCategoryFilters() {
             const counts = this.countProjectsByCategory();
             const totalCount = State.sites.length;
             const uniqueCategories = this.getUniqueCategories(counts);
-
-            // Генерация HTML фильтров
             let filtersHtml = this.createAllFilterButton(totalCount);
-            
             uniqueCategories.forEach(category => {
                 filtersHtml += this.createCategoryFilterButton(category, counts[category]);
             });
-
             DOM.categoryFilters.innerHTML = filtersHtml;
             DOM.categoryCount.textContent = uniqueCategories.length;
-
-            // Привязка обработчиков событий к фильтрам
             DOM.categoryFilters.querySelectorAll('.filter-chip').forEach(chip => {
                 chip.addEventListener('click', () => {
                     State.activeCategory = chip.dataset.category;
@@ -2362,79 +3043,60 @@ p.subtitle {
             });
         },
 
-        // ----------------------------------------
-        // Фильтрация данных
-        // ----------------------------------------
-        
-        /**
-         * Фильтрация проектов по категории и поисковому запросу
-         * 
-         * @returns {Array<Object>} Отфильтрованный список проектов
-         */
         getFilteredSites() {
             let filtered = State.sites;
-
-            // Фильтрация по категории
             if (State.activeCategory !== CONFIG.ALL_CATEGORIES) {
                 filtered = filtered.filter(site => {
                     const category = site.category || CONFIG.DEFAULT_CATEGORY;
                     return category === State.activeCategory;
                 });
             }
-
-            // Фильтрация по поисковому запросу
             if (State.searchQuery) {
                 const query = State.searchQuery;
                 filtered = filtered.filter(site => {
                     const title = (site.title || '').toLowerCase();
                     const description = (site.desc || '').toLowerCase();
                     const url = (site.url || '').toLowerCase();
-                    
-                    return title.includes(query) || 
-                           description.includes(query) || 
-                           url.includes(query);
+                    return title.includes(query) || description.includes(query) || url.includes(query);
                 });
             }
-
+            // Sorting
+            if (State.sortBy !== 'default') {
+                filtered = [...filtered];
+                switch (State.sortBy) {
+                    case 'name-asc':
+                        filtered.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ru'));
+                        break;
+                    case 'name-desc':
+                        filtered.sort((a, b) => (b.title || '').localeCompare(a.title || '', 'ru'));
+                        break;
+                    case 'category':
+                        filtered.sort((a, b) => {
+                            const ca = CATEGORY_META[a.category || CONFIG.DEFAULT_CATEGORY]?.label || '';
+                            const cb = CATEGORY_META[b.category || CONFIG.DEFAULT_CATEGORY]?.label || '';
+                            return ca.localeCompare(cb, 'ru');
+                        });
+                        break;
+                }
+            }
             return filtered;
         },
 
-        // ----------------------------------------
-        // Рендеринг сетки проектов
-        // ----------------------------------------
-        
-        /**
-         * Рендеринг сетки проектов с применением фильтров
-         */
         renderGrid() {
             const filtered = this.getFilteredSites();
-
             if (filtered.length === 0) {
                 this.renderEmpty();
                 return;
             }
-
-            // Очистка сетки
             DOM.grid.innerHTML = '';
-            
-            // Использование DocumentFragment для производительности
             const fragment = document.createDocumentFragment();
-
             filtered.forEach((site, index) => {
                 const card = this.createCard(site, index);
                 fragment.appendChild(card);
             });
-
             DOM.grid.appendChild(fragment);
         },
 
-        /**
-         * Создание DOM-элемента карточки проекта
-         * 
-         * @param {Object} site - Данные проекта
-         * @param {number} index - Индекс для анимации появления
-         * @returns {HTMLElement} DOM-элемент карточки
-         */
         createCard(site, index) {
             const safeUrl = Security.sanitizeUrl(site.url);
             const safeTitle = Security.escapeHtml(site.title || MESSAGES.noTitle);
@@ -2443,66 +3105,80 @@ p.subtitle {
             const meta = CATEGORY_META[category] || CATEGORY_META[CONFIG.DEFAULT_CATEGORY];
             const domain = Security.getDomain(site.url);
             const slug = Security.slug(site.url);
+            const isFav = State.favorites.has(site.url);
 
-            const card = document.createElement('a');
+            const card = document.createElement('div');
             card.className = 'card';
-            card.href = safeUrl;
-            if (slug) card.dataset.slug = slug;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
-            
-            // Задержка анимации появления
             card.style.animationDelay = `${index * CONFIG.CARD_ANIMATION_DELAY_STEP}s`;
-            
-            // CSS переменные для цвета категории
             card.style.setProperty(CONFIG.CATEGORY_COLOR_VAR, meta.color);
             card.style.setProperty(CONFIG.CATEGORY_BG_VAR, meta.color + CONFIG.CATEGORY_BG_OPACITY);
 
-            // Содержимое карточки
             card.innerHTML = `
-                <div class="card-header">
-                    <div class="card-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/>
-                        </svg>
-                    </div>
-                    <div class="card-title-wrap">
-                        <div class="card-title">${safeTitle}</div>
-                        <div class="card-category">
-                            <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${meta.icon}"/>
+                <button class="card-fav ${isFav ? 'active' : ''}" data-fav-url="${Security.escapeHtml(site.url)}" aria-label="В избранное">
+                    <svg fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </button>
+                <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="card" style="padding:0; border:none; box-shadow:none; background:transparent; min-height:auto; animation:none; opacity:1;">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${meta.icon}"/>
                             </svg>
-                            ${meta.label}
+                        </div>
+                        <div class="card-title-wrap">
+                            <div class="card-title">${safeTitle}</div>
+                            <div class="card-category">
+                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="${meta.icon}"/>
+                                </svg>
+                                ${meta.label}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="card-desc">${safeDescription}</div>
-                <div class="card-footer">
-                    <span class="card-link">
-                        ${MESSAGES.open}
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${OPEN_ICON}"/>
-                        </svg>
-                    </span>
-                    <div class="card-footer-right">
-                        ${slug ? `<span class="card-details" data-slug="${slug}" role="button" tabindex="0">Подробнее</span>` : ''}
-                        ${domain ? `<span class="card-domain">${Security.escapeHtml(domain)}</span>` : ''}
+                    <div class="card-desc">${safeDescription}</div>
+                    <div class="card-footer">
+                        <span class="card-link">
+                            ${MESSAGES.open}
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${OPEN_ICON}"/>
+                            </svg>
+                        </span>
+                        <div class="card-footer-right">
+                            ${slug ? `<span class="card-details" data-slug="${slug}" role="button" tabindex="0">Подробнее</span>` : ''}
+                            ${domain ? `<span class="card-domain">${Security.escapeHtml(domain)}</span>` : ''}
+                        </div>
                     </div>
-                </div>
+                </a>
             `;
-            
+
+            // Favorite button
+            const favBtn = card.querySelector('.card-fav');
+            favBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                toggleFavorite(site.url);
+            });
+
+            // Details button
+            const detailsBtn = card.querySelector('.card-details');
+            if (detailsBtn) {
+                detailsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    showProjectDetail(site);
+                });
+                detailsBtn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        showProjectDetail(site);
+                    }
+                });
+            }
+
             return card;
         },
 
-        // ----------------------------------------
-        // Загрузка данных
-        // ----------------------------------------
-        
-        /**
-         * Принудительная перезагрузка списка проектов на сервере
-         * 
-         * @returns {Promise<void>}
-         */
         async forceReloadProjects() {
             try {
                 await fetch(CONFIG.SITES_RELOAD_ENDPOINT, { method: 'POST' });
@@ -2511,54 +3187,48 @@ p.subtitle {
             }
         },
 
-        /**
-         * Загрузка списка проектов с сервера
-         * 
-         * @param {boolean} forceReload - Принудительно перезагрузить данные на сервере
-         * @returns {Promise<void>}
-         */
         async loadProjects(forceReload = false) {
             this.renderStatus(MESSAGES.loading, 'loading');
-            
-            // Блокировка кнопки обновления
             DOM.refreshBtn.disabled = true;
             DOM.refreshBtn.classList.add(CONFIG.SPINNING_CLASS);
+            if (DOM.headerProgress) {
+                DOM.headerProgress.style.width = '30%';
+                setTimeout(() => { DOM.headerProgress.style.width = '70%'; }, 200);
+            }
 
             try {
-                // Принудительная перезагрузка при необходимости
-                if (forceReload) {
-                    await this.forceReloadProjects();
-                }
-
-                // Минимальная задержка для UX
+                if (forceReload) await this.forceReloadProjects();
                 await new Promise(resolve => setTimeout(resolve, CONFIG.MIN_LOADING_DELAY));
 
-                // Получение списка проектов
                 const response = await fetch(CONFIG.SITES_API_ENDPOINT);
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
                 const sites = await response.json();
 
-                // Проверка на пустой результат
                 if (!sites || sites.length === 0) {
                     this.renderStatus(MESSAGES.empty, 'empty');
                     return;
                 }
 
-                // Сохранение данных и обновление UI
                 State.sites = sites;
                 DOM.totalCount.textContent = sites.length;
-
                 this.buildCategoryFilters();
                 this.renderGrid();
+
+                if (DOM.headerProgress) {
+                    DOM.headerProgress.style.width = '100%';
+                    setTimeout(() => { DOM.headerProgress.style.width = '0%'; }, 600);
+                }
+
+                if (forceReload) showToast(MESSAGES.refreshSuccess, 'success', 2500);
 
             } catch (error) {
                 console.error('[App] Load failed:', error);
                 this.renderStatus(MESSAGES.networkError, 'error');
+                if (DOM.headerProgress) {
+                    DOM.headerProgress.style.width = '0%';
+                }
+                if (forceReload) showToast(MESSAGES.refreshFail, 'error');
             } finally {
-                // Разблокировка кнопки обновления
                 DOM.refreshBtn.disabled = false;
                 DOM.refreshBtn.classList.remove(CONFIG.SPINNING_CLASS);
             }
@@ -2566,139 +3236,121 @@ p.subtitle {
     };
 
     // ============================================
-    // Запуск приложения
+    // Hotkeys
     // ============================================
-    
-    /**
-     * Точка входа приложения
-     */
-    function startApp() {
-        App.init();
-
-        // Переход на детальную страницу проекта по клику «Подробнее».
-        const goToDetails = (target) => {
-            const el = target.closest('.card-details');
-            if (!el) return false;
-            const slug = el.dataset.slug;
-            if (slug) window.location.href = `/p/${slug}`;
-            return true;
-        };
-        document.addEventListener('click', (event) => {
-            if (goToDetails(event.target)) {
-                event.preventDefault();
-                event.stopPropagation();
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if (DOM.cmdkOverlay.classList.contains(CONFIG.MODAL_ACTIVE_CLASS)) closeCmdk();
+                }
+                return;
             }
-        });
-        document.addEventListener('keydown', (event) => {
-            if ((event.key === 'Enter' || event.key === ' ') && event.target.classList.contains('card-details')) {
-                event.preventDefault();
-                goToDetails(event.target);
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if (DOM.cmdkOverlay.classList.contains(CONFIG.MODAL_ACTIVE_CLASS)) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+
+            switch (e.key) {
+                case '/':
+                    e.preventDefault();
+                    DOM.searchInput.focus();
+                    break;
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'r': case 'R': case 'к': case 'К':
+                    App.loadProjects(true);
+                    break;
+                case 'v': case 'V': case 'м': case 'М':
+                    applyViewMode(State.viewMode === 'grid' ? 'list' : 'grid');
+                    showToast(`Вид: ${State.viewMode === 'grid' ? 'сетка' : 'список'}`, 'info', 1500);
+                    break;
+                case '1': window.location.href = '/'; break;
+                case '2': window.location.href = '/news'; break;
+                case '3': window.location.href = '/status'; break;
+                case '4': window.location.href = '/rest'; break;
+                case '5': window.location.href = '/changelog'; break;
+                case 'a': case 'A': case 'ф': case 'Ф':
+                    window.location.href = '/add';
+                    break;
+                case 'Escape':
+                    if (DOM.cmdkOverlay.classList.contains(CONFIG.MODAL_ACTIVE_CLASS)) closeCmdk();
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: / поиск · ⌘K палитра · T тема · R обновить · V вид · 1-5 навигация · A добавить', 'info', 5000);
+                    break;
             }
         });
     }
 
-    // Запуск после загрузки DOM
+    // ============================================
+    // Start
+    // ============================================
+    function startApp() {
+        App.init();
+        initHotkeys();
+
+        // Mobile menu
+        const mobileToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', () => mobileMenu.classList.toggle('active'));
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.remove('active'));
+            });
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !mobileToggle.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Ad banner
+        const adBanner = document.getElementById('adBanner');
+        if (adBanner) {
+            const closeButton = adBanner.querySelector('.ad-close');
+            closeButton.addEventListener('click', () => adBanner.classList.add('hidden'));
+        }
+
+        // Active nav link
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.header-nav-link, .header-mobile-link').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
+                link.classList.add('active');
+            } else if (href === '/' && currentPath !== '/') {
+                link.classList.remove('active');
+            }
+        });
+
+        // Footer accordion
+        const footerToggles = document.querySelectorAll('.footer-section-toggle');
+        footerToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                footerToggles.forEach(otherToggle => {
+                    if (otherToggle !== toggle) otherToggle.setAttribute('aria-expanded', 'false');
+                });
+                toggle.setAttribute('aria-expanded', !isExpanded);
+            });
+        });
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', startApp);
     } else {
         startApp();
     }
 })();
-
-// ============================================
-// Header & Theme Toggle
-// ============================================
-
-(function() {
-    'use strict';
-
-    // Mobile menu toggle
-    const mobileToggle = document.getElementById('mobileMenuToggle');
-    const mobileMenu = document.getElementById('mobileMenu');
-
-    if (mobileToggle && mobileMenu) {
-        mobileToggle.addEventListener('click', () => {
-            mobileMenu.classList.toggle('active');
-        });
-
-        // Закрытие при клике по ссылке
-        mobileMenu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.remove('active');
-            });
-        });
-
-        // Закрытие при клике вне меню
-        document.addEventListener('click', (e) => {
-            if (!mobileMenu.contains(e.target) && !mobileToggle.contains(e.target)) {
-                mobileMenu.classList.remove('active');
-            }
-        });
-    }
-
-    // Theme toggle
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            const current = document.documentElement.dataset.theme;
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const isDark = current === 'dark' || (!current && systemDark);
-            const newTheme = isDark ? 'light' : 'dark';
-            
-            document.documentElement.dataset.theme = newTheme;
-            localStorage.setItem('oris-theme', newTheme);
-        });
-    }
-
-    // Активная ссылка в навигации (по текущему URL)
-    const currentPath = window.location.pathname;
-    document.querySelectorAll('.header-nav-link, .header-mobile-link').forEach(link => {
-        const href = link.getAttribute('href');
-        if (href === currentPath || (href !== '/' && currentPath.startsWith(href))) {
-            link.classList.add('active');
-        } else if (href === '/' && currentPath !== '/') {
-            link.classList.remove('active');
-        }
-    });
-})();
-
-// ============================================
-// Footer Accordion
-// ============================================
-(function() {
-    'use strict';
-    
-    const footerToggles = document.querySelectorAll('.footer-section-toggle');
-    
-    footerToggles.forEach(toggle => {
-        toggle.addEventListener('click', () => {
-            const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
-            
-            // Закрыть все остальные (опционально — убрать если нужно несколько открытых)
-            footerToggles.forEach(otherToggle => {
-                if (otherToggle !== toggle) {
-                    otherToggle.setAttribute('aria-expanded', 'false');
-                }
-            });
-            
-            // Переключить текущий
-            toggle.setAttribute('aria-expanded', !isExpanded);
-        });
-    });
-    
-    // На десктопе можно открыть все по умолчанию
-    function handleResponsive() {
-        const isDesktop = window.innerWidth > 900;
-        footerToggles.forEach(toggle => {
-            toggle.setAttribute('aria-expanded', isDesktop);
-        });
-    }
-    
-    // Раскомментировать если хотите авто-раскрытие на десктопе:
-    // handleResponsive();
-    // window.addEventListener('resize', handleResponsive);
-})();
-
 </script>
 <script src="/theme.js" defer></script>
 </body>

@@ -1,26 +1,26 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Добавьте свой сайт в каталог Oris или предложите сотрудничество">
     <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0D0D0F" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 
     <title>Добавить сайт · Oris</title>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 
     <style>
         :root {
             --bg-body: #F5F5F7;
             --bg-card: rgba(255, 255, 255, 0.72);
             --bg-elevated: #FFFFFF;
+            --bg-sunken: #E8E8ED;
             --bg-input: rgba(0, 0, 0, 0.04);
             --text-primary: #1D1D1F;
             --text-secondary: #6E6E73;
@@ -28,11 +28,18 @@
             --accent: #0071E3;
             --accent-hover: #0077ED;
             --accent-glow: rgba(0, 113, 227, 0.25);
+            --accent-soft: rgba(0, 113, 227, 0.12);
             --danger: #FF3B30;
             --danger-glow: rgba(255, 59, 48, 0.2);
+            --danger-soft: rgba(255, 59, 48, 0.12);
             --success: #34C759;
             --success-glow: rgba(52, 199, 89, 0.2);
+            --success-soft: rgba(52, 199, 89, 0.12);
             --warning: #FF9F0A;
+            --warning-soft: rgba(255, 159, 10, 0.12);
+            --purple: #AF52DE;
+            --purple-soft: rgba(175, 82, 222, 0.12);
+            --teal: #5AC8FA;
             --border: rgba(0, 0, 0, 0.06);
             --border-strong: rgba(0, 0, 0, 0.12);
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -41,28 +48,33 @@
             --radius-lg: 22px;
             --radius-md: 14px;
             --radius-sm: 10px;
-            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
             --transition: cubic-bezier(0.16, 1, 0.3, 1);
+            --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --grid-color: rgba(0, 0, 0, 0.04);
+            --glow: rgba(0, 113, 227, 0.15);
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-body: #0D0D0F;
-                --bg-card: rgba(28, 28, 30, 0.65);
-                --bg-elevated: #1C1C1E;
-                --bg-input: rgba(255, 255, 255, 0.06);
-                --text-primary: #F5F5F7;
-                --text-secondary: #98989D;
-                --text-tertiary: #636366;
-                --border: rgba(255, 255, 255, 0.08);
-                --border-strong: rgba(255, 255, 255, 0.15);
-                --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-                --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
-                --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.5);
-                --accent-glow: rgba(0, 113, 227, 0.4);
-                --danger-glow: rgba(255, 59, 48, 0.3);
-                --success-glow: rgba(52, 199, 89, 0.3);
-            }
+        [data-theme="dark"] {
+            --bg-body: #000000;
+            --bg-card: rgba(28, 28, 30, 0.65);
+            --bg-elevated: #1C1C1E;
+            --bg-sunken: #0A0A0A;
+            --bg-input: rgba(255, 255, 255, 0.06);
+            --text-primary: #F5F5F7;
+            --text-secondary: #A1A1A6;
+            --text-tertiary: #636366;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.6);
+            --accent-glow: rgba(0, 113, 227, 0.4);
+            --danger-glow: rgba(255, 59, 48, 0.3);
+            --success-glow: rgba(52, 199, 89, 0.3);
+            --grid-color: rgba(255, 255, 255, 0.03);
+            --glow: rgba(0, 113, 227, 0.25);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -82,31 +94,65 @@
             overflow-x: hidden;
         }
 
-        /* Decorative background elements */
-        body::before {
-            content: '';
+        /* Background grid */
+        .bg-grid {
             position: fixed;
-            top: -200px;
-            right: -200px;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(0, 113, 227, 0.08) 0%, transparent 70%);
-            border-radius: 50%;
+            inset: 0;
             pointer-events: none;
             z-index: 0;
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+            animation: gridShift 30s linear infinite;
+        }
+        @keyframes gridShift {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 48px 48px, 48px 48px; }
         }
 
-        body::after {
-            content: '';
+        /* Floating orbs */
+        .bg-orbs {
             position: fixed;
-            bottom: -300px;
-            left: -200px;
-            width: 700px;
-            height: 700px;
-            background: radial-gradient(circle, rgba(175, 82, 222, 0.06) 0%, transparent 70%);
-            border-radius: 50%;
+            inset: 0;
             pointer-events: none;
             z-index: 0;
+            overflow: hidden;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        [data-theme="dark"] .orb { opacity: 0.25; }
+        .orb-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            top: -150px; right: -150px;
+            animation-duration: 25s;
+        }
+        .orb-2 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+            bottom: -200px; left: -200px;
+            animation-duration: 30s;
+            animation-delay: -5s;
+        }
+        .orb-3 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+            top: 50%; left: 30%;
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(60px, -40px) scale(1.1); }
+            66% { transform: translate(-40px, 50px) scale(0.95); }
         }
 
         /* Header */
@@ -118,15 +164,12 @@
             backdrop-filter: saturate(180%) blur(24px);
             -webkit-backdrop-filter: saturate(180%) blur(24px);
             border-bottom: 1px solid var(--border);
-            transition: background-color 0.4s ease;
+            transition: background-color 0.4s ease, border-color 0.4s ease;
         }
-
-        @media (prefers-color-scheme: dark) {
-            .header { background: rgba(13, 13, 15, 0.65); }
-        }
+        [data-theme="dark"] .header { background: rgba(0, 0, 0, 0.65); }
 
         .header-inner {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 16px 24px;
             display: flex;
@@ -143,7 +186,6 @@
             color: var(--text-primary);
             transition: opacity 0.2s ease;
         }
-
         .logo:hover { opacity: 0.8; }
 
         .logo-icon {
@@ -160,7 +202,6 @@
         }
 
         .nav-links { display: flex; align-items: center; gap: 4px; }
-
         .nav-link {
             padding: 8px 16px;
             border-radius: 99px;
@@ -169,17 +210,54 @@
             color: var(--text-secondary);
             text-decoration: none;
             transition: all 0.25s var(--transition);
-            position: relative;
         }
-
         .nav-link:hover {
             background: rgba(142, 142, 147, 0.1);
             color: var(--text-primary);
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .icon-btn:hover {
+            background: rgba(142, 142, 147, 0.12);
+            color: var(--text-primary);
+        }
+        .icon-btn svg { width: 18px; height: 18px; }
+        .icon-btn .kbd-hint {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            font-family: var(--mono-stack);
+            color: var(--text-tertiary);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .icon-btn:hover .kbd-hint { opacity: 1; }
+
         /* Main */
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 56px 24px 100px;
             position: relative;
@@ -198,7 +276,6 @@
             z-index: -1;
             animation: floatHero 8s ease-in-out infinite;
         }
-
         @keyframes floatHero {
             0%, 100% { transform: translateY(0) rotate(0deg); }
             50% { transform: translateY(-15px) rotate(3deg); }
@@ -221,6 +298,20 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             line-height: 1.1;
+            min-height: 1.2em;
+        }
+        .typewriter-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 0.85em;
+            background: var(--accent);
+            margin-left: 4px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+            -webkit-text-fill-color: var(--accent);
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
         }
 
         .page-subtitle {
@@ -243,6 +334,7 @@
             margin-bottom: 36px;
             opacity: 0;
             animation: fadeIn 0.6s 0.15s var(--transition) forwards;
+            position: relative;
         }
 
         .tab {
@@ -259,9 +351,22 @@
             font-family: inherit;
             text-decoration: none;
             text-align: center;
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             position: relative;
             z-index: 1;
+        }
+        .tab .tab-kbd {
+            font-family: var(--mono-stack);
+            font-size: 0.68rem;
+            padding: 1px 6px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            font-weight: 600;
         }
 
         .tab.active {
@@ -270,14 +375,10 @@
             font-weight: 600;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
         }
-
-        @media (prefers-color-scheme: dark) {
-            .tab.active {
-                background: rgba(255, 255, 255, 0.1);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            }
+        [data-theme="dark"] .tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
-
         .tab:not(.active):hover { color: var(--text-primary); }
 
         /* Form Card */
@@ -292,7 +393,47 @@
             opacity: 0;
             animation: fadeInUp 0.7s 0.2s var(--transition) forwards;
             transition: background-color 0.4s ease, border-color 0.4s ease;
+            position: relative;
         }
+
+        /* Draft indicator */
+        .draft-indicator {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: var(--warning-soft);
+            color: var(--warning);
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        .draft-indicator.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .draft-indicator svg { width: 12px; height: 12px; }
+        .draft-clear {
+            background: transparent;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 4px;
+            font-size: 0.9rem;
+            line-height: 1;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        .draft-clear:hover { opacity: 1; }
 
         .form-section { display: none; }
         .form-section.active { display: block; }
@@ -316,7 +457,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 22px;
         }
-
         .form-grid .full { grid-column: 1 / -1; }
 
         @media (max-width: 640px) {
@@ -325,6 +465,7 @@
             .page-title { font-size: 2.1rem; }
             .container { padding: 40px 16px 80px; }
             .hero-decoration { display: none; }
+            .nav-links { display: none; }
         }
 
         .form-group {
@@ -333,18 +474,19 @@
             opacity: 0;
             animation: fadeInUp 0.5s var(--transition) forwards;
         }
-
-        .form-group:nth-child(1) { animation-delay: 0.05s; }
-        .form-group:nth-child(2) { animation-delay: 0.1s; }
-        .form-group:nth-child(3) { animation-delay: 0.15s; }
-        .form-group:nth-child(4) { animation-delay: 0.2s; }
-        .form-group:nth-child(5) { animation-delay: 0.25s; }
-        .form-group:nth-child(6) { animation-delay: 0.3s; }
-        .form-group:nth-child(7) { animation-delay: 0.35s; }
-        .form-group:nth-child(8) { animation-delay: 0.4s; }
+        .form-section.active .form-group:nth-child(1) { animation-delay: 0.05s; }
+        .form-section.active .form-group:nth-child(2) { animation-delay: 0.1s; }
+        .form-section.active .form-group:nth-child(3) { animation-delay: 0.15s; }
+        .form-section.active .form-group:nth-child(4) { animation-delay: 0.2s; }
+        .form-section.active .form-group:nth-child(5) { animation-delay: 0.25s; }
+        .form-section.active .form-group:nth-child(6) { animation-delay: 0.3s; }
+        .form-section.active .form-group:nth-child(7) { animation-delay: 0.35s; }
+        .form-section.active .form-group:nth-child(8) { animation-delay: 0.4s; }
 
         .form-label {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             font-size: 0.78rem;
             font-weight: 600;
             color: var(--text-secondary);
@@ -352,12 +494,9 @@
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }
+        .form-label .required { color: var(--danger); }
 
-        .form-label .required { color: var(--danger); margin-left: 2px; }
-
-        .input-wrapper {
-            position: relative;
-        }
+        .input-wrapper { position: relative; }
 
         .input-icon {
             position: absolute;
@@ -370,7 +509,6 @@
             pointer-events: none;
             transition: color 0.25s ease;
         }
-
         .input-wrapper.textarea-wrapper .input-icon {
             top: 16px;
             transform: none;
@@ -388,43 +526,31 @@
             transition: all 0.25s var(--transition);
             resize: vertical;
         }
-
-        .form-input.has-icon, .form-select.has-icon {
-            padding-left: 42px;
-        }
-
+        .form-input.has-icon, .form-select.has-icon { padding-left: 42px; }
         .form-textarea {
             min-height: 120px;
             line-height: 1.6;
             padding-left: 16px;
         }
-
         .form-input:hover, .form-textarea:hover, .form-select:hover {
             border-color: var(--border-strong);
             background: var(--bg-elevated);
         }
-
         .form-input:focus, .form-textarea:focus, .form-select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 4px var(--accent-glow);
             background: var(--bg-elevated);
             outline: none;
         }
-
         .form-input:focus ~ .input-icon,
-        .form-select:focus ~ .input-icon {
-            color: var(--accent);
-        }
+        .form-select:focus ~ .input-icon { color: var(--accent); }
 
         .form-input.error, .form-textarea.error, .form-select.error {
             border-color: var(--danger);
             box-shadow: 0 0 0 4px var(--danger-glow);
             animation: shake 0.4s var(--transition);
         }
-
-        .form-input.error ~ .input-icon {
-            color: var(--danger);
-        }
+        .form-input.error ~ .input-icon { color: var(--danger); }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -439,6 +565,13 @@
             display: flex;
             justify-content: space-between;
         }
+        .form-help .counter {
+            font-family: var(--mono-stack);
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .form-help .counter.warning { color: var(--warning); }
+        .form-help .counter.danger { color: var(--danger); }
 
         .form-error {
             font-size: 0.8rem;
@@ -447,9 +580,11 @@
             display: none;
             font-weight: 500;
             animation: fadeIn 0.3s ease;
+            align-items: center;
+            gap: 6px;
         }
-
-        .form-error.visible { display: block; }
+        .form-error svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .form-error.visible { display: flex; }
 
         /* Checkbox */
         .checkbox-group {
@@ -463,12 +598,10 @@
             cursor: pointer;
             transition: all 0.25s var(--transition);
         }
-
         .checkbox-group:hover {
             border-color: var(--border-strong);
             background: var(--bg-elevated);
         }
-
         .checkbox-group input[type="checkbox"] {
             width: 20px;
             height: 20px;
@@ -478,20 +611,17 @@
             cursor: pointer;
             border-radius: 6px;
         }
-
         .checkbox-label {
             font-size: 0.88rem;
             color: var(--text-primary);
             line-height: 1.5;
             cursor: pointer;
         }
-
         .checkbox-label a {
             color: var(--accent);
             text-decoration: none;
             font-weight: 500;
         }
-
         .checkbox-label a:hover { text-decoration: underline; }
 
         /* Submit Button */
@@ -516,7 +646,6 @@
             overflow: hidden;
             box-shadow: 0 4px 16px var(--accent-glow);
         }
-
         .submit-btn::after {
             content: '';
             position: absolute;
@@ -527,24 +656,17 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
             transition: left 0.6s ease;
         }
-
-        .submit-btn:hover:not(:disabled)::after {
-            left: 100%;
-        }
-
+        .submit-btn:hover:not(:disabled)::after { left: 100%; }
         .submit-btn:hover:not(:disabled) {
             box-shadow: 0 8px 24px var(--accent-glow);
             transform: translateY(-2px);
         }
-
         .submit-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
-
         .submit-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
-
         .submit-btn .spinner {
             width: 20px;
             height: 20px;
@@ -556,8 +678,8 @@
 
         /* Info box */
         .info-box {
-            background: rgba(0, 113, 227, 0.06);
-            border: 1.5px solid rgba(0, 113, 227, 0.15);
+            background: var(--accent-soft);
+            border: 1.5px solid rgba(0, 113, 227, 0.2);
             border-radius: var(--radius-md);
             padding: 18px 20px;
             margin-bottom: 28px;
@@ -566,12 +688,9 @@
             align-items: flex-start;
             transition: all 0.3s ease;
         }
-
         .info-box:hover {
-            background: rgba(0, 113, 227, 0.08);
-            border-color: rgba(0, 113, 227, 0.25);
+            border-color: rgba(0, 113, 227, 0.35);
         }
-
         .info-box svg {
             width: 22px;
             height: 22px;
@@ -579,13 +698,11 @@
             flex-shrink: 0;
             margin-top: 1px;
         }
-
         .info-box-text {
             font-size: 0.9rem;
             color: var(--text-primary);
             line-height: 1.6;
         }
-
         .info-box-text strong { font-weight: 600; }
         .info-box-text a { color: var(--accent); text-decoration: none; font-weight: 500; }
         .info-box-text a:hover { text-decoration: underline; }
@@ -604,7 +721,6 @@
             animation: fadeInUp 0.7s 0.3s var(--transition) forwards;
             transition: all 0.4s ease;
         }
-
         .rules-title {
             font-size: 1.35rem;
             font-weight: 700;
@@ -614,18 +730,15 @@
             align-items: center;
             gap: 12px;
         }
-
         .rules-title svg {
             width: 24px;
             height: 24px;
             color: var(--accent);
         }
-
         .rules-list {
             list-style: none;
             counter-reset: rule-counter;
         }
-
         .rules-list li {
             counter-increment: rule-counter;
             position: relative;
@@ -639,7 +752,6 @@
             transition: all 0.35s var(--transition);
             cursor: default;
         }
-
         .rules-list li::before {
             content: counter(rule-counter);
             position: absolute;
@@ -658,61 +770,62 @@
             font-weight: 700;
             box-shadow: 0 2px 8px var(--accent-glow);
         }
-
         .rules-list li:hover {
             border-color: var(--accent);
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
             background: var(--bg-elevated);
         }
-
         .rules-list li strong { font-weight: 600; color: var(--text-primary); }
 
         /* Toast */
-        .toast {
+        .toast-container {
             position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%) translateY(30px);
-            background: rgba(255, 255, 255, 0.85);
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
-            padding: 16px 28px;
-            border-radius: 99px;
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.2) inset;
+            padding: 14px 20px;
+            border-radius: 14px;
+            box-shadow: var(--shadow-lg);
             font-size: 0.92rem;
             font-weight: 500;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.4s var(--transition);
-            z-index: 300;
+            pointer-events: auto;
+            animation: toastIn 0.3s var(--bounce);
             display: flex;
             align-items: center;
             gap: 12px;
-            max-width: 90%;
+            min-width: 260px;
+            max-width: 380px;
+            color: var(--text-primary);
         }
-
-        @media (prefers-color-scheme: dark) {
-            .toast {
-                background: rgba(30, 30, 32, 0.85);
-                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.08) inset;
-            }
+        .toast.removing { animation: toastOut 0.25s ease forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
-        .toast.visible {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(100%); }
         }
-
-        .toast.success { color: var(--success); }
-        .toast.error { color: var(--danger); }
-        .toast.warning { color: var(--warning); }
-
         .toast-icon {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             flex-shrink: 0;
         }
+        .toast-icon.success { color: var(--success); }
+        .toast-icon.info { color: var(--accent); }
+        .toast-icon.warning { color: var(--warning); }
+        .toast-icon.error { color: var(--danger); }
+        .toast-message { flex: 1; }
 
         /* Success screen */
         .success-screen {
@@ -720,23 +833,21 @@
             text-align: center;
             padding: 56px 32px;
         }
-
         .success-screen.active { display: block; animation: fadeInUp 0.6s var(--transition); }
 
         .success-icon {
             width: 80px;
             height: 80px;
             margin: 0 auto 28px;
-            background: var(--success-glow);
+            background: var(--success-soft);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--success);
             position: relative;
-            animation: scaleIn 0.6s var(--transition);
+            animation: scaleIn 0.6s var(--bounce);
         }
-
         .success-icon::before {
             content: '';
             position: absolute;
@@ -746,19 +857,16 @@
             opacity: 0;
             animation: pulseRing 2s ease-out infinite;
         }
-
         @keyframes pulseRing {
             0% { transform: scale(0.8); opacity: 0.5; }
             100% { transform: scale(1.4); opacity: 0; }
         }
-
         .success-title {
             font-size: 1.6rem;
             font-weight: 700;
             margin-bottom: 12px;
             letter-spacing: -0.02em;
         }
-
         .success-text {
             color: var(--text-secondary);
             margin-bottom: 36px;
@@ -768,7 +876,6 @@
             font-size: 1rem;
             line-height: 1.6;
         }
-
         .success-actions {
             display: flex;
             gap: 12px;
@@ -790,7 +897,6 @@
             align-items: center;
             gap: 8px;
         }
-
         .btn-primary {
             background: var(--accent);
             color: white;
@@ -801,15 +907,73 @@
             box-shadow: 0 6px 18px var(--accent-glow);
             transform: translateY(-1px);
         }
-
         .btn-secondary {
-            background: rgba(142, 142, 147, 0.12);
+            background: var(--bg-input);
             color: var(--text-primary);
+            border: 1px solid var(--border-strong);
         }
         .btn-secondary:hover {
-            background: rgba(142, 142, 147, 0.2);
+            background: var(--bg-elevated);
             transform: translateY(-1px);
         }
+
+        /* Hotkey hints */
+        .hotkey-hints {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            font-family: var(--mono-stack);
+        }
+        .hotkey-hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        .hotkey-hint:hover { opacity: 1; }
+        kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
+            border-radius: 4px;
+            font-family: var(--mono-stack);
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: 0 1px 0 var(--border-strong);
+        }
+
+        /* Footer */
+        .footer {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 0.82rem;
+            position: relative;
+            z-index: 1;
+            background: var(--bg-body);
+            transition: background-color 0.4s ease;
+        }
+        .footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            margin: 0 8px;
+            transition: color 0.2s ease;
+        }
+        .footer a:hover { color: var(--accent); }
 
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -827,383 +991,454 @@
             border: 2px solid var(--bg-body);
         }
         ::-webkit-scrollbar-thumb:hover { background: rgba(142, 142, 147, 0.5); }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hotkey-hints { display: none; }
+            .toast-container { bottom: 16px; right: 16px; left: 16px; }
+            .toast { min-width: 0; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="header-inner">
-            <a href="/" class="logo">
-                <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            <span class="logo-text">Oris</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Projects</a>
+            <a href="/news" class="nav-link">News</a>
+            <a href="/changelog" class="nav-link">Changelog</a>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="themeBtn" aria-label="Переключить тему">
+                <svg id="themeIconSun" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:none;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>
-                <span class="logo-text">Oris</span>
-            </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Projects</a>
-                <a href="/news" class="nav-link">News</a>
-                <a href="/changelog" class="nav-link">Changelog</a>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- Decorative hero image -->
-        <img class="hero-decoration" src="https://oris-flax.vercel.app/add/effects.png" alt="" aria-hidden="true">
-
-        <div class="page-header">
-            <h1 class="page-title">Добавить проект</h1>
-            <p class="page-subtitle">Разместите свой сайт в каталоге Oris или предложите сотрудничество</p>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs" role="tablist">
-            <a href="/add?p=saite" class="tab active" id="tab-saite" role="tab" data-mode="saite">Добавить сайт</a>
-            <a href="/add?p=corp" class="tab" id="tab-corp" role="tab" data-mode="corp">Сотрудничество</a>
-            <a href="/add?p=rules" class="tab" id="tab-rules" role="tab" data-mode="rules">Правила</a>
-        </div>
-
-        <!-- SAITE FORM -->
-        <div class="form-card form-section active" id="section-saite" data-mode="saite">
-            <h2 class="form-section-title">Добавление сайта в каталог</h2>
-            <p class="form-section-desc">Поделитесь своим проектом с сообществом Oris. Модерация занимает до 24 часов.</p>
-
-            <div class="info-box">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                <svg id="themeIconMoon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
-                <div class="info-box-text">
-                    <strong>Важно:</strong> сайт должен быть рабочим, без вредоносного контента и соответствовать <a href="/add?p=rules">правилам</a>.
-                </div>
-            </div>
-
-            <form id="form-saite" novalidate>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label" for="saite-title">Название сайта<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <input type="text" class="form-input has-icon" id="saite-title" name="title" maxlength="80" required placeholder="Мой крутой проект" autocomplete="off">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="saite-title">Введите название (минимум 3 символа)</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="saite-url">URL сайта<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <input type="url" class="form-input has-icon" id="saite-url" name="url" required placeholder="https://example.com" autocomplete="off">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="saite-url">Введите корректный URL</div>
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="form-label" for="saite-desc">Описание<span class="required">*</span></label>
-                        <div class="input-wrapper textarea-wrapper">
-                            <textarea class="form-textarea" id="saite-desc" name="description" maxlength="500" required placeholder="Кратко опишите, что делает ваш сайт и для кого он предназначен"></textarea>
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
-                        </div>
-                        <div class="form-help">
-                            <span>До 500 символов</span>
-                            <span id="saite-desc-counter">0</span>/500
-                        </div>
-                        <div class="form-error" data-error-for="saite-desc">Описание должно содержать минимум 20 символов</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="saite-category">Категория</label>
-                        <div class="input-wrapper">
-                            <select class="form-select has-icon" id="saite-category" name="category">
-                                <option value="other">Другое</option>
-                                <option value="tools">Инструменты</option>
-                                <option value="dev">Для разработчиков</option>
-                                <option value="design">Дизайн</option>
-                                <option value="education">Образование</option>
-                                <option value="games">Игры</option>
-                                <option value="media">Медиа</option>
-                                <option value="social">Соцсети</option>
-                            </select>
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="saite-name">Ваше имя<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <input type="text" class="form-input has-icon" id="saite-name" name="authorName" maxlength="50" required placeholder="Как к вам обращаться" autocomplete="name">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="saite-name">Введите ваше имя</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="saite-email">Email<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <input type="email" class="form-input has-icon" id="saite-email" name="email" required placeholder="you@example.com" autocomplete="email">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="saite-email">Введите корректный email</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="saite-telegram">Telegram</label>
-                        <div class="input-wrapper">
-                            <input type="text" class="form-input has-icon" id="saite-telegram" name="telegram" maxlength="50" placeholder="@username" autocomplete="off">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                        </div>
-                        <div class="form-help">Для быстрой связи</div>
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="checkbox" id="saite-rules" required>
-                            Я ознакомился с <a href="/add?p=rules" target="_blank">правилами размещения</a> и согласен с ними
-                        </label>
-                        <div class="form-error" data-error-for="saite-rules">Необходимо принять правила</div>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn" id="submit-saite">
-                    <span>Отправить на модерацию</span>
-                </button>
-            </form>
+                <span class="kbd-hint">T</span>
+            </button>
         </div>
-
-        <!-- CORP FORM -->
-        <div class="form-card form-section" id="section-corp" data-mode="corp">
-            <h2 class="form-section-title">Сотрудничество</h2>
-            <p class="form-section-desc">Партнёрство, реклама, интеграции — мы открыты для предложений</p>
-
-            <div class="info-box">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-                <div class="info-box-text">
-                    <strong>Ответ в течение 24 часов.</strong> Все предложения рассматриваются командой Oris индивидуально.
-                </div>
-            </div>
-
-            <form id="form-corp" novalidate>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label" for="corp-name">Имя<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <input type="text" class="form-input has-icon" id="corp-name" name="name" maxlength="80" required placeholder="Иван Иванов" autocomplete="name">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="corp-name">Введите ваше имя</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="corp-company">Компания</label>
-                        <div class="input-wrapper">
-                            <input type="text" class="form-input has-icon" id="corp-company" name="company" maxlength="100" placeholder="Название компании" autocomplete="organization">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="corp-email">Email<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <input type="email" class="form-input has-icon" id="corp-email" name="email" required placeholder="you@company.com" autocomplete="email">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="corp-email">Введите корректный email</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="corp-telegram">Telegram</label>
-                        <div class="input-wrapper">
-                            <input type="text" class="form-input has-icon" id="corp-telegram" name="telegram" maxlength="50" placeholder="@username" autocomplete="off">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                        </div>
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="form-label" for="corp-type">Тип сотрудничества<span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <select class="form-select has-icon" id="corp-type" name="type" required>
-                                <option value="">Выберите тип</option>
-                                <option value="partnership">Партнёрство</option>
-                                <option value="advertising">Реклама / Спонсорство</option>
-                                <option value="integration">Техническая интеграция</option>
-                                <option value="content">Контент / Публикации</option>
-                                <option value="other">Другое</option>
-                            </select>
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                        </div>
-                        <div class="form-error" data-error-for="corp-type">Выберите тип сотрудничества</div>
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="form-label" for="corp-message">Сообщение<span class="required">*</span></label>
-                        <div class="input-wrapper textarea-wrapper">
-                            <textarea class="form-textarea" id="corp-message" name="message" maxlength="2000" required placeholder="Расскажите о вашем предложении, целях и ожидаемых результатах"></textarea>
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-                        </div>
-                        <div class="form-help">
-                            <span>До 2000 символов</span>
-                            <span id="corp-message-counter">0</span>/2000
-                        </div>
-                        <div class="form-error" data-error-for="corp-message">Сообщение должно содержать минимум 20 символов</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="corp-budget">Примерный бюджет</label>
-                        <div class="input-wrapper">
-                            <select class="form-select has-icon" id="corp-budget" name="budget">
-                                <option value="">Не указан</option>
-                                <option value="free">Без бюджета / barter</option>
-                                <option value="small">До 50 000 ₽</option>
-                                <option value="medium">50 000 — 300 000 ₽</option>
-                                <option value="large">300 000 — 1 000 000 ₽</option>
-                                <option value="enterprise">Более 1 000 000 ₽</option>
-                            </select>
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="corp-website">Сайт компании</label>
-                        <div class="input-wrapper">
-                            <input type="url" class="form-input has-icon" id="corp-website" name="website" placeholder="https://company.com" autocomplete="url">
-                            <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
-                        </div>
-                    </div>
-
-                    <div class="form-group full">
-                        <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="checkbox" id="corp-agree" required>
-                            Я согласен на обработку персональных данных в соответствии с <a href="#" data-modal="privacyModal">политикой конфиденциальности</a>
-                        </label>
-                        <div class="form-error" data-error-for="corp-agree">Необходимо согласие</div>
-                    </div>
-                </div>
-
-                <button type="submit" class="submit-btn" id="submit-corp">
-                    <span>Отправить предложение</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- RULES SECTION -->
-        <div class="form-section" id="section-rules" data-mode="rules">
-            <div class="rules-card" style="opacity: 1; animation: none;">
-                <h2 class="rules-title">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                    </svg>
-                    Правила размещения сайтов
-                </h2>
-
-                <ol class="rules-list">
-                    <li><strong>Работоспособность.</strong> Сайт должен быть доступен по указанному URL и корректно отображаться в современных браузерах.</li>
-                    <li><strong>Легальный контент.</strong> Запрещены материалы, нарушающие законодательство РФ и международные нормы: пиратство, экстремизм, порнография, продажа запрещённых товаров.</li>
-                    <li><strong>Без вредоносного ПО.</strong> Сайт не должен содержать вирусы, майнеры, фишинговые формы и скрытые редиректы.</li>
-                    <li><strong>Честное описание.</strong> Описание должно точно отражать содержание сайта. Запрещён кликбейт и misleading-информация.</li>
-                    <li><strong>Без агрессивной рекламы.</strong> Не допускаются сайты с навязчивыми pop-up, автовоспроизведением звука и обилием баннеров.</li>
-                    <li><strong>Уникальность.</strong> Предпочтение отдаётся авторским проектам. Клоны и агрегаторы без добавленной ценности могут быть отклонены.</li>
-                    <li><strong>HTTPS обязателен.</strong> Сайт должен работать по защищённому протоколу HTTPS.</li>
-                    <li><strong>Модерация.</strong> Команда Oris оставляет за собой право отклонить заявку без объяснения причин или удалить сайт из каталога при нарушении правил.</li>
-                    <li><strong>Актуальность контактов.</strong> Указанные контакты должны быть рабочими — мы можем связаться для уточнения деталей.</li>
-                    <li><strong>Обратная связь.</strong> Если ваш сайт был отклонён, вы можете подать заявку повторно после устранения замечаний.</li>
-                </ol>
-            </div>
-
-            <div class="rules-card" style="opacity: 1; animation: none; margin-top: 20px;">
-                <h2 class="rules-title">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                    </svg>
-                    Как это работает
-                </h2>
-                <ol class="rules-list">
-                    <li>Заполните форму <strong>«Добавить сайт»</strong> — это займёт пару минут.</li>
-                    <li>Мы получим заявку и проверим сайт в течение <strong>24 часов</strong>.</li>
-                    <li>При одобрении сайт появится в каталоге Oris и будет доступен всем посетителям.</li>
-                    <li>Мы свяжемся с вами по указанным контактам, если потребуются уточнения.</li>
-                </ol>
-            </div>
-        </div>
-
-        <!-- Success Screen -->
-        <div class="form-card success-screen" id="success-screen">
-            <div class="success-icon">
-                <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
-                </svg>
-            </div>
-            <h2 class="success-title" id="success-title">Заявка отправлена!</h2>
-            <p class="success-text" id="success-text">Мы получили вашу заявку и рассмотрим её в ближайшее время. Ответ придёт на указанный email.</p>
-            <div class="success-actions">
-                <a href="/" class="btn btn-primary">На главную</a>
-                <button class="btn btn-secondary" id="new-submission">Отправить ещё</button>
-            </div>
-        </div>
-    </main>
-
-    <!-- Toast -->
-    <div class="toast" id="toast">
-        <svg class="toast-icon" id="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span id="toast-message"></span>
     </div>
+</header>
+
+<main class="container">
+    <img class="hero-decoration" src="https://oris-flax.vercel.app/add/effects.png" alt="" aria-hidden="true">
+
+    <div class="page-header">
+        <h1 class="page-title" id="pageTitle"></h1>
+        <p class="page-subtitle">Разместите свой сайт в каталоге Oris или предложите сотрудничество</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+        <a href="/add?p=saite" class="tab active" id="tab-saite" role="tab" data-mode="saite">
+            Добавить сайт <span class="tab-kbd">1</span>
+        </a>
+        <a href="/add?p=corp" class="tab" id="tab-corp" role="tab" data-mode="corp">
+            Сотрудничество <span class="tab-kbd">2</span>
+        </a>
+        <a href="/add?p=rules" class="tab" id="tab-rules" role="tab" data-mode="rules">
+            Правила <span class="tab-kbd">3</span>
+        </a>
+    </div>
+
+    <!-- SAITE FORM -->
+    <div class="form-card form-section active" id="section-saite" data-mode="saite">
+        <div class="draft-indicator" id="draft-saite">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Есть сохранённый черновик</span>
+            <button class="draft-clear" data-draft-clear="saite" aria-label="Очистить черновик">×</button>
+        </div>
+
+        <h2 class="form-section-title">Добавление сайта в каталог</h2>
+        <p class="form-section-desc">Поделитесь своим проектом с сообществом Oris. Модерация занимает до 24 часов.</p>
+
+        <div class="info-box">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="info-box-text">
+                <strong>Важно:</strong> сайт должен быть рабочим, без вредоносного контента и соответствовать <a href="/add?p=rules">правилам</a>. Данные сохраняются автоматически.
+            </div>
+        </div>
+
+        <form id="form-saite" novalidate>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="saite-title">Название сайта<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input has-icon" id="saite-title" name="title" maxlength="80" required placeholder="Мой крутой проект" autocomplete="off" data-draft="saite-title">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="saite-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Введите название (минимум 3 символа)</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="saite-url">URL сайта<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="url" class="form-input has-icon" id="saite-url" name="url" required placeholder="https://example.com" autocomplete="off" data-draft="saite-url">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="saite-url">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Введите корректный URL (https://...)</span>
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label class="form-label" for="saite-desc">Описание<span class="required">*</span></label>
+                    <div class="input-wrapper textarea-wrapper">
+                        <textarea class="form-textarea" id="saite-desc" name="description" maxlength="500" required placeholder="Кратко опишите, что делает ваш сайт и для кого он предназначен" data-draft="saite-desc"></textarea>
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                    </div>
+                    <div class="form-help">
+                        <span>До 500 символов</span>
+                        <span><span class="counter" id="saite-desc-counter">0</span>/500</span>
+                    </div>
+                    <div class="form-error" data-error-for="saite-desc">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Описание должно содержать минимум 20 символов</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="saite-category">Категория</label>
+                    <div class="input-wrapper">
+                        <select class="form-select has-icon" id="saite-category" name="category" data-draft="saite-category">
+                            <option value="other">Другое</option>
+                            <option value="tools">Инструменты</option>
+                            <option value="dev">Для разработчиков</option>
+                            <option value="design">Дизайн</option>
+                            <option value="education">Образование</option>
+                            <option value="games">Игры</option>
+                            <option value="media">Медиа</option>
+                            <option value="social">Соцсети</option>
+                        </select>
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="saite-name">Ваше имя<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input has-icon" id="saite-name" name="authorName" maxlength="50" required placeholder="Как к вам обращаться" autocomplete="name" data-draft="saite-name">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="saite-name">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Введите ваше имя</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="saite-email">Email<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="email" class="form-input has-icon" id="saite-email" name="email" required placeholder="you@example.com" autocomplete="email" data-draft="saite-email">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="saite-email">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Введите корректный email</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="saite-telegram">Telegram</label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input has-icon" id="saite-telegram" name="telegram" maxlength="50" placeholder="@username" autocomplete="off" data-draft="saite-telegram">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    </div>
+                    <div class="form-help"><span>Для быстрой связи</span><span></span></div>
+                </div>
+
+                <div class="form-group full">
+                    <label class="checkbox-label" style="cursor: pointer; display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: var(--bg-input); border: 1.5px solid var(--border); border-radius: var(--radius-md);">
+                        <input type="checkbox" id="saite-rules" required style="width: 20px; height: 20px; margin-top: 1px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer;">
+                        <span>Я ознакомился с <a href="/add?p=rules" target="_blank">правилами размещения</a> и согласен с ними</span>
+                    </label>
+                    <div class="form-error" data-error-for="saite-rules">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Необходимо принять правила</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-saite">
+                <span>Отправить на модерацию</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- CORP FORM -->
+    <div class="form-card form-section" id="section-corp" data-mode="corp">
+        <div class="draft-indicator" id="draft-corp">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Есть сохранённый черновик</span>
+            <button class="draft-clear" data-draft-clear="corp" aria-label="Очистить черновик">×</button>
+        </div>
+
+        <h2 class="form-section-title">Сотрудничество</h2>
+        <p class="form-section-desc">Партнёрство, реклама, интеграции — мы открыты для предложений</p>
+
+        <div class="info-box">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+            <div class="info-box-text">
+                <strong>Ответ в течение 24 часов.</strong> Все предложения рассматриваются командой Oris индивидуально.
+            </div>
+        </div>
+
+        <form id="form-corp" novalidate>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="corp-name">Имя<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input has-icon" id="corp-name" name="name" maxlength="80" required placeholder="Иван Иванов" autocomplete="name" data-draft="corp-name">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="corp-name">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Введите ваше имя</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corp-company">Компания</label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input has-icon" id="corp-company" name="company" maxlength="100" placeholder="Название компании" autocomplete="organization" data-draft="corp-company">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corp-email">Email<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="email" class="form-input has-icon" id="corp-email" name="email" required placeholder="you@company.com" autocomplete="email" data-draft="corp-email">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="corp-email">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Введите корректный email</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corp-telegram">Telegram</label>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input has-icon" id="corp-telegram" name="telegram" maxlength="50" placeholder="@username" autocomplete="off" data-draft="corp-telegram">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label class="form-label" for="corp-type">Тип сотрудничества<span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <select class="form-select has-icon" id="corp-type" name="type" required data-draft="corp-type">
+                            <option value="">Выберите тип</option>
+                            <option value="partnership">Партнёрство</option>
+                            <option value="advertising">Реклама / Спонсорство</option>
+                            <option value="integration">Техническая интеграция</option>
+                            <option value="content">Контент / Публикации</option>
+                            <option value="other">Другое</option>
+                        </select>
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    </div>
+                    <div class="form-error" data-error-for="corp-type">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Выберите тип сотрудничества</span>
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label class="form-label" for="corp-message">Сообщение<span class="required">*</span></label>
+                    <div class="input-wrapper textarea-wrapper">
+                        <textarea class="form-textarea" id="corp-message" name="message" maxlength="2000" required placeholder="Расскажите о вашем предложении, целях и ожидаемых результатах" data-draft="corp-message"></textarea>
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                    </div>
+                    <div class="form-help">
+                        <span>До 2000 символов</span>
+                        <span><span class="counter" id="corp-message-counter">0</span>/2000</span>
+                    </div>
+                    <div class="form-error" data-error-for="corp-message">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Сообщение должно содержать минимум 20 символов</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corp-budget">Примерный бюджет</label>
+                    <div class="input-wrapper">
+                        <select class="form-select has-icon" id="corp-budget" name="budget" data-draft="corp-budget">
+                            <option value="">Не указан</option>
+                            <option value="free">Без бюджета / barter</option>
+                            <option value="small">До 50 000 ₽</option>
+                            <option value="medium">50 000 — 300 000 ₽</option>
+                            <option value="large">300 000 — 1 000 000 ₽</option>
+                            <option value="enterprise">Более 1 000 000 ₽</option>
+                        </select>
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="corp-website">Сайт компании</label>
+                    <div class="input-wrapper">
+                        <input type="url" class="form-input has-icon" id="corp-website" name="website" placeholder="https://company.com" autocomplete="url" data-draft="corp-website">
+                        <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label class="checkbox-label" style="cursor: pointer; display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: var(--bg-input); border: 1.5px solid var(--border); border-radius: var(--radius-md);">
+                        <input type="checkbox" id="corp-agree" required style="width: 20px; height: 20px; margin-top: 1px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer;">
+                        <span>Я согласен на обработку персональных данных в соответствии с <a href="#" data-modal="privacyModal">политикой конфиденциальности</a></span>
+                    </label>
+                    <div class="form-error" data-error-for="corp-agree">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Необходимо согласие</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-corp">
+                <span>Отправить предложение</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- RULES SECTION -->
+    <div class="form-section" id="section-rules" data-mode="rules">
+        <div class="rules-card" style="opacity: 1; animation: none;">
+            <h2 class="rules-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Правила размещения сайтов
+            </h2>
+
+            <ol class="rules-list">
+                <li><strong>Работоспособность.</strong> Сайт должен быть доступен по указанному URL и корректно отображаться в современных браузерах.</li>
+                <li><strong>Легальный контент.</strong> Запрещены материалы, нарушающие законодательство РФ и международные нормы: пиратство, экстремизм, порнография, продажа запрещённых товаров.</li>
+                <li><strong>Без вредоносного ПО.</strong> Сайт не должен содержать вирусы, майнеры, фишинговые формы и скрытые редиректы.</li>
+                <li><strong>Честное описание.</strong> Описание должно точно отражать содержание сайта. Запрещён кликбейт и misleading-информация.</li>
+                <li><strong>Без агрессивной рекламы.</strong> Не допускаются сайты с навязчивыми pop-up, автовоспроизведением звука и обилием баннеров.</li>
+                <li><strong>Уникальность.</strong> Предпочтение отдаётся авторским проектам. Клоны и агрегаторы без добавленной ценности могут быть отклонены.</li>
+                <li><strong>HTTPS обязателен.</strong> Сайт должен работать по защищённому протоколу HTTPS.</li>
+                <li><strong>Модерация.</strong> Команда Oris оставляет за собой право отклонить заявку без объяснения причин или удалить сайт из каталога при нарушении правил.</li>
+                <li><strong>Актуальность контактов.</strong> Указанные контакты должны быть рабочими — мы можем связаться для уточнения деталей.</li>
+                <li><strong>Обратная связь.</strong> Если ваш сайт был отклонён, вы можете подать заявку повторно после устранения замечаний.</li>
+            </ol>
+        </div>
+
+        <div class="rules-card" style="opacity: 1; animation: none; margin-top: 20px;">
+            <h2 class="rules-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Как это работает
+            </h2>
+            <ol class="rules-list">
+                <li>Заполните форму <strong>«Добавить сайт»</strong> — это займёт пару минут.</li>
+                <li>Мы получим заявку и проверим сайт в течение <strong>24 часов</strong>.</li>
+                <li>При одобрении сайт появится в каталоге Oris и будет доступен всем посетителям.</li>
+                <li>Мы свяжемся с вами по указанным контактам, если потребуются уточнения.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Success Screen -->
+    <div class="form-card success-screen" id="success-screen">
+        <div class="success-icon">
+            <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <h2 class="success-title" id="success-title">Заявка отправлена!</h2>
+        <p class="success-text" id="success-text">Мы получили вашу заявку и рассмотрим её в ближайшее время. Ответ придёт на указанный email.</p>
+        <div class="success-actions">
+            <a href="/" class="btn btn-primary">На главную</a>
+            <button class="btn btn-secondary" id="new-submission">Отправить ещё</button>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div>
+        <a href="/">Projects</a>
+        <a href="/news">News</a>
+        <a href="/changelog">Changelog</a>
+    </div>
+    <div style="margin-top: 12px;">
+        Oris Platform · <span id="currentYear"></span>
+    </div>
+</footer>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>1</kbd> добавить сайт</div>
+    <div class="hotkey-hint"><kbd>2</kbd> сотрудничество</div>
+    <div class="hotkey-hint"><kbd>3</kbd> правила</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
 
 <script>
 (function() {
     'use strict';
 
     // ============================================
-    // Константы конфигурации
+    // Configuration
     // ============================================
-    
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {number} Длительность показа toast-уведомления по умолчанию (мс) */
         TOAST_DURATION: 4500,
-        
-        /** @type {number} Минимальная длина заголовка сайта */
         MIN_TITLE_LENGTH: 3,
-        
-        /** @type {number} Минимальная длина описания */
         MIN_DESCRIPTION_LENGTH: 20,
-        
-        /** @type {number} Минимальная длина имени */
         MIN_NAME_LENGTH: 2,
-        
-        /** @type {string} URL для отправки заявки на добавление сайта */
         SAITE_SUBMIT_URL: '/api/add/saite',
-        
-        /** @type {string} URL для отправки заявки на сотрудничество */
         CORP_SUBMIT_URL: '/api/add/corp',
-        
-        /** @type {string} Базовый URL для страниц */
         BASE_URL: '/add',
-        
-        /** @type {string} Параметр URL для режима */
-        MODE_PARAM: 'p'
+        MODE_PARAM: 'p',
+        DRAFT_KEY_PREFIX: 'oris-draft-',
+        DRAFT_SAVE_DELAY: 500,
+        THEME_KEY: 'oris-theme'
     };
 
-    /**
-     * Доступные режимы работы
-     * @constant {Array<string>}
-     */
     const VALID_MODES = ['saite', 'corp', 'rules'];
-
-    /**
-     * Режим по умолчанию
-     * @constant {string}
-     */
     const DEFAULT_MODE = 'saite';
 
-    /**
-     * Сообщения для UI
-     * @constant {Object<string, string>}
-     */
     const MESSAGES = {
         validationError: 'Проверьте правильность заполнения полей',
         submitSuccess: 'Успешно отправлено',
@@ -1211,132 +1446,238 @@
         saiteSuccessText: 'Мы получили ваш сайт и рассмотрим его в течение 24 часов. Результат придёт на указанный email.',
         corpSuccessTitle: 'Предложение отправлено!',
         corpSuccessText: 'Спасибо за интерес к сотрудничеству. Наша команда свяжется с вами в течение 24 часов.',
-        serverError: 'Ошибка сервера'
+        serverError: 'Ошибка сервера',
+        draftLoaded: 'Черновик восстановлен',
+        draftCleared: 'Черновик удалён',
+        themeChanged: 'Тема изменена'
+    };
+
+    const PAGE_TITLES = {
+        saite: 'Добавить проект',
+        corp: 'Сотрудничество',
+        rules: 'Правила размещения'
     };
 
     // ============================================
-    // Состояние приложения
+    // State
     // ============================================
-    
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
     const State = {
-        /** @type {string} Текущий режим работы: 'saite' | 'corp' | 'rules' */
-        mode: DEFAULT_MODE
+        mode: DEFAULT_MODE,
+        theme: 'light',
+        draftTimers: {}
     };
 
     // ============================================
-    // UI Utilities
+    // DOM Cache
     // ============================================
-    
-    /**
-     * Утилиты пользовательского интерфейса
-     * @namespace
-     */
-    const UI = {
-        /** @type {number|null} ID таймера toast */
-        toastTimer: null,
+    const DOM = {
+        html: document.documentElement,
+        themeBtn: null,
+        themeIconSun: null,
+        themeIconMoon: null,
+        pageTitle: null,
+        toastContainer: null,
+        currentYear: null
+    };
 
-        /**
-         * SVG иконки для toast-уведомлений
-         * @type {Object<string, string>}
-         */
-        icons: {
-            success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-            error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-            warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
-            info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-        },
+    // ============================================
+    // Toast System
+    // ============================================
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
 
-        /**
-         * Показ toast-уведомления
-         * 
-         * @param {string} message - Текст уведомления
-         * @param {string} type - Тип уведомления: 'info' | 'success' | 'error' | 'warning'
-         * @param {number} duration - Длительность показа в мс
-         */
-        toast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
-            const toastElement = document.getElementById('toast');
-            const messageElement = document.getElementById('toast-message');
-            const iconElement = document.getElementById('toast-icon');
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
+    }
 
-            toastElement.className = `toast ${type} visible`;
-            messageElement.textContent = message;
-            iconElement.innerHTML = this.icons[type] || this.icons.info;
+    // ============================================
+    // Theme System
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
 
-            clearTimeout(this.toastTimer);
-            this.toastTimer = setTimeout(() => {
-                toastElement.classList.remove('visible');
-            }, duration);
-        },
+    function applyTheme(theme) {
+        State.theme = theme;
+        DOM.html.setAttribute('data-theme', theme);
+        DOM.themeIconSun.style.display = theme === 'dark' ? 'block' : 'none';
+        DOM.themeIconMoon.style.display = theme === 'dark' ? 'none' : 'block';
+        try { localStorage.setItem(CONFIG.THEME_KEY, theme); } catch (e) {}
+    }
 
-        /**
-         * Установка состояния загрузки для кнопки
-         * 
-         * @param {HTMLElement} button - Элемент кнопки
-         * @param {boolean} isLoading - Состояние загрузки
-         */
-        setLoading(button, isLoading) {
-            if (isLoading) {
-                button.dataset.originalHtml = button.innerHTML;
-                button.innerHTML = '<span class="spinner"></span><span>Отправка...</span>';
-                button.disabled = true;
-            } else {
-                button.innerHTML = button.dataset.originalHtml || button.innerHTML;
-                button.disabled = false;
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`${MESSAGES.themeChanged} на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem(CONFIG.THEME_KEY); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        DOM.themeBtn.addEventListener('click', toggleTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            } catch (err) {
+                applyTheme(e.matches ? 'dark' : 'light');
             }
-        },
+        });
+    }
 
-        /**
-         * Показ/скрытие ошибки для поля ввода
-         * 
-         * @param {string} inputId - ID поля ввода
-         * @param {boolean} show - Показать или скрыть ошибку
-         */
-        showError(inputId, show = true) {
-            const input = document.getElementById(inputId);
-            const errorElement = document.querySelector(`[data-error-for="${inputId}"]`);
-            
-            if (input) {
-                input.classList.toggle('error', show);
-            }
-            if (errorElement) {
-                errorElement.classList.toggle('visible', show);
-            }
-        },
+    // ============================================
+    // Draft System
+    // ============================================
+    function getDraftKey(formName) {
+        return CONFIG.DRAFT_KEY_PREFIX + formName;
+    }
 
-        /**
-         * Очистка всех ошибок в форме
-         * 
-         * @param {HTMLFormElement} form - Элемент формы
-         */
-        clearErrors(form) {
-            form.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(element => {
-                element.classList.remove('error');
+    function saveDraft(formName) {
+        try {
+            const form = document.getElementById(`form-${formName}`);
+            if (!form) return;
+            const data = {};
+            form.querySelectorAll('[data-draft]').forEach(el => {
+                data[el.dataset.draft] = el.value;
             });
-            form.querySelectorAll('.form-error').forEach(element => {
-                element.classList.remove('visible');
+            localStorage.setItem(getDraftKey(formName), JSON.stringify(data));
+            updateDraftIndicator(formName, true);
+        } catch (e) {}
+    }
+
+    function loadDraft(formName) {
+        try {
+            const saved = localStorage.getItem(getDraftKey(formName));
+            if (!saved) return false;
+            const data = JSON.parse(saved);
+            const form = document.getElementById(`form-${formName}`);
+            if (!form) return false;
+            let hasData = false;
+            Object.entries(data).forEach(([key, value]) => {
+                const el = form.querySelector(`[data-draft="${key}"]`);
+                if (el && value) {
+                    el.value = value;
+                    hasData = true;
+                }
             });
+            if (hasData) {
+                updateDraftIndicator(formName, true);
+                // Update counters
+                if (formName === 'saite') {
+                    updateCounter('saite-desc', 'saite-desc-counter', 500);
+                } else if (formName === 'corp') {
+                    updateCounter('corp-message', 'corp-message-counter', 2000);
+                }
+                return true;
+            }
+            return false;
+        } catch (e) {
+            return false;
         }
-    };
+    }
+
+    function clearDraft(formName) {
+        try {
+            localStorage.removeItem(getDraftKey(formName));
+            const form = document.getElementById(`form-${formName}`);
+            if (form) form.reset();
+            updateDraftIndicator(formName, false);
+            if (formName === 'saite') {
+                document.getElementById('saite-desc-counter').textContent = '0';
+            } else if (formName === 'corp') {
+                document.getElementById('corp-message-counter').textContent = '0';
+            }
+            showToast(MESSAGES.draftCleared, 'info', 2000);
+        } catch (e) {}
+    }
+
+    function updateDraftIndicator(formName, hasDraft) {
+        const indicator = document.getElementById(`draft-${formName}`);
+        if (indicator) {
+            indicator.classList.toggle('visible', hasDraft);
+        }
+    }
+
+    function scheduleDraftSave(formName) {
+        if (State.draftTimers[formName]) {
+            clearTimeout(State.draftTimers[formName]);
+        }
+        State.draftTimers[formName] = setTimeout(() => {
+            saveDraft(formName);
+        }, CONFIG.DRAFT_SAVE_DELAY);
+    }
+
+    function initDrafts() {
+        ['saite', 'corp'].forEach(formName => {
+            const form = document.getElementById(`form-${formName}`);
+            if (!form) return;
+            const hasDraft = loadDraft(formName);
+            if (hasDraft) {
+                setTimeout(() => {
+                    showToast(MESSAGES.draftLoaded, 'info', 2500);
+                }, 800);
+            }
+            form.addEventListener('input', () => scheduleDraftSave(formName));
+            form.addEventListener('change', () => scheduleDraftSave(formName));
+        });
+
+        document.querySelectorAll('[data-draft-clear]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearDraft(btn.dataset.draftClear);
+            });
+        });
+    }
 
     // ============================================
-    // Навигация и режимы
+    // Counter System
     // ============================================
-    
-    /**
-     * Установка режима работы из URL параметра
-     * 
-     * @param {boolean} pushState - Добавлять ли запись в историю браузера
-     */
+    function updateCounter(inputId, counterId, max) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        if (!input || !counter) return;
+        const len = input.value.length;
+        counter.textContent = len;
+        counter.classList.remove('warning', 'danger');
+        const ratio = len / max;
+        if (ratio >= 0.95) counter.classList.add('danger');
+        else if (ratio >= 0.8) counter.classList.add('warning');
+    }
+
+    function initCounters() {
+        const descInput = document.getElementById('saite-desc');
+        if (descInput) {
+            descInput.addEventListener('input', () => updateCounter('saite-desc', 'saite-desc-counter', 500));
+            updateCounter('saite-desc', 'saite-desc-counter', 500);
+        }
+        const msgInput = document.getElementById('corp-message');
+        if (msgInput) {
+            msgInput.addEventListener('input', () => updateCounter('corp-message', 'corp-message-counter', 2000));
+            updateCounter('corp-message', 'corp-message-counter', 2000);
+        }
+    }
+
+    // ============================================
+    // Navigation
+    // ============================================
     function setModeFromUrl(pushState = false) {
         const params = new URLSearchParams(window.location.search);
         const mode = params.get(CONFIG.MODE_PARAM) || DEFAULT_MODE;
         const newMode = VALID_MODES.includes(mode) ? mode : DEFAULT_MODE;
 
-        // Обновление URL если нужно
         if (pushState && newMode !== State.mode) {
             const newUrl = `${CONFIG.BASE_URL}?${CONFIG.MODE_PARAM}=${newMode}`;
             window.history.pushState({ mode: newMode }, '', newUrl);
@@ -1344,241 +1685,171 @@
 
         State.mode = newMode;
 
-        // Обновление активной вкладки
+        // Update tabs
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
         const activeTab = document.getElementById(`tab-${State.mode}`);
-        if (activeTab) {
-            activeTab.classList.add('active');
-        }
+        if (activeTab) activeTab.classList.add('active');
 
-        // Обновление активной секции
+        // Update sections
         document.querySelectorAll('.form-section').forEach(section => {
             section.classList.toggle('active', section.dataset.mode === State.mode);
         });
 
-        // Прокрутка наверх
+        // Update title with typewriter
+        updatePageTitle(PAGE_TITLES[State.mode] || PAGE_TITLES.saite);
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updatePageTitle(text) {
+        const el = DOM.pageTitle;
+        if (!el) return;
+        el.textContent = '';
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        el.appendChild(cursor);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                el.insertBefore(document.createTextNode(text[i]), cursor);
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => cursor.remove(), 2000);
+            }
+        }, 40);
+    }
+
+    // ============================================
+    // Validation
+    // ============================================
+    const Validators = {
+        required(value) { return value && value.trim().length > 0; },
+        minLength(value, min) { return value && value.trim().length >= min; },
+        email(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); },
+        url(value) {
+            try {
+                const u = new URL(value);
+                return u.protocol === 'http:' || u.protocol === 'https:';
+            } catch { return false; }
+        }
+    };
+
+    function showError(inputId, show = true) {
+        const input = document.getElementById(inputId);
+        const errorElement = document.querySelector(`[data-error-for="${inputId}"]`);
+        if (input) input.classList.toggle('error', show);
+        if (errorElement) errorElement.classList.toggle('visible', show);
+    }
+
+    function clearErrors(form) {
+        form.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(el => el.classList.remove('error'));
+        form.querySelectorAll('.form-error').forEach(el => el.classList.remove('visible'));
+    }
+
+    function validateSaiteForm() {
+        const form = document.getElementById('form-saite');
+        clearErrors(form);
+        let isValid = true;
+
+        if (!Validators.minLength(document.getElementById('saite-title').value, CONFIG.MIN_TITLE_LENGTH)) {
+            showError('saite-title'); isValid = false;
+        }
+        if (!Validators.url(document.getElementById('saite-url').value)) {
+            showError('saite-url'); isValid = false;
+        }
+        if (!Validators.minLength(document.getElementById('saite-desc').value, CONFIG.MIN_DESCRIPTION_LENGTH)) {
+            showError('saite-desc'); isValid = false;
+        }
+        if (!Validators.minLength(document.getElementById('saite-name').value, CONFIG.MIN_NAME_LENGTH)) {
+            showError('saite-name'); isValid = false;
+        }
+        if (!Validators.email(document.getElementById('saite-email').value)) {
+            showError('saite-email'); isValid = false;
+        }
+        if (!document.getElementById('saite-rules').checked) {
+            showError('saite-rules'); isValid = false;
+        }
+        return isValid;
+    }
+
+    function validateCorpForm() {
+        const form = document.getElementById('form-corp');
+        clearErrors(form);
+        let isValid = true;
+
+        if (!Validators.minLength(document.getElementById('corp-name').value, CONFIG.MIN_NAME_LENGTH)) {
+            showError('corp-name'); isValid = false;
+        }
+        if (!Validators.email(document.getElementById('corp-email').value)) {
+            showError('corp-email'); isValid = false;
+        }
+        if (!document.getElementById('corp-type').value) {
+            showError('corp-type'); isValid = false;
+        }
+        if (!Validators.minLength(document.getElementById('corp-message').value, CONFIG.MIN_DESCRIPTION_LENGTH)) {
+            showError('corp-message'); isValid = false;
+        }
+        if (!document.getElementById('corp-agree').checked) {
+            showError('corp-agree'); isValid = false;
+        }
+        return isValid;
+    }
+
+    // ============================================
+    // Submit
+    // ============================================
+    function setLoading(button, isLoading) {
+        if (isLoading) {
+            button.dataset.originalHtml = button.innerHTML;
+            button.innerHTML = '<span class="spinner"></span><span>Отправка...</span>';
+            button.disabled = true;
+        } else {
+            button.innerHTML = button.dataset.originalHtml || button.innerHTML;
+            button.disabled = false;
+        }
+    }
+
+    async function submitForm(url, data) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: MESSAGES.serverError }));
+            throw new Error(errorData.error || `Ошибка ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    function showSuccess(type) {
+        document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+        const successScreen = document.getElementById('success-screen');
+        const titleEl = document.getElementById('success-title');
+        const textEl = document.getElementById('success-text');
+
+        if (type === 'saite') {
+            titleEl.textContent = MESSAGES.saiteSuccessTitle;
+            textEl.textContent = MESSAGES.saiteSuccessText;
+        } else {
+            titleEl.textContent = MESSAGES.corpSuccessTitle;
+            textEl.textContent = MESSAGES.corpSuccessText;
+        }
+
+        successScreen.classList.add('active');
+        showToast(MESSAGES.submitSuccess, 'success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // ============================================
-    // Валидация
+    // Events
     // ============================================
-    
-    /**
-     * Валидаторы для полей формы
-     * @namespace
-     */
-    const Validators = {
-        /**
-         * Проверка обязательного поля
-         * 
-         * @param {string} value - Значение для проверки
-         * @returns {boolean} true если поле не пустое
-         */
-        required(value) {
-            return value && value.trim().length > 0;
-        },
-
-        /**
-         * Проверка минимальной длины
-         * 
-         * @param {string} value - Значение для проверки
-         * @param {number} min - Минимальная длина
-         * @returns {boolean} true если длина достаточна
-         */
-        minLength(value, min) {
-            return value && value.trim().length >= min;
-        },
-
-        /**
-         * Проверка валидности email
-         * 
-         * @param {string} value - Email для проверки
-         * @returns {boolean} true если email валиден
-         */
-        email(value) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        },
-
-        /**
-         * Проверка валидности URL
-         * 
-         * @param {string} value - URL для проверки
-         * @returns {boolean} true если URL валиден
-         */
-        url(value) {
-            try {
-                const urlObject = new URL(value);
-                return urlObject.protocol === 'http:' || urlObject.protocol === 'https:';
-            } catch {
-                return false;
-            }
-        }
-    };
-
-    /**
-     * Валидация формы добавления сайта
-     * 
-     * @returns {boolean} true если форма валидна
-     */
-    function validateSaiteForm() {
-        const form = document.getElementById('form-saite');
-        UI.clearErrors(form);
-        let isValid = true;
-
-        // Проверка заголовка
-        const title = document.getElementById('saite-title').value;
-        if (!Validators.minLength(title, CONFIG.MIN_TITLE_LENGTH)) {
-            UI.showError('saite-title');
-            isValid = false;
-        }
-
-        // Проверка URL
-        const url = document.getElementById('saite-url').value;
-        if (!Validators.url(url)) {
-            UI.showError('saite-url');
-            isValid = false;
-        }
-
-        // Проверка описания
-        const description = document.getElementById('saite-desc').value;
-        if (!Validators.minLength(description, CONFIG.MIN_DESCRIPTION_LENGTH)) {
-            UI.showError('saite-desc');
-            isValid = false;
-        }
-
-        // Проверка имени
-        const name = document.getElementById('saite-name').value;
-        if (!Validators.minLength(name, CONFIG.MIN_NAME_LENGTH)) {
-            UI.showError('saite-name');
-            isValid = false;
-        }
-
-        // Проверка email
-        const email = document.getElementById('saite-email').value;
-        if (!Validators.email(email)) {
-            UI.showError('saite-email');
-            isValid = false;
-        }
-
-        // Проверка согласия с правилами
-        const rulesCheckbox = document.getElementById('saite-rules').checked;
-        if (!rulesCheckbox) {
-            UI.showError('saite-rules');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    /**
-     * Валидация формы сотрудничества
-     * 
-     * @returns {boolean} true если форма валидна
-     */
-    function validateCorpForm() {
-        const form = document.getElementById('form-corp');
-        UI.clearErrors(form);
-        let isValid = true;
-
-        // Проверка имени
-        const name = document.getElementById('corp-name').value;
-        if (!Validators.minLength(name, CONFIG.MIN_NAME_LENGTH)) {
-            UI.showError('corp-name');
-            isValid = false;
-        }
-
-        // Проверка email
-        const email = document.getElementById('corp-email').value;
-        if (!Validators.email(email)) {
-            UI.showError('corp-email');
-            isValid = false;
-        }
-
-        // Проверка типа
-        const type = document.getElementById('corp-type').value;
-        if (!type) {
-            UI.showError('corp-type');
-            isValid = false;
-        }
-
-        // Проверка сообщения
-        const message = document.getElementById('corp-message').value;
-        if (!Validators.minLength(message, CONFIG.MIN_DESCRIPTION_LENGTH)) {
-            UI.showError('corp-message');
-            isValid = false;
-        }
-
-        // Проверка согласия
-        const agreeCheckbox = document.getElementById('corp-agree').checked;
-        if (!agreeCheckbox) {
-            UI.showError('corp-agree');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    // ============================================
-    // Отправка данных
-    // ============================================
-    
-    /**
-     * Отправка заявки на добавление сайта
-     * 
-     * @param {Object} data - Данные формы
-     * @returns {Promise<Object>} Ответ сервера
-     * @throws {Error} Если запрос не удался
-     */
-    async function submitSaite(data) {
-        const response = await fetch(CONFIG.SAITE_SUBMIT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: MESSAGES.serverError }));
-            throw new Error(errorData.error || `Ошибка ${response.status}`);
-        }
-        
-        return await response.json();
-    }
-
-    /**
-     * Отправка заявки на сотрудничество
-     * 
-     * @param {Object} data - Данные формы
-     * @returns {Promise<Object>} Ответ сервера
-     * @throws {Error} Если запрос не удался
-     */
-    async function submitCorp(data) {
-        const response = await fetch(CONFIG.CORP_SUBMIT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: MESSAGES.serverError }));
-            throw new Error(errorData.error || `Ошибка ${response.status}`);
-        }
-        
-        return await response.json();
-    }
-
-    // ============================================
-    // Обработчики событий
-    // ============================================
-    
-    /**
-     * Привязка всех обработчиков событий
-     */
     function bindEvents() {
-        // Клики по вкладкам - SPA поведение
+        // Tabs
         document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', (event) => {
-                event.preventDefault();
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
                 const mode = tab.dataset.mode;
                 const newUrl = `${CONFIG.BASE_URL}?${CONFIG.MODE_PARAM}=${mode}`;
                 window.history.pushState({ mode }, '', newUrl);
@@ -1586,20 +1857,17 @@
             });
         });
 
-        // Отправка формы добавления сайта
-        document.getElementById('form-saite').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
+        // Saite form submit
+        document.getElementById('form-saite').addEventListener('submit', async (e) => {
+            e.preventDefault();
             if (!validateSaiteForm()) {
-                UI.toast(MESSAGES.validationError, 'error');
+                showToast(MESSAGES.validationError, 'error');
                 return;
             }
-
-            const submitButton = document.getElementById('submit-saite');
-            UI.setLoading(submitButton, true);
-
+            const btn = document.getElementById('submit-saite');
+            setLoading(btn, true);
             try {
-                const formData = {
+                const data = {
                     title: document.getElementById('saite-title').value.trim(),
                     url: document.getElementById('saite-url').value.trim(),
                     description: document.getElementById('saite-desc').value.trim(),
@@ -1608,30 +1876,27 @@
                     email: document.getElementById('saite-email').value.trim(),
                     telegram: document.getElementById('saite-telegram').value.trim()
                 };
-
-                await submitSaite(formData);
+                await submitForm(CONFIG.SAITE_SUBMIT_URL, data);
+                try { localStorage.removeItem(getDraftKey('saite')); } catch (e) {}
                 showSuccess('saite');
-            } catch (error) {
-                UI.toast(error.message, 'error');
+            } catch (err) {
+                showToast(err.message, 'error');
             } finally {
-                UI.setLoading(submitButton, false);
+                setLoading(btn, false);
             }
         });
 
-        // Отправка формы сотрудничества
-        document.getElementById('form-corp').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            
+        // Corp form submit
+        document.getElementById('form-corp').addEventListener('submit', async (e) => {
+            e.preventDefault();
             if (!validateCorpForm()) {
-                UI.toast(MESSAGES.validationError, 'error');
+                showToast(MESSAGES.validationError, 'error');
                 return;
             }
-
-            const submitButton = document.getElementById('submit-corp');
-            UI.setLoading(submitButton, true);
-
+            const btn = document.getElementById('submit-corp');
+            setLoading(btn, true);
             try {
-                const formData = {
+                const data = {
                     name: document.getElementById('corp-name').value.trim(),
                     company: document.getElementById('corp-company').value.trim(),
                     email: document.getElementById('corp-email').value.trim(),
@@ -1641,47 +1906,36 @@
                     budget: document.getElementById('corp-budget').value,
                     website: document.getElementById('corp-website').value.trim()
                 };
-
-                await submitCorp(formData);
+                await submitForm(CONFIG.CORP_SUBMIT_URL, data);
+                try { localStorage.removeItem(getDraftKey('corp')); } catch (e) {}
                 showSuccess('corp');
-            } catch (error) {
-                UI.toast(error.message, 'error');
+            } catch (err) {
+                showToast(err.message, 'error');
             } finally {
-                UI.setLoading(submitButton, false);
+                setLoading(btn, false);
             }
         });
 
-        // Счетчики символов
-        document.getElementById('saite-desc').addEventListener('input', (event) => {
-            document.getElementById('saite-desc-counter').textContent = event.target.value.length;
-        });
-
-        document.getElementById('corp-message').addEventListener('input', (event) => {
-            document.getElementById('corp-message-counter').textContent = event.target.value.length;
-        });
-
-        // Очистка ошибок при вводе
+        // Clear errors on input
         document.querySelectorAll('.form-input, .form-textarea, .form-select').forEach(input => {
             input.addEventListener('input', () => {
                 input.classList.remove('error');
-                const errorElement = document.querySelector(`[data-error-for="${input.id}"]`);
-                if (errorElement) {
-                    errorElement.classList.remove('visible');
-                }
+                const err = document.querySelector(`[data-error-for="${input.id}"]`);
+                if (err) err.classList.remove('visible');
             });
         });
 
-        // Автоформатирование Telegram
+        // Telegram auto-format
         document.querySelectorAll('input[name="telegram"]').forEach(input => {
-            input.addEventListener('blur', (event) => {
-                let value = event.target.value.trim();
-                if (value && !value.startsWith('@')) {
-                    event.target.value = '@' + value;
+            input.addEventListener('blur', (e) => {
+                let v = e.target.value.trim();
+                if (v && !v.startsWith('@')) {
+                    e.target.value = '@' + v;
                 }
             });
         });
 
-        // Кнопка новой заявки
+        // New submission
         document.getElementById('new-submission').addEventListener('click', () => {
             document.getElementById('success-screen').classList.remove('active');
             document.getElementById(`section-${State.mode}`).classList.add('active');
@@ -1689,59 +1943,85 @@
             document.getElementById('form-corp').reset();
             document.getElementById('saite-desc-counter').textContent = '0';
             document.getElementById('corp-message-counter').textContent = '0';
+            updateDraftIndicator('saite', false);
+            updateDraftIndicator('corp', false);
         });
 
-        // Навигация браузера назад/вперед
-        window.addEventListener('popstate', () => {
-            setModeFromUrl(false);
-        });
+        // Popstate
+        window.addEventListener('popstate', () => setModeFromUrl(false));
     }
 
     // ============================================
-    // Экран успеха
+    // Hotkeys
     // ============================================
-    
-    /**
-     * Показ экрана успешной отправки
-     * 
-     * @param {string} type - Тип формы: 'saite' | 'corp'
-     */
-    function showSuccess(type) {
-        // Скрытие всех секций
-        document.querySelectorAll('.form-section').forEach(section => {
-            section.classList.remove('active');
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') e.target.blur();
+                return;
+            }
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            switch (e.key) {
+                case '1':
+                    e.preventDefault();
+                    switchMode('saite');
+                    break;
+                case '2':
+                    e.preventDefault();
+                    switchMode('corp');
+                    break;
+                case '3':
+                    e.preventDefault();
+                    switchMode('rules');
+                    break;
+                case 't':
+                case 'T':
+                case 'е':
+                case 'Е':
+                    toggleTheme();
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: 1/2/3 вкладки · T тема · ? помощь', 'info', 4000);
+                    break;
+            }
         });
+    }
 
-        const successScreen = document.getElementById('success-screen');
-        const titleElement = document.getElementById('success-title');
-        const textElement = document.getElementById('success-text');
-
-        if (type === 'saite') {
-            titleElement.textContent = MESSAGES.saiteSuccessTitle;
-            textElement.textContent = MESSAGES.saiteSuccessText;
-        } else {
-            titleElement.textContent = MESSAGES.corpSuccessTitle;
-            textElement.textContent = MESSAGES.corpSuccessText;
-        }
-
-        successScreen.classList.add('active');
-        UI.toast(MESSAGES.submitSuccess, 'success');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    function switchMode(mode) {
+        if (!VALID_MODES.includes(mode)) return;
+        const newUrl = `${CONFIG.BASE_URL}?${CONFIG.MODE_PARAM}=${mode}`;
+        window.history.pushState({ mode }, '', newUrl);
+        setModeFromUrl(false);
     }
 
     // ============================================
-    // Инициализация
+    // Init
     // ============================================
-    
-    /**
-     * Инициализация приложения
-     */
     function init() {
+        DOM.themeBtn = document.getElementById('themeBtn');
+        DOM.themeIconSun = document.getElementById('themeIconSun');
+        DOM.themeIconMoon = document.getElementById('themeIconMoon');
+        DOM.pageTitle = document.getElementById('pageTitle');
+        DOM.toastContainer = document.getElementById('toastContainer');
+        DOM.currentYear = document.getElementById('currentYear');
+
+        DOM.currentYear.textContent = new Date().getFullYear();
+
+        initTheme();
         setModeFromUrl(false);
         bindEvents();
+        initCounters();
+        initDrafts();
+        initHotkeys();
+
+        // Welcome toast
+        setTimeout(() => {
+            showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+        }, 1200);
     }
 
-    // Запуск после загрузки DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
