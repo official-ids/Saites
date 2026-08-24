@@ -1,44 +1,81 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Мониторинг доступности сайтов в реальном времени">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 <title>Uptime Monitor · Oris</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 <style>
 :root {
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #FFFFFF;
+    --bg-sunken: #E8E8ED;
+    --bg-input: rgba(0, 0, 0, 0.04);
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #86868B;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-glow: rgba(0, 113, 227, 0.25);
+    --danger: #FF3B30;
+    --danger-soft: rgba(255, 59, 48, 0.12);
+    --success: #34C759;
+    --success-soft: rgba(52, 199, 89, 0.12);
+    --warning: #FF9F0A;
+    --warning-soft: rgba(255, 159, 10, 0.12);
+    --purple: #AF52DE;
+    --purple-soft: rgba(175, 82, 222, 0.12);
+    --teal: #5AC8FA;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-strong: rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+    --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-color: rgba(0, 0, 0, 0.04);
+    --header-h: 56px;
+}
+[data-theme="dark"] {
     --bg-body: #000000;
     --bg-card: #1C1C1E;
     --bg-elevated: #2C2C2E;
-    --bg-subtle: #0A0A0A;
+    --bg-sunken: #0A0A0A;
+    --bg-input: rgba(255, 255, 255, 0.06);
     --text-primary: #F5F5F7;
-    --text-secondary: #86868B;
+    --text-secondary: #A1A1A6;
     --text-tertiary: #636366;
     --accent: #0A84FF;
     --accent-hover: #409CFF;
-    --danger: #FF453A;
-    --success: #30D158;
-    --warning: #FF9F0A;
-    --purple: #BF5AF2;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-glow: rgba(10, 132, 255, 0.4);
     --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.15);
+    --border-strong: rgba(255, 255, 255, 0.16);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-    --radius-lg: 18px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
-    --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
-    --header-h: 56px;
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
 html, body { min-height: 100vh; }
 body {
     background: var(--bg-body);
@@ -46,51 +83,266 @@ body {
     font-family: var(--font-stack);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    overflow-x: hidden;
 }
 
+/* Background grid */
+.bg-grid {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    animation: gridShift 30s linear infinite;
+}
+@keyframes gridShift {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 48px 48px, 48px 48px; }
+}
+
+/* Floating orbs */
+.bg-orbs {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 20s ease-in-out infinite;
+}
+[data-theme="dark"] .orb { opacity: 0.25; }
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    animation-duration: 25s;
+}
+.orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    bottom: -200px; left: -200px;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+.orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+    top: 50%; left: 30%;
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
+}
+
+/* Reading progress */
+.reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    width: 0%;
+    z-index: 200;
+    transition: width 0.1s ease;
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Header */
 .header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(0, 0, 0, 0.72);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid var(--border);
     height: var(--header-h);
+    transition: background-color 0.4s ease, border-color 0.4s ease;
 }
+[data-theme="dark"] .header { background: rgba(0, 0, 0, 0.72); }
 .header-inner {
-    max-width: 1200px; margin: 0 auto; padding: 0 24px;
-    height: 100%; display: flex; align-items: center;
-    justify-content: space-between; gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 }
-.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); font-weight: 600; letter-spacing: -0.02em; }
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
 .logo svg { width: 22px; height: 22px; color: var(--accent); }
-.nav-links { display: flex; gap: 8px; align-items: center; }
-.nav-link { padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); text-decoration: none; transition: all 0.2s; }
-.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-links { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.nav-link {
+    padding: 8px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
+.nav-link .nav-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-weight: 600;
+}
+.nav-link:not(.active) .nav-kbd {
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    color: var(--text-tertiary);
+}
 
-.layout { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+.icon-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: rotate(15deg);
+}
+.icon-btn svg { width: 16px; height: 16px; }
+
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: block; }
+
+/* Layout */
+.layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+    position: relative;
+    z-index: 1;
+}
 
 /* Hero */
-.hero { text-align: center; padding: 24px 0 40px; }
+.hero {
+    text-align: center;
+    padding: 24px 0 40px;
+}
 .hero-badge {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     padding: 6px 14px;
-    background: rgba(48, 209, 88, 0.1);
-    border: 1px solid rgba(48, 209, 88, 0.25);
+    background: var(--success-soft);
+    border: 1px solid rgba(52, 199, 89, 0.25);
     border-radius: 99px;
-    font-size: 0.78rem; font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--success);
     margin-bottom: 16px;
 }
 .hero-badge svg { width: 14px; height: 14px; }
 .hero-title {
-    font-size: 2.5rem; font-weight: 700;
-    letter-spacing: -0.03em; line-height: 1.1;
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
     margin-bottom: 12px;
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    min-height: 1.1em;
+    display: inline-block;
+    cursor: default;
+    position: relative;
+}
+.hero-title.glitch::before,
+.hero-title.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+.hero-title.glitch::before {
+    animation: glitch1 0.4s ease;
+    -webkit-text-fill-color: var(--danger);
+}
+.hero-title.glitch::after {
+    animation: glitch2 0.4s ease;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes glitch1 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.8; transform: translate(-3px, 1px); }
+    40% { opacity: 0.6; transform: translate(2px, -1px); }
+    60% { opacity: 0.4; transform: translate(-1px, 2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.6; transform: translate(3px, -1px); }
+    40% { opacity: 0.4; transform: translate(-2px, 1px); }
+    60% { opacity: 0.3; transform: translate(1px, -2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+.typewriter-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--accent);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes blink {
+    50% { opacity: 0; }
 }
 .hero-subtitle {
     font-size: 1.05rem;
@@ -112,6 +364,26 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 18px;
+    transition: all 0.25s var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--stat-color, var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.stat-card:hover::before { opacity: 1; }
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-strong);
 }
 .stat-label {
     font-size: 0.72rem;
@@ -127,6 +399,7 @@ body {
     letter-spacing: -0.02em;
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
+    font-family: var(--mono-stack);
 }
 .stat-value.success { color: var(--success); }
 .stat-value.warning { color: var(--warning); }
@@ -143,33 +416,45 @@ body {
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
-.add-monitor input {
-    flex: 1;
-    min-width: 240px;
-    background: var(--bg-subtle);
+.add-monitor::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+}
+.add-monitor input,
+.add-monitor select {
+    background: var(--bg-input);
     border: 1px solid var(--border);
     color: var(--text-primary);
     padding: 12px 16px;
     border-radius: var(--radius-md);
     font-family: inherit;
     font-size: 0.95rem;
+    transition: all 0.2s ease;
 }
-.add-monitor input:focus {
+.add-monitor input {
+    flex: 1;
+    min-width: 240px;
+}
+.add-monitor input:focus,
+.add-monitor select:focus {
     outline: none;
     border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: var(--bg-card);
 }
 .add-monitor input::placeholder { color: var(--text-tertiary); }
-.add-monitor select {
-    background: var(--bg-subtle);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    padding: 12px 14px;
-    border-radius: var(--radius-md);
-    font-family: inherit;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
+.add-monitor select { cursor: pointer; }
+
 .btn {
     padding: 12px 22px;
     border-radius: 99px;
@@ -178,23 +463,67 @@ body {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s var(--transition);
     display: inline-flex;
     align-items: center;
     gap: 8px;
     user-select: none;
 }
 .btn svg { width: 16px; height: 16px; }
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px var(--accent-glow);
+}
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
-.btn-secondary:hover { border-color: var(--border-strong); }
-.btn-danger { background: rgba(255,69,58,0.15); color: var(--danger); }
-.btn-danger:hover { background: rgba(255,69,58,0.25); }
-.btn-icon { padding: 10px; background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; transition: all 0.15s; border-radius: var(--radius-sm); }
-.btn-icon:hover { color: var(--danger); background: rgba(255,69,58,0.1); }
-.btn-icon svg { width: 18px; height: 18px; }
+.btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+}
+.btn-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+.btn-danger:hover {
+    background: var(--danger);
+    color: white;
+    transform: translateY(-1px);
+}
+.btn-icon {
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-icon:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: var(--danger);
+}
+.btn-icon.edit:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+}
+.btn-icon svg { width: 16px; height: 16px; }
 
 /* Controls */
 .controls {
@@ -205,7 +534,7 @@ body {
     gap: 12px;
     flex-wrap: wrap;
 }
-.controls-left { display: flex; gap: 10px; align-items: center; }
+.controls-left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .interval-select {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -215,18 +544,26 @@ body {
     font-family: inherit;
     font-size: 0.85rem;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+.interval-select:hover { border-color: var(--border-strong); }
+.interval-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .live-indicator {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
-    background: rgba(48, 209, 88, 0.1);
-    border: 1px solid rgba(48, 209, 88, 0.25);
+    background: var(--success-soft);
+    border: 1px solid rgba(52, 199, 89, 0.25);
     border-radius: 99px;
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--success);
+    font-family: var(--mono-stack);
 }
 .live-dot {
     width: 6px; height: 6px;
@@ -235,12 +572,12 @@ body {
     animation: pulse 2s infinite;
 }
 @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0.7); }
-    50% { box-shadow: 0 0 0 6px rgba(48, 209, 88, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+    50% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
 }
 .live-indicator.paused {
-    background: rgba(142, 142, 147, 0.1);
-    border-color: rgba(142, 142, 147, 0.25);
+    background: var(--bg-elevated);
+    border-color: var(--border);
     color: var(--text-secondary);
 }
 .live-indicator.paused .live-dot {
@@ -259,12 +596,30 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     padding: 20px;
-    transition: all 0.2s;
+    transition: all 0.25s var(--transition);
+    position: relative;
+    overflow: hidden;
 }
-.monitor-card:hover { border-color: var(--border-strong); }
-.monitor-card.status-down { border-left: 3px solid var(--danger); }
-.monitor-card.status-degraded { border-left: 3px solid var(--warning); }
-.monitor-card.status-up { border-left: 3px solid var(--success); }
+.monitor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--status-color, var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.monitor-card:hover::before { opacity: 1; }
+.monitor-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+.monitor-card.status-down { border-left: 3px solid var(--danger); --status-color: var(--danger); }
+.monitor-card.status-degraded { border-left: 3px solid var(--warning); --status-color: var(--warning); }
+.monitor-card.status-up { border-left: 3px solid var(--success); --status-color: var(--success); }
 
 .monitor-header {
     display: flex;
@@ -288,9 +643,9 @@ body {
     border-radius: 50%;
     flex-shrink: 0;
 }
-.status-dot.up { background: var(--success); }
-.status-dot.degraded { background: var(--warning); }
-.status-dot.down { background: var(--danger); }
+.status-dot.up { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-dot.degraded { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+.status-dot.down { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
 .status-dot.checking { background: var(--text-tertiary); animation: pulse-gray 1.5s infinite; }
 @keyframes pulse-gray {
     0%, 100% { opacity: 0.5; }
@@ -311,11 +666,12 @@ body {
     border-radius: 99px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    font-family: var(--mono-stack);
 }
-.monitor-status-badge.up { background: rgba(48, 209, 88, 0.12); color: var(--success); }
-.monitor-status-badge.degraded { background: rgba(255, 159, 10, 0.12); color: var(--warning); }
-.monitor-status-badge.down { background: rgba(255, 69, 58, 0.12); color: var(--danger); }
-.monitor-status-badge.checking { background: rgba(142, 142, 147, 0.12); color: var(--text-secondary); }
+.monitor-status-badge.up { background: var(--success-soft); color: var(--success); }
+.monitor-status-badge.degraded { background: var(--warning-soft); color: var(--warning); }
+.monitor-status-badge.down { background: var(--danger-soft); color: var(--danger); }
+.monitor-status-badge.checking { background: var(--bg-elevated); color: var(--text-secondary); }
 
 .monitor-metrics {
     display: grid;
@@ -357,7 +713,7 @@ body {
     border-radius: 2px;
     position: relative;
     cursor: pointer;
-    transition: transform 0.15s;
+    transition: transform 0.15s ease;
 }
 .uptime-block:hover { transform: scaleY(1.2); z-index: 2; }
 .uptime-block.up { background: var(--success); }
@@ -379,7 +735,7 @@ body {
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity 0.15s ease;
     z-index: 10;
 }
 .uptime-tooltip::after {
@@ -394,9 +750,7 @@ body {
 .uptime-block:hover .uptime-tooltip { opacity: 1; }
 
 /* Incidents */
-.incidents-section {
-    margin-top: 32px;
-}
+.incidents-section { margin-top: 32px; }
 .incidents-title {
     font-size: 1.1rem;
     font-weight: 600;
@@ -405,12 +759,14 @@ body {
     align-items: center;
     gap: 8px;
 }
+.incidents-title svg { width: 18px; height: 18px; color: var(--danger); }
 .incidents-count {
     font-size: 0.72rem;
     padding: 2px 8px;
     border-radius: 99px;
     background: var(--bg-elevated);
     color: var(--text-secondary);
+    font-family: var(--mono-stack);
 }
 .incident-item {
     background: var(--bg-card);
@@ -423,6 +779,11 @@ body {
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
+    transition: all 0.2s ease;
+}
+.incident-item:hover {
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
 }
 .incident-item.resolved { border-left-color: var(--success); }
 .incident-time {
@@ -448,50 +809,81 @@ body {
     text-align: center;
     padding: 60px 24px;
     color: var(--text-tertiary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
 }
 .empty-state svg { width: 56px; height: 56px; margin: 0 auto 14px; opacity: 0.5; }
 .empty-state-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
 
 /* Toast */
-.toast {
+.toast-container {
     position: fixed;
     bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(20px);
-    padding: 10px 18px;
-    border-radius: 99px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s;
-    z-index: 300;
-    display: inline-flex;
-    align-items: center;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
+    pointer-events: none;
 }
-.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast svg { width: 16px; height: 16px; }
-.toast.success { color: var(--success); }
-.toast.error { color: var(--danger); }
-.toast.info { color: var(--accent); }
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    padding: 14px 20px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.92rem;
+    font-weight: 500;
+    pointer-events: auto;
+    animation: toastIn 0.3s var(--bounce);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    color: var(--text-primary);
+}
+.toast.removing { animation: toastOut 0.25s ease forwards; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+.toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.toast-icon.success { color: var(--success); }
+.toast-icon.info { color: var(--accent); }
+.toast-icon.warning { color: var(--warning); }
+.toast-icon.error { color: var(--danger); }
+.toast-message { flex: 1; }
 
 /* Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 200;
     padding: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
-.modal-overlay.active { display: flex; }
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
 .modal {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -501,9 +893,315 @@ body {
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: var(--shadow-xl);
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.3s var(--bounce);
+    position: relative;
 }
-.modal h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 16px; }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.modal-overlay.active .modal {
+    transform: scale(1) translateY(0);
+}
+.modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+.modal label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+    margin-top: 12px;
+}
+.modal label:first-child { margin-top: 0; }
+.modal input,
+.modal select {
+    width: 100%;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+.modal input:focus,
+.modal select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: var(--bg-card);
+}
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* Scroll to top */
+.scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s var(--transition);
+    pointer-events: none;
+    z-index: 50;
+}
+.scroll-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.scroll-top:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.scroll-top svg { width: 18px; height: 18px; }
+
+/* Command Palette */
+.cmdk-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 15vh;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.cmdk-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.cmdk-dialog {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    transition: transform 0.25s var(--bounce);
+}
+.cmdk-overlay.active .cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+.cmdk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.cmdk-input-wrap svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.cmdk-input::placeholder { color: var(--text-tertiary); }
+.cmdk-esc {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.cmdk-group-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 12px 6px;
+}
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+.cmdk-item:hover,
+.cmdk-item.focused {
+    background: var(--bg-input);
+}
+.cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.cmdk-item-icon svg { width: 16px; height: 16px; }
+.cmdk-item-info { flex: 1; min-width: 0; }
+.cmdk-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--mono-stack);
+}
+.cmdk-item-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.cmdk-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.cmdk-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Hotkey hints */
+.hotkey-hints {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.hotkey-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.hotkey-hint:hover { opacity: 1; }
+kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 var(--border-strong);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+    .hotkey-hints { display: none; }
+    .toast-container { bottom: 16px; right: 16px; left: 16px; }
+    .toast { min-width: 0; max-width: 100%; }
+    .scroll-top { bottom: 16px; right: 16px; }
+}
 
 @media (max-width: 640px) {
     .hero-title { font-size: 1.8rem; }
@@ -517,6 +1215,14 @@ body {
 </head>
 <body>
 
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+<div class="reading-progress" id="readingProgress"></div>
+
 <header class="header">
     <div class="header-inner">
         <a href="/" class="logo">
@@ -526,10 +1232,25 @@ body {
             <span>Oris Monitor</span>
         </a>
         <nav class="nav-links">
-            <a href="/" class="nav-link">Projects</a>
-            <a href="/status" class="nav-link">Status</a>
-            <a href="/monitor" class="nav-link active">Monitor</a>
+            <a href="/" class="nav-link">Projects <span class="nav-kbd">1</span></a>
+            <a href="/status" class="nav-link">Status <span class="nav-kbd">2</span></a>
+            <a href="/monitor" class="nav-link active">Monitor <span class="nav-kbd">3</span></a>
         </nav>
+        <div class="header-actions">
+            <button class="icon-btn" id="cmdkBtn" aria-label="Командная палитра">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="themeToggle" aria-label="Сменить тему">
+                <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -542,27 +1263,27 @@ body {
             </svg>
             Client-side monitoring
         </div>
-        <h1 class="hero-title">Uptime Monitor</h1>
+        <h1 class="hero-title" id="heroTitle" data-text=""></h1>
         <p class="hero-subtitle">
-            Отслеживайте доступность ваших сайтов прямо из браузера. 
+            Отслеживайте доступность ваших сайтов прямо из браузера.
             Работает без серверной части — все проверки выполняются на стороне клиента.
         </p>
     </section>
 
     <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" style="--stat-color: var(--accent);">
             <div class="stat-label">Мониторов</div>
             <div class="stat-value" id="statTotal">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="--stat-color: var(--success);">
             <div class="stat-label">Онлайн</div>
             <div class="stat-value success" id="statUp">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="--stat-color: var(--warning);">
             <div class="stat-label">Проблемы</div>
             <div class="stat-value warning" id="statDegraded">0</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="--stat-color: var(--danger);">
             <div class="stat-label">Недоступны</div>
             <div class="stat-value danger" id="statDown">0</div>
         </div>
@@ -603,7 +1324,7 @@ body {
                 <option value="300000">5 мин</option>
             </select>
         </div>
-        <div style="display:flex;gap:8px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-secondary" id="pauseBtn">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -629,6 +1350,9 @@ body {
 
     <div class="incidents-section" id="incidentsSection" style="display:none;">
         <div class="incidents-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
             Инциденты
             <span class="incidents-count" id="incidentsCount">0</span>
         </div>
@@ -641,23 +1365,15 @@ body {
 <div class="modal-overlay" id="editModal">
     <div class="modal">
         <h3>Редактировать монитор</h3>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-            <div>
-                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Название</label>
-                <input type="text" id="editName" style="width:100%;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-md);font-family:inherit;font-size:0.95rem;margin-top:4px;">
-            </div>
-            <div>
-                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">URL</label>
-                <input type="text" id="editUrl" style="width:100%;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-md);font-family:inherit;font-size:0.95rem;margin-top:4px;">
-            </div>
-            <div>
-                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;">Метод</label>
-                <select id="editMethod" style="width:100%;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-primary);padding:10px 14px;border-radius:var(--radius-md);font-family:inherit;font-size:0.95rem;margin-top:4px;">
-                    <option value="GET">GET</option>
-                    <option value="HEAD">HEAD</option>
-                </select>
-            </div>
-        </div>
+        <label for="editName">Название</label>
+        <input type="text" id="editName">
+        <label for="editUrl">URL</label>
+        <input type="text" id="editUrl">
+        <label for="editMethod">Метод</label>
+        <select id="editMethod">
+            <option value="GET">GET</option>
+            <option value="HEAD">HEAD</option>
+        </select>
         <div class="modal-actions">
             <button class="btn btn-secondary" id="cancelEdit">Отмена</button>
             <button class="btn btn-primary" id="saveEdit">Сохранить</button>
@@ -665,41 +1381,193 @@ body {
     </div>
 </div>
 
-<div class="toast" id="toast">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-    <span id="toastText">Готово</span>
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" aria-label="Наверх">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+</button>
+
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск по мониторам, действиям..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>N</kbd> фокус на URL</div>
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>P</kbd> пауза</div>
+    <div class="hotkey-hint"><kbd>E</kbd> экспорт</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
 </div>
 
 <script>
 (function() {
     'use strict';
 
+    // ============================================
+    // Configuration
+    // ============================================
     const STORAGE_KEY = 'oris_monitor_monitors';
     const HISTORY_KEY = 'oris_monitor_history';
     const INCIDENTS_KEY = 'oris_monitor_incidents';
+    const ALERT_STATE_KEY = 'oris_monitor_alert_state';
+    const THEME_KEY = 'oris-theme';
+    const TOAST_DURATION = 3000;
 
+    // ============================================
+    // State
+    // ============================================
     const State = {
         monitors: [],
         history: {},
         incidents: [],
+        alertState: {},
         interval: 30000,
         paused: false,
         timer: null,
         editingId: null,
-        alertState: {} // { monitorId: { sent: bool, from: timestamp } }
+        theme: 'dark',
+        cmdkFocusedIndex: -1
     };
 
     const $ = id => document.getElementById(id);
 
-    // --- Helpers ---
-    function generateId() {
-        return 'm_' + Math.random().toString(36).slice(2, 10);
+    // ============================================
+    // DOM Cache
+    // ============================================
+    const DOM = {
+        heroTitle: $('heroTitle'),
+        monitorsList: $('monitorsList'),
+        incidentsSection: $('incidentsSection'),
+        incidentsList: $('incidentsList'),
+        incidentsCount: $('incidentsCount'),
+        statTotal: $('statTotal'),
+        statUp: $('statUp'),
+        statDegraded: $('statDegraded'),
+        statDown: $('statDown'),
+        addUrlInput: $('addUrlInput'),
+        addNameInput: $('addNameInput'),
+        addMethod: $('addMethod'),
+        addExpected: $('addExpected'),
+        addBtn: $('addBtn'),
+        pauseBtn: $('pauseBtn'),
+        exportBtn: $('exportBtn'),
+        clearBtn: $('clearBtn'),
+        intervalSelect: $('intervalSelect'),
+        liveIndicator: $('liveIndicator'),
+        liveText: $('liveText'),
+        editModal: $('editModal'),
+        editName: $('editName'),
+        editUrl: $('editUrl'),
+        editMethod: $('editMethod'),
+        cancelEdit: $('cancelEdit'),
+        saveEdit: $('saveEdit'),
+        themeToggle: $('themeToggle'),
+        scrollTop: $('scrollTop'),
+        readingProgress: $('readingProgress'),
+        cmdkBtn: $('cmdkBtn'),
+        cmdkOverlay: $('cmdkOverlay'),
+        cmdkInput: $('cmdkInput'),
+        cmdkResults: $('cmdkResults'),
+        toastContainer: $('toastContainer')
+    };
+
+    // ============================================
+    // Security
+    // ============================================
+    const Security = {
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' },
+        escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
+        }
+    };
+
+    // ============================================
+    // Toast System
+    // ============================================
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+
+    function showToast(message, type = 'info', duration = TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return String(str).replace(/[&<>"']/g, m => map[m]);
+    // ============================================
+    // Theme System
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        State.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        const sunIcon = document.querySelector('.theme-icon-light');
+        const moonIcon = document.querySelector('.theme-icon-dark');
+        if (sunIcon) sunIcon.style.display = theme === 'dark' ? 'block' : 'none';
+        if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'none' : 'block';
+        try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`Тема изменена на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        DOM.themeToggle.addEventListener('click', toggleTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (!localStorage.getItem(THEME_KEY)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            } catch (err) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+
+    // ============================================
+    // Helpers
+    // ============================================
+    function generateId() {
+        return 'm_' + Math.random().toString(36).slice(2, 10);
     }
 
     function isValidUrl(url) {
@@ -732,182 +1600,204 @@ body {
         return `${Math.round(ms / 3600000)}ч`;
     }
 
-    function showToast(msg, type = 'success') {
-        const t = $('toast');
-        $('toastText').textContent = msg;
-        t.className = `toast ${type} visible`;
-        clearTimeout(showToast._t);
-        showToast._t = setTimeout(() => t.classList.remove('visible'), 2500);
+    function pluralize(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const n1 = abs % 10;
+        if (abs > 10 && abs < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
     }
 
-// --- Storage ---
-const ALERT_STATE_KEY = 'oris_monitor_alert_state';
-
-function saveState() {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(State.monitors));
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(State.history));
-        localStorage.setItem(INCIDENTS_KEY, JSON.stringify(State.incidents));
-        localStorage.setItem(ALERT_STATE_KEY, JSON.stringify(State.alertState));
-    } catch (e) {
-        console.error('[monitor] Storage error:', e);
+    // ============================================
+    // Storage
+    // ============================================
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(State.monitors));
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(State.history));
+            localStorage.setItem(INCIDENTS_KEY, JSON.stringify(State.incidents));
+            localStorage.setItem(ALERT_STATE_KEY, JSON.stringify(State.alertState));
+        } catch (e) {
+            console.error('[monitor] Storage error:', e);
+        }
     }
-}
-
-function loadState() {
-    try {
-        State.monitors = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        State.history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
-        State.incidents = JSON.parse(localStorage.getItem(INCIDENTS_KEY) || '[]');
-        State.alertState = JSON.parse(localStorage.getItem(ALERT_STATE_KEY) || '{}');
-    } catch (e) {
-        console.error('[monitor] Load error:', e);
-        State.monitors = [];
-        State.history = {};
-        State.incidents = [];
-        State.alertState = {};
-    }
-}
 
     function loadState() {
         try {
             State.monitors = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
             State.history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '{}');
             State.incidents = JSON.parse(localStorage.getItem(INCIDENTS_KEY) || '[]');
+            State.alertState = JSON.parse(localStorage.getItem(ALERT_STATE_KEY) || '{}');
         } catch (e) {
+            console.error('[monitor] Load error:', e);
             State.monitors = [];
             State.history = {};
             State.incidents = [];
+            State.alertState = {};
         }
     }
 
-// --- Check ---
-async function checkMonitor(monitor) {
-    try {
-        // Серверная проверка (обход CORS)
-        const res = await fetch('/api/monitor/check', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                url: monitor.url,
-                method: monitor.method,
-                expected: monitor.expected
-            })
+    // ============================================
+    // Typewriter + Glitch
+    // ============================================
+    function typewriter(element, text, speed = 45) {
+        element.textContent = '';
+        element.setAttribute('data-text', '');
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                element.insertBefore(document.createTextNode(text[i]), cursor);
+                element.setAttribute('data-text', text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => cursor.remove(), 2000);
+            }
+        }, speed);
+    }
+
+    function triggerGlitch() {
+        DOM.heroTitle.classList.add('glitch');
+        setTimeout(() => DOM.heroTitle.classList.remove('glitch'), 400);
+    }
+
+    function initHero() {
+        setTimeout(() => {
+            typewriter(DOM.heroTitle, 'Uptime Monitor');
+        }, 300);
+        DOM.heroTitle.addEventListener('click', triggerGlitch);
+        setInterval(triggerGlitch, 7000);
+    }
+
+    // ============================================
+    // Scroll Effects
+    // ============================================
+    function initScrollEffects() {
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            DOM.readingProgress.style.width = progress + '%';
+            if (scrollTop > 400) {
+                DOM.scrollTop.classList.add('visible');
+            } else {
+                DOM.scrollTop.classList.remove('visible');
+            }
+        }, { passive: true });
+        DOM.scrollTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
-        
-        if (!res.ok) throw new Error('Server error');
-        
-        const result = await res.json();
-        
-        // Сохраняем историю на сервере (fire-and-forget)
-        fetch(`/api/monitor/history/${monitor.id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(result)
-        }).catch(err => console.error('[monitor/history] save error:', err));
-
-        return result;
-    } catch (err) {
-        return {
-            status: 'down',
-            latency: 0,
-            error: err.message,
-            timestamp: Date.now()
-        };
-    }
-}
-
-async function sendAlert(monitor, status, from) {
-    try {
-        const res = await fetch('/api/monitor/alert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                monitorName: monitor.name,
-                monitorUrl: monitor.url,
-                status,
-                from,
-                to: status === 'up' ? Date.now() : null
-            })
-        });
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            console.warn('[monitor/alert] server error:', err.error || res.status);
-        }
-    } catch (err) {
-        console.error('[monitor/alert] network error:', err.message);
-    }
-}
-
-async function runCheck(monitor) {
-    const result = await checkMonitor(monitor);
-
-    // Сохраняем историю локально (последние 100 записей)
-    if (!State.history[monitor.id]) State.history[monitor.id] = [];
-    State.history[monitor.id].push(result);
-    if (State.history[monitor.id].length > 100) {
-        State.history[monitor.id] = State.history[monitor.id].slice(-100);
     }
 
-    // Инициализируем состояние алертов для монитора
-    if (!State.alertState[monitor.id]) {
-        State.alertState[monitor.id] = { sent: false, from: null };
-    }
-    const alertState = State.alertState[monitor.id];
-
-    // Определяем смену статуса -> инцидент + алерт
-    const prevStatus = monitor.lastStatus;
-    if (prevStatus && prevStatus !== result.status) {
-        // Переход в down/degraded
-        if (result.status === 'down' || result.status === 'degraded') {
-            // Регистрируем инцидент локально
-            State.incidents.unshift({
-                monitorId: monitor.id,
-                monitorName: monitor.name,
-                monitorUrl: monitor.url,
-                from: Date.now(),
-                to: null,
-                status: result.status,
-                resolved: false
+    // ============================================
+    // Check Monitor
+    // ============================================
+    async function checkMonitor(monitor) {
+        try {
+            const res = await fetch('/api/monitor/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: monitor.url,
+                    method: monitor.method,
+                    expected: monitor.expected
+                })
             });
-
-            // Отправляем алерт только если ещё не отправляли
-            if (!alertState.sent) {
-                const incidentStart = Date.now();
-                alertState.sent = true;
-                alertState.from = incidentStart;
-                sendAlert(monitor, result.status, incidentStart);
-            }
-        }
-        // Переход обратно в up (восстановление)
-        else if ((prevStatus === 'down' || prevStatus === 'degraded') && result.status === 'up') {
-            // Закрываем локальный инцидент
-            const active = State.incidents.find(i => i.monitorId === monitor.id && !i.resolved);
-            if (active) {
-                active.to = Date.now();
-                active.resolved = true;
-            }
-
-            // Отправляем алерт о восстановлении, если был отправлен алерт о падении
-            if (alertState.sent) {
-                sendAlert(monitor, 'up', alertState.from);
-                alertState.sent = false;
-                alertState.from = null;
-            }
+            if (!res.ok) throw new Error('Server error');
+            const result = await res.json();
+            fetch(`/api/monitor/history/${monitor.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(result)
+            }).catch(err => console.error('[monitor/history] save error:', err));
+            return result;
+        } catch (err) {
+            return {
+                status: 'down',
+                latency: 0,
+                error: err.message,
+                timestamp: Date.now()
+            };
         }
     }
 
-    // Обновляем метрики монитора
-    monitor.lastStatus = result.status;
-    monitor.lastLatency = result.latency;
-    monitor.lastStatusCode = result.statusCode;
-    monitor.lastCheck = result.timestamp;
-    monitor.totalChecks = (monitor.totalChecks || 0) + 1;
-    if (result.status === 'up') monitor.upChecks = (monitor.upChecks || 0) + 1;
+    async function sendAlert(monitor, status, from) {
+        try {
+            const res = await fetch('/api/monitor/alert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    monitorName: monitor.name,
+                    monitorUrl: monitor.url,
+                    status,
+                    from,
+                    to: status === 'up' ? Date.now() : null
+                })
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                console.warn('[monitor/alert] server error:', err.error || res.status);
+            }
+        } catch (err) {
+            console.error('[monitor/alert] network error:', err.message);
+        }
+    }
 
-    saveState();
-    render();
-}
+    async function runCheck(monitor) {
+        const result = await checkMonitor(monitor);
+        if (!State.history[monitor.id]) State.history[monitor.id] = [];
+        State.history[monitor.id].push(result);
+        if (State.history[monitor.id].length > 100) {
+            State.history[monitor.id] = State.history[monitor.id].slice(-100);
+        }
+        if (!State.alertState[monitor.id]) {
+            State.alertState[monitor.id] = { sent: false, from: null };
+        }
+        const alertState = State.alertState[monitor.id];
+        const prevStatus = monitor.lastStatus;
+        if (prevStatus && prevStatus !== result.status) {
+            if (result.status === 'down' || result.status === 'degraded') {
+                State.incidents.unshift({
+                    monitorId: monitor.id,
+                    monitorName: monitor.name,
+                    monitorUrl: monitor.url,
+                    from: Date.now(),
+                    to: null,
+                    status: result.status,
+                    resolved: false
+                });
+                if (!alertState.sent) {
+                    const incidentStart = Date.now();
+                    alertState.sent = true;
+                    alertState.from = incidentStart;
+                    sendAlert(monitor, result.status, incidentStart);
+                }
+            } else if ((prevStatus === 'down' || prevStatus === 'degraded') && result.status === 'up') {
+                const active = State.incidents.find(i => i.monitorId === monitor.id && !i.resolved);
+                if (active) {
+                    active.to = Date.now();
+                    active.resolved = true;
+                }
+                if (alertState.sent) {
+                    sendAlert(monitor, 'up', alertState.from);
+                    alertState.sent = false;
+                    alertState.from = null;
+                }
+            }
+        }
+        monitor.lastStatus = result.status;
+        monitor.lastLatency = result.latency;
+        monitor.lastStatusCode = result.statusCode;
+        monitor.lastCheck = result.timestamp;
+        monitor.totalChecks = (monitor.totalChecks || 0) + 1;
+        if (result.status === 'up') monitor.upChecks = (monitor.upChecks || 0) + 1;
+        saveState();
+        render();
+    }
 
     async function runAllChecks() {
         if (State.paused) return;
@@ -927,17 +1817,18 @@ async function runCheck(monitor) {
         }
     }
 
-    // --- Actions ---
+    // ============================================
+    // Actions
+    // ============================================
     function addMonitor() {
-        const url = normalizeUrl($('addUrlInput').value);
+        const url = normalizeUrl(DOM.addUrlInput.value);
         if (!isValidUrl(url)) {
             showToast('Неверный URL', 'error');
             return;
         }
-        const name = $('addNameInput').value.trim() || new URL(url).hostname;
-        const method = $('addMethod').value;
-        const expected = $('addExpected').value;
-
+        const name = DOM.addNameInput.value.trim() || new URL(url).hostname;
+        const method = DOM.addMethod.value;
+        const expected = DOM.addExpected.value;
         State.monitors.push({
             id: generateId(),
             name,
@@ -952,64 +1843,66 @@ async function runCheck(monitor) {
             totalChecks: 0,
             upChecks: 0
         });
-
-        $('addUrlInput').value = '';
-        $('addNameInput').value = '';
+        DOM.addUrlInput.value = '';
+        DOM.addNameInput.value = '';
         saveState();
         render();
-        showToast('Монитор добавлен');
+        showToast('Монитор добавлен', 'success');
     }
 
     function removeMonitor(id) {
         if (!confirm('Удалить монитор и всю его историю?')) return;
         State.monitors = State.monitors.filter(m => m.id !== id);
         delete State.history[id];
+        delete State.alertState[id];
         saveState();
         render();
-        showToast('Монитор удалён');
+        showToast('Монитор удалён', 'info');
     }
 
     function openEdit(id) {
         const m = State.monitors.find(x => x.id === id);
         if (!m) return;
         State.editingId = id;
-        $('editName').value = m.name;
-        $('editUrl').value = m.url;
-        $('editMethod').value = m.method;
-        $('editModal').classList.add('active');
+        DOM.editName.value = m.name;
+        DOM.editUrl.value = m.url;
+        DOM.editMethod.value = m.method;
+        DOM.editModal.classList.add('active');
     }
 
     function saveEdit() {
         const m = State.monitors.find(x => x.id === State.editingId);
         if (!m) return;
-        const url = normalizeUrl($('editUrl').value);
+        const url = normalizeUrl(DOM.editUrl.value);
         if (!isValidUrl(url)) {
             showToast('Неверный URL', 'error');
             return;
         }
-        m.name = $('editName').value.trim() || new URL(url).hostname;
+        m.name = DOM.editName.value.trim() || new URL(url).hostname;
         m.url = url;
-        m.method = $('editMethod').value;
+        m.method = DOM.editMethod.value;
         saveState();
         render();
-        $('editModal').classList.remove('active');
-        showToast('Сохранено');
+        DOM.editModal.classList.remove('active');
+        showToast('Сохранено', 'success');
     }
 
     function togglePause() {
         State.paused = !State.paused;
-        $('pauseBtn').innerHTML = State.paused 
+        DOM.pauseBtn.innerHTML = State.paused
             ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Продолжить'
             : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Пауза';
-        $('liveIndicator').classList.toggle('paused', State.paused);
-        $('liveText').textContent = State.paused ? 'Мониторинг на паузе' : 'Мониторинг активен';
+        DOM.liveIndicator.classList.toggle('paused', State.paused);
+        DOM.liveText.textContent = State.paused ? 'Мониторинг на паузе' : 'Мониторинг активен';
         if (State.paused) stopMonitoring();
         else startMonitoring();
+        showToast(State.paused ? 'Мониторинг приостановлен' : 'Мониторинг возобновлён', 'info', 2000);
     }
 
     function changeInterval() {
-        State.interval = parseInt($('intervalSelect').value);
+        State.interval = parseInt(DOM.intervalSelect.value);
         if (!State.paused) startMonitoring();
+        showToast(`Интервал: ${State.interval / 1000} сек`, 'info', 2000);
     }
 
     function exportData() {
@@ -1026,22 +1919,27 @@ async function runCheck(monitor) {
         a.download = `monitor-export-${Date.now()}.json`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast('Данные экспортированы');
+        showToast('Данные экспортированы', 'success');
     }
 
-function clearAll() {
-    if (!confirm('Удалить все мониторы и историю?')) return;
-    State.monitors = [];
-    State.history = {};
-    State.incidents = [];
-    State.alertState = {};
-    localStorage.removeItem(ALERT_STATE_KEY);
-    saveState();
-    render();
-    showToast('Всё очищено');
-}
+    function clearAll() {
+        if (!confirm('Удалить все мониторы и историю?')) return;
+        State.monitors = [];
+        State.history = {};
+        State.incidents = [];
+        State.alertState = {};
+        saveState();
+        render();
+        showToast('Всё очищено', 'info');
+    }
 
-    // --- Render ---
+    // Expose for inline handlers
+    window.__removeMonitor = removeMonitor;
+    window.__editMonitor = openEdit;
+
+    // ============================================
+    // Render
+    // ============================================
     function render() {
         renderStats();
         renderMonitors();
@@ -1049,14 +1947,14 @@ function clearAll() {
     }
 
     function renderStats() {
-        $('statTotal').textContent = State.monitors.length;
-        $('statUp').textContent = State.monitors.filter(m => m.lastStatus === 'up').length;
-        $('statDegraded').textContent = State.monitors.filter(m => m.lastStatus === 'degraded').length;
-        $('statDown').textContent = State.monitors.filter(m => m.lastStatus === 'down').length;
+        DOM.statTotal.textContent = State.monitors.length;
+        DOM.statUp.textContent = State.monitors.filter(m => m.lastStatus === 'up').length;
+        DOM.statDegraded.textContent = State.monitors.filter(m => m.lastStatus === 'degraded').length;
+        DOM.statDown.textContent = State.monitors.filter(m => m.lastStatus === 'down').length;
     }
 
     function renderMonitors() {
-        const list = $('monitorsList');
+        const list = DOM.monitorsList;
         if (State.monitors.length === 0) {
             list.innerHTML = `
                 <div class="empty-state">
@@ -1068,33 +1966,30 @@ function clearAll() {
                 </div>`;
             return;
         }
-
         list.innerHTML = State.monitors.map(m => {
             const history = State.history[m.id] || [];
             const uptime = m.totalChecks > 0 ? ((m.upChecks / m.totalChecks) * 100).toFixed(1) : '—';
             const latency = formatLatency(m.lastLatency);
             const statusLabel = { up: 'Operational', degraded: 'Degraded', down: 'Down', checking: 'Checking' }[m.lastStatus] || 'Unknown';
-
-            const blocks = history.slice(-60).map((h, i) => {
+            const blocks = history.slice(-60).map((h) => {
                 const time = formatTime(h.timestamp);
                 return `<div class="uptime-block ${h.status}">
                     <div class="uptime-tooltip">${time}<br>${h.latency}ms · ${h.statusCode || 'err'}</div>
                 </div>`;
             }).join('');
-
             return `
                 <div class="monitor-card status-${m.lastStatus}">
                     <div class="monitor-header">
                         <div class="monitor-info">
                             <div class="monitor-name">
                                 <span class="status-dot ${m.lastStatus}"></span>
-                                ${escapeHtml(m.name)}
+                                ${Security.escapeHtml(m.name)}
                             </div>
-                            <div class="monitor-url">${escapeHtml(m.url)}</div>
+                            <div class="monitor-url">${Security.escapeHtml(m.url)}</div>
                         </div>
                         <span class="monitor-status-badge ${m.lastStatus}">${statusLabel}</span>
                         <div style="display:flex;gap:4px;">
-                            <button class="btn-icon" onclick="window.__editMonitor('${m.id}')" title="Редактировать">
+                            <button class="btn-icon edit" onclick="window.__editMonitor('${m.id}')" title="Редактировать">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </button>
                             <button class="btn-icon" onclick="window.__removeMonitor('${m.id}')" title="Удалить">
@@ -1131,26 +2026,23 @@ function clearAll() {
     }
 
     function renderIncidents() {
-        const section = $('incidentsSection');
-        const list = $('incidentsList');
+        const section = DOM.incidentsSection;
+        const list = DOM.incidentsList;
         const active = State.incidents.filter(i => !i.resolved);
         const resolved = State.incidents.filter(i => i.resolved).slice(0, 10);
-
         if (State.incidents.length === 0) {
             section.style.display = 'none';
             return;
         }
-
         section.style.display = 'block';
-        $('incidentsCount').textContent = State.incidents.length;
-
+        DOM.incidentsCount.textContent = State.incidents.length;
         const items = [...active, ...resolved].map(i => {
             const duration = i.to ? formatDuration(i.to - i.from) : formatDuration(Date.now() - i.from);
             return `
                 <div class="incident-item ${i.resolved ? 'resolved' : ''}">
                     <div class="incident-time">${new Date(i.from).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</div>
                     <div class="incident-text">
-                        <strong>${escapeHtml(i.monitorName)}</strong> — 
+                        <strong>${Security.escapeHtml(i.monitorName)}</strong> —
                         ${i.status === 'down' ? 'недоступен' : 'работает с задержками'}
                         ${i.resolved ? ' (восстановлен)' : ''}
                     </div>
@@ -1158,34 +2050,265 @@ function clearAll() {
                 </div>
             `;
         }).join('');
-
         list.innerHTML = items;
     }
 
-    // --- Expose for inline handlers ---
-    window.__removeMonitor = removeMonitor;
-    window.__editMonitor = openEdit;
+    // ============================================
+    // Command Palette
+    // ============================================
+    function openCmdk() {
+        DOM.cmdkOverlay.classList.add('active');
+        DOM.cmdkOverlay.style.display = 'flex';
+        DOM.cmdkInput.value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => DOM.cmdkInput.focus(), 50);
+        renderCmdkResults('');
+        document.body.style.overflow = 'hidden';
+    }
 
-    // --- Init ---
-    $('addBtn').addEventListener('click', addMonitor);
-    $('addUrlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addMonitor(); });
-    $('pauseBtn').addEventListener('click', togglePause);
-    $('intervalSelect').addEventListener('change', changeInterval);
-    $('exportBtn').addEventListener('click', exportData);
-    $('clearBtn').addEventListener('click', clearAll);
-    $('cancelEdit').addEventListener('click', () => $('editModal').classList.remove('active'));
-    $('saveEdit').addEventListener('click', saveEdit);
-    $('editModal').addEventListener('click', e => { if (e.target === $('editModal')) $('editModal').classList.remove('active'); });
+    function closeCmdk() {
+        DOM.cmdkOverlay.classList.remove('active');
+        setTimeout(() => {
+            DOM.cmdkOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 200);
+    }
 
-    loadState();
-    render();
-    startMonitoring();
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); } },
+            { type: 'action', title: 'Пауза/возобновление', desc: State.paused ? 'Возобновить мониторинг' : 'Приостановить мониторинг', kbd: 'P', action: () => { togglePause(); closeCmdk(); } },
+            { type: 'action', title: 'Экспорт данных', desc: 'Скачать JSON со всеми данными', kbd: 'E', action: () => { exportData(); closeCmdk(); } },
+            { type: 'action', title: 'Очистить всё', desc: 'Удалить все мониторы и историю', action: () => { clearAll(); closeCmdk(); } },
+            { type: 'nav', title: 'Каталог проектов', desc: 'Главная страница', url: '/', kbd: '1' },
+            { type: 'nav', title: 'System Status', desc: 'Статус сервисов Oris', url: '/status', kbd: '2' }
+        ];
+        const monitors = State.monitors.slice(0, 20).map(m => {
+            const statusLabel = { up: 'Operational', degraded: 'Degraded', down: 'Down', checking: 'Checking' }[m.lastStatus] || 'Unknown';
+            const statusColor = { up: 'var(--success)', degraded: 'var(--warning)', down: 'var(--danger)', checking: 'var(--text-tertiary)' }[m.lastStatus] || 'var(--accent)';
+            return {
+                type: 'monitor',
+                title: m.name,
+                desc: `${m.url} · ${statusLabel}${m.lastLatency ? ' · ' + m.lastLatency + 'ms' : ''}`,
+                color: statusColor,
+                id: m.id
+            };
+        });
+        let filteredActions = actions;
+        let filteredMonitors = monitors;
+        if (q) {
+            filteredActions = actions.filter(a =>
+                a.title.toLowerCase().includes(q) ||
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+            filteredMonitors = monitors.filter(m =>
+                m.title.toLowerCase().includes(q) ||
+                m.desc.toLowerCase().includes(q)
+            );
+        }
+        const items = [];
+        if (filteredActions.length > 0) items.push({ group: 'Действия', entries: filteredActions });
+        if (filteredMonitors.length > 0) items.push({ group: 'Мониторы', entries: filteredMonitors });
+        if (items.length === 0) {
+            DOM.cmdkResults.innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                const iconBg = entry.color ? entry.color + '22' : 'var(--accent-soft)';
+                const iconColor = entry.color || 'var(--accent)';
+                const iconPath = entry.type === 'monitor'
+                    ? 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+                    : 'M13 10V3L4 14h7v7l9-11h-7z';
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}">
+                        <div class="cmdk-item-icon" style="background: ${iconBg}; color: ${iconColor};">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+        DOM.cmdkResults.innerHTML = html;
+        DOM.cmdkResults.querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
 
-    // Pause on tab hidden
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) stopMonitoring();
-        else if (!State.paused) startMonitoring();
-    });
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'monitor' && entry.id) {
+                        closeCmdk();
+                        setTimeout(() => {
+                            const cards = document.querySelectorAll('.monitor-card');
+                            const monitor = State.monitors.find(m => m.id === entry.id);
+                            if (monitor) {
+                                const index = State.monitors.indexOf(monitor);
+                                if (cards[index]) cards[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 100);
+                    } else if (entry.url) {
+                        window.location.href = entry.url;
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function initCmdk() {
+        DOM.cmdkBtn.addEventListener('click', openCmdk);
+        DOM.cmdkOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cmdkOverlay) closeCmdk();
+        });
+        DOM.cmdkInput.addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        DOM.cmdkInput.addEventListener('keydown', (e) => {
+            const items = DOM.cmdkResults.querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // ============================================
+    // Hotkeys
+    // ============================================
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    if (DOM.editModal.classList.contains('active')) DOM.editModal.classList.remove('active');
+                }
+                return;
+            }
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+            switch (e.key) {
+                case '/':
+                    e.preventDefault();
+                    DOM.addUrlInput.focus();
+                    break;
+                case 'n': case 'N': case 'т': case 'Т':
+                    DOM.addUrlInput.focus();
+                    break;
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'p': case 'P': case 'з': case 'З':
+                    togglePause();
+                    break;
+                case 'e': case 'E': case 'у': case 'У':
+                    exportData();
+                    break;
+                case '1': window.location.href = '/'; break;
+                case '2': window.location.href = '/status'; break;
+                case '3': window.location.href = '/monitor'; break;
+                case 'Escape':
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else if (DOM.editModal.classList.contains('active')) DOM.editModal.classList.remove('active');
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: ⌘K палитра · N фокус URL · T тема · P пауза · E экспорт · 1-3 навигация · ? помощь', 'info', 5000);
+                    break;
+            }
+        });
+    }
+
+    // ============================================
+    // Event Bindings
+    // ============================================
+    function bindEvents() {
+        DOM.addBtn.addEventListener('click', addMonitor);
+        DOM.addUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') addMonitor(); });
+        DOM.pauseBtn.addEventListener('click', togglePause);
+        DOM.intervalSelect.addEventListener('change', changeInterval);
+        DOM.exportBtn.addEventListener('click', exportData);
+        DOM.clearBtn.addEventListener('click', clearAll);
+        DOM.cancelEdit.addEventListener('click', () => DOM.editModal.classList.remove('active'));
+        DOM.saveEdit.addEventListener('click', saveEdit);
+        DOM.editModal.addEventListener('click', e => { if (e.target === DOM.editModal) DOM.editModal.classList.remove('active'); });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) stopMonitoring();
+            else if (!State.paused) startMonitoring();
+        });
+    }
+
+    // ============================================
+    // Init
+    // ============================================
+    function init() {
+        initTheme();
+        initHero();
+        initScrollEffects();
+        initCmdk();
+        initHotkeys();
+        bindEvents();
+        loadState();
+        render();
+        startMonitoring();
+        setTimeout(() => {
+            showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+        }, 1200);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();
 </script>
 
