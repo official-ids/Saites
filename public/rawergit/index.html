@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light" data-accent="blue">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RawerGit — Raw view for GitHub files</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" media="(prefers-color-scheme: dark)">
+<style>
+/* ============ RESET & BASE ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --transition: 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ============ LIGHT THEME ============ */
+[data-theme="light"] {
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f6f8fa;
+  --color-canvas-muted: #eaeef2;
+  --color-border-default: #d0d7de;
+  --color-border-muted: #d8dee4;
+  --color-text-primary: #1f2328;
+  --color-text-secondary: #656d76;
+  --color-text-tertiary: #6e7781;
+  --color-text-link: var(--accent-fg);
+  --color-bg-hover: rgba(208, 215, 222, 0.32);
+  --color-shadow: rgba(140, 149, 159, 0.2);
+  --color-btn-bg: #f6f8fa;
+  --color-btn-border: rgba(27, 31, 36, 0.15);
+  --color-btn-hover-bg: #e6eaef;
+  --color-btn-primary-bg: var(--accent-emphasis);
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-hover-bg: var(--accent-emphasis-hover);
+  --color-fg-default: #1f2328;
+  --color-fg-muted: #656d76;
+  --color-success-fg: #1a7f37;
+  --color-danger-fg: #d1242f;
+  --color-attention-fg: #9a6700;
+  --scrollbar-thumb: #c0c8d1;
+  --code-bg: #f6f8fa;
+}
+
+/* ============ DARK THEME ============ */
+[data-theme="dark"] {
+  --color-canvas-default: #0d1117;
+  --color-canvas-subtle: #161b22;
+  --color-canvas-muted: #1c2128;
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #7d8590;
+  --color-text-tertiary: #6e7681;
+  --color-text-link: var(--accent-fg);
+  --color-bg-hover: rgba(110, 118, 129, 0.1);
+  --color-shadow: rgba(0, 0, 0, 0.5);
+  --color-btn-bg: #21262d;
+  --color-btn-border: rgba(240, 246, 252, 0.1);
+  --color-btn-hover-bg: #30363d;
+  --color-btn-primary-bg: var(--accent-emphasis);
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-hover-bg: var(--accent-emphasis-hover);
+  --color-fg-default: #e6edf3;
+  --color-fg-muted: #7d8590;
+  --color-success-fg: #3fb950;
+  --color-danger-fg: #f85149;
+  --color-attention-fg: #d29922;
+  --scrollbar-thumb: #3d444d;
+  --code-bg: #161b22;
+}
+
+/* ============ ACCENT COLORS ============ */
+[data-accent="blue"] {
+  --accent-fg: #0969da;
+  --accent-emphasis: #0969da;
+  --accent-emphasis-hover: #0860c4;
+  --accent-subtle: #ddf4ff;
+}
+[data-theme="dark"][data-accent="blue"] {
+  --accent-fg: #4493f8;
+  --accent-emphasis: #1f6feb;
+  --accent-emphasis-hover: #388bfd;
+  --accent-subtle: rgba(56, 139, 253, 0.15);
+}
+
+[data-accent="purple"] {
+  --accent-fg: #8250df;
+  --accent-emphasis: #8250df;
+  --accent-emphasis-hover: #6e40c9;
+  --accent-subtle: #fbefff;
+}
+[data-theme="dark"][data-accent="purple"] {
+  --accent-fg: #ab7df8;
+  --accent-emphasis: #8957e5;
+  --accent-emphasis-hover: #a371f7;
+  --accent-subtle: rgba(163, 113, 247, 0.15);
+}
+
+[data-accent="pink"] {
+  --accent-fg: #bf3989;
+  --accent-emphasis: #bf3989;
+  --accent-emphasis-hover: #a61b6e;
+  --accent-subtle: #ffeff7;
+}
+[data-theme="dark"][data-accent="pink"] {
+  --accent-fg: #f778ba;
+  --accent-emphasis: #db61a2;
+  --accent-emphasis-hover: #f778ba;
+  --accent-subtle: rgba(219, 97, 162, 0.15);
+}
+
+[data-accent="orange"] {
+  --accent-fg: #bc4c00;
+  --accent-emphasis: #bc4c00;
+  --accent-emphasis-hover: #a33d00;
+  --accent-subtle: #fff1e5;
+}
+[data-theme="dark"][data-accent="orange"] {
+  --accent-fg: #f0883e;
+  --accent-emphasis: #db6d28;
+  --accent-emphasis-hover: #f0883e;
+  --accent-subtle: rgba(219, 109, 40, 0.15);
+}
+
+[data-accent="green"] {
+  --accent-fg: #1a7f37;
+  --accent-emphasis: #1a7f37;
+  --accent-emphasis-hover: #116329;
+  --accent-subtle: #dafbe1;
+}
+[data-theme="dark"][data-accent="green"] {
+  --accent-fg: #3fb950;
+  --accent-emphasis: #238636;
+  --accent-emphasis-hover: #2ea043;
+  --accent-subtle: rgba(63, 185, 80, 0.15);
+}
+
+[data-accent="red"] {
+  --accent-fg: #d1242f;
+  --accent-emphasis: #d1242f;
+  --accent-emphasis-hover: #b91c1c;
+  --accent-subtle: #ffebe9;
+}
+[data-theme="dark"][data-accent="red"] {
+  --accent-fg: #f85149;
+  --accent-emphasis: #da3633;
+  --accent-emphasis-hover: #f85149;
+  --accent-subtle: rgba(248, 81, 73, 0.15);
+}
+
+/* ============ GLOBAL ============ */
+html, body {
+  height: 100%;
+  background: var(--color-canvas-default);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+a { color: var(--color-text-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 5px; border: 2px solid var(--color-canvas-default); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
+
+/* ============ HEADER ============ */
+.header {
+  background: var(--color-canvas-default);
+  border-bottom: 1px solid var(--color-border-muted);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: saturate(180%) blur(8px);
+  background: color-mix(in srgb, var(--color-canvas-default) 85%, transparent);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-emphasis);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.logo-text-sub {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-size: 13px;
+  margin-left: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: background var(--transition), color var(--transition);
+  position: relative;
+}
+
+.icon-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* ============ MAIN LAYOUT ============ */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .sidebar.open { display: block; position: fixed; top: 65px; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--color-canvas-default); border-top: 1px solid var(--color-border-muted); overflow-y: auto; padding: 16px; }
+}
+
+/* ============ SIDEBAR ============ */
+.sidebar {
+  border-right: 1px solid var(--color-border-muted);
+  padding: 24px 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 65px);
+  position: sticky;
+  top: 65px;
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sidebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  padding: 0 8px;
+}
+
+.history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-item {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  transition: background var(--transition);
+}
+
+.history-item:hover {
+  background: var(--color-bg-hover);
+}
+
+.history-item-path {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.history-item-delete {
+  opacity: 0;
+  color: var(--color-text-tertiary);
+  padding: 2px;
+  border-radius: 4px;
+  transition: opacity var(--transition);
+}
+
+.history-item:hover .history-item-delete { opacity: 1; }
+.history-item-delete:hover { color: var(--color-danger-fg); background: var(--color-bg-hover); }
+.history-item-delete svg { width: 14px; height: 14px; display: block; }
+
+.history-empty {
+  padding: 16px 10px;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.clear-history {
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+  margin-top: 8px;
+}
+
+.clear-history:hover { background: var(--color-bg-hover); color: var(--color-danger-fg); }
+
+/* ============ CONTENT ============ */
+.content {
+  padding: 32px 24px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .content { padding: 20px 16px; }
+  .header { padding: 12px 16px; }
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+/* ============ INPUT CARD ============ */
+.input-card {
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.input-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.text-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.text-input:focus {
+  border-color: var(--accent-emphasis);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.text-input::placeholder { color: var(--color-text-tertiary); }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--transition), border-color var(--transition);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.btn svg { width: 16px; height: 16px; }
+
+.btn-default {
+  background: var(--color-btn-bg);
+  border-color: var(--color-btn-border);
+  color: var(--color-text-primary);
+}
+
+.btn-default:hover { background: var(--color-btn-hover-bg); }
+
+.btn-primary {
+  background: var(--color-btn-primary-bg);
+  color: var(--color-btn-primary-text);
+  border-color: rgba(27, 31, 36, 0.15);
+}
+
+.btn-primary:hover { background: var(--color-btn-primary-hover-bg); }
+
+.btn-danger {
+  color: var(--color-danger-fg);
+}
+
+.btn-danger:hover { background: var(--color-danger-fg); color: #fff; }
+
+.btn-icon {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* ============ RESULT CARD ============ */
+.result-card {
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-muted);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.result-file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.file-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.file-path {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.result-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.raw-url-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-muted);
+}
+
+.raw-url-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.raw-url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.raw-url-input:focus {
+  border-color: var(--accent-emphasis);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.code-wrapper {
+  position: relative;
+  max-height: 600px;
+  overflow: auto;
+  background: var(--code-bg);
+}
+
+.code-wrapper pre {
+  margin: 0;
+  padding: 16px;
+  background: transparent !important;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.code-wrapper code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.line-numbers {
+  display: flex;
+}
+
+.line-numbers .line-num {
+  user-select: none;
+  color: var(--color-text-tertiary);
+  text-align: right;
+  padding-right: 16px;
+  margin-right: 16px;
+  border-right: 1px solid var(--color-border-muted);
+  min-width: 40px;
+}
+
+.line-numbers .line-content {
+  flex: 1;
+  white-space: pre;
+}
+
+/* ============ EMPTY STATE ============ */
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  color: var(--color-text-tertiary);
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.example-urls {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.example-url {
+  padding: 8px 12px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.example-url:hover {
+  border-color: var(--accent-emphasis);
+  background: var(--accent-subtle);
+}
+
+/* ============ ERROR STATE ============ */
+.error-banner {
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--color-danger-fg) 10%, var(--color-canvas-default));
+  border: 1px solid color-mix(in srgb, var(--color-danger-fg) 40%, var(--color-border-default));
+  border-radius: var(--radius-md);
+  color: var(--color-danger-fg);
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+/* ============ LOADING ============ */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  color: var(--color-text-secondary);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--accent-emphasis);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ MODAL ============ */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-backdrop.open { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border-muted);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ============ SETTINGS ============ */
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-group:last-child { margin-bottom: 0; }
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.settings-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.theme-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.theme-option {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+
+.theme-option:hover { color: var(--color-text-primary); }
+
+.theme-option.active {
+  background: var(--color-canvas-default);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 3px var(--color-shadow);
+}
+
+.accent-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.accent-swatch {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform var(--transition), border-color var(--transition);
+  position: relative;
+}
+
+.accent-swatch:hover { transform: scale(1.1); }
+
+.accent-swatch.active {
+  border-color: var(--color-text-primary);
+}
+
+.accent-swatch.active::after {
+  content: '';
+  position: absolute;
+  inset: 25%;
+  background: #fff;
+  border-radius: 50%;
+  mix-blend-mode: difference;
+}
+
+.accent-swatch[data-color="blue"] { background: #0969da; }
+.accent-swatch[data-color="purple"] { background: #8250df; }
+.accent-swatch[data-color="pink"] { background: #bf3989; }
+.accent-swatch[data-color="orange"] { background: #bc4c00; }
+.accent-swatch[data-color="green"] { background: #1a7f37; }
+.accent-swatch[data-color="red"] { background: #d1242f; }
+.accent-swatch[data-color="yellow"] { background: #9a6700; }
+
+[data-theme="dark"] .accent-swatch[data-color="blue"] { background: #4493f8; }
+[data-theme="dark"] .accent-swatch[data-color="purple"] { background: #ab7df8; }
+[data-theme="dark"] .accent-swatch[data-color="pink"] { background: #f778ba; }
+[data-theme="dark"] .accent-swatch[data-color="orange"] { background: #f0883e; }
+[data-theme="dark"] .accent-swatch[data-color="green"] { background: #3fb950; }
+[data-theme="dark"] .accent-swatch[data-color="red"] { background: #f85149; }
+[data-theme="dark"] .accent-swatch[data-color="yellow"] { background: #d29922; }
+
+/* ============ AI CHAT WIDGET ============ */
+.ai-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-emphasis);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--color-shadow);
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition);
+  z-index: 80;
+  border: none;
+}
+
+.ai-fab:hover {
+  transform: scale(1.05);
+  background: var(--accent-emphasis-hover);
+}
+
+.ai-fab svg { width: 24px; height: 24px; }
+
+.ai-panel {
+  position: fixed;
+  bottom: 92px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 520px;
+  max-height: calc(100vh - 120px);
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px var(--color-shadow);
+  display: none;
+  flex-direction: column;
+  z-index: 80;
+  overflow: hidden;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-panel.open { display: flex; }
+
+.ai-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-canvas-subtle);
+}
+
+.ai-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-emphasis);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ai-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ai-subtitle {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success-fg);
+  display: inline-block;
+}
+
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.ai-message.bot {
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-muted);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.ai-message.user {
+  background: var(--accent-emphasis);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-message.bot a { color: var(--accent-fg); }
+
+.ai-message code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(0,0,0,0.08);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+[data-theme="dark"] .ai-message code { background: rgba(255,255,255,0.1); }
+
+.ai-typing {
+  display: inline-flex;
+  gap: 3px;
+  padding: 12px 14px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-md);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+
+.ai-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+  animation: typing 1.2s infinite ease-in-out;
+}
+
+.ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.ai-input-area {
+  padding: 12px;
+  border-top: 1px solid var(--color-border-muted);
+  display: flex;
+  gap: 8px;
+  background: var(--color-canvas-subtle);
+}
+
+.ai-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  min-height: 36px;
+  max-height: 100px;
+  font-family: inherit;
+}
+
+.ai-input:focus {
+  border-color: var(--accent-emphasis);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.ai-send {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--accent-emphasis);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.ai-send:hover { background: var(--accent-emphasis-hover); }
+.ai-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-send svg { width: 16px; height: 16px; }
+
+/* ============ TOAST ============ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px var(--color-shadow);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.2s ease;
+  pointer-events: auto;
+}
+
+.toast.success { border-left: 3px solid var(--color-success-fg); }
+.toast.error { border-left: 3px solid var(--color-danger-fg); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ UTILITIES ============ */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+
+/* Override prism theme for both modes */
+[data-theme="light"] .code-wrapper pre[class*="language-"],
+[data-theme="light"] .code-wrapper code[class*="language-"] {
+  background: transparent !important;
+  color: var(--color-text-primary);
+  text-shadow: none;
+}
+
+[data-theme="dark"] .code-wrapper pre[class*="language-"],
+[data-theme="dark"] .code-wrapper code[class*="language-"] {
+  background: transparent !important;
+  color: var(--color-text-primary);
+  text-shadow: none;
+}
+
+[data-theme="light"] .token.comment,
+[data-theme="light"] .token.prolog,
+[data-theme="light"] .token.doctype,
+[data-theme="light"] .token.cdata { color: #6a737d; }
+[data-theme="light"] .token.punctuation { color: #24292e; }
+[data-theme="light"] .token.property,
+[data-theme="light"] .token.tag,
+[data-theme="light"] .token.boolean,
+[data-theme="light"] .token.number,
+[data-theme="light"] .token.constant,
+[data-theme="light"] .token.symbol { color: #005cc5; }
+[data-theme="light"] .token.selector,
+[data-theme="light"] .token.attr-name,
+[data-theme="light"] .token.string,
+[data-theme="light"] .token.char,
+[data-theme="light"] .token.builtin { color: #032f62; }
+[data-theme="light"] .token.operator,
+[data-theme="light"] .token.entity,
+[data-theme="light"] .token.url { color: #d73a49; }
+[data-theme="light"] .token.atrule,
+[data-theme="light"] .token.attr-value,
+[data-theme="light"] .token.keyword { color: #d73a49; }
+[data-theme="light"] .token.function { color: #6f42c1; }
+[data-theme="light"] .token.regex,
+[data-theme="light"] .token.important,
+[data-theme="light"] .token.variable { color: #e36209; }
+
+[data-theme="dark"] .token.comment,
+[data-theme="dark"] .token.prolog,
+[data-theme="dark"] .token.doctype,
+[data-theme="dark"] .token.cdata { color: #8b949e; }
+[data-theme="dark"] .token.punctuation { color: #c9d1d9; }
+[data-theme="dark"] .token.property,
+[data-theme="dark"] .token.tag,
+[data-theme="dark"] .token.boolean,
+[data-theme="dark"] .token.number,
+[data-theme="dark"] .token.constant,
+[data-theme="dark"] .token.symbol { color: #79c0ff; }
+[data-theme="dark"] .token.selector,
+[data-theme="dark"] .token.attr-name,
+[data-theme="dark"] .token.string,
+[data-theme="dark"] .token.char,
+[data-theme="dark"] .token.builtin { color: #a5d6ff; }
+[data-theme="dark"] .token.operator,
+[data-theme="dark"] .token.entity,
+[data-theme="dark"] .token.url { color: #ff7b72; }
+[data-theme="dark"] .token.atrule,
+[data-theme="dark"] .token.attr-value,
+[data-theme="dark"] .token.keyword { color: #ff7b72; }
+[data-theme="dark"] .token.function { color: #d2a8ff; }
+[data-theme="dark"] .token.regex,
+[data-theme="dark"] .token.important,
+[data-theme="dark"] .token.variable { color: #ffa657; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <a href="#" class="logo" onclick="return false;">
+      <div class="logo-icon">R</div>
+      <span>RawerGit<span class="logo-text-sub"> · raw view for GitHub</span></span>
+    </a>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="btn-sidebar-toggle" title="История" aria-label="История">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-settings" title="Настройки" aria-label="Настройки">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">История</div>
+      <ul class="history-list" id="history-list"></ul>
+      <button class="clear-history" id="btn-clear-history">Очистить историю</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">О сервисе</div>
+      <div style="padding: 8px 10px; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;">
+        RawerGit превращает обычные ссылки GitHub в прямые raw-ссылки на исходный код. Вставляете URL — получаете чистый код и готовую ссылку для встраивания.
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <section class="content">
+    <h1 class="page-title">Получить raw-версию файла</h1>
+    <p class="page-subtitle">Вставьте ссылку на GitHub-файл — получите прямой URL и исходный код.</p>
+
+    <div class="input-card">
+      <label class="input-label" for="url-input">GitHub URL</label>
+      <div class="input-row">
+        <input type="text" id="url-input" class="text-input" placeholder="https://github.com/user/repo/blob/main/file.js" autocomplete="off" spellcheck="false">
+        <button class="btn btn-primary" id="btn-fetch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Получить
+        </button>
+      </div>
+      <div class="input-hint">Поддерживаются ссылки вида github.com/.../blob/... и github.com/.../raw/...</div>
+    </div>
+
+    <div id="error-container"></div>
+    <div id="loading-container"></div>
+    <div id="result-container">
+      <div class="empty-state" id="empty-state">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <div class="empty-state-title">Начните с ссылки на GitHub</div>
+        <div class="empty-state-text">Вставьте URL файла выше или выберите пример ниже</div>
+        <div class="example-urls">
+          <button class="example-url" data-url="https://github.com/twbs/bootstrap/blob/main/package.json">https://github.com/twbs/bootstrap/blob/main/package.json</button>
+          <button class="example-url" data-url="https://github.com/vuejs/core/blob/main/README.md">https://github.com/vuejs/core/blob/main/README.md</button>
+          <button class="example-url" data-url="https://github.com/microsoft/TypeScript/blob/main/src/compiler/checker.ts">https://github.com/microsoft/TypeScript/blob/main/src/compiler/checker.ts</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal" role="dialog" aria-labelledby="settings-title">
+    <div class="modal-header">
+      <h2 class="modal-title" id="settings-title">Настройки</h2>
+      <button class="icon-btn" id="btn-close-settings" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-group">
+        <label class="settings-label">Тема оформления</label>
+        <div class="settings-description">Выберите светлую, тёмную или следуйте системным настройкам</div>
+        <div class="theme-switcher" id="theme-switcher">
+          <button class="theme-option" data-theme-value="light">Светлая</button>
+          <button class="theme-option" data-theme-value="dark">Тёмная</button>
+          <button class="theme-option" data-theme-value="system">Системная</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <label class="settings-label">Акцентный цвет</label>
+        <div class="settings-description">Основной цвет интерфейса и ссылок</div>
+        <div class="accent-grid" id="accent-grid">
+          <button class="accent-swatch" data-color="blue" title="Синий"></button>
+          <button class="accent-swatch" data-color="purple" title="Фиолетовый"></button>
+          <button class="accent-swatch" data-color="pink" title="Розовый"></button>
+          <button class="accent-swatch" data-color="orange" title="Оранжевый"></button>
+          <button class="accent-swatch" data-color="green" title="Зелёный"></button>
+          <button class="accent-swatch" data-color="red" title="Красный"></button>
+          <button class="accent-swatch" data-color="yellow" title="Жёлтый"></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="btn-close-settings-footer">Готово</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI CHAT -->
+<button class="ai-fab" id="ai-fab" title="AI-поддержка" aria-label="Открыть AI-поддержку">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-header">
+    <div class="ai-header-info">
+      <div class="ai-avatar">AI</div>
+      <div>
+        <div class="ai-title">RawerGit Support</div>
+        <div class="ai-subtitle"><span class="ai-status-dot"></span> Онлайн</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="btn-close-ai" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ai-messages" id="ai-messages">
+    <div class="ai-message bot">Привет! Я помощник RawerGit. Спрашивайте о сервисе, raw-ссылках, GitHub API или чём угодно — отвечу.</div>
+  </div>
+  <div class="ai-input-area">
+    <textarea class="ai-input" id="ai-input" placeholder="Спросите что-нибудь..." rows="1"></textarea>
+    <button class="ai-send" id="ai-send" aria-label="Отправить">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script>
+/* ============================================================
+   RAWERGIT — CORE APPLICATION
+   ============================================================ */
+
+const MISTRAL_API_KEY = 'XOXe6aEwWgnRRXZ8QhFhPkPG4qza64OQ';
+const MISTRAL_MODEL = 'mistral-small-latest';
+const MISTRAL_ENDPOINT = 'https://api.mistral.ai/v1/chat/completions';
+
+const SYSTEM_PROMPT = `Ты — дружелюбный помощник сервиса RawerGit. RawerGit — это веб-сервис, который принимает ссылку на GitHub-файл (например, https://github.com/user/repo/blob/main/file.js) и возвращает:
+1. Прямой raw-URL (https://raw.githubusercontent.com/user/repo/main/file.js)
+2. Сам исходный код файла с подсветкой синтаксиса
+3. Возможность скопировать URL, скопировать код или скачать файл.
+
+Отвечай кратко, по делу, на русском языке. Помогай с вопросами:
+- Как пользоваться сервисом
+- Как устроены raw-ссылки GitHub
+- Как встраивать код с raw-ссылок
+- Ошибки при загрузке файлов
+- Отличия между blob/raw/tree ссылками
+- GitHub API и ограничения
+
+Если вопрос не связан с сервисом — всё равно помоги, но старайся возвращать разговор к теме.`;
+
+/* ---------- STATE ---------- */
+const state = {
+  theme: localStorage.getItem('rg-theme') || 'system',
+  accent: localStorage.getItem('rg-accent') || 'blue',
+  history: JSON.parse(localStorage.getItem('rg-history') || '[]'),
+  aiMessages: [],
+  aiLoading: false,
+};
+
+/* ---------- THEME ---------- */
+function applyTheme() {
+  let effective = state.theme;
+  if (state.theme === 'system') {
+    effective = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', effective);
+  document.documentElement.setAttribute('data-accent', state.accent);
+
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.themeValue === state.theme);
+  });
+  document.querySelectorAll('.accent-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.dataset.color === state.accent);
+  });
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (state.theme === 'system') applyTheme();
+});
+
+document.querySelectorAll('.theme-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.theme = btn.dataset.themeValue;
+    localStorage.setItem('rg-theme', state.theme);
+    applyTheme();
+  });
+});
+
+document.querySelectorAll('.accent-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    state.accent = sw.dataset.color;
+    localStorage.setItem('rg-accent', state.accent);
+    applyTheme();
+  });
+});
+
+applyTheme();
+
+/* ---------- URL PARSING ---------- */
+function parseGitHubUrl(url) {
+  url = url.trim();
+  if (!url) return null;
+
+  // Normalize
+  url = url.replace(/^https?:\/\//, '');
+  if (!url.startsWith('github.com/')) {
+    // Try to detect if user forgot github.com
+    if (/^[^\/]+\/[^\/]+\/(blob|tree|raw)\/.+/i.test(url)) {
+      url = 'github.com/' + url;
+    } else {
+      return null;
+    }
+  }
+
+  const match = url.match(/^github\.com\/([^\/]+)\/([^\/]+)\/(blob|tree|raw)\/([^\/]+)\/(.+)$/i);
+  if (!match) return null;
+
+  const [, user, repo, type, branch, path] = match;
+  const rawUrl = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${path}`;
+  return { user, repo, type, branch, path, rawUrl };
+}
+
+function detectLanguage(path) {
+  const ext = path.split('.').pop().toLowerCase();
+  const map = {
+    'js': 'javascript', 'mjs': 'javascript', 'cjs': 'javascript',
+    'ts': 'typescript', 'tsx': 'typescript',
+    'py': 'python', 'pyw': 'python',
+    'json': 'json',
+    'css': 'css', 'scss': 'css', 'sass': 'css', 'less': 'css',
+    'html': 'markup', 'htm': 'markup', 'xml': 'markup', 'svg': 'markup',
+    'sh': 'bash', 'bash': 'bash', 'zsh': 'bash',
+    'java': 'java',
+    'c': 'c', 'h': 'c',
+    'cpp': 'cpp', 'cc': 'cpp', 'cxx': 'cpp', 'hpp': 'cpp',
+    'go': 'go',
+    'rs': 'rust',
+    'rb': 'ruby',
+    'php': 'php',
+    'yml': 'yaml', 'yaml': 'yaml',
+    'md': 'markdown', 'markdown': 'markdown',
+    'sql': 'sql',
+  };
+  return map[ext] || 'none';
+}
+
+/* ---------- HISTORY ---------- */
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (state.history.length === 0) {
+    list.innerHTML = '<li class="history-empty">Пока пусто</li>';
+    return;
+  }
+  list.innerHTML = state.history.map((item, idx) => `
+    <li class="history-item" data-idx="${idx}">
+      <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="history-item-path" title="${escapeHtml(item.path)}">${escapeHtml(item.path)}</span>
+      <button class="history-item-delete" data-idx="${idx}" title="Удалить" aria-label="Удалить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </li>
+  `).join('');
+
+  list.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.history-item-delete')) return;
+      const idx = parseInt(el.dataset.idx);
+      document.getElementById('url-input').value = state.history[idx].url;
+      fetchFile();
+    });
+  });
+
+  list.querySelectorAll('.history-item-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      state.history.splice(idx, 1);
+      saveHistory();
+      renderHistory();
+    });
+  });
+}
+
+function saveHistory() {
+  localStorage.setItem('rg-history', JSON.stringify(state.history));
+}
+
+function addToHistory(parsed) {
+  state.history = state.history.filter(h => h.url !== parsed.rawUrl.replace('raw.githubusercontent.com', 'github.com').replace(/\/raw\//, '/blob/'));
+  state.history.unshift({
+    url: `https://github.com/${parsed.user}/${parsed.repo}/blob/${parsed.branch}/${parsed.path}`,
+    path: `${parsed.user}/${parsed.repo}/${parsed.path}`,
+    ts: Date.now(),
+  });
+  if (state.history.length > 20) state.history = state.history.slice(0, 20);
+  saveHistory();
+  renderHistory();
+}
+
+/* ---------- FETCH FILE ---------- */
+async function fetchFile() {
+  const input = document.getElementById('url-input');
+  const url = input.value.trim();
+  const errorContainer = document.getElementById('error-container');
+  const loadingContainer = document.getElementById('loading-container');
+  const resultContainer = document.getElementById('result-container');
+
+  errorContainer.innerHTML = '';
+  loadingContainer.innerHTML = '';
+
+  if (!url) {
+    errorContainer.innerHTML = `<div class="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Введите ссылку на GitHub-файл</div>`;
+    return;
+  }
+
+  const parsed = parseGitHubUrl(url);
+  if (!parsed) {
+    errorContainer.innerHTML = `<div class="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Не удалось распознать ссылку. Используйте формат: github.com/user/repo/blob/branch/path</div>`;
+    return;
+  }
+
+  loadingContainer.innerHTML = `<div class="loading"><div class="spinner"></div><span>Загружаем файл...</span></div>`;
+  resultContainer.innerHTML = '';
+
+  try {
+    const response = await fetch(parsed.rawUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText === 'Not Found' ? 'Файл не найден' : response.statusText}`);
+    }
+    const text = await response.text();
+    loadingContainer.innerHTML = '';
+    addToHistory(parsed);
+    renderResult(parsed, text);
+  } catch (err) {
+    loadingContainer.innerHTML = '';
+    errorContainer.innerHTML = `<div class="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Ошибка загрузки: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderResult(parsed, text) {
+  const container = document.getElementById('result-container');
+  const lang = detectLanguage(parsed.path);
+  const lines = text.split('\n');
+  const lineCount = lines.length;
+  const sizeBytes = new Blob([text]).size;
+  const sizeStr = formatSize(sizeBytes);
+
+  let highlighted;
+  if (lang !== 'none' && Prism.languages[lang]) {
+    highlighted = Prism.highlight(text, Prism.languages[lang], lang);
+  } else {
+    highlighted = escapeHtml(text);
+  }
+
+  const linesHtml = highlighted.split('\n').map((line, i) =>
+    `<div class="line-numbers"><span class="line-num">${i + 1}</span><span class="line-content">${line || ' '}</span></div>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="result-card">
+      <div class="result-header">
+        <div class="result-file-info">
+          <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="file-path">${escapeHtml(parsed.path)}</span>
+        </div>
+        <div class="file-meta">${lineCount} строк · ${sizeStr}</div>
+      </div>
+      <div class="raw-url-bar">
+        <span class="raw-url-label">RAW URL</span>
+        <input type="text" class="raw-url-input" id="raw-url-output" value="${escapeHtml(parsed.rawUrl)}" readonly>
+        <button class="btn btn-default btn-icon" id="btn-copy-url" title="Скопировать URL">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Копировать
+        </button>
+      </div>
+      <div class="result-actions" style="padding: 10px 16px; background: var(--color-canvas-subtle); border-bottom: 1px solid var(--color-border-muted);">
+        <button class="btn btn-default btn-icon" id="btn-copy-code">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Копировать код
+        </button>
+        <button class="btn btn-default btn-icon" id="btn-download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать
+        </button>
+        <a class="btn btn-default btn-icon" id="btn-open-raw" href="${escapeHtml(parsed.rawUrl)}" target="_blank" rel="noopener" style="text-decoration:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Открыть raw
+        </a>
+      </div>
+      <div class="code-wrapper">
+        <pre><code class="language-${lang}">${linesHtml}</code></pre>
+      </div>
+    </div>
+  `;
+
+  // Store raw text for copy/download
+  container._rawText = text;
+  container._fileName = parsed.path.split('/').pop();
+
+  document.getElementById('btn-copy-url').addEventListener('click', () => {
+    copyToClipboard(parsed.rawUrl);
+    showToast('URL скопирован', 'success');
+  });
+
+  document.getElementById('btn-copy-code').addEventListener('click', () => {
+    copyToClipboard(container._rawText);
+    showToast('Код скопирован', 'success');
+  });
+
+  document.getElementById('btn-download').addEventListener('click', () => {
+    downloadFile(container._rawText, container._fileName);
+    showToast('Файл скачивается', 'success');
+  });
+}
+
+/* ---------- UTILITIES ---------- */
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+}
+
+function downloadFile(content, filename) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;${type === 'success' ? 'color:var(--color-success-fg)' : 'color:var(--color-danger-fg)'}">
+      ${type === 'success' ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+    </svg>
+    <span>${escapeHtml(message)}</span>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'opacity 0.2s';
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 200);
+  }, 2500);
+}
+
+/* ---------- SETTINGS MODAL ---------- */
+const settingsModal = document.getElementById('settings-modal');
+document.getElementById('btn-settings').addEventListener('click', () => settingsModal.classList.add('open'));
+document.getElementById('btn-close-settings').addEventListener('click', () => settingsModal.classList.remove('open'));
+document.getElementById('btn-close-settings-footer').addEventListener('click', () => settingsModal.classList.remove('open'));
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) settingsModal.classList.remove('open');
+});
+
+/* ---------- SIDEBAR TOGGLE (MOBILE) ---------- */
+document.getElementById('btn-sidebar-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const sidebar = document.getElementById('sidebar');
+  // На мобильных — toggle класса open
+  if (window.innerWidth <= 900) {
+    sidebar.classList.toggle('open');
+  } else {
+    // На десктопе — скролл к сайдбару + подсветка
+    sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sidebar.style.transition = 'background 0.3s';
+    sidebar.style.background = 'var(--accent-subtle)';
+    setTimeout(() => { sidebar.style.background = ''; }, 600);
+  }
+});
+
+// Закрытие сайдбара при клике вне его (мобильный)
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('btn-sidebar-toggle');
+  if (window.innerWidth <= 900 && sidebar.classList.contains('open') &&
+      !sidebar.contains(e.target) && !btn.contains(e.target)) {
+    sidebar.classList.remove('open');
+  }
+});
+
+/* ---------- HISTORY CLEAR ---------- */
+document.getElementById('btn-clear-history').addEventListener('click', () => {
+  if (state.history.length === 0) return;
+  state.history = [];
+  saveHistory();
+  renderHistory();
+  showToast('История очищена', 'success');
+});
+
+/* ---------- EXAMPLE URLS ---------- */
+document.querySelectorAll('.example-url').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('url-input').value = btn.dataset.url;
+    fetchFile();
+  });
+});
+
+/* ---------- MAIN ACTIONS ---------- */
+document.getElementById('btn-fetch').addEventListener('click', fetchFile);
+document.getElementById('url-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') fetchFile();
+});
+
+/* ---------- AI CHAT ---------- */
+const aiPanel = document.getElementById('ai-panel');
+const aiMessages = document.getElementById('ai-messages');
+const aiInput = document.getElementById('ai-input');
+const aiSend = document.getElementById('ai-send');
+
+document.getElementById('ai-fab').addEventListener('click', () => {
+  aiPanel.classList.toggle('open');
+  if (aiPanel.classList.contains('open')) {
+    setTimeout(() => aiInput.focus(), 100);
+  }
+});
+document.getElementById('btn-close-ai').addEventListener('click', () => aiPanel.classList.remove('open'));
+
+function addAiMessage(role, text) {
+  const msg = document.createElement('div');
+  msg.className = `ai-message ${role}`;
+  msg.innerHTML = formatAiText(text);
+  aiMessages.appendChild(msg);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+  return msg;
+}
+
+function formatAiText(text) {
+  // Very basic markdown: code blocks, inline code, bold, links
+  let html = escapeHtml(text);
+  html = html.replace(/```([\s\S]*?)```/g, (_, code) => `<pre style="background:rgba(0,0,0,0.05);padding:8px;border-radius:4px;overflow-x:auto;margin:6px 0;"><code>${code}</code></pre>`);
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function showAiTyping() {
+  const typing = document.createElement('div');
+  typing.className = 'ai-typing';
+  typing.id = 'ai-typing-indicator';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  aiMessages.appendChild(typing);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function hideAiTyping() {
+  const t = document.getElementById('ai-typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendAiMessage() {
+  const text = aiInput.value.trim();
+  if (!text || state.aiLoading) return;
+
+  addAiMessage('user', text);
+  aiInput.value = '';
+  aiInput.style.height = 'auto';
+  state.aiLoading = true;
+  aiSend.disabled = true;
+  showAiTyping();
+
+  state.aiMessages.push({ role: 'user', content: text });
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...state.aiMessages.slice(-10),
+  ];
+
+  try {
+    const response = await fetch(MISTRAL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MISTRAL_MODEL,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
+
+    hideAiTyping();
+    addAiMessage('bot', reply);
+    state.aiMessages.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    hideAiTyping();
+    addAiMessage('bot', `Извините, произошла ошибка: ${err.message}. Попробуйте ещё раз.`);
+  } finally {
+    state.aiLoading = false;
+    aiSend.disabled = false;
+    aiInput.focus();
+  }
+}
+
+aiSend.addEventListener('click', sendAiMessage);
+aiInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendAiMessage();
+  }
+});
+
+aiInput.addEventListener('input', () => {
+  aiInput.style.height = 'auto';
+  aiInput.style.height = Math.min(aiInput.scrollHeight, 100) + 'px';
+});
+
+/* ---------- INIT ---------- */
+renderHistory();
+
+// Keyboard shortcut: Ctrl/Cmd+K to focus input
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('url-input').focus();
+    document.getElementById('url-input').select();
+  }
+  if (e.key === 'Escape') {
+    settingsModal.classList.remove('open');
+    aiPanel.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
