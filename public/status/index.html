@@ -1,141 +1,543 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Статус сервисов платформы Oris — реальный мониторинг доступности API">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="robots" content="noindex, nofollow">
+<script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 <title>System Status · Oris</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 <style>
 :root {
-    --bg-body: #F5F5F7; --bg-card: #FFFFFF; --bg-elevated: #F0F0F2; --bg-subtle: #FAFAFA;
-    --text-primary: #1D1D1F; --text-secondary: #86868B; --text-tertiary: #AEAEB2;
-    --accent: #0071E3; --accent-hover: #0077ED;
-    --danger: #FF3B30; --success: #34C759; --warning: #FF9F0A; --purple: #AF52DE;
-    --border: rgba(0,0,0,0.08); --border-strong: rgba(0,0,0,0.15);
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
-    --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
-    --shadow-lg: 0 20px 40px rgba(0,0,0,0.12);
-    --radius-lg: 18px; --radius-md: 12px; --radius-sm: 8px;
+    --bg-body: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-elevated: #FFFFFF;
+    --bg-sunken: #E8E8ED;
+    --bg-input: rgba(0, 0, 0, 0.04);
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #86868B;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-glow: rgba(0, 113, 227, 0.25);
+    --danger: #FF3B30;
+    --danger-soft: rgba(255, 59, 48, 0.12);
+    --success: #34C759;
+    --success-soft: rgba(52, 199, 89, 0.12);
+    --warning: #FF9F0A;
+    --warning-soft: rgba(255, 159, 10, 0.12);
+    --purple: #AF52DE;
+    --purple-soft: rgba(175, 82, 222, 0.12);
+    --teal: #5AC8FA;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-strong: rgba(0, 0, 0, 0.12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
     --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+    --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-color: rgba(0, 0, 0, 0.04);
     --header-h: 64px;
 }
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-body: #000; --bg-card: #1C1C1E; --bg-elevated: #2C2C2E; --bg-subtle: #0A0A0A;
-        --text-primary: #F5F5F7; --text-secondary: #86868B; --text-tertiary: #636366;
-        --border: rgba(255,255,255,0.1); --border-strong: rgba(255,255,255,0.18);
-    }
+[data-theme="dark"] {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-sunken: #0A0A0A;
+    --bg-input: rgba(255, 255, 255, 0.06);
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1A6;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-glow: rgba(10, 132, 255, 0.4);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; }
 body {
-    background: var(--bg-body); color: var(--text-primary);
-    font-family: var(--font-stack); line-height: 1.5;
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-family: var(--font-stack);
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    overflow-x: hidden;
 }
+
+/* Background grid */
+.bg-grid {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    animation: gridShift 30s linear infinite;
+}
+@keyframes gridShift {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 48px 48px, 48px 48px; }
+}
+
+/* Floating orbs */
+.bg-orbs {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 20s ease-in-out infinite;
+}
+[data-theme="dark"] .orb { opacity: 0.25; }
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    animation-duration: 25s;
+}
+.orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    bottom: -200px; left: -200px;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+.orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+    top: 50%; left: 30%;
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
+}
+
+/* Reading progress */
+.reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    width: 0%;
+    z-index: 200;
+    transition: width 0.1s ease;
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Header */
 .header {
-    position: sticky; top: 0; z-index: 100;
-    background: rgba(245,245,247,0.72);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 245, 247, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid var(--border); height: var(--header-h);
+    border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+    transition: background-color 0.4s ease, border-color 0.4s ease;
 }
-@media (prefers-color-scheme: dark) { .header { background: rgba(0,0,0,0.72); } }
+[data-theme="dark"] .header { background: rgba(0, 0, 0, 0.72); }
 .header-inner {
-    max-width: 1200px; margin: 0 auto; padding: 14px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: 100%;
 }
-.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
 .logo-icon { width: 28px; height: 28px; color: var(--accent); }
-.logo-text { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
-.nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.logo-text {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
 .nav-link {
-    padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500;
-    color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease;
+    padding: 8px 14px;
+    border-radius: 99px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
-.nav-link:hover { background: rgba(142,142,147,0.12); color: var(--text-primary); }
+.nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
-.layout { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
-.hero { text-align: center; padding: 40px 0 48px; }
-.hero-eyebrow {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 16px;
+.nav-link .nav-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-weight: 600;
 }
+.nav-link:not(.active) .nav-kbd {
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    color: var(--text-tertiary);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+.icon-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: rotate(15deg);
+}
+.icon-btn svg { width: 16px; height: 16px; }
+.icon-btn .kbd-hint {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    font-family: var(--mono-stack);
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.icon-btn:hover .kbd-hint { opacity: 1; }
+
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: block; }
+
+/* Layout */
+.layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    padding: 40px 0 48px;
+}
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding: 4px 12px;
+    background: var(--accent-soft);
+    border-radius: 99px;
+}
+.hero-eyebrow svg { width: 14px; height: 14px; }
 .hero-title {
-    font-size: 3rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
     margin-bottom: 16px;
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    min-height: 1.1em;
+    display: inline-block;
+    cursor: default;
+    position: relative;
+}
+.hero-title.glitch::before,
+.hero-title.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+.hero-title.glitch::before {
+    animation: glitch1 0.4s ease;
+    -webkit-text-fill-color: var(--danger);
+}
+.hero-title.glitch::after {
+    animation: glitch2 0.4s ease;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes glitch1 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.8; transform: translate(-3px, 1px); }
+    40% { opacity: 0.6; transform: translate(2px, -1px); }
+    60% { opacity: 0.4; transform: translate(-1px, 2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.6; transform: translate(3px, -1px); }
+    40% { opacity: 0.4; transform: translate(-2px, 1px); }
+    60% { opacity: 0.3; transform: translate(1px, -2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+.typewriter-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--accent);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes blink {
+    50% { opacity: 0; }
 }
 .hero-subtitle {
-    font-size: 1.1rem; color: var(--text-secondary);
-    max-width: 640px; margin: 0 auto 24px; line-height: 1.6;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 640px;
+    margin: 0 auto 24px;
+    line-height: 1.6;
 }
-.last-updated { font-size: 0.82rem; color: var(--text-tertiary); font-family: var(--mono-stack); }
+.last-updated {
+    font-size: 0.82rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+
+/* Live indicator */
+.live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--success-soft);
+    color: var(--success);
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: var(--mono-stack);
+    margin-left: 8px;
+}
+.live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+}
+
+/* Overall status */
 .overall-status {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 32px; margin-bottom: 32px;
-    display: flex; align-items: center; gap: 24px; box-shadow: var(--shadow-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
+.overall-status::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--success), var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.overall-status.operational::before { opacity: 1; background: linear-gradient(90deg, var(--success), var(--teal)); }
+.overall-status.degraded::before { opacity: 1; background: linear-gradient(90deg, var(--warning), var(--danger)); }
+.overall-status.outage::before { opacity: 1; background: linear-gradient(90deg, var(--danger), var(--purple)); }
+
 .status-indicator {
-    width: 72px; height: 72px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
 }
 .status-indicator::after {
-    content: ''; position: absolute; inset: -4px;
-    border-radius: 50%; border: 2px solid currentColor; opacity: 0.2;
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    opacity: 0.2;
 }
 .status-indicator svg { width: 36px; height: 36px; }
-.status-indicator.operational { background: rgba(52,199,89,0.12); color: var(--success); }
-.status-indicator.degraded { background: rgba(255,159,10,0.12); color: var(--warning); }
-.status-indicator.outage { background: rgba(255,59,48,0.12); color: var(--danger); }
-.status-indicator.checking { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
+.status-indicator.operational { background: var(--success-soft); color: var(--success); }
+.status-indicator.degraded { background: var(--warning-soft); color: var(--warning); }
+.status-indicator.outage { background: var(--danger-soft); color: var(--danger); }
+.status-indicator.checking { background: var(--bg-elevated); color: var(--text-secondary); }
 .status-indicator.checking svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
 .status-info { flex: 1; }
-.status-title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
-.status-description { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; }
-.status-meta { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.status-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+.status-description {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.status-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
 .meta-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.78rem; font-weight: 500; padding: 4px 10px;
-    border-radius: 6px; background: var(--bg-elevated); color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-family: var(--mono-stack);
 }
 .meta-chip svg { width: 12px; height: 12px; }
-.meta-chip.success { background: rgba(52,199,89,0.12); color: var(--success); }
-.meta-chip.warning { background: rgba(255,159,10,0.12); color: var(--warning); }
-.meta-chip.danger { background: rgba(255,59,48,0.12); color: var(--danger); }
+.meta-chip.success { background: var(--success-soft); color: var(--success); }
+.meta-chip.warning { background: var(--warning-soft); color: var(--warning); }
+.meta-chip.danger { background: var(--danger-soft); color: var(--danger); }
+
+/* Uptime section */
 .uptime-section {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 24px; margin-bottom: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-sm);
 }
 .uptime-header {
-    display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
 }
-.uptime-title { font-size: 1rem; font-weight: 600; }
+.uptime-title {
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.uptime-title svg { width: 16px; height: 16px; color: var(--accent); }
 .uptime-percentage {
-    font-size: 0.92rem; font-weight: 600;
-    color: var(--success); font-family: var(--mono-stack);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--success);
+    font-family: var(--mono-stack);
 }
-.uptime-bar { display: flex; gap: 2px; height: 32px; margin-bottom: 12px; }
+.uptime-bar {
+    display: flex;
+    gap: 2px;
+    height: 32px;
+    margin-bottom: 12px;
+}
 .uptime-day {
-    flex: 1; border-radius: 2px; cursor: pointer;
-    transition: transform 0.15s ease; position: relative;
+    flex: 1;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    position: relative;
 }
 .uptime-day:hover { transform: scaleY(1.3); z-index: 2; }
 .uptime-day.operational { background: var(--success); }
@@ -143,197 +545,762 @@ body {
 .uptime-day.outage { background: var(--danger); }
 .uptime-day.unknown { background: var(--bg-elevated); opacity: 0.4; }
 .uptime-labels {
-    display: flex; justify-content: space-between;
-    font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--mono-stack);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
 }
 .uptime-windows {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 12px; margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
 }
 .uptime-window {
-    background: var(--bg-elevated); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 16px; text-align: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.uptime-window:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 .uptime-window-label {
-    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
 }
 .uptime-window-value {
-    font-size: 1.5rem; font-weight: 700; font-family: var(--mono-stack);
-    letter-spacing: -0.02em; color: var(--success);
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: var(--mono-stack);
+    letter-spacing: -0.02em;
+    color: var(--success);
 }
 .uptime-window-value.degraded { color: var(--warning); }
 .uptime-window-value.outage { color: var(--danger); }
 .uptime-window-value.unknown { color: var(--text-tertiary); }
 .uptime-source {
-    font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--mono-stack);
-    margin-top: 12px; text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+    margin-top: 12px;
+    text-align: right;
 }
-.service-uptime {
-    display: flex; align-items: center; gap: 6px;
-    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
-    font-size: 0.75rem; color: var(--text-secondary); font-family: var(--mono-stack);
-}
-.service-uptime-dot {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    background: var(--text-tertiary);
-}
-.service-uptime-dot.operational { background: var(--success); }
-.service-uptime-dot.degraded { background: var(--warning); }
-.service-uptime-dot.outage { background: var(--danger); }
 .day-tooltip {
-    position: absolute; bottom: calc(100% + 8px); left: 50%;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
     transform: translateX(-50%);
-    background: var(--text-primary); color: var(--bg-body);
-    padding: 6px 10px; border-radius: 6px; font-size: 0.72rem;
-    white-space: nowrap; pointer-events: none; opacity: 0;
-    transition: opacity 0.15s ease; z-index: 10; font-family: var(--mono-stack);
+    background: var(--text-primary);
+    color: var(--bg-body);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+    font-family: var(--mono-stack);
 }
 .day-tooltip::after {
-    content: ''; position: absolute; top: 100%; left: 50%;
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
     transform: translateX(-50%);
-    border: 4px solid transparent; border-top-color: var(--text-primary);
+    border: 4px solid transparent;
+    border-top-color: var(--text-primary);
 }
 .uptime-day:hover .day-tooltip { opacity: 1; }
+
+/* Section header */
 .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 12px;
 }
-.section-title { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.02em; }
+.section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.section-title svg { width: 18px; height: 18px; color: var(--accent); }
 .section-count {
-    font-size: 0.78rem; font-weight: 500; padding: 3px 10px;
-    border-radius: 99px; background: var(--bg-elevated); color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-family: var(--mono-stack);
 }
+
+/* Category filter chips */
+.category-chips {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    flex-wrap: wrap;
+}
+.category-chips::-webkit-scrollbar { display: none; }
+.chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s var(--transition);
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+}
+.chip:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+.chip.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.chip-count {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 1px 6px;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: var(--mono-stack);
+}
+[data-theme="dark"] .chip-count { background: rgba(255, 255, 255, 0.15); }
+.chip.active .chip-count { background: rgba(255, 255, 255, 0.25); }
+
+/* Services grid */
 .services-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px; margin-bottom: 48px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 48px;
 }
 .service-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 20px; transition: all 0.2s ease;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: all 0.25s var(--transition);
+    position: relative;
+    overflow: hidden;
 }
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--svc-color, var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.service-card:hover::before { opacity: 1; }
 .service-card:hover {
     border-color: var(--border-strong);
-    box-shadow: var(--shadow-sm); transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
-.service-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.service-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
 .service-icon {
-    width: 40px; height: 40px; border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.3s var(--transition);
 }
+.service-card:hover .service-icon { transform: scale(1.08) rotate(-3deg); }
 .service-icon svg { width: 20px; height: 20px; }
 .service-info { flex: 1; min-width: 0; }
-.service-name { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 2px; }
-.service-category {
-    font-size: 0.75rem; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.04em;
+.service-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+}
+.service-path {
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .service-status-badge {
-    font-size: 0.72rem; font-weight: 600; padding: 4px 10px;
-    border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em;
-    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    font-family: var(--mono-stack);
 }
-.service-status-badge.operational { background: rgba(52,199,89,0.12); color: var(--success); }
-.service-status-badge.degraded { background: rgba(255,159,10,0.12); color: var(--warning); }
-.service-status-badge.outage { background: rgba(255,59,48,0.12); color: var(--danger); }
-.service-status-badge.checking { background: rgba(142,142,147,0.12); color: var(--text-secondary); }
+.service-status-badge.operational { background: var(--success-soft); color: var(--success); }
+.service-status-badge.degraded { background: var(--warning-soft); color: var(--warning); }
+.service-status-badge.outage { background: var(--danger-soft); color: var(--danger); }
+.service-status-badge.checking { background: var(--bg-elevated); color: var(--text-secondary); }
 .service-metrics {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 8px; padding-top: 14px; border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
 }
 .metric { text-align: left; }
 .metric-label {
-    font-size: 0.68rem; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px;
+    font-size: 0.68rem;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
 }
 .metric-value {
-    font-size: 0.9rem; font-weight: 600; font-family: var(--mono-stack);
-    color: var(--text-primary); word-break: break-all;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: var(--mono-stack);
+    color: var(--text-primary);
+    word-break: break-all;
 }
 .metric-value.fast { color: var(--success); }
 .metric-value.medium { color: var(--warning); }
 .metric-value.slow { color: var(--danger); }
 .service-error {
-    margin-top: 12px; padding: 10px 12px;
-    background: rgba(255,59,48,0.08); border: 1px solid rgba(255,59,48,0.2);
-    border-radius: var(--radius-sm); font-size: 0.78rem;
-    color: var(--danger); font-family: var(--mono-stack);
-    word-break: break-word; line-height: 1.5;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--danger-soft);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--danger);
+    font-family: var(--mono-stack);
+    word-break: break-word;
+    line-height: 1.5;
 }
+.service-category-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--svc-color, var(--accent));
+    background: var(--svc-bg, var(--accent-soft));
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-bottom: 8px;
+}
+
+/* Incidents */
 .incidents-section { margin-bottom: 48px; }
 .incident-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-md); padding: 20px; margin-bottom: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 12px;
     border-left: 3px solid var(--text-tertiary);
+    transition: all 0.2s ease;
+}
+.incident-card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateX(2px);
 }
 .incident-card.active { border-left-color: var(--danger); }
 .incident-card.degraded { border-left-color: var(--warning); }
 .incident-header {
-    display: flex; justify-content: space-between;
-    align-items: flex-start; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
 }
-.incident-title { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; flex: 1; }
+.incident-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    flex: 1;
+}
 .incident-status {
-    font-size: 0.72rem; font-weight: 600; padding: 3px 10px;
-    border-radius: 99px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+    font-family: var(--mono-stack);
 }
-.incident-status.active { background: rgba(255,59,48,0.12); color: var(--danger); }
-.incident-status.degraded { background: rgba(255,159,10,0.12); color: var(--warning); }
-.incident-description { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; }
+.incident-status.active { background: var(--danger-soft); color: var(--danger); }
+.incident-status.degraded { background: var(--warning-soft); color: var(--warning); }
+.incident-description {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
 .incident-details {
-    font-family: var(--mono-stack); font-size: 0.78rem;
-    background: var(--bg-elevated); padding: 10px 12px;
-    border-radius: var(--radius-sm); color: var(--text-secondary);
-    word-break: break-word; line-height: 1.6; margin-top: 10px;
+    font-family: var(--mono-stack);
+    font-size: 0.78rem;
+    background: var(--bg-elevated);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    word-break: break-word;
+    line-height: 1.6;
+    margin-top: 10px;
 }
 .incident-meta {
-    display: flex; gap: 12px; flex-wrap: wrap;
-    font-size: 0.78rem; color: var(--text-tertiary);
-    margin-top: 10px; font-family: var(--mono-stack);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+    color: var(--text-tertiary);
+    margin-top: 10px;
+    font-family: var(--mono-stack);
 }
 .no-incidents {
-    text-align: center; padding: 48px 24px;
-    background: var(--bg-card); border: 1px solid var(--border);
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
 }
-.no-incidents-icon { width: 48px; height: 48px; margin: 0 auto 12px; color: var(--success); }
-.no-incidents-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-.no-incidents-text { font-size: 0.88rem; color: var(--text-secondary); }
+.no-incidents-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+    color: var(--success);
+}
+.no-incidents-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.no-incidents-text {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+/* Footer */
 .footer {
-    max-width: 1200px; margin: 0 auto; padding: 32px 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 24px;
     border-top: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 16px; flex-wrap: wrap; color: var(--text-tertiary); font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--text-tertiary);
+    font-size: 0.82rem;
+    position: relative;
+    z-index: 1;
 }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
-.footer-meta { display: flex; align-items: center; gap: 16px; font-family: var(--mono-stack); }
-.auto-refresh-toggle {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 99px;
-    background: var(--bg-elevated); border: 1px solid var(--border);
-    color: var(--text-secondary); font-size: 0.78rem;
-    font-family: inherit; cursor: pointer; transition: all 0.2s ease;
+.footer-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono-stack);
+    flex-wrap: wrap;
 }
-.auto-refresh-toggle:hover { background: var(--bg-card); color: var(--text-primary); }
+.auto-refresh-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 99px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.auto-refresh-toggle:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+}
 .auto-refresh-toggle.active {
-    background: rgba(0,113,227,0.1); border-color: var(--accent); color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 .auto-refresh-toggle svg { width: 12px; height: 12px; }
+
+/* Scroll to top */
+.scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s var(--transition);
+    pointer-events: none;
+    z-index: 50;
+}
+.scroll-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.scroll-top:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.scroll-top svg { width: 18px; height: 18px; }
+
+/* Command Palette */
+.cmdk-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 15vh;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.cmdk-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.cmdk-dialog {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    transition: transform 0.25s var(--bounce);
+}
+.cmdk-overlay.active .cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+.cmdk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.cmdk-input-wrap svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.cmdk-input::placeholder { color: var(--text-tertiary); }
+.cmdk-esc {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.cmdk-group-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 12px 6px;
+}
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+.cmdk-item:hover,
+.cmdk-item.focused {
+    background: var(--bg-input);
+}
+.cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cmdk-item-icon svg { width: 16px; height: 16px; }
+.cmdk-item-info { flex: 1; min-width: 0; }
+.cmdk-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--mono-stack);
+}
+.cmdk-item-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.cmdk-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.cmdk-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Toast */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    padding: 14px 20px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.92rem;
+    font-weight: 500;
+    pointer-events: auto;
+    animation: toastIn 0.3s var(--bounce);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    color: var(--text-primary);
+}
+.toast.removing { animation: toastOut 0.25s ease forwards; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+.toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.toast-icon.success { color: var(--success); }
+.toast-icon.info { color: var(--accent); }
+.toast-icon.warning { color: var(--warning); }
+.toast-icon.error { color: var(--danger); }
+.toast-message { flex: 1; }
+
+/* Hotkey hints */
+.hotkey-hints {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.hotkey-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.hotkey-hint:hover { opacity: 1; }
+kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 var(--border-strong);
+}
+
+/* Spinner */
+.spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 40px auto;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
 @media (max-width: 768px) {
     .hero-title { font-size: 2rem; }
     .overall-status { flex-direction: column; text-align: center; padding: 24px; }
     .status-meta { justify-content: center; }
     .services-grid { grid-template-columns: 1fr; }
-    .nav-link { padding: 6px 10px; font-size: 0.82rem; }
+    .nav-links { display: none; }
     .layout { padding: 24px 16px 60px; }
+    .hotkey-hints { display: none; }
+    .toast-container { bottom: 16px; right: 16px; left: 16px; }
+    .toast { min-width: 0; max-width: 100%; }
+    .scroll-top { bottom: 16px; right: 16px; }
 }
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 </style>
 </head>
 <body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+<div class="reading-progress" id="readingProgress"></div>
 
 <header class="header">
     <div class="header-inner">
@@ -344,12 +1311,29 @@ body {
             <span class="logo-text">Oris</span>
         </a>
         <nav class="nav-links">
-            <a href="/" class="nav-link">Projects</a>
-            <a href="/news" class="nav-link">News</a>
-            <a href="/changelog" class="nav-link">Changelog</a>
-            <a href="/api" class="nav-link">API</a>
-            <a href="/status" class="nav-link active">Status</a>
+            <a href="/" class="nav-link">Projects <span class="nav-kbd">1</span></a>
+            <a href="/news" class="nav-link">News <span class="nav-kbd">2</span></a>
+            <a href="/changelog" class="nav-link">Changelog <span class="nav-kbd">3</span></a>
+            <a href="/support" class="nav-link">Support <span class="nav-kbd">4</span></a>
+            <a href="/status" class="nav-link active">Status <span class="nav-kbd">5</span></a>
         </nav>
+        <div class="header-actions">
+            <button class="icon-btn" id="cmdkBtn" aria-label="Командная палитра">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="kbd-hint">⌘K</span>
+            </button>
+            <button class="icon-btn" id="themeToggle" aria-label="Сменить тему">
+                <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <span class="kbd-hint">T</span>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -357,15 +1341,16 @@ body {
 
     <section class="hero">
         <div class="hero-eyebrow">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
             Real-time Monitoring
+            <span class="live-indicator"><span class="live-dot"></span>LIVE</span>
         </div>
-        <h1 class="hero-title">System Status</h1>
+        <h1 class="hero-title" id="heroTitle" data-text=""></h1>
         <p class="hero-subtitle">
             Реальный мониторинг всех API-эндпоинтов платформы Oris.
-            Проверки выполняются со стороны клиента каждые 30 секунд.
+            Список endpoints подгружается автоматически из proxy-сервера.
         </p>
         <div class="last-updated" id="lastUpdated">Последняя проверка: —</div>
     </section>
@@ -387,7 +1372,12 @@ body {
 
     <section class="uptime-section">
         <div class="uptime-header">
-            <div class="uptime-title">История доступности (серверный мониторинг)</div>
+            <div class="uptime-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                История доступности (серверный мониторинг)
+            </div>
             <div class="uptime-percentage" id="uptimePercentage">—</div>
         </div>
         <div class="uptime-bar" id="uptimeBar"></div>
@@ -414,15 +1404,26 @@ body {
 
     <section>
         <div class="section-header">
-            <h2 class="section-title">Сервисы и API</h2>
+            <h2 class="section-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"/>
+                </svg>
+                Сервисы и API
+            </h2>
             <span class="section-count" id="servicesCount">0 сервисов</span>
         </div>
+        <div class="category-chips" id="categoryChips"></div>
         <div class="services-grid" id="servicesGrid"></div>
     </section>
 
     <section class="incidents-section">
         <div class="section-header">
-            <h2 class="section-title">Активные инциденты</h2>
+            <h2 class="section-title">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                Активные инциденты
+            </h2>
             <span class="section-count" id="incidentsCount">Реальные ошибки</span>
         </div>
         <div id="incidentsList"></div>
@@ -445,75 +1446,68 @@ body {
     </div>
 </footer>
 
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" aria-label="Наверх">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+</button>
+
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск по сервисам, действиям..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>R</kbd> обновить</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
+
 <script>
 (function() {
     'use strict';
 
     // ============================================
-    // Константы конфигурации
+    // Configuration
     // ============================================
-    
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {number} Таймаут для внутренних endpoint проверок (мс) */
         DEFAULT_TIMEOUT: 3000,
-        
-        /** @type {number} Таймаут для внешних URL проверок (мс) */
         EXTERNAL_TIMEOUT: 5000,
-        
-        /** @type {number} Таймаут для проверки KV (мс) */
         KV_TIMEOUT: 5000,
-        
-        /** @type {number} Интервал автообновления (мс) */
         REFRESH_INTERVAL: 30000,
-        
-        /** @type {number} Максимальное количество записей в истории проверок */
         MAX_HISTORY_SIZE: 90,
-        
-        /** @type {number} Количество отображаемых элементов в uptime bar */
         UPTIME_BAR_VISIBLE_COUNT: 90,
-        
-        /** @type {string} API endpoint для загрузки конфигурации */
-        STATUS_CONFIG_ENDPOINT: '/api/status-config',
-
-        /** @type {string} API endpoint серверной истории аптайма */
-        STATUS_HISTORY_ENDPOINT: '/api/status-history',
-        
-        /** @type {string} ID контейнера сетки сервисов */
-        SERVICES_GRID_ID: 'servicesGrid',
-        
-        /** @type {string} ID элемента количества сервисов */
-        SERVICES_COUNT_ID: 'servicesCount',
-        
-        /** @type {string} ID элемента списка инцидентов */
-        INCIDENTS_LIST_ID: 'incidentsList',
-        
-        /** @type {string} ID элемента количества инцидентов */
-        INCIDENTS_COUNT_ID: 'incidentsCount',
-        
-        /** @type {string} ID элемента uptime bar */
-        UPTIME_BAR_ID: 'uptimeBar',
-        
-        /** @type {string} ID элемента процента uptime */
-        UPTIME_PERCENTAGE_ID: 'uptimePercentage',
-        
-        /** @type {string} ID элемента начальной метки uptime */
-        UPTIME_START_ID: 'uptimeStart',
-        
-        /** @type {string} ID элемента последней проверки */
-        LAST_UPDATED_ID: 'lastUpdated',
-        
-        /** @type {string} ID кнопки автообновления */
-        AUTO_REFRESH_BTN_ID: 'autoRefreshBtn'
+        TOAST_DURATION: 3000,
+        THEME_KEY: 'oris-theme',
+        // Основные endpoints для получения списка API
+        // Пробуются по очереди, первый рабочий используется
+        PROXY_ENDPOINTS: [
+            '/api/proxy',
+            '/api/status-config'
+        ],
+        STATUS_HISTORY_ENDPOINT: '/api/status-history'
     };
 
-    /**
-     * Статусы сервисов
-     * @constant {Object<string, string>}
-     */
     const STATUS = {
         OPERATIONAL: 'operational',
         DEGRADED: 'degraded',
@@ -521,24 +1515,10 @@ body {
         CHECKING: 'checking'
     };
 
-    /**
-     * Пороги латентности для классификации
-     * @constant {Object}
-     */
-    const LATENCY_THRESHOLDS = {
-        /** @type {number} Порог для быстрой латентности (мс) */
-        FAST: 300,
-        
-        /** @type {number} Порог для средней латентности (мс) */
-        MEDIUM: 1500
-    };
+    const LATENCY_THRESHOLDS = { FAST: 300, MEDIUM: 1500 };
 
-    /**
-     * Сообщения для UI
-     * @constant {Object<string, string>}
-     */
     const MESSAGES = {
-        loadingServices: 'Загрузка сервисов...',
+        loadingServices: 'Загрузка списка API из proxy...',
         noIncidents: 'Активных инцидентов нет',
         noIncidentsText: 'Все сервисы работают корректно по результатам последней проверки',
         checkingSystems: 'Проверка систем...',
@@ -547,110 +1527,176 @@ body {
         allSystemsDescription: 'Все API-эндпоинты отвечают корректно. Последние проверки выполнены успешно.',
         partialProblems: 'Частичные проблемы',
         outagesDetected: 'Обнаружены сбои',
-        configLoadError: 'Ошибка загрузки конфигурации',
+        configLoadError: 'Ошибка загрузки списка API',
         noCheckConfigured: 'No check configured',
         unknownCustomCheck: 'Unknown custom check',
         kvUnavailable: 'KV недоступен',
         connectionFailed: 'Connection failed',
         autoRefreshOn: 'Auto-refresh 30s',
-        autoRefreshOff: 'Auto-refresh OFF'
+        autoRefreshOff: 'Auto-refresh OFF',
+        refreshSuccess: 'Проверка завершена',
+        refreshFail: 'Не удалось выполнить проверку',
+        proxyLoaded: 'Загружено из proxy',
+        themeChanged: 'Тема изменена'
+    };
+
+    // Палитра цветов для категорий
+    const CATEGORY_COLORS = [
+        { color: '#0071E3', bg: 'rgba(0, 113, 227, 0.12)' },
+        { color: '#34C759', bg: 'rgba(52, 199, 89, 0.12)' },
+        { color: '#FF9F0A', bg: 'rgba(255, 159, 10, 0.12)' },
+        { color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.12)' },
+        { color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.12)' },
+        { color: '#5AC8FA', bg: 'rgba(90, 200, 250, 0.12)' },
+        { color: '#5E5CE6', bg: 'rgba(94, 92, 230, 0.12)' },
+        { color: '#FF2D55', bg: 'rgba(255, 45, 85, 0.12)' }
+    ];
+
+    // Иконки для разных типов endpoints
+    const ENDPOINT_ICONS = {
+        default: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
+        news: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>',
+        support: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>',
+        auth: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>',
+        status: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>',
+        sites: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>',
+        upload: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>',
+        changelog: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        faq: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+        admin: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>'
     };
 
     // ============================================
-    // Состояние приложения
+    // State
     // ============================================
-    
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
     const State = {
-        /** @type {Object<string, Object>} Результаты проверок сервисов */
         services: {},
-        
-        /** @type {boolean} Флаг автообновления */
         autoRefresh: true,
-        
-        /** @type {number|null} ID интервала автообновления */
         refreshInterval: null,
-        
-        /** @type {Object} Серверная история аптайма */
-        serverHistory: { snapshots: [], uptime: {}, services: {}, lastCheck: null }
+        serverHistory: { snapshots: [], uptime: {}, services: {}, lastCheck: null },
+        theme: 'light',
+        activeCategory: 'all',
+        cmdkFocusedIndex: -1,
+        proxyEndpoint: null
     };
 
-    /**
-     * Список сервисов для проверки
-     * @type {Array<Object>}
-     */
     let SERVICES = [];
 
     // ============================================
-    // Утилиты безопасности
+    // DOM Cache
     // ============================================
-    
-    /**
-     * Утилиты безопасности для защиты от XSS-атак
-     * @namespace
-     */
-    const Security = {
-        /**
-         * Карта соответствия символов HTML-сущностям
-         * @type {Object<string, string>}
-         */
-        HTML_ESCAPE_MAP: {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        },
+    const DOM = {
+        heroTitle: document.getElementById('heroTitle'),
+        servicesGrid: document.getElementById('servicesGrid'),
+        servicesCount: document.getElementById('servicesCount'),
+        categoryChips: document.getElementById('categoryChips'),
+        incidentsList: document.getElementById('incidentsList'),
+        incidentsCount: document.getElementById('incidentsCount'),
+        uptimeBar: document.getElementById('uptimeBar'),
+        uptimePercentage: document.getElementById('uptimePercentage'),
+        uptimeStart: document.getElementById('uptimeStart'),
+        lastUpdated: document.getElementById('lastUpdated'),
+        autoRefreshBtn: document.getElementById('autoRefreshBtn'),
+        overallStatus: document.getElementById('overallStatus'),
+        overallTitle: document.getElementById('overallTitle'),
+        overallDescription: document.getElementById('overallDescription'),
+        overallMeta: document.getElementById('overallMeta'),
+        themeToggle: document.getElementById('themeToggle'),
+        scrollTop: document.getElementById('scrollTop'),
+        readingProgress: document.getElementById('readingProgress'),
+        cmdkBtn: document.getElementById('cmdkBtn'),
+        cmdkOverlay: document.getElementById('cmdkOverlay'),
+        cmdkInput: document.getElementById('cmdkInput'),
+        cmdkResults: document.getElementById('cmdkResults'),
+        toastContainer: document.getElementById('toastContainer')
+    };
 
-        /**
-         * Экранирование HTML-сущностей в строке
-         * 
-         * @param {string|number|null|undefined} str - Исходная строка
-         * @returns {string} - Строка с экранированными HTML-сущностями
-         */
+    // ============================================
+    // Security
+    // ============================================
+    const Security = {
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' },
         escapeHtml(str) {
             if (!str) return '';
-            return String(str).replace(/[&<>"']/g, (match) => {
-                return this.HTML_ESCAPE_MAP[match];
-            });
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
         }
     };
 
     // ============================================
-    // SVG иконки
+    // Toast
     // ============================================
-    
-    /**
-     * SVG иконки для статусов
-     * @namespace
-     */
-    const ICONS = {
-        /** @type {string} Иконка успеха */
-        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
-        
-        /** @type {string} Иконка предупреждения */
-        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/>',
-        
-        /** @type {string} Иконка ошибки */
-        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
-        
-        /** @type {string} Иконка обновления */
-        refresh: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>',
-        
-        /** @type {string} Иконка времени */
-        clock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
-        
-        /** @type {string} Иконка щита */
-        shield: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>'
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
     };
 
-    /**
-     * Иконки для статусов сервисов
-     * @constant {Object<string, string>}
-     */
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
+    }
+
+    // ============================================
+    // Theme
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        State.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        const sunIcon = document.querySelector('.theme-icon-light');
+        const moonIcon = document.querySelector('.theme-icon-dark');
+        if (sunIcon) sunIcon.style.display = theme === 'dark' ? 'block' : 'none';
+        if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'none' : 'block';
+        try { localStorage.setItem(CONFIG.THEME_KEY, theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`${MESSAGES.themeChanged} на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem(CONFIG.THEME_KEY); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        DOM.themeToggle.addEventListener('click', toggleTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            } catch (err) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+
+    // ============================================
+    // Utilities
+    // ============================================
+    function formatLatency(ms) {
+        if (!ms && ms !== 0) return { value: '—', cls: '' };
+        if (ms < LATENCY_THRESHOLDS.FAST) return { value: `${ms}ms`, cls: 'fast' };
+        if (ms < LATENCY_THRESHOLDS.MEDIUM) return { value: `${ms}ms`, cls: 'medium' };
+        return { value: `${ms}ms`, cls: 'slow' };
+    }
+
+    function getStatusLabel(status) {
+        const labels = { operational: 'Operational', degraded: 'Degraded', outage: 'Outage', checking: 'Checking' };
+        return labels[status] || status;
+    }
+
     const STATUS_ICONS = {
         operational: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>',
         degraded: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/>',
@@ -658,200 +1704,11 @@ body {
         checking: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>'
     };
 
-    // ============================================
-    // Проверки сервисов
-    // ============================================
-    
-    /**
-     * Проверка внутреннего endpoint
-     * 
-     * @param {string} path - Путь endpoint
-     * @param {string} method - HTTP метод
-     * @param {Array<number>} expectedStatuses - Ожидаемые HTTP статусы
-     * @param {number} timeout - Таймаут в мс
-     * @param {string|null} body - Тело запроса для POST
-     * @returns {Promise<Object>} Результат проверки
-     */
-    async function pingEndpoint(path, method, expectedStatuses, timeout, body) {
-        timeout = timeout || CONFIG.DEFAULT_TIMEOUT;
-        const start = performance.now();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
+    function getStatusIcon(status) { return STATUS_ICONS[status]; }
 
-        try {
-            const options = {
-                method: method || 'GET',
-                signal: controller.signal,
-                cache: 'no-store',
-                headers: { 'X-Status-Check': '1' }
-            };
-            
-            if (body) {
-                options.headers['Content-Type'] = 'application/json';
-                options.body = body;
-            }
-            
-            const response = await fetch(path, options);
-            clearTimeout(timeoutId);
-            
-            const latency = Math.round(performance.now() - start);
-            const isSuccess = (expectedStatuses || [200]).includes(response.status);
-
-            return {
-                status: isSuccess ? STATUS.OPERATIONAL : STATUS.OUTAGE,
-                latency,
-                statusCode: response.status,
-                checkedAt: new Date().toISOString(),
-                error: isSuccess ? null : `Unexpected status ${response.status} (expected ${expectedStatuses.join('|')})`
-            };
-        } catch (error) {
-            clearTimeout(timeoutId);
-            const latency = Math.round(performance.now() - start);
-            
-            if (error.name === 'AbortError') {
-                return {
-                    status: STATUS.DEGRADED,
-                    latency,
-                    error: `Timeout after ${timeout}ms`,
-                    checkedAt: new Date().toISOString()
-                };
-            }
-            
-            return {
-                status: STATUS.OUTAGE,
-                latency,
-                error: error.message || MESSAGES.connectionFailed,
-                checkedAt: new Date().toISOString()
-            };
-        }
-    }
-
-    /**
-     * Проверка внешнего URL
-     * 
-     * @param {string} url - URL для проверки
-     * @param {number} timeout - Таймаут в мс
-     * @returns {Promise<Object>} Результат проверки
-     */
-    async function pingExternal(url, timeout) {
-        timeout = timeout || CONFIG.EXTERNAL_TIMEOUT;
-        const start = performance.now();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        try {
-            await fetch(url, {
-                method: 'HEAD',
-                mode: 'no-cors',
-                cache: 'no-store',
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            return {
-                status: STATUS.OPERATIONAL,
-                latency: Math.round(performance.now() - start),
-                statusCode: '—',
-                checkedAt: new Date().toISOString()
-            };
-        } catch (error) {
-            clearTimeout(timeoutId);
-            
-            return {
-                status: STATUS.DEGRADED,
-                latency: Math.round(performance.now() - start),
-                error: MESSAGES.connectionFailed,
-                checkedAt: new Date().toISOString()
-            };
-        }
-    }
-
-    /**
-     * Косвенная проверка Vercel KV через news endpoint
-     * 
-     * @returns {Promise<Object>} Результат проверки
-     */
-    async function checkKV() {
-        const result = await pingEndpoint('/api/news/posts', 'GET', [200], CONFIG.KV_TIMEOUT);
-        
-        if (result.status === STATUS.OPERATIONAL) {
-            return { ...result, statusCode: '200 (KV OK)' };
-        }
-        
-        return { 
-            ...result, 
-            error: `${MESSAGES.kvUnavailable}: ${result.error || 'posts endpoint failed'}` 
-        };
-    }
-
-    // ============================================
-    // Утилиты форматирования
-    // ============================================
-    
-    /**
-     * Форматирование латентности с классификацией
-     * 
-     * @param {number} ms - Латентность в миллисекундах
-     * @returns {Object} Объект с значением и CSS классом
-     * 
-     * @example
-     * formatLatency(150); // { value: '150ms', cls: 'fast' }
-     * formatLatency(800); // { value: '800ms', cls: 'medium' }
-     * formatLatency(2000); // { value: '2000ms', cls: 'slow' }
-     */
-    function formatLatency(ms) {
-        if (!ms && ms !== 0) return { value: '—', cls: '' };
-        
-        if (ms < LATENCY_THRESHOLDS.FAST) {
-            return { value: `${ms}ms`, cls: 'fast' };
-        }
-        
-        if (ms < LATENCY_THRESHOLDS.MEDIUM) {
-            return { value: `${ms}ms`, cls: 'medium' };
-        }
-        
-        return { value: `${ms}ms`, cls: 'slow' };
-    }
-
-    /**
-     * Получение текстовой метки статуса
-     * 
-     * @param {string} status - Статус сервиса
-     * @returns {string} Текстовая метка
-     */
-    function getStatusLabel(status) {
-        const labels = {
-            operational: 'Operational',
-            degraded: 'Degraded',
-            outage: 'Outage',
-            checking: 'Checking'
-        };
-        
-        return labels[status] || status;
-    }
-
-    /**
-     * Получение SVG иконки для статуса
-     * 
-     * @param {string} status - Статус сервиса
-     * @returns {string} SVG path
-     */
-    function getStatusIcon(status) {
-        return STATUS_ICONS[status];
-    }
-
-    /**
-     * Склонение слов
-     * 
-     * @param {number} n - Число
-     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
-     * @returns {string} Правильная форма
-     */
     function pluralize(n, forms) {
         const abs = Math.abs(n) % 100;
         const n1 = abs % 10;
-        
         if (abs > 10 && abs < 20) return forms[2];
         if (n1 > 1 && n1 < 5) return forms[1];
         if (n1 === 1) return forms[0];
@@ -859,64 +1716,338 @@ body {
     }
 
     // ============================================
-    // Рендеринг сервисов
+    // Proxy Discovery
     // ============================================
     
     /**
-     * Рендеринг ошибки сервиса
-     * 
-     * @param {string} error - Текст ошибки
-     * @returns {string} HTML ошибки
+     * Определение категории из пути endpoint
      */
-    function renderServiceError(error) {
-        if (!error) return '';
-        
-        return `
-            <div class="service-error">
-                <strong>Error:</strong> ${Security.escapeHtml(error)}
-            </div>
-        `;
+    function detectCategory(path) {
+        const p = path.toLowerCase();
+        if (p.includes('/news') || p.includes('/post')) return 'News';
+        if (p.includes('/support') || p.includes('/ticket')) return 'Support';
+        if (p.includes('/auth') || p.includes('/login') || p.includes('/session')) return 'Auth';
+        if (p.includes('/status')) return 'Status';
+        if (p.includes('/sites') || p.includes('/add') || p.includes('/catalog')) return 'Sites';
+        if (p.includes('/upload') || p.includes('/file')) return 'Upload';
+        if (p.includes('/changelog')) return 'Changelog';
+        if (p.includes('/faq')) return 'FAQ';
+        if (p.includes('/admin')) return 'Admin';
+        return 'Other';
     }
 
     /**
-     * Рендеринг одной карточки сервиса
-     * 
-     * @param {Object} service - Данные сервиса
-     * @returns {string} HTML карточки
+     * Определение иконки по категории
      */
+    function detectIcon(category) {
+        const map = {
+            'News': ENDPOINT_ICONS.news,
+            'Support': ENDPOINT_ICONS.support,
+            'Auth': ENDPOINT_ICONS.auth,
+            'Status': ENDPOINT_ICONS.status,
+            'Sites': ENDPOINT_ICONS.sites,
+            'Upload': ENDPOINT_ICONS.upload,
+            'Changelog': ENDPOINT_ICONS.changelog,
+            'FAQ': ENDPOINT_ICONS.faq,
+            'Admin': ENDPOINT_ICONS.admin
+        };
+        return map[category] || ENDPOINT_ICONS.default;
+    }
+
+    /**
+     * Получение цвета для категории
+     */
+    const categoryColorCache = {};
+    let colorIndex = 0;
+    function getCategoryColor(category) {
+        if (!categoryColorCache[category]) {
+            categoryColorCache[category] = CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length];
+            colorIndex++;
+        }
+        return categoryColorCache[category];
+    }
+
+    /**
+     * Построение функции проверки для endpoint
+     */
+    function buildCheckFunction(service, check) {
+        if (!check) {
+            return async () => ({
+                status: STATUS.OUTAGE,
+                latency: 0,
+                error: MESSAGES.noCheckConfigured,
+                checkedAt: new Date().toISOString()
+            });
+        }
+
+        if (check.type === 'external') {
+            return async () => {
+                const start = performance.now();
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), check.timeout || CONFIG.EXTERNAL_TIMEOUT);
+                try {
+                    await fetch(check.url, {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-store',
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    return {
+                        status: STATUS.OPERATIONAL,
+                        latency: Math.round(performance.now() - start),
+                        statusCode: '—',
+                        checkedAt: new Date().toISOString()
+                    };
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    return {
+                        status: STATUS.DEGRADED,
+                        latency: Math.round(performance.now() - start),
+                        error: MESSAGES.connectionFailed,
+                        checkedAt: new Date().toISOString()
+                    };
+                }
+            };
+        }
+
+        if (check.type === 'custom') {
+            if (check.name === 'checkKV') {
+                return async () => {
+                    const start = performance.now();
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), CONFIG.KV_TIMEOUT);
+                    try {
+                        const response = await fetch('/api/news/posts', {
+                            method: 'GET',
+                            signal: controller.signal,
+                            cache: 'no-store',
+                            headers: { 'X-Status-Check': '1' }
+                        });
+                        clearTimeout(timeoutId);
+                        const latency = Math.round(performance.now() - start);
+                        if (response.status === 200) {
+                            return {
+                                status: STATUS.OPERATIONAL,
+                                latency,
+                                statusCode: '200 (KV OK)',
+                                checkedAt: new Date().toISOString()
+                            };
+                        }
+                        return {
+                            status: STATUS.OUTAGE,
+                            latency,
+                            error: `${MESSAGES.kvUnavailable}: status ${response.status}`,
+                            checkedAt: new Date().toISOString()
+                        };
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        return {
+                            status: error.name === 'AbortError' ? STATUS.DEGRADED : STATUS.OUTAGE,
+                            latency: Math.round(performance.now() - start),
+                            error: error.message || MESSAGES.connectionFailed,
+                            checkedAt: new Date().toISOString()
+                        };
+                    }
+                };
+            }
+            return async () => ({
+                status: STATUS.OUTAGE,
+                latency: 0,
+                error: `${MESSAGES.unknownCustomCheck}: ${check.name}`,
+                checkedAt: new Date().toISOString()
+            });
+        }
+
+        // Обычный endpoint
+        return async () => {
+            const start = performance.now();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), check.timeout || CONFIG.DEFAULT_TIMEOUT);
+            try {
+                const options = {
+                    method: check.method || 'GET',
+                    signal: controller.signal,
+                    cache: 'no-store',
+                    headers: { 'X-Status-Check': '1' }
+                };
+                if (check.body) {
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = check.body;
+                }
+                const response = await fetch(check.path, options);
+                clearTimeout(timeoutId);
+                const latency = Math.round(performance.now() - start);
+                const expectedStatuses = check.expectedStatuses || [200];
+                const isSuccess = expectedStatuses.includes(response.status);
+                return {
+                    status: isSuccess ? STATUS.OPERATIONAL : STATUS.OUTAGE,
+                    latency,
+                    statusCode: response.status,
+                    checkedAt: new Date().toISOString(),
+                    error: isSuccess ? null : `Unexpected status ${response.status} (expected ${expectedStatuses.join('|')})`
+                };
+            } catch (error) {
+                clearTimeout(timeoutId);
+                const latency = Math.round(performance.now() - start);
+                if (error.name === 'AbortError') {
+                    return {
+                        status: STATUS.DEGRADED,
+                        latency,
+                        error: `Timeout after ${check.timeout || CONFIG.DEFAULT_TIMEOUT}ms`,
+                        checkedAt: new Date().toISOString()
+                    };
+                }
+                return {
+                    status: STATUS.OUTAGE,
+                    latency,
+                    error: error.message || MESSAGES.connectionFailed,
+                    checkedAt: new Date().toISOString()
+                };
+            }
+        };
+    }
+
+    /**
+     * Загрузка списка endpoints из proxy.
+     * Пробует несколько endpoints по очереди.
+     */
+    async function loadServicesFromProxy() {
+        let lastError = null;
+
+        for (const endpoint of CONFIG.PROXY_ENDPOINTS) {
+            try {
+                const response = await fetch(endpoint, { cache: 'no-store' });
+                if (!response.ok) {
+                    lastError = new Error(`HTTP ${response.status} from ${endpoint}`);
+                    continue;
+                }
+                const raw = await response.json();
+                
+                // Proxy может возвращать:
+                // 1. Массив endpoints (простой список путей)
+                // 2. Массив объектов { path, method, category, ... }
+                // 3. Объект { endpoints: [...], services: [...] }
+                
+                let endpoints = [];
+                if (Array.isArray(raw)) {
+                    endpoints = raw;
+                } else if (raw && Array.isArray(raw.endpoints)) {
+                    endpoints = raw.endpoints;
+                } else if (raw && Array.isArray(raw.services)) {
+                    endpoints = raw.services;
+                } else if (raw && typeof raw === 'object') {
+                    // Преобразуем объект в массив endpoints
+                    endpoints = Object.entries(raw).map(([path, config]) => {
+                        if (typeof config === 'string') {
+                            return { path, method: config };
+                        }
+                        return { path, ...config };
+                    });
+                }
+
+                if (endpoints.length === 0) {
+                    lastError = new Error(`Empty response from ${endpoint}`);
+                    continue;
+                }
+
+                State.proxyEndpoint = endpoint;
+
+                // Трансформируем в объекты сервисов
+                SERVICES = endpoints.map((ep, idx) => {
+                    let path, method, category, name, check;
+                    
+                    if (typeof ep === 'string') {
+                        path = ep;
+                        method = 'GET';
+                    } else if (typeof ep === 'object' && ep !== null) {
+                        path = ep.path || ep.url || ep.endpoint || `/api/unknown-${idx}`;
+                        method = ep.method || 'GET';
+                        category = ep.category;
+                        name = ep.name || ep.title;
+                        check = ep.check || { path, method, expectedStatuses: ep.expectedStatuses || [200], timeout: ep.timeout };
+                    } else {
+                        return null;
+                    }
+
+                    if (!category) category = detectCategory(path);
+                    if (!name) {
+                        // Генерируем имя из пути
+                        const parts = path.split('/').filter(Boolean);
+                        name = parts.length > 0 
+                            ? parts[parts.length - 1].replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+                            : `Endpoint ${idx + 1}`;
+                        // Capitalize first letter
+                        name = name.charAt(0).toUpperCase() + name.slice(1);
+                    }
+
+                    const icon = detectIcon(category);
+                    const colors = getCategoryColor(category);
+
+                    return {
+                        id: `svc-${idx}-${path.replace(/[^a-z0-9]/gi, '-').slice(0, 40)}`,
+                        path,
+                        name,
+                        category,
+                        icon,
+                        color: colors.color,
+                        colorBg: colors.bg,
+                        check: check || { path, method }
+                    };
+                }).filter(Boolean);
+
+                // Добавляем функции проверок
+                SERVICES = SERVICES.map(s => ({
+                    ...s,
+                    check: buildCheckFunction(s, s.check)
+                }));
+
+                showToast(`${MESSAGES.proxyLoaded}: ${SERVICES.length} ${pluralize(SERVICES.length, ['endpoint', 'endpoint', 'endpoints'])} из ${endpoint}`, 'success', 3000);
+                return true;
+
+            } catch (error) {
+                lastError = error;
+                continue;
+            }
+        }
+
+        throw lastError || new Error('All proxy endpoints failed');
+    }
+
+    // ============================================
+    // Rendering
+    // ============================================
+    function renderServiceError(error) {
+        if (!error) return '';
+        return `<div class="service-error"><strong>Error:</strong> ${Security.escapeHtml(error)}</div>`;
+    }
+
     function renderServiceCard(service) {
         const result = State.services[service.id];
         const status = result?.status || STATUS.CHECKING;
         const latency = formatLatency(result?.latency);
         const statusCode = result?.statusCode ?? '—';
-        
-        const checkedTime = result 
-            ? new Date(result.checkedAt).toLocaleTimeString('ru-RU', { 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit' 
-              })
+        const checkedTime = result
+            ? new Date(result.checkedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
             : '—';
-
         const svcUptime = State.serverHistory.services[service.id];
-        const uptime30d = svcUptime && (svcUptime['30d'] !== null && svcUptime['30d'] !== undefined)
+        const uptime30d = svcUptime && svcUptime['30d'] !== null && svcUptime['30d'] !== undefined
             ? `${svcUptime['30d'].toFixed(1)}% за 30 дней`
             : 'Аптайм: накопление данных';
 
         return `
-            <div class="service-card" data-service="${service.id}">
+            <div class="service-card" data-service="${service.id}" style="--svc-color: ${service.color}; --svc-bg: ${service.colorBg};">
+                <div class="service-category-tag">${Security.escapeHtml(service.category)}</div>
                 <div class="service-header">
-                    <div class="service-icon" style="background: ${service.color}20; color: ${service.color};">
+                    <div class="service-icon" style="background: ${service.colorBg}; color: ${service.color};">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${service.icon}</svg>
                     </div>
                     <div class="service-info">
                         <div class="service-name">${Security.escapeHtml(service.name)}</div>
-                        <div class="service-category">${Security.escapeHtml(service.category)}</div>
+                        <div class="service-path">${Security.escapeHtml(service.path)}</div>
                     </div>
                     <div class="service-status-badge ${status}">
-                        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            ${getStatusIcon(status)}
-                        </svg>
+                        <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(status)}</svg>
                         ${getStatusLabel(status)}
                     </div>
                 </div>
@@ -934,8 +2065,8 @@ body {
                         <div class="metric-value">${checkedTime}</div>
                     </div>
                 </div>
-                <div class="service-uptime">
-                    <span class="service-uptime-dot ${status}"></span>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:0.75rem;color:var(--text-secondary);font-family:var(--mono-stack);">
+                    <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${status === STATUS.OPERATIONAL ? 'var(--success)' : status === STATUS.DEGRADED ? 'var(--warning)' : status === STATUS.OUTAGE ? 'var(--danger)' : 'var(--text-tertiary)'}"></span>
                     <span>${Security.escapeHtml(uptime30d)}</span>
                 </div>
                 ${renderServiceError(result?.error)}
@@ -943,119 +2074,126 @@ body {
         `;
     }
 
-    /**
-     * Рендеринг списка сервисов
-     */
     function renderServices() {
-        const grid = document.getElementById(CONFIG.SERVICES_GRID_ID);
-        
+        const filtered = State.activeCategory === 'all'
+            ? SERVICES
+            : SERVICES.filter(s => s.category === State.activeCategory);
+
         if (SERVICES.length === 0) {
-            grid.innerHTML = `
-                <div class="no-incidents">
+            DOM.servicesGrid.innerHTML = `
+                <div class="no-incidents" style="grid-column:1/-1;">
+                    <div class="spinner"></div>
                     <div class="no-incidents-text">${MESSAGES.loadingServices}</div>
                 </div>
             `;
             return;
         }
-        
-        grid.innerHTML = SERVICES.map(service => renderServiceCard(service)).join('');
-        document.getElementById(CONFIG.SERVICES_COUNT_ID).textContent = `${SERVICES.length} сервисов`;
-    }
 
-    // ============================================
-    // Рендеринг общего статуса
-    // ============================================
-    
-    /**
-     * Создание HTML для meta chip
-     * 
-     * @param {string} type - Тип chip: 'success' | 'warning' | 'danger' | ''
-     * @param {string} icon - SVG иконка
-     * @param {string} text - Текст
-     * @returns {string} HTML chip
-     */
-    function createMetaChip(type, icon, text) {
-        const className = type ? `meta-chip ${type}` : 'meta-chip';
-        return `
-            <span class="${className}">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg>
-                ${text}
-            </span>
-        `;
-    }
-
-    /**
-     * Рендеринг общего статуса всех систем
-     */
-    function renderOverallStatus() {
-        const results = Object.values(State.services).filter(r => r && r.status);
-        const indicator = document.querySelector('.status-indicator');
-        const title = document.getElementById('overallTitle');
-        const description = document.getElementById('overallDescription');
-        const meta = document.getElementById('overallMeta');
-
-        // Начальное состояние - проверка
-        if (results.length === 0) {
-            indicator.className = `status-indicator ${STATUS.CHECKING}`;
-            indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(STATUS.CHECKING)}</svg>`;
-            title.textContent = MESSAGES.checkingSystems;
-            description.textContent = MESSAGES.checkingDescription;
-            meta.innerHTML = '';
+        if (filtered.length === 0) {
+            DOM.servicesGrid.innerHTML = `
+                <div class="no-incidents" style="grid-column:1/-1;">
+                    <div class="no-incidents-text">Нет сервисов в этой категории</div>
+                </div>
+            `;
             return;
         }
 
-        // Подсчет статусов
+        DOM.servicesGrid.innerHTML = filtered.map(service => renderServiceCard(service)).join('');
+        DOM.servicesCount.textContent = `${filtered.length} ${pluralize(filtered.length, ['сервис', 'сервиса', 'сервисов'])}`;
+    }
+
+    function renderCategoryChips() {
+        const categories = {};
+        SERVICES.forEach(s => {
+            categories[s.category] = (categories[s.category] || 0) + 1;
+        });
+
+        let html = `<button class="chip ${State.activeCategory === 'all' ? 'active' : ''}" data-cat="all">
+            <span>Все</span>
+            <span class="chip-count">${SERVICES.length}</span>
+        </button>`;
+
+        Object.keys(categories).sort().forEach(cat => {
+            const colors = getCategoryColor(cat);
+            const isActive = State.activeCategory === cat;
+            const style = isActive ? `background:${colors.color};border-color:${colors.color};color:white;` : '';
+            html += `<button class="chip ${isActive ? 'active' : ''}" data-cat="${Security.escapeHtml(cat)}" style="${style}">
+                <span>${Security.escapeHtml(cat)}</span>
+                <span class="chip-count">${categories[cat]}</span>
+            </button>`;
+        });
+
+        DOM.categoryChips.innerHTML = html;
+        DOM.categoryChips.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                State.activeCategory = chip.dataset.cat;
+                renderCategoryChips();
+                renderServices();
+            });
+        });
+    }
+
+    function createMetaChip(type, icon, text) {
+        const className = type ? `meta-chip ${type}` : 'meta-chip';
+        return `<span class="${className}"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${icon}</svg>${text}</span>`;
+    }
+
+    const ICONS = {
+        success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+        warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"/>',
+        error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+        clock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+    };
+
+    function renderOverallStatus() {
+        const results = Object.values(State.services).filter(r => r && r.status);
+        const indicator = DOM.overallStatus.querySelector('.status-indicator');
+        
+        if (results.length === 0) {
+            indicator.className = `status-indicator ${STATUS.CHECKING}`;
+            indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(STATUS.CHECKING)}</svg>`;
+            DOM.overallTitle.textContent = MESSAGES.checkingSystems;
+            DOM.overallDescription.textContent = MESSAGES.checkingDescription;
+            DOM.overallMeta.innerHTML = '';
+            DOM.overallStatus.className = 'overall-status';
+            return;
+        }
+
         const outageCount = results.filter(r => r.status === STATUS.OUTAGE).length;
         const degradedCount = results.filter(r => r.status === STATUS.DEGRADED).length;
         const operationalCount = results.filter(r => r.status === STATUS.OPERATIONAL).length;
         const avgLatency = Math.round(results.reduce((sum, r) => sum + (r.latency || 0), 0) / results.length);
 
-        // Определение финального статуса
         let finalStatus = STATUS.OPERATIONAL;
         if (outageCount > 0) finalStatus = STATUS.OUTAGE;
         else if (degradedCount > 0) finalStatus = STATUS.DEGRADED;
 
-        // Обновление индикатора
         indicator.className = `status-indicator ${finalStatus}`;
         indicator.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${getStatusIcon(finalStatus)}</svg>`;
+        DOM.overallStatus.className = `overall-status ${finalStatus}`;
 
-        // Обновление текста
         if (outageCount > 0) {
-            title.textContent = MESSAGES.outagesDetected;
-            description.textContent = `${outageCount} ${pluralize(outageCount, ['сервис недоступен', 'сервиса недоступны', 'сервисов недоступно'])}. Детали ниже в секции инцидентов.`;
+            DOM.overallTitle.textContent = MESSAGES.outagesDetected;
+            DOM.overallDescription.textContent = `${outageCount} ${pluralize(outageCount, ['сервис недоступен', 'сервиса недоступны', 'сервисов недоступно'])}. Детали ниже в секции инцидентов.`;
         } else if (degradedCount > 0) {
-            title.textContent = MESSAGES.partialProblems;
-            description.textContent = `${degradedCount} ${pluralize(degradedCount, ['сервис работает с задержками', 'сервиса работают с задержками', 'сервисов работают с задержками'])}.`;
+            DOM.overallTitle.textContent = MESSAGES.partialProblems;
+            DOM.overallDescription.textContent = `${degradedCount} ${pluralize(degradedCount, ['сервис работает с задержками', 'сервиса работают с задержками', 'сервисов работают с задержками'])}.`;
         } else {
-            title.textContent = MESSAGES.allSystemsOperational;
-            description.textContent = MESSAGES.allSystemsDescription;
+            DOM.overallTitle.textContent = MESSAGES.allSystemsOperational;
+            DOM.overallDescription.textContent = MESSAGES.allSystemsDescription;
         }
 
-        // Обновление meta chips
         const metaChips = [
             createMetaChip('success', ICONS.success, `${operationalCount} ok`),
             degradedCount > 0 ? createMetaChip('warning', ICONS.warning, `${degradedCount} slow`) : '',
             outageCount > 0 ? createMetaChip('danger', ICONS.error, `${outageCount} down`) : '',
             createMetaChip('', ICONS.clock, `avg ${avgLatency}ms`)
         ].filter(Boolean).join('');
-
-        meta.innerHTML = metaChips;
+        DOM.overallMeta.innerHTML = metaChips;
     }
 
-    // ============================================
-    // Рендеринг инцидентов
-    // ============================================
-    
-    /**
-     * Рендеринг одной карточки инцидента
-     * 
-     * @param {Object} service - Данные сервиса
-     * @param {Object} result - Результат проверки
-     * @returns {string} HTML карточки инцидента
-     */
     function renderIncidentCard(service, result) {
         const checkedTime = new Date(result.checkedAt).toLocaleTimeString('ru-RU');
-        
         return `
             <div class="incident-card ${result.status}">
                 <div class="incident-header">
@@ -1063,7 +2201,7 @@ body {
                     <div class="incident-status ${result.status}">${getStatusLabel(result.status)}</div>
                 </div>
                 <div class="incident-description">
-                    Сервис в категории <strong>${Security.escapeHtml(service.category)}</strong> не отвечает корректно.
+                    Сервис <strong>${Security.escapeHtml(service.path)}</strong> в категории <strong>${Security.escapeHtml(service.category)}</strong> не отвечает корректно.
                 </div>
                 ${result.error ? `<div class="incident-details">${Security.escapeHtml(result.error)}</div>` : ''}
                 <div class="incident-meta">
@@ -1075,57 +2213,35 @@ body {
         `;
     }
 
-    /**
-     * Рендеринг списка инцидентов
-     */
     function renderIncidents() {
-        const list = document.getElementById(CONFIG.INCIDENTS_LIST_ID);
-        
         const incidents = SERVICES
             .map(service => ({ service, result: State.services[service.id] }))
             .filter(item => item.result && (item.result.status === STATUS.OUTAGE || item.result.status === STATUS.DEGRADED));
 
         if (incidents.length === 0) {
-            list.innerHTML = `
+            DOM.incidentsList.innerHTML = `
                 <div class="no-incidents">
                     <svg class="no-incidents-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        ${ICONS.shield}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
                     <div class="no-incidents-title">${MESSAGES.noIncidents}</div>
                     <div class="no-incidents-text">${MESSAGES.noIncidentsText}</div>
                 </div>
             `;
-            document.getElementById(CONFIG.INCIDENTS_COUNT_ID).textContent = '0 инцидентов';
+            DOM.incidentsCount.textContent = '0 инцидентов';
             return;
         }
 
-        list.innerHTML = incidents
+        DOM.incidentsList.innerHTML = incidents
             .map(({ service, result }) => renderIncidentCard(service, result))
             .join('');
-
-        document.getElementById(CONFIG.INCIDENTS_COUNT_ID).textContent = 
-            `${incidents.length} ${pluralize(incidents.length, ['инцидент', 'инцидента', 'инцидентов'])}`;
+        DOM.incidentsCount.textContent = `${incidents.length} ${pluralize(incidents.length, ['инцидент', 'инцидента', 'инцидентов'])}`;
     }
 
-    // ============================================
-    // Рендеринг uptime bar
-    // ============================================
-    
-    /**
-     * Создание HTML для одного элемента uptime bar (снимок мониторинга)
-     * 
-     * @param {Object} snap - Снимок мониторинга
-     * @param {number} number - Порядковый номер снимка
-     * @returns {string} HTML элемента
-     */
     function renderUptimeDay(snap, number) {
-        const time = new Date(snap.timestamp).toLocaleString('ru-RU', { 
-            day: '2-digit',
-            month: '2-digit',
-            hour: '2-digit', 
-            minute: '2-digit'
+        const time = new Date(snap.timestamp).toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         });
-        
         return `
             <div class="uptime-day ${snap.status}">
                 <div class="day-tooltip">
@@ -1137,12 +2253,6 @@ body {
         `;
     }
 
-    /**
-     * Форматирование процента аптайма с CSS-классом
-     * 
-     * @param {number|null} value - Процент (0-100) или null
-     * @returns {Object} { text, cls }
-     */
     function formatUptimeValue(value) {
         if (value === null || value === undefined) return { text: '—', cls: 'unknown' };
         let cls = 'operational';
@@ -1151,13 +2261,9 @@ body {
         return { text: `${value.toFixed(1)}%`, cls: `uptime-window-value ${cls}` };
     }
 
-    /**
-     * Рендеринг агрегатов аптайма за окна 24h/7d/30d
-     */
     function renderUptimeWindows() {
         const uptime = State.serverHistory.uptime || {};
         const map = { '24h': 'uptime24h', '7d': 'uptime7d', '30d': 'uptime30d' };
-
         Object.entries(map).forEach(([key, id]) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -1165,14 +2271,12 @@ body {
             el.textContent = text;
             el.className = cls;
         });
-
         const source = document.getElementById('uptimeSource');
         const lastCheck = State.serverHistory.lastCheck;
         const count = State.serverHistory.snapshots.length;
         if (lastCheck) {
             const t = new Date(lastCheck).toLocaleString('ru-RU', {
-                day: '2-digit', month: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
             });
             source.textContent = `Снимков: ${count} · последняя запись: ${t}`;
         } else {
@@ -1180,50 +2284,35 @@ body {
         }
     }
 
-    /**
-     * Рендеринг полосы uptime на основе серверных снимков
-     */
     function renderUptimeBar() {
-        const bar = document.getElementById(CONFIG.UPTIME_BAR_ID);
-        const percentage = document.getElementById(CONFIG.UPTIME_PERCENTAGE_ID);
-        const startLabel = document.getElementById(CONFIG.UPTIME_START_ID);
-
+        const bar = DOM.uptimeBar;
+        const percentage = DOM.uptimePercentage;
+        const startLabel = DOM.uptimeStart;
         const snapshots = State.serverHistory.snapshots || [];
-
         if (snapshots.length === 0) {
             bar.innerHTML = '<div class="uptime-day unknown" style="flex: 1;"></div>';
             percentage.textContent = '—';
             startLabel.textContent = 'Нет данных';
             return;
         }
-
         const successful = snapshots.filter(s => s.status === STATUS.OPERATIONAL).length;
         const uptimePercent = ((successful / snapshots.length) * 100).toFixed(1);
         percentage.textContent = `${uptimePercent}%`;
-
         const visible = snapshots.slice(-CONFIG.UPTIME_BAR_VISIBLE_COUNT);
         const startIndex = snapshots.length - visible.length;
-
         const firstCheck = new Date(visible[0].timestamp);
-        startLabel.textContent = firstCheck.toLocaleString('ru-RU', { 
+        startLabel.textContent = firstCheck.toLocaleString('ru-RU', {
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         });
-
         bar.innerHTML = visible
             .map((snap, idx) => renderUptimeDay(snap, startIndex + idx + 1))
             .join('');
     }
 
-    /**
-     * Загрузка серверной истории аптайма
-     * 
-     * @returns {Promise<void>}
-     */
     async function loadServerHistory() {
         try {
             const response = await fetch(CONFIG.STATUS_HISTORY_ENDPOINT, { cache: 'no-store' });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
             const data = await response.json();
             State.serverHistory = {
                 snapshots: Array.isArray(data.snapshots) ? data.snapshots : [],
@@ -1232,37 +2321,22 @@ body {
                 lastCheck: data.lastCheck || null
             };
         } catch (error) {
-            console.error('[Status] Failed to load uptime history:', error);
+            console.warn('[Status] Failed to load uptime history:', error);
         }
-
         renderUptimeBar();
         renderUptimeWindows();
-        renderServices();
     }
 
-    /**
-     * Обновление времени последней проверки
-     */
     function updateLastUpdated() {
-        const time = new Date().toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
+        const time = new Date().toLocaleTimeString('ru-RU', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
         });
-        
-        document.getElementById(CONFIG.LAST_UPDATED_ID).textContent = `Последняя проверка: ${time}`;
+        DOM.lastUpdated.textContent = `Последняя проверка: ${time}${State.proxyEndpoint ? ' · source: ' + State.proxyEndpoint : ''}`;
     }
 
     // ============================================
-    // Главный цикл проверок
+    // Checks
     // ============================================
-    
-    /**
-     * Выполнение одной проверки сервиса
-     * 
-     * @param {Object} service - Данные сервиса
-     * @returns {Promise<Object>} Результат проверки
-     */
     async function executeServiceCheck(service) {
         try {
             const result = await service.check();
@@ -1275,60 +2349,31 @@ body {
                 checkedAt: new Date().toISOString()
             };
         }
-        
-        // Обновление UI после каждой проверки
         renderServices();
         renderOverallStatus();
         renderIncidents();
-        
         return State.services[service.id];
     }
 
-    /**
-     * Запуск всех проверок сервисов (живая проверка из браузера).
-     * История аптайма хранится на сервере и подгружается отдельно.
-     * 
-     * @returns {Promise<void>}
-     */
     async function runAllChecks() {
-        // Инициализация статусов
         SERVICES.forEach(service => {
             if (!State.services[service.id]) {
                 State.services[service.id] = { status: STATUS.CHECKING };
             }
         });
-        
         renderServices();
         renderOverallStatus();
-
-        // Выполнение всех проверок параллельно
         await Promise.all(SERVICES.map(service => executeServiceCheck(service)));
-
         renderIncidents();
         updateLastUpdated();
-
-        // Подгрузка серверной истории (триггерит «ленивую» запись снимка)
         loadServerHistory();
     }
 
-    // ============================================
-    // Автообновление
-    // ============================================
-    
-    /**
-     * Запуск автообновления
-     */
     function startAutoRefresh() {
-        if (State.refreshInterval) {
-            clearInterval(State.refreshInterval);
-        }
-        
+        if (State.refreshInterval) clearInterval(State.refreshInterval);
         State.refreshInterval = setInterval(runAllChecks, CONFIG.REFRESH_INTERVAL);
     }
 
-    /**
-     * Остановка автообновления
-     */
     function stopAutoRefresh() {
         if (State.refreshInterval) {
             clearInterval(State.refreshInterval);
@@ -1337,145 +2382,237 @@ body {
     }
 
     // ============================================
-    // Построение функций проверок
+    // Typewriter + Glitch
     // ============================================
-    
-    /**
-     * Построение функции проверки из конфигурации
-     * 
-     * @param {Object} service - Данные сервиса
-     * @param {Object} check - Конфигурация проверки
-     * @returns {Function} Функция проверки
-     */
-    function buildCheckFunction(service, check) {
-        if (!check) {
-            return () => Promise.resolve({ 
-                status: STATUS.OUTAGE, 
-                latency: 0, 
-                error: MESSAGES.noCheckConfigured, 
-                checkedAt: new Date().toISOString() 
-            });
-        }
-
-        // Внешний URL
-        if (check.type === 'external') {
-            return () => pingExternal(check.url, check.timeout || CONFIG.EXTERNAL_TIMEOUT);
-        }
-        
-        // Кастомная проверка
-        if (check.type === 'custom') {
-            if (check.name === 'checkKV') return checkKV;
-            
-            return () => Promise.resolve({ 
-                status: STATUS.OUTAGE, 
-                latency: 0, 
-                error: `${MESSAGES.unknownCustomCheck}: ${check.name}`, 
-                checkedAt: new Date().toISOString() 
-            });
-        }
-        
-        // Обычный endpoint
-        return () => pingEndpoint(
-            check.path,
-            check.method || 'GET',
-            check.expectedStatuses || [200],
-            check.timeout || CONFIG.DEFAULT_TIMEOUT,
-            check.body || null
-        );
-    }
-
-    /**
-     * Трансформация сырых данных сервисов в объекты с функциями проверок
-     * 
-     * @param {Array<Object>} rawServices - Сырые данные сервисов
-     * @returns {Array<Object>} Трансформированные сервисы
-     */
-    function transformServices(rawServices) {
-        return rawServices.map(service => ({
-            ...service,
-            check: buildCheckFunction(service, service.check)
-        }));
-    }
-
-    // ============================================
-    // Загрузка конфигурации
-    // ============================================
-    
-    /**
-     * Отображение ошибки загрузки конфигурации
-     * 
-     * @param {Error} error - Объект ошибки
-     */
-    function showConfigLoadError(error) {
-        const grid = document.getElementById(CONFIG.SERVICES_GRID_ID);
-        grid.innerHTML = `
-            <div class="no-incidents" style="grid-column: 1/-1;">
-                <div class="no-incidents-title">${MESSAGES.configLoadError}</div>
-                <div class="no-incidents-text">${Security.escapeHtml(error.message)}. Обновите страницу.</div>
-            </div>
-        `;
-    }
-
-    /**
-     * Загрузка конфигурации сервисов с сервера
-     * 
-     * @returns {Promise<void>}
-     */
-    async function loadServices() {
-        try {
-            const response = await fetch(CONFIG.STATUS_CONFIG_ENDPOINT);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+    function typewriter(element, text, speed = 45) {
+        element.textContent = '';
+        element.setAttribute('data-text', '');
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                element.insertBefore(document.createTextNode(text[i]), cursor);
+                element.setAttribute('data-text', text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => cursor.remove(), 2000);
             }
-            
-            const raw = await response.json();
-            
-            if (!Array.isArray(raw)) {
-                throw new Error('Invalid config');
+        }, speed);
+    }
+
+    function triggerGlitch() {
+        DOM.heroTitle.classList.add('glitch');
+        setTimeout(() => DOM.heroTitle.classList.remove('glitch'), 400);
+    }
+
+    function initHero() {
+        setTimeout(() => {
+            typewriter(DOM.heroTitle, 'System Status');
+        }, 300);
+        DOM.heroTitle.addEventListener('click', triggerGlitch);
+        setInterval(triggerGlitch, 7000);
+    }
+
+    // ============================================
+    // Scroll effects
+    // ============================================
+    function initScrollEffects() {
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            DOM.readingProgress.style.width = progress + '%';
+            if (scrollTop > 400) {
+                DOM.scrollTop.classList.add('visible');
+            } else {
+                DOM.scrollTop.classList.remove('visible');
             }
-            
-            SERVICES = transformServices(raw);
-            init();
-            
-        } catch (error) {
-            console.error('[Status] Failed to load config:', error);
-            showConfigLoadError(error);
+        }, { passive: true });
+        DOM.scrollTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // ============================================
+    // Command Palette
+    // ============================================
+    function openCmdk() {
+        DOM.cmdkOverlay.classList.add('active');
+        DOM.cmdkOverlay.style.display = 'flex';
+        DOM.cmdkInput.value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => DOM.cmdkInput.focus(), 50);
+        renderCmdkResults('');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCmdk() {
+        DOM.cmdkOverlay.classList.remove('active');
+        setTimeout(() => {
+            DOM.cmdkOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 200);
+    }
+
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); } },
+            { type: 'action', title: 'Обновить проверки', desc: 'Перезапустить все проверки', kbd: 'R', action: () => { runAllChecks(); showToast(MESSAGES.refreshSuccess, 'success'); closeCmdk(); } },
+            { type: 'action', title: 'Переключить автообновление', desc: State.autoRefresh ? 'Включено → выключить' : 'Выключено → включить', action: () => { handleAutoRefreshToggle(); closeCmdk(); } },
+            { type: 'nav', title: 'Каталог проектов', desc: 'Главная страница', url: '/', kbd: '1' },
+            { type: 'nav', title: 'Новости', desc: 'Новости платформы', url: '/news', kbd: '2' },
+            { type: 'nav', title: 'Changelog', desc: 'История изменений', url: '/changelog', kbd: '3' },
+            { type: 'nav', title: 'Поддержка', desc: 'Создать тикет', url: '/support', kbd: '4' }
+        ];
+        const services = SERVICES.slice(0, 30).map(s => {
+            const result = State.services[s.id];
+            const status = result?.status || STATUS.CHECKING;
+            return {
+                type: 'service',
+                title: s.name,
+                desc: `${s.path} · ${getStatusLabel(status)}${result?.latency ? ' · ' + result.latency + 'ms' : ''}`,
+                color: s.color,
+                icon: s.icon,
+                id: s.id
+            };
+        });
+        let filteredActions = actions;
+        let filteredServices = services;
+        if (q) {
+            filteredActions = actions.filter(a =>
+                a.title.toLowerCase().includes(q) ||
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+            filteredServices = services.filter(s =>
+                s.title.toLowerCase().includes(q) ||
+                s.desc.toLowerCase().includes(q)
+            );
+        }
+        const items = [];
+        if (filteredActions.length > 0) items.push({ group: 'Действия', entries: filteredActions });
+        if (filteredServices.length > 0) items.push({ group: 'Сервисы', entries: filteredServices });
+        if (items.length === 0) {
+            DOM.cmdkResults.innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                const iconBg = entry.color ? entry.color + '18' : 'var(--accent-soft)';
+                const iconColor = entry.color || 'var(--accent)';
+                const iconPath = entry.icon || 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z';
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}">
+                        <div class="cmdk-item-icon" style="background: ${iconBg}; color: ${iconColor};">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+        DOM.cmdkResults.innerHTML = html;
+        DOM.cmdkResults.querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
+
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'service' && entry.id) {
+                        closeCmdk();
+                        setTimeout(() => {
+                            const el = document.querySelector(`[data-service="${entry.id}"]`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    } else if (entry.url) {
+                        window.location.href = entry.url;
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function initCmdk() {
+        DOM.cmdkBtn.addEventListener('click', openCmdk);
+        DOM.cmdkOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cmdkOverlay) closeCmdk();
+        });
+        DOM.cmdkInput.addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        DOM.cmdkInput.addEventListener('keydown', (e) => {
+            const items = DOM.cmdkResults.querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
         }
     }
 
     // ============================================
-    // Обработчики событий
+    // Auto-refresh
     // ============================================
-    
-    /**
-     * Обновление UI кнопки автообновления
-     */
     function updateAutoRefreshButton() {
-        const button = document.getElementById(CONFIG.AUTO_REFRESH_BTN_ID);
-        button.classList.toggle('active', State.autoRefresh);
-        button.querySelector('span').textContent = State.autoRefresh 
-            ? MESSAGES.autoRefreshOn 
+        DOM.autoRefreshBtn.classList.toggle('active', State.autoRefresh);
+        DOM.autoRefreshBtn.querySelector('span').textContent = State.autoRefresh
+            ? MESSAGES.autoRefreshOn
             : MESSAGES.autoRefreshOff;
     }
 
-    /**
-     * Обработчик клика по кнопке автообновления
-     */
     function handleAutoRefreshToggle() {
         State.autoRefresh = !State.autoRefresh;
         updateAutoRefreshButton();
-        
         if (State.autoRefresh) {
             startAutoRefresh();
+            showToast('Автообновление включено', 'success', 2000);
         } else {
             stopAutoRefresh();
+            showToast('Автообновление выключено', 'info', 2000);
         }
     }
 
-    /**
-     * Обработчик изменения видимости вкладки
-     */
     function handleVisibilityChange() {
         if (document.hidden) {
             stopAutoRefresh();
@@ -1485,49 +2622,99 @@ body {
         }
     }
 
-    /**
-     * Привязка обработчиков событий
-     */
-    function bindEvents() {
-        // Автообновление
-        document.getElementById(CONFIG.AUTO_REFRESH_BTN_ID)
-            .addEventListener('click', handleAutoRefreshToggle);
-
-        // Пауза при скрытии вкладки
-        document.addEventListener('visibilitychange', handleVisibilityChange);
+    // ============================================
+    // Hotkeys
+    // ============================================
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                }
+                return;
+            }
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+            switch (e.key) {
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'r': case 'R': case 'к': case 'К':
+                    runAllChecks();
+                    showToast(MESSAGES.refreshSuccess, 'success');
+                    break;
+                case '1': window.location.href = '/'; break;
+                case '2': window.location.href = '/news'; break;
+                case '3': window.location.href = '/changelog'; break;
+                case '4': window.location.href = '/support'; break;
+                case '5': window.location.href = '/status'; break;
+                case 'Escape':
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: ⌘K палитра · T тема · R обновить · 1-5 навигация · ? помощь', 'info', 5000);
+                    break;
+            }
+        });
     }
 
     // ============================================
-    // Инициализация
+    // Init
     // ============================================
-    
-    /**
-     * Инициализация приложения
-     */
-    function init() {
-        // Первоначальный рендеринг
+    async function init() {
+        initTheme();
+        initHero();
+        initScrollEffects();
+        initCmdk();
+        initHotkeys();
+
+        DOM.autoRefreshBtn.addEventListener('click', handleAutoRefreshToggle);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Загрузка списка endpoints из proxy
+        try {
+            await loadServicesFromProxy();
+        } catch (error) {
+            console.error('[Status] Failed to load from proxy:', error);
+            DOM.servicesGrid.innerHTML = `
+                <div class="no-incidents" style="grid-column:1/-1;">
+                    <div class="no-incidents-title">${MESSAGES.configLoadError}</div>
+                    <div class="no-incidents-text">${Security.escapeHtml(error.message)}. Убедитесь, что /api/proxy доступен.</div>
+                </div>
+            `;
+            return;
+        }
+
+        renderCategoryChips();
         renderServices();
         renderUptimeBar();
         renderUptimeWindows();
         renderIncidents();
         renderOverallStatus();
 
-        // Загрузка серверной истории аптайма
         loadServerHistory();
-
-        // Запуск живых проверок
         runAllChecks();
         startAutoRefresh();
 
-        // Привязка событий
-        bindEvents();
+        setTimeout(() => {
+            showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+        }, 1200);
     }
 
-    // Запуск после загрузки DOM
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadServices);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        loadServices();
+        init();
     }
 })();
 </script>
