@@ -360,19 +360,26 @@ html, body {
     animation: none;
 }
 
-/* Hotkey hints - исправленное позиционирование */
+/* === ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ ПАЛИТРЫ === */
+
+/* Палитра команд всегда поверх ВСЕХ элементов на странице */
+.cmdk-overlay {
+    z-index: 9999 !important;
+}
+
+/* Подсказки горячих клавиш внизу слева */
 .hotkey-hints {
     position: fixed;
     bottom: 28px;
     left: 28px;
-    z-index: 50; /* Уменьшили z-index чтобы не перекрывал основной контент */
+    z-index: 10 !important; /* Заведомо ниже палитры и модальных окон */
     display: flex;
     flex-direction: column;
     gap: 6px;
     font-size: 0.72rem;
     color: var(--text-tertiary);
     font-family: var(--mono);
-    pointer-events: none; /* Чтобы не мешали кликам */
+    pointer-events: none !important; /* Гарантирует, что клики проходят сквозь подсказки */
     opacity: 0.7;
     transition: opacity 0.2s ease;
 }
@@ -387,10 +394,16 @@ html, body {
     gap: 8px;
 }
 
-/* На мобильных скрываем подсказки */
+/* Автоматически скрывать подсказки, когда открыта палитра или модальное окно (для чистоты интерфейса) */
+body:has(.cmdk-overlay.active) .hotkey-hints,
+body:has(.modal-overlay.visible) .hotkey-hints {
+    opacity: 0 !important;
+}
+
+/* На мобильных устройствах скрываем подсказки полностью, чтобы не мешали */
 @media (max-width: 768px) {
     .hotkey-hints {
-        display: none;
+        display: none !important;
     }
 }
 
