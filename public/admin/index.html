@@ -1955,6 +1955,9 @@ kbd {
     }
 
     function initHotkeys() {
+
+        let hintsVisible = true;
+
         document.addEventListener('keydown', (e) => {
             const tag = e.target.tagName;
             const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
@@ -1965,6 +1968,10 @@ kbd {
                     if ($('modalOverlay').classList.contains('visible')) closeModal();
                 }
                 return;
+            }
+            if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') {
+                hintsVisible = !hintsVisible;
+                $('hotkeyHints').style.opacity = hintsVisible ? '0.5' : '0';
             }
             if (e.ctrlKey || e.metaKey) {
                 if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
