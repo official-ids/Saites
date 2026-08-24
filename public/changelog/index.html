@@ -1,67 +1,575 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Changelog · Oris</title>
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="description" content="История развития платформы Oris и технические обновления">
+    <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-    
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 
     <style>
         :root {
             --bg-body: #F5F5F7;
             --bg-card: #FFFFFF;
+            --bg-elevated: #FFFFFF;
+            --bg-sunken: #E8E8ED;
+            --bg-input: rgba(0, 0, 0, 0.04);
             --text-primary: #1D1D1F;
-            --text-secondary: #86868B;
+            --text-secondary: #6E6E73;
+            --text-tertiary: #86868B;
             --accent: #0071E3;
-            --border: rgba(0, 0, 0, 0.1);
-            --line: #E5E5EA;
-            --success: #34C759;
-            --warning: #FF9F0A;
+            --accent-hover: #0077ED;
+            --accent-soft: rgba(0, 113, 227, 0.12);
+            --accent-glow: rgba(0, 113, 227, 0.25);
             --danger: #FF3B30;
+            --danger-soft: rgba(255, 59, 48, 0.12);
+            --success: #34C759;
+            --success-soft: rgba(52, 199, 89, 0.12);
+            --warning: #FF9F0A;
+            --warning-soft: rgba(255, 159, 10, 0.12);
+            --purple: #AF52DE;
+            --purple-soft: rgba(175, 82, 222, 0.12);
+            --teal: #5AC8FA;
+            --border: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.15);
+            --line: #E5E5EA;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+            --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+            --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --grid-color: rgba(0, 0, 0, 0.04);
+            --header-h: 64px;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-body: #000000;
-                --bg-card: #1C1C1E;
-                --text-primary: #F5F5F7;
-                --text-secondary: #86868B;
-                --border: rgba(255, 255, 255, 0.1);
-                --line: #38383A;
-            }
+        [data-theme="dark"] {
+            --bg-body: #000000;
+            --bg-card: #1C1C1E;
+            --bg-elevated: #2C2C2E;
+            --bg-sunken: #0A0A0A;
+            --bg-input: rgba(255, 255, 255, 0.06);
+            --text-primary: #F5F5F7;
+            --text-secondary: #A1A1A6;
+            --text-tertiary: #636366;
+            --accent: #0A84FF;
+            --accent-hover: #409CFF;
+            --accent-soft: rgba(10, 132, 255, 0.18);
+            --accent-glow: rgba(10, 132, 255, 0.4);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.16);
+            --line: #38383A;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+            --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+            --grid-color: rgba(255, 255, 255, 0.03);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
 
         body {
             background: var(--bg-body);
             color: var(--text-primary);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: var(--font-stack);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             padding-bottom: 60px;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+        /* Background grid */
+        .bg-grid {
+            position: fixed; inset: 0;
+            pointer-events: none; z-index: 0;
+            background-image:
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+            animation: gridShift 30s linear infinite;
+        }
+        @keyframes gridShift {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 48px 48px, 48px 48px; }
+        }
 
-        header { padding: 60px 0 40px; opacity: 0; animation: fadeIn 0.6s ease forwards; }
-        h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 12px; }
-        .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+        /* Floating orbs */
+        .bg-orbs {
+            position: fixed; inset: 0;
+            pointer-events: none; z-index: 0;
+            overflow: hidden;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        [data-theme="dark"] .orb { opacity: 0.25; }
+        .orb-1 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+            top: -150px; right: -150px;
+            animation-duration: 25s;
+        }
+        .orb-2 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+            bottom: -200px; left: -200px;
+            animation-duration: 30s;
+            animation-delay: -5s;
+        }
+        .orb-3 {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+            top: 50%; left: 30%;
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(60px, -40px) scale(1.1); }
+            66% { transform: translate(-40px, 50px) scale(0.95); }
+        }
 
-        .timeline { position: relative; padding-left: 32px; margin-top: 40px; min-height: 200px; }
+        /* Reading progress */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            width: 0%;
+            z-index: 200;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .container { 
+            max-width: 820px; 
+            margin: 0 auto; 
+            padding: 0 24px; 
+            position: relative; 
+            z-index: 1;
+        }
+
+        /* Header */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(245, 245, 247, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+            height: var(--header-h);
+            transition: background-color 0.4s ease, border-color 0.4s ease;
+        }
+        [data-theme="dark"] .site-header { background: rgba(0, 0, 0, 0.72); }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            height: 100%;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .logo-icon { width: 28px; height: 28px; color: var(--accent); }
+        .logo-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            padding: 8px 14px;
+            border-radius: 99px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
+        .nav-link.active { background: var(--accent); color: white; }
+        .nav-link .nav-kbd {
+            font-family: var(--mono-stack);
+            font-size: 0.62rem;
+            padding: 1px 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .nav-link:not(.active) .nav-kbd {
+            background: var(--bg-sunken);
+            border: 1px solid var(--border);
+            color: var(--text-tertiary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+        .icon-btn:hover {
+            color: var(--text-primary);
+            border-color: var(--border-strong);
+            transform: rotate(15deg);
+        }
+        .icon-btn svg { width: 16px; height: 16px; }
+        .icon-btn .kbd-hint {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            font-family: var(--mono-stack);
+            color: var(--text-tertiary);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .icon-btn:hover .kbd-hint { opacity: 1; }
+
+        .theme-icon-dark { display: none; }
+        [data-theme="dark"] .theme-icon-light { display: none; }
+        [data-theme="dark"] .theme-icon-dark { display: block; }
+
+        /* Hero */
+        header.hero { 
+            padding: 60px 0 40px; 
+            opacity: 0; 
+            animation: fadeIn 0.6s ease forwards;
+            text-align: center;
+        }
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 16px;
+            padding: 4px 12px;
+            background: var(--accent-soft);
+            border-radius: 99px;
+        }
+        .hero-eyebrow svg { width: 14px; height: 14px; }
+        h1 { 
+            font-size: 3rem; 
+            font-weight: 700; 
+            letter-spacing: -0.03em; 
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            min-height: 1.1em;
+            display: inline-block;
+            cursor: default;
+            position: relative;
+        }
+        h1.glitch::before,
+        h1.glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            pointer-events: none;
+        }
+        h1.glitch::before {
+            animation: glitch1 0.4s ease;
+            -webkit-text-fill-color: var(--danger);
+        }
+        h1.glitch::after {
+            animation: glitch2 0.4s ease;
+            -webkit-text-fill-color: var(--accent);
+        }
+        @keyframes glitch1 {
+            0%, 100% { opacity: 0; transform: translate(0, 0); }
+            20% { opacity: 0.8; transform: translate(-3px, 1px); }
+            40% { opacity: 0.6; transform: translate(2px, -1px); }
+            60% { opacity: 0.4; transform: translate(-1px, 2px); }
+            80% { opacity: 0; transform: translate(0, 0); }
+        }
+        @keyframes glitch2 {
+            0%, 100% { opacity: 0; transform: translate(0, 0); }
+            20% { opacity: 0.6; transform: translate(3px, -1px); }
+            40% { opacity: 0.4; transform: translate(-2px, 1px); }
+            60% { opacity: 0.3; transform: translate(1px, -2px); }
+            80% { opacity: 0; transform: translate(0, 0); }
+        }
+        .typewriter-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 0.85em;
+            background: var(--accent);
+            margin-left: 4px;
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+            -webkit-text-fill-color: var(--accent);
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .subtitle { 
+            color: var(--text-secondary); 
+            font-size: 1.1rem; 
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            margin: 32px 0;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.2s ease forwards;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .stats-bar::-webkit-scrollbar { display: none; }
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s ease;
+        }
+        .stat-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-strong);
+        }
+        .stat-chip strong {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            font-family: var(--mono-stack);
+            font-size: 0.85rem;
+        }
+        .stat-chip svg { width: 16px; height: 16px; }
+
+        /* Search */
+        .search-wrap {
+            max-width: 560px;
+            margin: 0 auto 24px;
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.25s ease forwards;
+        }
+        .search-box {
+            width: 100%;
+            padding: 14px 48px 14px 48px;
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.25s var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .search-box::placeholder { color: var(--text-tertiary); }
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: var(--text-tertiary);
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+        .search-box:focus ~ .search-icon { color: var(--accent); }
+        .search-kbd {
+            position: absolute;
+            right: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: var(--mono-stack);
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            background: var(--bg-sunken);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            font-weight: 600;
+        }
+        .search-box:focus ~ .search-kbd { opacity: 0; }
+        .search-clear {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .search-clear.visible { display: flex; }
+        .search-clear:hover { background: var(--border-strong); color: var(--text-primary); }
+        .search-stats {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            margin-top: 10px;
+            height: 20px;
+            font-family: var(--mono-stack);
+        }
+
+        /* Type filter chips */
+        .type-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeIn 0.8s 0.3s ease forwards;
+        }
+        .type-filters::-webkit-scrollbar { display: none; }
+        .chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s var(--transition);
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+        }
+        .chip:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        .chip.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .chip-count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 1px 6px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-family: var(--mono-stack);
+        }
+        [data-theme="dark"] .chip-count { background: rgba(255, 255, 255, 0.15); }
+        .chip.active .chip-count { background: rgba(255, 255, 255, 0.25); }
+
+        /* Timeline */
+        .timeline { 
+            position: relative; 
+            padding-left: 32px; 
+            margin-top: 40px; 
+            min-height: 200px;
+        }
         
         .timeline::before {
             content: '';
@@ -70,7 +578,7 @@
             top: 8px;
             bottom: 0;
             width: 2px;
-            background: var(--line);
+            background: linear-gradient(to bottom, var(--accent), var(--line) 30%, var(--line));
         }
 
         .release { 
@@ -81,6 +589,7 @@
             animation: slideUp 0.5s ease forwards;
         }
         .release:last-child { margin-bottom: 0; }
+        .release.hidden { display: none; }
 
         .dot {
             position: absolute;
@@ -92,39 +601,108 @@
             background: var(--bg-body);
             border: 3px solid var(--accent);
             z-index: 1;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .release:first-child .dot { 
             background: var(--accent); 
-            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.2); 
+            box-shadow: 0 0 0 4px var(--accent-soft);
+            animation: pulseDot 2s ease-in-out infinite;
+        }
+        @keyframes pulseDot {
+            0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
+            50% { box-shadow: 0 0 0 8px transparent; }
+        }
+
+        .release-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
         }
 
         .version-tag {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-size: 0.8rem;
             font-weight: 600;
             color: var(--accent);
-            background: rgba(0, 113, 227, 0.1);
+            background: var(--accent-soft);
             padding: 4px 10px;
             border-radius: 6px;
-            margin-bottom: 8px;
+            margin-bottom: 0;
+            font-family: var(--mono-stack);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .version-tag:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+        .version-tag svg {
+            width: 12px;
+            height: 12px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .version-tag:hover svg { opacity: 1; }
+
+        .release-latest {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--success);
+            background: var(--success-soft);
+            padding: 2px 8px;
+            border-radius: 99px;
         }
 
-        .date { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; display: block; }
+        .date { 
+            font-size: 0.85rem; 
+            color: var(--text-secondary); 
+            margin-bottom: 12px; 
+            display: block;
+            font-family: var(--mono-stack);
+        }
 
         .changes ul { list-style: none; }
         .changes li {
             position: relative;
-            padding-left: 20px;
-            margin-bottom: 8px;
+            padding: 8px 12px 8px 20px;
+            margin-bottom: 6px;
             color: var(--text-primary);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            font-size: 0.92rem;
+        }
+        .changes li:hover {
+            border-color: var(--border-strong);
+            transform: translateX(2px);
+            box-shadow: var(--shadow-sm);
         }
         .changes li::before {
-            content: '•';
+            content: '';
             position: absolute;
-            left: 0;
-            color: var(--text-secondary);
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+        }
+        .changes li mark {
+            background: var(--warning-soft);
+            color: var(--text-primary);
+            padding: 0 3px;
+            border-radius: 3px;
+            font-weight: 600;
         }
 
         .type-badge {
@@ -138,6 +716,7 @@
             margin-right: 8px;
             vertical-align: middle;
             line-height: 1.4;
+            font-family: var(--mono-stack);
         }
         .type-feat     { color: #248A3D; background: rgba(52, 199, 89, 0.15); }
         .type-fix      { color: #C60000; background: rgba(255, 59, 48, 0.15); }
@@ -149,41 +728,72 @@
         .type-security { color: #C60000; background: rgba(255, 59, 48, 0.2); }
         .type-default  { color: #6E6E73; background: rgba(152, 152, 157, 0.12); }
 
-        @media (prefers-color-scheme: dark) {
-            .type-feat     { color: #30D158; }
-            .type-fix      { color: #FF453A; }
-            .type-breaking { color: #FF9F0A; }
-            .type-perf     { color: #0A84FF; }
-            .type-docs     { color: #BF5AF2; }
-            .type-refactor { color: #5E5CE6; }
-            .type-chore    { color: #98989D; }
-            .type-security { color: #FF453A; }
-            .type-default  { color: #98989D; }
-        }
+        [data-theme="dark"] .type-feat     { color: #30D158; }
+        [data-theme="dark"] .type-fix      { color: #FF453A; }
+        [data-theme="dark"] .type-breaking { color: #FF9F0A; }
+        [data-theme="dark"] .type-perf     { color: #0A84FF; }
+        [data-theme="dark"] .type-docs     { color: #BF5AF2; }
+        [data-theme="dark"] .type-refactor { color: #5E5CE6; }
+        [data-theme="dark"] .type-chore    { color: #98989D; }
+        [data-theme="dark"] .type-security { color: #FF453A; }
+        [data-theme="dark"] .type-default  { color: #98989D; }
 
         .back-link {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             margin-top: 60px;
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.9rem;
-            transition: color 0.2s ease;
+            transition: all 0.2s ease;
+            padding: 10px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 99px;
+            box-shadow: var(--shadow-sm);
         }
-        .back-link:hover { color: var(--accent); }
+        .back-link:hover { 
+            color: var(--accent); 
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
 
-        footer { text-align: center; margin-top: 80px; font-size: 0.8rem; color: var(--text-secondary); }
+        footer { 
+            text-align: center; 
+            margin-top: 80px; 
+            font-size: 0.82rem; 
+            color: var(--text-tertiary);
+            position: relative;
+            z-index: 1;
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
 
         .status-message {
             text-align: center;
-            padding: 40px 0;
+            padding: 60px 24px;
             color: var(--text-secondary);
             font-size: 1rem;
         }
         .status-message.error { color: var(--danger); }
+        .status-message-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            color: var(--text-tertiary);
+        }
+        .status-message-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
 
         .spinner {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border: 3px solid var(--border);
             border-top-color: var(--accent);
             border-radius: 50%;
@@ -191,194 +801,806 @@
             margin: 0 auto 16px;
         }
 
+        /* Scroll to top */
+        .scroll-top {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-md);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s var(--transition);
+            pointer-events: none;
+            z-index: 50;
+        }
+        .scroll-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .scroll-top:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .scroll-top svg { width: 18px; height: 18px; }
+
+        /* Command Palette */
+        .cmdk-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            z-index: 1100;
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 15vh;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .cmdk-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        .cmdk-dialog {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 560px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-strong);
+            overflow: hidden;
+            transform: scale(0.95) translateY(-10px);
+            transition: transform 0.25s var(--bounce);
+        }
+        .cmdk-overlay.active .cmdk-dialog {
+            transform: scale(1) translateY(0);
+        }
+        .cmdk-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .cmdk-input-wrap svg {
+            width: 18px;
+            height: 18px;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+        }
+        .cmdk-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        .cmdk-input::placeholder { color: var(--text-tertiary); }
+        .cmdk-esc {
+            font-family: var(--mono-stack);
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            background: var(--bg-sunken);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+        .cmdk-results {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        .cmdk-group-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+            padding: 8px 12px 6px;
+        }
+        .cmdk-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .cmdk-item:hover,
+        .cmdk-item.focused {
+            background: var(--bg-input);
+        }
+        .cmdk-item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+        .cmdk-item-icon svg { width: 16px; height: 16px; }
+        .cmdk-item-info { flex: 1; min-width: 0; }
+        .cmdk-item-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cmdk-item-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .cmdk-item-kbd {
+            font-family: var(--mono-stack);
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            background: var(--bg-sunken);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+        .cmdk-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+        .cmdk-footer {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            font-family: var(--mono-stack);
+        }
+        .cmdk-footer-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            padding: 14px 20px;
+            border-radius: 14px;
+            box-shadow: var(--shadow-lg);
+            font-size: 0.92rem;
+            font-weight: 500;
+            pointer-events: auto;
+            animation: toastIn 0.3s var(--bounce);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 260px;
+            max-width: 380px;
+            color: var(--text-primary);
+        }
+        .toast.removing { animation: toastOut 0.25s ease forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        .toast-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .toast-icon.success { color: var(--success); }
+        .toast-icon.info { color: var(--accent); }
+        .toast-icon.warning { color: var(--warning); }
+        .toast-icon.error { color: var(--danger); }
+        .toast-message { flex: 1; }
+
+        /* Hotkey hints */
+        .hotkey-hints {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            font-family: var(--mono-stack);
+        }
+        .hotkey-hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        .hotkey-hint:hover { opacity: 1; }
+        kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            border-radius: 4px;
+            font-family: var(--mono-stack);
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: 0 1px 0 var(--border-strong);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .hotkey-hints { display: none; }
+            .toast-container { bottom: 16px; right: 16px; left: 16px; }
+            .toast { min-width: 0; max-width: 100%; }
+            .scroll-top { bottom: 16px; right: 16px; }
+            h1 { font-size: 2.2rem; }
+            .container { padding: 0 16px; }
+            header.hero { padding: 40px 0 24px; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .subtitle { font-size: 0.98rem; }
+            .timeline { padding-left: 28px; }
+            .dot { left: -28px; width: 14px; height: 14px; }
+            .release-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <h1>Changelog</h1>
-            <p class="subtitle">История развития платформы Oris и технические обновления.</p>
-        </header>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+<div class="reading-progress" id="readingProgress"></div>
 
-        <div id="timeline" class="timeline">
-            <div class="status-message">
-                <div class="spinner"></div>
-                Загрузка истории изменений...
-            </div>
+<header class="site-header">
+    <div class="header-inner">
+        <a href="/" class="logo">
+            <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            <span class="logo-text">Oris</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="nav-link">Projects <span class="nav-kbd">1</span></a>
+            <a href="/news" class="nav-link">News <span class="nav-kbd">2</span></a>
+            <a href="/changelog" class="nav-link active">Changelog <span class="nav-kbd">3</span></a>
+            <a href="/support" class="nav-link">Support <span class="nav-kbd">4</span></a>
+            <a href="/help" class="nav-link">Help <span class="nav-kbd">5</span></a>
+        </nav>
+        <div class="header-actions">
+            <button class="icon-btn" id="cmdkBtn" aria-label="Командная палитра">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="kbd-hint">⌘K</span>
+            </button>
+            <button class="icon-btn" id="themeToggle" aria-label="Сменить тему">
+                <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <span class="kbd-hint">T</span>
+            </button>
         </div>
-
-        <div style="text-align: center;">
-            <a href="/" class="back-link">← Вернуться к проектам</a>
-        </div>
-
-        <footer>
-            &copy; <span id="year"></span> Oris Development Team
-        </footer>
     </div>
+</header>
+
+<div class="container">
+    <header class="hero">
+        <div class="hero-eyebrow">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Changelog
+        </div>
+        <h1 id="heroTitle" data-text=""></h1>
+        <p class="subtitle">История развития платформы Oris и технические обновления.</p>
+    </header>
+
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-chip">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            <span>Релизов: <strong id="releaseCount">0</strong></span>
+        </div>
+        <div class="stat-chip">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span>Изменений: <strong id="changesCount">0</strong></span>
+        </div>
+        <div class="stat-chip">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            <span>Последний: <strong id="latestVersion">—</strong></span>
+        </div>
+    </div>
+
+    <div class="search-wrap">
+        <input type="text" class="search-box" id="searchInput" placeholder="Поиск по changelog..." autocomplete="off">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span class="search-kbd">/</span>
+        <button class="search-clear" id="searchClear" aria-label="Очистить">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+        <div class="search-stats" id="searchStats"></div>
+    </div>
+
+    <div class="type-filters" id="typeFilters"></div>
+
+    <div id="timeline" class="timeline">
+        <div class="status-message">
+            <div class="spinner"></div>
+            Загрузка истории изменений...
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="/" class="back-link">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Вернуться к проектам
+        </a>
+    </div>
+
+    <footer>
+        &copy; <span id="year"></span> Oris Development Team · 
+        <a href="/status">Status</a> · 
+        <a href="/support">Support</a>
+    </footer>
+</div>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" aria-label="Наверх">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+</button>
+
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск по версиям, изменениям..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>/</kbd> поиск</div>
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>R</kbd> обновить</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
 
 <script>
 (function() {
     'use strict';
 
     // ============================================
-    // Константы конфигурации
+    // Configuration
     // ============================================
-    
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {string} API endpoint для загрузки changelog */
         API_ENDPOINT: '/api/changelog',
-        
-        /** @type {number} Задержка анимации между элементами (мс) */
         ANIMATION_DELAY_STEP: 0.08,
-        
-        /** @type {string} ID элемента для отображения года */
+        TOAST_DURATION: 3000,
+        SEARCH_DEBOUNCE_MS: 200,
         YEAR_ELEMENT_ID: 'year',
-        
-        /** @type {string} ID контейнера timeline */
         TIMELINE_CONTAINER_ID: 'timeline',
-        
-        /** @type {string} CSS класс для сообщений статуса */
         STATUS_MESSAGE_CLASS: 'status-message',
-        
-        /** @type {string} CSS класс для сообщений об ошибках */
-        ERROR_MESSAGE_CLASS: 'error'
+        ERROR_MESSAGE_CLASS: 'error',
+        THEME_KEY: 'oris-theme'
     };
 
-    /**
-     * Карта типов изменений с метаданными
-     * @constant {Object<string, {label: string, cls: string}>}
-     */
     const CHANGE_TYPES = {
-        feat: { label: 'Feature', cls: 'type-feat' },
-        feature: { label: 'Feature', cls: 'type-feat' },
-        fix: { label: 'Fix', cls: 'type-fix' },
-        breaking: { label: 'Breaking', cls: 'type-breaking' },
-        perf: { label: 'Perf', cls: 'type-perf' },
-        docs: { label: 'Docs', cls: 'type-docs' },
-        refactor: { label: 'Refactor', cls: 'type-refactor' },
-        chore: { label: 'Chore', cls: 'type-chore' },
-        security: { label: 'Security', cls: 'type-security' },
-        sec: { label: 'Security', cls: 'type-security' }
+        feat: { label: 'Feature', cls: 'type-feat', color: '#34C759' },
+        feature: { label: 'Feature', cls: 'type-feat', color: '#34C759' },
+        fix: { label: 'Fix', cls: 'type-fix', color: '#FF3B30' },
+        breaking: { label: 'Breaking', cls: 'type-breaking', color: '#FF9F0A' },
+        perf: { label: 'Perf', cls: 'type-perf', color: '#0A84FF' },
+        docs: { label: 'Docs', cls: 'type-docs', color: '#AF52DE' },
+        refactor: { label: 'Refactor', cls: 'type-refactor', color: '#5E5CE6' },
+        chore: { label: 'Chore', cls: 'type-chore', color: '#8E8E93' },
+        security: { label: 'Security', cls: 'type-security', color: '#FF3B30' },
+        sec: { label: 'Security', cls: 'type-security', color: '#FF3B30' }
     };
 
-    /**
-     * Значения по умолчанию для типов изменений
-     * @constant {{label: string, cls: string}}
-     */
     const DEFAULT_CHANGE_TYPE = {
         label: 'Update',
-        cls: 'type-default'
+        cls: 'type-default',
+        color: '#8E8E93'
     };
 
-    /**
-     * Сообщения для UI
-     * @constant {Object<string, string>}
-     */
     const MESSAGES = {
         empty: 'История изменений пуста',
         loadError: 'Не удалось загрузить историю изменений',
-        unknownVersion: 'Unknown'
+        unknownVersion: 'Unknown',
+        copied: 'Версия скопирована',
+        refreshSuccess: 'Changelog обновлён',
+        refreshFail: 'Не удалось обновить'
     };
 
-// ============================================
-// Утилиты безопасности
-// ============================================
-const Security = {
-    /**
-     * Экранирование HTML-сущностей
-     * @param {string|number|null|undefined} str
-     * @returns {string}
-     */
-    escapeHtml: function(str) {
-        if (!str) return '';
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return String(str).replace(/[&<>"']/g, function(m) {
-            return map[m];
-        });
-    },
+    // ============================================
+    // State
+    // ============================================
+    const State = {
+        releases: [],
+        searchQuery: '',
+        activeType: 'all',
+        theme: 'light',
+        cmdkFocusedIndex: -1
+    };
 
-    /**
-     * Безопасное получение текста
-     * @param {string|number|null|undefined} str
-     * @returns {string}
-     */
-    safeText: function(str) {
-        return this.escapeHtml(str || '');
+    // ============================================
+    // DOM Cache
+    // ============================================
+    const DOM = {
+        heroTitle: document.getElementById('heroTitle'),
+        timeline: document.getElementById('timeline'),
+        yearElement: document.getElementById('year'),
+        releaseCount: document.getElementById('releaseCount'),
+        changesCount: document.getElementById('changesCount'),
+        latestVersion: document.getElementById('latestVersion'),
+        searchInput: document.getElementById('searchInput'),
+        searchClear: document.getElementById('searchClear'),
+        searchStats: document.getElementById('searchStats'),
+        typeFilters: document.getElementById('typeFilters'),
+        themeToggle: document.getElementById('themeToggle'),
+        scrollTop: document.getElementById('scrollTop'),
+        readingProgress: document.getElementById('readingProgress'),
+        cmdkBtn: document.getElementById('cmdkBtn'),
+        cmdkOverlay: document.getElementById('cmdkOverlay'),
+        cmdkInput: document.getElementById('cmdkInput'),
+        cmdkResults: document.getElementById('cmdkResults'),
+        toastContainer: document.getElementById('toastContainer')
+    };
+
+    // ============================================
+    // Security
+    // ============================================
+    const Security = {
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' },
+        escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
+        },
+        safeText(str) {
+            return this.escapeHtml(str || '');
+        }
+    };
+
+    // ============================================
+    // Toast System
+    // ============================================
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
     }
-};
 
     // ============================================
-    // Утилиты рендеринга
+    // Theme System
     // ============================================
-    
-    /**
-     * Создание HTML бейджа для типа изменения
-     * 
-     * @param {string} type - Тип изменения (feat, fix, breaking и т.д.)
-     * @returns {string} - HTML строка бейджа
-     * 
-     * @example
-     * getTypeBadge('feat');
-     * // returns '<span class="type-badge type-feat">Feature</span>'
-     */
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        State.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        const sunIcon = document.querySelector('.theme-icon-light');
+        const moonIcon = document.querySelector('.theme-icon-dark');
+        if (sunIcon) sunIcon.style.display = theme === 'dark' ? 'block' : 'none';
+        if (moonIcon) moonIcon.style.display = theme === 'dark' ? 'none' : 'block';
+        try { localStorage.setItem(CONFIG.THEME_KEY, theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`Тема изменена на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem(CONFIG.THEME_KEY); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        DOM.themeToggle.addEventListener('click', toggleTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            } catch (err) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+
+    // ============================================
+    // Utilities
+    // ============================================
+    function pluralize(n, forms) {
+        const abs = Math.abs(n) % 100;
+        const n1 = abs % 10;
+        if (abs > 10 && abs < 20) return forms[2];
+        if (n1 > 1 && n1 < 5) return forms[1];
+        if (n1 === 1) return forms[0];
+        return forms[2];
+    }
+
+    function highlightText(text, query) {
+        if (!query) return text;
+        try {
+            const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${safeQuery})`, 'gi');
+            return text.replace(regex, '<mark>$1</mark>');
+        } catch (error) {
+            return text;
+        }
+    }
+
+    // ============================================
+    // Typewriter + Glitch
+    // ============================================
+    function typewriter(element, text, speed = 45) {
+        element.textContent = '';
+        element.setAttribute('data-text', '');
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                element.insertBefore(document.createTextNode(text[i]), cursor);
+                element.setAttribute('data-text', text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => cursor.remove(), 2000);
+            }
+        }, speed);
+    }
+
+    function triggerGlitch() {
+        DOM.heroTitle.classList.add('glitch');
+        setTimeout(() => DOM.heroTitle.classList.remove('glitch'), 400);
+    }
+
+    function initHero() {
+        setTimeout(() => {
+            typewriter(DOM.heroTitle, 'Changelog');
+        }, 300);
+        DOM.heroTitle.addEventListener('click', triggerGlitch);
+        setInterval(triggerGlitch, 7000);
+    }
+
+    // ============================================
+    // Reading Progress & Scroll Top
+    // ============================================
+    function initScrollEffects() {
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            DOM.readingProgress.style.width = progress + '%';
+
+            if (scrollTop > 400) {
+                DOM.scrollTop.classList.add('visible');
+            } else {
+                DOM.scrollTop.classList.remove('visible');
+            }
+        }, { passive: true });
+
+        DOM.scrollTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // ============================================
+    // Rendering
+    // ============================================
     function getTypeBadge(type) {
         const normalizedType = (type || 'default').toLowerCase();
         const meta = CHANGE_TYPES[normalizedType] || DEFAULT_CHANGE_TYPE;
-        
         return `<span class="type-badge ${meta.cls}">${meta.label}</span>`;
     }
 
-    /**
-     * Создание HTML для списка изменений
-     * 
-     * @param {Array<Object>} changes - Массив изменений
-     * @returns {string} - HTML строка списка изменений
-     */
-    function renderChangesList(changes) {
-        if (!Array.isArray(changes) || changes.length === 0) {
-            return '';
-        }
+    function getTypeMeta(type) {
+        const normalizedType = (type || 'default').toLowerCase();
+        return CHANGE_TYPES[normalizedType] || DEFAULT_CHANGE_TYPE;
+    }
 
+    function countChangesByType() {
+        const counts = {};
+        State.releases.forEach(release => {
+            (release.changes || []).forEach(change => {
+                const type = (change.type || 'default').toLowerCase();
+                counts[type] = (counts[type] || 0) + 1;
+            });
+        });
+        return counts;
+    }
+
+    function renderTypeFilters() {
+        const counts = countChangesByType();
+        const totalChanges = State.releases.reduce((sum, r) => sum + (r.changes || []).length, 0);
+
+        let html = `<button class="chip ${State.activeType === 'all' ? 'active' : ''}" data-type="all">
+            <span>Все</span>
+            <span class="chip-count">${totalChanges}</span>
+        </button>`;
+
+        Object.keys(CHANGE_TYPES).forEach(typeKey => {
+            // Avoid duplicates (feat/feature, sec/security)
+            if ((typeKey === 'feature' && counts['feat']) || (typeKey === 'sec' && counts['security'])) return;
+            const count = counts[typeKey] || 0;
+            if (count > 0) {
+                const meta = CHANGE_TYPES[typeKey];
+                const isActive = State.activeType === typeKey || 
+                    (State.activeType === 'feat' && typeKey === 'feature') ||
+                    (State.activeType === 'security' && typeKey === 'sec');
+                html += `<button class="chip ${isActive ? 'active' : ''}" data-type="${typeKey}" style="${isActive ? `background:${meta.color};border-color:${meta.color};color:white;` : ''}">
+                    <span>${meta.label}</span>
+                    <span class="chip-count">${count}</span>
+                </button>`;
+            }
+        });
+
+        DOM.typeFilters.innerHTML = html;
+        DOM.typeFilters.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                State.activeType = chip.dataset.type;
+                renderTypeFilters();
+                renderTimeline();
+            });
+        });
+    }
+
+    function renderChangesList(changes, query) {
+        if (!Array.isArray(changes) || changes.length === 0) return '';
         const listItems = changes.map(change => {
             const safeText = Security.escapeHtml(change.text || '');
+            const textHtml = query ? highlightText(safeText, query) : safeText;
             const badge = getTypeBadge(change.type);
-            return `<li>${badge} ${safeText}</li>`;
+            return `<li>${badge} ${textHtml}</li>`;
         }).join('');
-
         return `<ul>${listItems}</ul>`;
     }
 
-    /**
-     * Создание HTML для одного релиза
-     * 
-     * @param {Object} release - Данные релиза
-     * @param {number} index - Индекс релиза для анимации
-     * @returns {string} - HTML строка релиза
-     */
-    function renderRelease(release, index) {
+    function renderRelease(release, index, query) {
         const safeVersion = Security.escapeHtml(release.version || MESSAGES.unknownVersion);
         const safeDate = Security.escapeHtml(release.date || '');
-        const changesHtml = renderChangesList(release.changes);
+        const changes = (release.changes || []).filter(change => {
+            if (State.activeType === 'all') return true;
+            const type = (change.type || 'default').toLowerCase();
+            return type === State.activeType || 
+                (State.activeType === 'feat' && type === 'feature') ||
+                (State.activeType === 'feature' && type === 'feat') ||
+                (State.activeType === 'security' && type === 'sec') ||
+                (State.activeType === 'sec' && type === 'security');
+        });
+
+        if (changes.length === 0) return '';
+
+        const changesHtml = renderChangesList(changes, query);
         const animationDelay = index * CONFIG.ANIMATION_DELAY_STEP;
+        const isLatest = index === 0;
 
         return `
-            <div class="release" style="animation-delay: ${animationDelay}s">
+            <div class="release" style="animation-delay: ${animationDelay}s" data-version="${safeVersion}">
                 <div class="dot"></div>
-                <span class="version-tag">${safeVersion}</span>
+                <div class="release-header">
+                    <span class="version-tag" data-copy-version="${safeVersion}" title="Нажмите, чтобы скопировать">
+                        ${safeVersion}
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </span>
+                    ${isLatest ? '<span class="release-latest">Latest</span>' : ''}
+                </div>
                 ${safeDate ? `<span class="date">${safeDate}</span>` : ''}
                 <div class="changes">
                     ${changesHtml}
@@ -387,91 +1609,400 @@ const Security = {
         `;
     }
 
-    /**
-     * Отображение сообщения статуса
-     * 
-     * @param {HTMLElement} container - Контейнер для сообщения
-     * @param {string} message - Текст сообщения
-     * @param {boolean} isError - Является ли сообщение ошибкой
-     */
     function showStatusMessage(container, message, isError = false) {
         const messageClass = isError 
             ? `${CONFIG.STATUS_MESSAGE_CLASS} ${CONFIG.ERROR_MESSAGE_CLASS}`
             : CONFIG.STATUS_MESSAGE_CLASS;
-        
-        container.innerHTML = `<div class="${messageClass}">${message}</div>`;
+        const icon = isError 
+            ? '<svg class="status-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+            : '';
+        container.innerHTML = `
+            <div class="${messageClass}">
+                ${icon}
+                <div class="status-message-title">${isError ? 'Ошибка' : ''}</div>
+                <div>${message}</div>
+            </div>
+        `;
+    }
+
+    function updateStats() {
+        DOM.releaseCount.textContent = State.releases.length;
+        const totalChanges = State.releases.reduce((sum, r) => sum + (r.changes || []).length, 0);
+        DOM.changesCount.textContent = totalChanges;
+        if (State.releases.length > 0) {
+            DOM.latestVersion.textContent = State.releases[0].version || '—';
+        }
+    }
+
+    function renderTimeline() {
+        const query = State.searchQuery.toLowerCase().trim();
+        const container = DOM.timeline;
+
+        if (State.releases.length === 0) {
+            showStatusMessage(container, MESSAGES.empty);
+            return;
+        }
+
+        let visibleCount = 0;
+        const html = State.releases.map((release, index) => {
+            // Filter by search
+            if (query) {
+                const versionMatch = (release.version || '').toLowerCase().includes(query);
+                const dateMatch = (release.date || '').toLowerCase().includes(query);
+                const changesMatch = (release.changes || []).some(c => 
+                    (c.text || '').toLowerCase().includes(query)
+                );
+                if (!versionMatch && !dateMatch && !changesMatch) return '';
+            }
+
+            const rendered = renderRelease(release, index, query);
+            if (rendered) visibleCount++;
+            return rendered;
+        }).join('');
+
+        if (!html.trim()) {
+            container.innerHTML = `
+                <div class="status-message">
+                    <svg class="status-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="status-message-title">Ничего не найдено</div>
+                    <div>Попробуйте изменить запрос или выбрать другой тип</div>
+                </div>
+            `;
+            DOM.searchStats.textContent = `Найдено: 0 из ${State.releases.length}`;
+            return;
+        }
+
+        container.innerHTML = html;
+
+        // Update stats
+        if (query || State.activeType !== 'all') {
+            DOM.searchStats.textContent = `Найдено: ${visibleCount} из ${State.releases.length}`;
+        } else {
+            DOM.searchStats.textContent = `Всего релизов: ${State.releases.length}`;
+        }
+
+        // Bind copy version events
+        container.querySelectorAll('[data-copy-version]').forEach(tag => {
+            tag.addEventListener('click', async () => {
+                const version = tag.dataset.copyVersion;
+                try {
+                    await navigator.clipboard.writeText(version);
+                    showToast(`${MESSAGES.copied}: ${version}`, 'success', 2000);
+                } catch (err) {
+                    showToast('Не удалось скопировать', 'error');
+                }
+            });
+        });
     }
 
     // ============================================
-    // Загрузка и отображение данных
+    // Search
     // ============================================
-    
-    /**
-     * Загрузка и отображение истории изменений
-     * Получает данные из API и рендерит timeline
-     * 
-     * @returns {Promise<void>}
-     */
-    async function loadChangelog() {
-        const container = document.getElementById(CONFIG.TIMELINE_CONTAINER_ID);
-        
+    function initSearch() {
+        let debounceTimer;
+
+        DOM.searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            DOM.searchClear.classList.toggle('visible', DOM.searchInput.value.length > 0);
+            debounceTimer = setTimeout(() => {
+                State.searchQuery = DOM.searchInput.value;
+                renderTimeline();
+            }, CONFIG.SEARCH_DEBOUNCE_MS);
+        });
+
+        DOM.searchClear.addEventListener('click', () => {
+            DOM.searchInput.value = '';
+            State.searchQuery = '';
+            DOM.searchClear.classList.remove('visible');
+            renderTimeline();
+            DOM.searchInput.focus();
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        const queryParam = params.get('q');
+        if (queryParam) {
+            DOM.searchInput.value = queryParam;
+            State.searchQuery = queryParam;
+            DOM.searchClear.classList.add('visible');
+        }
+    }
+
+    // ============================================
+    // Command Palette
+    // ============================================
+    function openCmdk() {
+        DOM.cmdkOverlay.classList.add('active');
+        DOM.cmdkOverlay.style.display = 'flex';
+        DOM.cmdkInput.value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => DOM.cmdkInput.focus(), 50);
+        renderCmdkResults('');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCmdk() {
+        DOM.cmdkOverlay.classList.remove('active');
+        setTimeout(() => {
+            DOM.cmdkOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 200);
+    }
+
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); } },
+            { type: 'action', title: 'Обновить changelog', desc: 'Перезагрузить данные', kbd: 'R', action: () => { loadChangelog(true); closeCmdk(); } },
+            { type: 'action', title: 'Очистить поиск', desc: 'Сбросить поисковый запрос', action: () => { DOM.searchInput.value = ''; State.searchQuery = ''; DOM.searchClear.classList.remove('visible'); renderTimeline(); closeCmdk(); } },
+            { type: 'action', title: 'Сбросить фильтры', desc: 'Показать все типы', action: () => { State.activeType = 'all'; renderTypeFilters(); renderTimeline(); closeCmdk(); } },
+            { type: 'nav', title: 'Каталог проектов', desc: 'Главная страница', url: '/', kbd: '1' },
+            { type: 'nav', title: 'Новости', desc: 'Новости платформы', url: '/news', kbd: '2' },
+            { type: 'nav', title: 'Поддержка', desc: 'Создать тикет', url: '/support', kbd: '4' },
+            { type: 'nav', title: 'Помощь', desc: 'FAQ и руководства', url: '/help', kbd: '5' }
+        ];
+
+        const releases = State.releases.map(r => ({
+            type: 'release',
+            title: r.version || MESSAGES.unknownVersion,
+            desc: `${(r.changes || []).length} ${pluralize((r.changes || []).length, ['изменение', 'изменения', 'изменений'])}${r.date ? ' · ' + r.date : ''}`,
+            version: r.version
+        }));
+
+        let filteredActions = actions;
+        let filteredReleases = releases;
+        if (q) {
+            filteredActions = actions.filter(a =>
+                a.title.toLowerCase().includes(q) ||
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+            filteredReleases = releases.filter(r =>
+                r.title.toLowerCase().includes(q) ||
+                r.desc.toLowerCase().includes(q)
+            );
+        }
+
+        const items = [];
+        if (filteredActions.length > 0) items.push({ group: 'Действия', entries: filteredActions });
+        if (filteredReleases.length > 0) items.push({ group: 'Релизы', entries: filteredReleases });
+
+        if (items.length === 0) {
+            DOM.cmdkResults.innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                const iconPath = entry.type === 'release' 
+                    ? 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'
+                    : 'M13 10V3L4 14h7v7l9-11h-7z';
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}">
+                        <div class="cmdk-item-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+
+        DOM.cmdkResults.innerHTML = html;
+
+        DOM.cmdkResults.querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
+
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'release' && entry.version) {
+                        closeCmdk();
+                        setTimeout(() => {
+                            const el = document.querySelector(`[data-version="${entry.version}"]`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    } else if (entry.url) {
+                        window.location.href = entry.url;
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function initCmdk() {
+        DOM.cmdkBtn.addEventListener('click', openCmdk);
+        DOM.cmdkOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cmdkOverlay) closeCmdk();
+        });
+        DOM.cmdkInput.addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        DOM.cmdkInput.addEventListener('keydown', (e) => {
+            const items = DOM.cmdkResults.querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // ============================================
+    // Load Data
+    // ============================================
+    async function loadChangelog(forceReload = false) {
+        const container = DOM.timeline;
+
         if (!container) {
             console.error('[Changelog] Timeline container not found');
             return;
         }
 
+        if (forceReload) {
+            container.innerHTML = '<div class="status-message"><div class="spinner"></div>Обновление...</div>';
+        }
+
         try {
             const response = await fetch(CONFIG.API_ENDPOINT);
-            
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
             }
 
             const data = await response.json();
 
-            // Валидация данных
             if (!Array.isArray(data)) {
                 throw new Error('Invalid data format: expected array');
             }
 
-            if (data.length === 0) {
-                showStatusMessage(container, MESSAGES.empty);
-                return;
-            }
+            State.releases = data;
+            updateStats();
+            renderTypeFilters();
+            renderTimeline();
 
-            // Рендеринг всех релизов
-            const html = data.map((release, index) => renderRelease(release, index)).join('');
-            container.innerHTML = html;
+            if (forceReload) {
+                showToast(MESSAGES.refreshSuccess, 'success');
+            }
 
         } catch (err) {
             console.error('[Changelog] Failed to load:', err);
             showStatusMessage(container, MESSAGES.loadError, true);
+            if (forceReload) {
+                showToast(MESSAGES.refreshFail, 'error');
+            }
         }
     }
 
     // ============================================
-    // Инициализация
+    // Hotkeys
     // ============================================
-    
-    /**
-     * Установка текущего года в footer
-     */
-    function setCurrentYear() {
-        const yearElement = document.getElementById(CONFIG.YEAR_ELEMENT_ID);
-        if (yearElement) {
-            yearElement.textContent = new Date().getFullYear();
-        }
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                }
+                return;
+            }
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+
+            switch (e.key) {
+                case '/':
+                    e.preventDefault();
+                    DOM.searchInput.focus();
+                    break;
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'r': case 'R': case 'к': case 'К':
+                    loadChangelog(true);
+                    break;
+                case '1': window.location.href = '/'; break;
+                case '2': window.location.href = '/news'; break;
+                case '3': window.location.href = '/changelog'; break;
+                case '4': window.location.href = '/support'; break;
+                case '5': window.location.href = '/help'; break;
+                case 'Escape':
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: / поиск · ⌘K палитра · T тема · R обновить · 1-5 навигация', 'info', 5000);
+                    break;
+            }
+        });
     }
 
-    /**
-     * Инициализация приложения
-     */
+    // ============================================
+    // Init
+    // ============================================
     function init() {
-        setCurrentYear();
+        if (DOM.yearElement) {
+            DOM.yearElement.textContent = new Date().getFullYear();
+        }
+
+        initTheme();
+        initHero();
+        initScrollEffects();
+        initSearch();
+        initCmdk();
+        initHotkeys();
         loadChangelog();
+
+        setTimeout(() => {
+            showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+        }, 1200);
     }
 
-    // Запуск после загрузки DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
