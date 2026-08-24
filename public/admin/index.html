@@ -1,44 +1,84 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 <title>Oris Admin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 <style>
 :root {
+    --bg: #F5F5F7;
+    --bg-sidebar: rgba(255, 255, 255, 0.8);
+    --bg-card: rgba(255, 255, 255, 0.55);
+    --bg-card-hover: rgba(255, 255, 255, 0.75);
+    --bg-elevated: #FFFFFF;
+    --bg-input: rgba(0, 0, 0, 0.04);
+    --bg-subtle: #FAFAFA;
+    --text-primary: #1D1D1F;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #86868B;
+    --accent: #0071E3;
+    --accent-hover: #0077ED;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-glow: rgba(0, 113, 227, 0.25);
+    --danger: #FF3B30;
+    --danger-hover: #FF453A;
+    --danger-soft: rgba(255, 59, 48, 0.12);
+    --success: #34C759;
+    --success-soft: rgba(52, 199, 89, 0.12);
+    --warning: #FF9F0A;
+    --warning-soft: rgba(255, 159, 10, 0.12);
+    --purple: #AF52DE;
+    --purple-soft: rgba(175, 82, 222, 0.12);
+    --teal: #5AC8FA;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
+    --radius-lg: 22px;
+    --radius-md: 17px;
+    --radius-sm: 12px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+    --transition: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] {
     --bg: #000000;
     --bg-sidebar: rgba(20, 20, 22, 0.8);
     --bg-card: rgba(40, 40, 42, 0.55);
     --bg-card-hover: rgba(55, 55, 57, 0.75);
     --bg-elevated: #2C2C2E;
-    --bg-input: #1C1C1E;
+    --bg-input: rgba(255, 255, 255, 0.06);
     --bg-subtle: #0D0D0D;
     --text-primary: #F5F5F7;
-    --text-secondary: #98989D;
+    --text-secondary: #A1A1A6;
     --text-tertiary: #6E6E73;
     --accent: #0A84FF;
     --accent-hover: #409CFF;
-    --danger: #FF453A;
-    --danger-hover: #FF6961;
-    --success: #30D158;
-    --warning: #FF9F0A;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-glow: rgba(10, 132, 255, 0.4);
     --border: rgba(255, 255, 255, 0.1);
     --border-strong: rgba(255, 255, 255, 0.18);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
-    --radius-lg: 22px;
-    --radius-md: 17px;
-    --radius-sm: 12px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --transition: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
     height: 100%;
@@ -47,17 +87,77 @@ html, body {
     color: var(--text-primary);
     font-family: var(--font);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     letter-spacing: -0.01em;
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* ------------------------
-   Layout
------------------------- */
+/* Background grid */
+.bg-grid {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    animation: gridShift 30s linear infinite;
+}
+@keyframes gridShift {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 48px 48px, 48px 48px; }
+}
+
+/* Floating orbs */
+.bg-orbs {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 20s ease-in-out infinite;
+}
+[data-theme="light"] .orb { opacity: 0.3; }
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    animation-duration: 25s;
+}
+.orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    bottom: -200px; left: -200px;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+.orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+    top: 50%; left: 30%;
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
+}
+
+/* Layout */
 .app {
     display: flex;
     height: 100vh;
+    position: relative;
+    z-index: 1;
 }
 
+/* Sidebar */
 .sidebar {
     width: 280px;
     background: var(--bg-sidebar);
@@ -67,6 +167,8 @@ html, body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
 }
 
 .sidebar-header {
@@ -79,16 +181,24 @@ html, body {
     align-items: center;
     gap: 10px;
     font-size: 1.15rem;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.02em;
 }
 
 .sidebar-logo svg { width: 24px; height: 24px; color: var(--accent); }
 
+.sidebar-logo-text {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 .sidebar-subtitle {
     font-size: 0.78rem;
     color: var(--text-tertiary);
     margin-top: 4px;
+    font-family: var(--mono);
 }
 
 .sidebar-nav {
@@ -97,6 +207,10 @@ html, body {
     overflow-y: auto;
 }
 
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
 .nav-section-label {
     font-size: 0.72rem;
     font-weight: 600;
@@ -104,6 +218,7 @@ html, body {
     letter-spacing: 0.1em;
     color: var(--text-tertiary);
     padding: 14px 12px 8px;
+    font-family: var(--mono);
 }
 
 .nav-item {
@@ -118,40 +233,93 @@ html, body {
     font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 2px;
+    position: relative;
 }
 
 .nav-item:hover {
-    background: rgba(255,255,255,0.08);
+    background: rgba(142, 142, 147, 0.1);
     color: var(--text-primary);
+    transform: translateX(2px);
 }
 
 .nav-item.active {
     background: var(--accent);
     color: white;
     font-weight: 600;
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
 
 .nav-item svg { width: 20px; height: 20px; flex-shrink: 0; }
 
 .nav-item .badge {
     margin-left: auto;
-    background: rgba(255,255,255,0.15);
+    background: rgba(142, 142, 147, 0.15);
     color: var(--text-secondary);
     padding: 2px 10px;
     border-radius: 99px;
     font-size: 0.7rem;
     font-weight: 600;
+    font-family: var(--mono);
 }
 
 .nav-item.active .badge {
-    background: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.25);
     color: white;
+}
+
+.nav-item .nav-kbd {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.nav-item:not(.active) .nav-kbd {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-tertiary);
 }
 
 .sidebar-footer {
     padding: 18px;
     border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
+
+.sidebar-footer-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+}
+.icon-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: rotate(15deg);
+}
+.icon-btn svg { width: 16px; height: 16px; }
+
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: block; }
 
 .token-status {
     display: flex;
@@ -160,13 +328,18 @@ html, body {
     font-size: 0.82rem;
     color: var(--text-secondary);
     padding: 10px 14px;
-    background: rgba(0,0,0,0.4);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    font-family: var(--mono);
 }
 
-.token-status:hover { background: rgba(0,0,0,0.6); }
+.token-status:hover {
+    background: var(--bg-card);
+    border-color: var(--border-strong);
+}
 
 .token-dot {
     width: 7px;
@@ -174,19 +347,27 @@ html, body {
     border-radius: 50%;
     background: var(--success);
     box-shadow: 0 0 8px var(--success);
+    animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 8px var(--success); }
+    50% { box-shadow: 0 0 12px var(--success), 0 0 0 4px rgba(52, 199, 89, 0.2); }
 }
 
-.token-dot.error { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+.token-dot.error {
+    background: var(--danger);
+    box-shadow: 0 0 8px var(--danger);
+    animation: none;
+}
 
-/* ------------------------
-   Main Content
------------------------- */
+/* Main */
 .main {
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     min-width: 0;
+    position: relative;
 }
 
 .topbar {
@@ -196,37 +377,96 @@ html, body {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    background: rgba(10,10,10,0.5);
+    background: var(--bg-sidebar);
     backdrop-filter: blur(30px) saturate(180%);
     -webkit-backdrop-filter: blur(30px) saturate(180%);
+    position: relative;
+    z-index: 2;
 }
 
 .topbar-title {
     font-size: 1.35rem;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    min-height: 1.3em;
+    display: inline-block;
+    cursor: default;
+    position: relative;
+}
+.topbar-title.glitch::before,
+.topbar-title.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+.topbar-title.glitch::before {
+    animation: glitch1 0.4s ease;
+    -webkit-text-fill-color: var(--danger);
+}
+.topbar-title.glitch::after {
+    animation: glitch2 0.4s ease;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes glitch1 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.8; transform: translate(-3px, 1px); }
+    40% { opacity: 0.6; transform: translate(2px, -1px); }
+    60% { opacity: 0.4; transform: translate(-1px, 2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.6; transform: translate(3px, -1px); }
+    40% { opacity: 0.4; transform: translate(-2px, 1px); }
+    60% { opacity: 0.3; transform: translate(1px, -2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+.typewriter-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 0.85em;
+    background: var(--accent);
+    margin-left: 3px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes blink {
+    50% { opacity: 0; }
 }
 
 .topbar-actions {
     display: flex;
     gap: 8px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .content {
     flex: 1;
     overflow-y: auto;
     padding: 28px;
+    position: relative;
 }
 
 .content::-webkit-scrollbar { width: 10px; }
 .content::-webkit-scrollbar-track { background: transparent; }
-.content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
-.content::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+.content::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+.content::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
-/* ------------------------
-   Buttons
------------------------- */
+/* Buttons */
 .btn {
     padding: 10px 18px;
     border-radius: 99px;
@@ -235,14 +475,12 @@ html, body {
     font-size: 0.88rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s var(--transition);
+    transition: all 0.25s var(--transition);
     display: inline-flex;
     align-items: center;
     gap: 6px;
     user-select: none;
     white-space: nowrap;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 }
 
 .btn svg { width: 16px; height: 16px; }
@@ -250,23 +488,26 @@ html, body {
 .btn-primary {
     background: var(--accent);
     color: white;
+    box-shadow: 0 2px 8px var(--accent-glow);
 }
 
 .btn-primary:hover:not(:disabled) {
     background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(10, 132, 255, 0.35);
+    box-shadow: 0 6px 16px var(--accent-glow);
 }
 
 .btn-secondary {
-    background: rgba(255,255,255,0.1);
+    background: var(--bg-card);
     color: var(--text-primary);
     border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: rgba(255,255,255,0.15);
-    border-color: var(--border-strong);
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+    transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -276,8 +517,9 @@ html, body {
 }
 
 .btn-danger:hover:not(:disabled) {
-    background: rgba(255, 69, 58, 0.15);
+    background: var(--danger-soft);
     border-color: var(--danger);
+    transform: translateY(-1px);
 }
 
 .btn-ghost {
@@ -286,7 +528,7 @@ html, body {
 }
 
 .btn-ghost:hover:not(:disabled) {
-    background: rgba(255,255,255,0.08);
+    background: rgba(142, 142, 147, 0.1);
     color: var(--text-primary);
 }
 
@@ -303,9 +545,7 @@ html, body {
     border-radius: 50%;
 }
 
-/* ------------------------
-   Sites Grid
------------------------- */
+/* Toolbar */
 .toolbar {
     display: flex;
     gap: 12px;
@@ -332,10 +572,13 @@ html, body {
     transition: all 0.2s var(--transition);
 }
 
+.search-box input::placeholder { color: var(--text-tertiary); }
+
 .search-box input:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: var(--bg-elevated);
 }
 
 .search-box svg {
@@ -346,8 +589,32 @@ html, body {
     width: 18px;
     height: 18px;
     color: var(--text-tertiary);
+    pointer-events: none;
+    transition: color 0.2s ease;
 }
 
+.search-box input:focus ~ svg { color: var(--accent); }
+
+.search-kbd {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    font-weight: 600;
+}
+
+.search-box input:focus ~ .search-kbd { opacity: 0; }
+
+/* Sites Grid */
 .sites-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -363,12 +630,25 @@ html, body {
     position: relative;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
+    overflow: hidden;
 }
+
+.site-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.site-card:hover::before { opacity: 1; }
 
 .site-card:hover {
     border-color: var(--border-strong);
     background: var(--bg-card-hover);
-    transform: scale(1.01);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
@@ -379,7 +659,7 @@ html, body {
 
 .site-card.drag-over {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .site-card-header {
@@ -399,7 +679,7 @@ html, body {
     margin-top: 2px;
 }
 
-.drag-handle:hover { color: var(--text-primary); background: rgba(255,255,255,0.1); }
+.drag-handle:hover { color: var(--text-primary); background: rgba(142, 142, 147, 0.15); }
 .drag-handle:active { cursor: grabbing; }
 .drag-handle svg { width: 16px; height: 16px; display: block; }
 
@@ -450,6 +730,7 @@ html, body {
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-tertiary);
+    font-family: var(--mono);
 }
 
 .field input, .field select, .field textarea {
@@ -464,10 +745,12 @@ html, body {
     width: 100%;
 }
 
+.field input::placeholder, .field textarea::placeholder { color: var(--text-tertiary); }
+
 .field input:focus, .field select:focus, .field textarea:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.12);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .field textarea {
@@ -500,6 +783,7 @@ html, body {
     align-items: center;
     gap: 4px;
     padding: 4px 0;
+    font-family: var(--mono);
 }
 
 .url-preview:hover { text-decoration: underline; }
@@ -518,11 +802,10 @@ html, body {
     font-size: 0.8rem;
     color: var(--text-tertiary);
     font-weight: 500;
+    font-family: var(--mono);
 }
 
-/* ------------------------
-   Empty State
------------------------- */
+/* Empty State */
 .empty-state {
     text-align: center;
     padding: 80px 20px;
@@ -530,12 +813,15 @@ html, body {
 }
 
 .empty-state svg { width: 56px; height: 56px; margin-bottom: 20px; opacity: 0.4; }
-.empty-state h3 { font-size: 1.2rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
 .empty-state p { font-size: 0.92rem; margin-bottom: 24px; }
 
-/* ------------------------
-   JSON Editor
------------------------- */
+/* JSON Editor */
 .json-editor-wrap {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -550,7 +836,7 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(0,0,0,0.4);
+    background: var(--bg-input);
     gap: 12px;
     flex-wrap: wrap;
 }
@@ -558,16 +844,17 @@ html, body {
 .json-editor-toolbar .info {
     font-size: 0.84rem;
     color: var(--text-secondary);
+    font-family: var(--mono);
 }
 
 .json-editor {
     width: 100%;
     min-height: 420px;
-    background: #0A0A0A;
+    background: var(--bg-subtle);
     color: var(--text-primary);
     border: none;
     padding: 18px;
-    font-family: 'SF Mono', 'Menlo', monospace;
+    font-family: var(--mono);
     font-size: 0.88rem;
     line-height: 1.6;
     resize: vertical;
@@ -575,12 +862,10 @@ html, body {
 
 .json-editor:focus {
     outline: none;
-    background: #050505;
+    background: var(--bg);
 }
 
-/* ------------------------
-   Changelog Cards
------------------------- */
+/* Changelog */
 .changelog-list {
     display: flex;
     flex-direction: column;
@@ -593,6 +878,26 @@ html, body {
     border-radius: var(--radius-md);
     padding: 20px;
     backdrop-filter: blur(15px);
+    transition: all 0.25s var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.changelog-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.changelog-card:hover::before { opacity: 1; }
+
+.changelog-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-sm);
 }
 
 .changelog-header {
@@ -626,9 +931,11 @@ html, body {
     border: none;
     text-align: right;
     font-family: inherit;
+    border-bottom: 2px solid transparent;
+    padding: 2px 0;
 }
 
-.changelog-date:focus { outline: none; border-bottom: 1px solid var(--accent); }
+.changelog-date:focus { outline: none; border-bottom-color: var(--accent); }
 
 .changelog-item {
     display: flex;
@@ -650,11 +957,12 @@ html, body {
     letter-spacing: 0.04em;
     flex-shrink: 0;
     margin-top: 2px;
+    font-family: var(--mono);
 }
 
-.type-badge.feat { background: rgba(48, 209, 88, 0.15); color: var(--success); }
-.type-badge.fix { background: rgba(255, 69, 58, 0.15); color: var(--danger); }
-.type-badge.default { background: rgba(152, 152, 157, 0.15); color: var(--text-secondary); }
+.type-badge.feat { background: var(--success-soft); color: var(--success); }
+.type-badge.fix { background: var(--danger-soft); color: var(--danger); }
+.type-badge.default { background: var(--bg-input); color: var(--text-secondary); }
 
 .changelog-text {
     flex: 1;
@@ -679,79 +987,80 @@ html, body {
     border-bottom-color: var(--accent);
 }
 
-/* ------------------------
-   Toast
------------------------- */
+/* Toast */
 .toast-container {
     position: fixed;
     bottom: 28px;
     right: 28px;
-    z-index: 1000;
+    z-index: 1200;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     pointer-events: none;
 }
 
 .toast {
-    background: rgba(44, 44, 46, 0.9);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
     backdrop-filter: blur(25px) saturate(180%);
     -webkit-backdrop-filter: blur(25px) saturate(180%);
     padding: 14px 20px;
-    border-radius: var(--radius-sm);
+    border-radius: 14px;
     box-shadow: var(--shadow-lg);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     font-weight: 500;
+    pointer-events: auto;
+    animation: toastIn 0.3s var(--bounce);
     display: flex;
     align-items: center;
-    gap: 10px;
-    min-width: 280px;
-    pointer-events: auto;
-    animation: toastIn 0.35s var(--transition);
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    color: var(--text-primary);
 }
 
-.toast.success { border-color: rgba(48, 209, 88, 0.3); }
-.toast.error { border-color: rgba(255, 69, 58, 0.3); }
-.toast.info { border-color: rgba(10, 132, 255, 0.3); }
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--accent); }
 
-.toast svg { width: 18px; height: 18px; flex-shrink: 0; }
-.toast.success svg { color: var(--success); }
-.toast.error svg { color: var(--danger); }
-.toast.info svg { color: var(--accent); }
-
-@keyframes toastIn {
-    from { opacity: 0; transform: translateX(30px); }
-    to { opacity: 1; transform: translateX(0); }
-}
+.toast svg { width: 20px; height: 20px; flex-shrink: 0; }
+.toast.success > svg:first-child { color: var(--success); }
+.toast.error > svg:first-child { color: var(--danger); }
+.toast.info > svg:first-child { color: var(--accent); }
 
 .toast.removing {
-    animation: toastOut 0.3s var(--transition) forwards;
+    animation: toastOut 0.25s ease forwards;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes toastOut {
-    to { opacity: 0; transform: translateX(30px); }
+    to { opacity: 0; transform: translateX(100%); }
 }
 
-/* ------------------------
-   Modal
------------------------- */
+/* Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     z-index: 900;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
-.modal-overlay.visible { display: flex; animation: fadeIn 0.2s; }
-
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal-overlay.visible {
+    display: flex;
+    opacity: 1;
+}
 
 .modal {
     background: var(--bg-elevated);
@@ -760,19 +1069,30 @@ html, body {
     padding: 26px;
     max-width: 460px;
     width: 100%;
-    box-shadow: var(--shadow-lg);
-    animation: modalIn 0.3s var(--transition);
+    box-shadow: var(--shadow-xl);
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.3s var(--bounce);
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes modalIn {
-    from { opacity: 0; transform: scale(0.94) translateY(15px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+.modal-overlay.visible .modal {
+    transform: scale(1) translateY(0);
+}
+
+.modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
 }
 
 .modal h3 {
     font-size: 1.15rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 10px;
+    letter-spacing: -0.02em;
 }
 
 .modal p {
@@ -788,9 +1108,7 @@ html, body {
     justify-content: flex-end;
 }
 
-/* ------------------------
-   Loading
------------------------- */
+/* Loading */
 .loading {
     display: flex;
     flex-direction: column;
@@ -804,7 +1122,7 @@ html, body {
 .spinner {
     width: 36px;
     height: 36px;
-    border: 3px solid rgba(255,255,255,0.1);
+    border: 3px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
@@ -812,9 +1130,248 @@ html, body {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ------------------------
-   Responsive
------------------------- */
+/* Scroll to top */
+.scroll-top {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s var(--transition);
+    pointer-events: none;
+    z-index: 50;
+}
+.scroll-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.scroll-top:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.scroll-top svg { width: 18px; height: 18px; }
+
+/* Command Palette */
+.cmdk-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 15vh;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.cmdk-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.cmdk-dialog {
+    background: var(--bg-elevated);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    transition: transform 0.25s var(--bounce);
+}
+.cmdk-overlay.active .cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+.cmdk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.cmdk-input-wrap svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.cmdk-input::placeholder { color: var(--text-tertiary); }
+.cmdk-esc {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.cmdk-group-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 12px 6px;
+    font-family: var(--mono);
+}
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+.cmdk-item:hover,
+.cmdk-item.focused {
+    background: var(--bg-input);
+}
+.cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.cmdk-item-icon svg { width: 16px; height: 16px; }
+.cmdk-item-info { flex: 1; min-width: 0; }
+.cmdk-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--mono);
+}
+.cmdk-item-kbd {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.cmdk-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono);
+    flex-wrap: wrap;
+}
+.cmdk-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Hotkey hints */
+.hotkey-hints {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono);
+}
+.hotkey-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.hotkey-hint:hover { opacity: 1; }
+kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 var(--border-strong);
+}
+
+/* Drop zone */
+.drop-zone {
+    position: relative;
+    min-height: 200px;
+}
+.drop-zone-active {
+    outline: 2px dashed var(--accent);
+    outline-offset: -8px;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
@@ -828,6 +1385,10 @@ html, body {
     .sidebar.open { transform: translateX(0); }
     .sites-grid { grid-template-columns: 1fr; }
     .field-row { grid-template-columns: 1fr; }
+    .hotkey-hints { display: none; }
+    .toast-container { bottom: 16px; right: 16px; left: 16px; }
+    .toast { min-width: 0; max-width: 100%; }
+    .scroll-top { bottom: 16px; right: 16px; }
 }
 
 .hidden { display: none !important; }
@@ -847,9 +1408,23 @@ html, body {
     pointer-events: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
 </style>
 </head>
 <body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
 
 <div class="app">
     <!-- Sidebar -->
@@ -859,7 +1434,7 @@ html, body {
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
-                <span>Oris Admin</span>
+                <span class="sidebar-logo-text">Oris Admin</span>
             </div>
             <div class="sidebar-subtitle">Панель управления</div>
         </div>
@@ -872,29 +1447,31 @@ html, body {
                 </svg>
                 <span>Проекты</span>
                 <span class="badge" id="sitesCount">0</span>
+                <span class="nav-kbd">1</span>
             </div>
             <div class="nav-item" data-section="changelog">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span>Changelog</span>
+                <span class="nav-kbd">2</span>
             </div>
-
             <div class="nav-item" data-section="downloader">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
                 <span>Файлы</span>
                 <span class="badge" id="filesCount">0</span>
+                <span class="nav-kbd">3</span>
             </div>
-
             <div class="nav-item" data-section="redirects">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-    </svg>
-    <span>Редиректы</span>
-    <span class="badge" id="redirectsCount">0</span>
-</div>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                <span>Редиректы</span>
+                <span class="badge" id="redirectsCount">0</span>
+                <span class="nav-kbd">4</span>
+            </div>
 
             <div class="nav-section-label">Конфигурация</div>
             <div class="nav-item" data-section="status">
@@ -902,22 +1479,45 @@ html, body {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
                 <span>Status Config</span>
+                <span class="nav-kbd">5</span>
             </div>
             <div class="nav-item" data-section="api">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
                 </svg>
                 <span>API Config</span>
+                <span class="nav-kbd">6</span>
             </div>
             <div class="nav-item" data-section="faq">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <span>FAQ</span>
+                <span class="nav-kbd">7</span>
             </div>
         </nav>
 
         <div class="sidebar-footer">
+            <div class="sidebar-footer-actions">
+                <button class="icon-btn" id="cmdkBtn" aria-label="Командная палитра">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="themeToggle" aria-label="Сменить тему">
+                    <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="scrollTopBtn" aria-label="Наверх" style="margin-left:auto;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                    </svg>
+                </button>
+            </div>
             <div class="token-status" id="tokenStatus">
                 <span class="token-dot" id="tokenDot"></span>
                 <span id="tokenText">Токен не введён</span>
@@ -928,7 +1528,7 @@ html, body {
     <!-- Main -->
     <main class="main">
         <div class="topbar">
-            <div class="topbar-title" id="pageTitle">Проекты</div>
+            <div class="topbar-title" id="pageTitle" data-text=""></div>
             <div class="topbar-actions" id="topbarActions"></div>
         </div>
 
@@ -956,6 +1556,35 @@ html, body {
     </div>
 </div>
 
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск по разделам, действиям..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>S</kbd> сохранить</div>
+    <div class="hotkey-hint"><kbd>1-7</kbd> разделы</div>
+    <div class="hotkey-hint"><kbd>/</kbd> поиск</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
+
 <script>
 (function() {
     'use strict';
@@ -963,47 +1592,21 @@ html, body {
     // ============================================
     // State Management
     // ============================================
-    
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
     const State = {
-        /** @type {string} Токен администратора */
         token: localStorage.getItem('admin_token') || '',
-        
-        /** @type {string} Текущая активная секция */
         currentSection: 'sites',
-        
-        /** @type {Array<Object>} Список проектов */
         sites: [],
-        
-        /** @type {string} Содержимое changelog */
         changelog: '',
-        
-        /** @type {Array|null} Конфигурация статусов */
         statusConfig: null,
-        
-        /** @type {Array|null} Конфигурация API */
         apiConfig: null,
-        
-        /** @type {Array|null} Конфигурация FAQ */
         faqConfig: null,
-        
-        /** @type {string} Сырое содержимое для редактирования */
         rawContent: '',
-        
-        /** @type {string} Поисковый запрос */
         searchQuery: '',
-        
-        /** @type {boolean} Флаг несохраненных изменений */
-        dirty: false
+        dirty: false,
+        theme: 'dark',
+        cmdkFocusedIndex: -1
     };
 
-    /**
-     * Категории проектов
-     * @constant {Object<string, string>}
-     */
     const CATEGORIES = {
         tools: 'Инструменты',
         dev: 'Для разработчиков',
@@ -1015,64 +1618,369 @@ html, body {
         other: 'Другое'
     };
 
-    /**
-     * Сокращение для document.getElementById
-     * @param {string} id - ID элемента
-     * @returns {HTMLElement|null}
-     */
     const $ = (id) => document.getElementById(id);
+
+    // ============================================
+    // Security
+    // ============================================
+    const Security = {
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' },
+        escapeHtml(str) {
+            if (str == null) return '';
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
+        }
+    };
+
+    // ============================================
+    // Theme System
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        State.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem('oris-theme', theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`Тема изменена на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem('oris-theme'); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        $('themeToggle').addEventListener('click', toggleTheme);
+    }
+
+    // ============================================
+    // Toast Notifications
+    // ============================================
+    const ToastIcons = {
+        success: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        error: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'
+    };
+
+    function showToast(message, type = 'info', duration = 3000) {
+        const container = $('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span>${Security.escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
+    }
+
+    // ============================================
+    // Modal
+    // ============================================
+    let modalCallback = null;
+
+    function showModal(title, text, onConfirm) {
+        $('modalTitle').textContent = title;
+        $('modalText').textContent = text;
+        $('modalOverlay').classList.add('visible');
+        modalCallback = onConfirm;
+    }
+
+    function closeModal() {
+        $('modalOverlay').classList.remove('visible');
+        modalCallback = null;
+    }
+
+    $('modalCancel').addEventListener('click', closeModal);
+    $('modalConfirm').addEventListener('click', () => {
+        if (modalCallback) modalCallback();
+        closeModal();
+    });
+    $('modalOverlay').addEventListener('click', (e) => {
+        if (e.target === $('modalOverlay')) closeModal();
+    });
+
+    // ============================================
+    // Typewriter + Glitch
+    // ============================================
+    let typewriterInterval = null;
+    function typewriter(element, text, speed = 40) {
+        if (typewriterInterval) clearInterval(typewriterInterval);
+        element.textContent = '';
+        element.setAttribute('data-text', '');
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        let i = 0;
+        typewriterInterval = setInterval(() => {
+            if (i < text.length) {
+                element.insertBefore(document.createTextNode(text[i]), cursor);
+                element.setAttribute('data-text', text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(typewriterInterval);
+                typewriterInterval = null;
+                setTimeout(() => {
+                    if (cursor.parentNode) cursor.remove();
+                }, 2000);
+            }
+        }, speed);
+    }
+
+    function triggerGlitch() {
+        const el = $('pageTitle');
+        el.classList.add('glitch');
+        setTimeout(() => el.classList.remove('glitch'), 400);
+    }
+
+    function setPageTitle(text) {
+        typewriter($('pageTitle'), text);
+    }
+
+    // ============================================
+    // Scroll to top
+    // ============================================
+    function initScrollTop() {
+        const content = $('content');
+        const btn = $('scrollTopBtn');
+        content.addEventListener('scroll', () => {
+            if (content.scrollTop > 400) {
+                btn.classList.add('visible');
+            } else {
+                btn.classList.remove('visible');
+            }
+        }, { passive: true });
+        btn.addEventListener('click', () => {
+            content.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // ============================================
+    // Command Palette
+    // ============================================
+    function openCmdk() {
+        $('cmdkOverlay').classList.add('active');
+        $('cmdkOverlay').style.display = 'flex';
+        $('cmdkInput').value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => $('cmdkInput').focus(), 50);
+        renderCmdkResults('');
+    }
+
+    function closeCmdk() {
+        $('cmdkOverlay').classList.remove('active');
+        setTimeout(() => {
+            $('cmdkOverlay').style.display = 'none';
+        }, 200);
+    }
+
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+        const sections = [
+            { id: 'sites', title: 'Проекты', desc: 'Управление каталогом сайтов', kbd: '1', icon: 'M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z' },
+            { id: 'changelog', title: 'Changelog', desc: 'История изменений версий', kbd: '2', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+            { id: 'downloader', title: 'Файлы', desc: 'Загрузка и управление файлами', kbd: '3', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
+            { id: 'redirects', title: 'Редиректы', desc: 'Короткие ссылки и редиректы', kbd: '4', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
+            { id: 'status', title: 'Status Config', desc: 'Конфигурация мониторинга статусов', kbd: '5', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2z' },
+            { id: 'api', title: 'API Config', desc: 'Конфигурация API endpoints', kbd: '6', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' },
+            { id: 'faq', title: 'FAQ', desc: 'Конфигурация часто задаваемых вопросов', kbd: '7', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' }
+        ];
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); }, icon: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' },
+            { type: 'action', title: 'Сохранить изменения', desc: 'Сохранить текущий раздел', kbd: 'S', action: () => { const btn = $('saveBtn'); if (btn && !btn.disabled) btn.click(); closeCmdk(); }, icon: 'M5 13l4 4L19 7' },
+            { type: 'action', title: 'Обновить данные', desc: 'Перезагрузить текущий раздел', kbd: 'R', action: () => { const btn = $('reloadBtn'); if (btn) btn.click(); closeCmdk(); }, icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+            { type: 'action', title: 'Ввести токен', desc: 'Изменить admin token', action: () => { promptToken(); closeCmdk(); }, icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z' }
+        ];
+        let filteredSections = sections;
+        let filteredActions = actions;
+        if (q) {
+            filteredSections = sections.filter(s =>
+                s.title.toLowerCase().includes(q) ||
+                s.desc.toLowerCase().includes(q)
+            );
+            filteredActions = actions.filter(a =>
+                a.title.toLowerCase().includes(q) ||
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+        }
+        const items = [];
+        if (filteredSections.length > 0) items.push({ group: 'Разделы', entries: filteredSections.map(s => ({ ...s, type: 'section' })) });
+        if (filteredActions.length > 0) items.push({ group: 'Действия', entries: filteredActions });
+        if (items.length === 0) {
+            $('cmdkResults').innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}">
+                        <div class="cmdk-item-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${entry.icon}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+        $('cmdkResults').innerHTML = html;
+        $('cmdkResults').querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
+
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'section') {
+                        closeCmdk();
+                        switchSection(entry.id);
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function initCmdk() {
+        $('cmdkBtn').addEventListener('click', openCmdk);
+        $('cmdkOverlay').addEventListener('click', (e) => {
+            if (e.target === $('cmdkOverlay')) closeCmdk();
+        });
+        $('cmdkInput').addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        $('cmdkInput').addEventListener('keydown', (e) => {
+            const items = $('cmdkResults').querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    // ============================================
+    // Hotkeys
+    // ============================================
+    function switchSection(sectionId) {
+        const navItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+        if (navItem) navItem.click();
+    }
+
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+            if (isInput) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if ($('cmdkOverlay').classList.contains('active')) closeCmdk();
+                    if ($('modalOverlay').classList.contains('visible')) closeModal();
+                }
+                return;
+            }
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if ($('cmdkOverlay').classList.contains('active')) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') {
+                    e.preventDefault();
+                    const btn = $('saveBtn');
+                    if (btn && !btn.disabled) btn.click();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+            switch (e.key) {
+                case '/':
+                    e.preventDefault();
+                    const searchInput = $('searchInput');
+                    if (searchInput) searchInput.focus();
+                    break;
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'r': case 'R': case 'к': case 'К':
+                    const reloadBtn = $('reloadBtn');
+                    if (reloadBtn) reloadBtn.click();
+                    break;
+                case '1': switchSection('sites'); break;
+                case '2': switchSection('changelog'); break;
+                case '3': switchSection('downloader'); break;
+                case '4': switchSection('redirects'); break;
+                case '5': switchSection('status'); break;
+                case '6': switchSection('api'); break;
+                case '7': switchSection('faq'); break;
+                case 'Escape':
+                    if ($('cmdkOverlay').classList.contains('active')) closeCmdk();
+                    else if ($('modalOverlay').classList.contains('visible')) closeModal();
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: ⌘K палитра · T тема · S сохранить · R обновить · 1-7 разделы · / поиск · ? помощь', 'info', 5000);
+                    break;
+            }
+        });
+    }
 
     // ============================================
     // DOWNLOADER MODULE
     // ============================================
-
-    // ---------- Configuration ----------
-    
-    /**
-     * Конфигурация модуля загрузчика файлов
-     * @namespace
-     */
     const DownloaderConfig = {
-        /** @type {number} Количество файлов на странице */
         PAGE_LIMIT: 20,
-        
-        /** @type {number} Задержка поиска в мс */
         SEARCH_DEBOUNCE_MS: 300,
-        
-        /** @type {number} Максимальный размер файла (100 МБ) */
         MAX_FILE_SIZE: 100 * 1024 * 1024,
-        
-        /**
-         * API endpoints
-         * @type {Object}
-         */
         ENDPOINTS: {
-            /** @type {string} Список файлов */
             list: '/api/downloader/list',
-            
-            /** @type {string} Загрузка файла */
             upload: '/api/downloader/',
-            
-            /**
-             * Конкретный файл
-             * @param {string} hash - SHA-256 хеш файла
-             * @returns {string} URL endpoint
-             */
             item: (hash) => `/api/downloader/${hash}`,
-            
-            /**
-             * Публичная ссылка на файл
-             * @param {string} hash - SHA-256 хеш файла
-             * @returns {string} Публичный URL
-             */
             public: (hash) => `${window.location.origin}/downloader/${hash}`
         }
     };
 
-    /**
-     * SVG иконки для UI
-     * @namespace
-     */
     const Icons = {
         lock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>',
         upload: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>',
@@ -1086,24 +1994,10 @@ html, body {
         copy: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>'
     };
 
-    // ---------- Utilities ----------
-    
-    /**
-     * Создание SVG иконки
-     * @param {string} name - Название иконки
-     * @param {number} size - Размер в пикселях
-     * @returns {string} HTML строка SVG
-     */
     function svgIcon(name, size = 16) {
         return `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:${size}px;height:${size}px;">${Icons[name] || ''}</svg>`;
     }
 
-    /**
-     * Debounce функция для оптимизации частых вызовов
-     * @param {Function} fn - Функция для вызова
-     * @param {number} delay - Задержка в мс
-     * @returns {Function} Debounced функция
-     */
     function debounce(fn, delay) {
         let timer;
         return (...args) => {
@@ -1112,74 +2006,24 @@ html, body {
         };
     }
 
-    /**
-     * Экранирование HTML-сущностей
-     * @param {string|null|undefined} str - Исходная строка
-     * @returns {string} Экранированная строка
-     */
-    function escapeHtml(str) {
-        if (str == null) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    // ---------- State ----------
-    
-    /**
-     * Состояние модуля загрузчика
-     * @namespace
-     */
     const DownloaderState = {
-        /** @type {Array<Object>} Список файлов */
         files: [],
-        
-        /** @type {number} Общее количество файлов */
         total: 0,
-        
-        /** @type {number} Текущая страница */
         page: 1,
-        
-        /** @type {number} Всего страниц */
         totalPages: 1,
-        
-        /** @type {string} Поисковый запрос */
         search: '',
-        
-        /** @type {boolean} Флаг загрузки */
         isLoading: false,
-        
-        /** @type {boolean} Флаг загрузки файла */
         isUploading: false
     };
 
-    // ---------- File Loading ----------
-    
-    /**
-     * Загрузка списка файлов с сервера
-     * @param {number} page - Номер страницы
-     * @returns {Promise<void>}
-     */
     async function loadFiles(page = 1) {
         if (DownloaderState.isLoading) return;
         DownloaderState.isLoading = true;
-
-        $('content').innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <div>Загрузка файлов...</div>
-            </div>`;
-        $('pageTitle').textContent = 'Файлы';
+        $('content').innerHTML = `<div class="loading"><div class="spinner"></div><div>Загрузка файлов...</div></div>`;
+        setPageTitle('Файлы');
         $('topbarActions').innerHTML = '';
-
         try {
-            const data = await apiRequest(
-                `${DownloaderConfig.ENDPOINTS.list}?page=${page}&limit=${DownloaderConfig.PAGE_LIMIT}`
-            );
-
+            const data = await apiRequest(`${DownloaderConfig.ENDPOINTS.list}?page=${page}&limit=${DownloaderConfig.PAGE_LIMIT}`);
             Object.assign(DownloaderState, {
                 files: data.files || [],
                 total: data.total || 0,
@@ -1194,47 +2038,23 @@ html, body {
         }
     }
 
-    /**
-     * Отображение ошибки загрузки файлов
-     * @param {Error} err - Объект ошибки
-     */
     function renderFilesError(err) {
         if (err.message === 'UNAUTHORIZED') {
-            $('content').innerHTML = `
-                <div class="empty-state">
-                    ${svgIcon('lock', 48)}
-                    <h3>Требуется авторизация</h3>
-                    <p>Неверный или отсутствует токен администратора.</p>
-                    <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
-                </div>`;
+            $('content').innerHTML = `<div class="empty-state">${svgIcon('lock', 48)}<h3>Требуется авторизация</h3><p>Неверный или отсутствует токен администратора.</p><button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button></div>`;
             document.getElementById('enterTokenBtn')?.addEventListener('click', promptToken);
             return;
         }
-
         const isNetwork = !navigator.onLine || err.name === 'TypeError';
-        $('content').innerHTML = `
-            <div class="empty-state">
-                <h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3>
-                <p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : escapeHtml(err.message)}</p>
-                <button class="btn btn-primary" id="retryBtn">Повторить</button>
-            </div>`;
+        $('content').innerHTML = `<div class="empty-state"><h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3><p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : Security.escapeHtml(err.message)}</p><button class="btn btn-primary" id="retryBtn">Повторить</button></div>`;
         document.getElementById('retryBtn')?.addEventListener('click', () => loadFiles(DownloaderState.page));
     }
 
-    // ---------- Rendering ----------
-    
-    /**
-     * Полный рендеринг модуля файлов
-     */
     function renderFiles() {
         renderTopbar();
         renderContent();
         bindGlobalEvents();
     }
 
-    /**
-     * Рендеринг верхней панели с действиями
-     */
     function renderTopbar() {
         $('filesCount').textContent = DownloaderState.total;
         $('topbarActions').innerHTML = `
@@ -1247,100 +2067,47 @@ html, body {
             <div class="search-box" style="margin-left:auto; position:relative;">
                 ${svgIcon('search')}
                 <input type="text" id="fileSearchInput" placeholder="Поиск по имени..."
-                       value="${escapeHtml(DownloaderState.search)}"
+                       value="${Security.escapeHtml(DownloaderState.search)}"
                        ${DownloaderState.isLoading ? 'disabled' : ''}>
-                ${DownloaderState.search ? `
-                    <button class="btn btn-ghost btn-icon" id="clearFileSearchBtn"
-                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);"
-                            title="Очистить">${svgIcon('close')}</button>` : ''}
+                <span class="search-kbd">/</span>
+                ${DownloaderState.search ? `<button class="btn btn-ghost btn-icon" id="clearFileSearchBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);" title="Очистить">${svgIcon('close')}</button>` : ''}
             </div>`;
     }
 
-    /**
-     * Рендеринг основного содержимого
-     */
     function renderContent() {
-        $('content').innerHTML = `
-            <div class="drop-zone" id="dropZone">
-                <div class="sites-grid" id="filesGrid"></div>
-            </div>
-            ${renderPagination()}`;
-
+        $('content').innerHTML = `<div class="drop-zone" id="dropZone"><div class="sites-grid" id="filesGrid"></div></div>${renderPagination()}`;
         renderFilesList();
     }
 
-    /**
-     * Рендеринг пагинации
-     * @returns {string} HTML пагинации или пустая строка
-     */
     function renderPagination() {
         if (DownloaderState.totalPages <= 1) return '';
-        return `
-            <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px;">
-                <button class="btn btn-secondary" id="prevPageBtn" ${DownloaderState.page <= 1 ? 'disabled' : ''}>
-                    ← Назад
-                </button>
-                <span style="color:var(--text-secondary); font-size:0.9rem;">
-                    Страница ${DownloaderState.page} из ${DownloaderState.totalPages}
-                    (всего ${DownloaderState.total})
-                </span>
-                <button class="btn btn-secondary" id="nextPageBtn"
-                        ${DownloaderState.page >= DownloaderState.totalPages ? 'disabled' : ''}>
-                    Вперёд →
-                </button>
-            </div>`;
+        return `<div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:24px;"><button class="btn btn-secondary" id="prevPageBtn" ${DownloaderState.page <= 1 ? 'disabled' : ''}>← Назад</button><span style="color:var(--text-secondary); font-size:0.9rem; font-family:var(--mono);">Страница ${DownloaderState.page} из ${DownloaderState.totalPages} (всего ${DownloaderState.total})</span><button class="btn btn-secondary" id="nextPageBtn" ${DownloaderState.page >= DownloaderState.totalPages ? 'disabled' : ''}>Вперёд →</button></div>`;
     }
 
-    /**
-     * Рендеринг списка файлов
-     */
     function renderFilesList() {
         const grid = document.getElementById('filesGrid');
         const filtered = filterFiles();
-
         if (filtered.length === 0) {
             grid.innerHTML = renderEmptyState();
             document.getElementById('uploadEmptyBtn')?.addEventListener('click', triggerFileUpload);
             return;
         }
-
         const fragment = document.createDocumentFragment();
         filtered.forEach(file => fragment.appendChild(createFileCard(file)));
         grid.appendChild(fragment);
     }
 
-    /**
-     * Фильтрация файлов по поисковому запросу
-     * @returns {Array<Object>} Отфильтрованный список файлов
-     */
     function filterFiles() {
         if (!DownloaderState.search) return DownloaderState.files;
         const q = DownloaderState.search.toLowerCase();
         return DownloaderState.files.filter(f => (f.name || '').toLowerCase().includes(q));
     }
 
-    /**
-     * Рендеринг пустого состояния
-     * @returns {string} HTML пустого состояния
-     */
     function renderEmptyState() {
         const hasSearch = Boolean(DownloaderState.search);
-        return `
-            <div class="empty-state">
-                ${svgIcon('folder', 48)}
-                <h3>Нет файлов</h3>
-                <p>${hasSearch ? 'Ничего не найдено по вашему запросу.' : 'Загрузите первый файл или перетащите его сюда.'}</p>
-                ${!hasSearch ? '<button class="btn btn-primary" id="uploadEmptyBtn">Загрузить файл</button>' : ''}
-            </div>`;
+        return `<div class="empty-state">${svgIcon('folder', 48)}<h3>Нет файлов</h3><p>${hasSearch ? 'Ничего не найдено по вашему запросу.' : 'Загрузите первый файл или перетащите его сюда.'}</p>${!hasSearch ? '<button class="btn btn-primary" id="uploadEmptyBtn">Загрузить файл</button>' : ''}</div>`;
     }
 
-    // ---------- File Card ----------
-    
-    /**
-     * Создание карточки файла
-     * @param {Object} file - Данные файла
-     * @returns {HTMLElement} DOM элемент карточки
-     */
     function createFileCard(file) {
         const card = document.createElement('div');
         card.className = 'site-card';
@@ -1348,87 +2115,47 @@ html, body {
         card.innerHTML = `
             <div class="site-card-header">
                 <div class="site-card-title" style="flex:1;">
-                    <input type="text" class="file-name-input"
-                           value="${escapeHtml(file.name)}"
-                           data-hash="${file.hash}"
-                           data-original="${escapeHtml(file.name)}"
-                           placeholder="Имя файла"
-                           maxlength="255">
+                    <input type="text" class="file-name-input" value="${Security.escapeHtml(file.name)}" data-hash="${file.hash}" data-original="${Security.escapeHtml(file.name)}" placeholder="Имя файла" maxlength="255">
                 </div>
                 <div class="site-card-actions">
-                    <button class="btn btn-ghost btn-icon" data-action="copy-link" data-hash="${file.hash}"
-                            title="Копировать ссылку">${svgIcon('link')}</button>
-                    <a href="/downloader/${file.hash}" class="btn btn-ghost btn-icon"
-                       title="Скачать" target="_blank" rel="noopener">${svgIcon('download')}</a>
-                    <button class="btn btn-ghost btn-icon" data-action="delete"
-                            data-hash="${file.hash}" data-name="${escapeHtml(file.name)}"
-                            title="Удалить">${svgIcon('trash')}</button>
+                    <button class="btn btn-ghost btn-icon" data-action="copy-link" data-hash="${file.hash}" title="Копировать ссылку">${svgIcon('link')}</button>
+                    <a href="/downloader/${file.hash}" class="btn btn-ghost btn-icon" title="Скачать" target="_blank" rel="noopener">${svgIcon('download')}</a>
+                    <button class="btn btn-ghost btn-icon" data-action="delete" data-hash="${file.hash}" data-name="${Security.escapeHtml(file.name)}" title="Удалить">${svgIcon('trash')}</button>
                 </div>
             </div>
             <div class="site-card-body">
                 <div class="field-row">
-                    <div class="field">
-                        <label>Размер</label>
-                        <div style="color:var(--text-primary); font-size:0.9rem;">${escapeHtml(file.sizeFormatted)}</div>
-                    </div>
-                    <div class="field">
-                        <label>Тип</label>
-                        <div style="color:var(--text-primary); font-size:0.85rem;">${escapeHtml(file.contentType)}</div>
-                    </div>
+                    <div class="field"><label>Размер</label><div style="color:var(--text-primary); font-size:0.9rem; font-family:var(--mono);">${Security.escapeHtml(file.sizeFormatted)}</div></div>
+                    <div class="field"><label>Тип</label><div style="color:var(--text-primary); font-size:0.85rem;">${Security.escapeHtml(file.contentType)}</div></div>
                 </div>
                 <div class="field">
                     <label>Хеш (SHA-256)</label>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <code style="font-size:0.8rem; color:var(--text-secondary); word-break:break-all;">
-                            ${escapeHtml(file.hash)}
-                        </code>
-                        <button class="btn btn-ghost btn-icon" data-action="copy-hash" data-hash="${file.hash}"
-                                title="Копировать хеш" style="flex-shrink:0;">${svgIcon('copy', 14)}</button>
+                        <code style="font-size:0.8rem; color:var(--text-secondary); word-break:break-all; font-family:var(--mono);">${Security.escapeHtml(file.hash)}</code>
+                        <button class="btn btn-ghost btn-icon" data-action="copy-hash" data-hash="${file.hash}" title="Копировать хеш" style="flex-shrink:0;">${svgIcon('copy', 14)}</button>
                     </div>
                 </div>
                 <div class="field-row">
-                    <div class="field">
-                        <label>Загрузок</label>
-                        <div style="color:var(--text-primary);">${file.downloads ?? 0}</div>
-                    </div>
-                    <div class="field">
-                        <label>Загружен</label>
-                        <div style="color:var(--text-primary); font-size:0.85rem;">
-                            ${new Date(file.uploadedAt).toLocaleString('ru-RU')}
-                        </div>
-                    </div>
+                    <div class="field"><label>Загрузок</label><div style="color:var(--text-primary); font-family:var(--mono);">${file.downloads ?? 0}</div></div>
+                    <div class="field"><label>Загружен</label><div style="color:var(--text-primary); font-size:0.85rem;">${new Date(file.uploadedAt).toLocaleString('ru-RU')}</div></div>
                 </div>
             </div>`;
         return card;
     }
 
-    // ---------- Event Binding ----------
-    
-    /**
-     * Привязка глобальных событий модуля файлов
-     */
     function bindGlobalEvents() {
         document.getElementById('uploadFileBtn')?.addEventListener('click', triggerFileUpload);
         document.getElementById('refreshFilesBtn')?.addEventListener('click', () => loadFiles(DownloaderState.page));
-        document.getElementById('prevPageBtn')?.addEventListener('click', () => {
-            if (DownloaderState.page > 1) loadFiles(DownloaderState.page - 1);
-        });
-        document.getElementById('nextPageBtn')?.addEventListener('click', () => {
-            if (DownloaderState.page < DownloaderState.totalPages) loadFiles(DownloaderState.page + 1);
-        });
-
+        document.getElementById('prevPageBtn')?.addEventListener('click', () => { if (DownloaderState.page > 1) loadFiles(DownloaderState.page - 1); });
+        document.getElementById('nextPageBtn')?.addEventListener('click', () => { if (DownloaderState.page < DownloaderState.totalPages) loadFiles(DownloaderState.page + 1); });
         bindSearch();
         bindGridDelegation();
         bindDropZone();
     }
 
-    /**
-     * Привязка событий поиска
-     */
     function bindSearch() {
         const input = document.getElementById('fileSearchInput');
         if (!input) return;
-
         const debouncedSearch = debounce((value) => {
             DownloaderState.search = value;
             renderFilesList();
@@ -1438,7 +2165,6 @@ html, body {
                 current.setSelectionRange(value.length, value.length);
             }
         }, DownloaderConfig.SEARCH_DEBOUNCE_MS);
-
         input.addEventListener('input', (e) => debouncedSearch(e.target.value));
         document.getElementById('clearFileSearchBtn')?.addEventListener('click', () => {
             DownloaderState.search = '';
@@ -1446,20 +2172,14 @@ html, body {
         });
     }
 
-    /**
-     * Привязка событий через делегирование для сетки файлов
-     */
     function bindGridDelegation() {
         const grid = document.getElementById('filesGrid');
         if (!grid) return;
-
-        // Делегирование кликов для кнопок действий
         grid.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const action = btn.dataset.action;
             const hash = btn.dataset.hash;
-
             if (action === 'copy-link') {
                 copyToClipboard(DownloaderConfig.ENDPOINTS.public(hash));
                 showToast('Ссылка скопирована', 'info', 1500);
@@ -1471,40 +2191,21 @@ html, body {
                 confirmDelete(hash, name);
             }
         });
-
-        // Переименование по Enter / Escape / blur
         grid.addEventListener('keydown', (e) => {
-            if (e.target.classList.contains('file-name-input') && e.key === 'Enter') {
-                e.preventDefault();
-                e.target.blur();
-            }
-            if (e.target.classList.contains('file-name-input') && e.key === 'Escape') {
-                e.target.value = e.target.dataset.original;
-                e.target.blur();
-            }
+            if (e.target.classList.contains('file-name-input') && e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+            if (e.target.classList.contains('file-name-input') && e.key === 'Escape') { e.target.value = e.target.dataset.original; e.target.blur(); }
         });
-
         grid.addEventListener('blur', (e) => {
             if (!e.target.classList.contains('file-name-input')) return;
             const newName = e.target.value.trim();
             const original = e.target.dataset.original;
             const hash = e.target.dataset.hash;
-            if (!newName) {
-                e.target.value = original;
-                return;
-            }
+            if (!newName) { e.target.value = original; return; }
             if (newName === original) return;
             handleRename(hash, newName, e.target);
         }, true);
     }
 
-    /**
-     * Обработка переименования файла
-     * @param {string} hash - Хеш файла
-     * @param {string} newName - Новое имя
-     * @param {HTMLInputElement} inputEl - Элемент ввода
-     * @returns {Promise<void>}
-     */
     async function handleRename(hash, newName, inputEl) {
         if (newName.length > 255) {
             showToast('Имя файла слишком длинное', 'error');
@@ -1523,59 +2224,29 @@ html, body {
         }
     }
 
-    /**
-     * Подтверждение удаления файла
-     * @param {string} hash - Хеш файла
-     * @param {string} name - Имя файла
-     */
     function confirmDelete(hash, name) {
-        showModal(
-            'Удалить файл?',
-            `Файл «${name}» будет удалён без возможности восстановления.`,
-            async () => {
-                try {
-                    await deleteFile(hash);
-                    showToast('Файл удалён', 'success');
-                    await loadFiles(DownloaderState.page);
-                } catch (err) {
-                    showToast(err.message || 'Ошибка удаления', 'error');
-                }
+        showModal('Удалить файл?', `Файл «${name}» будет удалён без возможности восстановления.`, async () => {
+            try {
+                await deleteFile(hash);
+                showToast('Файл удалён', 'success');
+                await loadFiles(DownloaderState.page);
+            } catch (err) {
+                showToast(err.message || 'Ошибка удаления', 'error');
             }
-        );
+        });
     }
 
-    // ---------- Drag & Drop ----------
-    
-    /**
-     * Привязка событий drag & drop для зоны загрузки
-     */
     function bindDropZone() {
         const zone = document.getElementById('dropZone');
         if (!zone) return;
-
-        ['dragenter', 'dragover'].forEach(evt =>
-            zone.addEventListener(evt, (e) => {
-                e.preventDefault();
-                zone.classList.add('drop-zone-active');
-            })
-        );
-        ['dragleave', 'drop'].forEach(evt =>
-            zone.addEventListener(evt, (e) => {
-                e.preventDefault();
-                zone.classList.remove('drop-zone-active');
-            })
-        );
+        ['dragenter', 'dragover'].forEach(evt => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.add('drop-zone-active'); }));
+        ['dragleave', 'drop'].forEach(evt => zone.addEventListener(evt, (e) => { e.preventDefault(); zone.classList.remove('drop-zone-active'); }));
         zone.addEventListener('drop', (e) => {
             const files = e.dataTransfer?.files;
             if (files?.length) uploadFile(files[0]);
         });
     }
 
-    // ---------- File Upload ----------
-    
-    /**
-     * Триггер выбора файла через input
-     */
     function triggerFileUpload() {
         if (DownloaderState.isUploading) return;
         const input = document.createElement('input');
@@ -1588,93 +2259,54 @@ html, body {
         input.click();
     }
 
-    /**
-     * Загрузка файла на сервер
-     * @param {File} file - Файл для загрузки
-     * @returns {Promise<void>}
-     */
     async function uploadFile(file) {
         if (DownloaderState.isUploading) return;
         if (file.size > DownloaderConfig.MAX_FILE_SIZE) {
             showToast('Файл слишком большой (макс. 100 МБ)', 'error');
             return;
         }
-
         DownloaderState.isUploading = true;
         renderTopbar();
         showToast(`Загрузка «${file.name}»...`, 'info', 0);
-
         const formData = new FormData();
         formData.append('file', file);
-
         try {
-            // Используем отдельный endpoint для загрузки
             const res = await fetch('/api/downloader-upload', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${State.token}` },
                 body: formData
             });
-
             if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 throw new Error(data.error || `Ошибка ${res.status}`);
             }
-
             const data = await res.json();
             showToast(data.existed ? 'Файл уже существует' : `Файл «${file.name}» загружен`, 'success');
             await loadFiles(1);
         } catch (err) {
-            if (err.message === 'UNAUTHORIZED') {
-                showToast('Ошибка доступа. Проверьте токен.', 'error');
-            } else {
-                showToast(err.message || 'Не удалось загрузить файл', 'error');
-            }
+            if (err.message === 'UNAUTHORIZED') showToast('Ошибка доступа. Проверьте токен.', 'error');
+            else showToast(err.message || 'Не удалось загрузить файл', 'error');
         } finally {
             DownloaderState.isUploading = false;
             renderTopbar();
         }
     }
 
-    // ---------- API Methods ----------
-    
-    /**
-     * Переименование файла
-     * @param {string} hash - Хеш файла
-     * @param {string} newName - Новое имя
-     * @returns {Promise<Object>}
-     */
     async function renameFile(hash, newName) {
-        return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), {
-            method: 'PATCH',
-            body: JSON.stringify({ name: newName })
-        });
+        return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), { method: 'PATCH', body: JSON.stringify({ name: newName }) });
     }
 
-    /**
-     * Удаление файла
-     * @param {string} hash - Хеш файла
-     * @returns {Promise<Object>}
-     */
     async function deleteFile(hash) {
         return apiRequest(DownloaderConfig.ENDPOINTS.item(hash), { method: 'DELETE' });
     }
 
-    /**
-     * Копирование текста в буфер обмена
-     * @param {string} text - Текст для копирования
-     */
     function copyToClipboard(text) {
         if (navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
         } else {
             fallbackCopy(text);
         }
-        
-        /**
-         * Fallback для старых браузеров
-         * @param {string} value - Текст для копирования
-         */
         function fallbackCopy(value) {
             const ta = document.createElement('textarea');
             ta.value = value;
@@ -1682,9 +2314,7 @@ html, body {
             ta.style.opacity = '0';
             document.body.appendChild(ta);
             ta.select();
-            try { 
-                document.execCommand('copy'); 
-            } catch (_) {}
+            try { document.execCommand('copy'); } catch (_) {}
             document.body.removeChild(ta);
         }
     }
@@ -1692,61 +2322,19 @@ html, body {
     // ============================================
     // REDIRECTS MODULE
     // ============================================
-
-    // ---------- Configuration ----------
-    
-    /**
-     * Конфигурация модуля редиректов
-     * @namespace
-     */
     const RedirectsConfig = {
-        /** @type {number} Задержка поиска в мс */
         SEARCH_DEBOUNCE_MS: 300,
-        
-        /** @type {RegExp} Паттерн для валидации slug */
         SLUG_PATTERN: /^[a-z0-9_-]{2,32}$/,
-        
-        /** @type {number} Максимальная длина slug */
         SLUG_MAX_LENGTH: 32,
-        
-        /** @type {number} Максимальная длина описания */
         DESC_MAX_LENGTH: 200,
-        
-        /**
-         * API endpoints
-         * @type {Object}
-         */
         ENDPOINTS: {
-            /** @type {string} Список редиректов */
             list: '/api/redirects/admin',
-            
-            /**
-             * Конкретный редирект
-             * @param {string} slug - Slug редиректа
-             * @returns {string} URL endpoint
-             */
             item: (slug) => `/api/redirects/admin/${slug}`,
-            
-            /**
-             * Короткая ссылка
-             * @param {string} slug - Slug редиректа
-             * @returns {string} Публичный URL
-             */
             short: (slug) => `${window.location.origin}/r/${slug}`
         },
-        
-        /**
-         * Сообщения для UI
-         * @type {Object}
-         */
         MESSAGES: {
             slugInvalid: 'Slug: 2-32 символов (a-z, 0-9, -, _)',
             urlInvalid: 'Некорректный URL',
-            /**
-             * Сообщение о дубликате
-             * @param {string} slug - Slug редиректа
-             * @returns {string} Сообщение
-             */
             duplicate: (slug) => `Редирект "/${slug}" уже существует`,
             empty: 'Нет редиректов',
             notFound: 'Ничего не найдено',
@@ -1754,44 +2342,19 @@ html, body {
         }
     };
 
-    // ---------- State ----------
-    
-    /**
-     * Состояние модуля редиректов
-     * @namespace
-     */
     const RedirectsState = {
-        /** @type {Array<Object>} Список редиректов */
         list: [],
-        
-        /** @type {string} Поисковый запрос */
         search: '',
-        
-        /** @type {boolean} Флаг загрузки */
         isLoading: false,
-        
-        /** @type {boolean} Флаг создания */
         isCreating: false
     };
 
-    // ---------- Loading ----------
-    
-    /**
-     * Загрузка списка редиректов
-     * @returns {Promise<void>}
-     */
     async function loadRedirects() {
         if (RedirectsState.isLoading) return;
         RedirectsState.isLoading = true;
-
-        $('content').innerHTML = `
-            <div class="loading">
-                <div class="spinner"></div>
-                <div>Загрузка редиректов...</div>
-            </div>`;
-        $('pageTitle').textContent = 'Редиректы';
+        $('content').innerHTML = `<div class="loading"><div class="spinner"></div><div>Загрузка редиректов...</div></div>`;
+        setPageTitle('Редиректы');
         $('topbarActions').innerHTML = '';
-
         try {
             const data = await apiRequest(RedirectsConfig.ENDPOINTS.list);
             RedirectsState.list = data.redirects || [];
@@ -1804,53 +2367,27 @@ html, body {
         }
     }
 
-    /**
-     * Отображение ошибки загрузки редиректов
-     * @param {Error} err - Объект ошибки
-     */
     function renderRedirectsError(err) {
         if (err.message === 'UNAUTHORIZED') {
-            $('content').innerHTML = `
-                <div class="empty-state">
-                    ${svgIcon('lock', 48)}
-                    <h3>Требуется авторизация</h3>
-                    <p>Неверный или отсутствует токен администратора.</p>
-                    <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
-                </div>`;
+            $('content').innerHTML = `<div class="empty-state">${svgIcon('lock', 48)}<h3>Требуется авторизация</h3><p>Неверный или отсутствует токен администратора.</p><button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button></div>`;
             document.getElementById('enterTokenBtn')?.addEventListener('click', promptToken);
             return;
         }
-
         const isNetwork = !navigator.onLine || err.name === 'TypeError';
-        $('content').innerHTML = `
-            <div class="empty-state">
-                <h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3>
-                <p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : escapeHtml(err.message)}</p>
-                <button class="btn btn-primary" id="retryBtn">Повторить</button>
-            </div>`;
+        $('content').innerHTML = `<div class="empty-state"><h3>${isNetwork ? 'Нет соединения' : 'Ошибка'}</h3><p>${isNetwork ? 'Проверьте подключение к сети и повторите попытку.' : Security.escapeHtml(err.message)}</p><button class="btn btn-primary" id="retryBtn">Повторить</button></div>`;
         document.getElementById('retryBtn')?.addEventListener('click', loadRedirects);
     }
 
-    // ---------- Rendering ----------
-    
-    /**
-     * Полный рендеринг модуля редиректов
-     */
     function renderRedirects() {
         renderRedirectsTopbar();
         renderRedirectsContent();
         bindRedirectsGlobalEvents();
     }
 
-    /**
-     * Рендеринг верхней панели редиректов
-     */
     function renderRedirectsTopbar() {
         $('topbarActions').innerHTML = `
             <button class="btn btn-primary" id="addRedirectBtn" ${RedirectsState.isCreating ? 'disabled' : ''}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Новый редирект
             </button>
             <button class="btn btn-secondary" id="refreshRedirectsBtn" ${RedirectsState.isLoading ? 'disabled' : ''}>
@@ -1858,72 +2395,41 @@ html, body {
             </button>
             <div class="search-box" style="margin-left:auto; position:relative;">
                 ${svgIcon('search')}
-                <input type="text" id="redirectSearchInput" placeholder="Поиск по slug или URL..."
-                       value="${escapeHtml(RedirectsState.search)}"
-                       ${RedirectsState.isLoading ? 'disabled' : ''}>
-                ${RedirectsState.search ? `
-                    <button class="btn btn-ghost btn-icon" id="clearRedirectSearchBtn"
-                            style="position:absolute;right:8px;top:50%;transform:translateY(-50%);"
-                            title="Очистить">${svgIcon('close')}</button>` : ''}
+                <input type="text" id="redirectSearchInput" placeholder="Поиск по slug или URL..." value="${Security.escapeHtml(RedirectsState.search)}" ${RedirectsState.isLoading ? 'disabled' : ''}>
+                <span class="search-kbd">/</span>
+                ${RedirectsState.search ? `<button class="btn btn-ghost btn-icon" id="clearRedirectSearchBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);" title="Очистить">${svgIcon('close')}</button>` : ''}
             </div>`;
     }
 
-    /**
-     * Рендеринг содержимого редиректов
-     */
     function renderRedirectsContent() {
-        $('content').innerHTML = `
-            <div id="redirectsGrid" style="display:flex; flex-direction:column; gap:16px; margin-top:20px;"></div>`;
-
+        $('content').innerHTML = `<div id="redirectsGrid" style="display:flex; flex-direction:column; gap:16px; margin-top:20px;"></div>`;
         const grid = document.getElementById('redirectsGrid');
         grid.appendChild(createRedirectFormCard());
-
         const filtered = filterRedirects();
         if (filtered.length === 0) {
             grid.appendChild(createRedirectsEmptyState());
             return;
         }
-
         const fragment = document.createDocumentFragment();
         filtered.forEach(redirect => fragment.appendChild(createRedirectCard(redirect)));
         grid.appendChild(fragment);
     }
 
-    /**
-     * Фильтрация редиректов по поисковому запросу
-     * @returns {Array<Object>} Отфильтрованный список
-     */
     function filterRedirects() {
         if (!RedirectsState.search) return RedirectsState.list;
         const q = RedirectsState.search.toLowerCase();
-        return RedirectsState.list.filter(r =>
-            (r.slug || '').toLowerCase().includes(q) ||
-            (r.url || '').toLowerCase().includes(q) ||
-            (r.description || '').toLowerCase().includes(q)
-        );
+        return RedirectsState.list.filter(r => (r.slug || '').toLowerCase().includes(q) || (r.url || '').toLowerCase().includes(q) || (r.description || '').toLowerCase().includes(q));
     }
 
-    /**
-     * Создание пустого состояния для редиректов
-     * @returns {HTMLElement} DOM элемент
-     */
     function createRedirectsEmptyState() {
         const wrapper = document.createElement('div');
         wrapper.className = 'empty-state';
         wrapper.style.padding = '40px 20px';
         const hasSearch = Boolean(RedirectsState.search);
-        wrapper.innerHTML = `
-            <h3>${RedirectsConfig.MESSAGES.empty}</h3>
-            <p>${hasSearch ? RedirectsConfig.MESSAGES.notFound : RedirectsConfig.MESSAGES.createHint}</p>`;
+        wrapper.innerHTML = `<h3>${RedirectsConfig.MESSAGES.empty}</h3><p>${hasSearch ? RedirectsConfig.MESSAGES.notFound : RedirectsConfig.MESSAGES.createHint}</p>`;
         return wrapper;
     }
 
-    // ---------- Form Card ----------
-    
-    /**
-     * Создание формы для нового редиректа
-     * @returns {HTMLElement} DOM элемент формы
-     */
     function createRedirectFormCard() {
         const card = document.createElement('div');
         card.className = 'site-card';
@@ -1931,194 +2437,96 @@ html, body {
         card.innerHTML = `
             <div class="site-card-header">
                 <div class="site-card-title" style="flex:1;">
-                    <input type="text" class="new-slug-input"
-                           placeholder="slug (например: my-link)"
-                           maxlength="${RedirectsConfig.SLUG_MAX_LENGTH}"
-                           pattern="[a-z0-9_-]+">
+                    <input type="text" class="new-slug-input" placeholder="slug (например: my-link)" maxlength="${RedirectsConfig.SLUG_MAX_LENGTH}" pattern="[a-z0-9_-]+">
                 </div>
             </div>
             <div class="site-card-body">
-                <div class="field">
-                    <label>URL назначения</label>
-                    <input type="url" class="new-url-input" placeholder="https://example.com">
-                </div>
-                <div class="field">
-                    <label>Описание (необязательно)</label>
-                    <input type="text" class="new-desc-input"
-                           placeholder="Краткое описание"
-                           maxlength="${RedirectsConfig.DESC_MAX_LENGTH}">
-                </div>
+                <div class="field"><label>URL назначения</label><input type="url" class="new-url-input" placeholder="https://example.com"></div>
+                <div class="field"><label>Описание (необязательно)</label><input type="text" class="new-desc-input" placeholder="Краткое описание" maxlength="${RedirectsConfig.DESC_MAX_LENGTH}"></div>
             </div>
             <div class="card-footer">
-                <span style="font-size:0.8rem; color:var(--text-tertiary);">Новый редирект</span>
-                <button class="btn btn-primary" data-action="create-redirect"
-                        style="padding:8px 16px; font-size:0.85rem;">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
+                <span style="font-size:0.8rem; color:var(--text-tertiary); font-family:var(--mono);">Новый редирект</span>
+                <button class="btn btn-primary" data-action="create-redirect" style="padding:8px 16px; font-size:0.85rem;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     Создать
                 </button>
             </div>`;
         return card;
     }
 
-    // ---------- Redirect Card ----------
-    
-    /**
-     * Создание карточки редиректа
-     * @param {Object} redirect - Данные редиректа
-     * @returns {HTMLElement} DOM элемент карточки
-     */
     function createRedirectCard(redirect) {
         const card = document.createElement('div');
         card.className = 'site-card';
         card.dataset.slug = redirect.slug;
-
         const shortUrl = RedirectsConfig.ENDPOINTS.short(redirect.slug);
-
         card.innerHTML = `
             <div class="site-card-header">
                 <div class="site-card-title" style="flex:1;">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                        <code style="font-weight:600; font-size:1rem;">/${escapeHtml(redirect.slug)}</code>
-                        <a href="${shortUrl}" target="_blank" rel="noopener"
-                           class="url-preview" style="font-size:0.8rem; color:var(--accent);">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                 style="width:12px;height:12px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
-                            ${escapeHtml(shortUrl)}
+                        <code style="font-weight:600; font-size:1rem; font-family:var(--mono);">/${Security.escapeHtml(redirect.slug)}</code>
+                        <a href="${shortUrl}" target="_blank" rel="noopener" class="url-preview" style="font-size:0.8rem; color:var(--accent);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:12px;height:12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            ${Security.escapeHtml(shortUrl)}
                         </a>
                     </div>
                 </div>
                 <div class="site-card-actions">
-                    <button class="btn btn-ghost btn-icon" data-action="copy-short-url"
-                            data-url="${escapeHtml(shortUrl)}" title="Копировать короткую ссылку">
-                        ${svgIcon('link')}
-                    </button>
-                    <button class="btn btn-ghost btn-icon" data-action="delete-redirect"
-                            data-slug="${escapeHtml(redirect.slug)}" title="Удалить">
-                        ${svgIcon('trash')}
-                    </button>
+                    <button class="btn btn-ghost btn-icon" data-action="copy-short-url" data-url="${Security.escapeHtml(shortUrl)}" title="Копировать короткую ссылку">${svgIcon('link')}</button>
+                    <button class="btn btn-ghost btn-icon" data-action="delete-redirect" data-slug="${Security.escapeHtml(redirect.slug)}" title="Удалить">${svgIcon('trash')}</button>
                 </div>
             </div>
             <div class="site-card-body">
                 <div class="field">
                     <label>URL назначения</label>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="word-break:break-all; flex:1;">${escapeHtml(redirect.url)}</span>
-                        <button class="btn btn-ghost btn-icon" data-action="copy-url"
-                                data-url="${escapeHtml(redirect.url)}" title="Копировать URL">
-                            ${svgIcon('copy', 14)}
-                        </button>
+                        <span style="word-break:break-all; flex:1; font-family:var(--mono);">${Security.escapeHtml(redirect.url)}</span>
+                        <button class="btn btn-ghost btn-icon" data-action="copy-url" data-url="${Security.escapeHtml(redirect.url)}" title="Копировать URL">${svgIcon('copy', 14)}</button>
                     </div>
                 </div>
-                ${redirect.description ? `
-                    <div class="field">
-                        <label>Описание</label>
-                        <div style="color:var(--text-secondary);">${escapeHtml(redirect.description)}</div>
-                    </div>` : ''}
+                ${redirect.description ? `<div class="field"><label>Описание</label><div style="color:var(--text-secondary);">${Security.escapeHtml(redirect.description)}</div></div>` : ''}
                 <div class="field-row">
-                    <div class="field">
-                        <label>Переходов</label>
-                        <div style="color:var(--text-primary); font-weight:600;" class="redirect-clicks">
-                            ${redirect.clicks ?? 0}
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Последний переход</label>
-                        <div style="font-size:0.85rem;">
-                            ${redirect.lastClickedAt
-                                ? new Date(redirect.lastClickedAt).toLocaleString('ru-RU')
-                                : '—'}
-                        </div>
-                    </div>
+                    <div class="field"><label>Переходов</label><div style="color:var(--text-primary); font-weight:600; font-family:var(--mono);" class="redirect-clicks">${redirect.clicks ?? 0}</div></div>
+                    <div class="field"><label>Последний переход</label><div style="font-size:0.85rem;">${redirect.lastClickedAt ? new Date(redirect.lastClickedAt).toLocaleString('ru-RU') : '—'}</div></div>
                 </div>
                 <div class="field-row">
-                    <div class="field">
-                        <label>Создан</label>
-                        <div style="font-size:0.85rem;">
-                            ${new Date(redirect.createdAt).toLocaleString('ru-RU')}
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>Статус</label>
-                        <div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;">
-                            <span style="width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 6px var(--success);"></span>
-                            Активен
-                        </div>
-                    </div>
+                    <div class="field"><label>Создан</label><div style="font-size:0.85rem;">${new Date(redirect.createdAt).toLocaleString('ru-RU')}</div></div>
+                    <div class="field"><label>Статус</label><div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;"><span style="width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 6px var(--success);"></span>Активен</div></div>
                 </div>
             </div>`;
         return card;
     }
 
-    // ---------- Event Binding ----------
-    
-    /**
-     * Привязка глобальных событий редиректов
-     */
     function bindRedirectsGlobalEvents() {
-        document.getElementById('addRedirectBtn')?.addEventListener('click', () => {
-            document.querySelector('.new-slug-input')?.focus();
-        });
+        document.getElementById('addRedirectBtn')?.addEventListener('click', () => { document.querySelector('.new-slug-input')?.focus(); });
         document.getElementById('refreshRedirectsBtn')?.addEventListener('click', loadRedirects);
-
         bindRedirectsSearch();
         bindRedirectsGridDelegation();
     }
 
-    /**
-     * Привязка событий поиска редиректов
-     */
     function bindRedirectsSearch() {
         const input = document.getElementById('redirectSearchInput');
         if (!input) return;
-
         const debouncedSearch = debounce((value) => {
             RedirectsState.search = value;
             renderRedirectsContent();
             const current = document.getElementById('redirectSearchInput');
-            if (current) {
-                current.focus();
-                current.setSelectionRange(value.length, value.length);
-            }
+            if (current) { current.focus(); current.setSelectionRange(value.length, value.length); }
         }, RedirectsConfig.SEARCH_DEBOUNCE_MS);
-
         input.addEventListener('input', (e) => debouncedSearch(e.target.value));
-        document.getElementById('clearRedirectSearchBtn')?.addEventListener('click', () => {
-            RedirectsState.search = '';
-            renderRedirects();
-        });
+        document.getElementById('clearRedirectSearchBtn')?.addEventListener('click', () => { RedirectsState.search = ''; renderRedirects(); });
     }
 
-    /**
-     * Привязка событий через делегирование для сетки редиректов
-     */
     function bindRedirectsGridDelegation() {
         const grid = document.getElementById('redirectsGrid');
         if (!grid) return;
-
-        // Делегирование кликов
         grid.addEventListener('click', async (e) => {
             const actionBtn = e.target.closest('[data-action]');
             if (!actionBtn) return;
             const action = actionBtn.dataset.action;
-
-            if (action === 'create-redirect') {
-                await handleCreateRedirect();
-            } else if (action === 'delete-redirect') {
-                const slug = actionBtn.dataset.slug;
-                confirmDeleteRedirect(slug);
-            } else if (action === 'copy-short-url' || action === 'copy-url') {
-                const url = actionBtn.dataset.url;
-                copyToClipboard(url);
-                showToast('Ссылка скопирована', 'info', 1500);
-            }
+            if (action === 'create-redirect') await handleCreateRedirect();
+            else if (action === 'delete-redirect') confirmDeleteRedirect(actionBtn.dataset.slug);
+            else if (action === 'copy-short-url' || action === 'copy-url') { copyToClipboard(actionBtn.dataset.url); showToast('Ссылка скопирована', 'info', 1500); }
         });
-
-        // Enter для отправки формы
         grid.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
             const isInForm = e.target.closest('.new-slug-input, .new-url-input, .new-desc-input');
@@ -2128,45 +2536,22 @@ html, body {
         });
     }
 
-    // ---------- Create / Delete ----------
-    
-    /**
-     * Обработка создания нового редиректа
-     * @returns {Promise<void>}
-     */
     async function handleCreateRedirect() {
         if (RedirectsState.isCreating) return;
-
         const slugInput = document.querySelector('.new-slug-input');
         const urlInput = document.querySelector('.new-url-input');
         const descInput = document.querySelector('.new-desc-input');
         if (!slugInput || !urlInput) return;
-
         const slug = slugInput.value.trim().toLowerCase();
         const url = urlInput.value.trim();
         const description = descInput?.value.trim() || '';
-
-        if (!RedirectsConfig.SLUG_PATTERN.test(slug)) {
-            showToast(RedirectsConfig.MESSAGES.slugInvalid, 'error');
-            slugInput.focus();
-            return;
-        }
-        if (!isValidUrl(url)) {
-            showToast(RedirectsConfig.MESSAGES.urlInvalid, 'error');
-            urlInput.focus();
-            return;
-        }
-        if (RedirectsState.list.some(r => r.slug === slug)) {
-            showToast(RedirectsConfig.MESSAGES.duplicate(slug), 'error');
-            slugInput.focus();
-            return;
-        }
-
+        if (!RedirectsConfig.SLUG_PATTERN.test(slug)) { showToast(RedirectsConfig.MESSAGES.slugInvalid, 'error'); slugInput.focus(); return; }
+        if (!isValidUrl(url)) { showToast(RedirectsConfig.MESSAGES.urlInvalid, 'error'); urlInput.focus(); return; }
+        if (RedirectsState.list.some(r => r.slug === slug)) { showToast(RedirectsConfig.MESSAGES.duplicate(slug), 'error'); slugInput.focus(); return; }
         RedirectsState.isCreating = true;
         try {
             await createRedirect(slug, url, description);
-            slugInput.value = '';
-            urlInput.value = '';
+            slugInput.value = ''; urlInput.value = '';
             if (descInput) descInput.value = '';
             showToast(`Редирект "/${slug}" создан`, 'success');
             await loadRedirects();
@@ -2177,178 +2562,45 @@ html, body {
         }
     }
 
-    /**
-     * Подтверждение удаления редиректа
-     * @param {string} slug - Slug редиректа
-     */
     function confirmDeleteRedirect(slug) {
-        showModal(
-            'Удалить редирект?',
-            `Редирект "/${slug}" будет удалён безвозвратно.`,
-            async () => {
-                try {
-                    await deleteRedirect(slug);
-                    showToast('Редирект удалён', 'success');
-                    await loadRedirects();
-                } catch (err) {
-                    showToast(err.message || 'Ошибка удаления', 'error');
-                }
-            }
-        );
-    }
-
-    // ---------- API ----------
-    
-    /**
-     * Создание нового редиректа
-     * @param {string} slug - Slug редиректа
-     * @param {string} url - URL назначения
-     * @param {string} description - Описание
-     * @returns {Promise<Object>}
-     */
-    async function createRedirect(slug, url, description) {
-        return apiRequest(RedirectsConfig.ENDPOINTS.list, {
-            method: 'POST',
-            body: JSON.stringify({ slug, url, description })
+        showModal('Удалить редирект?', `Редирект "/${slug}" будет удалён безвозвратно.`, async () => {
+            try { await deleteRedirect(slug); showToast('Редирект удалён', 'success'); await loadRedirects(); }
+            catch (err) { showToast(err.message || 'Ошибка удаления', 'error'); }
         });
     }
 
-    /**
-     * Удаление редиректа
-     * @param {string} slug - Slug редиректа
-     * @returns {Promise<Object>}
-     */
+    async function createRedirect(slug, url, description) {
+        return apiRequest(RedirectsConfig.ENDPOINTS.list, { method: 'POST', body: JSON.stringify({ slug, url, description }) });
+    }
+
     async function deleteRedirect(slug) {
         return apiRequest(RedirectsConfig.ENDPOINTS.item(slug), { method: 'DELETE' });
     }
 
-    // ---------- Validation ----------
-    
-    /**
-     * Валидация URL
-     * @param {string} string - URL для проверки
-     * @returns {boolean} true если URL валиден
-     */
     function isValidUrl(string) {
-        try {
-            const url = new URL(string);
-            return url.protocol === 'http:' || url.protocol === 'https:';
-        } catch (_) {
-            return false;
-        }
+        try { const url = new URL(string); return url.protocol === 'http:' || url.protocol === 'https:'; }
+        catch (_) { return false; }
     }
-
-    // ============================================
-    // UI COMPONENTS
-    // ============================================
-
-    // ---------- Toast Notifications ----------
-    
-    /**
-     * Показ toast-уведомления
-     * @param {string} message - Текст уведомления
-     * @param {string} type - Тип: 'success' | 'error' | 'info'
-     * @param {number} duration - Длительность показа в мс
-     */
-    function showToast(message, type = 'info', duration = 3000) {
-        const icons = {
-            success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
-            error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
-            info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-        };
-        const container = $('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type]}</svg><span>${message}</span>`;
-        container.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('removing');
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
-    }
-
-    // ---------- Modal Dialog ----------
-    
-    /** @type {Function|null} Callback для модального окна */
-    let modalCallback = null;
-
-    /**
-     * Показ модального окна подтверждения
-     * @param {string} title - Заголовок
-     * @param {string} text - Текст
-     * @param {Function} onConfirm - Callback при подтверждении
-     */
-    function showModal(title, text, onConfirm) {
-        $('modalTitle').textContent = title;
-        $('modalText').textContent = text;
-        $('modalOverlay').classList.add('visible');
-        modalCallback = onConfirm;
-    }
-
-    /**
-     * Закрытие модального окна
-     */
-    function closeModal() {
-        $('modalOverlay').classList.remove('visible');
-        modalCallback = null;
-    }
-
-    $('modalCancel').addEventListener('click', closeModal);
-    $('modalConfirm').addEventListener('click', () => {
-        if (modalCallback) modalCallback();
-        closeModal();
-    });
-    $('modalOverlay').addEventListener('click', (e) => {
-        if (e.target === $('modalOverlay')) closeModal();
-    });
 
     // ============================================
     // API COMMUNICATION
     // ============================================
-    
-    /**
-     * Выполнение API запроса с авторизацией
-     * @param {string} url - URL endpoint
-     * @param {Object} options - Опции fetch
-     * @returns {Promise<Object>} Ответ сервера
-     * @throws {Error} Если токен невалиден или запрос не удался
-     */
     async function apiRequest(url, options = {}) {
-        // Критическая проверка: токен не должен содержать кириллицу или быть пустым
-        if (!State.token || State.token === 'Токен не введён' || State.token.trim() === '') {
-            throw new Error('UNAUTHORIZED');
-        }
-
-        // Дополнительная проверка: токен должен содержать только ASCII-символы
-        if (/[^\x00-\x7F]/.test(State.token)) {
-            console.error('Токен содержит недопустимые символы (кириллица или спецсимволы)');
-            throw new Error('UNAUTHORIZED');
-        }
-
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-        
+        if (!State.token || State.token === 'Токен не введён' || State.token.trim() === '') throw new Error('UNAUTHORIZED');
+        if (/[^\x00-\x7F]/.test(State.token)) { console.error('Токен содержит недопустимые символы'); throw new Error('UNAUTHORIZED'); }
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
         headers['Authorization'] = `Bearer ${State.token}`;
-
         try {
             const res = await fetch(url, { ...options, headers });
-            if (res.status === 401 || res.status === 403) {
-                throw new Error('UNAUTHORIZED');
-            }
+            if (res.status === 401 || res.status === 403) throw new Error('UNAUTHORIZED');
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 throw new Error(data.error || `HTTP ${res.status}`);
             }
             return await res.json();
         } catch (err) {
-            if (err.message === 'UNAUTHORIZED') {
-                throw err;
-            }
-            if (err.message.includes('Failed to fetch')) {
-                throw new Error('Ошибка сети. Проверьте подключение.');
-            }
+            if (err.message === 'UNAUTHORIZED') throw err;
+            if (err.message.includes('Failed to fetch')) throw new Error('Ошибка сети. Проверьте подключение.');
             throw err;
         }
     }
@@ -2356,12 +2608,6 @@ html, body {
     // ============================================
     // NAVIGATION & SECTIONS
     // ============================================
-    
-    /**
-     * Загрузка секции с обработкой ошибок
-     * @param {string} section - Название секции
-     * @returns {Promise<void>}
-     */
     async function loadSection(section) {
         $('content').innerHTML = '<div class="loading"><div class="spinner"></div><div>Загрузка...</div></div>';
         try {
@@ -2375,7 +2621,6 @@ html, body {
                 State.changelog = data.content || '';
                 renderChangelog();
             } else if (section === 'downloader') {
-                // Сбрасываем поиск и загружаем первую страницу
                 DownloaderState.search = '';
                 DownloaderState.page = 1;
                 loadFiles(1);
@@ -2397,26 +2642,11 @@ html, body {
             }
         } catch (err) {
             if (err.message === 'UNAUTHORIZED') {
-                $('content').innerHTML = `
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                        <h3>Требуется авторизация</h3>
-                        <p>Неверный или отсутствует токен администратора.</p>
-                        <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
-                    </div>`;
+                $('content').innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><h3>Требуется авторизация</h3><p>Неверный или отсутствует токен администратора.</p><button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button></div>`;
                 $('enterTokenBtn').addEventListener('click', promptToken);
                 showToast('Ошибка доступа', 'error');
             } else {
-                $('content').innerHTML = `<div class="empty-state">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    <h3>Ошибка загрузки</h3>
-                    <p>${err.message}</p>
-                    <button class="btn btn-primary" onclick="location.reload()">Повторить</button>
-                </div>`;
+                $('content').innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><h3>Ошибка загрузки</h3><p>${Security.escapeHtml(err.message)}</p><button class="btn btn-primary" onclick="location.reload()">Повторить</button></div>`;
                 showToast(err.message, 'error');
             }
         }
@@ -2425,63 +2655,33 @@ html, body {
     // ============================================
     // SITES MODULE
     // ============================================
-
-    // ---------- Parser ----------
-    
-    /**
-     * Парсинг содержимого в список проектов
-     * @param {string} content - Сырое содержимое
-     * @returns {Array<Object>} Список проектов
-     */
     function parseSaites(content) {
         if (!content || typeof content !== 'string') return [];
         const blocks = content.split('::').filter(b => b && b.trim());
         const sites = [];
         const VALID_CATEGORIES = ['tools', 'dev', 'design', 'education', 'games', 'media', 'social', 'other'];
-
         for (const block of blocks) {
             const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
             if (lines.length < 3) continue;
-            
-            /**
-             * Очистка строки от служебных символов
-             * @param {string} str - Исходная строка
-             * @returns {string} Очищенная строка
-             */
             const clean = (str) => {
                 let s = str.split('@:')[0].trim();
-                if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-                    s = s.slice(1, -1);
-                }
+                if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) s = s.slice(1, -1);
                 return s.trim();
             };
-            
             const title = clean(lines[0]);
             let url = clean(lines[1]);
             const desc = clean(lines[2]);
-
-            // Читаем категорию из 4-й строки
             let category = 'other';
             if (lines.length >= 4) {
                 const rawCat = clean(lines[3]).toLowerCase();
-                if (VALID_CATEGORIES.includes(rawCat)) {
-                    category = rawCat;
-                }
+                if (VALID_CATEGORIES.includes(rawCat)) category = rawCat;
             }
-
             if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-            if (title && url && desc) {
-                sites.push({ title, url, desc, category });
-            }
+            if (title && url && desc) sites.push({ title, url, desc, category });
         }
         return sites;
     }
 
-    /**
-     * Сериализация списка проектов в строку
-     * @param {Array<Object>} sites - Список проектов
-     * @returns {string} Сериализованная строка
-     */
     function serializeSaites(sites) {
         return sites.map(s => {
             const url = s.url.replace(/^https?:\/\//i, '');
@@ -2490,67 +2690,42 @@ html, body {
         }).join('\n::\n');
     }
 
-    // ---------- Rendering ----------
-    
-    /**
-     * Рендеринг модуля проектов
-     */
     function renderSites() {
-        $('pageTitle').textContent = 'Проекты';
+        setPageTitle('Проекты');
         $('sitesCount').textContent = State.sites.length;
-
-        const filtered = State.searchQuery
-            ? State.sites.filter(s =>
-                s.title.toLowerCase().includes(State.searchQuery.toLowerCase()) ||
-                s.desc.toLowerCase().includes(State.searchQuery.toLowerCase())
-            )
-            : State.sites;
-
+        const filtered = State.searchQuery ? State.sites.filter(s => s.title.toLowerCase().includes(State.searchQuery.toLowerCase()) || s.desc.toLowerCase().includes(State.searchQuery.toLowerCase())) : State.sites;
         $('topbarActions').innerHTML = `
             <button class="btn btn-secondary" id="reloadBtn">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Обновить
             </button>
             <button class="btn btn-primary" id="saveBtn" ${State.dirty ? '' : 'disabled'}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 Сохранить (${State.sites.length})
             </button>
         `;
-
         $('reloadBtn').addEventListener('click', () => loadSection('sites'));
         $('saveBtn').addEventListener('click', saveSites);
-
         if (filtered.length === 0) {
             $('content').innerHTML = `
                 <div class="toolbar">
                     <div class="search-box">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <input type="text" id="searchInput" placeholder="Поиск проектов..." value="${escapeHtml(State.searchQuery)}">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input type="text" id="searchInput" placeholder="Поиск проектов..." value="${Security.escapeHtml(State.searchQuery)}">
+                        <span class="search-kbd">/</span>
                         ${State.searchQuery ? '<button class="btn btn-ghost btn-icon" id="clearSearchBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);" title="Очистить"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>' : ''}
                     </div>
                     <button class="btn btn-primary" id="addSiteBtn">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         Добавить проект
                     </button>
                     <button class="btn btn-secondary" id="exportCsvBtn" style="margin-left:auto;">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         CSV
                     </button>
                 </div>
                 <div class="empty-state">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
                     <h3>${State.searchQuery ? 'Ничего не найдено' : 'Нет проектов'}</h3>
                     <p>${State.searchQuery ? 'Попробуйте изменить запрос' : 'Добавьте первый проект в каталог'}</p>
                     ${!State.searchQuery ? '<button class="btn btn-primary" id="addSiteBtn2">Добавить проект</button>' : ''}
@@ -2560,118 +2735,84 @@ html, body {
             bindExportCsv();
             return;
         }
-
         $('content').innerHTML = `
             <div class="toolbar">
                 <div class="search-box">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text" id="searchInput" placeholder="Поиск проектов..." value="${escapeHtml(State.searchQuery)}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="searchInput" placeholder="Поиск проектов..." value="${Security.escapeHtml(State.searchQuery)}">
+                    <span class="search-kbd">/</span>
                     ${State.searchQuery ? '<button class="btn btn-ghost btn-icon" id="clearSearchBtn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);" title="Очистить"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>' : ''}
                 </div>
                 <button class="btn btn-primary" id="addSiteBtn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Добавить проект
                 </button>
                 <button class="btn btn-secondary" id="exportCsvBtn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     CSV
                 </button>
             </div>
             <div class="sites-grid" id="sitesGrid"></div>
         `;
-
         const grid = $('sitesGrid');
-        filtered.forEach((site, idx) => {
+        filtered.forEach((site) => {
             const realIndex = State.sites.indexOf(site);
             const card = createSiteCard(site, realIndex);
             grid.appendChild(card);
         });
-
         bindSearchAndAdd();
         bindExportCsv();
         bindDragAndDrop();
     }
 
-    /**
-     * Создание карточки проекта
-     * @param {Object} site - Данные проекта
-     * @param {number} index - Индекс в массиве
-     * @returns {HTMLElement} DOM элемент карточки
-     */
     function createSiteCard(site, index) {
         const card = document.createElement('div');
         card.className = 'site-card';
         card.draggable = true;
         card.dataset.index = index;
-
-        const catOptions = Object.entries(CATEGORIES)
-            .map(([k, v]) => `<option value="${k}" ${site.category === k ? 'selected' : ''}>${v}</option>`)
-            .join('');
-
+        const catOptions = Object.entries(CATEGORIES).map(([k, v]) => `<option value="${k}" ${site.category === k ? 'selected' : ''}>${v}</option>`).join('');
         card.innerHTML = `
             <div class="site-card-header">
                 <div class="drag-handle" title="Перетащите для изменения порядка">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
                 </div>
                 <div class="site-card-title">
-                    <input type="text" class="site-title-input" value="${escapeHtml(site.title)}" placeholder="Название проекта">
+                    <input type="text" class="site-title-input" value="${Security.escapeHtml(site.title)}" placeholder="Название проекта">
                 </div>
                 <div class="site-card-actions">
                     <button class="btn btn-ghost btn-icon" title="Удалить" data-action="delete">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                 </div>
             </div>
             <div class="site-card-body">
                 <div class="field">
                     <label>URL</label>
-                    <input type="text" class="site-url-input" value="${escapeHtml(site.url)}" placeholder="https://example.com">
-                    <a href="${escapeHtml(site.url)}" target="_blank" rel="noopener" class="url-preview">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                        </svg>
-                        <span>${escapeHtml(site.url)}</span>
+                    <input type="text" class="site-url-input" value="${Security.escapeHtml(site.url)}" placeholder="https://example.com">
+                    <a href="${Security.escapeHtml(site.url)}" target="_blank" rel="noopener" class="url-preview">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        <span>${Security.escapeHtml(site.url)}</span>
                     </a>
                 </div>
                 <div class="field-row">
-                    <div class="field">
-                        <label>Категория</label>
-                        <select class="site-category-input">${catOptions}</select>
-                    </div>
+                    <div class="field"><label>Категория</label><select class="site-category-input">${catOptions}</select></div>
                     <div class="field" style="justify-content: flex-end;">
                         <button class="btn btn-ghost" style="font-size: 0.82rem;" data-action="duplicate">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             Дублировать
                         </button>
                     </div>
                 </div>
                 <div class="field">
                     <label>Описание</label>
-                    <textarea class="site-desc-input" placeholder="Краткое описание проекта...">${escapeHtml(site.desc)}</textarea>
+                    <textarea class="site-desc-input" placeholder="Краткое описание проекта...">${Security.escapeHtml(site.desc)}</textarea>
                 </div>
             </div>
             <div class="card-footer">
                 <span class="card-index">#${index + 1}</span>
             </div>
         `;
-
-        // Привязка событий ввода
-        card.querySelector('.site-title-input').addEventListener('input', (e) => {
-            State.sites[index].title = e.target.value;
-            markDirty();
-        });
+        card.querySelector('.site-title-input').addEventListener('input', (e) => { State.sites[index].title = e.target.value; markDirty(); });
         card.querySelector('.site-url-input').addEventListener('input', (e) => {
             let url = e.target.value.trim();
             if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
@@ -2682,16 +2823,8 @@ html, body {
             if (link) link.href = url;
             markDirty();
         });
-        card.querySelector('.site-category-input').addEventListener('change', (e) => {
-            State.sites[index].category = e.target.value;
-            markDirty();
-        });
-        card.querySelector('.site-desc-input').addEventListener('input', (e) => {
-            State.sites[index].desc = e.target.value;
-            markDirty();
-        });
-
-        // Действия
+        card.querySelector('.site-category-input').addEventListener('change', (e) => { State.sites[index].category = e.target.value; markDirty(); });
+        card.querySelector('.site-desc-input').addEventListener('input', (e) => { State.sites[index].desc = e.target.value; markDirty(); });
         card.querySelector('[data-action="delete"]').addEventListener('click', () => {
             showModal('Удалить проект?', `Проект "${State.sites[index].title}" будет удалён. Это действие нельзя отменить.`, () => {
                 State.sites.splice(index, 1);
@@ -2700,7 +2833,6 @@ html, body {
                 showToast('Проект удалён', 'success');
             });
         });
-
         card.querySelector('[data-action="duplicate"]').addEventListener('click', () => {
             const copy = { ...State.sites[index], title: State.sites[index].title + ' (копия)' };
             State.sites.splice(index + 1, 0, copy);
@@ -2708,13 +2840,9 @@ html, body {
             renderSites();
             showToast('Проект продублирован', 'success');
         });
-
         return card;
     }
 
-    /**
-     * Привязка событий поиска и добавления
-     */
     function bindSearchAndAdd() {
         const searchInput = $('searchInput');
         if (searchInput) {
@@ -2722,19 +2850,12 @@ html, body {
                 State.searchQuery = e.target.value;
                 renderSites();
                 const newInput = $('searchInput');
-                if (newInput) {
-                    newInput.focus();
-                    newInput.setSelectionRange(e.target.value.length, e.target.value.length);
-                }
+                if (newInput) { newInput.focus(); newInput.setSelectionRange(e.target.value.length, e.target.value.length); }
             });
         }
         const clearBtn = $('clearSearchBtn');
         if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                State.searchQuery = '';
-                renderSites();
-                showToast('Поиск очищен', 'info', 1500);
-            });
+            clearBtn.addEventListener('click', () => { State.searchQuery = ''; renderSites(); showToast('Поиск очищен', 'info', 1500); });
         }
         const addBtn = $('addSiteBtn');
         if (addBtn) addBtn.addEventListener('click', addSite);
@@ -2742,24 +2863,16 @@ html, body {
         if (addBtn2) addBtn2.addEventListener('click', addSite);
     }
 
-    /**
-     * Привязка событий экспорта CSV
-     */
     function bindExportCsv() {
         const btn = $('exportCsvBtn');
-        if (btn) {
-            btn.addEventListener('click', exportCsv);
-        }
+        if (btn) btn.addEventListener('click', exportCsv);
     }
 
-    /**
-     * Экспорт проектов в CSV
-     */
     function exportCsv() {
         const rows = [['Название', 'URL', 'Описание', 'Категория']];
         State.sites.forEach(s => rows.push([s.title, s.url, s.desc, CATEGORIES[s.category] || s.category]));
         const csvContent = rows.map(r => r.map(f => `"${f.replace(/"/g, '""')}"`).join(',')).join('\n');
-        const blob = new Blob(['\uFEFF' + csvContent], {type: 'text/csv;charset=utf-8;'});
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = 'sites.csv';
@@ -2767,101 +2880,52 @@ html, body {
         showToast('Экспортировано в CSV', 'success');
     }
 
-    /**
-     * Добавление нового проекта
-     */
     function addSite() {
-        State.sites.push({
-            title: 'Новый проект',
-            url: 'https://',
-            desc: 'Описание проекта...',
-            category: 'other'
-        });
+        State.sites.push({ title: 'Новый проект', url: 'https://', desc: 'Описание проекта...', category: 'other' });
         markDirty();
         renderSites();
-        setTimeout(() => {
-            $('content').scrollTop = $('content').scrollHeight;
-        }, 100);
+        setTimeout(() => { $('content').scrollTop = $('content').scrollHeight; }, 100);
         showToast('Добавлен новый проект', 'info');
     }
 
-    /**
-     * Пометка состояния как измененного
-     */
     function markDirty() {
         State.dirty = true;
         const saveBtn = $('saveBtn');
         if (saveBtn) saveBtn.disabled = false;
     }
 
-    /**
-     * Сохранение списка проектов
-     * @returns {Promise<void>}
-     */
     async function saveSites() {
         const invalid = State.sites.filter(s => !s.title.trim() || !s.url.trim() || !s.desc.trim());
         if (invalid.length > 0) {
             showToast(`Заполните все поля в ${invalid.length} проект(ах)`, 'error');
             return;
         }
-
         const content = serializeSaites(State.sites);
         try {
-            await apiRequest('/api/admin/save', {
-                method: 'POST',
-                body: JSON.stringify({ content })
-            });
+            await apiRequest('/api/admin/save', { method: 'POST', body: JSON.stringify({ content }) });
             State.dirty = false;
             State.rawContent = content;
             renderSites();
             showToast(`Сохранено ${State.sites.length} проектов`, 'success');
         } catch (err) {
-            if (err.message === 'UNAUTHORIZED') {
-                showToast('Ошибка доступа. Проверьте токен.', 'error');
-                promptToken();
-            } else {
-                showToast(err.message, 'error');
-            }
+            if (err.message === 'UNAUTHORIZED') { showToast('Ошибка доступа. Проверьте токен.', 'error'); promptToken(); }
+            else showToast(err.message, 'error');
         }
     }
 
-    // ---------- Drag & Drop ----------
-    
-    /**
-     * Привязка событий drag & drop для сортировки проектов
-     */
     function bindDragAndDrop() {
         const cards = document.querySelectorAll('.site-card');
         let dragIndex = null;
-
         cards.forEach(card => {
-            card.addEventListener('dragstart', (e) => {
-                dragIndex = parseInt(card.dataset.index);
-                card.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-                document.querySelectorAll('.site-card').forEach(c => c.classList.remove('drag-over'));
-            });
-
-            card.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                card.classList.add('drag-over');
-            });
-
-            card.addEventListener('dragleave', () => {
-                card.classList.remove('drag-over');
-            });
-
+            card.addEventListener('dragstart', (e) => { dragIndex = parseInt(card.dataset.index); card.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+            card.addEventListener('dragend', () => { card.classList.remove('dragging'); document.querySelectorAll('.site-card').forEach(c => c.classList.remove('drag-over')); });
+            card.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; card.classList.add('drag-over'); });
+            card.addEventListener('dragleave', () => { card.classList.remove('drag-over'); });
             card.addEventListener('drop', (e) => {
                 e.preventDefault();
                 card.classList.remove('drag-over');
                 const dropIndex = parseInt(card.dataset.index);
                 if (dragIndex === null || dragIndex === dropIndex) return;
-
                 const [moved] = State.sites.splice(dragIndex, 1);
                 State.sites.splice(dropIndex, 0, moved);
                 markDirty();
@@ -2874,11 +2938,6 @@ html, body {
     // ============================================
     // CHANGELOG MODULE
     // ============================================
-
-    /**
-     * Типы изменений в changelog
-     * @constant {Object<string, Object>}
-     */
     const CHANGE_TYPES = {
         feat: { label: 'FEAT', color: '#30D158', bg: 'rgba(48, 209, 88, 0.15)' },
         fix: { label: 'FIX', color: '#FF453A', bg: 'rgba(255, 69, 58, 0.15)' },
@@ -2891,106 +2950,62 @@ html, body {
         default: { label: 'NOTE', color: '#98989D', bg: 'rgba(152, 152, 157, 0.12)' }
     };
 
-    /** @type {number|null} Индекс перетаскиваемой версии */
     let _changelogVersionDragIdx = null;
-    
-    /** @type {Object|null} Данные перетаскиваемого изменения */
-    let _changelogChangeDragData = null;
 
-    /**
-     * Рендеринг модуля changelog
-     */
     function renderChangelog() {
-        $('pageTitle').textContent = 'Changelog';
+        setPageTitle('Changelog');
         $('topbarActions').innerHTML = `
             <button class="btn btn-secondary" id="reloadBtn">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Обновить
             </button>
             <button class="btn btn-primary" id="saveBtn" ${State.dirty ? '' : 'disabled'}>
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 Сохранить
             </button>
         `;
-
         $('reloadBtn').addEventListener('click', () => loadSection('changelog'));
         $('saveBtn').addEventListener('click', saveChangelog);
-
         const parsed = parseChangelog(State.changelog);
         State._changelogParsed = parsed;
-
         $('content').innerHTML = `
             <div class="toolbar" style="margin-bottom: 20px;">
                 <button class="btn btn-primary" id="addVersionBtn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Новая версия
                 </button>
                 <button class="btn btn-secondary" id="expandAllBtn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                     Развернуть все
                 </button>
                 <button class="btn btn-secondary" id="collapseAllBtn">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"/></svg>
                     Свернуть все
                 </button>
-                <span style="margin-left:auto; font-size:0.88rem; color:var(--text-secondary);">
+                <span style="margin-left:auto; font-size:0.88rem; color:var(--text-secondary); font-family:var(--mono);">
                     ${parsed.length} ${declension(parsed.length, ['версия', 'версии', 'версий'])}
                 </span>
             </div>
             <div class="changelog-list" id="changelogList"></div>
         `;
-
         $('addVersionBtn').addEventListener('click', () => {
             const today = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-            parsed.unshift({
-                version: 'v1.0.0',
-                date: today,
-                changes: [{ type: 'feat', text: '' }]
-            });
+            parsed.unshift({ version: 'v1.0.0', date: today, changes: [{ type: 'feat', text: '' }] });
             persistChangelog();
             renderChangelog();
             setTimeout(() => {
                 const firstVersionInput = $('changelogList').querySelector('.changelog-version');
-                if (firstVersionInput) {
-                    firstVersionInput.focus();
-                    firstVersionInput.select();
-                }
+                if (firstVersionInput) { firstVersionInput.focus(); firstVersionInput.select(); }
             }, 50);
             showToast('Создана новая версия', 'success');
         });
-
-        $('expandAllBtn').addEventListener('click', () => {
-            document.querySelectorAll('.changelog-card').forEach(c => c.classList.remove('collapsed'));
-        });
-        $('collapseAllBtn').addEventListener('click', () => {
-            document.querySelectorAll('.changelog-card').forEach(c => c.classList.add('collapsed'));
-        });
-
+        $('expandAllBtn').addEventListener('click', () => { document.querySelectorAll('.changelog-card').forEach(c => c.classList.remove('collapsed')); });
+        $('collapseAllBtn').addEventListener('click', () => { document.querySelectorAll('.changelog-card').forEach(c => c.classList.add('collapsed')); });
         if (parsed.length === 0) {
-            $('changelogList').innerHTML = `
-                <div class="empty-state">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <h3>История пуста</h3>
-                    <p>Добавьте первую версию, чтобы начать вести changelog</p>
-                    <button class="btn btn-primary" id="addVersionEmpty">Создать первую версию</button>
-                </div>
-            `;
+            $('changelogList').innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><h3>История пуста</h3><p>Добавьте первую версию, чтобы начать вести changelog</p><button class="btn btn-primary" id="addVersionEmpty">Создать первую версию</button></div>`;
             $('addVersionEmpty').addEventListener('click', () => $('addVersionBtn').click());
             return;
         }
-
         const list = $('changelogList');
         parsed.forEach((version, vIdx) => {
             const card = document.createElement('div');
@@ -3000,140 +3015,90 @@ html, body {
             renderVersionCard(card, version, vIdx);
             list.appendChild(card);
         });
-
         attachChangelogDelegation();
     }
 
-    /**
-     * Рендеринг карточки версии
-     * @param {HTMLElement} card - DOM элемент карточки
-     * @param {Object} version - Данные версии
-     * @param {number} vIdx - Индекс версии
-     */
     function renderVersionCard(card, version, vIdx) {
-        const typeOptions = Object.entries(CHANGE_TYPES)
-            .map(([k, v]) => `<option value="${k}">${v.label}</option>`)
-            .join('');
-
+        const typeOptions = Object.entries(CHANGE_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
         card.innerHTML = `
             <div class="changelog-header">
                 <div class="drag-handle" data-role="version-drag" title="Перетащите версию">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
                 </div>
-                <input type="text" class="changelog-version" data-role="version" value="${escapeHtml(version.version || '')}" placeholder="Версия (напр. v2.4.1)">
-                <input type="text" class="changelog-date" data-role="date" value="${escapeHtml(version.date || '')}" placeholder="Дата">
-                <span style="font-size:0.78rem; color:var(--text-tertiary); padding: 4px 10px; background: rgba(255,255,255,0.05); border-radius: 99px;">
+                <input type="text" class="changelog-version" data-role="version" value="${Security.escapeHtml(version.version || '')}" placeholder="Версия (напр. v2.4.1)">
+                <input type="text" class="changelog-date" data-role="date" value="${Security.escapeHtml(version.date || '')}" placeholder="Дата">
+                <span style="font-size:0.78rem; color:var(--text-tertiary); padding: 4px 10px; background: var(--bg-input); border-radius: 99px; font-family:var(--mono);">
                     ${version.changes.length} ${declension(version.changes.length, ['изменение', 'изменения', 'изменений'])}
                 </span>
                 <button class="btn btn-ghost btn-icon" data-action="collapse" title="Свернуть">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <button class="btn btn-ghost btn-icon" data-action="delete-version" title="Удалить версию">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
             </div>
             <div class="changelog-items" data-role="items">
                 ${version.changes.map((c, cIdx) => renderChangeItem(c, cIdx, typeOptions)).join('')}
             </div>
             <button class="btn btn-ghost" data-action="add-item" style="margin-top:14px; font-size:0.84rem;">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Добавить изменение
             </button>
         `;
     }
 
-    /**
-     * Рендеринг элемента изменения
-     * @param {Object} change - Данные изменения
-     * @param {number} cIdx - Индекс изменения
-     * @param {string} typeOptions - HTML опций для select
-     * @returns {string} HTML элемента
-     */
     function renderChangeItem(change, cIdx, typeOptions) {
         const meta = CHANGE_TYPES[change.type] || CHANGE_TYPES.default;
-        const options = Object.entries(CHANGE_TYPES)
-            .map(([k, v]) => `<option value="${k}" ${change.type === k ? 'selected' : ''}>${v.label}</option>`)
-            .join('');
-
+        const options = Object.entries(CHANGE_TYPES).map(([k, v]) => `<option value="${k}" ${change.type === k ? 'selected' : ''}>${v.label}</option>`).join('');
         return `
             <div class="changelog-item" data-c-idx="${cIdx}" draggable="true">
                 <div class="drag-handle" data-role="change-drag" style="margin-top:6px;">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
                 </div>
-                <select data-role="type" style="background:${meta.bg}; color:${meta.color}; border:1px solid rgba(255,255,255,0.08); padding:4px 28px 4px 10px; border-radius:99px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; appearance:none; cursor:pointer; background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2398989D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;); background-repeat:no-repeat; background-position:right 8px center;">
+                <select data-role="type" style="background:${meta.bg}; color:${meta.color}; border:1px solid var(--border); padding:4px 28px 4px 10px; border-radius:99px; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; appearance:none; cursor:pointer; background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2398989D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E&quot;); background-repeat:no-repeat; background-position:right 8px center;">
                     ${options}
                 </select>
                 <div class="changelog-text">
-                    <input type="text" data-role="text" value="${escapeHtml(change.text)}" placeholder="Описание изменения...">
+                    <input type="text" data-role="text" value="${Security.escapeHtml(change.text)}" placeholder="Описание изменения...">
                 </div>
                 <button class="btn btn-ghost btn-icon" data-action="delete-item" title="Удалить">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
         `;
     }
 
-    /**
-     * Привязка событий через делегирование для changelog
-     */
     function attachChangelogDelegation() {
         const list = $('changelogList');
-
-        // Делегирование событий: инпуты не теряют фокус при перерисовке
         list.addEventListener('input', (e) => {
             const card = e.target.closest('.changelog-card');
             if (!card) return;
             const vIdx = parseInt(card.dataset.vIdx);
             const parsed = State._changelogParsed;
-
-            if (e.target.dataset.role === 'version') {
-                parsed[vIdx].version = e.target.value;
-                persistChangelog();
-            } else if (e.target.dataset.role === 'date') {
-                parsed[vIdx].date = e.target.value;
-                persistChangelog();
-            } else if (e.target.dataset.role === 'text') {
+            if (e.target.dataset.role === 'version') { parsed[vIdx].version = e.target.value; persistChangelog(); }
+            else if (e.target.dataset.role === 'date') { parsed[vIdx].date = e.target.value; persistChangelog(); }
+            else if (e.target.dataset.role === 'text') {
                 const item = e.target.closest('.changelog-item');
-                if (item) {
-                    const cIdx = parseInt(item.dataset.cIdx);
-                    parsed[vIdx].changes[cIdx].text = e.target.value;
-                    persistChangelog();
-                }
+                if (item) { const cIdx = parseInt(item.dataset.cIdx); parsed[vIdx].changes[cIdx].text = e.target.value; persistChangelog(); }
             }
         });
-
         list.addEventListener('change', (e) => {
             const card = e.target.closest('.changelog-card');
             if (!card) return;
             const vIdx = parseInt(card.dataset.vIdx);
             const parsed = State._changelogParsed;
-
             if (e.target.dataset.role === 'type') {
                 const item = e.target.closest('.changelog-item');
                 if (item) {
                     const cIdx = parseInt(item.dataset.cIdx);
                     parsed[vIdx].changes[cIdx].type = e.target.value;
                     persistChangelog();
-                    // Обновляем визуал селекта без перерисовки
                     const meta = CHANGE_TYPES[e.target.value] || CHANGE_TYPES.default;
                     e.target.style.background = `${meta.bg}`;
                     e.target.style.color = meta.color;
                 }
             }
         });
-
         list.addEventListener('click', (e) => {
             const action = e.target.closest('[data-action]');
             if (!action) return;
@@ -3141,50 +3106,32 @@ html, body {
             if (!card) return;
             const vIdx = parseInt(card.dataset.vIdx);
             const parsed = State._changelogParsed;
-
             switch (action.dataset.action) {
-                case 'collapse':
-                    card.classList.toggle('collapsed');
-                    break;
-
+                case 'collapse': card.classList.toggle('collapsed'); break;
                 case 'delete-version':
-                    showModal(
-                        'Удалить версию?',
-                        `Версия "${parsed[vIdx].version}" будет удалена вместе с ${parsed[vIdx].changes.length} изменениями. Это действие нельзя отменить.`,
-                        () => {
-                            parsed.splice(vIdx, 1);
-                            persistChangelog();
-                            renderChangelog();
-                            showToast('Версия удалена', 'success');
-                        }
-                    );
+                    showModal('Удалить версию?', `Версия "${parsed[vIdx].version}" будет удалена вместе с ${parsed[vIdx].changes.length} изменениями. Это действие нельзя отменить.`, () => {
+                        parsed.splice(vIdx, 1);
+                        persistChangelog();
+                        renderChangelog();
+                        showToast('Версия удалена', 'success');
+                    });
                     break;
-
                 case 'delete-item': {
                     const item = action.closest('.changelog-item');
                     if (item) {
                         const cIdx = parseInt(item.dataset.cIdx);
                         parsed[vIdx].changes.splice(cIdx, 1);
                         persistChangelog();
-                        // Удаляем элемент из DOM без полной перерисовки
                         item.style.animation = 'toastOut 0.2s forwards';
                         setTimeout(() => {
                             item.remove();
-                            // Обновляем счётчик изменений
                             const counter = card.querySelector('.changelog-header span');
-                            if (counter) {
-                                const count = parsed[vIdx].changes.length;
-                                counter.textContent = `${count} ${declension(count, ['изменение', 'изменения', 'изменений'])}`;
-                            }
-                            // Переиндексируем data-c-idx
-                            card.querySelectorAll('.changelog-item').forEach((el, i) => {
-                                el.dataset.cIdx = i;
-                            });
+                            if (counter) { const count = parsed[vIdx].changes.length; counter.textContent = `${count} ${declension(count, ['изменение', 'изменения', 'изменений'])}`; }
+                            card.querySelectorAll('.changelog-item').forEach((el, i) => { el.dataset.cIdx = i; });
                         }, 200);
                     }
                     break;
                 }
-
                 case 'add-item': {
                     parsed[vIdx].changes.push({ type: 'feat', text: '' });
                     persistChangelog();
@@ -3193,53 +3140,25 @@ html, body {
                     temp.innerHTML = renderChangeItem(parsed[vIdx].changes[parsed[vIdx].changes.length - 1], parsed[vIdx].changes.length - 1, '');
                     const newItem = temp.firstElementChild;
                     itemsContainer.appendChild(newItem);
-                    // Обновляем счётчик
                     const counter = card.querySelector('.changelog-header span');
-                    if (counter) {
-                        const count = parsed[vIdx].changes.length;
-                        counter.textContent = `${count} ${declension(count, ['изменение', 'изменения', 'изменений'])}`;
-                    }
+                    if (counter) { const count = parsed[vIdx].changes.length; counter.textContent = `${count} ${declension(count, ['изменение', 'изменения', 'изменений'])}`; }
                     newItem.querySelector('[data-role="text"]').focus();
                     break;
                 }
             }
         });
-
-        // Drag-and-drop версий
         const cards = list.querySelectorAll('.changelog-card');
         cards.forEach(card => {
-            card.addEventListener('dragstart', (e) => {
-                if (!e.target.dataset || e.target.dataset.role !== 'version-drag') {
-                    // Разрешаем drag только с хэндла версии
-                }
-                _changelogVersionDragIdx = parseInt(card.dataset.vIdx);
-                card.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-                cards.forEach(c => c.classList.remove('drag-over'));
-                _changelogVersionDragIdx = null;
-            });
-
-            card.addEventListener('dragover', (e) => {
-                if (_changelogVersionDragIdx === null) return;
-                e.preventDefault();
-                card.classList.add('drag-over');
-            });
-
-            card.addEventListener('dragleave', () => {
-                card.classList.remove('drag-over');
-            });
-
+            card.addEventListener('dragstart', () => { _changelogVersionDragIdx = parseInt(card.dataset.vIdx); card.classList.add('dragging'); });
+            card.addEventListener('dragend', () => { card.classList.remove('dragging'); cards.forEach(c => c.classList.remove('drag-over')); _changelogVersionDragIdx = null; });
+            card.addEventListener('dragover', (e) => { if (_changelogVersionDragIdx === null) return; e.preventDefault(); card.classList.add('drag-over'); });
+            card.addEventListener('dragleave', () => { card.classList.remove('drag-over'); });
             card.addEventListener('drop', (e) => {
                 if (_changelogVersionDragIdx === null) return;
                 e.preventDefault();
                 card.classList.remove('drag-over');
                 const dropIdx = parseInt(card.dataset.vIdx);
                 if (_changelogVersionDragIdx === dropIdx) return;
-
                 const parsed = State._changelogParsed;
                 const [moved] = parsed.splice(_changelogVersionDragIdx, 1);
                 parsed.splice(dropIdx, 0, moved);
@@ -3250,9 +3169,6 @@ html, body {
         });
     }
 
-    /**
-     * Сохранение changelog в состояние
-     */
     function persistChangelog() {
         State.changelog = serializeChangelog(State._changelogParsed);
         State.dirty = true;
@@ -3260,12 +3176,6 @@ html, body {
         if (saveBtn) saveBtn.disabled = false;
     }
 
-    /**
-     * Склонение слов
-     * @param {number} n - Число
-     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
-     * @returns {string} Правильная форма
-     */
     function declension(n, forms) {
         const abs = Math.abs(n) % 100;
         const last = abs % 10;
@@ -3275,48 +3185,26 @@ html, body {
         return forms[2];
     }
 
-    /**
-     * Парсинг changelog из строки
-     * @param {string} content - Сырое содержимое
-     * @returns {Array<Object>} Список версий
-     */
     function parseChangelog(content) {
         if (!content || typeof content !== 'string') return [];
         const blocks = content.split('::').filter(b => b?.trim());
         return blocks.map(block => {
             const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
             if (lines.length === 0) return null;
-
             const headerLine = lines[0];
-            const [version, date] = headerLine.includes('|')
-                ? headerLine.split('|').map(s => s.trim())
-                : [headerLine, ''];
-
+            const [version, date] = headerLine.includes('|') ? headerLine.split('|').map(s => s.trim()) : [headerLine, ''];
             const changes = lines.slice(1).map(line => {
                 const match = line.match(/^-\s*\[(\w+)\]\s*(.*)$/);
                 if (match) {
                     const type = match[1].toLowerCase();
-                    return {
-                        type: CHANGE_TYPES[type] ? type : 'default',
-                        text: match[2].trim()
-                    };
+                    return { type: CHANGE_TYPES[type] ? type : 'default', text: match[2].trim() };
                 }
                 return { type: 'default', text: line.replace(/^-\s*/, '').trim() };
             }).filter(c => c.text);
-
-            return {
-                version: version?.trim() || '',
-                date: date?.trim() || '',
-                changes
-            };
+            return { version: version?.trim() || '', date: date?.trim() || '', changes };
         }).filter(v => v && (v.version || v.changes.length > 0));
     }
 
-    /**
-     * Сериализация changelog в строку
-     * @param {Array<Object>} parsed - Список версий
-     * @returns {string} Сериализованная строка
-     */
     function serializeChangelog(parsed) {
         return parsed.map(v => {
             const header = v.date ? `${v.version} | ${v.date}` : v.version;
@@ -3325,164 +3213,98 @@ html, body {
         }).join('\n::\n');
     }
 
-    /**
-     * Сохранение changelog
-     * @returns {Promise<void>}
-     */
     async function saveChangelog() {
         const parsed = State._changelogParsed || [];
-        // Валидация: проверяем пустые версии без изменений
         const empty = parsed.filter(v => !v.version.trim() && v.changes.length === 0);
         if (empty.length > 0) {
-            showModal(
-                'Обнаружены пустые версии',
-                `${empty.length} ${declension(empty.length, ['версия', 'версии', 'версий'])} без названия и изменений будут удалены перед сохранением. Продолжить?`,
-                async () => {
-                    State._changelogParsed = parsed.filter(v => v.version.trim() || v.changes.length > 0);
-                    await doSaveChangelog();
-                }
-            );
+            showModal('Обнаружены пустые версии', `${empty.length} ${declension(empty.length, ['версия', 'версии', 'версий'])} без названия и изменений будут удалены перед сохранением. Продолжить?`, async () => {
+                State._changelogParsed = parsed.filter(v => v.version.trim() || v.changes.length > 0);
+                await doSaveChangelog();
+            });
             return;
         }
         await doSaveChangelog();
     }
 
-    /**
-     * Выполнение сохранения changelog
-     * @returns {Promise<void>}
-     */
     async function doSaveChangelog() {
         try {
             State.changelog = serializeChangelog(State._changelogParsed);
-            await apiRequest('/api/admin/changelog/save', {
-                method: 'POST',
-                body: JSON.stringify({ content: State.changelog })
-            });
+            await apiRequest('/api/admin/changelog/save', { method: 'POST', body: JSON.stringify({ content: State.changelog }) });
             State.dirty = false;
             const saveBtn = $('saveBtn');
             if (saveBtn) saveBtn.disabled = true;
             showToast('Changelog сохранён', 'success');
         } catch (err) {
-            if (err.message === 'UNAUTHORIZED') {
-                showToast('Ошибка доступа. Проверьте токен.', 'error');
-                promptToken();
-            } else {
-                showToast(err.message, 'error');
-            }
+            if (err.message === 'UNAUTHORIZED') { showToast('Ошибка доступа. Проверьте токен.', 'error'); promptToken(); }
+            else showToast(err.message, 'error');
         }
     }
 
     // ============================================
     // JSON EDITOR MODULE
     // ============================================
-    
-    /**
-     * Рендеринг JSON редактора
-     * @param {string} section - Название секции
-     * @param {Array} data - Данные для редактирования
-     */
     function renderJsonEditor(section, data) {
         const titles = { status: 'Status Config', api: 'API Config', faq: 'FAQ Config' };
-        const endpoints = {
-            status: '/api/admin/status-config/save',
-            api: '/api/admin/api-config/save',
-            faq: '/api/admin/faq-config/save'
-        };
-        $('pageTitle').textContent = titles[section];
+        const endpoints = { status: '/api/admin/status-config/save', api: '/api/admin/api-config/save', faq: '/api/admin/faq-config/save' };
+        setPageTitle(titles[section]);
         $('topbarActions').innerHTML = `
             <button class="btn btn-secondary" id="reloadBtn">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                 Обновить
             </button>
             <button class="btn btn-primary" id="saveBtn">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 Сохранить
             </button>
         `;
-
         $('reloadBtn').addEventListener('click', () => loadSection(section));
         $('saveBtn').addEventListener('click', async () => {
             try {
                 const textarea = $('jsonEditor');
                 const parsed = JSON.parse(textarea.value);
-                await apiRequest(endpoints[section], {
-                    method: 'POST',
-                    body: JSON.stringify({ content: parsed })
-                });
+                await apiRequest(endpoints[section], { method: 'POST', body: JSON.stringify({ content: parsed }) });
                 showToast('Сохранено', 'success');
             } catch (err) {
-                if (err instanceof SyntaxError) {
-                    showToast('Невалидный JSON: ' + err.message, 'error');
-                } else {
-                    showToast(err.message, 'error');
-                }
+                if (err instanceof SyntaxError) showToast('Невалидный JSON: ' + err.message, 'error');
+                else showToast(err.message, 'error');
             }
         });
-
         $('content').innerHTML = `
             <div class="json-editor-wrap">
                 <div class="json-editor-toolbar">
                     <span class="info">Редактируйте JSON напрямую</span>
                     <div style="display:flex;gap:8px;">
                         <button class="btn btn-ghost" id="copyBtn" style="font-size:0.84rem;">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             Копировать
                         </button>
                         <button class="btn btn-ghost" id="pasteBtn" style="font-size:0.84rem;">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                             Вставить
                         </button>
                         <button class="btn btn-ghost" id="formatBtn" style="font-size:0.84rem;">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
-                            </svg>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
                             Форматировать
                         </button>
                     </div>
                 </div>
-                <textarea class="json-editor" id="jsonEditor" spellcheck="false">${escapeHtml(JSON.stringify(data, null, 2))}</textarea>
+                <textarea class="json-editor" id="jsonEditor" spellcheck="false">${Security.escapeHtml(JSON.stringify(data, null, 2))}</textarea>
             </div>
         `;
-
-        $('copyBtn').addEventListener('click', () => {
-            navigator.clipboard.writeText($('jsonEditor').value).then(() => showToast('Скопировано', 'info', 1500));
-        });
+        $('copyBtn').addEventListener('click', () => { navigator.clipboard.writeText($('jsonEditor').value).then(() => showToast('Скопировано', 'info', 1500)); });
         $('pasteBtn').addEventListener('click', async () => {
-            try {
-                const text = await navigator.clipboard.readText();
-                $('jsonEditor').value = text;
-                showToast('Вставлено', 'info', 1500);
-            } catch {
-                showToast('Не удалось вставить', 'error');
-            }
+            try { const text = await navigator.clipboard.readText(); $('jsonEditor').value = text; showToast('Вставлено', 'info', 1500); }
+            catch { showToast('Не удалось вставить', 'error'); }
         });
         $('formatBtn').addEventListener('click', () => {
-            try {
-                const textarea = $('jsonEditor');
-                const parsed = JSON.parse(textarea.value);
-                textarea.value = JSON.stringify(parsed, null, 2);
-                showToast('Отформатировано', 'info', 1500);
-            } catch (err) {
-                showToast('Невалидный JSON', 'error');
-            }
+            try { const textarea = $('jsonEditor'); const parsed = JSON.parse(textarea.value); textarea.value = JSON.stringify(parsed, null, 2); showToast('Отформатировано', 'info', 1500); }
+            catch (err) { showToast('Невалидный JSON', 'error'); }
         });
     }
 
     // ============================================
     // NAVIGATION
     // ============================================
-    
-    /**
-     * Привязка событий навигации
-     */
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -3495,10 +3317,6 @@ html, body {
     // ============================================
     // TOKEN MANAGEMENT
     // ============================================
-    
-    /**
-     * Обновление статуса токена в UI
-     */
     function updateTokenStatus() {
         if (State.token) {
             $('tokenDot').className = 'token-dot';
@@ -3509,9 +3327,6 @@ html, body {
         }
     }
 
-    /**
-     * Запрос токена у пользователя
-     */
     function promptToken() {
         const token = prompt('Введите Admin Token:');
         if (token !== null) {
@@ -3525,56 +3340,32 @@ html, body {
     $('tokenStatus').addEventListener('click', promptToken);
 
     // ============================================
-    // UTILITIES
-    // ============================================
-    
-    /**
-     * Экранирование HTML-сущностей (дубликат для совместимости)
-     * @param {string|null|undefined} str - Исходная строка
-     * @returns {string} Экранированная строка
-     */
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    // ============================================
     // INITIALIZATION
     // ============================================
-    
-    /**
-     * Инициализация приложения
-     */
+    initTheme();
+    initScrollTop();
+    initCmdk();
+    initHotkeys();
     updateTokenStatus();
+
     if (!State.token) {
-        $('content').innerHTML = `
-            <div class="empty-state">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-                <h3>Требуется токен</h3>
-                <p>Введите токен администратора для доступа.</p>
-                <button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button>
-            </div>`;
+        $('content').innerHTML = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><h3>Требуется токен</h3><p>Введите токен администратора для доступа.</p><button class="btn btn-primary" id="enterTokenBtn">Ввести токен</button></div>`;
         $('enterTokenBtn').addEventListener('click', promptToken);
     } else {
         loadSection('sites');
     }
 
-    /**
-     * Предупреждение при попытке закрытия с несохраненными изменениями
-     */
     window.addEventListener('beforeunload', (e) => {
-        if (State.dirty) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
+        if (State.dirty) { e.preventDefault(); e.returnValue = ''; }
     });
+
+    // Glitch on title click
+    $('pageTitle').addEventListener('click', triggerGlitch);
+    setInterval(triggerGlitch, 8000);
+
+    setTimeout(() => {
+        showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+    }, 1200);
 })();
 </script>
 </body>
