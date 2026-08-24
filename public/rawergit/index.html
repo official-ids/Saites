@@ -293,7 +293,7 @@ input, textarea {
 /* ============ SIDEBAR ============ */
 .sidebar {
   border-right: 1px solid var(--color-border-muted);
-  padding: 24px 16px;
+  padding: 24px 12px; /* Сбалансированный отступ: прижато левее, но дышится */
   overflow-y: auto;
   max-height: calc(100vh - 65px);
   position: sticky;
@@ -311,7 +311,7 @@ input, textarea {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 8px;
-  padding: 0 8px;
+  padding: 0 4px; /* Минимальный отступ слева для заголовков */
 }
 
 .history-list {
@@ -322,7 +322,7 @@ input, textarea {
 }
 
 .history-item {
-  padding: 8px 10px;
+  padding: 6px 8px; /* Компактнее и левее */
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 13px;
@@ -353,6 +353,9 @@ input, textarea {
   padding: 2px;
   border-radius: 4px;
   transition: opacity var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .history-item:hover .history-item-delete { opacity: 1; }
@@ -360,20 +363,21 @@ input, textarea {
 .history-item-delete svg { width: 14px; height: 14px; display: block; }
 
 .history-empty {
-  padding: 16px 10px;
+  padding: 16px 8px;
   color: var(--color-text-tertiary);
   font-size: 13px;
-  text-align: center;
+  text-align: left; /* Выравнивание по левому краю для консистентности */
 }
 
 .clear-history {
   width: 100%;
-  padding: 6px 10px;
+  padding: 6px 8px;
   font-size: 12px;
   color: var(--color-text-secondary);
   border-radius: var(--radius-md);
   transition: background var(--transition);
   margin-top: 8px;
+  text-align: left;
 }
 
 .clear-history:hover { background: var(--color-bg-hover); color: var(--color-danger-fg); }
