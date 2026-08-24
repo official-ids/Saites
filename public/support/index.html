@@ -1,60 +1,86 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Техническая поддержка Oris — чат с командой">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 <title>Поддержка · Oris</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 <style>
 :root {
     --bg-body: #F5F5F7;
     --bg-card: #FFFFFF;
-    --bg-elevated: #F0F0F2;
+    --bg-elevated: #FFFFFF;
+    --bg-sunken: #E8E8ED;
+    --bg-input: rgba(0, 0, 0, 0.04);
     --bg-sidebar: #F9F9FB;
     --bg-bubble-user: #0071E3;
     --bg-bubble-other: #FFFFFF;
     --text-primary: #1D1D1F;
-    --text-secondary: #86868B;
-    --text-tertiary: #AEAEB2;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #86868B;
     --text-on-accent: #FFFFFF;
     --accent: #0071E3;
     --accent-hover: #0077ED;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-glow: rgba(0, 113, 227, 0.25);
     --danger: #FF3B30;
+    --danger-soft: rgba(255, 59, 48, 0.12);
     --success: #34C759;
+    --success-soft: rgba(52, 199, 89, 0.12);
     --warning: #FF9F0A;
+    --warning-soft: rgba(255, 159, 10, 0.12);
+    --purple: #AF52DE;
+    --purple-soft: rgba(175, 82, 222, 0.12);
+    --teal: #5AC8FA;
     --gold: #D4AF37;
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.15);
+    --gold-soft: rgba(212, 175, 55, 0.15);
+    --border: rgba(0, 0, 0, 0.06);
+    --border-strong: rgba(0, 0, 0, 0.12);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --radius-lg: 18px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
     --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --mono-stack: 'SF Mono', 'Menlo', monospace;
+    --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+    --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-color: rgba(0, 0, 0, 0.04);
+    --header-h: 56px;
 }
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-body: #000000;
-        --bg-card: #1C1C1E;
-        --bg-elevated: #2C2C2E;
-        --bg-sidebar: #0A0A0A;
-        --bg-bubble-other: #2C2C2E;
-        --text-primary: #F5F5F7;
-        --text-secondary: #86868B;
-        --text-tertiary: #636366;
-        --border: rgba(255, 255, 255, 0.1);
-        --border-strong: rgba(255, 255, 255, 0.18);
-    }
+[data-theme="dark"] {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-sunken: #0A0A0A;
+    --bg-input: rgba(255, 255, 255, 0.06);
+    --bg-sidebar: #0A0A0A;
+    --bg-bubble-other: #2C2C2E;
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1A6;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-glow: rgba(10, 132, 255, 0.4);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
 html, body { height: 100%; overflow: hidden; }
@@ -63,34 +89,108 @@ body {
     color: var(--text-primary);
     font-family: var(--font-stack);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* Кнопки с иконками (общий стиль) */
+/* Background grid */
+.bg-grid {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    animation: gridShift 30s linear infinite;
+}
+@keyframes gridShift {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 48px 48px, 48px 48px; }
+}
+
+/* Floating orbs */
+.bg-orbs {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 20s ease-in-out infinite;
+}
+[data-theme="dark"] .orb { opacity: 0.25; }
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    animation-duration: 25s;
+}
+.orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    bottom: -200px; left: -200px;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+.orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+    top: 50%; left: 30%;
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
+}
+
+/* Icon buttons */
 .btn-icon {
     background: transparent;
     border: none;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
     color: var(--text-secondary);
+    position: relative;
 }
 .btn-icon:hover {
     background: var(--bg-elevated);
     transform: scale(1.05);
     color: var(--text-primary);
 }
-.btn-icon svg {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2;
+.btn-icon svg { width: 18px; height: 18px; stroke-width: 2; }
+.btn-icon .kbd-hint {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    font-family: var(--mono-stack);
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
 }
+.btn-icon:hover .kbd-hint { opacity: 1; }
 
-/* ============= КАРТОЧКИ ФАЙЛОВ ============= */
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: block; }
+
+/* File cards */
 .file-card {
     display: block;
     margin: 6px 0;
@@ -99,7 +199,7 @@ body {
     background: var(--bg-elevated);
     max-width: 280px;
     border: 1px solid var(--border);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.2s var(--transition), box-shadow 0.2s ease;
 }
 .file-card:first-child { margin-top: 0; }
 .file-card:last-child { margin-bottom: 0; }
@@ -114,12 +214,7 @@ body {
 .message.user .file-card:hover {
     background: rgba(255, 255, 255, 0.2);
 }
-
-/* Карточка с изображением */
-.image-card a {
-    display: block;
-    line-height: 0;
-}
+.image-card a { display: block; line-height: 0; }
 .image-card img {
     display: block;
     width: 100%;
@@ -128,9 +223,7 @@ body {
     cursor: zoom-in;
     transition: transform 0.2s ease;
 }
-.image-card img:hover {
-    transform: scale(1.02);
-}
+.image-card img:hover { transform: scale(1.02); }
 .image-card .file-name {
     padding: 8px 12px;
     font-size: 0.75rem;
@@ -143,8 +236,6 @@ body {
     color: rgba(255, 255, 255, 0.85);
     border-top-color: rgba(255, 255, 255, 0.18);
 }
-
-/* Карточка с документом */
 .doc-card .file-link {
     display: flex;
     align-items: center;
@@ -154,25 +245,16 @@ body {
     color: inherit;
     transition: background 0.15s ease;
 }
-.doc-card .file-link:hover {
-    background: var(--border);
-}
-.message.user .doc-card .file-link:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
+.doc-card .file-link:hover { background: var(--border); }
+.message.user .doc-card .file-link:hover { background: rgba(255, 255, 255, 0.08); }
 .doc-card .file-link svg {
     flex-shrink: 0;
     color: var(--accent);
     width: 32px;
     height: 32px;
 }
-.message.user .doc-card .file-link svg {
-    color: var(--text-on-accent);
-}
-.doc-card .file-info {
-    min-width: 0;
-    flex: 1;
-}
+.message.user .doc-card .file-link svg { color: var(--text-on-accent); }
+.doc-card .file-info { min-width: 0; flex: 1; }
 .doc-card .file-name {
     font-size: 0.86rem;
     font-weight: 600;
@@ -183,26 +265,21 @@ body {
     margin-bottom: 2px;
     letter-spacing: -0.01em;
 }
-.message.user .doc-card .file-name {
-    color: var(--text-on-accent);
-}
+.message.user .doc-card .file-name { color: var(--text-on-accent); }
 .doc-card .file-size {
     font-size: 0.72rem;
     color: var(--text-secondary);
     font-weight: 500;
+    font-family: var(--mono-stack);
 }
-.message.user .doc-card .file-size {
-    color: rgba(255, 255, 255, 0.72);
-}
-
-/* Текст в bubble должен правильно оборачивать карточки */
+.message.user .doc-card .file-size { color: rgba(255, 255, 255, 0.72); }
 .message-bubble .msg-text {
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
 
-/* Панель эмодзи */
+/* Emoji panel */
 .emoji-panel {
     position: absolute;
     bottom: 70px;
@@ -216,8 +293,13 @@ body {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 6px;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     z-index: 100;
+    animation: slideUp 0.2s var(--transition);
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 .emoji-panel button {
     background: transparent;
@@ -228,11 +310,9 @@ body {
     border-radius: 8px;
     transition: background 0.1s;
 }
-.emoji-panel button:hover {
-    background: var(--bg-elevated);
-}
+.emoji-panel button:hover { background: var(--bg-elevated); }
 
-/* Превью файла */
+/* File preview */
 .file-preview {
     position: absolute;
     bottom: 70px;
@@ -241,8 +321,9 @@ body {
     border-radius: 16px;
     padding: 12px;
     max-width: 260px;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     z-index: 100;
+    animation: slideUp 0.2s var(--transition);
 }
 .file-preview img {
     max-width: 100%;
@@ -263,6 +344,8 @@ body {
     font-size: 0.7rem;
     cursor: pointer;
     margin-top: 8px;
+    font-family: inherit;
+    font-weight: 500;
 }
 
 /* App layout */
@@ -271,6 +354,8 @@ body {
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
+    position: relative;
+    z-index: 1;
 }
 
 /* Sidebar */
@@ -281,14 +366,17 @@ body {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    position: relative;
+    z-index: 2;
 }
 .sidebar-header {
-    padding: 16px 20px;
+    padding: 14px 20px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+    height: var(--header-h);
 }
 .sidebar-logo {
     display: flex;
@@ -298,7 +386,15 @@ body {
     color: var(--text-primary);
 }
 .sidebar-logo svg { width: 24px; height: 24px; color: var(--accent); }
-.sidebar-logo span { font-size: 1rem; font-weight: 600; letter-spacing: -0.02em; }
+.sidebar-logo span {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 .sidebar-user {
     display: flex;
     align-items: center;
@@ -309,10 +405,12 @@ body {
 .sidebar-user-admin {
     padding: 2px 8px;
     border-radius: 99px;
-    background: rgba(212, 175, 55, 0.15);
+    background: var(--gold-soft);
     color: var(--gold);
     font-size: 0.7rem;
-    font-weight: 600;
+    font-weight: 700;
+    font-family: var(--mono-stack);
+    letter-spacing: 0.05em;
 }
 .sidebar-actions {
     padding: 12px 16px;
@@ -328,17 +426,33 @@ body {
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s var(--transition);
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
 .btn svg { width: 14px; height: 14px; }
-.btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-secondary { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); }
-.btn-secondary:hover { background: var(--border); }
-.btn-danger { background: rgba(255, 59, 48, 0.1); color: var(--danger); }
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px var(--accent-glow);
+}
+.btn-primary:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+    background: var(--bg-card);
+    border-color: var(--accent);
+}
+.btn-danger { background: var(--danger-soft); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: white; }
 .btn-ghost { background: transparent; color: var(--text-secondary); }
 .btn-ghost:hover { background: var(--bg-elevated); color: var(--text-primary); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -352,15 +466,31 @@ body {
     padding: 12px 14px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.2s var(--transition);
     margin-bottom: 2px;
     border: 1px solid transparent;
+    position: relative;
 }
-.ticket-item:hover { background: var(--bg-elevated); }
+.ticket-item:hover {
+    background: var(--bg-elevated);
+    transform: translateX(2px);
+}
 .ticket-item.active {
     background: var(--bg-card);
     border-color: var(--accent);
     box-shadow: var(--shadow-sm);
+}
+.ticket-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
 }
 .ticket-subject {
     font-size: 0.92rem;
@@ -385,8 +515,9 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     flex-shrink: 0;
+    font-family: var(--mono-stack);
 }
-.ticket-status.open { background: rgba(52, 199, 89, 0.12); color: var(--success); }
+.ticket-status.open { background: var(--success-soft); color: var(--success); }
 .ticket-status.closed { background: var(--bg-elevated); color: var(--text-tertiary); }
 .ticket-preview {
     font-size: 0.8rem;
@@ -401,6 +532,7 @@ body {
     color: var(--text-tertiary);
     display: flex;
     justify-content: space-between;
+    font-family: var(--mono-stack);
 }
 
 /* Chat panel */
@@ -410,15 +542,20 @@ body {
     flex-direction: column;
     min-width: 0;
     background: var(--bg-body);
+    position: relative;
+    z-index: 1;
 }
 .chat-header {
-    padding: 14px 24px;
+    padding: 12px 24px;
     border-bottom: 1px solid var(--border);
     background: var(--bg-card);
     display: flex;
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+    height: var(--header-h);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 .chat-header-info { flex: 1; min-width: 0; }
 .chat-header-title {
@@ -433,6 +570,7 @@ body {
 .chat-header-subtitle {
     font-size: 0.8rem;
     color: var(--text-secondary);
+    font-family: var(--mono-stack);
 }
 .chat-back-btn {
     display: none;
@@ -457,6 +595,11 @@ body {
     max-width: 70%;
     display: flex;
     flex-direction: column;
+    animation: msgIn 0.3s var(--transition);
+}
+@keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 .message.user { align-self: flex-end; align-items: flex-end; }
 .message.admin { align-self: flex-start; align-items: flex-start; }
@@ -470,6 +613,7 @@ body {
     font-size: 0.78rem;
     color: var(--text-secondary);
     margin: 8px 0;
+    border: 1px solid var(--border);
 }
 .message-bubble {
     padding: 10px 14px;
@@ -483,6 +627,7 @@ body {
     background: var(--bg-bubble-user);
     color: var(--text-on-accent);
     border-bottom-right-radius: 6px;
+    box-shadow: 0 2px 8px var(--accent-glow);
 }
 .message.admin .message-bubble {
     background: var(--bg-bubble-other);
@@ -503,6 +648,7 @@ body {
     color: var(--text-tertiary);
     margin-top: 2px;
     padding: 0 6px;
+    font-family: var(--mono-stack);
 }
 
 .chat-compose {
@@ -520,7 +666,7 @@ body {
     padding: 10px 14px;
     border: 1px solid var(--border);
     border-radius: 20px;
-    background: var(--bg-elevated);
+    background: var(--bg-input);
     color: var(--text-primary);
     font-family: inherit;
     font-size: 0.92rem;
@@ -528,13 +674,15 @@ body {
     min-height: 40px;
     max-height: 120px;
     line-height: 1.4;
-    transition: border-color 0.15s ease;
+    transition: all 0.2s ease;
 }
+.chat-compose textarea::placeholder { color: var(--text-tertiary); }
 .chat-compose textarea:focus {
     border-color: var(--accent);
     background: var(--bg-card);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.chat-compose button {
+.chat-compose button.send-btn {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -545,12 +693,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: all 0.2s var(--transition);
     flex-shrink: 0;
+    box-shadow: 0 2px 8px var(--accent-glow);
 }
-.chat-compose button:hover:not(:disabled) { background: var(--accent-hover); transform: scale(1.05); }
-.chat-compose button:disabled { opacity: 0.4; cursor: not-allowed; }
-.chat-compose button svg { width: 18px; height: 18px; }
+.chat-compose button.send-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.chat-compose button.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.chat-compose button.send-btn svg { width: 18px; height: 18px; }
 
 .empty-state {
     flex: 1;
@@ -563,8 +716,18 @@ body {
     color: var(--text-secondary);
 }
 .empty-state svg { width: 64px; height: 64px; color: var(--text-tertiary); margin-bottom: 16px; }
-.empty-state-title { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
-.empty-state-text { font-size: 0.9rem; max-width: 320px; margin-bottom: 20px; line-height: 1.5; }
+.empty-state-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+.empty-state-text {
+    font-size: 0.9rem;
+    max-width: 320px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
 
 /* Login screen */
 .login-screen {
@@ -584,7 +747,23 @@ body {
     padding: 32px;
     max-width: 420px;
     width: 100%;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+    animation: modalIn 0.4s var(--bounce);
+}
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
 }
 .login-logo {
     display: flex;
@@ -594,15 +773,34 @@ body {
     margin-bottom: 20px;
 }
 .login-logo svg { width: 32px; height: 32px; color: var(--accent); }
-.login-logo span { font-size: 1.3rem; font-weight: 700; }
-.login-title { font-size: 1.4rem; font-weight: 700; text-align: center; margin-bottom: 6px; }
-.login-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9rem; }
+.login-logo span {
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.login-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+.login-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+}
 .login-tabs {
     display: flex;
-    background: var(--bg-elevated);
+    background: var(--bg-input);
     padding: 4px;
     border-radius: 99px;
     margin-bottom: 20px;
+    border: 1px solid var(--border);
 }
 .login-tab {
     flex: 1;
@@ -615,9 +813,14 @@ body {
     font-weight: 500;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s var(--transition);
 }
-.login-tab.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+.login-tab.active {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+}
 .form-group { margin-bottom: 16px; }
 .form-label {
     display: block;
@@ -633,13 +836,18 @@ body {
     padding: 10px 14px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--bg-body);
+    background: var(--bg-input);
     color: var(--text-primary);
     font-family: inherit;
     font-size: 0.95rem;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
 }
-.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15); }
+.form-input::placeholder { color: var(--text-tertiary); }
+.form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    background: var(--bg-card);
+}
 .form-hint { font-size: 0.78rem; color: var(--text-tertiary); margin-top: 4px; }
 .form-error { font-size: 0.78rem; color: var(--danger); margin-top: 4px; }
 .login-btn {
@@ -653,9 +861,14 @@ body {
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.2s var(--transition);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
-.login-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.login-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--accent-glow);
+}
 .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* New ticket modal */
@@ -663,14 +876,20 @@ body {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     display: none;
     align-items: center;
     justify-content: center;
     z-index: 500;
     padding: 20px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
-.modal-overlay.active { display: flex; }
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
 .modal-content {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -678,13 +897,43 @@ body {
     padding: 28px;
     max-width: 460px;
     width: 100%;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.3s var(--bounce);
+    position: relative;
+    overflow: hidden;
 }
-.modal-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 6px; }
-.modal-subtitle { color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 20px; }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.modal-overlay.active .modal-content {
+    transform: scale(1) translateY(0);
+}
+.modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+}
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+.modal-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+}
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
 
-/* Footer links */
+/* Sidebar footer */
 .sidebar-footer {
     padding: 12px 20px;
     border-top: 1px solid var(--border);
@@ -693,38 +942,63 @@ body {
     display: flex;
     gap: 12px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 .sidebar-footer a {
     color: var(--text-secondary);
     text-decoration: none;
     transition: color 0.15s ease;
 }
-.sidebar-footer a:hover {
-    color: var(--accent);
-}
+.sidebar-footer a:hover { color: var(--accent); }
 
 /* Toast */
-.toast {
+.toast-container {
     position: fixed;
     bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--bg-card);
-    padding: 10px 18px;
-    border-radius: 99px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--border);
-    font-size: 0.88rem;
-    font-weight: 500;
-    opacity: 0;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     pointer-events: none;
-    transition: all 0.3s ease;
-    z-index: 600;
-    max-width: 90%;
 }
-.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.success { color: var(--success); }
-.toast.error { color: var(--danger); }
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    padding: 14px 20px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.92rem;
+    font-weight: 500;
+    pointer-events: auto;
+    animation: toastIn 0.3s var(--bounce);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    color: var(--text-primary);
+}
+.toast.removing { animation: toastOut 0.25s ease forwards; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+.toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.toast-icon.success { color: var(--success); }
+.toast-icon.info { color: var(--accent); }
+.toast-icon.warning { color: var(--warning); }
+.toast-icon.error { color: var(--danger); }
+.toast-message { flex: 1; }
 
 /* Typing indicator */
 .typing-indicator {
@@ -757,17 +1031,6 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
-/* Mobile */
-@media (max-width: 768px) {
-    .sidebar { width: 100%; position: absolute; inset: 0; z-index: 10; }
-    .chat { position: absolute; inset: 0; z-index: 5; }
-    .app.chat-open .sidebar { display: none; }
-    .app:not(.chat-open) .chat { display: none; }
-    .chat-back-btn { display: flex; }
-    .message { max-width: 85%; }
-    .file-card { max-width: 100%; }
-}
-
 .spinner {
     width: 24px; height: 24px;
     border: 3px solid var(--border);
@@ -777,9 +1040,242 @@ body {
     margin: 20px auto;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Command Palette */
+.cmdk-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 15vh;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.cmdk-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.cmdk-dialog {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    transition: transform 0.25s var(--bounce);
+}
+.cmdk-overlay.active .cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+.cmdk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.cmdk-input-wrap svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.cmdk-input::placeholder { color: var(--text-tertiary); }
+.cmdk-esc {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.cmdk-group-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 12px 6px;
+}
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+.cmdk-item:hover,
+.cmdk-item.focused {
+    background: var(--bg-input);
+}
+.cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.cmdk-item-icon svg { width: 16px; height: 16px; }
+.cmdk-item-info { flex: 1; min-width: 0; }
+.cmdk-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.cmdk-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.cmdk-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Hotkey hints */
+.hotkey-hints {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.hotkey-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.hotkey-hint:hover { opacity: 1; }
+kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 var(--border-strong);
+}
+
+/* Legal content */
+.legal-content h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 16px;
+    margin-bottom: 8px;
+}
+.legal-content p {
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .sidebar { width: 100%; position: absolute; inset: 0; z-index: 10; }
+    .chat { position: absolute; inset: 0; z-index: 5; }
+    .app.chat-open .sidebar { display: none; }
+    .app:not(.chat-open) .chat { display: none; }
+    .chat-back-btn { display: flex; }
+    .message { max-width: 85%; }
+    .file-card { max-width: 100%; }
+    .hotkey-hints { display: none; }
+    .toast-container { bottom: 16px; right: 16px; left: 16px; }
+    .toast { min-width: 0; max-width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
 </style>
 </head>
 <body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
 
 <!-- Login Screen -->
 <div class="login-screen" id="loginScreen" style="display: none;">
@@ -831,8 +1327,16 @@ body {
             <div class="sidebar-user">
                 <span id="currentUserName">—</span>
                 <span class="sidebar-user-admin" id="adminBadge" style="display: none;">ADMIN</span>
-                <button class="btn btn-ghost" id="logoutBtn" title="Выйти" style="padding: 4px;">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button class="btn-icon" id="themeToggle" aria-label="Сменить тему" style="width:32px;height:32px;">
+                    <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="logoutBtn" title="Выйти" style="width:32px;height:32px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
                 </button>
@@ -853,8 +1357,9 @@ body {
         </div>
 
         <div class="sidebar-footer">
-            <a href="/support?p=privacy" target="_blank">Политика конфиденциальности</a>
-            <a href="/support?p=rules" target="_blank">Правила чата</a>
+            <a href="/help">Помощь</a>
+            <a href="/support?p=privacy">Конфиденциальность</a>
+            <a href="/support?p=rules">Правила чата</a>
         </div>
     </aside>
 
@@ -894,20 +1399,18 @@ body {
                     <line x1="15" y1="9" x2="15.01" y2="9"></line>
                 </svg>
             </button>
-
             <button type="button" id="attachFileBtn" class="btn-icon" title="Прикрепить файл">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M13.5 3H12H8C6.9 3 6 3.9 6 5v14c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V8.5L13.5 3z"></path>
                     <path d="M13 3v5h5"></path>
                 </svg>
             </button>
-
             <input type="file" id="fileInput" style="display: none;" accept="image/*,application/pdf,text/plain,.jpg,.png,.gif,.webp">
 
             <div id="emojiPanel" class="emoji-panel" style="display: none;"></div>
             <div id="filePreview" class="file-preview" style="display: none;"></div>
 
-            <button id="sendBtn" disabled>
+            <button class="send-btn" id="sendBtn" disabled>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                 </svg>
@@ -938,145 +1441,219 @@ body {
     </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск по тикетам, действиям..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>N</kbd> новый тикет</div>
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>⌎</kbd> отправить</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
 
 <script>
 (function() {
     'use strict';
 
     // ============================================
-    // Константы конфигурации
+    // Configuration
     // ============================================
-    
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {number} Интервал опроса новых сообщений (мс) */
         POLLING_INTERVAL: 4000,
-        
-        /** @type {number} Максимальная высота поля ввода (px) */
         MAX_INPUT_HEIGHT: 120,
-        
-        /** @type {number} Длительность показа toast (мс) */
         TOAST_DURATION: 3000,
-        
-        /** @type {number} Максимальная длина превью сообщения */
         MESSAGE_PREVIEW_LENGTH: 80,
-        
-        /** @type {number} Задержка прокрутки чата (мс) */
         SCROLL_DELAY: 50,
-        
-        /** @type {string} Ключ для хранения токена в localStorage */
         TOKEN_STORAGE_KEY: 'oris_support_token',
-        
-        /** @type {string} Regex для поиска файловых маркеров */
-        FILE_MARKER_REGEX: '\\[\\[file:([A-Za-z0-9+/=]+)\\]\\]'
+        FILE_MARKER_REGEX: '\\[\\[file:([A-Za-z0-9+/=]+)\\]\\]',
+        THEME_KEY: 'oris-theme'
     };
 
-    /**
-     * API endpoints
-     * @namespace
-     */
     const API = {
-        /** @type {string} Авторизация пользователя */
         USER_AUTH: '/api/support/auth/user',
-        
-        /** @type {string} Авторизация администратора */
         ADMIN_AUTH: '/api/support/auth/admin',
-        
-        /** @type {string} Выход из системы */
         LOGOUT: '/api/support/auth/logout',
-        
-        /** @type {string} Список тикетов */
         TICKETS: '/api/support/tickets',
-        
-        /**
-         * Конкретный тикет
-         * @param {string} id - ID тикета
-         * @returns {string} URL endpoint
-         */
         TICKET: (id) => `/api/support/tickets/${id}`,
-        
-        /**
-         * Сообщения тикета
-         * @param {string} id - ID тикета
-         * @returns {string} URL endpoint
-         */
         MESSAGES: (id) => `/api/support/tickets/${id}/messages`,
-        
-        /**
-         * Статус тикета
-         * @param {string} id - ID тикета
-         * @returns {string} URL endpoint
-         */
         STATUS: (id) => `/api/support/tickets/${id}/status`
     };
 
-    /**
-     * Эмодзи для быстрого выбора
-     * @constant {Array<string>}
-     */
     const COMMON_EMOJIS = [
         '😊', '😂', '❤️', '👍', '🎉', '😢', '😡', '🤔',
         '👋', '🙏', '🔥', '✨', '💡', '📎', '🔒', '✅',
         '⭐', '🍕', '🚀', '💬', '🕒', '⚠️', '🔧', '📌'
     ];
 
-    // ============================================
-    // Состояние приложения
-    // ============================================
-    
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
-    const State = {
-        /** @type {Object|null} Данные сессии пользователя */
-        session: null,
-        
-        /** @type {string|null} Токен авторизации */
-        token: null,
-        
-        /** @type {Array<Object>} Список тикетов */
-        tickets: [],
-        
-        /** @type {string|null} ID текущего открытого тикета */
-        currentTicketId: null,
-        
-        /** @type {Object|null} Данные текущего тикета */
-        currentTicket: null,
-        
-        /** @type {number|null} ID интервала опроса */
-        pollingTimer: null,
-        
-        /** @type {string} Режим входа: 'user' | 'admin' */
-        loginMode: 'user',
-        
-        /** @type {number} Количество непрочитанных сообщений */
-        unreadCount: 0,
-        
-        /** @type {Map<string, number>} Счетчики сообщений для каждого тикета */
-        lastKnownMessagesCount: new Map(),
-        
-        /** @type {string} Оригинальный заголовок страницы */
-        originalTitle: document.title
+    const MESSAGES = {
+        ticketCreated: 'Тикет создан',
+        ticketClosed: 'Тикет закрыт',
+        ticketReopened: 'Тикет переоткрыт',
+        fileUploaded: 'Файл загружен',
+        sessionExpired: 'Сессия истекла',
+        noConnection: 'Нет соединения',
+        enterName: 'Введите имя',
+        enterToken: 'Введите токен',
+        enterSubject: 'Укажите тему',
+        enterMessage: 'Напишите сообщение'
     };
+
+    // ============================================
+    // State
+    // ============================================
+    const State = {
+        session: null,
+        token: null,
+        tickets: [],
+        currentTicketId: null,
+        currentTicket: null,
+        pollingTimer: null,
+        loginMode: 'user',
+        unreadCount: 0,
+        lastKnownMessagesCount: new Map(),
+        originalTitle: document.title,
+        theme: 'light',
+        cmdkFocusedIndex: -1
+    };
+
+    // ============================================
+    // DOM Cache
+    // ============================================
+    const DOM = {
+        loginScreen: document.getElementById('loginScreen'),
+        app: document.getElementById('app'),
+        loginForm: document.getElementById('loginForm'),
+        loginBtn: document.getElementById('loginBtn'),
+        loginError: document.getElementById('loginError'),
+        loginName: document.getElementById('loginName'),
+        loginToken: document.getElementById('loginToken'),
+        nameField: document.getElementById('nameField'),
+        tokenField: document.getElementById('tokenField'),
+        currentUserName: document.getElementById('currentUserName'),
+        adminBadge: document.getElementById('adminBadge'),
+        userActions: document.getElementById('userActions'),
+        ticketsList: document.getElementById('ticketsList'),
+        chatHeader: document.getElementById('chatHeader'),
+        chatTitle: document.getElementById('chatTitle'),
+        chatSubtitle: document.getElementById('chatSubtitle'),
+        chatMessages: document.getElementById('chatMessages'),
+        chatCompose: document.getElementById('chatCompose'),
+        messageInput: document.getElementById('messageInput'),
+        sendBtn: document.getElementById('sendBtn'),
+        emojiPickerBtn: document.getElementById('emojiPickerBtn'),
+        emojiPanel: document.getElementById('emojiPanel'),
+        attachFileBtn: document.getElementById('attachFileBtn'),
+        fileInput: document.getElementById('fileInput'),
+        filePreview: document.getElementById('filePreview'),
+        backBtn: document.getElementById('backBtn'),
+        logoutBtn: document.getElementById('logoutBtn'),
+        newTicketBtn: document.getElementById('newTicketBtn'),
+        newTicketModal: document.getElementById('newTicketModal'),
+        newTicketForm: document.getElementById('newTicketForm'),
+        ticketSubject: document.getElementById('ticketSubject'),
+        ticketMessage: document.getElementById('ticketMessage'),
+        cancelNewTicket: document.getElementById('cancelNewTicket'),
+        submitNewTicket: document.getElementById('submitNewTicket'),
+        toggleStatusBtn: document.getElementById('toggleStatusBtn'),
+        themeToggle: document.getElementById('themeToggle'),
+        cmdkOverlay: document.getElementById('cmdkOverlay'),
+        cmdkInput: document.getElementById('cmdkInput'),
+        cmdkResults: document.getElementById('cmdkResults'),
+        toastContainer: document.getElementById('toastContainer')
+    };
+
+    // ============================================
+    // Security
+    // ============================================
+    const Security = {
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' },
+        escapeHtml(str) {
+            if (str == null) return '';
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
+        }
+    };
+
+    // ============================================
+    // Toast System
+    // ============================================
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
+    }
+
+    // ============================================
+    // Theme System
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        State.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem(CONFIG.THEME_KEY, theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`Тема изменена на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem(CONFIG.THEME_KEY); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        DOM.themeToggle.addEventListener('click', toggleTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            } catch (err) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
 
     // ============================================
     // API Client
     // ============================================
-    
-    /**
-     * Клиент для работы с API
-     * @namespace
-     */
     const ApiClient = {
-        /**
-         * Получение заголовков для запроса
-         * @returns {Object} Заголовки HTTP
-         */
         headers() {
             const headers = { 'Content-Type': 'application/json' };
             if (State.token) {
@@ -1084,14 +1661,6 @@ body {
             }
             return headers;
         },
-
-        /**
-         * Выполнение HTTP запроса
-         * @param {string} url - URL endpoint
-         * @param {Object} options - Опции fetch
-         * @returns {Promise<Object>} Ответ сервера
-         * @throws {Error} Если запрос не удался
-         */
         async request(url, options = {}) {
             try {
                 const response = await fetch(url, {
@@ -1101,112 +1670,58 @@ body {
                         ...(options.headers || {})
                     }
                 });
-
-                // Обработка истекшей сессии
                 if (response.status === 401) {
                     State.session = null;
                     State.token = null;
                     localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
                     showLoginScreen();
-                    throw new Error('Сессия истекла');
+                    throw new Error(MESSAGES.sessionExpired);
                 }
-
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
                     throw new Error(data.error || `Ошибка ${response.status}`);
                 }
-
                 return data;
             } catch (error) {
                 if (error.name === 'TypeError') {
-                    throw new Error('Нет соединения');
+                    throw new Error(MESSAGES.noConnection);
                 }
                 throw error;
             }
         },
-
-        /**
-         * Авторизация пользователя
-         * @param {string} name - Имя пользователя
-         * @param {string} token - Токен (опционально)
-         * @returns {Promise<Object>} Данные сессии
-         */
         userAuth(name, token) {
             return this.request(API.USER_AUTH, {
                 method: 'POST',
                 body: JSON.stringify({ name, token })
             });
         },
-
-        /**
-         * Авторизация администратора
-         * @param {string} token - Admin token
-         * @returns {Promise<Object>} Данные сессии
-         */
         adminAuth(token) {
             return this.request(API.ADMIN_AUTH, {
                 method: 'POST',
                 body: JSON.stringify({ token })
             });
         },
-
-        /**
-         * Выход из системы
-         * @returns {Promise<Object>} Результат
-         */
         logout() {
             return this.request(API.LOGOUT, { method: 'POST' });
         },
-
-        /**
-         * Получение списка тикетов
-         * @returns {Promise<Object>} Список тикетов
-         */
         getTickets() {
             return this.request(API.TICKETS);
         },
-
-        /**
-         * Получение конкретного тикета
-         * @param {string} id - ID тикета
-         * @returns {Promise<Object>} Данные тикета
-         */
         getTicket(id) {
             return this.request(API.TICKET(id));
         },
-
-        /**
-         * Создание нового тикета
-         * @param {string} subject - Тема тикета
-         * @param {string} firstMessage - Первое сообщение
-         * @returns {Promise<Object>} Созданный тикет
-         */
         createTicket(subject, firstMessage) {
             return this.request(API.TICKETS, {
                 method: 'POST',
                 body: JSON.stringify({ subject, firstMessage })
             });
         },
-
-        /**
-         * Отправка сообщения в тикет
-         * @param {string} id - ID тикета
-         * @param {string} text - Текст сообщения
-         * @returns {Promise<Object>} Результат
-         */
         sendMessage(id, text) {
             return this.request(API.MESSAGES(id), {
                 method: 'POST',
                 body: JSON.stringify({ text })
             });
         },
-
-        /**
-         * Изменение статуса тикета
-         * @param {string} id - ID тикета
-         * @param {string} status - Новый статус: 'open' | 'closed'
-         * @returns {Promise<Object>} Результат
-         */
         setStatus(id, status) {
             return this.request(API.STATUS(id), {
                 method: 'POST',
@@ -1216,136 +1731,55 @@ body {
     };
 
     // ============================================
-    // UI Utilities
+    // Utilities
     // ============================================
-    
-    /**
-     * Показ toast-уведомления
-     * @param {string} message - Текст уведомления
-     * @param {string} type - Тип: 'info' | 'success' | 'error'
-     */
-    function toast(message, type = 'info') {
-        const toastElement = document.getElementById('toast');
-        toastElement.textContent = message;
-        toastElement.className = `toast ${type} visible`;
-        
-        clearTimeout(toastElement._timer);
-        toastElement._timer = setTimeout(() => {
-            toastElement.classList.remove('visible');
-        }, CONFIG.TOAST_DURATION);
-    }
-
-    /**
-     * Экранирование HTML-сущностей
-     * @param {string|null|undefined} str - Исходная строка
-     * @returns {string} Экранированная строка
-     */
-    function escapeHtml(str) {
-        if (str == null) return '';
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return String(str).replace(/[&<>"']/g, (match) => map[match]);
-    }
-
-    /**
-     * Форматирование относительного времени
-     * @param {string} iso - ISO строка даты
-     * @returns {string} Отформатированное время
-     */
     function formatTime(iso) {
         const date = new Date(iso);
         const now = new Date();
         const diff = now - date;
-
-        // Только что (менее минуты)
         if (diff < 60000) return 'только что';
-        
-        // Менее часа
-        if (diff < 3600000) {
-            return Math.floor(diff / 60000) + ' мин';
-        }
-        
-        // Вчера
+        if (diff < 3600000) return Math.floor(diff / 60000) + ' мин';
         const yesterday = new Date(now);
         yesterday.setDate(now.getDate() - 1);
-        if (date.toDateString() === yesterday.toDateString()) {
-            return 'вчера';
-        }
-        
-        // Сегодня
+        if (date.toDateString() === yesterday.toDateString()) return 'вчера';
         if (date.toDateString() === now.toDateString()) {
-            return date.toLocaleTimeString('ru-RU', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
         }
-        
-        // Менее недели
-        if (diff < 604800000) {
-            return Math.floor(diff / 86400000) + ' дн';
-        }
-        
-        // Старые даты
-        return date.toLocaleDateString('ru-RU', {
-            day: 'numeric',
-            month: 'short'
-        });
+        if (diff < 604800000) return Math.floor(diff / 86400000) + ' дн';
+        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
     }
 
-    /**
-     * Форматирование полного времени
-     * @param {string} iso - ISO строка даты
-     * @returns {string} Отформатированная дата и время
-     */
     function formatFullTime(iso) {
         return new Date(iso).toLocaleString('ru-RU', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
         });
     }
 
-    // ============================================
-    // File Rendering
-    // ============================================
-    
-    /**
-     * Рендеринг карточки файла
-     * @param {Object} fileMeta - Метаданные файла
-     * @returns {string} HTML карточки файла
-     */
     function renderFileCard(fileMeta) {
         const isImage = fileMeta.mime && fileMeta.mime.startsWith('image/');
         const sizeKB = fileMeta.size / 1024;
         const sizeStr = sizeKB < 1024
             ? `${sizeKB.toFixed(1)} KB`
             : `${(fileMeta.size / 1048576).toFixed(1)} MB`;
-
         if (isImage) {
             return `
                 <div class="file-card image-card">
-                    <a href="${escapeHtml(fileMeta.url)}" target="_blank" rel="noopener noreferrer">
-                        <img src="${escapeHtml(fileMeta.url)}" alt="${escapeHtml(fileMeta.name)}" loading="lazy">
+                    <a href="${Security.escapeHtml(fileMeta.url)}" target="_blank" rel="noopener noreferrer">
+                        <img src="${Security.escapeHtml(fileMeta.url)}" alt="${Security.escapeHtml(fileMeta.name)}" loading="lazy">
                     </a>
-                    <div class="file-name">${escapeHtml(fileMeta.name)}</div>
+                    <div class="file-name">${Security.escapeHtml(fileMeta.name)}</div>
                 </div>
             `;
         } else {
             return `
                 <div class="file-card doc-card">
-                    <a href="${escapeHtml(fileMeta.url)}" target="_blank" rel="noopener noreferrer" class="file-link">
+                    <a href="${Security.escapeHtml(fileMeta.url)}" target="_blank" rel="noopener noreferrer" class="file-link">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M13 3H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8l-5-5z"/>
                             <path d="M13 3v5h5"/>
                         </svg>
                         <div class="file-info">
-                            <div class="file-name">${escapeHtml(fileMeta.name)}</div>
+                            <div class="file-name">${Security.escapeHtml(fileMeta.name)}</div>
                             <div class="file-size">${sizeStr}</div>
                         </div>
                     </a>
@@ -1354,13 +1788,6 @@ body {
         }
     }
 
-    // ============================================
-    // Title Notifications
-    // ============================================
-    
-    /**
-     * Обновление заголовка страницы с уведомлением о непрочитанных
-     */
     function updateTitleNotification() {
         if (State.unreadCount > 0) {
             document.title = `(${State.unreadCount}) ${State.originalTitle}`;
@@ -1370,151 +1797,109 @@ body {
     }
 
     // ============================================
-    // Auth & Login
+    // Auth
     // ============================================
-    
-    /**
-     * Показ экрана входа
-     */
     function showLoginScreen() {
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('app').style.display = 'none';
+        DOM.loginScreen.style.display = 'flex';
+        DOM.app.style.display = 'none';
     }
 
-    /**
-     * Показ основного приложения
-     */
     function showApp() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
-        
+        DOM.loginScreen.style.display = 'none';
+        DOM.app.style.display = 'flex';
         const isAdmin = State.session.role === 'admin';
-        document.getElementById('currentUserName').textContent = State.session.name;
-        document.getElementById('adminBadge').style.display = isAdmin ? 'inline' : 'none';
-        document.getElementById('userActions').style.display = isAdmin ? 'none' : 'block';
-        
+        DOM.currentUserName.textContent = State.session.name;
+        DOM.adminBadge.style.display = isAdmin ? 'inline' : 'none';
+        DOM.userActions.style.display = isAdmin ? 'none' : 'block';
         loadTickets();
         startPolling();
     }
 
-    /**
-     * Инициализация формы входа
-     */
     function initLogin() {
         const tabs = document.querySelectorAll('[data-login-tab]');
-        const nameField = document.getElementById('nameField');
-        const tokenField = document.getElementById('tokenField');
-        const loginBtn = document.getElementById('loginBtn');
-
-        // Переключение вкладок
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 State.loginMode = tab.dataset.loginTab;
-                
                 if (State.loginMode === 'admin') {
-                    nameField.style.display = 'none';
-                    tokenField.style.display = 'block';
-                    loginBtn.textContent = 'Войти как команда';
+                    DOM.nameField.style.display = 'none';
+                    DOM.tokenField.style.display = 'block';
+                    DOM.loginBtn.textContent = 'Войти как команда';
                 } else {
-                    nameField.style.display = 'block';
-                    tokenField.style.display = 'none';
-                    loginBtn.textContent = 'Войти';
+                    DOM.nameField.style.display = 'block';
+                    DOM.tokenField.style.display = 'none';
+                    DOM.loginBtn.textContent = 'Войти';
                 }
-                
-                document.getElementById('loginError').style.display = 'none';
+                DOM.loginError.style.display = 'none';
             });
         });
 
-        // Обработка отправки формы
-        document.getElementById('loginForm').addEventListener('submit', async () => {
-            const errorElement = document.getElementById('loginError');
-            errorElement.style.display = 'none';
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Вход...';
-
+        DOM.loginForm.addEventListener('submit', async () => {
+            DOM.loginError.style.display = 'none';
+            DOM.loginBtn.disabled = true;
+            DOM.loginBtn.textContent = 'Вход...';
             try {
                 let data;
-                
                 if (State.loginMode === 'admin') {
-                    const token = document.getElementById('loginToken').value.trim();
-                    if (!token) throw new Error('Введите токен');
+                    const token = DOM.loginToken.value.trim();
+                    if (!token) throw new Error(MESSAGES.enterToken);
                     data = await ApiClient.adminAuth(token);
                 } else {
-                    const name = document.getElementById('loginName').value.trim();
-                    if (!name) throw new Error('Введите имя');
+                    const name = DOM.loginName.value.trim();
+                    if (!name) throw new Error(MESSAGES.enterName);
                     const existingToken = localStorage.getItem(CONFIG.TOKEN_STORAGE_KEY);
                     data = await ApiClient.userAuth(name, existingToken);
                 }
-                
                 State.session = data.session;
                 State.token = data.token;
                 localStorage.setItem(CONFIG.TOKEN_STORAGE_KEY, data.token);
                 showApp();
             } catch (error) {
-                errorElement.textContent = error.message;
-                errorElement.style.display = 'block';
+                DOM.loginError.textContent = error.message;
+                DOM.loginError.style.display = 'block';
             } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = State.loginMode === 'admin' ? 'Войти как команда' : 'Войти';
+                DOM.loginBtn.disabled = false;
+                DOM.loginBtn.textContent = State.loginMode === 'admin' ? 'Войти как команда' : 'Войти';
             }
         });
     }
 
     // ============================================
-    // Tickets Management
+    // Tickets
     // ============================================
-    
-    /**
-     * Загрузка списка тикетов
-     * @returns {Promise<void>}
-     */
     async function loadTickets() {
-        const list = document.getElementById('ticketsList');
-        
+        const list = DOM.ticketsList;
         try {
             const data = await ApiClient.getTickets();
             State.tickets = data.tickets || [];
-
-            // Подсчет непрочитанных для пользователей
             if (State.session && State.session.role === 'user') {
                 let newUnread = 0;
-                
                 for (const ticket of State.tickets) {
                     const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
-                    
                     if (ticket.messagesCount > lastCount && ticket.status === 'open') {
                         const lastMessage = ticket.lastMessage;
                         if (lastMessage && lastMessage.from !== 'user') {
                             newUnread += ticket.messagesCount - lastCount;
                         }
                     }
-                    
                     State.lastKnownMessagesCount.set(ticket.id, ticket.messagesCount);
                 }
-                
                 State.unreadCount = newUnread;
                 updateTitleNotification();
             }
-
             renderTickets();
         } catch (error) {
             list.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-text">${escapeHtml(error.message)}</div>
+                    <div class="empty-state-text">${Security.escapeHtml(error.message)}</div>
                 </div>
             `;
         }
     }
 
-    /**
-     * Рендеринг списка тикетов
-     */
     function renderTickets() {
-        const list = document.getElementById('ticketsList');
-        
-        // Пустой список
+        const list = DOM.ticketsList;
         if (State.tickets.length === 0) {
             const isAdmin = State.session.role === 'admin';
             list.innerHTML = `
@@ -1528,111 +1913,83 @@ body {
             `;
             return;
         }
-
-        // Рендеринг тикетов
         list.innerHTML = State.tickets.map(ticket => {
             const lastMessage = ticket.lastMessage;
             const fileMarkerRegex = new RegExp('\\[\\[file:[A-Za-z0-9+/=]+\\]\\]', 'g');
-            
             let preview = lastMessage
                 ? (lastMessage.from === 'admin' ? '🛡 ' : '') + lastMessage.text.replace(fileMarkerRegex, '📎 Файл')
                 : 'Нет сообщений';
-            
             if (preview.length > CONFIG.MESSAGE_PREVIEW_LENGTH) {
                 preview = preview.slice(0, CONFIG.MESSAGE_PREVIEW_LENGTH) + '…';
             }
-            
+            const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
+            const hasUnread = ticket.messagesCount > lastCount && ticket.status === 'open' && lastMessage && lastMessage.from !== 'user';
             return `
-                <div class="ticket-item ${ticket.id === State.currentTicketId ? 'active' : ''}" data-ticket-id="${ticket.id}">
+                <div class="ticket-item ${ticket.id === State.currentTicketId ? 'active' : ''} ${hasUnread ? 'unread' : ''}" data-ticket-id="${ticket.id}">
                     <div class="ticket-subject">
-                        <span class="ticket-subject-text">${escapeHtml(ticket.subject)}</span>
+                        <span class="ticket-subject-text">${Security.escapeHtml(ticket.subject)}</span>
                         <span class="ticket-status ${ticket.status}">${ticket.status === 'open' ? 'Открыт' : 'Закрыт'}</span>
                     </div>
-                    <div class="ticket-preview">${escapeHtml(preview)}</div>
+                    <div class="ticket-preview">${Security.escapeHtml(preview)}</div>
                     <div class="ticket-meta">
-                        <span>${escapeHtml(ticket.userName)}</span>
-                        <span>${formatTime(ticket.updatedAt)} · ${ticket.messagesCount} сообщ.</span>
+                        <span>${Security.escapeHtml(ticket.userName)}</span>
+                        <span>${formatTime(ticket.updatedAt)} · ${ticket.messagesCount}</span>
                     </div>
                 </div>
             `;
         }).join('');
-
-        // Привязка событий
         list.querySelectorAll('[data-ticket-id]').forEach(element => {
             element.addEventListener('click', () => openTicket(element.dataset.ticketId));
         });
     }
 
-    /**
-     * Открытие тикета
-     * @param {string} id - ID тикета
-     * @returns {Promise<void>}
-     */
     async function openTicket(id) {
-        // Сброс счетчика непрочитанных для пользователя
         if (State.session && State.session.role === 'user') {
             const ticket = State.tickets.find(t => t.id === id);
             if (ticket) {
                 const lastCount = State.lastKnownMessagesCount.get(id) || 0;
                 const newMessages = ticket.messagesCount - lastCount;
-                
                 if (newMessages > 0) {
                     State.unreadCount = Math.max(0, State.unreadCount - newMessages);
                     updateTitleNotification();
                 }
-                
                 State.lastKnownMessagesCount.set(id, ticket.messagesCount);
             }
         }
-
         State.currentTicketId = id;
-        document.getElementById('app').classList.add('chat-open');
+        DOM.app.classList.add('chat-open');
         renderTickets();
-
-        const header = document.getElementById('chatHeader');
-        const messages = document.getElementById('chatMessages');
-        const compose = document.getElementById('chatCompose');
-        header.style.display = 'flex';
-        compose.style.display = 'flex';
-
+        DOM.chatHeader.style.display = 'flex';
+        DOM.chatCompose.style.display = 'flex';
         try {
             const data = await ApiClient.getTicket(id);
             State.currentTicket = data.ticket;
             renderChat();
-            
             if (State.currentTicket.status === 'open') {
-                document.getElementById('messageInput').focus();
+                DOM.messageInput.focus();
             }
         } catch (error) {
-            messages.innerHTML = `
+            DOM.chatMessages.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-text">${escapeHtml(error.message)}</div>
+                    <div class="empty-state-text">${Security.escapeHtml(error.message)}</div>
                 </div>
             `;
         }
     }
 
     // ============================================
-    // Chat Management
+    // Chat
     // ============================================
-    
-    /**
-     * Рендеринг чата
-     */
     function renderChat() {
         const ticket = State.currentTicket;
         if (!ticket) return;
-
-        // Заголовок и подзаголовок
-        document.getElementById('chatTitle').textContent = ticket.subject;
+        DOM.chatTitle.textContent = ticket.subject;
         const subtitleParts = [
             `Создан ${formatFullTime(ticket.createdAt)}`,
             `Статус: ${ticket.status === 'open' ? 'открыт' : 'закрыт'}`
         ];
-        document.getElementById('chatSubtitle').textContent = subtitleParts.join(' · ');
-
-        // Кнопка изменения статуса (только для админа)
-        const toggleButton = document.getElementById('toggleStatusBtn');
+        DOM.chatSubtitle.textContent = subtitleParts.join(' · ');
+        const toggleButton = DOM.toggleStatusBtn;
         if (State.session.role === 'admin') {
             toggleButton.style.display = 'inline-flex';
             toggleButton.textContent = ticket.status === 'open' ? 'Закрыть тикет' : 'Переоткрыть';
@@ -1640,66 +1997,52 @@ body {
                 const newStatus = ticket.status === 'open' ? 'closed' : 'open';
                 try {
                     await ApiClient.setStatus(ticket.id, newStatus);
-                    toast(newStatus === 'closed' ? 'Тикет закрыт' : 'Тикет переоткрыт', 'success');
+                    showToast(newStatus === 'closed' ? MESSAGES.ticketClosed : MESSAGES.ticketReopened, 'success');
                     await loadTickets();
                     await openTicket(ticket.id);
                 } catch (error) {
-                    toast(error.message, 'error');
+                    showToast(error.message, 'error');
                 }
             };
         } else {
             toggleButton.style.display = 'none';
         }
-
-        // Рендеринг сообщений
-        const messagesElement = document.getElementById('chatMessages');
+        const messagesElement = DOM.chatMessages;
         const isAdmin = State.session.role === 'admin';
         let lastSender = null;
-
         messagesElement.innerHTML = ticket.messages.map((message, index) => {
-            // Обработка файловых маркеров
             const processedText = message.text;
             const fileRegex = new RegExp(CONFIG.FILE_MARKER_REGEX, 'g');
             let lastIndex = 0;
             const parts = [];
             let match;
-            
             while ((match = fileRegex.exec(processedText)) !== null) {
                 const before = processedText.substring(lastIndex, match.index);
                 if (before) {
-                    parts.push('<span class="msg-text">' + escapeHtml(before) + '</span>');
+                    parts.push('<span class="msg-text">' + Security.escapeHtml(before) + '</span>');
                 }
-                
                 try {
                     const base64 = match[1];
                     const jsonString = decodeURIComponent(escape(atob(base64)));
                     const fileMeta = JSON.parse(jsonString);
                     parts.push(renderFileCard(fileMeta));
                 } catch (error) {
-                    parts.push('<span class="msg-text">' + escapeHtml(match[0]) + '</span>');
+                    parts.push('<span class="msg-text">' + Security.escapeHtml(match[0]) + '</span>');
                 }
-                
                 lastIndex = fileRegex.lastIndex;
             }
-            
             const tail = processedText.substring(lastIndex);
             if (tail) {
-                parts.push('<span class="msg-text">' + escapeHtml(tail) + '</span>');
+                parts.push('<span class="msg-text">' + Security.escapeHtml(tail) + '</span>');
             }
-            
             const finalText = parts.join('');
-
-            // Определение стороны сообщения
             const isOwnMessage = (isAdmin && message.from === 'admin') || (!isAdmin && message.from === 'user');
             const side = isOwnMessage ? 'user' : 'admin';
             const senderName = isOwnMessage
                 ? 'Вы'
-                : (message.from === 'admin' ? 'Support Team' : escapeHtml(ticket.userName));
-
-            // Показ имени отправителя
+                : (message.from === 'admin' ? 'Support Team' : Security.escapeHtml(ticket.userName));
             const showSender = !lastSender || lastSender !== message.from;
             lastSender = message.from;
-
             return `
                 ${showSender ? `<div class="message-sender" style="align-self: ${side === 'user' ? 'flex-end' : 'flex-start'}; padding: ${index === 0 ? '0 6px' : '8px 6px 2px'};">${senderName}</div>` : ''}
                 <div class="message ${side}">
@@ -1708,16 +2051,11 @@ body {
                 </div>
             `;
         }).join('');
-
-        // Прокрутка вниз
         setTimeout(() => {
             messagesElement.scrollTop = messagesElement.scrollHeight;
         }, CONFIG.SCROLL_DELAY);
-
-        // Блокировка ввода для закрытых тикетов
-        const input = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendBtn');
-        
+        const input = DOM.messageInput;
+        const sendButton = DOM.sendBtn;
         if (ticket.status === 'closed' && !isAdmin) {
             input.disabled = true;
             input.placeholder = 'Тикет закрыт. Только команда поддержки может его переоткрыть.';
@@ -1729,29 +2067,22 @@ body {
         }
     }
 
-    /**
-     * Отправка сообщения
-     * @returns {Promise<void>}
-     */
     async function sendMessage() {
-        const input = document.getElementById('messageInput');
+        const input = DOM.messageInput;
         const text = input.value.trim();
-        
         if (!text || !State.currentTicketId) return;
-
-        const button = document.getElementById('sendBtn');
+        const button = DOM.sendBtn;
         const originalContent = button.innerHTML;
         button.disabled = true;
         button.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>';
         input.value = '';
         input.style.height = 'auto';
-
         try {
             await ApiClient.sendMessage(State.currentTicketId, text);
             await openTicket(State.currentTicketId);
             await loadTickets();
         } catch (error) {
-            toast(error.message, 'error');
+            showToast(error.message, 'error');
             input.value = text;
         } finally {
             button.innerHTML = originalContent;
@@ -1759,80 +2090,56 @@ body {
         }
     }
 
-    /**
-     * Инициализация поля ввода чата
-     */
     function initChatInput() {
-        const input = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendBtn');
-
-        // Автоматическое изменение высоты
+        const input = DOM.messageInput;
+        const sendButton = DOM.sendBtn;
         input.addEventListener('input', () => {
             sendButton.disabled = !input.value.trim();
             input.style.height = 'auto';
             input.style.height = Math.min(input.scrollHeight, CONFIG.MAX_INPUT_HEIGHT) + 'px';
         });
-
-        // Отправка по Enter
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendMessage();
             }
         });
-
-        // Кнопка отправки
         sendButton.addEventListener('click', sendMessage);
     }
 
     // ============================================
     // New Ticket Modal
     // ============================================
-    
-    /**
-     * Инициализация модального окна создания тикета
-     */
     function initNewTicket() {
-        const modal = document.getElementById('newTicketModal');
-        
+        const modal = DOM.newTicketModal;
         const open = () => modal.classList.add('active');
         const close = () => {
             modal.classList.remove('active');
-            document.getElementById('ticketSubject').value = '';
-            document.getElementById('ticketMessage').value = '';
+            DOM.ticketSubject.value = '';
+            DOM.ticketMessage.value = '';
         };
-
-        // Открытие/закрытие
-        document.getElementById('newTicketBtn').addEventListener('click', open);
-        document.getElementById('cancelNewTicket').addEventListener('click', close);
+        DOM.newTicketBtn.addEventListener('click', open);
+        DOM.cancelNewTicket.addEventListener('click', close);
         modal.addEventListener('click', (event) => {
             if (event.target === modal) close();
         });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && modal.classList.contains('active')) close();
-        });
-
-        // Отправка формы
-        document.getElementById('newTicketForm').addEventListener('submit', async (event) => {
+        DOM.newTicketForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            const subject = document.getElementById('ticketSubject').value.trim();
-            const message = document.getElementById('ticketMessage').value.trim();
-            const button = document.getElementById('submitNewTicket');
-
-            if (!subject) return toast('Укажите тему', 'error');
-            if (!message) return toast('Напишите сообщение', 'error');
-
+            const subject = DOM.ticketSubject.value.trim();
+            const message = DOM.ticketMessage.value.trim();
+            const button = DOM.submitNewTicket;
+            if (!subject) return showToast(MESSAGES.enterSubject, 'error');
+            if (!message) return showToast(MESSAGES.enterMessage, 'error');
             button.disabled = true;
             button.textContent = 'Создание...';
-            
             try {
                 const data = await ApiClient.createTicket(subject, message);
-                toast('Тикет создан', 'success');
+                showToast(MESSAGES.ticketCreated, 'success');
                 close();
                 await loadTickets();
                 await openTicket(data.ticket.id);
             } catch (error) {
-                toast(error.message, 'error');
+                showToast(error.message, 'error');
             } finally {
                 button.disabled = false;
                 button.textContent = 'Создать тикет';
@@ -1843,245 +2150,148 @@ body {
     // ============================================
     // Polling
     // ============================================
-    
-    /**
-     * Запуск опроса новых сообщений
-     */
     function startPolling() {
         if (State.pollingTimer) clearInterval(State.pollingTimer);
-        
         State.pollingTimer = setInterval(async () => {
             try {
                 const data = await ApiClient.getTickets();
                 const oldTickets = State.tickets;
                 State.tickets = data.tickets || [];
-
-                // Подсчет непрочитанных
                 if (State.session && State.session.role === 'user') {
                     let newUnread = 0;
-                    
                     for (const ticket of State.tickets) {
                         const lastCount = State.lastKnownMessagesCount.get(ticket.id) || 0;
-                        
                         if (ticket.messagesCount > lastCount && ticket.status === 'open') {
                             const lastMessage = ticket.lastMessage;
                             if (lastMessage && lastMessage.from !== 'user') {
                                 newUnread += ticket.messagesCount - lastCount;
                             }
                         }
-                        
                         State.lastKnownMessagesCount.set(ticket.id, ticket.messagesCount);
                     }
-                    
                     State.unreadCount = newUnread;
                     updateTitleNotification();
                 }
-
-                // Обновление текущего тикета
                 if (State.currentTicketId) {
                     const current = State.tickets.find(t => t.id === State.currentTicketId);
                     const oldCurrent = oldTickets.find(t => t.id === State.currentTicketId);
-                    
                     if (current && oldCurrent && current.messagesCount > oldCurrent.messagesCount) {
                         const fresh = await ApiClient.getTicket(State.currentTicketId);
                         State.currentTicket = fresh.ticket;
                         renderChat();
                     }
                 }
-                
                 renderTickets();
             } catch (error) {
-                // Игнорируем ошибки опроса
+                // ignore
             }
         }, CONFIG.POLLING_INTERVAL);
     }
 
     // ============================================
-    // Event Handlers
-    // ============================================
-    
-    // Кнопка назад
-    document.getElementById('backBtn').addEventListener('click', () => {
-        document.getElementById('app').classList.remove('chat-open');
-        State.currentTicketId = null;
-        State.currentTicket = null;
-        renderTickets();
-    });
-
-    // Кнопка выхода
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        if (!confirm('Выйти из аккаунта?')) return;
-        
-        try {
-            await ApiClient.logout();
-        } catch (error) {
-            // Игнорируем ошибки
-        }
-        
-        State.session = null;
-        State.token = null;
-        localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
-        
-        if (State.pollingTimer) clearInterval(State.pollingTimer);
-        showLoginScreen();
-    });
-
-    // Обновление при получении фокуса
-    window.addEventListener('focus', () => {
-        if (State.session) {
-            loadTickets();
-            if (State.currentTicketId) openTicket(State.currentTicketId);
-        }
-    });
-
-    // ============================================
     // Emoji Picker
     // ============================================
-    
-    const emojiButton = document.getElementById('emojiPickerBtn');
-    const emojiPanel = document.getElementById('emojiPanel');
-    const messageInput = document.getElementById('messageInput');
-
-    /**
-     * Построение панели эмодзи
-     */
     function buildEmojiPanel() {
-        emojiPanel.innerHTML = COMMON_EMOJIS.map(emoji => {
+        DOM.emojiPanel.innerHTML = COMMON_EMOJIS.map(emoji => {
             return `<button type="button">${emoji}</button>`;
         }).join('');
-        
-        emojiPanel.querySelectorAll('button').forEach(button => {
+        DOM.emojiPanel.querySelectorAll('button').forEach(button => {
             button.addEventListener('click', (event) => {
                 const emoji = event.currentTarget.textContent;
-                const cursorPosition = messageInput.selectionStart;
-                const text = messageInput.value;
-                
-                messageInput.value = text.slice(0, cursorPosition) + emoji + text.slice(cursorPosition);
-                messageInput.focus();
-                messageInput.dispatchEvent(new Event('input'));
-                emojiPanel.style.display = 'none';
+                const cursorPosition = DOM.messageInput.selectionStart;
+                const text = DOM.messageInput.value;
+                DOM.messageInput.value = text.slice(0, cursorPosition) + emoji + text.slice(cursorPosition);
+                DOM.messageInput.focus();
+                DOM.messageInput.dispatchEvent(new Event('input'));
+                DOM.emojiPanel.style.display = 'none';
             });
         });
     }
 
-    // Открытие/закрытие панели
-    emojiButton.addEventListener('click', (event) => {
+    DOM.emojiPickerBtn.addEventListener('click', (event) => {
         event.stopPropagation();
-        const isVisible = emojiPanel.style.display === 'grid';
-        emojiPanel.style.display = isVisible ? 'none' : 'grid';
-        
-        if (!isVisible && emojiPanel.children.length === 0) {
+        const isVisible = DOM.emojiPanel.style.display === 'grid';
+        DOM.emojiPanel.style.display = isVisible ? 'none' : 'grid';
+        if (!isVisible && DOM.emojiPanel.children.length === 0) {
             buildEmojiPanel();
         }
     });
 
-    // Закрытие при клике вне панели
     document.addEventListener('click', (event) => {
-        if (!emojiPanel.contains(event.target) && event.target !== emojiButton) {
-            emojiPanel.style.display = 'none';
+        if (!DOM.emojiPanel.contains(event.target) && event.target !== DOM.emojiPickerBtn) {
+            DOM.emojiPanel.style.display = 'none';
         }
     });
 
     // ============================================
     // File Upload
     // ============================================
-    
-    const attachButton = document.getElementById('attachFileBtn');
-    const fileInput = document.getElementById('fileInput');
-    const filePreview = document.getElementById('filePreview');
+    DOM.attachFileBtn.addEventListener('click', () => DOM.fileInput.click());
 
-    // Открытие диалога выбора файла
-    attachButton.addEventListener('click', () => fileInput.click());
-
-    // Обработка выбранного файла
-    fileInput.addEventListener('change', async (event) => {
+    DOM.fileInput.addEventListener('change', async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
-        
         reader.onload = async (loadEvent) => {
-            // Превью файла
-            let previewHtml = `<div class="file-name">${escapeHtml(file.name)} (${(file.size/1024).toFixed(1)} KB)</div>`;
-            
+            let previewHtml = `<div class="file-name">${Security.escapeHtml(file.name)} (${(file.size/1024).toFixed(1)} KB)</div>`;
             if (file.type.startsWith('image/')) {
                 previewHtml += `<img src="${loadEvent.target.result}" alt="preview">`;
             }
-            
             previewHtml += `<button id="cancelUpload">Отмена</button>`;
-            filePreview.innerHTML = previewHtml;
-            filePreview.style.display = 'block';
-
-            // Кнопка отмены
+            DOM.filePreview.innerHTML = previewHtml;
+            DOM.filePreview.style.display = 'block';
             document.getElementById('cancelUpload').addEventListener('click', () => {
-                filePreview.style.display = 'none';
-                fileInput.value = '';
+                DOM.filePreview.style.display = 'none';
+                DOM.fileInput.value = '';
             });
-
-            // Загрузка файла
             const formData = new FormData();
             formData.append('file', file);
-            
             try {
                 const response = await fetch('/api/support/upload', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${State.token}` },
                     body: formData
                 });
-                
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'Ошибка загрузки');
-
-                // Создание файлового маркера
                 const fileMeta = {
                     name: file.name,
                     url: data.url,
                     size: file.size,
                     mime: file.type
                 };
-                
                 const jsonString = JSON.stringify(fileMeta);
                 const base64 = btoa(unescape(encodeURIComponent(jsonString)));
                 const fileBlock = `[[file:${base64}]]`;
-
-                // Вставка в поле ввода
-                const cursorPosition = messageInput.selectionStart;
-                const text = messageInput.value;
-                const needSpace = text.length > 0 && text[cursorPosition - 1] && 
+                const cursorPosition = DOM.messageInput.selectionStart;
+                const text = DOM.messageInput.value;
+                const needSpace = text.length > 0 && text[cursorPosition - 1] &&
                                  text[cursorPosition - 1] !== '\n' && text[cursorPosition - 1] !== ' ';
                 const insert = (needSpace ? '\n' : '') + fileBlock + '\n';
-                
-                messageInput.value = text.slice(0, cursorPosition) + insert + text.slice(cursorPosition);
-                messageInput.dispatchEvent(new Event('input'));
-                toast('Файл загружен', 'success');
+                DOM.messageInput.value = text.slice(0, cursorPosition) + insert + text.slice(cursorPosition);
+                DOM.messageInput.dispatchEvent(new Event('input'));
+                showToast(MESSAGES.fileUploaded, 'success');
             } catch (error) {
-                toast(error.message, 'error');
+                showToast(error.message, 'error');
             } finally {
-                filePreview.style.display = 'none';
-                fileInput.value = '';
+                DOM.filePreview.style.display = 'none';
+                DOM.fileInput.value = '';
             }
         };
-        
         reader.readAsDataURL(file);
     });
 
-    // Закрытие превью при клике вне
     document.addEventListener('click', (event) => {
-        if (!filePreview.contains(event.target) && 
-            event.target !== attachButton && 
-            event.target !== fileInput) {
-            filePreview.style.display = 'none';
+        if (!DOM.filePreview.contains(event.target) &&
+            event.target !== DOM.attachFileBtn &&
+            event.target !== DOM.fileInput) {
+            DOM.filePreview.style.display = 'none';
         }
     });
 
     // ============================================
     // Legal Pages
     // ============================================
-    
-    /**
-     * Контент юридических страниц
-     * @constant {Object}
-     */
     const LEGAL_PAGES = {
         privacy: {
             title: 'Политика конфиденциальности',
@@ -2119,14 +2329,9 @@ body {
         }
     };
 
-    /**
-     * Показ юридической страницы
-     * @param {string} pageKey - Ключ страницы
-     */
     function showLegalPage(pageKey) {
         const page = LEGAL_PAGES[pageKey];
         if (!page) return;
-
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay active';
         overlay.innerHTML = `
@@ -2140,28 +2345,8 @@ body {
                 </div>
             </div>
         `;
-
-        const style = document.createElement('style');
-        style.textContent = `
-            .legal-content h3 {
-                font-size: 0.95rem;
-                font-weight: 600;
-                color: var(--text-primary);
-                margin-top: 16px;
-                margin-bottom: 8px;
-            }
-            .legal-content p {
-                margin-bottom: 12px;
-            }
-        `;
-        document.head.appendChild(style);
         document.body.appendChild(overlay);
-
-        const closeModal = () => {
-            overlay.remove();
-            style.remove();
-        };
-
+        const closeModal = () => overlay.remove();
         document.getElementById('closeLegalModal').addEventListener('click', closeModal);
         overlay.addEventListener('click', (event) => {
             if (event.target === overlay) closeModal();
@@ -2174,32 +2359,252 @@ body {
         });
     }
 
-    // Обработчики ссылок на юридические страницы
     document.querySelectorAll('.sidebar-footer a').forEach(link => {
         link.addEventListener('click', (event) => {
-            event.preventDefault();
-            const url = new URL(link.href);
-            const pageKey = url.searchParams.get('p');
-            if (pageKey) {
-                showLegalPage(pageKey);
+            const href = link.getAttribute('href');
+            if (href && href.includes('?p=')) {
+                event.preventDefault();
+                const url = new URL(link.href, window.location.origin);
+                const pageKey = url.searchParams.get('p');
+                if (pageKey) showLegalPage(pageKey);
             }
         });
     });
 
     // ============================================
-    // Initialization
+    // Command Palette
     // ============================================
-    
-    /**
-     * Инициализация приложения
-     * @returns {Promise<void>}
-     */
+    function openCmdk() {
+        DOM.cmdkOverlay.classList.add('active');
+        DOM.cmdkOverlay.style.display = 'flex';
+        DOM.cmdkInput.value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => DOM.cmdkInput.focus(), 50);
+        renderCmdkResults('');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCmdk() {
+        DOM.cmdkOverlay.classList.remove('active');
+        setTimeout(() => {
+            DOM.cmdkOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 200);
+    }
+
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); } },
+            { type: 'action', title: 'Новый тикет', desc: 'Создать обращение в поддержку', kbd: 'N', action: () => { DOM.newTicketBtn.click(); closeCmdk(); } },
+            { type: 'action', title: 'Выйти', desc: 'Завершить текущую сессию', action: () => { DOM.logoutBtn.click(); closeCmdk(); } },
+            { type: 'nav', title: 'Каталог проектов', desc: 'Главная страница', url: '/', kbd: '1' },
+            { type: 'nav', title: 'Новости', desc: 'Новости платформы', url: '/news', kbd: '2' },
+            { type: 'nav', title: 'Помощь', desc: 'FAQ и руководства', url: '/help', kbd: '5' }
+        ];
+        const tickets = State.tickets.slice(0, 20).map(t => ({
+            type: 'ticket',
+            title: t.subject,
+            desc: `${t.userName} · ${t.messagesCount} сообщ. · ${t.status === 'open' ? 'открыт' : 'закрыт'}`,
+            id: t.id
+        }));
+        let filteredActions = actions;
+        let filteredTickets = tickets;
+        if (q) {
+            filteredActions = actions.filter(a =>
+                a.title.toLowerCase().includes(q) ||
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+            filteredTickets = tickets.filter(t =>
+                t.title.toLowerCase().includes(q) ||
+                t.desc.toLowerCase().includes(q)
+            );
+        }
+        const items = [];
+        if (filteredActions.length > 0) items.push({ group: 'Действия', entries: filteredActions });
+        if (filteredTickets.length > 0) items.push({ group: 'Тикеты', entries: filteredTickets });
+        if (items.length === 0) {
+            DOM.cmdkResults.innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                const iconPath = entry.type === 'ticket'
+                    ? 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
+                    : 'M13 10V3L4 14h7v7l9-11h-7z';
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}">
+                        <div class="cmdk-item-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+        DOM.cmdkResults.innerHTML = html;
+        DOM.cmdkResults.querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
+
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'ticket' && entry.id) {
+                        closeCmdk();
+                        setTimeout(() => openTicket(entry.id), 100);
+                    } else if (entry.url) {
+                        window.location.href = entry.url;
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function initCmdk() {
+        DOM.cmdkOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cmdkOverlay) closeCmdk();
+        });
+        DOM.cmdkInput.addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        DOM.cmdkInput.addEventListener('keydown', (e) => {
+            const items = DOM.cmdkResults.querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // ============================================
+    // Hotkeys
+    // ============================================
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                }
+                return;
+            }
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+            // Check if login screen is visible
+            if (DOM.loginScreen.style.display !== 'none') return;
+
+            switch (e.key) {
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'n': case 'N': case 'т': case 'Т':
+                    if (State.session && State.session.role !== 'admin') {
+                        DOM.newTicketBtn.click();
+                    }
+                    break;
+                case 'Escape':
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else if (DOM.newTicketModal.classList.contains('active')) {
+                        DOM.cancelNewTicket.click();
+                    }
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: ⌘K палитра · N новый тикет · T тема · Enter отправить · ? помощь', 'info', 5000);
+                    break;
+            }
+        });
+    }
+
+    // ============================================
+    // Event Handlers
+    // ============================================
+    DOM.backBtn.addEventListener('click', () => {
+        DOM.app.classList.remove('chat-open');
+        State.currentTicketId = null;
+        State.currentTicket = null;
+        renderTickets();
+    });
+
+    DOM.logoutBtn.addEventListener('click', async () => {
+        if (!confirm('Выйти из аккаунта?')) return;
+        try {
+            await ApiClient.logout();
+        } catch (error) {
+            // ignore
+        }
+        State.session = null;
+        State.token = null;
+        localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
+        if (State.pollingTimer) clearInterval(State.pollingTimer);
+        showLoginScreen();
+    });
+
+    window.addEventListener('focus', () => {
+        if (State.session) {
+            loadTickets();
+            if (State.currentTicketId) openTicket(State.currentTicketId);
+        }
+    });
+
+    // ============================================
+    // Init
+    // ============================================
     async function init() {
+        initTheme();
         initLogin();
         initChatInput();
         initNewTicket();
+        initCmdk();
+        initHotkeys();
 
-        // Попытка восстановления сессии
         const savedToken = localStorage.getItem(CONFIG.TOKEN_STORAGE_KEY);
         if (savedToken) {
             try {
@@ -2212,11 +2617,15 @@ body {
                 localStorage.removeItem(CONFIG.TOKEN_STORAGE_KEY);
             }
         }
-        
         showLoginScreen();
+
+        setTimeout(() => {
+            if (DOM.loginScreen.style.display !== 'none') {
+                showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+            }
+        }, 1200);
     }
 
-    // Запуск инициализации
     init();
 })();
 </script>
