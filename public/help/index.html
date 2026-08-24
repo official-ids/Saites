@@ -1,60 +1,80 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="Центр помощи Oris — ответы на частые вопросы, руководства и поддержка">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<script>try{var t=localStorage.getItem('oris-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 <title>Помощь · Oris</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
 <style>
 :root {
     --bg-body: #F5F5F7;
     --bg-card: #FFFFFF;
-    --bg-elevated: #F0F0F2;
-    --bg-subtle: #FAFAFA;
+    --bg-elevated: #FFFFFF;
+    --bg-sunken: #E8E8ED;
+    --bg-input: rgba(0, 0, 0, 0.04);
     --text-primary: #1D1D1F;
-    --text-secondary: #86868B;
-    --text-tertiary: #AEAEB2;
+    --text-secondary: #6E6E73;
+    --text-tertiary: #86868B;
     --accent: #0071E3;
     --accent-hover: #0077ED;
+    --accent-soft: rgba(0, 113, 227, 0.12);
+    --accent-glow: rgba(0, 113, 227, 0.25);
     --danger: #FF3B30;
+    --danger-soft: rgba(255, 59, 48, 0.12);
     --success: #34C759;
+    --success-soft: rgba(52, 199, 89, 0.12);
     --warning: #FF9F0A;
+    --warning-soft: rgba(255, 159, 10, 0.12);
     --purple: #AF52DE;
-    --gold: #D4AF37;
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.15);
+    --purple-soft: rgba(175, 82, 222, 0.12);
+    --teal: #5AC8FA;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-strong: rgba(0, 0, 0, 0.12);
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-    --radius-lg: 18px;
-    --radius-md: 12px;
-    --radius-sm: 8px;
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.12);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.16);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
     --font-stack: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --mono-stack: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --mono-stack: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+    --transition: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --grid-color: rgba(0, 0, 0, 0.04);
     --header-h: 64px;
 }
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg-body: #000000;
-        --bg-card: #1C1C1E;
-        --bg-elevated: #2C2C2E;
-        --bg-subtle: #0A0A0A;
-        --text-primary: #F5F5F7;
-        --text-secondary: #86868B;
-        --text-tertiary: #636366;
-        --border: rgba(255, 255, 255, 0.1);
-        --border-strong: rgba(255, 255, 255, 0.18);
-    }
+[data-theme="dark"] {
+    --bg-body: #000000;
+    --bg-card: #1C1C1E;
+    --bg-elevated: #2C2C2E;
+    --bg-sunken: #0A0A0A;
+    --bg-input: rgba(255, 255, 255, 0.06);
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1A6;
+    --text-tertiary: #636366;
+    --accent: #0A84FF;
+    --accent-hover: #409CFF;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-glow: rgba(10, 132, 255, 0.4);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.6);
+    --grid-color: rgba(255, 255, 255, 0.03);
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html { scroll-behavior: smooth; }
 body {
     background: var(--bg-body);
@@ -62,7 +82,80 @@ body {
     font-family: var(--font-stack);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Background grid */
+.bg-grid {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    animation: gridShift 30s linear infinite;
+}
+@keyframes gridShift {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 48px 48px, 48px 48px; }
+}
+
+/* Floating orbs */
+.bg-orbs {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+}
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 20s ease-in-out infinite;
+}
+[data-theme="dark"] .orb { opacity: 0.25; }
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -150px; right: -150px;
+    animation-duration: 25s;
+}
+.orb-2 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, var(--purple) 0%, transparent 70%);
+    bottom: -200px; left: -200px;
+    animation-duration: 30s;
+    animation-delay: -5s;
+}
+.orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+    top: 50%; left: 30%;
+    animation-duration: 22s;
+    animation-delay: -10s;
+}
+@keyframes orbFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(60px, -40px) scale(1.1); }
+    66% { transform: translate(-40px, 50px) scale(0.95); }
+}
+
+/* Reading progress */
+.reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    width: 0%;
+    z-index: 200;
+    transition: width 0.1s ease;
+    box-shadow: 0 0 8px var(--accent-glow);
 }
 
 .header {
@@ -72,8 +165,9 @@ body {
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid var(--border);
     height: var(--header-h);
+    transition: background-color 0.4s ease, border-color 0.4s ease;
 }
-@media (prefers-color-scheme: dark) { .header { background: rgba(0, 0, 0, 0.72); } }
+[data-theme="dark"] .header { background: rgba(0, 0, 0, 0.72); }
 .header-inner {
     max-width: 1200px; margin: 0 auto; padding: 14px 24px;
     display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 100%;
@@ -81,27 +175,143 @@ body {
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
 .logo-icon { width: 28px; height: 28px; color: var(--accent); }
 .logo-text { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
-.nav-links { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nav-links { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .nav-link {
     padding: 8px 14px; border-radius: 99px; font-size: 0.88rem; font-weight: 500;
     color: var(--text-secondary); text-decoration: none; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 6px;
 }
 .nav-link:hover { background: rgba(142, 142, 147, 0.12); color: var(--text-primary); }
 .nav-link.active { background: var(--accent); color: white; }
+.nav-link .nav-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.62rem;
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-weight: 600;
+}
+.nav-link:not(.active) .nav-kbd {
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    color: var(--text-tertiary);
+}
 
-.layout { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+}
+.icon-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    transform: rotate(15deg);
+}
+.icon-btn svg { width: 16px; height: 16px; }
+.icon-btn .kbd-hint {
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    font-family: var(--mono-stack);
+    color: var(--text-tertiary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.icon-btn:hover .kbd-hint { opacity: 1; }
+
+.theme-icon-dark { display: none; }
+[data-theme="dark"] .theme-icon-light { display: none; }
+[data-theme="dark"] .theme-icon-dark { display: block; }
+
+.layout { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; position: relative; z-index: 1; }
 
 .hero { text-align: center; padding: 40px 0 32px; }
 .hero-eyebrow {
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
     letter-spacing: 0.08em; color: var(--accent); margin-bottom: 16px;
+    padding: 4px 12px;
+    background: var(--accent-soft);
+    border-radius: 99px;
 }
+.hero-eyebrow svg { width: 14px; height: 14px; }
 .hero-title {
     font-size: 3rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
     margin-bottom: 16px;
     background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    min-height: 1.1em;
+    display: inline-block;
+    cursor: default;
+    position: relative;
+}
+.hero-title.glitch::before,
+.hero-title.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    pointer-events: none;
+}
+.hero-title.glitch::before {
+    animation: glitch1 0.4s ease;
+    -webkit-text-fill-color: var(--danger);
+}
+.hero-title.glitch::after {
+    animation: glitch2 0.4s ease;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes glitch1 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.8; transform: translate(-3px, 1px); }
+    40% { opacity: 0.6; transform: translate(2px, -1px); }
+    60% { opacity: 0.4; transform: translate(-1px, 2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+    0%, 100% { opacity: 0; transform: translate(0, 0); }
+    20% { opacity: 0.6; transform: translate(3px, -1px); }
+    40% { opacity: 0.4; transform: translate(-2px, 1px); }
+    60% { opacity: 0.3; transform: translate(1px, -2px); }
+    80% { opacity: 0; transform: translate(0, 0); }
+}
+.typewriter-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--accent);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+    -webkit-text-fill-color: var(--accent);
+}
+@keyframes blink {
+    50% { opacity: 0; }
 }
 .hero-subtitle {
     font-size: 1.1rem; color: var(--text-secondary);
@@ -109,23 +319,24 @@ body {
 }
 
 /* Search */
-.search-wrap { max-width: 560px; margin: 0 auto 40px; position: relative; }
+.search-wrap { max-width: 560px; margin: 0 auto 24px; position: relative; }
 .search-box {
     width: 100%;
-    padding: 14px 20px 14px 48px;
+    padding: 14px 48px 14px 48px;
     border: 1px solid var(--border);
     border-radius: 99px;
     background: var(--bg-card);
     color: var(--text-primary);
     font-family: inherit;
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: all 0.25s var(--transition);
     box-shadow: var(--shadow-sm);
 }
+.search-box::placeholder { color: var(--text-tertiary); }
 .search-box:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.15);
+    box-shadow: 0 0 0 4px var(--accent-soft);
 }
 .search-icon {
     position: absolute; left: 18px; top: 50%;
@@ -133,19 +344,39 @@ body {
     width: 18px; height: 18px;
     color: var(--text-tertiary);
     pointer-events: none;
+    transition: color 0.2s ease;
 }
+.search-box:focus ~ .search-icon { color: var(--accent); }
+.search-kbd {
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    font-weight: 600;
+}
+.search-box:focus ~ .search-kbd { opacity: 0; }
 .search-clear {
     position: absolute; right: 14px; top: 50%;
     transform: translateY(-50%);
     width: 28px; height: 28px;
     border-radius: 50%;
     background: var(--bg-elevated);
-    border: none;
+    border: 1px solid var(--border);
     color: var(--text-secondary);
     cursor: pointer;
     display: none;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease;
 }
 .search-clear.visible { display: flex; }
 .search-clear:hover { background: var(--border-strong); color: var(--text-primary); }
@@ -155,7 +386,59 @@ body {
     color: var(--text-tertiary);
     margin-top: 10px;
     height: 20px;
+    font-family: var(--mono-stack);
 }
+
+/* Category filter chips */
+.category-chips {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.category-chips::-webkit-scrollbar { display: none; }
+.chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s var(--transition);
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+}
+.chip:hover {
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+.chip.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+.chip svg { width: 14px; height: 14px; }
+.chip-count {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 1px 6px;
+    border-radius: 99px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: var(--mono-stack);
+}
+[data-theme="dark"] .chip-count { background: rgba(255, 255, 255, 0.15); }
+.chip.active .chip-count { background: rgba(255, 255, 255, 0.25); }
 
 /* Categories */
 .categories {
@@ -170,13 +453,25 @@ body {
     border-radius: var(--radius-md);
     padding: 18px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s var(--transition);
     text-decoration: none;
     color: inherit;
     display: block;
+    position: relative;
+    overflow: hidden;
 }
+.category-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--cat-color, var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.category-card:hover::before { opacity: 1; }
 .category-card:hover {
-    border-color: var(--accent);
+    border-color: var(--cat-color, var(--accent));
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
@@ -185,7 +480,9 @@ body {
     border-radius: var(--radius-sm);
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 10px;
+    transition: transform 0.3s var(--transition);
 }
+.category-card:hover .category-icon { transform: scale(1.08) rotate(-3deg); }
 .category-icon svg { width: 20px; height: 20px; }
 .category-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 2px; }
 .category-desc { font-size: 0.78rem; color: var(--text-secondary); }
@@ -198,12 +495,14 @@ body {
     border-radius: 99px;
     background: var(--bg-elevated);
     color: var(--text-secondary);
+    font-family: var(--mono-stack);
 }
 
 /* FAQ Sections */
 .faq-section {
     margin-bottom: 40px;
     scroll-margin-top: calc(var(--header-h) + 24px);
+    animation: fadeInUp 0.5s var(--transition) backwards;
 }
 .faq-section.hidden { display: none; }
 .section-header {
@@ -226,6 +525,7 @@ body {
     font-size: 0.72rem; font-weight: 500;
     padding: 3px 10px; border-radius: 99px;
     background: var(--bg-elevated); color: var(--text-secondary);
+    font-family: var(--mono-stack);
 }
 
 .faq-item {
@@ -234,11 +534,13 @@ body {
     border-radius: var(--radius-md);
     margin-bottom: 8px;
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: all 0.25s var(--transition);
+    animation: fadeInUp 0.4s var(--transition) backwards;
+    position: relative;
 }
 .faq-item.hidden { display: none; }
 .faq-item:hover { border-color: var(--border-strong); }
-.faq-item.open { border-color: var(--accent); }
+.faq-item.open { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .faq-question {
     padding: 14px 18px;
     display: flex; align-items: center; gap: 12px;
@@ -249,11 +551,12 @@ body {
 .faq-q-icon {
     width: 24px; height: 24px;
     border-radius: 50%;
-    background: rgba(0, 113, 227, 0.1);
+    background: var(--accent-soft);
     color: var(--accent);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     font-size: 0.82rem; font-weight: 700;
+    font-family: var(--mono-stack);
 }
 .faq-q-text {
     flex: 1;
@@ -262,15 +565,42 @@ body {
     color: var(--text-primary);
 }
 .faq-q-text mark {
-    background: rgba(255, 159, 10, 0.3);
-    color: inherit;
-    padding: 0 2px;
+    background: var(--warning-soft);
+    color: var(--text-primary);
+    padding: 0 3px;
     border-radius: 3px;
+    font-weight: 600;
 }
+.faq-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.faq-item:hover .faq-actions,
+.faq-item.open .faq-actions { opacity: 1; }
+.faq-action-btn {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.faq-action-btn:hover {
+    background: var(--bg-elevated);
+    color: var(--accent);
+}
+.faq-action-btn svg { width: 14px; height: 14px; }
 .faq-toggle {
     width: 20px; height: 20px;
     color: var(--text-tertiary);
-    transition: transform 0.2s ease;
+    transition: transform 0.25s ease;
     flex-shrink: 0;
 }
 .faq-item.open .faq-toggle { transform: rotate(180deg); color: var(--accent); }
@@ -280,8 +610,13 @@ body {
     font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.7;
+    animation: slideDown 0.25s var(--transition);
 }
 .faq-item.open .faq-answer { display: block; }
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .faq-answer p { margin-bottom: 10px; }
 .faq-answer p:last-child { margin-bottom: 0; }
 .faq-answer strong { color: var(--text-primary); font-weight: 600; }
@@ -322,12 +657,27 @@ body {
 /* CTA */
 .cta {
     margin-top: 48px;
-    background: linear-gradient(135deg, rgba(0, 113, 227, 0.08) 0%, rgba(175, 82, 222, 0.08) 100%);
+    background: linear-gradient(135deg, var(--accent-soft) 0%, var(--purple-soft) 100%);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     padding: 32px;
     text-align: center;
+    position: relative;
+    overflow: hidden;
 }
+.cta::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 50%);
+    animation: rotateBg 20s linear infinite;
+    opacity: 0.5;
+}
+@keyframes rotateBg {
+    to { transform: rotate(360deg); }
+}
+.cta > * { position: relative; z-index: 1; }
 .cta-title {
     font-size: 1.3rem; font-weight: 700;
     letter-spacing: -0.02em; margin-bottom: 8px;
@@ -345,19 +695,19 @@ body {
     padding: 10px 20px; border-radius: 99px;
     font-family: inherit; font-size: 0.9rem; font-weight: 500;
     cursor: pointer; border: none;
-    transition: all 0.2s ease;
+    transition: all 0.25s var(--transition);
     text-decoration: none;
 }
 .btn-primary {
     background: var(--accent); color: white;
-    box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
+    box-shadow: 0 4px 12px var(--accent-glow);
 }
-.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 18px var(--accent-glow); }
 .btn-secondary {
     background: var(--bg-card); color: var(--text-primary);
     border: 1px solid var(--border);
 }
-.btn-secondary:hover { border-color: var(--border-strong); }
+.btn-secondary:hover { border-color: var(--accent); transform: translateY(-1px); }
 .btn svg { width: 16px; height: 16px; }
 
 /* Quick links grid */
@@ -385,11 +735,12 @@ body {
     text-decoration: none;
     color: var(--text-primary);
     font-size: 0.88rem; font-weight: 500;
-    transition: all 0.2s ease;
+    transition: all 0.25s var(--transition);
 }
 .quick-link:hover {
     border-color: var(--accent);
     transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
 }
 .quick-link svg { width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0; }
 
@@ -401,13 +752,15 @@ body {
     text-align: center;
     color: var(--text-tertiary);
     font-size: 0.82rem;
+    position: relative;
+    z-index: 1;
 }
 .footer a { color: var(--accent); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
 
 /* Spinner */
 .spinner {
-    width: 28px; height: 28px;
+    width: 36px; height: 36px;
     border: 3px solid var(--border);
     border-top-color: var(--accent);
     border-radius: 50%;
@@ -416,22 +769,321 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Scroll to top */
+.scroll-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s var(--transition);
+    pointer-events: none;
+    z-index: 50;
+}
+.scroll-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.scroll-top:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.scroll-top svg { width: 18px; height: 18px; }
+
+/* Command Palette */
+.cmdk-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    z-index: 1100;
+    display: none;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 15vh;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.cmdk-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+.cmdk-dialog {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 560px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-strong);
+    overflow: hidden;
+    transform: scale(0.95) translateY(-10px);
+    transition: transform 0.25s var(--bounce);
+}
+.cmdk-overlay.active .cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+.cmdk-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+.cmdk-input-wrap svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+.cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.cmdk-input::placeholder { color: var(--text-tertiary); }
+.cmdk-esc {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px;
+}
+.cmdk-group-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    padding: 8px 12px 6px;
+}
+.cmdk-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+}
+.cmdk-item:hover,
+.cmdk-item.focused {
+    background: var(--bg-input);
+}
+.cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cmdk-item-icon svg { width: 16px; height: 16px; }
+.cmdk-item-info { flex: 1; min-width: 0; }
+.cmdk-item-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-desc {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cmdk-item-kbd {
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+.cmdk-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+}
+.cmdk-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.cmdk-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Toast */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+.toast {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    padding: 14px 20px;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    font-size: 0.92rem;
+    font-weight: 500;
+    pointer-events: auto;
+    animation: toastIn 0.3s var(--bounce);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+    max-width: 380px;
+    color: var(--text-primary);
+}
+.toast.removing { animation: toastOut 0.25s ease forwards; }
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(100%); }
+}
+.toast-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.toast-icon.success { color: var(--success); }
+.toast-icon.info { color: var(--accent); }
+.toast-icon.warning { color: var(--warning); }
+.toast-icon.error { color: var(--danger); }
+.toast-message { flex: 1; }
+
+/* Hotkey hints */
+.hotkey-hints {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    font-family: var(--mono-stack);
+}
+.hotkey-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+.hotkey-hint:hover { opacity: 1; }
+kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    font-family: var(--mono-stack);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 1px 0 var(--border-strong);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
 
 @media (max-width: 640px) {
     .hero-title { font-size: 2rem; }
     .hero-subtitle { font-size: 0.98rem; }
     .layout { padding: 24px 16px 60px; }
-    .nav-link { padding: 6px 10px; font-size: 0.82rem; }
+    .nav-links { display: none; }
     .faq-answer { padding-left: 18px; }
     .cta { padding: 24px 20px; }
+    .hotkey-hints { display: none; }
+    .toast-container { bottom: 16px; right: 16px; left: 16px; }
+    .toast { min-width: 0; max-width: 100%; }
+    .scroll-top { bottom: 16px; right: 16px; }
 }
 </style>
 </head>
 <body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+</div>
+<div class="reading-progress" id="readingProgress"></div>
 
 <header class="header">
     <div class="header-inner">
@@ -442,12 +1094,29 @@ body {
             <span class="logo-text">Oris</span>
         </a>
         <nav class="nav-links">
-            <a href="/" class="nav-link">Projects</a>
-            <a href="/news" class="nav-link">News</a>
-            <a href="/changelog" class="nav-link">Changelog</a>
-            <a href="/support" class="nav-link">Support</a>
-            <a href="/help" class="nav-link active">Help</a>
+            <a href="/" class="nav-link">Projects <span class="nav-kbd">1</span></a>
+            <a href="/news" class="nav-link">News <span class="nav-kbd">2</span></a>
+            <a href="/changelog" class="nav-link">Changelog <span class="nav-kbd">3</span></a>
+            <a href="/support" class="nav-link">Support <span class="nav-kbd">4</span></a>
+            <a href="/help" class="nav-link active">Help <span class="nav-kbd">5</span></a>
         </nav>
+        <div class="header-actions">
+            <button class="icon-btn" id="cmdkBtn" aria-label="Командная палитра">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="kbd-hint">⌘K</span>
+            </button>
+            <button class="icon-btn" id="themeToggle" aria-label="Сменить тему">
+                <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+                <span class="kbd-hint">T</span>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -455,12 +1124,12 @@ body {
 
     <section class="hero">
         <div class="hero-eyebrow">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             Help Center
         </div>
-        <h1 class="hero-title">Чем мы можем помочь?</h1>
+        <h1 class="hero-title" id="heroTitle" data-text=""></h1>
         <p class="hero-subtitle">
             Ответы на частые вопросы, руководства по использованию платформы Oris
             и ссылки на полезные ресурсы.
@@ -468,10 +1137,11 @@ body {
     </section>
 
     <div class="search-wrap">
+        <input type="text" class="search-box" id="searchInput" placeholder="Поиск по вопросам..." autocomplete="off">
         <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
-        <input type="text" class="search-box" id="searchInput" placeholder="Поиск по вопросам..." autocomplete="off">
+        <span class="search-kbd">/</span>
         <button class="search-clear" id="searchClear" aria-label="Очистить">
             <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -479,6 +1149,8 @@ body {
         </button>
         <div class="search-stats" id="searchStats"></div>
     </div>
+
+    <div class="category-chips" id="categoryChips"></div>
 
     <div class="categories" id="categoriesGrid"></div>
 
@@ -546,64 +1218,68 @@ body {
     <a href="/status">Status</a>
 </footer>
 
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop" aria-label="Наверх">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+</button>
+
+<!-- Command Palette -->
+<div class="cmdk-overlay" id="cmdkOverlay">
+    <div class="cmdk-dialog">
+        <div class="cmdk-input-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Поиск по вопросам, разделам, действиям..." autocomplete="off">
+            <span class="cmdk-esc">ESC</span>
+        </div>
+        <div class="cmdk-results" id="cmdkResults"></div>
+        <div class="cmdk-footer">
+            <div class="cmdk-footer-item"><kbd>↑↓</kbd> навигация</div>
+            <div class="cmdk-footer-item"><kbd>↵</kbd> открыть</div>
+            <div class="cmdk-footer-item"><kbd>esc</kbd> закрыть</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hotkey hints -->
+<div class="hotkey-hints" aria-hidden="true">
+    <div class="hotkey-hint"><kbd>/</kbd> поиск</div>
+    <div class="hotkey-hint"><kbd>⌘K</kbd> палитра</div>
+    <div class="hotkey-hint"><kbd>T</kbd> тема</div>
+    <div class="hotkey-hint"><kbd>A</kbd> развернуть всё</div>
+    <div class="hotkey-hint"><kbd>?</kbd> помощь</div>
+</div>
+
 <script>
 (function() {
     'use strict';
 
     // ============================================
-    // Константы конфигурации
+    // Configuration
     // ============================================
-    
-    /**
-     * Конфигурация приложения
-     * @namespace
-     */
     const CONFIG = {
-        /** @type {string} API endpoint для загрузки FAQ */
         API_ENDPOINT: '/api/faq',
-        
-        /** @type {number} Задержка поиска в мс */
         SEARCH_DEBOUNCE_MS: 200,
-        
-        /** @type {string} CSS класс для видимых элементов */
+        TOAST_DURATION: 3000,
         VISIBLE_CLASS: 'visible',
-        
-        /** @type {string} CSS класс для открытых FAQ элементов */
         OPEN_CLASS: 'open',
-        
-        /** @type {string} Атрибут для скролла к секции */
         SCROLL_ATTR: 'data-scroll-to',
-        
-        /** @type {string} Атрибут для toggle элемента */
         TOGGLE_ATTR: 'data-toggle',
-        
-        /** @type {string} Атрибут для ID элемента */
         ITEM_ID_ATTR: 'data-item-id',
-        
-        /** @type {string} ID контейнера FAQ */
         FAQ_CONTAINER_ID: 'faqContainer',
-        
-        /** @type {string} ID сетки категорий */
         CATEGORIES_GRID_ID: 'categoriesGrid',
-        
-        /** @type {string} ID поля поиска */
         SEARCH_INPUT_ID: 'searchInput',
-        
-        /** @type {string} ID кнопки очистки поиска */
         SEARCH_CLEAR_ID: 'searchClear',
-        
-        /** @type {string} ID статистики поиска */
-        SEARCH_STATS_ID: 'searchStats'
+        SEARCH_STATS_ID: 'searchStats',
+        THEME_KEY: 'oris-theme'
     };
 
-    // ============================================
-    // Метаданные категорий
-    // ============================================
-    
-    /**
-     * Метаданные категорий FAQ (иконки и цвета)
-     * @constant {Object<string, {name: string, desc: string, color: string, icon: string}>}
-     */
     const CATEGORY_META = {
         general: {
             name: 'Общие вопросы',
@@ -643,344 +1319,344 @@ body {
         }
     };
 
-    /**
-     * Категория по умолчанию
-     * @constant {string}
-     */
     const DEFAULT_CATEGORY = 'general';
 
-    // ============================================
-    // Дефолтные FAQ
-    // ============================================
-    
-    /**
-     * Дефолтные FAQ (используются если API недоступен)
-     * @constant {Array<Object>}
-     */
     const DEFAULT_FAQ = [
         {
             id: 'general',
             category: 'general',
             items: [
-                {
-                    q: 'Что такое платформа Oris?',
-                    a: 'Oris — это каталог избранных веб-проектов с новостным разделом, системой комментариев и технической поддержкой. Платформа создана для демонстрации интересных сайтов и обмена мнениями о них.'
-                },
-                {
-                    q: 'Как добавить свой сайт в каталог?',
-                    a: 'Перейдите на страницу добавления сайта (<a href="/add">/add</a>), заполните форму с названием, URL и описанием проекта. Заявка отправляется администратору через Telegram-бота для ручной модерации.'
-                },
-                {
-                    q: 'Где посмотреть историю изменений платформы?',
-                    a: 'Вся история версий доступна на странице <a href="/changelog">/changelog</a>. Там перечислены все обновления с тегами <code>[feat]</code>, <code>[fix]</code>, <code>[sec]</code>, <code>[major]</code>.'
-                },
-                {
-                    q: 'Как следить за доступностью сервисов?',
-                    a: 'Страница <a href="/status">/status</a> выполняет реальные проверки всех API-эндпоинтов каждые 30 секунд и отображает задержки, статусы и активные инциденты.'
-                }
+                { q: 'Что такое платформа Oris?', a: 'Oris — это каталог избранных веб-проектов с новостным разделом, системой комментариев и технической поддержкой. Платформа создана для демонстрации интересных сайтов и обмена мнениями о них.' },
+                { q: 'Как добавить свой сайт в каталог?', a: 'Перейдите на страницу добавления сайта (<a href="/add">/add</a>), заполните форму с названием, URL и описанием проекта. Заявка отправляется администратору через Telegram-бота для ручной модерации.' },
+                { q: 'Где посмотреть историю изменений платформы?', a: 'Вся история версий доступна на странице <a href="/changelog">/changelog</a>. Там перечислены все обновления с тегами <code>[feat]</code>, <code>[fix]</code>, <code>[sec]</code>, <code>[major]</code>.' },
+                { q: 'Как следить за доступностью сервисов?', a: 'Страница <a href="/status">/status</a> выполняет реальные проверки всех API-эндпоинтов каждые 30 секунд и отображает задержки, статусы и активные инциденты.' }
             ]
         },
         {
             id: 'account',
             category: 'account',
             items: [
-                {
-                    q: 'Как зарегистрироваться в новостях?',
-                    a: 'Нажмите кнопку <strong>«Войти»</strong> на странице <a href="/news">/news</a>, выберите роль «Читатель» и введите имя. Вы получите уникальный 4-значный ID — <strong>сохраните его</strong>, он нужен для повторного входа.'
-                },
-                {
-                    q: 'Как войти с другого устройства?',
-                    a: 'Нажмите <strong>«Войти»</strong>, затем <strong>«Войти по ID»</strong> и введите свой 4-значный ID. Пароль не требуется — ID является единственным ключом доступа к аккаунту.'
-                },
-                {
-                    q: 'Что делать, если я потерял ID?',
-                    a: 'К сожалению, восстановить ID невозможно — он не привязан к email или телефону. Создайте новый аккаунт. В будущем мы планируем добавить привязку к email для восстановления доступа.'
-                },
-                {
-                    q: 'Можно ли изменить имя пользователя?',
-                    a: 'Сейчас имя устанавливается при регистрации и изменить его нельзя. Создайте новый аккаунт, если хотите другой ник. Мы работаем над функцией смены имени.'
-                }
+                { q: 'Как зарегистрироваться в новостях?', a: 'Нажмите кнопку <strong>«Войти»</strong> на странице <a href="/news">/news</a>, выберите роль «Читатель» и введите имя. Вы получите уникальный 4-значный ID — <strong>сохраните его</strong>, он нужен для повторного входа.' },
+                { q: 'Как войти с другого устройства?', a: 'Нажмите <strong>«Войти»</strong>, затем <strong>«Войти по ID»</strong> и введите свой 4-значный ID. Пароль не требуется — ID является единственным ключом доступа к аккаунту.' },
+                { q: 'Что делать, если я потерял ID?', a: 'К сожалению, восстановить ID невозможно — он не привязан к email или телефону. Создайте новый аккаунт. В будущем мы планируем добавить привязку к email для восстановления доступа.' },
+                { q: 'Можно ли изменить имя пользователя?', a: 'Сейчас имя устанавливается при регистрации и изменить его нельзя. Создайте новый аккаунт, если хотите другой ник. Мы работаем над функцией смены имени.' }
             ]
         },
         {
             id: 'news',
             category: 'news',
             items: [
-                {
-                    q: 'Что такое уровни читателей?',
-                    a: 'Уровни показывают активность пользователя в комментариях. Есть 4 уровня:<ul><li><strong>Newbie</strong> — начальный уровень</li><li><strong>Active</strong> — 10+ комментариев и 20+ лайков</li><li><strong>Expert</strong> — 50+ комментариев и 100+ лайков</li><li><strong>Plus</strong> — 200+ комментариев и 500+ лайков</li></ul>Уровень отображается цветным бейджем рядом с именем.'
-                },
-                {
-                    q: 'Как оставить комментарий?',
-                    a: 'Откройте любой пост, нажмите на иконку комментариев. Для комментирования необходимо быть авторизованным. Максимальная длина комментария — 2000 символов. Можно отвечать на чужие комментарии (до 3 уровней вложенности).'
-                },
-                {
-                    q: 'Можно ли редактировать свой комментарий?',
-                    a: 'Да. Нажмите кнопку <strong>«Изменить»</strong> под своим комментарием. После сохранения появится отметка <em>«(изменено)»</em>. Редактировать можно только свои комментарии.'
-                },
-                {
-                    q: 'Что означают лайки и дизлайки?',
-                    a: '<strong>Лайки</strong> — это одобрение контента, которое влияет на уровень автора комментария. <strong>Дизлайки</strong> показывают несогласие, но не влияют на статистику. У одного пользователя может быть только один лайк или дизлайк на комментарий.'
-                },
-                {
-                    q: 'Как добавить пост в избранное?',
-                    a: 'Нажмите на иконку закладки (<svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>) под постом. Все избранные посты доступны во вкладке <strong>«Избранное»</strong> на странице новостей.'
-                },
-                {
-                    q: 'Поддерживается ли Markdown в постах?',
-                    a: 'Да, посты поддерживают <strong>GitHub Flavored Markdown</strong>: заголовки, списки, цитаты, таблицы, код с подсветкой синтаксиса, ссылки, изображения. При создании поста доступен предпросмотр.'
-                }
+                { q: 'Что такое уровни читателей?', a: 'Уровни показывают активность пользователя в комментариях. Есть 4 уровня:<ul><li><strong>Newbie</strong> — начальный уровень</li><li><strong>Active</strong> — 10+ комментариев и 20+ лайков</li><li><strong>Expert</strong> — 50+ комментариев и 100+ лайков</li><li><strong>Plus</strong> — 200+ комментариев и 500+ лайков</li></ul>Уровень отображается цветным бейджем рядом с именем.' },
+                { q: 'Как оставить комментарий?', a: 'Откройте любой пост, нажмите на иконку комментариев. Для комментирования необходимо быть авторизованным. Максимальная длина комментария — 2000 символов. Можно отвечать на чужие комментарии (до 3 уровней вложенности).' },
+                { q: 'Можно ли редактировать свой комментарий?', a: 'Да. Нажмите кнопку <strong>«Изменить»</strong> под своим комментарием. После сохранения появится отметка <em>«(изменено)»</em>. Редактировать можно только свои комментарии.' },
+                { q: 'Что означают лайки и дизлайки?', a: '<strong>Лайки</strong> — это одобрение контента, которое влияет на уровень автора комментария. <strong>Дизлайки</strong> показывают несогласие, но не влияют на статистику. У одного пользователя может быть только один лайк или дизлайк на комментарий.' },
+                { q: 'Как добавить пост в избранное?', a: 'Нажмите на иконку закладки под постом. Все избранные посты доступны во вкладке <strong>«Избранное»</strong> на странице новостей.' },
+                { q: 'Поддерживается ли Markdown в постах?', a: 'Да, посты поддерживают <strong>GitHub Flavored Markdown</strong>: заголовки, списки, цитаты, таблицы, код с подсветкой синтаксиса, ссылки, изображения. При создании поста доступен предпросмотр.' }
             ]
         },
         {
             id: 'support',
             category: 'support',
             items: [
-                {
-                    q: 'Как создать тикет в поддержку?',
-                    a: 'Перейдите на <a href="/support">/support</a>, введите имя и создайте тикет с описанием проблемы. Команда поддержки ответит в чате. Вы получите уведомление о новых сообщениях при обновлении страницы.'
-                },
-                {
-                    q: 'Сколько времени занимает ответ?',
-                    a: 'Стандартное время ответа — до 24 часов в рабочие дни. Критические проблемы обрабатываются в приоритетном порядке.'
-                },
-                {
-                    q: 'Вижу ли я чужие тикеты?',
-                    a: 'Нет. Обычные пользователи видят только свои тикеты. Команда поддержки видит все обращения для оперативной помощи.'
-                },
-                {
-                    q: 'Можно ли переоткрыть закрытый тикет?',
-                    a: 'Да. Если вы напишете новое сообщение в закрытый тикет, он автоматически переоткроется. Команда поддержки получит уведомление.'
-                }
+                { q: 'Как создать тикет в поддержку?', a: 'Перейдите на <a href="/support">/support</a>, введите имя и создайте тикет с описанием проблемы. Команда поддержки ответит в чате. Вы получите уведомление о новых сообщениях при обновлении страницы.' },
+                { q: 'Сколько времени занимает ответ?', a: 'Стандартное время ответа — до 24 часов в рабочие дни. Критические проблемы обрабатываются в приоритетном порядке.' },
+                { q: 'Вижу ли я чужие тикеты?', a: 'Нет. Обычные пользователи видят только свои тикеты. Команда поддержки видит все обращения для оперативной помощи.' },
+                { q: 'Можно ли переоткрыть закрытый тикет?', a: 'Да. Если вы напишете новое сообщение в закрытый тикет, он автоматически переоткроется. Команда поддержки получит уведомление.' }
             ]
         },
         {
             id: 'admin',
             category: 'admin',
             items: [
-                {
-                    q: 'Как войти как администратор?',
-                    a: 'На странице <a href="/news">/news</a> нажмите <strong>«Войти»</strong>, выберите роль <strong>«Администратор»</strong> и введите Admin Token. Токен выдаётся владельцем платформы.'
-                },
-                {
-                    q: 'Что может делать администратор?',
-                    a: 'Администратор имеет доступ к:<ul><li>Созданию, редактированию и удалению постов</li><li>Закреплению постов и комментариев</li><li>Загрузке файлов (до 50 МБ)</li><li>Ответам в техподдержке</li><li>Управлению каталогом проектов</li><li>Редактированию changelog</li><li>Управлению FAQ через админ-панель</li></ul>'
-                },
-                {
-                    q: 'Как редактировать FAQ?',
-                    a: 'FAQ редактируется через эндпоинты <code>/api/admin/faq-config</code> и <code>/api/admin/faq-config/save</code> с передачей Admin Token в заголовке <code>Authorization: Bearer TOKEN</code>.'
-                },
-                {
-                    q: 'Где сохраняются посты и тикеты?',
-                    a: 'Все данные хранятся в <strong>Vercel KV</strong> (Redis). Файлы из постов загружаются в <strong>Vercel Blob</strong>. Каталог проектов и changelog синхронизируются через GitHub API.'
-                }
+                { q: 'Как войти как администратор?', a: 'На странице <a href="/news">/news</a> нажмите <strong>«Войти»</strong>, выберите роль <strong>«Администратор»</strong> и введите Admin Token. Токен выдаётся владельцем платформы.' },
+                { q: 'Что может делать администратор?', a: 'Администратор имеет доступ к:<ul><li>Созданию, редактированию и удалению постов</li><li>Закреплению постов и комментариев</li><li>Загрузке файлов (до 50 МБ)</li><li>Ответам в техподдержке</li><li>Управлению каталогом проектов</li><li>Редактированию changelog</li><li>Управлению FAQ через админ-панель</li></ul>' },
+                { q: 'Как редактировать FAQ?', a: 'FAQ редактируется через эндпоинты <code>/api/admin/faq-config</code> и <code>/api/admin/faq-config/save</code> с передачей Admin Token в заголовке <code>Authorization: Bearer TOKEN</code>.' },
+                { q: 'Где сохраняются посты и тикеты?', a: 'Все данные хранятся в <strong>Vercel KV</strong> (Redis). Файлы из постов загружаются в <strong>Vercel Blob</strong>. Каталог проектов и changelog синхронизируются через GitHub API.' }
             ]
         },
         {
             id: 'technical',
             category: 'technical',
             items: [
-                {
-                    q: 'Какие браузеры поддерживаются?',
-                    a: 'Платформа работает во всех современных браузерах: Chrome 90+, Firefox 90+, Safari 15+, Edge 90+. Рекомендуется последняя версия браузера для лучшего опыта.'
-                },
-                {
-                    q: 'Работает ли сайт на мобильных устройствах?',
-                    a: 'Да, весь интерфейс полностью адаптивен. Специально оптимизированы: навигация, карточки постов, модалки комментариев, страницы статуса и поддержки.'
-                },
-                {
-                    q: 'Поддерживается ли тёмная тема?',
-                    a: 'Да, тема автоматически переключается в зависимости от настроек операционной системы (<code>prefers-color-scheme</code>). Ручного переключателя нет.'
-                },
-                {
-                    q: 'Куда отправляются заявки с форм?',
-                    a: 'Все заявки с форм добавления сайта и сотрудничества доставляются в Telegram администратору через бота. Ответы на тикеты поддержки сохраняются в базе данных и доступны только в чате.'
-                },
-                {
-                    q: 'Как обеспечивается безопасность?',
-                    a: 'Платформа использует:<ul><li><strong>Helmet</strong> — защитные HTTP-заголовки</li><li><strong>CSP</strong> — Content Security Policy</li><li><strong>Rate limiting</strong> — защита от спама</li><li><strong>timingSafeEqual</strong> — защита от timing-атак на токены</li><li><strong>Санитизация</strong> — очистка пользовательского ввода</li></ul>'
-                }
+                { q: 'Какие браузеры поддерживаются?', a: 'Платформа работает во всех современных браузерах: Chrome 90+, Firefox 90+, Safari 15+, Edge 90+. Рекомендуется последняя версия браузера для лучшего опыта.' },
+                { q: 'Работает ли сайт на мобильных устройствах?', a: 'Да, весь интерфейс полностью адаптивен. Специально оптимизированы: навигация, карточки постов, модалки комментариев, страницы статуса и поддержки.' },
+                { q: 'Поддерживается ли тёмная тема?', a: 'Да, тема автоматически переключается в зависимости от настроек операционной системы. Также доступен ручной переключатель в шапке сайта.' },
+                { q: 'Куда отправляются заявки с форм?', a: 'Все заявки с форм добавления сайта и сотрудничества доставляются в Telegram администратору через бота. Ответы на тикеты поддержки сохраняются в базе данных и доступны только в чате.' },
+                { q: 'Как обеспечивается безопасность?', a: 'Платформа использует:<ul><li><strong>Helmet</strong> — защитные HTTP-заголовки</li><li><strong>CSP</strong> — Content Security Policy</li><li><strong>Rate limiting</strong> — защита от спама</li><li><strong>timingSafeEqual</strong> — защита от timing-атак на токены</li><li><strong>Санитизация</strong> — очистка пользовательского ввода</li></ul>' }
             ]
         }
     ];
 
     // ============================================
-    // Состояние приложения
+    // State
     // ============================================
-    
-    /**
-     * Глобальное состояние приложения
-     * @namespace
-     */
     const State = {
-        /** @type {Array<Object>} Список FAQ секций */
         faq: [],
-        
-        /** @type {string} Поисковый запрос */
         searchQuery: '',
-        
-        /** @type {Set<string>} Набор ID открытых элементов */
-        openItems: new Set()
+        openItems: new Set(),
+        activeCategory: 'all',
+        theme: 'light',
+        cmdkFocusedIndex: -1
     };
 
     // ============================================
-    // Утилиты безопасности
+    // DOM Cache
     // ============================================
-    
-    /**
-     * Утилиты безопасности для защиты от XSS-атак
-     * @namespace
-     */
-    const Security = {
-        /**
-         * Карта соответствия символов HTML-сущностям
-         * @type {Object<string, string>}
-         */
-        HTML_ESCAPE_MAP: {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        },
+    const DOM = {
+        heroTitle: document.getElementById('heroTitle'),
+        searchInput: document.getElementById('searchInput'),
+        searchClear: document.getElementById('searchClear'),
+        searchStats: document.getElementById('searchStats'),
+        categoriesGrid: document.getElementById('categoriesGrid'),
+        categoryChips: document.getElementById('categoryChips'),
+        faqContainer: document.getElementById('faqContainer'),
+        themeToggle: document.getElementById('themeToggle'),
+        themeIconSun: document.querySelector('.theme-icon-light'),
+        themeIconMoon: document.querySelector('.theme-icon-dark'),
+        scrollTop: document.getElementById('scrollTop'),
+        readingProgress: document.getElementById('readingProgress'),
+        cmdkBtn: document.getElementById('cmdkBtn'),
+        cmdkOverlay: document.getElementById('cmdkOverlay'),
+        cmdkInput: document.getElementById('cmdkInput'),
+        cmdkResults: document.getElementById('cmdkResults'),
+        toastContainer: document.getElementById('toastContainer')
+    };
 
-        /**
-         * Экранирование HTML-сущностей в строке
-         * 
-         * @param {string|number|null|undefined} str - Исходная строка
-         * @returns {string} - Строка с экранированными HTML-сущностями
-         */
+    // ============================================
+    // Security
+    // ============================================
+    const Security = {
+        HTML_ESCAPE_MAP: { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' },
         escapeHtml(str) {
             if (!str) return '';
-            return String(str).replace(/[&<>"']/g, (match) => {
-                return this.HTML_ESCAPE_MAP[match];
-            });
+            return String(str).replace(/[&<>"']/g, (m) => this.HTML_ESCAPE_MAP[m]);
         }
     };
 
     // ============================================
-    // Утилиты форматирования
+    // Toast System
     // ============================================
-    
-    /**
-     * Склонение слов
-     * 
-     * @param {number} n - Число
-     * @param {Array<string>} forms - Формы слова [1, 2-4, 5+]
-     * @returns {string} - Правильная форма
-     * 
-     * @example
-     * pluralize(5, ['вопрос', 'вопроса', 'вопросов']); // 'вопросов'
-     */
+    const ToastIcons = {
+        success: '<svg class="toast-icon success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        info: '<svg class="toast-icon info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        warning: '<svg class="toast-icon warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        error: '<svg class="toast-icon error" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>'
+    };
+
+    function showToast(message, type = 'info', duration = CONFIG.TOAST_DURATION) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `${ToastIcons[type] || ToastIcons.info}<span class="toast-message">${message}</span>`;
+        DOM.toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('removing');
+            setTimeout(() => toast.remove(), 250);
+        }, duration);
+    }
+
+    // ============================================
+    // Theme System
+    // ============================================
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function applyTheme(theme) {
+        State.theme = theme;
+        document.documentElement.dataset.theme = theme;
+        DOM.themeIconSun.style.display = theme === 'dark' ? 'block' : 'none';
+        DOM.themeIconMoon.style.display = theme === 'dark' ? 'none' : 'block';
+        try { localStorage.setItem(CONFIG.THEME_KEY, theme); } catch (e) {}
+    }
+
+    function toggleTheme() {
+        const newTheme = State.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        showToast(`Тема изменена на ${newTheme === 'dark' ? 'тёмную' : 'светлую'}`, 'info', 2000);
+    }
+
+    function initTheme() {
+        let savedTheme = null;
+        try { savedTheme = localStorage.getItem(CONFIG.THEME_KEY); } catch (e) {}
+        applyTheme(savedTheme || getSystemTheme());
+        DOM.themeToggle.addEventListener('click', toggleTheme);
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            try {
+                if (!localStorage.getItem(CONFIG.THEME_KEY)) {
+                    applyTheme(e.matches ? 'dark' : 'light');
+                }
+            } catch (err) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+
+    // ============================================
+    // Utilities
+    // ============================================
     function pluralize(n, forms) {
         const abs = Math.abs(n) % 100;
         const n1 = abs % 10;
-        
         if (abs > 10 && abs < 20) return forms[2];
         if (n1 > 1 && n1 < 5) return forms[1];
         if (n1 === 1) return forms[0];
         return forms[2];
     }
 
-    /**
-     * Удаление HTML-тегов из строки
-     * 
-     * @param {string} html - HTML строка
-     * @returns {string} - Текст без HTML тегов
-     * 
-     * @example
-     * stripHtml('<p>Hello</p>'); // 'Hello'
-     */
     function stripHtml(html) {
         const tmp = document.createElement('div');
         tmp.innerHTML = html;
         return tmp.textContent || tmp.innerText || '';
     }
 
-    /**
-     * Подсветка поискового запроса в тексте
-     * 
-     * @param {string} text - Исходный текст
-     * @param {string} query - Поисковый запрос
-     * @returns {string} - Текст с подсветкой <mark>
-     * 
-     * @example
-     * highlightText('Hello world', 'world'); // 'Hello <mark>world</mark>'
-     */
     function highlightText(text, query) {
         if (!query) return text;
-        
         try {
-            // Экранирование спецсимволов регулярного выражения
             const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             const regex = new RegExp(`(${safeQuery})`, 'gi');
             return text.replace(regex, '<mark>$1</mark>');
         } catch (error) {
-            console.warn('[FAQ] Highlight error:', error);
             return text;
         }
     }
 
     // ============================================
-    // Загрузка данных
+    // Typewriter + Glitch
     // ============================================
-    
-    /**
-     * Загрузка FAQ с API (с fallback на дефолтные данные)
-     * 
-     * @returns {Promise<void>}
-     */
+    function typewriter(element, text, speed = 45) {
+        element.textContent = '';
+        element.setAttribute('data-text', '');
+        const cursor = document.createElement('span');
+        cursor.className = 'typewriter-cursor';
+        element.appendChild(cursor);
+        let i = 0;
+        const interval = setInterval(() => {
+            if (i < text.length) {
+                element.insertBefore(document.createTextNode(text[i]), cursor);
+                element.setAttribute('data-text', text.substring(0, i + 1));
+                i++;
+            } else {
+                clearInterval(interval);
+                setTimeout(() => cursor.remove(), 2000);
+            }
+        }, speed);
+    }
+
+    function triggerGlitch() {
+        DOM.heroTitle.classList.add('glitch');
+        setTimeout(() => DOM.heroTitle.classList.remove('glitch'), 400);
+    }
+
+    function initHero() {
+        setTimeout(() => {
+            typewriter(DOM.heroTitle, 'Чем мы можем помочь?');
+        }, 300);
+        DOM.heroTitle.addEventListener('click', triggerGlitch);
+        setInterval(triggerGlitch, 7000);
+    }
+
+    // ============================================
+    // Reading Progress & Scroll Top
+    // ============================================
+    function initScrollEffects() {
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            DOM.readingProgress.style.width = progress + '%';
+
+            if (scrollTop > 400) {
+                DOM.scrollTop.classList.add('visible');
+            } else {
+                DOM.scrollTop.classList.remove('visible');
+            }
+        }, { passive: true });
+
+        DOM.scrollTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // ============================================
+    // Load FAQ
+    // ============================================
     async function loadFAQ() {
         try {
             const response = await fetch(CONFIG.API_ENDPOINT);
-            
             if (response.ok) {
                 const data = await response.json();
-                
-                // Валидация данных
                 if (Array.isArray(data) && data.length > 0) {
                     State.faq = data;
-                    console.log(`[FAQ] Loaded ${data.length} sections from API`);
                 } else {
                     State.faq = DEFAULT_FAQ;
-                    console.warn('[FAQ] Empty API response, using defaults');
                 }
             } else {
                 State.faq = DEFAULT_FAQ;
-                console.warn(`[FAQ] API error ${response.status}, using defaults`);
             }
         } catch (error) {
             State.faq = DEFAULT_FAQ;
-            console.error('[FAQ] Failed to load:', error);
         }
-        
         renderAll();
     }
 
     // ============================================
-    // Рендеринг категорий
+    // Category Chips
     // ============================================
-    
-    /**
-     * Рендеринг сетки категорий
-     */
+    function renderCategoryChips() {
+        const counts = {};
+        State.faq.forEach(section => {
+            counts[section.category] = (counts[section.category] || 0) + (section.items || []).length;
+        });
+
+        const total = State.faq.reduce((sum, s) => sum + (s.items || []).length, 0);
+        let html = `<button class="chip ${State.activeCategory === 'all' ? 'active' : ''}" data-chip="all">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <span>Все</span>
+            <span class="chip-count">${total}</span>
+        </button>`;
+
+        Object.keys(CATEGORY_META).forEach(catKey => {
+            if (counts[catKey]) {
+                const meta = CATEGORY_META[catKey];
+                const isActive = State.activeCategory === catKey;
+                const style = isActive ? `background:${meta.color};border-color:${meta.color};` : '';
+                html += `<button class="chip ${isActive ? 'active' : ''}" data-chip="${catKey}" style="${style}">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${meta.icon}</svg>
+                    <span>${meta.name}</span>
+                    <span class="chip-count">${counts[catKey]}</span>
+                </button>`;
+            }
+        });
+
+        DOM.categoryChips.innerHTML = html;
+        DOM.categoryChips.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                State.activeCategory = chip.dataset.chip;
+                renderCategoryChips();
+                renderFAQ();
+            });
+        });
+    }
+
+    // ============================================
+    // Render Categories
+    // ============================================
     function renderCategories() {
-        const grid = document.getElementById(CONFIG.CATEGORIES_GRID_ID);
-        
-        // Подсчет количества вопросов в каждой секции
         const counts = {};
         State.faq.forEach(section => {
             counts[section.id] = (section.items || []).length;
         });
 
-        // Генерация HTML карточек категорий
-        grid.innerHTML = State.faq.map(section => {
+        const filteredFaq = State.activeCategory === 'all' 
+            ? State.faq 
+            : State.faq.filter(s => s.category === State.activeCategory);
+
+        DOM.categoriesGrid.innerHTML = filteredFaq.map(section => {
             const meta = CATEGORY_META[section.category] || CATEGORY_META[DEFAULT_CATEGORY];
             const count = counts[section.id] || 0;
             const countText = `${count} ${pluralize(count, ['вопрос', 'вопроса', 'вопросов'])}`;
-            
             return `
-                <a href="#${section.id}" class="category-card" ${CONFIG.SCROLL_ATTR}="${section.id}">
+                <a href="#${section.id}" class="category-card" ${CONFIG.SCROLL_ATTR}="${section.id}" style="--cat-color: ${meta.color};">
                     <div class="category-icon" style="background: ${meta.color}20; color: ${meta.color};">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${meta.icon}</svg>
                     </div>
@@ -991,47 +1667,37 @@ body {
             `;
         }).join('');
 
-        // Привязка событий скролла
-        grid.querySelectorAll(`[${CONFIG.SCROLL_ATTR}]`).forEach(card => {
+        DOM.categoriesGrid.querySelectorAll(`[${CONFIG.SCROLL_ATTR}]`).forEach(card => {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
                 const id = card.getAttribute(CONFIG.SCROLL_ATTR);
                 const target = document.getElementById(id);
-                
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
     }
 
     // ============================================
-    // Рендеринг FAQ
+    // Render FAQ
     // ============================================
-    
-    /**
-     * Рендеринг списка FAQ с фильтрацией и подсветкой
-     */
     function renderFAQ() {
-        const container = document.getElementById(CONFIG.FAQ_CONTAINER_ID);
         const query = State.searchQuery.toLowerCase().trim();
 
-        // Фильтрация секций и элементов по поисковому запросу
-        const filtered = State.faq.map(section => ({
-            ...section,
-            items: (section.items || []).filter(item => {
-                if (!query) return true;
-                
-                const questionMatch = item.q.toLowerCase().includes(query);
-                const answerMatch = stripHtml(item.a).toLowerCase().includes(query);
-                
-                return questionMatch || answerMatch;
-            })
-        })).filter(section => section.items.length > 0);
+        const filtered = State.faq
+            .filter(section => State.activeCategory === 'all' || section.category === State.activeCategory)
+            .map(section => ({
+                ...section,
+                items: (section.items || []).filter(item => {
+                    if (!query) return true;
+                    const questionMatch = item.q.toLowerCase().includes(query);
+                    const answerMatch = stripHtml(item.a).toLowerCase().includes(query);
+                    return questionMatch || answerMatch;
+                })
+            }))
+            .filter(section => section.items.length > 0);
 
-        // Пустой результат
         if (filtered.length === 0) {
-            container.innerHTML = `
+            DOM.faqContainer.innerHTML = `
                 <div class="empty-state">
                     <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -1044,35 +1710,32 @@ body {
             return;
         }
 
-        // Подсчет статистики
         let totalVisible = 0;
         let totalAll = 0;
-        
-        filtered.forEach(section => {
-            totalVisible += section.items.length;
-        });
-        
-        State.faq.forEach(section => {
-            totalAll += (section.items || []).length;
-        });
+        filtered.forEach(section => { totalVisible += section.items.length; });
+        State.faq.forEach(section => { totalAll += (section.items || []).length; });
 
-        // Генерация HTML секций
-        container.innerHTML = filtered.map(section => {
+        DOM.faqContainer.innerHTML = filtered.map((section, sIdx) => {
             const meta = CATEGORY_META[section.category] || CATEGORY_META[DEFAULT_CATEGORY];
             const countText = `${section.items.length} ${pluralize(section.items.length, ['вопрос', 'вопроса', 'вопросов'])}`;
-            
+
             const itemsHtml = section.items.map((item, idx) => {
                 const itemId = `${section.id}-${idx}`;
                 const isOpen = State.openItems.has(itemId);
-                const questionHtml = query 
-                    ? highlightText(Security.escapeHtml(item.q), query) 
+                const questionHtml = query
+                    ? highlightText(Security.escapeHtml(item.q), query)
                     : Security.escapeHtml(item.q);
-                
+
                 return `
-                    <div class="faq-item ${isOpen ? CONFIG.OPEN_CLASS : ''}" ${CONFIG.ITEM_ID_ATTR}="${itemId}">
+                    <div class="faq-item ${isOpen ? CONFIG.OPEN_CLASS : ''}" ${CONFIG.ITEM_ID_ATTR}="${itemId}" style="animation-delay: ${idx * 0.04}s;">
                         <div class="faq-question" ${CONFIG.TOGGLE_ATTR}="${itemId}">
                             <div class="faq-q-icon">Q</div>
                             <div class="faq-q-text">${questionHtml}</div>
+                            <div class="faq-actions">
+                                <button class="faq-action-btn" data-copy-item="${itemId}" title="Скопировать ссылку">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                                </button>
+                            </div>
                             <svg class="faq-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -1081,9 +1744,9 @@ body {
                     </div>
                 `;
             }).join('');
-            
+
             return `
-                <section class="faq-section" id="${section.id}">
+                <section class="faq-section" id="${section.id}" style="animation-delay: ${sIdx * 0.1}s;">
                     <div class="section-header">
                         <div class="section-icon" style="background: ${meta.color}20; color: ${meta.color};">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">${meta.icon}</svg>
@@ -1096,14 +1759,13 @@ body {
             `;
         }).join('');
 
-        // Привязка событий toggle
-        container.querySelectorAll(`[${CONFIG.TOGGLE_ATTR}]`).forEach(btn => {
-            btn.addEventListener('click', () => {
+        // Toggle events
+        DOM.faqContainer.querySelectorAll(`[${CONFIG.TOGGLE_ATTR}]`).forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (e.target.closest('.faq-action-btn')) return;
                 const itemId = btn.getAttribute(CONFIG.TOGGLE_ATTR);
                 const item = btn.closest('.faq-item');
-                
                 item.classList.toggle(CONFIG.OPEN_CLASS);
-                
                 if (item.classList.contains(CONFIG.OPEN_CLASS)) {
                     State.openItems.add(itemId);
                 } else {
@@ -1112,99 +1774,340 @@ body {
             });
         });
 
+        // Copy link events
+        DOM.faqContainer.querySelectorAll('[data-copy-item]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const itemId = btn.dataset.copyItem;
+                const section = State.faq.find(s => s.items.some((_, idx) => `${s.id}-${idx}` === itemId));
+                if (!section) return;
+                const idx = parseInt(itemId.split('-').pop());
+                const item = section.items[idx];
+                const url = `${window.location.origin}/help#${section.id}`;
+                try {
+                    await navigator.clipboard.writeText(url);
+                    showToast('Ссылка скопирована', 'success', 2000);
+                } catch (err) {
+                    showToast('Не удалось скопировать', 'error');
+                }
+            });
+        });
+
         updateSearchStats(totalVisible, totalAll);
     }
 
-    /**
-     * Обновление статистики поиска
-     * 
-     * @param {number} visible - Количество видимых вопросов
-     * @param {number} total - Общее количество вопросов
-     */
     function updateSearchStats(visible, total) {
-        const stats = document.getElementById(CONFIG.SEARCH_STATS_ID);
-        
         if (!State.searchQuery) {
-            stats.textContent = `Всего вопросов: ${total}`;
+            DOM.searchStats.textContent = `Всего вопросов: ${total}`;
         } else {
-            stats.textContent = `Найдено: ${visible} из ${total}`;
+            DOM.searchStats.textContent = `Найдено: ${visible} из ${total}`;
         }
     }
 
-    /**
-     * Полный рендеринг всех компонентов
-     */
     function renderAll() {
+        renderCategoryChips();
         renderCategories();
         renderFAQ();
     }
 
     // ============================================
-    // Поиск
+    // Search
     // ============================================
-    
-    /**
-     * Инициализация поиска с debounce
-     */
     function initSearch() {
-        const input = document.getElementById(CONFIG.SEARCH_INPUT_ID);
-        const clearBtn = document.getElementById(CONFIG.SEARCH_CLEAR_ID);
         let debounceTimer;
 
-        // Обработчик ввода с debounce
-        input.addEventListener('input', () => {
+        DOM.searchInput.addEventListener('input', () => {
             clearTimeout(debounceTimer);
-            
-            // Показ/скрытие кнопки очистки
-            clearBtn.classList.toggle(CONFIG.VISIBLE_CLASS, input.value.length > 0);
-            
+            DOM.searchClear.classList.toggle(CONFIG.VISIBLE_CLASS, DOM.searchInput.value.length > 0);
             debounceTimer = setTimeout(() => {
-                State.searchQuery = input.value;
+                State.searchQuery = DOM.searchInput.value;
                 renderFAQ();
-                
-                // Автоскролл к первому результату при поиске
                 if (State.searchQuery) {
                     const firstSection = document.querySelector('.faq-section');
-                    if (firstSection) {
-                        firstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
+                    if (firstSection) firstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }, CONFIG.SEARCH_DEBOUNCE_MS);
         });
 
-        // Обработчик очистки поиска
-        clearBtn.addEventListener('click', () => {
-            input.value = '';
+        DOM.searchClear.addEventListener('click', () => {
+            DOM.searchInput.value = '';
             State.searchQuery = '';
-            clearBtn.classList.remove(CONFIG.VISIBLE_CLASS);
+            DOM.searchClear.classList.remove(CONFIG.VISIBLE_CLASS);
             renderFAQ();
-            input.focus();
+            DOM.searchInput.focus();
         });
 
-        // Инициализация поиска из URL параметра
         const params = new URLSearchParams(window.location.search);
         const queryParam = params.get('q');
-        
         if (queryParam) {
-            input.value = queryParam;
+            DOM.searchInput.value = queryParam;
             State.searchQuery = queryParam;
-            clearBtn.classList.add(CONFIG.VISIBLE_CLASS);
+            DOM.searchClear.classList.add(CONFIG.VISIBLE_CLASS);
         }
     }
 
     // ============================================
-    // Инициализация
+    // Command Palette
     // ============================================
-    
-    /**
-     * Инициализация приложения
-     */
-    function init() {
-        initSearch();
-        loadFAQ();
+    function openCmdk() {
+        DOM.cmdkOverlay.classList.add('active');
+        DOM.cmdkOverlay.style.display = 'flex';
+        DOM.cmdkInput.value = '';
+        State.cmdkFocusedIndex = -1;
+        setTimeout(() => DOM.cmdkInput.focus(), 50);
+        renderCmdkResults('');
+        document.body.style.overflow = 'hidden';
     }
 
-    // Запуск после загрузки DOM
+    function closeCmdk() {
+        DOM.cmdkOverlay.classList.remove('active');
+        setTimeout(() => {
+            DOM.cmdkOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 200);
+    }
+
+    function renderCmdkResults(query) {
+        const q = query.toLowerCase().trim();
+
+        const actions = [
+            { type: 'action', title: 'Переключить тему', desc: 'Светлая/тёмная тема', kbd: 'T', action: () => { toggleTheme(); closeCmdk(); } },
+            { type: 'action', title: 'Развернуть все вопросы', desc: 'Открыть все ответы', kbd: 'A', action: () => { expandAll(); closeCmdk(); } },
+            { type: 'action', title: 'Свернуть все вопросы', desc: 'Закрыть все ответы', kbd: 'S', action: () => { collapseAll(); closeCmdk(); } },
+            { type: 'action', title: 'Очистить поиск', desc: 'Сбросить поисковый запрос', action: () => { DOM.searchInput.value = ''; State.searchQuery = ''; DOM.searchClear.classList.remove(CONFIG.VISIBLE_CLASS); renderFAQ(); closeCmdk(); } },
+            { type: 'nav', title: 'Каталог проектов', desc: 'Главная страница', url: '/', kbd: '1' },
+            { type: 'nav', title: 'Новости', desc: 'Новости платформы', url: '/news', kbd: '2' },
+            { type: 'nav', title: 'Changelog', desc: 'История изменений', url: '/changelog', kbd: '3' },
+            { type: 'nav', title: 'Поддержка', desc: 'Создать тикет', url: '/support', kbd: '4' }
+        ];
+
+        const questions = [];
+        State.faq.forEach(section => {
+            const meta = CATEGORY_META[section.category] || CATEGORY_META[DEFAULT_CATEGORY];
+            (section.items || []).forEach((item, idx) => {
+                questions.push({
+                    type: 'question',
+                    title: item.q,
+                    desc: meta.name,
+                    sectionId: section.id,
+                    itemId: `${section.id}-${idx}`,
+                    color: meta.color,
+                    icon: meta.icon
+                });
+            });
+        });
+
+        let filteredActions = actions;
+        let filteredQuestions = questions;
+        if (q) {
+            filteredActions = actions.filter(a =>
+                a.title.toLowerCase().includes(q) ||
+                (a.desc && a.desc.toLowerCase().includes(q))
+            );
+            filteredQuestions = questions.filter(p =>
+                p.title.toLowerCase().includes(q) ||
+                (p.desc && p.desc.toLowerCase().includes(q))
+            );
+        }
+
+        const items = [];
+        if (filteredActions.length > 0) items.push({ group: 'Действия', entries: filteredActions });
+        if (filteredQuestions.length > 0) items.push({ group: 'Вопросы', entries: filteredQuestions });
+
+        if (items.length === 0) {
+            DOM.cmdkResults.innerHTML = '<div class="cmdk-empty">Ничего не найдено</div>';
+            return;
+        }
+
+        let html = '';
+        let globalIndex = 0;
+        items.forEach(group => {
+            html += `<div class="cmdk-group-label">${group.group}</div>`;
+            group.entries.forEach(entry => {
+                const isFocused = globalIndex === State.cmdkFocusedIndex;
+                const iconBg = entry.color ? entry.color + '18' : 'var(--accent-soft)';
+                const iconColor = entry.color || 'var(--accent)';
+                const iconPath = entry.icon || 'M13 10V3L4 14h7v7l9-11h-7z';
+                html += `
+                    <div class="cmdk-item${isFocused ? ' focused' : ''}" data-cmdk-idx="${globalIndex}">
+                        <div class="cmdk-item-icon" style="background: ${iconBg}; color: ${iconColor};">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"/></svg>
+                        </div>
+                        <div class="cmdk-item-info">
+                            <div class="cmdk-item-title">${Security.escapeHtml(entry.title)}</div>
+                            <div class="cmdk-item-desc">${Security.escapeHtml(entry.desc || '')}</div>
+                        </div>
+                        ${entry.kbd ? `<span class="cmdk-item-kbd">${entry.kbd}</span>` : ''}
+                    </div>
+                `;
+                globalIndex++;
+            });
+        });
+
+        DOM.cmdkResults.innerHTML = html;
+
+        DOM.cmdkResults.querySelectorAll('.cmdk-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const idx = parseInt(el.dataset.cmdkIdx);
+                executeCmdkItem(idx, items);
+            });
+        });
+    }
+
+    function executeCmdkItem(idx, groups) {
+        let currentIdx = 0;
+        for (const group of groups) {
+            for (const entry of group.entries) {
+                if (currentIdx === idx) {
+                    if (entry.type === 'action' && entry.action) {
+                        entry.action();
+                    } else if (entry.type === 'question') {
+                        closeCmdk();
+                        // Open the question
+                        State.openItems.add(entry.itemId);
+                        renderFAQ();
+                        setTimeout(() => {
+                            const el = document.querySelector(`[${CONFIG.ITEM_ID_ATTR}="${entry.itemId}"]`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    } else if (entry.url) {
+                        window.location.href = entry.url;
+                    }
+                    return;
+                }
+                currentIdx++;
+            }
+        }
+    }
+
+    function initCmdk() {
+        DOM.cmdkBtn.addEventListener('click', openCmdk);
+        DOM.cmdkOverlay.addEventListener('click', (e) => {
+            if (e.target === DOM.cmdkOverlay) closeCmdk();
+        });
+        DOM.cmdkInput.addEventListener('input', (e) => {
+            State.cmdkFocusedIndex = -1;
+            renderCmdkResults(e.target.value);
+        });
+        DOM.cmdkInput.addEventListener('keydown', (e) => {
+            const items = DOM.cmdkResults.querySelectorAll('.cmdk-item');
+            if (!items.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.min(State.cmdkFocusedIndex + 1, items.length - 1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                State.cmdkFocusedIndex = Math.max(State.cmdkFocusedIndex - 1, -1);
+                updateCmdkFocus(items);
+            } else if (e.key === 'Enter' && State.cmdkFocusedIndex >= 0) {
+                e.preventDefault();
+                items[State.cmdkFocusedIndex].click();
+            }
+        });
+    }
+
+    function updateCmdkFocus(items) {
+        items.forEach((item, idx) => {
+            item.classList.toggle('focused', idx === State.cmdkFocusedIndex);
+        });
+        if (State.cmdkFocusedIndex >= 0 && items[State.cmdkFocusedIndex]) {
+            items[State.cmdkFocusedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // ============================================
+    // Expand/Collapse All
+    // ============================================
+    function expandAll() {
+        document.querySelectorAll('.faq-item').forEach(item => {
+            const itemId = item.getAttribute(CONFIG.ITEM_ID_ATTR);
+            item.classList.add(CONFIG.OPEN_CLASS);
+            State.openItems.add(itemId);
+        });
+        showToast('Все вопросы развёрнуты', 'info', 2000);
+    }
+
+    function collapseAll() {
+        document.querySelectorAll('.faq-item').forEach(item => {
+            const itemId = item.getAttribute(CONFIG.ITEM_ID_ATTR);
+            item.classList.remove(CONFIG.OPEN_CLASS);
+            State.openItems.delete(itemId);
+        });
+        State.openItems.clear();
+        showToast('Все вопросы свёрнуты', 'info', 2000);
+    }
+
+    // ============================================
+    // Hotkeys
+    // ============================================
+    function initHotkeys() {
+        document.addEventListener('keydown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                if (e.key === 'Escape') {
+                    e.target.blur();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                }
+                return;
+            }
+            if (e.ctrlKey || e.metaKey) {
+                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                    e.preventDefault();
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    else openCmdk();
+                    return;
+                }
+                return;
+            }
+            if (e.altKey) return;
+
+            switch (e.key) {
+                case '/':
+                    e.preventDefault();
+                    DOM.searchInput.focus();
+                    break;
+                case 't': case 'T': case 'е': case 'Е':
+                    toggleTheme();
+                    break;
+                case 'a': case 'A': case 'ф': case 'Ф':
+                    expandAll();
+                    break;
+                case 's': case 'S': case 'ы': case 'Ы':
+                    collapseAll();
+                    break;
+                case '1': window.location.href = '/'; break;
+                case '2': window.location.href = '/news'; break;
+                case '3': window.location.href = '/changelog'; break;
+                case '4': window.location.href = '/support'; break;
+                case '5': window.location.href = '/help'; break;
+                case 'Escape':
+                    if (DOM.cmdkOverlay.classList.contains('active')) closeCmdk();
+                    break;
+                case '?':
+                    showToast('Горячие клавиши: / поиск · ⌘K палитра · T тема · A развернуть · S свернуть · 1-5 навигация', 'info', 5000);
+                    break;
+            }
+        });
+    }
+
+    // ============================================
+    // Init
+    // ============================================
+    function init() {
+        initTheme();
+        initHero();
+        initScrollEffects();
+        initSearch();
+        initCmdk();
+        initHotkeys();
+        loadFAQ();
+
+        setTimeout(() => {
+            showToast('Нажмите ? для списка горячих клавиш', 'info', 3500);
+        }, 1200);
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
