@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light" data-accent="blue">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitFolder — Скачивание папок из GitHub</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --transition: 120ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme="light"] {
+  --color-canvas-default: #ffffff;
+  --color-canvas-subtle: #f6f8fa;
+  --color-canvas-muted: #eaeef2;
+  --color-border-default: #d0d7de;
+  --color-border-muted: #d8dee4;
+  --color-text-primary: #1f2328;
+  --color-text-secondary: #656d76;
+  --color-text-tertiary: #6e7781;
+  --color-text-link: var(--accent-fg);
+  --color-bg-hover: rgba(208, 215, 222, 0.32);
+  --color-shadow: rgba(140, 149, 159, 0.2);
+  --color-btn-bg: #f6f8fa;
+  --color-btn-border: rgba(27, 31, 36, 0.15);
+  --color-btn-hover-bg: #e6eaef;
+  --color-btn-primary-bg: var(--accent-emphasis);
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-hover-bg: var(--accent-emphasis-hover);
+  --color-fg-default: #1f2328;
+  --color-fg-muted: #656d76;
+  --color-success-fg: #1a7f37;
+  --color-danger-fg: #d1242f;
+  --color-attention-fg: #9a6700;
+  --scrollbar-thumb: #c0c8d1;
+}
+
+[data-theme="dark"] {
+  --color-canvas-default: #0d1117;
+  --color-canvas-subtle: #161b22;
+  --color-canvas-muted: #1c2128;
+  --color-border-default: #30363d;
+  --color-border-muted: #21262d;
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #7d8590;
+  --color-text-tertiary: #6e7681;
+  --color-text-link: var(--accent-fg);
+  --color-bg-hover: rgba(110, 118, 129, 0.1);
+  --color-shadow: rgba(0, 0, 0, 0.5);
+  --color-btn-bg: #21262d;
+  --color-btn-border: rgba(240, 246, 252, 0.1);
+  --color-btn-hover-bg: #30363d;
+  --color-btn-primary-bg: var(--accent-emphasis);
+  --color-btn-primary-text: #ffffff;
+  --color-btn-primary-hover-bg: var(--accent-emphasis-hover);
+  --color-fg-default: #e6edf3;
+  --color-fg-muted: #7d8590;
+  --color-success-fg: #3fb950;
+  --color-danger-fg: #f85149;
+  --color-attention-fg: #d29922;
+  --scrollbar-thumb: #3d444d;
+}
+
+[data-accent="blue"] {
+  --accent-fg: #0969da;
+  --accent-emphasis: #0969da;
+  --accent-emphasis-hover: #0860c4;
+  --accent-subtle: #ddf4ff;
+}
+[data-theme="dark"][data-accent="blue"] {
+  --accent-fg: #4493f8;
+  --accent-emphasis: #1f6feb;
+  --accent-emphasis-hover: #388bfd;
+  --accent-subtle: rgba(56, 139, 253, 0.15);
+}
+
+[data-accent="purple"] {
+  --accent-fg: #8250df;
+  --accent-emphasis: #8250df;
+  --accent-emphasis-hover: #6e40c9;
+  --accent-subtle: #fbefff;
+}
+[data-theme="dark"][data-accent="purple"] {
+  --accent-fg: #ab7df8;
+  --accent-emphasis: #8957e5;
+  --accent-emphasis-hover: #a371f7;
+  --accent-subtle: rgba(163, 113, 247, 0.15);
+}
+
+[data-accent="green"] {
+  --accent-fg: #1a7f37;
+  --accent-emphasis: #1a7f37;
+  --accent-emphasis-hover: #116329;
+  --accent-subtle: #dafbe1;
+}
+[data-theme="dark"][data-accent="green"] {
+  --accent-fg: #3fb950;
+  --accent-emphasis: #238636;
+  --accent-emphasis-hover: #2ea043;
+  --accent-subtle: rgba(63, 185, 80, 0.15);
+}
+
+html, body {
+  height: 100%;
+  background: var(--color-canvas-default);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+a { color: var(--color-text-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 5px; border: 2px solid var(--color-canvas-default); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
+
+.header {
+  background: var(--color-canvas-default);
+  border-bottom: 1px solid var(--color-border-muted);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-emphasis);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.logo-text-sub {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-size: 13px;
+  margin-left: 2px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+
+.icon-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.icon-btn svg { width: 18px; height: 18px; }
+
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .sidebar.open { display: block; position: fixed; top: 65px; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--color-canvas-default); border-top: 1px solid var(--color-border-muted); overflow-y: auto; padding: 16px; }
+}
+
+.sidebar {
+  border-right: 1px solid var(--color-border-muted);
+  padding: 24px 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 65px);
+  position: sticky;
+  top: 65px;
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sidebar-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.history-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-item {
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  transition: background var(--transition);
+}
+
+.history-item:hover { background: var(--color-bg-hover); }
+
+.history-item-path {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.history-item-delete {
+  opacity: 0;
+  color: var(--color-text-tertiary);
+  padding: 2px;
+  border-radius: 4px;
+  transition: opacity var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-item:hover .history-item-delete { opacity: 1; }
+.history-item-delete:hover { color: var(--color-danger-fg); background: var(--color-bg-hover); }
+.history-item-delete svg { width: 14px; height: 14px; display: block; }
+
+.history-empty {
+  padding: 16px 8px;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  text-align: left;
+}
+
+.clear-history {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  transition: background var(--transition);
+  margin-top: 8px;
+  text-align: left;
+}
+
+.clear-history:hover { background: var(--color-bg-hover); color: var(--color-danger-fg); }
+
+.content {
+  padding: 32px 24px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .content { padding: 20px 16px; }
+  .header { padding: 12px 16px; }
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.page-subtitle {
+  color: var(--color-text-secondary);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.input-card {
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.input-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.text-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.text-input:focus {
+  border-color: var(--accent-emphasis);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.text-input::placeholder { color: var(--color-text-tertiary); }
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background var(--transition), border-color var(--transition);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.btn svg { width: 16px; height: 16px; }
+
+.btn-default {
+  background: var(--color-btn-bg);
+  border-color: var(--color-btn-border);
+  color: var(--color-text-primary);
+}
+
+.btn-default:hover { background: var(--color-btn-hover-bg); }
+
+.btn-primary {
+  background: var(--color-btn-primary-bg);
+  color: var(--color-btn-primary-text);
+  border-color: rgba(27, 31, 36, 0.15);
+}
+
+.btn-primary:hover { background: var(--color-btn-primary-hover-bg); }
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.result-card {
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-canvas-subtle);
+  border-bottom: 1px solid var(--color-border-muted);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.folder-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.folder-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.folder-path {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folder-meta {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.file-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border-muted);
+  transition: background var(--transition);
+}
+
+.file-item:last-child { border-bottom: none; }
+.file-item:hover { background: var(--color-bg-hover); }
+
+.file-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent-emphasis);
+}
+
+.file-icon-type {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.file-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.result-actions {
+  padding: 12px 16px;
+  background: var(--color-canvas-subtle);
+  border-top: 1px solid var(--color-border-muted);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  color: var(--color-text-tertiary);
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state-text {
+  font-size: 14px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.example-urls {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.example-url {
+  padding: 8px 12px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.example-url:hover {
+  border-color: var(--accent-emphasis);
+  background: var(--accent-subtle);
+}
+
+.error-banner {
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--color-danger-fg) 10%, var(--color-canvas-default));
+  border: 1px solid color-mix(in srgb, var(--color-danger-fg) 40%, var(--color-border-default));
+  border-radius: var(--radius-md);
+  color: var(--color-danger-fg);
+  font-size: 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  color: var(--color-text-secondary);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--accent-emphasis);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-backdrop.open { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px var(--color-shadow);
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border-muted);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-group:last-child { margin-bottom: 0; }
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.settings-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.theme-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.theme-option {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+
+.theme-option:hover { color: var(--color-text-primary); }
+
+.theme-option.active {
+  background: var(--color-canvas-default);
+  color: var(--color-text-primary);
+  box-shadow: 0 1px 3px var(--color-shadow);
+}
+
+.accent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.accent-swatch {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform var(--transition), border-color var(--transition);
+  position: relative;
+}
+
+.accent-swatch:hover { transform: scale(1.1); }
+
+.accent-swatch.active {
+  border-color: var(--color-text-primary);
+}
+
+.accent-swatch.active::after {
+  content: '';
+  position: absolute;
+  inset: 25%;
+  background: #fff;
+  border-radius: 50%;
+  mix-blend-mode: difference;
+}
+
+.accent-swatch[data-color="blue"] { background: #0969da; }
+.accent-swatch[data-color="purple"] { background: #8250df; }
+.accent-swatch[data-color="green"] { background: #1a7f37; }
+
+[data-theme="dark"] .accent-swatch[data-color="blue"] { background: #4493f8; }
+[data-theme="dark"] .accent-swatch[data-color="purple"] { background: #ab7df8; }
+[data-theme="dark"] .accent-swatch[data-color="green"] { background: #3fb950; }
+
+.ai-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-emphasis);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--color-shadow);
+  cursor: pointer;
+  transition: transform var(--transition), background var(--transition);
+  z-index: 80;
+  border: none;
+}
+
+.ai-fab:hover {
+  transform: scale(1.05);
+  background: var(--accent-emphasis-hover);
+}
+
+.ai-fab svg { width: 24px; height: 24px; }
+
+.ai-panel {
+  position: fixed;
+  bottom: 92px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 520px;
+  max-height: calc(100vh - 120px);
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px var(--color-shadow);
+  display: none;
+  flex-direction: column;
+  z-index: 80;
+  overflow: hidden;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-panel.open { display: flex; }
+
+.ai-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-canvas-subtle);
+}
+
+.ai-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-emphasis);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ai-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ai-subtitle {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success-fg);
+  display: inline-block;
+}
+
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.ai-message.bot {
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-muted);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+
+.ai-message.user {
+  background: var(--accent-emphasis);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.ai-typing {
+  display: inline-flex;
+  gap: 3px;
+  padding: 12px 14px;
+  background: var(--color-canvas-subtle);
+  border: 1px solid var(--color-border-muted);
+  border-radius: var(--radius-md);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+
+.ai-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-tertiary);
+  animation: typing 1.2s infinite ease-in-out;
+}
+
+.ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.ai-input-area {
+  padding: 12px;
+  border-top: 1px solid var(--color-border-muted);
+  display: flex;
+  gap: 8px;
+  background: var(--color-canvas-subtle);
+}
+
+.ai-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  min-height: 36px;
+  max-height: 100px;
+  font-family: inherit;
+}
+
+.ai-input:focus {
+  border-color: var(--accent-emphasis);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.ai-send {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--accent-emphasis);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.ai-send:hover { background: var(--accent-emphasis-hover); }
+.ai-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-send svg { width: 16px; height: 16px; }
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  background: var(--color-canvas-default);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px var(--color-shadow);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn 0.2s ease;
+  pointer-events: auto;
+}
+
+.toast.success { border-left: 3px solid var(--color-success-fg); }
+.toast.error { border-left: 3px solid var(--color-danger-fg); }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--color-border-muted);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-emphasis);
+  transition: width 0.3s ease;
+}
+
+.api-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  background: var(--color-canvas-subtle);
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+}
+
+.api-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.api-status-dot.success { background: var(--color-success-fg); }
+.api-status-dot.error { background: var(--color-danger-fg); }
+.api-status-dot.loading { background: var(--color-attention-fg); animation: pulse 1.5s infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <a href="#" class="logo" onclick="return false;">
+      <div class="logo-icon">F</div>
+      <span>GitFolder<span class="logo-text-sub"> · скачать папки из GitHub</span></span>
+    </a>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="btn-sidebar-toggle" title="История" aria-label="История">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </button>
+    <button class="icon-btn" id="btn-settings" title="Настройки" aria-label="Настройки">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="main">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">История</div>
+      <ul class="history-list" id="history-list"></ul>
+      <button class="clear-history" id="btn-clear-history">Очистить историю</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">О сервисе</div>
+      <div style="padding: 8px 10px; font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;">
+        GitFolder позволяет скачивать отдельные папки из GitHub-репозиториев. Вставьте URL папки — выберите файлы — получите ZIP-архив.
+      </div>
+    </div>
+  </aside>
+
+  <section class="content">
+    <h1 class="page-title">Скачать папку из GitHub</h1>
+    <p class="page-subtitle">Вставьте ссылку на папку — выберите файлы — скачайте ZIP-архив.</p>
+
+    <div class="input-card">
+      <label class="input-label" for="url-input">GitHub Folder URL</label>
+      <div class="input-row">
+        <input type="text" id="url-input" class="text-input" placeholder="https://github.com/user/repo/tree/main/folder" autocomplete="off" spellcheck="false">
+        <button class="btn btn-primary" id="btn-fetch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Найти
+        </button>
+      </div>
+      <div class="input-hint">Поддерживаются ссылки вида github.com/.../tree/.../folder</div>
+      <div class="api-status" id="api-status">
+        <span class="api-status-dot loading" id="api-status-dot"></span>
+        <span id="api-status-text">Загрузка API ключа...</span>
+      </div>
+    </div>
+
+    <div id="error-container"></div>
+    <div id="loading-container"></div>
+    <div id="result-container">
+      <div class="empty-state" id="empty-state">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <div class="empty-state-title">Начните со ссылки на папку</div>
+        <div class="empty-state-text">Вставьте URL папки выше или выберите пример ниже</div>
+        <div class="example-urls">
+          <button class="example-url" data-url="https://github.com/twbs/bootstrap/tree/main/scss">https://github.com/twbs/bootstrap/tree/main/scss</button>
+          <button class="example-url" data-url="https://github.com/vuejs/core/tree/main/src">https://github.com/vuejs/core/tree/main/src</button>
+          <button class="example-url" data-url="https://github.com/microsoft/TypeScript/tree/main/src/compiler">https://github.com/microsoft/TypeScript/tree/main/src/compiler</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal" role="dialog" aria-labelledby="settings-title">
+    <div class="modal-header">
+      <h2 class="modal-title" id="settings-title">Настройки</h2>
+      <button class="icon-btn" id="btn-close-settings" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-group">
+        <label class="settings-label">Тема оформления</label>
+        <div class="settings-description">Выберите светлую, тёмную или следуйте системным настройкам</div>
+        <div class="theme-switcher" id="theme-switcher">
+          <button class="theme-option" data-theme-value="light">Светлая</button>
+          <button class="theme-option" data-theme-value="dark">Тёмная</button>
+          <button class="theme-option" data-theme-value="system">Системная</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <label class="settings-label">Акцентный цвет</label>
+        <div class="settings-description">Основной цвет интерфейса и ссылок</div>
+        <div class="accent-grid" id="accent-grid">
+          <button class="accent-swatch" data-color="blue" title="Синий"></button>
+          <button class="accent-swatch" data-color="purple" title="Фиолетовый"></button>
+          <button class="accent-swatch" data-color="green" title="Зелёный"></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="btn-close-settings-footer">Готово</button>
+    </div>
+  </div>
+</div>
+
+<button class="ai-fab" id="ai-fab" title="AI-поддержка" aria-label="Открыть AI-поддержку">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-header">
+    <div class="ai-header-info">
+      <div class="ai-avatar">AI</div>
+      <div>
+        <div class="ai-title">GitFolder Support</div>
+        <div class="ai-subtitle"><span class="ai-status-dot"></span> Mistral · онлайн</div>
+      </div>
+    </div>
+    <button class="icon-btn" id="btn-close-ai" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ai-messages" id="ai-messages">
+    <div class="ai-message bot">Привет! Я помощник GitFolder. Помогу скачать папки из GitHub, расскажу о сервисе или отвечу на вопросы.</div>
+  </div>
+  <div class="ai-input-area">
+    <textarea class="ai-input" id="ai-input" placeholder="Спросите что-нибудь..." rows="1"></textarea>
+    <button class="ai-send" id="ai-send" aria-label="Отправить">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const API_KEY_URL = 'https://oris-flax.vercel.app/~/secret/api-keys/mistral.txt';
+const MISTRAL_MODEL = 'mistral-small-latest';
+const MISTRAL_ENDPOINT = 'https://api.mistral.ai/v1/chat/completions';
+
+const SYSTEM_PROMPT = `Ты — дружелюбный помощник сервиса GitFolder. GitFolder — это веб-сервис, который позволяет скачивать отдельные папки из GitHub-репозиториев в виде ZIP-архивов.
+
+Основные функции:
+- Вставка URL папки из GitHub (формат: github.com/user/repo/tree/branch/folder)
+- Просмотр списка файлов в папке
+- Выбор конкретных файлов для скачивания
+- Создание и скачивание ZIP-архива
+- AI-помощник для вопросов о сервисе
+
+Отвечай кратко, по делу, на русском языке. Помогай с вопросами:
+- Как пользоваться сервисом
+- Как устроены ссылки на папки GitHub
+- Ошибки при загрузке
+- Ограничения GitHub API (rate limit)
+- Форматы URL
+
+Если вопрос не связан с сервисом — всё равно помоги, но старайся возвращать разговор к теме.`;
+
+const state = {
+  theme: localStorage.getItem('gf-theme') || 'system',
+  accent: localStorage.getItem('gf-accent') || 'blue',
+  history: JSON.parse(localStorage.getItem('gf-history') || '[]'),
+  aiMessages: [],
+  aiLoading: false,
+  apiKey: null,
+  apiKeyLoading: true,
+};
+
+function applyTheme() {
+  let effective = state.theme;
+  if (state.theme === 'system') {
+    effective = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', effective);
+  document.documentElement.setAttribute('data-accent', state.accent);
+
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.themeValue === state.theme);
+  });
+  document.querySelectorAll('.accent-swatch').forEach(sw => {
+    sw.classList.toggle('active', sw.dataset.color === state.accent);
+  });
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (state.theme === 'system') applyTheme();
+});
+
+document.querySelectorAll('.theme-option').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.theme = btn.dataset.themeValue;
+    localStorage.setItem('gf-theme', state.theme);
+    applyTheme();
+  });
+});
+
+document.querySelectorAll('.accent-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    state.accent = sw.dataset.color;
+    localStorage.setItem('gf-accent', state.accent);
+    applyTheme();
+  });
+});
+
+applyTheme();
+
+async function loadApiKey() {
+  const statusDot = document.getElementById('api-status-dot');
+  const statusText = document.getElementById('api-status-text');
+  
+  try {
+    const response = await fetch(API_KEY_URL);
+    if (!response.ok) throw new Error('Не удалось загрузить');
+    const key = await response.text();
+    state.apiKey = key.trim();
+    state.apiKeyLoading = false;
+    statusDot.className = 'api-status-dot success';
+    statusText.textContent = 'API ключ загружен';
+  } catch (err) {
+    state.apiKeyLoading = false;
+    statusDot.className = 'api-status-dot error';
+    statusText.textContent = 'Ошибка загрузки API ключа';
+    console.error('Failed to load API key:', err);
+  }
+}
+
+loadApiKey();
+
+function parseGitHubFolderUrl(url) {
+  url = url.trim();
+  if (!url) return null;
+
+  url = url.replace(/^https?:\/\//, '');
+  if (!url.startsWith('github.com/')) {
+    if (/^[^\/]+\/[^\/]+\/(tree|blob)\/.+/i.test(url)) {
+      url = 'github.com/' + url;
+    } else {
+      return null;
+    }
+  }
+
+  const match = url.match(/^github\.com\/([^\/]+)\/([^\/]+)\/(tree|blob)\/([^\/]+)\/(.+)$/i);
+  if (!match) return null;
+
+  const [, user, repo, type, branch, path] = match;
+  return { user, repo, type, branch, path };
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (state.history.length === 0) {
+    list.innerHTML = '<li class="history-empty">Пока пусто</li>';
+    return;
+  }
+  list.innerHTML = state.history.map((item, idx) => `
+    <li class="history-item" data-idx="${idx}">
+      <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span class="history-item-path" title="${escapeHtml(item.path)}">${escapeHtml(item.path)}</span>
+      <button class="history-item-delete" data-idx="${idx}" title="Удалить" aria-label="Удалить">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </li>
+  `).join('');
+
+  list.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.history-item-delete')) return;
+      const idx = parseInt(el.dataset.idx);
+      document.getElementById('url-input').value = state.history[idx].url;
+      fetchFolder();
+    });
+  });
+
+  list.querySelectorAll('.history-item-delete').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(btn.dataset.idx);
+      state.history.splice(idx, 1);
+      saveHistory();
+      renderHistory();
+    });
+  });
+}
+
+function saveHistory() {
+  localStorage.setItem('gf-history', JSON.stringify(state.history));
+}
+
+function addToHistory(parsed) {
+  const url = `https://github.com/${parsed.user}/${parsed.repo}/tree/${parsed.branch}/${parsed.path}`;
+  state.history = state.history.filter(h => h.url !== url);
+  state.history.unshift({
+    url: url,
+    path: `${parsed.user}/${parsed.repo}/${parsed.path}`,
+    ts: Date.now(),
+  });
+  if (state.history.length > 20) state.history = state.history.slice(0, 20);
+  saveHistory();
+  renderHistory();
+}
+
+async function fetchFolder() {
+  const input = document.getElementById('url-input');
+  const url = input.value.trim();
+  const errorContainer = document.getElementById('error-container');
+  const loadingContainer = document.getElementById('loading-container');
+  const resultContainer = document.getElementById('result-container');
+
+  errorContainer.innerHTML = '';
+  loadingContainer.innerHTML = '';
+
+  if (!url) {
+    errorContainer.innerHTML = `<div class="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Введите ссылку на папку GitHub</div>`;
+    return;
+  }
+
+  const parsed = parseGitHubFolderUrl(url);
+  if (!parsed) {
+    errorContainer.innerHTML = `<div class="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Не удалось распознать ссылку. Используйте формат: github.com/user/repo/tree/branch/folder</div>`;
+    return;
+  }
+
+  loadingContainer.innerHTML = `<div class="loading"><div class="spinner"></div><span>Загружаем содержимое папки...</span></div>`;
+  resultContainer.innerHTML = '';
+
+  try {
+    const apiUrl = `https://api.github.com/repos/${parsed.user}/${parsed.repo}/contents/${parsed.path}?ref=${parsed.branch}`;
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      if (response.status === 403) {
+        throw new Error('Превышен лимит запросов GitHub API. Подождите несколько минут.');
+      } else if (response.status === 404) {
+        throw new Error('Папка не найдена. Проверьте URL.');
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      throw new Error('URL указывает на файл, а не на папку');
+    }
+
+    loadingContainer.innerHTML = '';
+    addToHistory(parsed);
+    renderFolder(parsed, data);
+  } catch (err) {
+    loadingContainer.innerHTML = '';
+    errorContainer.innerHTML = `<div class="error-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Ошибка: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderFolder(parsed, files) {
+  const container = document.getElementById('result-container');
+  const fileCount = files.length;
+  const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+
+  const filesHtml = files.map((file, idx) => `
+    <div class="file-item" data-idx="${idx}">
+      <input type="checkbox" class="file-checkbox" data-idx="${idx}" checked>
+      <svg class="file-icon-type" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        ${file.type === 'file' 
+          ? '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'
+          : '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>'}
+      </svg>
+      <span class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+      <span class="file-size">${file.size ? formatSize(file.size) : '—'}</span>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="result-card">
+      <div class="result-header">
+        <div class="folder-info">
+          <svg class="folder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span class="folder-path">${escapeHtml(parsed.path)}</span>
+        </div>
+        <div class="folder-meta">${fileCount} файлов · ${formatSize(totalSize)}</div>
+      </div>
+      <div class="file-list">
+        ${filesHtml}
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-download-zip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Скачать ZIP
+        </button>
+        <button class="btn btn-default" id="btn-select-all">Выбрать все</button>
+        <button class="btn btn-default" id="btn-deselect-all">Снять выделение</button>
+      </div>
+    </div>
+  `;
+
+  container._files = files;
+  container._parsed = parsed;
+
+  document.getElementById('btn-download-zip').addEventListener('click', () => downloadZip(container));
+  document.getElementById('btn-select-all').addEventListener('click', () => {
+    container.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = true);
+  });
+  document.getElementById('btn-deselect-all').addEventListener('click', () => {
+    container.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = false);
+  });
+}
+
+async function downloadZip(container) {
+  const files = container._files;
+  const parsed = container._parsed;
+  const checkboxes = container.querySelectorAll('.file-checkbox:checked');
+  
+  if (checkboxes.length === 0) {
+    showToast('Выберите хотя бы один файл', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-download-zip');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Скачивание...';
+
+  const progressBar = document.createElement('div');
+  progressBar.className = 'progress-bar';
+  progressBar.innerHTML = '<div class="progress-fill" style="width: 0%"></div>';
+  btn.parentElement.appendChild(progressBar);
+
+  const zip = new JSZip();
+  const selectedFiles = Array.from(checkboxes).map(cb => files[parseInt(cb.dataset.idx)]);
+  const total = selectedFiles.length;
+  let completed = 0;
+
+  try {
+    for (const file of selectedFiles) {
+      if (file.type === 'file') {
+        try {
+          const response = await fetch(file.download_url);
+          if (response.ok) {
+            const content = await response.arrayBuffer();
+            zip.file(file.name, content);
+          }
+        } catch (err) {
+          console.error(`Failed to download ${file.name}:`, err);
+        }
+      }
+      completed++;
+      const progress = (completed / total) * 100;
+      progressBar.querySelector('.progress-fill').style.width = `${progress}%`;
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${parsed.path.split('/').pop()}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast(`Скачано ${completed} файлов`, 'success');
+  } catch (err) {
+    showToast(`Ошибка: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    setTimeout(() => progressBar.remove(), 1000);
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;${type === 'success' ? 'color:var(--color-success-fg)' : 'color:var(--color-danger-fg)'}">
+      ${type === 'success' ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+    </svg>
+    <span>${escapeHtml(message)}</span>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = 'opacity 0.2s';
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 200);
+  }, 2500);
+}
+
+const settingsModal = document.getElementById('settings-modal');
+document.getElementById('btn-settings').addEventListener('click', () => settingsModal.classList.add('open'));
+document.getElementById('btn-close-settings').addEventListener('click', () => settingsModal.classList.remove('open'));
+document.getElementById('btn-close-settings-footer').addEventListener('click', () => settingsModal.classList.remove('open'));
+settingsModal.addEventListener('click', (e) => {
+  if (e.target === settingsModal) settingsModal.classList.remove('open');
+});
+
+document.getElementById('btn-sidebar-toggle').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const sidebar = document.getElementById('sidebar');
+  if (window.innerWidth <= 900) {
+    sidebar.classList.toggle('open');
+  } else {
+    sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sidebar.style.transition = 'background 0.3s';
+    sidebar.style.background = 'var(--accent-subtle)';
+    setTimeout(() => { sidebar.style.background = ''; }, 600);
+  }
+});
+
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  const btn = document.getElementById('btn-sidebar-toggle');
+  if (window.innerWidth <= 900 && sidebar.classList.contains('open') &&
+      !sidebar.contains(e.target) && !btn.contains(e.target)) {
+    sidebar.classList.remove('open');
+  }
+});
+
+document.getElementById('btn-clear-history').addEventListener('click', () => {
+  if (state.history.length === 0) return;
+  state.history = [];
+  saveHistory();
+  renderHistory();
+  showToast('История очищена', 'success');
+});
+
+document.querySelectorAll('.example-url').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('url-input').value = btn.dataset.url;
+    fetchFolder();
+  });
+});
+
+document.getElementById('btn-fetch').addEventListener('click', fetchFolder);
+document.getElementById('url-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') fetchFolder();
+});
+
+const aiPanel = document.getElementById('ai-panel');
+const aiMessages = document.getElementById('ai-messages');
+const aiInput = document.getElementById('ai-input');
+const aiSend = document.getElementById('ai-send');
+
+document.getElementById('ai-fab').addEventListener('click', () => {
+  aiPanel.classList.toggle('open');
+  if (aiPanel.classList.contains('open')) {
+    setTimeout(() => aiInput.focus(), 100);
+  }
+});
+document.getElementById('btn-close-ai').addEventListener('click', () => aiPanel.classList.remove('open'));
+
+function addAiMessage(role, text) {
+  const msg = document.createElement('div');
+  msg.className = `ai-message ${role}`;
+  msg.innerHTML = formatAiText(text);
+  aiMessages.appendChild(msg);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+  return msg;
+}
+
+function formatAiText(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function showAiTyping() {
+  const typing = document.createElement('div');
+  typing.className = 'ai-typing';
+  typing.id = 'ai-typing-indicator';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  aiMessages.appendChild(typing);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+function hideAiTyping() {
+  const t = document.getElementById('ai-typing-indicator');
+  if (t) t.remove();
+}
+
+async function sendAiMessage() {
+  const text = aiInput.value.trim();
+  if (!text || state.aiLoading || state.apiKeyLoading) return;
+
+  if (!state.apiKey) {
+    addAiMessage('bot', 'API ключ ещё загружается. Подождите несколько секунд и попробуйте снова.');
+    return;
+  }
+
+  addAiMessage('user', text);
+  aiInput.value = '';
+  aiInput.style.height = 'auto';
+  state.aiLoading = true;
+  aiSend.disabled = true;
+  showAiTyping();
+
+  state.aiMessages.push({ role: 'user', content: text });
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...state.aiMessages.slice(-10),
+  ];
+
+  try {
+    const response = await fetch(MISTRAL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${state.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MISTRAL_MODEL,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 800,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || 'Не удалось получить ответ.';
+
+    hideAiTyping();
+    addAiMessage('bot', reply);
+    state.aiMessages.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    hideAiTyping();
+    addAiMessage('bot', `Извините, произошла ошибка: ${err.message}. Попробуйте ещё раз.`);
+  } finally {
+    state.aiLoading = false;
+    aiSend.disabled = false;
+    aiInput.focus();
+  }
+}
+
+aiSend.addEventListener('click', sendAiMessage);
+aiInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendAiMessage();
+  }
+});
+
+aiInput.addEventListener('input', () => {
+  aiInput.style.height = 'auto';
+  aiInput.style.height = Math.min(aiInput.scrollHeight, 100) + 'px';
+});
+
+renderHistory();
+
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('url-input').focus();
+    document.getElementById('url-input').select();
+  }
+  if (e.key === 'Escape') {
+    settingsModal.classList.remove('open');
+    aiPanel.classList.remove('open');
+  }
+});
+</script>
+</body>
+</html>
