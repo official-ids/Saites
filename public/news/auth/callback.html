@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Подтверждение email · Oris</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+    --bg: #000000; --card: #1C1C1E; --text: #F5F5F7; --text2: #A1A1A6;
+    --accent: #0A84FF; --success: #30D158; --danger: #FF453A;
+    --border: rgba(255,255,255,0.1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.logo {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 24px;
+}
+.logo svg { width: 32px; height: 32px; color: var(--accent); }
+.logo span { font-size: 1.3rem; font-weight: 700; }
+h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 12px; }
+p { color: var(--text2); font-size: 0.95rem; line-height: 1.5; margin-bottom: 24px; }
+.spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 20px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 12px 24px;
+    background: var(--accent); color: white;
+    border: none; border-radius: 99px;
+    font-family: inherit; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    transition: all 0.2s;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(10,132,255,0.4); }
+.btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.success-icon {
+    width: 64px; height: 64px; margin: 0 auto 16px;
+    background: rgba(48,209,88,0.15); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--success);
+}
+.error-icon {
+    width: 64px; height: 64px; margin: 0 auto 16px;
+    background: rgba(255,69,58,0.15); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--danger);
+}
+.hidden { display: none !important; }
+.actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="logo">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Oris</span>
+    </div>
+
+    <div id="loadingState">
+        <h1>Подтверждение email</h1>
+        <p>Проверяем вашу почту...</p>
+        <div class="spinner"></div>
+    </div>
+
+    <div id="successState" class="hidden">
+        <div class="success-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <h1>Почта подтверждена!</h1>
+        <p>Ваш email успешно подтверждён. Теперь вы можете войти в аккаунт.</p>
+        <div class="actions">
+            <a href="/news" class="btn">Перейти к новостям</a>
+        </div>
+    </div>
+
+    <div id="errorState" class="hidden">
+        <div class="error-icon">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </div>
+        <h1>Ошибка подтверждения</h1>
+        <p id="errorText">Ссылка недействительна или срок её действия истёк.</p>
+        <div class="actions">
+            <a href="/news" class="btn secondary">На главную</a>
+            <a href="/news#auth" class="btn">Войти</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+(async () => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const type = params.get('type');
+    const error = params.get('error');
+    const errorDesc = params.get('error_description');
+
+    if (error) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorText').textContent = errorDesc || error;
+        return;
+    }
+
+    if (type !== 'signup' || !accessToken) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorText').textContent = 'Неверный тип подтверждения или отсутствует токен.';
+        return;
+    }
+
+    try {
+        const { data, error: err } = await sb.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+        });
+
+        if (err) throw err;
+
+        // Сохраняем сессию
+        localStorage.setItem('oris_supabase_session', JSON.stringify(data.session));
+
+        // Помечаем email как подтверждённый
+        localStorage.setItem('oris_email_confirmed', 'true');
+
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('successState').classList.remove('hidden');
+    } catch (e) {
+        document.getElementById('loadingState').classList.add('hidden');
+        document.getElementById('errorState').classList.remove('hidden');
+        document.getElementById('errorText').textContent = e.message || 'Не удалось подтвердить email.';
+    }
+})();
+</script>
+</body>
+</html>
