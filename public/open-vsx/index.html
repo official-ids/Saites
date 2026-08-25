@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open VSX Marketplace</title>
+    <meta name="description" content="Маркетплейс расширений Open VSX — поиск, просмотр и скачивание расширений для редакторов кода.">
+    <link rel="stylesheet" href="https://oris-flax.vercel.app/open-vsx/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" defer></script>
+    <script type="module" src="https://oris-flax.vercel.app/open-vsx/js/app.js"></script>
+</head>
+<body>
+    <header class="site-header" id="site-header">
+        <div class="container header-inner">
+            <a href="/" class="brand" data-link data-route="/">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#007acc" d="M12 2 2 7v10l10 5 10-5V7z" opacity="0.9"/>
+                        <path fill="#ffffff" d="M12 2 2 7l10 5 10-5z" opacity="0.25"/>
+                    </svg>
+                </span>
+                <span class="brand-text">Open VSX</span>
+            </a>
+            <nav class="nav" aria-label="Основная навигация">
+                <a href="/" class="nav-link" data-link data-route="/">Маркетплейс</a>
+                <a href="/search?q=" class="nav-link" data-link data-route="/search">Поиск</a>
+            </nav>
+            <div class="header-search" role="search">
+                <label for="header-search-input" class="sr-only">Поиск расширений</label>
+                <input
+                    type="search"
+                    id="header-search-input"
+                    class="header-search-input"
+                    placeholder="Поиск расширений..."
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+                <button type="button" class="header-search-btn" id="header-search-btn" aria-label="Выполнить поиск">
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <line x1="16.5" y1="16.5" x2="22" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app" class="app-main" aria-live="polite"></main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <p class="footer-line">Open VSX Marketplace Clone</p>
+            <p class="footer-line">Powered by Open VSX API</p>
+        </div>
+    </footer>
+</body>
+</html>
