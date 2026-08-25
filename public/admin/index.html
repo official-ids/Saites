@@ -2567,17 +2567,39 @@ function initHotkeys() {
     }
 
     function bindRedirectsSearch() {
-        const input = document.getElementById('redirectSearchInput');
-        if (!input) return;
-        const debouncedSearch = debounce((value) => {
-            RedirectsState.search = value;
-            renderRedirectsContent();
-            const current = document.getElementById('redirectSearchInput');
-            if (current) { current.focus(); current.setSelectionRange(value.length, value.length); }
-        }, RedirectsConfig.SEARCH_DEBOUNCE_MS);
-        input.addEventListener('input', (e) => debouncedSearch(e.target.value));
-        document.getElementById('clearRedirectSearchBtn')?.addEventListener('click', () => { RedirectsState.search = ''; renderRedirects(); });
-    }
+    const input = document.getElementById('redirectSearchInput');
+    if (!input) return;
+
+    const debouncedSearch = debounce((value) => {
+        // 1. Запоминаем позицию курсора ДО перерисовки
+        const cursorPos = {
+            start: input.selectionStart,
+            end: input.selectionEnd,
+            value: input.value
+        };
+
+        RedirectsState.search = value;
+        renderRedirectsContent(); // Перерисовка
+        
+        // 2. Восстанавливаем позицию курсора ПОСЛЕ перерисовки
+        const current = document.getElementById('redirectSearchInput');
+        if (current) {
+            current.focus();
+            if (current.value === cursorPos.value) {
+                current.setSelectionRange(cursorPos.start, cursorPos.end);
+            } else {
+                current.setSelectionRange(current.value.length, current.value.length);
+            }
+        }
+    }, RedirectsConfig.SEARCH_DEBOUNCE_MS);
+
+    input.addEventListener('input', (e) => debouncedSearch(e.target.value));
+    
+    document.getElementById('clearRedirectSearchBtn')?.addEventListener('click', () => {
+        RedirectsState.search = '';
+        renderRedirects();
+    });
+}
 
     function bindRedirectsGridDelegation() {
         const grid = document.getElementById('redirectsGrid');
@@ -2906,25 +2928,49 @@ function initHotkeys() {
         return card;
     }
 
-    function bindSearchAndAdd() {
-        const searchInput = $('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                State.searchQuery = e.target.value;
-                renderSites();
-                const newInput = $('searchInput');
-                if (newInput) { newInput.focus(); newInput.setSelectionRange(e.target.value.length, e.target.value.length); }
-            });
-        }
-        const clearBtn = $('clearSearchBtn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => { State.searchQuery = ''; renderSites(); showToast('Поиск очищен', 'info', 1500); });
-        }
-        const addBtn = $('addSiteBtn');
-        if (addBtn) addBtn.addEventListener('click', addSite);
-        const addBtn2 = $('addSiteBtn2');
-        if (addBtn2) addBtn2.addEventListener('click', addSite);
+function bindSearchAndAdd() {
+    const searchInput = $('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            // 1. Запоминаем позицию курсора ДО перерисовки
+            const cursorPos = {
+                start: searchInput.selectionStart,
+                end: searchInput.selectionEnd,
+                value: searchInput.value
+            };
+
+            State.searchQuery = e.target.value;
+            renderSites(); // Перерисовка уничтожает старый input и создает новый
+
+            // 2. Восстанавливаем позицию курсора ПОСЛЕ перерисовки
+            const newInput = $('searchInput');
+            if (newInput) {
+                newInput.focus();
+                // Если значение совпадает, восстанавливаем точную позицию курсора
+                if (newInput.value === cursorPos.value) {
+                    newInput.setSelectionRange(cursorPos.start, cursorPos.end);
+                } else {
+                    // Fallback: если длина изменилась, ставим в конец
+                    newInput.setSelectionRange(newInput.value.length, newInput.value.length);
+                }
+            }
+        });
     }
+    
+    const clearBtn = $('clearSearchBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            State.searchQuery = '';
+            renderSites();
+            showToast('Поиск очищен', 'info', 1500);
+        });
+    }
+    
+    const addBtn = $('addSiteBtn');
+    if (addBtn) addBtn.addEventListener('click', addSite);
+    const addBtn2 = $('addSiteBtn2');
+    if (addBtn2) addBtn2.addEventListener('click', addSite);
+}
 
     function bindExportCsv() {
         const btn = $('exportCsvBtn');
