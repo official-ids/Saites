@@ -1954,71 +1954,80 @@ kbd {
         if (navItem) navItem.click();
     }
 
-    function initHotkeys() {
+function initHotkeys() {
+    let hintsVisible = true;
+    // Ищем элемент по классу, так как id="hotkeyHints" отсутствует в HTML
+    const hintsEl = document.querySelector('.hotkey-hints');
 
-        let hintsVisible = true;
+    document.addEventListener('keydown', (e) => {
+        const tag = e.target.tagName;
+        const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
+        
+        if (isInput) {
+            if (e.key === 'Escape') {
+                e.target.blur();
+                if ($('cmdkOverlay') && $('cmdkOverlay').classList.contains('active')) closeCmdk();
+                if ($('modalOverlay') && $('modalOverlay').classList.contains('visible')) closeModal();
+            }
+            return;
+        }
 
-        document.addEventListener('keydown', (e) => {
-            const tag = e.target.tagName;
-            const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable;
-            if (isInput) {
-                if (e.key === 'Escape') {
-                    e.target.blur();
-                    if ($('cmdkOverlay').classList.contains('active')) closeCmdk();
-                    if ($('modalOverlay').classList.contains('visible')) closeModal();
-                }
+        // Переключение видимости подсказок по клавише H / р
+        if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') {
+            hintsVisible = !hintsVisible;
+            if (hintsEl) {
+                hintsEl.style.opacity = hintsVisible ? '0.5' : '0';
+            }
+        }
+
+        if (e.ctrlKey || e.metaKey) {
+            if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
+                e.preventDefault();
+                if ($('cmdkOverlay') && $('cmdkOverlay').classList.contains('active')) closeCmdk();
+                else openCmdk();
                 return;
             }
-            if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') {
-                hintsVisible = !hintsVisible;
-                $('hotkeyHints').style.opacity = hintsVisible ? '0.5' : '0';
-            }
-            if (e.ctrlKey || e.metaKey) {
-                if ((e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') && !e.shiftKey) {
-                    e.preventDefault();
-                    if ($('cmdkOverlay').classList.contains('active')) closeCmdk();
-                    else openCmdk();
-                    return;
-                }
-                if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') {
-                    e.preventDefault();
-                    const btn = $('saveBtn');
-                    if (btn && !btn.disabled) btn.click();
-                    return;
-                }
+            if (e.key === 's' || e.key === 'S' || e.key === 'ы' || e.key === 'Ы') {
+                e.preventDefault();
+                const btn = $('saveBtn');
+                if (btn && !btn.disabled) btn.click();
                 return;
             }
-            if (e.altKey) return;
-            switch (e.key) {
-                case '/':
-                    e.preventDefault();
-                    const searchInput = $('searchInput');
-                    if (searchInput) searchInput.focus();
-                    break;
-                case 't': case 'T': case 'е': case 'Е':
-                    toggleTheme();
-                    break;
-                case 'r': case 'R': case 'к': case 'К':
-                    const reloadBtn = $('reloadBtn');
-                    if (reloadBtn) reloadBtn.click();
-                    break;
-                case '1': switchSection('sites'); break;
-                case '2': switchSection('changelog'); break;
-                case '3': switchSection('downloader'); break;
-                case '4': switchSection('redirects'); break;
-                case '5': switchSection('status'); break;
-                case '6': switchSection('api'); break;
-                case '7': switchSection('faq'); break;
-                case 'Escape':
-                    if ($('cmdkOverlay').classList.contains('active')) closeCmdk();
-                    else if ($('modalOverlay').classList.contains('visible')) closeModal();
-                    break;
-                case '?':
-                    showToast('Горячие клавиши: ⌘K палитра · T тема · S сохранить · R обновить · 1-7 разделы · / поиск · ? помощь', 'info', 5000);
-                    break;
-            }
-        });
-    }
+            return;
+        }
+
+        if (e.altKey) return;
+
+        switch (e.key) {
+            case '/':
+                e.preventDefault();
+                const searchInput = $('searchInput');
+                if (searchInput) searchInput.focus();
+                break;
+            case 't': case 'T': case 'е': case 'Е':
+                if (typeof toggleTheme === 'function') toggleTheme();
+                break;
+            case 'r': case 'R': case 'к': case 'К':
+                const reloadBtn = $('reloadBtn');
+                if (reloadBtn) reloadBtn.click();
+                break;
+            case '1': switchSection('sites'); break;
+            case '2': switchSection('changelog'); break;
+            case '3': switchSection('downloader'); break;
+            case '4': switchSection('redirects'); break;
+            case '5': switchSection('status'); break;
+            case '6': switchSection('api'); break;
+            case '7': switchSection('faq'); break;
+            case 'Escape':
+                if ($('cmdkOverlay') && $('cmdkOverlay').classList.contains('active')) closeCmdk();
+                else if ($('modalOverlay') && $('modalOverlay').classList.contains('visible')) closeModal();
+                break;
+            case '?':
+                showToast('Горячие клавиши: ⌘K палитра · H скрыть подсказки · T тема · S сохранить · R обновить · 1-7 разделы · / поиск · ? помощь', 'info', 5000);
+                break;
+        }
+    });
+}
 
     // ============================================
     // DOWNLOADER MODULE
