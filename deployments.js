@@ -3,12 +3,34 @@ const { kv } = require('@vercel/kv');
 const router = express.Router();
 
 // -----------------------------
-// Конфигурация
+// Конфигурация и Константы
 // -----------------------------
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
-const CACHE_KEY = 'vercel:deployments:cache';
-const CACHE_TTL = 300; // Кэш на 5 минут (300 секунд)
+
+// Базовые настройки по умолчанию
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 50; // Защита от чрезмерных запросов к Vercel API
+const DEFAULT_STATE = 'READY';
+const CACHE_TTL = 300; // 5 минут
+
+// -----------------------------
+// Вспомогательные функции
+// -----------------------------
+
+/**
+ * Форматирует дату в московском времени
+ */
+const formatMoscowDate = (dateString) => {
+    return new Date(dateString).toLocaleString('ru-RU', {
+        timeZone: 'Europe/Moscow',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
 
 // -----------------------------
 // Routes
@@ -16,24 +38,38 @@ const CACHE_TTL = 300; // Кэш на 5 минут (300 секунд)
 
 /**
  * GET /api/deployments
- * Возвращает список последних деплоев с кэшированием
+ * Возвращает список деплоев с поддержкой пагинации, фильтрации и умного кэширования.
+ * Query params:
+ *  - limit: число (по умолчанию 20, макс 50)
+ *  - state: строка (по умолчанию 'READY', например: 'BUILDING', 'ERROR', 'READY')
  */
 router.get('/', async (req, res) => {
     try {
-        // 1. Проверка наличия секретов
+        // 1. Валидация конфигурации (Fail Fast)
         if (!VERCEL_TOKEN || !VERCEL_PROJECT_ID) {
-            console.error('[deployments] Missing VERCEL_TOKEN or VERCEL_PROJECT_ID');
-            return res.status(500).json({ error: 'Vercel API не настроен на сервере' });
+            console.error('[Vercel Deployments] Missing environment variables: VERCEL_TOKEN or VERCEL_PROJECT_ID');
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Vercel API не настроен на сервере (отсутствуют переменные окружения)' 
+            });
         }
 
-        // 2. Проверяем кэш в Vercel KV
+        // 2. Парсинг и валидация query-параметров (Гибкость)
+        const requestedLimit = Math.min(Math.max(parseInt(req.query.limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
+        const requestedState = (typeof req.query.state === 'string' ? req.query.state.toUpperCase() : DEFAULT_STATE) || DEFAULT_STATE;
+
+        // 3. Динамический ключ кэша (Предотвращение коллизий)
+        // Если запрошен другой лимит или статус, кэш должен быть отдельным
+        const CACHE_KEY = `vercel:deployments:${VERCEL_PROJECT_ID}:${requestedLimit}:${requestedState}`;
+
+        // 4. Проверка кэша
         const cachedData = await kv.get(CACHE_KEY);
         if (cachedData) {
-            return res.json(cachedData);
+            return res.json({ ...cachedData, cached: true }); // Флаг cached полезен для отладки на фронтенде
         }
 
-        // 3. Запрос к официальному Vercel API
-        const apiUrl = `https://api.vercel.com/v9/deployments?projectId=${VERCEL_PROJECT_ID}&limit=20&state=READY`;
+        // 5. Запрос к Vercel API
+        const apiUrl = `https://api.vercel.com/v9/deployments?projectId=${VERCEL_PROJECT_ID}&limit=${requestedLimit}&state=${requestedState}`;
         
         const response = await fetch(apiUrl, {
             method: 'GET',
@@ -43,41 +79,59 @@ router.get('/', async (req, res) => {
             }
         });
 
+        // 6. Продвинутая обработка ошибок API
         if (!response.ok) {
-            throw new Error(`Vercel API responded with status ${response.status}`);
+            let errorDetail = `Vercel API responded with status ${response.status}`;
+            try {
+                const errorBody = await response.json();
+                errorDetail = errorBody.error?.message || errorDetail;
+            } catch (e) {
+                // Игнорируем, если ответ не JSON
+            }
+
+            console.error(`[Vercel Deployments] API Error ${response.status}:`, errorDetail);
+            
+            // Возвращаем корректный HTTP-статус клиенту (например, 401 при плохом токене)
+            const status = response.status === 401 || response.status === 403 ? 403 : 502;
+            return res.status(status).json({ 
+                success: false, 
+                error: `Ошибка Vercel API: ${errorDetail}` 
+            });
         }
 
         const data = await response.json();
 
-        // 4. Форматируем данные для удобного использования на фронтенде
-        const deployments = data.deployments.map(d => ({
+        // 7. Безопасное форматирование данных (защита от undefined/null)
+        const deployments = (data.deployments || []).map(d => ({
             id: d.id,
-            url: `https://${d.url}`, // Полная ссылка на превью
-            createdAt: new Date(d.created).toLocaleString('ru-RU', { 
-                timeZone: 'Europe/Moscow',
-                day: 'numeric', month: 'long', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            }),
-            state: d.state, // READY, ERROR, BUILDING и т.д.
-            commitMessage: d.meta?.githubCommitMessage || 'Ручной деплой',
-            branch: d.meta?.githubCommitRef || 'unknown'
+            url: d.url ? `https://${d.url}` : null,
+            createdAt: formatMoscowDate(d.created),
+            state: d.state,
+            commitMessage: d.meta?.githubCommitMessage || d.meta?.commitMessage || 'Ручной деплой',
+            branch: d.meta?.githubCommitRef || d.meta?.branch || 'unknown',
+            author: d.meta?.githubCommitAuthorLogin || 'unknown' // Бонус: автор коммита
         }));
 
         const result = { 
             success: true, 
+            cached: false,
+            count: deployments.length,
             deployments 
         };
 
-        // 5. Сохраняем в кэш с TTL
-        await kv.set(CACHE_KEY, result, { ex: CACHE_TTL });
+        // 8. Сохранение в кэш с TTL
+        // Используем .catch, чтобы ошибка записи в кэш не ломала успешный ответ клиенту
+        await kv.set(CACHE_KEY, result, { ex: CACHE_TTL }).catch(err => {
+            console.warn('[Vercel Deployments] Failed to write to cache:', err.message);
+        });
 
         res.json(result);
 
     } catch (err) {
-        console.error('[deployments] Error fetching deployments:', err.message);
+        console.error('[Vercel Deployments] Unexpected server error:', err.message);
         res.status(500).json({ 
             success: false, 
-            error: 'Ошибка получения истории деплоев' 
+            error: 'Внутренняя ошибка сервера при получении истории деплоев' 
         });
     }
 });

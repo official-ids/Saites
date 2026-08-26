@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>История версий сайта - Oris</title>
     <meta name="description" content="История всех деплоев и версий сайта Oris. Просмотр старых сборок, статусов и сообщений коммитов.">
-    <link rel="stylesheet" href="/css/style.css">
     <style>
         /* ============================================
            ОСНОВНЫЕ ПЕРЕМЕННЫЕ И СБРОС
@@ -34,6 +32,19 @@
             --history-radius: 6px;
             --history-radius-lg: 8px;
             --history-transition: 0.2s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: var(--history-bg-primary);
+            color: var(--history-text-primary);
+            line-height: 1.5;
         }
 
         /* ============================================
@@ -162,44 +173,80 @@
             border-color: var(--history-accent);
         }
 
-        .history-refresh-button {
-            background: var(--history-accent);
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
+        .history-control-button {
+            background: var(--history-bg-tertiary);
+            color: var(--history-text-primary);
+            border: 1px solid var(--history-border);
+            padding: 10px 16px;
             border-radius: var(--history-radius);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: background var(--history-transition);
+            transition: all var(--history-transition);
             display: flex;
             align-items: center;
             gap: 8px;
             white-space: nowrap;
         }
 
-        .history-refresh-button:hover {
-            background: var(--history-accent-hover);
+        .history-control-button:hover {
+            background: var(--history-bg-active);
+            border-color: var(--history-border-light);
         }
 
-        .history-refresh-button:disabled {
+        .history-control-button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .history-refresh-button svg {
+        .history-control-button svg {
             width: 16px;
             height: 16px;
             transition: transform 0.6s linear;
         }
 
-        .history-refresh-button.loading svg {
+        .history-control-button.loading svg {
             animation: history-spin 1s linear infinite;
+        }
+
+        .history-refresh-button {
+            background: var(--history-accent);
+            color: #ffffff;
+            border: none;
+        }
+
+        .history-refresh-button:hover {
+            background: var(--history-accent-hover);
         }
 
         @keyframes history-spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           ИНДИКАТОР ПОСЛЕДНЕГО ОБНОВЛЕНИЯ
+           ============================================ */
+        .history-last-update {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--history-text-muted);
+            margin-bottom: 16px;
+        }
+
+        .history-last-update-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--history-success);
+            animation: history-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes history-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         /* ============================================
@@ -353,6 +400,13 @@
             margin-bottom: 4px;
         }
 
+        .history-highlight {
+            background: rgba(0, 122, 204, 0.3);
+            padding: 2px 4px;
+            border-radius: 3px;
+            color: var(--history-text-primary);
+        }
+
         /* Действия карточки */
         .history-card-actions {
             display: flex;
@@ -380,6 +434,11 @@
             background: var(--history-bg-active);
             color: var(--history-text-primary);
             border-color: var(--history-border-light);
+            transform: translateY(-1px);
+        }
+
+        .history-card-action-btn:active {
+            transform: translateY(0);
         }
 
         .history-card-action-btn svg {
@@ -388,29 +447,246 @@
         }
 
         /* ============================================
-           СОСТОЯНИЯ: ЗАГРУЗКА, ОШИБКА, ПУСТО
+           СКЕЛЕТОН ЗАГРУЗКИ
            ============================================ */
-        .history-loading-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--history-text-secondary);
+        .history-skeleton {
+            background: var(--history-bg-secondary);
+            border: 1px solid var(--history-border);
+            border-radius: var(--history-radius-lg);
+            padding: 20px;
+            animation: history-skeleton-pulse 1.5s ease-in-out infinite;
         }
 
-        .history-loading-spinner {
+        @keyframes history-skeleton-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .history-skeleton-line {
+            background: var(--history-bg-tertiary);
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .history-skeleton-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .history-skeleton-title {
+            height: 16px;
+            width: 60%;
+        }
+
+        .history-skeleton-text {
+            height: 12px;
+            width: 80%;
+        }
+
+        .history-skeleton-text-short {
+            height: 12px;
+            width: 40%;
+        }
+
+        /* ============================================
+           ПАГИНАЦИЯ
+           ============================================ */
+        .history-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--history-border);
+        }
+
+        .history-pagination-button {
+            background: var(--history-bg-tertiary);
+            border: 1px solid var(--history-border);
+            color: var(--history-text-primary);
+            padding: 8px 16px;
+            border-radius: var(--history-radius);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--history-transition);
+        }
+
+        .history-pagination-button:hover:not(:disabled) {
+            background: var(--history-bg-active);
+            border-color: var(--history-border-light);
+        }
+
+        .history-pagination-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .history-pagination-button.active {
+            background: var(--history-accent);
+            border-color: var(--history-accent);
+            color: #ffffff;
+        }
+
+        .history-pagination-info {
+            font-size: 13px;
+            color: var(--history-text-muted);
+            padding: 0 12px;
+        }
+
+        /* ============================================
+           КНОПКА "ВЕРНУТЬСЯ К НАЧАЛУ"
+           ============================================ */
+        .history-scroll-top {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--history-accent);
+            color: #ffffff;
+            border: none;
             width: 48px;
             height: 48px;
-            border: 3px solid var(--history-border);
-            border-top-color: var(--history-accent);
             border-radius: 50%;
-            animation: history-spin 0.8s linear infinite;
-            margin: 0 auto 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+            transition: all var(--history-transition);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
         }
 
-        .history-loading-text {
-            font-size: 15px;
+        .history-scroll-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .history-scroll-top:hover {
+            background: var(--history-accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 204, 0.4);
+        }
+
+        .history-scroll-top svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* ============================================
+           МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ
+           ============================================ */
+        .history-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--history-transition);
+        }
+
+        .history-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .history-modal {
+            background: var(--history-bg-secondary);
+            border: 1px solid var(--history-border);
+            border-radius: var(--history-radius-lg);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+            transform: scale(0.9);
+            transition: transform var(--history-transition);
+        }
+
+        .history-modal-overlay.visible .history-modal {
+            transform: scale(1);
+        }
+
+        .history-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--history-border);
+        }
+
+        .history-modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
             margin: 0;
         }
 
+        .history-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--history-text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all var(--history-transition);
+        }
+
+        .history-modal-close:hover {
+            background: var(--history-bg-tertiary);
+            color: var(--history-text-primary);
+        }
+
+        .history-modal-close svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .history-modal-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .history-modal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .history-modal-label {
+            font-size: 12px;
+            color: var(--history-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-modal-value {
+            font-size: 14px;
+            color: var(--history-text-primary);
+            word-break: break-word;
+        }
+
+        .history-modal-value a {
+            color: var(--history-info);
+            text-decoration: none;
+        }
+
+        .history-modal-value a:hover {
+            text-decoration: underline;
+        }
+
+        /* ============================================
+           СОСТОЯНИЯ: ОШИБКА, ПУСТО
+           ============================================ */
         .history-error-state {
             background: rgba(244, 71, 71, 0.08);
             border: 1px solid rgba(244, 71, 71, 0.3);
@@ -484,6 +760,72 @@
         }
 
         /* ============================================
+           УВЕДОМЛЕНИЯ (TOAST)
+           ============================================ */
+        .history-toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10001;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-toast {
+            background: var(--history-bg-secondary);
+            color: var(--history-text-primary);
+            padding: 12px 20px;
+            border-radius: var(--history-radius);
+            border: 1px solid var(--history-border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            font-size: 13px;
+            animation: history-toast-slide-in 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 250px;
+        }
+
+        .history-toast.success {
+            border-left: 3px solid var(--history-success);
+        }
+
+        .history-toast.error {
+            border-left: 3px solid var(--history-danger);
+        }
+
+        .history-toast.info {
+            border-left: 3px solid var(--history-info);
+        }
+
+        @keyframes history-toast-slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes history-toast-slide-out {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .history-toast.hiding {
+            animation: history-toast-slide-out 0.3s ease forwards;
+        }
+
+        /* ============================================
            АДАПТИВНОСТЬ
            ============================================ */
         
@@ -537,7 +879,7 @@
                 width: 100%;
             }
 
-            .history-refresh-button {
+            .history-control-button {
                 width: 100%;
                 justify-content: center;
             }
@@ -574,6 +916,18 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
+
+            .history-modal {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .history-scroll-top {
+                width: 40px;
+                height: 40px;
+                bottom: 16px;
+                right: 16px;
+            }
         }
 
         /* Маленькие мобильные */
@@ -603,9 +957,13 @@
                 font-size: 12px;
             }
 
-            .history-loading-state,
             .history-empty-state {
                 padding: 60px 16px;
+            }
+
+            .history-toast {
+                min-width: 200px;
+                padding: 10px 16px;
             }
         }
 
@@ -619,8 +977,10 @@
         /* Печать */
         @media print {
             .history-controls,
-            .history-refresh-button,
-            .history-card-actions {
+            .history-control-button,
+            .history-card-actions,
+            .history-scroll-top,
+            .history-pagination {
                 display: none;
             }
 
@@ -644,6 +1004,7 @@
 
         .history-deployment-card {
             animation: history-fade-in 0.3s ease forwards;
+            opacity: 0;
         }
 
         .history-deployment-card:nth-child(1) { animation-delay: 0.05s; }
@@ -651,6 +1012,11 @@
         .history-deployment-card:nth-child(3) { animation-delay: 0.15s; }
         .history-deployment-card:nth-child(4) { animation-delay: 0.2s; }
         .history-deployment-card:nth-child(5) { animation-delay: 0.25s; }
+        .history-deployment-card:nth-child(6) { animation-delay: 0.3s; }
+        .history-deployment-card:nth-child(7) { animation-delay: 0.35s; }
+        .history-deployment-card:nth-child(8) { animation-delay: 0.4s; }
+        .history-deployment-card:nth-child(9) { animation-delay: 0.45s; }
+        .history-deployment-card:nth-child(10) { animation-delay: 0.5s; }
 
         /* Утилиты */
         .history-visually-hidden {
@@ -705,15 +1071,29 @@
                     placeholder="Поиск по URL, сообщению коммита или ветке..."
                     autocomplete="off"
                     spellcheck="false"
+                    aria-label="Поиск деплоев"
                 >
             </div>
-            <select class="history-filter-select" id="historyFilterSelect">
+            <select class="history-filter-select" id="historyFilterSelect" aria-label="Фильтр по статусу">
                 <option value="all">Все статусы</option>
                 <option value="ready">Только успешные</option>
                 <option value="error">Только с ошибками</option>
                 <option value="building">Только в сборке</option>
             </select>
-            <button class="history-refresh-button" id="historyRefreshButton" type="button">
+            <select class="history-filter-select" id="historySortSelect" aria-label="Сортировка">
+                <option value="date-desc">Сначала новые</option>
+                <option value="date-asc">Сначала старые</option>
+                <option value="status">По статусу</option>
+            </select>
+            <button class="history-control-button" id="historyExportButton" type="button" aria-label="Экспорт данных">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Экспорт</span>
+            </button>
+            <button class="history-control-button history-refresh-button" id="historyRefreshButton" type="button" aria-label="Обновить список">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="23 4 23 10 17 10"></polyline>
                     <polyline points="1 20 1 14 7 14"></polyline>
@@ -723,6 +1103,12 @@
             </button>
         </section>
 
+        <!-- Индикатор последнего обновления -->
+        <div class="history-last-update" id="historyLastUpdate" style="display: none;">
+            <div class="history-last-update-dot"></div>
+            <span id="historyLastUpdateTime">Обновлено только что</span>
+        </div>
+
         <!-- Информация о результатах -->
         <div class="history-results-info" id="historyResultsInfo" style="display: none;">
             <span class="history-results-count" id="historyResultsCount"></span>
@@ -731,12 +1117,55 @@
 
         <!-- Контейнер для списка / состояний -->
         <div id="historyContent">
-            <div class="history-loading-state">
-                <div class="history-loading-spinner"></div>
-                <p class="history-loading-text">Загрузка истории деплоев...</p>
+            <!-- Skeleton loading -->
+            <div class="history-deployments-list">
+                <div class="history-skeleton">
+                    <div class="history-skeleton-line history-skeleton-title"></div>
+                    <div class="history-skeleton-line history-skeleton-text"></div>
+                    <div class="history-skeleton-line history-skeleton-text-short"></div>
+                </div>
+                <div class="history-skeleton">
+                    <div class="history-skeleton-line history-skeleton-title"></div>
+                    <div class="history-skeleton-line history-skeleton-text"></div>
+                    <div class="history-skeleton-line history-skeleton-text-short"></div>
+                </div>
+                <div class="history-skeleton">
+                    <div class="history-skeleton-line history-skeleton-title"></div>
+                    <div class="history-skeleton-line history-skeleton-text"></div>
+                    <div class="history-skeleton-line history-skeleton-text-short"></div>
+                </div>
             </div>
         </div>
+
+        <!-- Пагинация -->
+        <div class="history-pagination" id="historyPagination" style="display: none;"></div>
     </main>
+
+    <!-- Кнопка "Вернуться к началу" -->
+    <button class="history-scroll-top" id="historyScrollTop" aria-label="Вернуться к началу">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <!-- Модальное окно деталей -->
+    <div class="history-modal-overlay" id="historyModalOverlay">
+        <div class="history-modal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+            <div class="history-modal-header">
+                <h2 class="history-modal-title" id="historyModalTitle">Детали деплоя</h2>
+                <button class="history-modal-close" id="historyModalClose" aria-label="Закрыть">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="history-modal-content" id="historyModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Контейнер для уведомлений -->
+    <div class="history-toast-container" id="historyToastContainer"></div>
 
     <script>
         // ============================================
@@ -747,7 +1176,12 @@
             filteredDeployments: [],
             isLoading: false,
             searchQuery: '',
-            statusFilter: 'all'
+            statusFilter: 'all',
+            sortBy: 'date-desc',
+            currentPage: 1,
+            itemsPerPage: 10,
+            lastUpdateTime: null,
+            autoRefreshInterval: null
         };
 
         // ============================================
@@ -758,11 +1192,21 @@
             refreshButton: document.getElementById('historyRefreshButton'),
             searchInput: document.getElementById('historySearchInput'),
             filterSelect: document.getElementById('historyFilterSelect'),
+            sortSelect: document.getElementById('historySortSelect'),
+            exportButton: document.getElementById('historyExportButton'),
             resultsInfo: document.getElementById('historyResultsInfo'),
             resultsCount: document.getElementById('historyResultsCount'),
             statTotal: document.getElementById('statTotal'),
             statReady: document.getElementById('statReady'),
-            statError: document.getElementById('statError')
+            statError: document.getElementById('statError'),
+            scrollTop: document.getElementById('historyScrollTop'),
+            lastUpdate: document.getElementById('historyLastUpdate'),
+            lastUpdateTime: document.getElementById('historyLastUpdateTime'),
+            pagination: document.getElementById('historyPagination'),
+            modalOverlay: document.getElementById('historyModalOverlay'),
+            modalClose: document.getElementById('historyModalClose'),
+            modalContent: document.getElementById('historyModalContent'),
+            toastContainer: document.getElementById('historyToastContainer')
         };
 
         // ============================================
@@ -775,12 +1219,11 @@
             elements.refreshButton.disabled = true;
             elements.refreshButton.classList.add('loading');
             
-            showLoading();
+            showSkeleton();
 
             try {
                 const response = await fetch('/api/deployments');
                 
-                // Проверка типа ответа
                 const contentType = response.headers.get('content-type') || '';
                 if (!contentType.includes('application/json')) {
                     const text = await response.text();
@@ -802,12 +1245,19 @@
                 }
 
                 state.deployments = data.deployments;
+                state.currentPage = 1;
+                state.lastUpdateTime = new Date();
+                
                 updateStats();
+                updateLastUpdateTime();
                 applyFilters();
+                
+                showToast('Данные успешно загружены', 'success');
 
             } catch (error) {
                 console.error('Ошибка загрузки деплоев:', error);
                 showError(error.message);
+                showToast('Ошибка загрузки данных', 'error');
             } finally {
                 state.isLoading = false;
                 elements.refreshButton.disabled = false;
@@ -829,7 +1279,44 @@
         }
 
         // ============================================
-        // ФИЛЬТРАЦИЯ И ПОИСК
+        // ОБНОВЛЕНИЕ ВРЕМЕНИ ПОСЛЕДНЕГО ОБНОВЛЕНИЯ
+        // ============================================
+        function updateLastUpdateTime() {
+            if (!state.lastUpdateTime) {
+                elements.lastUpdate.style.display = 'none';
+                return;
+            }
+
+            elements.lastUpdate.style.display = 'flex';
+            const now = new Date();
+            const diff = Math.floor((now - state.lastUpdateTime) / 1000);
+
+            let timeText;
+            if (diff < 60) {
+                timeText = 'Обновлено только что';
+            } else if (diff < 3600) {
+                const minutes = Math.floor(diff / 60);
+                timeText = `Обновлено ${minutes} ${getPlural(minutes, 'минуту', 'минуты', 'минут')} назад`;
+            } else {
+                const hours = Math.floor(diff / 3600);
+                timeText = `Обновлено ${hours} ${getPlural(hours, 'час', 'часа', 'часов')} назад`;
+            }
+
+            elements.lastUpdateTime.textContent = timeText;
+        }
+
+        function getPlural(number, one, two, five) {
+            let n = Math.abs(number);
+            n %= 100;
+            if (n >= 5 && n <= 20) return five;
+            n %= 10;
+            if (n === 1) return one;
+            if (n >= 2 && n <= 4) return two;
+            return five;
+        }
+
+        // ============================================
+        // ФИЛЬТРАЦИЯ, ПОИСК И СОРТИРОВКА
         // ============================================
         function applyFilters() {
             let filtered = state.deployments.slice();
@@ -856,8 +1343,31 @@
                 });
             }
 
+            // Сортировка
+            filtered = sortDeployments(filtered, state.sortBy);
+
             state.filteredDeployments = filtered;
             renderResults();
+            renderPagination();
+        }
+
+        function sortDeployments(deployments, sortBy) {
+            const sorted = deployments.slice();
+
+            switch (sortBy) {
+                case 'date-desc':
+                    sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    break;
+                case 'date-asc':
+                    sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    break;
+                case 'status':
+                    const statusOrder = { 'ERROR': 0, 'BUILDING': 1, 'READY': 2 };
+                    sorted.sort((a, b) => (statusOrder[a.state] || 99) - (statusOrder[b.state] || 99));
+                    break;
+            }
+
+            return sorted;
         }
 
         // ============================================
@@ -865,10 +1375,13 @@
         // ============================================
         function renderResults() {
             const deployments = state.filteredDeployments;
+            const startIndex = (state.currentPage - 1) * state.itemsPerPage;
+            const endIndex = startIndex + state.itemsPerPage;
+            const pageDeployments = deployments.slice(startIndex, endIndex);
 
             // Показываем информацию о результатах
             elements.resultsInfo.style.display = 'flex';
-            elements.resultsCount.textContent = 'Показано: ' + deployments.length + ' из ' + state.deployments.length;
+            elements.resultsCount.textContent = `Показано ${startIndex + 1}-${Math.min(endIndex, deployments.length)} из ${deployments.length}`;
 
             if (deployments.length === 0) {
                 if (state.deployments.length === 0) {
@@ -880,7 +1393,7 @@
             }
 
             const html = '<div class="history-deployments-list">' + 
-                deployments.map(renderDeploymentCard).join('') + 
+                pageDeployments.map(renderDeploymentCard).join('') + 
                 '</div>';
             
             elements.content.innerHTML = html;
@@ -888,14 +1401,13 @@
             // Добавляем обработчики кликов на карточки
             document.querySelectorAll('.history-deployment-card').forEach(card => {
                 card.addEventListener('click', function(event) {
-                    // Не открываем, если клик был по кнопке или ссылке
                     if (event.target.closest('.history-card-action-btn') || 
                         event.target.closest('.history-card-url')) {
                         return;
                     }
-                    const url = this.dataset.url;
-                    if (url) {
-                        window.open(url, '_blank', 'noopener,noreferrer');
+                    const deploymentId = this.dataset.id;
+                    if (deploymentId) {
+                        showDeploymentDetails(deploymentId);
                     }
                 });
             });
@@ -912,18 +1424,19 @@
             const cardStatusClass = 'status-' + statusClass;
             
             const commitMessage = (deployment.commitMessage && deployment.commitMessage !== 'Ручной деплой') 
-                ? escapeHtml(deployment.commitMessage) 
+                ? highlightText(escapeHtml(deployment.commitMessage), state.searchQuery)
                 : 'Ручной деплой';
             
-            const branch = escapeHtml(deployment.branch || 'unknown');
+            const branch = highlightText(escapeHtml(deployment.branch || 'unknown'), state.searchQuery);
             const createdAt = escapeHtml(deployment.createdAt || '');
             const url = escapeHtml(deployment.url || '');
+            const highlightedUrl = highlightText(url, state.searchQuery);
 
-            return '<div class="history-deployment-card ' + cardStatusClass + '" data-url="' + url + '">' +
+            return '<div class="history-deployment-card ' + cardStatusClass + '" data-id="' + escapeHtml(deployment.id) + '">' +
                 '<div class="history-card-top">' +
                     '<div class="history-card-url-wrapper">' +
                         '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="history-card-url" onclick="event.stopPropagation()">' + 
-                            url + 
+                            highlightedUrl + 
                         '</a>' +
                     '</div>' +
                     '<span class="history-card-status ' + statusClass + '">' + statusText + '</span>' +
@@ -965,24 +1478,212 @@
                         '</svg>' +
                         '<span>Копировать</span>' +
                     '</button>' +
+                    '<button class="history-card-action-btn" onclick="event.stopPropagation(); showDeploymentDetails(\'' + escapeHtml(deployment.id) + '\')">' +
+'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+    '<circle cx="12" cy="12" r="10"></circle>' +
+    '<line x1="12" y1="16" x2="12" y2="12"></line>' +
+    '<line x1="12" y1="8" x2="12.01" y2="8"></line>' +
+'</svg>' +
+                        '<span>Детали</span>' +
+                    '</button>' +
                 '</div>' +
             '</div>';
         }
 
         // ============================================
+        // ПОДСВЕТКА СОВПАДЕНИЙ ПРИ ПОИСКЕ
+        // ============================================
+        function highlightText(text, query) {
+            if (!query || !query.trim()) return text;
+            
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp('(' + escapedQuery + ')', 'gi');
+            return text.replace(regex, '<span class="history-highlight">$1</span>');
+        }
+
+        // ============================================
+        // ПАГИНАЦИЯ
+        // ============================================
+        function renderPagination() {
+            const totalPages = Math.ceil(state.filteredDeployments.length / state.itemsPerPage);
+            
+            if (totalPages <= 1) {
+                elements.pagination.style.display = 'none';
+                return;
+            }
+
+            elements.pagination.style.display = 'flex';
+            
+            let html = '';
+            
+            // Кнопка "Назад"
+            html += '<button class="history-pagination-button" ' + 
+                    (state.currentPage === 1 ? 'disabled' : '') + 
+                    ' onclick="changePage(' + (state.currentPage - 1) + ')">← Назад</button>';
+
+            // Номера страниц
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, state.currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage < maxVisiblePages - 1) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            if (startPage > 1) {
+                html += '<button class="history-pagination-button" onclick="changePage(1)">1</button>';
+                if (startPage > 2) {
+                    html += '<span class="history-pagination-info">...</span>';
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += '<button class="history-pagination-button ' + 
+                        (i === state.currentPage ? 'active' : '') + 
+                        '" onclick="changePage(' + i + ')">' + i + '</button>';
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    html += '<span class="history-pagination-info">...</span>';
+                }
+                html += '<button class="history-pagination-button" onclick="changePage(' + totalPages + ')">' + totalPages + '</button>';
+            }
+
+            // Кнопка "Вперед"
+            html += '<button class="history-pagination-button" ' + 
+                    (state.currentPage === totalPages ? 'disabled' : '') + 
+                    ' onclick="changePage(' + (state.currentPage + 1) + ')">Вперед →</button>';
+
+            elements.pagination.innerHTML = html;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(state.filteredDeployments.length / state.itemsPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            state.currentPage = page;
+            renderResults();
+            renderPagination();
+            
+            // Прокрутка к началу списка
+            elements.content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ============================================
+        // МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ
+        // ============================================
+        function showDeploymentDetails(deploymentId) {
+            const deployment = state.deployments.find(d => d.id === deploymentId);
+            if (!deployment) return;
+
+            const statusText = deployment.state === 'READY' ? 'Готов' : 
+                              deployment.state === 'ERROR' ? 'Ошибка' : 'Сборка';
+
+            const content = `
+                <div class="history-modal-field">
+                    <span class="history-modal-label">ID деплоя</span>
+                    <span class="history-modal-value">${escapeHtml(deployment.id)}</span>
+                </div>
+                <div class="history-modal-field">
+                    <span class="history-modal-label">URL</span>
+                    <span class="history-modal-value">
+                        <a href="${escapeHtml(deployment.url)}" target="_blank" rel="noopener noreferrer">
+                            ${escapeHtml(deployment.url)}
+                        </a>
+                    </span>
+                </div>
+                <div class="history-modal-field">
+                    <span class="history-modal-label">Статус</span>
+                    <span class="history-modal-value">${statusText}</span>
+                </div>
+                <div class="history-modal-field">
+                    <span class="history-modal-label">Дата создания</span>
+                    <span class="history-modal-value">${escapeHtml(deployment.createdAt)}</span>
+                </div>
+                <div class="history-modal-field">
+                    <span class="history-modal-label">Ветка</span>
+                    <span class="history-modal-value">${escapeHtml(deployment.branch || 'unknown')}</span>
+                </div>
+                <div class="history-modal-field">
+                    <span class="history-modal-label">Сообщение коммита</span>
+                    <span class="history-modal-value">${escapeHtml(deployment.commitMessage || 'Ручной деплой')}</span>
+                </div>
+                ${deployment.author ? `
+                <div class="history-modal-field">
+                    <span class="history-modal-label">Автор</span>
+                    <span class="history-modal-value">${escapeHtml(deployment.author)}</span>
+                </div>
+                ` : ''}
+            `;
+
+            elements.modalContent.innerHTML = content;
+            elements.modalOverlay.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeploymentDetails() {
+            elements.modalOverlay.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================
+        // ЭКСПОРТ ДАННЫХ
+        // ============================================
+        function exportData() {
+            if (state.deployments.length === 0) {
+                showToast('Нет данных для экспорта', 'error');
+                return;
+            }
+
+            const data = {
+                exportDate: new Date().toISOString(),
+                totalDeployments: state.deployments.length,
+                deployments: state.deployments
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `deployments-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Данные экспортированы', 'success');
+        }
+
+        // ============================================
         // СОСТОЯНИЯ ИНТЕРФЕЙСА
         // ============================================
-        function showLoading() {
+        function showSkeleton() {
             elements.resultsInfo.style.display = 'none';
+            elements.pagination.style.display = 'none';
             elements.content.innerHTML = 
-                '<div class="history-loading-state">' +
-                    '<div class="history-loading-spinner"></div>' +
-                    '<p class="history-loading-text">Загрузка истории деплоев...</p>' +
+                '<div class="history-deployments-list">' +
+                    '<div class="history-skeleton">' +
+                        '<div class="history-skeleton-line history-skeleton-title"></div>' +
+                        '<div class="history-skeleton-line history-skeleton-text"></div>' +
+                        '<div class="history-skeleton-line history-skeleton-text-short"></div>' +
+                    '</div>' +
+                    '<div class="history-skeleton">' +
+                        '<div class="history-skeleton-line history-skeleton-title"></div>' +
+                        '<div class="history-skeleton-line history-skeleton-text"></div>' +
+                        '<div class="history-skeleton-line history-skeleton-text-short"></div>' +
+                    '</div>' +
+                    '<div class="history-skeleton">' +
+                        '<div class="history-skeleton-line history-skeleton-title"></div>' +
+                        '<div class="history-skeleton-line history-skeleton-text"></div>' +
+                        '<div class="history-skeleton-line history-skeleton-text-short"></div>' +
+                    '</div>' +
                 '</div>';
         }
 
         function showError(message) {
             elements.resultsInfo.style.display = 'none';
+            elements.pagination.style.display = 'none';
             elements.content.innerHTML = 
                 '<div class="history-error-state">' +
                     '<p class="history-error-title">Ошибка загрузки</p>' +
@@ -992,6 +1693,7 @@
 
         function showEmpty() {
             elements.resultsInfo.style.display = 'none';
+            elements.pagination.style.display = 'none';
             elements.content.innerHTML = 
                 '<div class="history-empty-state">' +
                     '<svg class="history-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
@@ -1003,6 +1705,7 @@
         }
 
         function showNoResults() {
+            elements.pagination.style.display = 'none';
             elements.content.innerHTML = 
                 '<div class="history-empty-state">' +
                     '<svg class="history-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
@@ -1012,6 +1715,26 @@
                     '<p class="history-empty-title">Ничего не найдено</p>' +
                     '<p class="history-empty-text">Попробуйте изменить параметры поиска или фильтра</p>' +
                 '</div>';
+        }
+
+        // ============================================
+        // УВЕДОМЛЕНИЯ (TOAST)
+        // ============================================
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = 'history-toast ' + type;
+            toast.textContent = message;
+            
+            elements.toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
         }
 
         // ============================================
@@ -1027,7 +1750,7 @@
         function copyToClipboard(text) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(function() {
-                    showNotification('Ссылка скопирована в буфер обмена');
+                    showToast('Ссылка скопирована в буфер обмена', 'success');
                 }).catch(function() {
                     fallbackCopy(text);
                 });
@@ -1045,30 +1768,11 @@
             textarea.select();
             try {
                 document.execCommand('copy');
-                showNotification('Ссылка скопирована в буфер обмена');
+                showToast('Ссылка скопирована в буфер обмена', 'success');
             } catch (err) {
-                showNotification('Не удалось скопировать ссылку');
+                showToast('Не удалось скопировать ссылку', 'error');
             }
             document.body.removeChild(textarea);
-        }
-
-        function showNotification(message) {
-            const notification = document.createElement('div');
-            notification.textContent = message;
-            notification.style.cssText = 
-                'position: fixed; bottom: 24px; right: 24px; background: #252526; ' +
-                'color: #cccccc; padding: 12px 20px; border-radius: 6px; ' +
-                'border: 1px solid #3c3c3c; box-shadow: 0 4px 12px rgba(0,0,0,0.4); ' +
-                'font-size: 13px; z-index: 10000; animation: history-fade-in 0.2s ease;';
-            document.body.appendChild(notification);
-            
-            setTimeout(function() {
-                notification.style.opacity = '0';
-                notification.style.transition = 'opacity 0.3s';
-                setTimeout(function() {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 2500);
         }
 
         // ============================================
@@ -1080,12 +1784,18 @@
             loadDeployments();
         });
 
+        // Кнопка экспорта
+        elements.exportButton.addEventListener('click', function() {
+            exportData();
+        });
+
         // Поиск с задержкой (debounce)
         let searchTimeout = null;
         elements.searchInput.addEventListener('input', function(event) {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(function() {
                 state.searchQuery = event.target.value;
+                state.currentPage = 1;
                 applyFilters();
             }, 300);
         });
@@ -1093,6 +1803,14 @@
         // Фильтр по статусу
         elements.filterSelect.addEventListener('change', function(event) {
             state.statusFilter = event.target.value;
+            state.currentPage = 1;
+            applyFilters();
+        });
+
+        // Сортировка
+        elements.sortSelect.addEventListener('change', function(event) {
+            state.sortBy = event.target.value;
+            state.currentPage = 1;
             applyFilters();
         });
 
@@ -1102,15 +1820,56 @@
                 event.preventDefault();
                 clearTimeout(searchTimeout);
                 state.searchQuery = event.target.value;
+                state.currentPage = 1;
                 applyFilters();
             }
         });
+
+        // Кнопка "Вернуться к началу"
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 300) {
+                elements.scrollTop.classList.add('visible');
+            } else {
+                elements.scrollTop.classList.remove('visible');
+            }
+        });
+
+        elements.scrollTop.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Модальное окно
+        elements.modalClose.addEventListener('click', closeDeploymentDetails);
+        elements.modalOverlay.addEventListener('click', function(event) {
+            if (event.target === elements.modalOverlay) {
+                closeDeploymentDetails();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && elements.modalOverlay.classList.contains('visible')) {
+                closeDeploymentDetails();
+            }
+        });
+
+        // Автообновление времени
+        setInterval(updateLastUpdateTime, 60000); // Каждую минуту
 
         // ============================================
         // ИНИЦИАЛИЗАЦИЯ
         // ============================================
         document.addEventListener('DOMContentLoaded', function() {
             loadDeployments();
+            
+            // Автообновление каждые 5 минут
+            state.autoRefreshInterval = setInterval(loadDeployments, 5 * 60 * 1000);
+        });
+
+        // Очистка интервалов при закрытии страницы
+        window.addEventListener('beforeunload', function() {
+            if (state.autoRefreshInterval) {
+                clearInterval(state.autoRefreshInterval);
+            }
         });
     </script>
 </body>
