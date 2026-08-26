@@ -964,16 +964,52 @@ async function loadVsixFile(file) {
     });
 
     for (const { path, entry } of entries) {
-      if (!entry.dir) {
-        const content = await entry.async('string');
-        files[path] = {
-          content: content,
-          originalContent: content,
-          isBinary: isBinaryContent(content),
-          size: content.length
-        };
-      } else {
+      if (entry.dir) {
         files[path] = { isDir: true };
+        continue;
+      }
+      
+      try {
+        // Защита от ошибки JSZip на файлах размером 0 байт
+        if (entry._data && entry._data.uncompressedSize === 0) {
+          files[path] = {
+            content: '',
+            originalContent: '',
+            isBinary: false,
+            size: 0
+          };
+        } else {
+          const content = await entry.async('string');
+          const isBinary = isBinaryContent(content);
+          files[path] = {
+            content: content,
+            originalContent: content,
+            isBinary: isBinary,
+            size: content.length
+          };
+        }
+      } catch (e) {
+        console.warn('Не удалось прочитать ' + path + ' как текст. Пробуем как бинарный.', e);
+        try {
+          // Фолбэк: читаем как Blob для бинарных файлов (картинки, .node и т.д.)
+          const blob = await entry.async('blob');
+          files[path] = {
+            content: '', // Содержимое не храним в памяти, читаем из zip по требованию
+            originalContent: '',
+            isBinary: true,
+            size: blob.size,
+            isBlob: true
+          };
+        } catch (e2) {
+          // Если совсем не читается, помечаем как поврежденный
+          files[path] = {
+            content: '',
+            originalContent: '',
+            isBinary: true,
+            size: 0,
+            error: 'Unreadable'
+          };
+        }
       }
     }
 
@@ -999,6 +1035,7 @@ async function loadVsixFile(file) {
 }
 
 function isBinaryContent(str) {
+  if (!str || str.length === 0) return false;
   let nonPrintable = 0;
   const sample = str.substring(0, 1024);
   for (let i = 0; i < sample.length; i++) {
