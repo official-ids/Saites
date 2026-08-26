@@ -1,0 +1,1117 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История версий сайта - Oris</title>
+    <meta name="description" content="История всех деплоев и версий сайта Oris. Просмотр старых сборок, статусов и сообщений коммитов.">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /* ============================================
+           ОСНОВНЫЕ ПЕРЕМЕННЫЕ И СБРОС
+           ============================================ */
+        :root {
+            --history-bg-primary: #1e1e1e;
+            --history-bg-secondary: #252526;
+            --history-bg-tertiary: #2d2d30;
+            --history-bg-hover: #2a2d2e;
+            --history-bg-active: #37373d;
+            --history-bg-input: #3c3c3c;
+            --history-border: #3c3c3c;
+            --history-border-light: #4a4a4a;
+            --history-text-primary: #cccccc;
+            --history-text-secondary: #969696;
+            --history-text-muted: #6a6a6a;
+            --history-accent: #007acc;
+            --history-accent-hover: #1a8ad4;
+            --history-danger: #f44747;
+            --history-success: #4ec9b0;
+            --history-warning: #dcdcaa;
+            --history-info: #519aba;
+            --history-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --history-shadow-hover: 0 4px 16px rgba(0, 122, 204, 0.15);
+            --history-radius: 6px;
+            --history-radius-lg: 8px;
+            --history-transition: 0.2s ease;
+        }
+
+        /* ============================================
+           КОНТЕЙНЕР СТРАНИЦЫ
+           ============================================ */
+        .history-page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* ============================================
+           ШАПКА СТРАНИЦЫ
+           ============================================ */
+        .history-page-header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--history-border);
+        }
+
+        .history-page-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .history-page-subtitle {
+            font-size: 15px;
+            color: var(--history-text-secondary);
+            margin: 0;
+            line-height: 1.5;
+            max-width: 700px;
+        }
+
+        .history-page-stats {
+            display: flex;
+            gap: 24px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .history-stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .history-stat-label {
+            font-size: 12px;
+            color: var(--history-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--history-text-primary);
+        }
+
+        /* ============================================
+           ПАНЕЛЬ УПРАВЛЕНИЯ
+           ============================================ */
+        .history-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .history-search-wrapper {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .history-search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--history-text-muted);
+            pointer-events: none;
+        }
+
+        .history-search-input {
+            width: 100%;
+            background: var(--history-bg-input);
+            border: 1px solid var(--history-border);
+            color: var(--history-text-primary);
+            padding: 10px 12px 10px 40px;
+            border-radius: var(--history-radius);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color var(--history-transition);
+        }
+
+        .history-search-input:focus {
+            border-color: var(--history-accent);
+        }
+
+        .history-search-input::placeholder {
+            color: var(--history-text-muted);
+        }
+
+        .history-filter-select {
+            background: var(--history-bg-input);
+            border: 1px solid var(--history-border);
+            color: var(--history-text-primary);
+            padding: 10px 14px;
+            border-radius: var(--history-radius);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            min-width: 160px;
+            transition: border-color var(--history-transition);
+        }
+
+        .history-filter-select:focus {
+            border-color: var(--history-accent);
+        }
+
+        .history-refresh-button {
+            background: var(--history-accent);
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--history-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--history-transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .history-refresh-button:hover {
+            background: var(--history-accent-hover);
+        }
+
+        .history-refresh-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .history-refresh-button svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.6s linear;
+        }
+
+        .history-refresh-button.loading svg {
+            animation: history-spin 1s linear infinite;
+        }
+
+        @keyframes history-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           СПИСОК ДЕПЛОЕВ
+           ============================================ */
+        .history-deployments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-deployment-card {
+            background: var(--history-bg-secondary);
+            border: 1px solid var(--history-border);
+            border-radius: var(--history-radius-lg);
+            padding: 20px;
+            transition: all var(--history-transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .history-deployment-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--history-accent);
+            opacity: 0;
+            transition: opacity var(--history-transition);
+        }
+
+        .history-deployment-card:hover {
+            border-color: var(--history-accent);
+            transform: translateY(-2px);
+            box-shadow: var(--history-shadow-hover);
+        }
+
+        .history-deployment-card:hover::before {
+            opacity: 1;
+        }
+
+        .history-deployment-card.status-error {
+            border-left: 3px solid var(--history-danger);
+        }
+
+        .history-deployment-card.status-building {
+            border-left: 3px solid var(--history-warning);
+        }
+
+        .history-deployment-card.status-ready {
+            border-left: 3px solid var(--history-success);
+        }
+
+        /* Верхняя часть карточки */
+        .history-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .history-card-url-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-card-url {
+            color: var(--history-info);
+            font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            text-decoration: none;
+            word-break: break-all;
+            display: inline-block;
+            transition: color var(--history-transition);
+        }
+
+        .history-card-url:hover {
+            color: var(--history-accent);
+            text-decoration: underline;
+        }
+
+        .history-card-status {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .history-card-status.ready {
+            background: rgba(78, 201, 176, 0.15);
+            color: var(--history-success);
+        }
+
+        .history-card-status.error {
+            background: rgba(244, 71, 71, 0.15);
+            color: var(--history-danger);
+        }
+
+        .history-card-status.building {
+            background: rgba(220, 220, 170, 0.15);
+            color: var(--history-warning);
+        }
+
+        /* Метаданные карточки */
+        .history-card-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--history-text-muted);
+            margin-bottom: 12px;
+        }
+
+        .history-card-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .history-card-meta-item svg {
+            width: 14px;
+            height: 14px;
+            color: var(--history-text-muted);
+            flex-shrink: 0;
+        }
+
+        /* Сообщение коммита */
+        .history-card-commit {
+            font-size: 13px;
+            color: var(--history-text-secondary);
+            line-height: 1.5;
+            padding-top: 12px;
+            border-top: 1px solid var(--history-border);
+            word-break: break-word;
+        }
+
+        .history-card-commit-label {
+            font-size: 11px;
+            color: var(--history-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        /* Действия карточки */
+        .history-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--history-border);
+        }
+
+        .history-card-action-btn {
+            background: var(--history-bg-tertiary);
+            border: 1px solid var(--history-border);
+            color: var(--history-text-secondary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--history-transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .history-card-action-btn:hover {
+            background: var(--history-bg-active);
+            color: var(--history-text-primary);
+            border-color: var(--history-border-light);
+        }
+
+        .history-card-action-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ============================================
+           СОСТОЯНИЯ: ЗАГРУЗКА, ОШИБКА, ПУСТО
+           ============================================ */
+        .history-loading-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--history-text-secondary);
+        }
+
+        .history-loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--history-border);
+            border-top-color: var(--history-accent);
+            border-radius: 50%;
+            animation: history-spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .history-loading-text {
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .history-error-state {
+            background: rgba(244, 71, 71, 0.08);
+            border: 1px solid rgba(244, 71, 71, 0.3);
+            border-radius: var(--history-radius-lg);
+            padding: 24px;
+            color: var(--history-danger);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .history-error-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+        }
+
+        .history-error-message {
+            margin: 0;
+            color: var(--history-text-secondary);
+            word-break: break-word;
+        }
+
+        .history-empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--history-text-muted);
+        }
+
+        .history-empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            color: var(--history-text-muted);
+            opacity: 0.5;
+        }
+
+        .history-empty-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--history-text-secondary);
+            margin: 0 0 8px 0;
+        }
+
+        .history-empty-text {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* ============================================
+           СЧЕТЧИК РЕЗУЛЬТАТОВ
+           ============================================ */
+        .history-results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--history-text-muted);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .history-results-count {
+            font-weight: 500;
+            color: var(--history-text-secondary);
+        }
+
+        .history-results-hint {
+            font-size: 12px;
+        }
+
+        /* ============================================
+           АДАПТИВНОСТЬ
+           ============================================ */
+        
+        /* Планшеты */
+        @media (max-width: 1024px) {
+            .history-page-container {
+                padding: 24px 20px;
+            }
+
+            .history-page-title {
+                font-size: 28px;
+            }
+
+            .history-page-stats {
+                gap: 20px;
+            }
+        }
+
+        /* Мобильные устройства */
+        @media (max-width: 768px) {
+            .history-page-container {
+                padding: 20px 16px;
+            }
+
+            .history-page-title {
+                font-size: 24px;
+            }
+
+            .history-page-subtitle {
+                font-size: 14px;
+            }
+
+            .history-page-stats {
+                gap: 16px;
+            }
+
+            .history-stat-value {
+                font-size: 18px;
+            }
+
+            .history-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .history-search-wrapper {
+                min-width: 100%;
+            }
+
+            .history-filter-select {
+                width: 100%;
+            }
+
+            .history-refresh-button {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .history-deployment-card {
+                padding: 16px;
+            }
+
+            .history-card-top {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .history-card-status {
+                align-self: flex-start;
+            }
+
+            .history-card-meta {
+                gap: 12px;
+                font-size: 11px;
+            }
+
+            .history-card-actions {
+                flex-wrap: wrap;
+            }
+
+            .history-card-action-btn {
+                flex: 1;
+                justify-content: center;
+                min-width: 120px;
+            }
+
+            .history-results-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Маленькие мобильные */
+        @media (max-width: 480px) {
+            .history-page-container {
+                padding: 16px 12px;
+            }
+
+            .history-page-title {
+                font-size: 20px;
+            }
+
+            .history-page-header {
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+            }
+
+            .history-deployment-card {
+                padding: 14px;
+            }
+
+            .history-card-url {
+                font-size: 12px;
+            }
+
+            .history-card-commit {
+                font-size: 12px;
+            }
+
+            .history-loading-state,
+            .history-empty-state {
+                padding: 60px 16px;
+            }
+        }
+
+        /* Очень большие экраны */
+        @media (min-width: 1400px) {
+            .history-page-container {
+                max-width: 1400px;
+            }
+        }
+
+        /* Печать */
+        @media print {
+            .history-controls,
+            .history-refresh-button,
+            .history-card-actions {
+                display: none;
+            }
+
+            .history-deployment-card {
+                break-inside: avoid;
+                border: 1px solid #000;
+            }
+        }
+
+        /* Анимации появления */
+        @keyframes history-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .history-deployment-card {
+            animation: history-fade-in 0.3s ease forwards;
+        }
+
+        .history-deployment-card:nth-child(1) { animation-delay: 0.05s; }
+        .history-deployment-card:nth-child(2) { animation-delay: 0.1s; }
+        .history-deployment-card:nth-child(3) { animation-delay: 0.15s; }
+        .history-deployment-card:nth-child(4) { animation-delay: 0.2s; }
+        .history-deployment-card:nth-child(5) { animation-delay: 0.25s; }
+
+        /* Утилиты */
+        .history-visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <main class="history-page-container">
+        <!-- Шапка страницы -->
+        <header class="history-page-header">
+            <h1 class="history-page-title">История версий сайта</h1>
+            <p class="history-page-subtitle">
+                Просмотр всех деплоев и старых версий сайта. Каждая карточка представляет отдельную сборку, 
+                развернутую на Vercel. Нажмите на карточку, чтобы открыть соответствующую версию в новой вкладке.
+            </p>
+            <div class="history-page-stats" id="historyStats">
+                <div class="history-stat-item">
+                    <span class="history-stat-label">Всего деплоев</span>
+                    <span class="history-stat-value" id="statTotal">-</span>
+                </div>
+                <div class="history-stat-item">
+                    <span class="history-stat-label">Успешных</span>
+                    <span class="history-stat-value" id="statReady">-</span>
+                </div>
+                <div class="history-stat-item">
+                    <span class="history-stat-label">С ошибками</span>
+                    <span class="history-stat-value" id="statError">-</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Панель управления -->
+        <section class="history-controls" aria-label="Управление списком">
+            <div class="history-search-wrapper">
+                <svg class="history-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input 
+                    type="search" 
+                    class="history-search-input" 
+                    id="historySearchInput"
+                    placeholder="Поиск по URL, сообщению коммита или ветке..."
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+            </div>
+            <select class="history-filter-select" id="historyFilterSelect">
+                <option value="all">Все статусы</option>
+                <option value="ready">Только успешные</option>
+                <option value="error">Только с ошибками</option>
+                <option value="building">Только в сборке</option>
+            </select>
+            <button class="history-refresh-button" id="historyRefreshButton" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Обновить</span>
+            </button>
+        </section>
+
+        <!-- Информация о результатах -->
+        <div class="history-results-info" id="historyResultsInfo" style="display: none;">
+            <span class="history-results-count" id="historyResultsCount"></span>
+            <span class="history-results-hint">Нажмите на карточку, чтобы открыть версию</span>
+        </div>
+
+        <!-- Контейнер для списка / состояний -->
+        <div id="historyContent">
+            <div class="history-loading-state">
+                <div class="history-loading-spinner"></div>
+                <p class="history-loading-text">Загрузка истории деплоев...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ============================================
+        // СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+        // ============================================
+        const state = {
+            deployments: [],
+            filteredDeployments: [],
+            isLoading: false,
+            searchQuery: '',
+            statusFilter: 'all'
+        };
+
+        // ============================================
+        // DOM ЭЛЕМЕНТЫ
+        // ============================================
+        const elements = {
+            content: document.getElementById('historyContent'),
+            refreshButton: document.getElementById('historyRefreshButton'),
+            searchInput: document.getElementById('historySearchInput'),
+            filterSelect: document.getElementById('historyFilterSelect'),
+            resultsInfo: document.getElementById('historyResultsInfo'),
+            resultsCount: document.getElementById('historyResultsCount'),
+            statTotal: document.getElementById('statTotal'),
+            statReady: document.getElementById('statReady'),
+            statError: document.getElementById('statError')
+        };
+
+        // ============================================
+        // ЗАГРУЗКА ДАННЫХ
+        // ============================================
+        async function loadDeployments() {
+            if (state.isLoading) return;
+            
+            state.isLoading = true;
+            elements.refreshButton.disabled = true;
+            elements.refreshButton.classList.add('loading');
+            
+            showLoading();
+
+            try {
+                const response = await fetch('/api/deployments');
+                
+                // Проверка типа ответа
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(
+                        'Сервер вернул не JSON (получен тип: ' + (contentType || 'неизвестно') + '). ' +
+                        'Проверьте, что маршрут /api/deployments подключен в proxy.js. ' +
+                        'Начало ответа: ' + text.substring(0, 200)
+                    );
+                }
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Неизвестная ошибка API');
+                }
+
+                if (!data.deployments || !Array.isArray(data.deployments)) {
+                    throw new Error('Неверный формат ответа от сервера');
+                }
+
+                state.deployments = data.deployments;
+                updateStats();
+                applyFilters();
+
+            } catch (error) {
+                console.error('Ошибка загрузки деплоев:', error);
+                showError(error.message);
+            } finally {
+                state.isLoading = false;
+                elements.refreshButton.disabled = false;
+                elements.refreshButton.classList.remove('loading');
+            }
+        }
+
+        // ============================================
+        // ОБНОВЛЕНИЕ СТАТИСТИКИ
+        // ============================================
+        function updateStats() {
+            const total = state.deployments.length;
+            const ready = state.deployments.filter(d => d.state === 'READY').length;
+            const error = state.deployments.filter(d => d.state === 'ERROR').length;
+
+            elements.statTotal.textContent = total;
+            elements.statReady.textContent = ready;
+            elements.statError.textContent = error;
+        }
+
+        // ============================================
+        // ФИЛЬТРАЦИЯ И ПОИСК
+        // ============================================
+        function applyFilters() {
+            let filtered = state.deployments.slice();
+
+            // Фильтр по статусу
+            if (state.statusFilter !== 'all') {
+                const statusMap = {
+                    'ready': 'READY',
+                    'error': 'ERROR',
+                    'building': 'BUILDING'
+                };
+                const targetStatus = statusMap[state.statusFilter];
+                filtered = filtered.filter(d => d.state === targetStatus);
+            }
+
+            // Поиск
+            if (state.searchQuery.trim()) {
+                const query = state.searchQuery.toLowerCase().trim();
+                filtered = filtered.filter(d => {
+                    const url = (d.url || '').toLowerCase();
+                    const commit = (d.commitMessage || '').toLowerCase();
+                    const branch = (d.branch || '').toLowerCase();
+                    return url.includes(query) || commit.includes(query) || branch.includes(query);
+                });
+            }
+
+            state.filteredDeployments = filtered;
+            renderResults();
+        }
+
+        // ============================================
+        // РЕНДЕРИНГ РЕЗУЛЬТАТОВ
+        // ============================================
+        function renderResults() {
+            const deployments = state.filteredDeployments;
+
+            // Показываем информацию о результатах
+            elements.resultsInfo.style.display = 'flex';
+            elements.resultsCount.textContent = 'Показано: ' + deployments.length + ' из ' + state.deployments.length;
+
+            if (deployments.length === 0) {
+                if (state.deployments.length === 0) {
+                    showEmpty();
+                } else {
+                    showNoResults();
+                }
+                return;
+            }
+
+            const html = '<div class="history-deployments-list">' + 
+                deployments.map(renderDeploymentCard).join('') + 
+                '</div>';
+            
+            elements.content.innerHTML = html;
+
+            // Добавляем обработчики кликов на карточки
+            document.querySelectorAll('.history-deployment-card').forEach(card => {
+                card.addEventListener('click', function(event) {
+                    // Не открываем, если клик был по кнопке или ссылке
+                    if (event.target.closest('.history-card-action-btn') || 
+                        event.target.closest('.history-card-url')) {
+                        return;
+                    }
+                    const url = this.dataset.url;
+                    if (url) {
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                    }
+                });
+            });
+        }
+
+        // ============================================
+        // РЕНДЕРИНГ ОДНОЙ КАРТОЧКИ
+        // ============================================
+        function renderDeploymentCard(deployment) {
+            const statusClass = deployment.state === 'READY' ? 'ready' : 
+                               deployment.state === 'ERROR' ? 'error' : 'building';
+            const statusText = deployment.state === 'READY' ? 'Готов' : 
+                              deployment.state === 'ERROR' ? 'Ошибка' : 'Сборка';
+            const cardStatusClass = 'status-' + statusClass;
+            
+            const commitMessage = (deployment.commitMessage && deployment.commitMessage !== 'Ручной деплой') 
+                ? escapeHtml(deployment.commitMessage) 
+                : 'Ручной деплой';
+            
+            const branch = escapeHtml(deployment.branch || 'unknown');
+            const createdAt = escapeHtml(deployment.createdAt || '');
+            const url = escapeHtml(deployment.url || '');
+
+            return '<div class="history-deployment-card ' + cardStatusClass + '" data-url="' + url + '">' +
+                '<div class="history-card-top">' +
+                    '<div class="history-card-url-wrapper">' +
+                        '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="history-card-url" onclick="event.stopPropagation()">' + 
+                            url + 
+                        '</a>' +
+                    '</div>' +
+                    '<span class="history-card-status ' + statusClass + '">' + statusText + '</span>' +
+                '</div>' +
+                '<div class="history-card-meta">' +
+                    '<div class="history-card-meta-item">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                            '<circle cx="12" cy="12" r="10"></circle>' +
+                            '<polyline points="12 6 12 12 16 14"></polyline>' +
+                        '</svg>' +
+                        '<span>' + createdAt + '</span>' +
+                    '</div>' +
+                    '<div class="history-card-meta-item">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                            '<circle cx="12" cy="12" r="4"></circle>' +
+                            '<line x1="1.05" y1="12" x2="7" y2="12"></line>' +
+                            '<line x1="17.01" y1="12" x2="22.96" y2="12"></line>' +
+                        '</svg>' +
+                        '<span>' + branch + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="history-card-commit">' +
+                    '<div class="history-card-commit-label">Коммит</div>' +
+                    commitMessage +
+                '</div>' +
+                '<div class="history-card-actions">' +
+                    '<button class="history-card-action-btn" onclick="event.stopPropagation(); window.open(\'' + url + '\', \'_blank\', \'noopener,noreferrer\')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                            '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>' +
+                            '<polyline points="15 3 21 3 21 9"></polyline>' +
+                            '<line x1="10" y1="14" x2="21" y2="3"></line>' +
+                        '</svg>' +
+                        '<span>Открыть</span>' +
+                    '</button>' +
+                    '<button class="history-card-action-btn" onclick="event.stopPropagation(); copyToClipboard(\'' + url + '\')">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+                            '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
+                            '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
+                        '</svg>' +
+                        '<span>Копировать</span>' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+        }
+
+        // ============================================
+        // СОСТОЯНИЯ ИНТЕРФЕЙСА
+        // ============================================
+        function showLoading() {
+            elements.resultsInfo.style.display = 'none';
+            elements.content.innerHTML = 
+                '<div class="history-loading-state">' +
+                    '<div class="history-loading-spinner"></div>' +
+                    '<p class="history-loading-text">Загрузка истории деплоев...</p>' +
+                '</div>';
+        }
+
+        function showError(message) {
+            elements.resultsInfo.style.display = 'none';
+            elements.content.innerHTML = 
+                '<div class="history-error-state">' +
+                    '<p class="history-error-title">Ошибка загрузки</p>' +
+                    '<p class="history-error-message">' + escapeHtml(message) + '</p>' +
+                '</div>';
+        }
+
+        function showEmpty() {
+            elements.resultsInfo.style.display = 'none';
+            elements.content.innerHTML = 
+                '<div class="history-empty-state">' +
+                    '<svg class="history-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+                        '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>' +
+                    '</svg>' +
+                    '<p class="history-empty-title">История пуста</p>' +
+                    '<p class="history-empty-text">Деплои пока не были зафиксированы</p>' +
+                '</div>';
+        }
+
+        function showNoResults() {
+            elements.content.innerHTML = 
+                '<div class="history-empty-state">' +
+                    '<svg class="history-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">' +
+                        '<circle cx="11" cy="11" r="8"></circle>' +
+                        '<line x1="21" y1="21" x2="16.65" y2="16.65"></line>' +
+                    '</svg>' +
+                    '<p class="history-empty-title">Ничего не найдено</p>' +
+                    '<p class="history-empty-text">Попробуйте изменить параметры поиска или фильтра</p>' +
+                '</div>';
+        }
+
+        // ============================================
+        // УТИЛИТЫ
+        // ============================================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    showNotification('Ссылка скопирована в буфер обмена');
+                }).catch(function() {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showNotification('Ссылка скопирована в буфер обмена');
+            } catch (err) {
+                showNotification('Не удалось скопировать ссылку');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = 
+                'position: fixed; bottom: 24px; right: 24px; background: #252526; ' +
+                'color: #cccccc; padding: 12px 20px; border-radius: 6px; ' +
+                'border: 1px solid #3c3c3c; box-shadow: 0 4px 12px rgba(0,0,0,0.4); ' +
+                'font-size: 13px; z-index: 10000; animation: history-fade-in 0.2s ease;';
+            document.body.appendChild(notification);
+            
+            setTimeout(function() {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s';
+                setTimeout(function() {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 2500);
+        }
+
+        // ============================================
+        // ОБРАБОТЧИКИ СОБЫТИЙ
+        // ============================================
+        
+        // Кнопка обновления
+        elements.refreshButton.addEventListener('click', function() {
+            loadDeployments();
+        });
+
+        // Поиск с задержкой (debounce)
+        let searchTimeout = null;
+        elements.searchInput.addEventListener('input', function(event) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                state.searchQuery = event.target.value;
+                applyFilters();
+            }, 300);
+        });
+
+        // Фильтр по статусу
+        elements.filterSelect.addEventListener('change', function(event) {
+            state.statusFilter = event.target.value;
+            applyFilters();
+        });
+
+        // Клавиша Enter в поиске
+        elements.searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                clearTimeout(searchTimeout);
+                state.searchQuery = event.target.value;
+                applyFilters();
+            }
+        });
+
+        // ============================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDeployments();
+        });
+    </script>
+</body>
+</html>

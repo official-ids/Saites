@@ -74,6 +74,7 @@ const MODULE_PATHS = {
     ROBLOX: '../roblox',
     YOUTUBE: '../youtube',
     MONITOR: '../monitor',
+    DEPLOYMENTS: '../deployments',
     JSON_STUDIO: '../json_studio',
     REVIEW: '../review',
     GRADE: '../grade',
@@ -100,6 +101,8 @@ const robloxRouter = require(MODULE_PATHS.ROBLOX);
 const youtubeRouter = require(MODULE_PATHS.YOUTUBE);
 
 const monitorRouter = require(MODULE_PATHS.MONITOR);
+
+const deploymentsRouter = require(MODULE_PATHS.DEPLOYMENTS);
 
 const jsonStudioRouter = require(MODULE_PATHS.JSON_STUDIO);
 
@@ -1282,6 +1285,7 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/roblox', robloxRouter);
 app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
+app.use('/api/deployments', deploymentsRouter);
 app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/grade', gradeRouter);
