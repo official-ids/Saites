@@ -8,21 +8,18 @@ const router = express.Router();
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
 
-// Базовые настройки по умолчанию
 const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 50; // Защита от чрезмерных запросов к Vercel API
+const MAX_LIMIT = 50;
 const DEFAULT_STATE = 'READY';
 const CACHE_TTL = 300; // 5 минут
 
 // -----------------------------
 // Вспомогательные функции
 // -----------------------------
-
-/**
- * Форматирует дату в московском времени
- */
-const formatMoscowDate = (dateString) => {
-    return new Date(dateString).toLocaleString('ru-RU', {
+const formatMoscowDate = (timestamp) => {
+    // Vercel API возвращает 'created' как строку-таймстамп (например, "1609492210000")
+    const date = new Date(Number(timestamp));
+    return date.toLocaleString('ru-RU', {
         timeZone: 'Europe/Moscow',
         day: 'numeric',
         month: 'long',
@@ -35,17 +32,9 @@ const formatMoscowDate = (dateString) => {
 // -----------------------------
 // Routes
 // -----------------------------
-
-/**
- * GET /api/deployments
- * Возвращает список деплоев с поддержкой пагинации, фильтрации и умного кэширования.
- * Query params:
- *  - limit: число (по умолчанию 20, макс 50)
- *  - state: строка (по умолчанию 'READY', например: 'BUILDING', 'ERROR', 'READY')
- */
 router.get('/', async (req, res) => {
     try {
-        // 1. Валидация конфигурации (Fail Fast)
+        // 1. Валидация конфигурации
         if (!VERCEL_TOKEN || !VERCEL_PROJECT_ID) {
             console.error('[Vercel Deployments] Missing environment variables: VERCEL_TOKEN or VERCEL_PROJECT_ID');
             return res.status(500).json({ 
@@ -54,22 +43,21 @@ router.get('/', async (req, res) => {
             });
         }
 
-        // 2. Парсинг и валидация query-параметров (Гибкость)
+        // 2. Парсинг query-параметров
         const requestedLimit = Math.min(Math.max(parseInt(req.query.limit) || DEFAULT_LIMIT, 1), MAX_LIMIT);
         const requestedState = (typeof req.query.state === 'string' ? req.query.state.toUpperCase() : DEFAULT_STATE) || DEFAULT_STATE;
 
-        // 3. Динамический ключ кэша (Предотвращение коллизий)
-        // Если запрошен другой лимит или статус, кэш должен быть отдельным
+        // 3. Динамический ключ кэша
         const CACHE_KEY = `vercel:deployments:${VERCEL_PROJECT_ID}:${requestedLimit}:${requestedState}`;
 
         // 4. Проверка кэша
         const cachedData = await kv.get(CACHE_KEY);
         if (cachedData) {
-            return res.json({ ...cachedData, cached: true }); // Флаг cached полезен для отладки на фронтенде
+            return res.json({ ...cachedData, cached: true });
         }
 
-        // 5. Запрос к Vercel API
-        const apiUrl = `https://api.vercel.com/v9/deployments?projectId=${VERCEL_PROJECT_ID}&limit=${requestedLimit}&state=${requestedState}`;
+        // 5. Запрос к Vercel API (ИСПРАВЛЕНО: v7 вместо v9)
+        const apiUrl = `https://api.vercel.com/v7/deployments?projectId=${VERCEL_PROJECT_ID}&limit=${requestedLimit}&state=${requestedState}`;
         
         const response = await fetch(apiUrl, {
             method: 'GET',
@@ -79,7 +67,7 @@ router.get('/', async (req, res) => {
             }
         });
 
-        // 6. Продвинутая обработка ошибок API
+        // 6. Обработка ошибок API
         if (!response.ok) {
             let errorDetail = `Vercel API responded with status ${response.status}`;
             try {
@@ -91,7 +79,6 @@ router.get('/', async (req, res) => {
 
             console.error(`[Vercel Deployments] API Error ${response.status}:`, errorDetail);
             
-            // Возвращаем корректный HTTP-статус клиенту (например, 401 при плохом токене)
             const status = response.status === 401 || response.status === 403 ? 403 : 502;
             return res.status(status).json({ 
                 success: false, 
@@ -101,15 +88,15 @@ router.get('/', async (req, res) => {
 
         const data = await response.json();
 
-        // 7. Безопасное форматирование данных (защита от undefined/null)
+        // 7. Форматирование данных (ИСПРАВЛЕНО: маппинг полей согласно документации Vercel API v7)
         const deployments = (data.deployments || []).map(d => ({
-            id: d.id,
+            id: d.uid || d.id, // Vercel использует 'uid' для деплоев
             url: d.url ? `https://${d.url}` : null,
             createdAt: formatMoscowDate(d.created),
-            state: d.state,
+            state: d.state || d.readyState, // Vercel использует 'state' или 'readyState'
             commitMessage: d.meta?.githubCommitMessage || d.meta?.commitMessage || 'Ручной деплой',
             branch: d.meta?.githubCommitRef || d.meta?.branch || 'unknown',
-            author: d.meta?.githubCommitAuthorLogin || 'unknown' // Бонус: автор коммита
+            author: d.attribution?.gitUser?.login || d.meta?.githubCommitAuthorLogin || 'unknown'
         }));
 
         const result = { 
@@ -119,8 +106,7 @@ router.get('/', async (req, res) => {
             deployments 
         };
 
-        // 8. Сохранение в кэш с TTL
-        // Используем .catch, чтобы ошибка записи в кэш не ломала успешный ответ клиенту
+        // 8. Сохранение в кэш
         await kv.set(CACHE_KEY, result, { ex: CACHE_TTL }).catch(err => {
             console.warn('[Vercel Deployments] Failed to write to cache:', err.message);
         });
