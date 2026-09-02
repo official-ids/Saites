@@ -1,0 +1,497 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Документация: Исключения доменов в Zapret</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.0/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jetbrains-mono@5.0.0/index.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f8f9fb;
+    --bg-code: #1e1e2e;
+    --text: #1a1a1a;
+    --text-muted: #5c6470;
+    --border: #e5e7eb;
+    --accent: #2563eb;
+    --accent-soft: #dbeafe;
+    --warn: #d97706;
+    --warn-soft: #fef3c7;
+    --success: #059669;
+    --success-soft: #d1fae5;
+    --danger: #be123c;
+    --danger-soft: #fff1f2;
+  }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, pre { font-family: 'JetBrains Mono', Consolas, monospace; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1280px; margin: 0 auto; }
+  .sidebar {
+    position: sticky; top: 0; height: 100vh;
+    padding: 32px 24px; border-right: 1px solid var(--border);
+    overflow-y: auto; background: var(--bg-soft);
+  }
+  .sidebar-title {
+    font-size: 14px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 16px;
+  }
+  .sidebar ul { list-style: none; }
+  .sidebar li a {
+    display: block; padding: 6px 12px; border-radius: 6px;
+    color: var(--text); text-decoration: none; font-size: 14px;
+    transition: all 0.15s;
+  }
+  .sidebar li a:hover { background: var(--accent-soft); color: var(--accent); }
+  .sidebar .group { margin-bottom: 20px; }
+  .sidebar .group-title {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0 12px; margin-bottom: 6px;
+  }
+
+  .content { padding: 48px 64px; max-width: 860px; }
+
+  /* Header */
+  .hero { padding-bottom: 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  .hero h1 { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .hero p { font-size: 18px; color: var(--text-muted); }
+  .badge {
+    display: inline-block; padding: 4px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  /* Typography */
+  h2 {
+    font-size: 28px; font-weight: 700; margin-top: 56px; margin-bottom: 16px;
+    letter-spacing: -0.01em; scroll-margin-top: 24px;
+  }
+  h3 { font-size: 20px; font-weight: 600; margin-top: 32px; margin-bottom: 12px; }
+  h4 { font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px; }
+  p { margin-bottom: 16px; }
+  ul, ol { margin-bottom: 16px; padding-left: 24px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* Code */
+  code:not(pre code) {
+    background: var(--bg-soft); padding: 2px 6px; border-radius: 4px;
+    font-size: 0.9em; color: var(--danger); border: 1px solid var(--border);
+  }
+  pre {
+    background: var(--bg-code); color: #e4e4e7;
+    padding: 20px; border-radius: 8px; overflow-x: auto;
+    font-size: 13.5px; line-height: 1.6; margin-bottom: 16px;
+    position: relative;
+  }
+  pre code { color: inherit; background: transparent; border: none; padding: 0; font-size: inherit; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(255,255,255,0.08); color: #d4d4d8;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .copy-btn.copied { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+
+  /* Callouts */
+  .callout {
+    padding: 16px 20px; border-radius: 8px; margin: 20px 0;
+    border-left: 4px solid; font-size: 14.5px;
+  }
+  .callout-title { font-weight: 600; margin-bottom: 4px; display: block; }
+  .callout.info { background: var(--accent-soft); border-color: var(--accent); }
+  .callout.warn { background: var(--warn-soft); border-color: var(--warn); }
+  .callout.success { background: var(--success-soft); border-color: var(--success); }
+  .callout.danger { background: var(--danger-soft); border-color: var(--danger); }
+
+  /* Steps */
+  .steps { counter-reset: step; margin: 24px 0; }
+  .step {
+    counter-increment: step; position: relative;
+    padding: 16px 20px 16px 64px; margin-bottom: 12px;
+    background: var(--bg-soft); border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .step::before {
+    content: counter(step); position: absolute; left: 20px; top: 16px;
+    width: 28px; height: 28px; background: var(--accent); color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+  }
+  .step-title { font-weight: 600; margin-bottom: 4px; }
+
+  /* Table */
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0 24px;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+  }
+  th { background: var(--bg-soft); font-weight: 600; font-size: 13px; }
+  tr:hover td { background: var(--bg-soft); }
+
+  /* Tabs */
+  .tabs { margin: 24px 0; }
+  .tab-buttons { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    padding: 10px 16px; background: transparent; border: none;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; padding: 20px 0; }
+  .tab-panel.active { display: block; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    .content { padding: 32px 24px; }
+    .hero h1 { font-size: 30px; }
+    h2 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">Документация</div>
+    <div class="group">
+      <div class="group-title">Введение</div>
+      <ul>
+        <li><a href="#overview">Обзор</a></li>
+        <li><a href="#how-it-works">Как это работает</a></li>
+      </ul>
+    </div>
+    <div class="group">
+      <div class="group-title">Настройка</div>
+      <ul>
+        <li><a href="#windows">Windows</a></li>
+        <li><a href="#linux">Linux / OpenWRT</a></li>
+        <li><a href="#goodbyedpi">GoodbyeDPI</a></li>
+      </ul>
+    </div>
+    <div class="group">
+      <div class="group-title">Справочник</div>
+      <ul>
+        <li><a href="#examples">Примеры доменов</a></li>
+        <li><a href="#syntax">Синтаксис</a></li>
+        <li><a href="#verification">Проверка</a></li>
+        <li><a href="#troubleshooting">Решение проблем</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="hero">
+      <span class="badge">Руководство</span>
+      <h1>Исключения доменов в Zapret</h1>
+      <p>Как корректно исключить произвольные сайты из обработки DPI-обходом, чтобы они работали без модификации трафика.</p>
+    </header>
+
+    <section id="overview">
+      <h2>Обзор</h2>
+      <p>Zapret (и его производные сборки, такие как <code>zapret-discord-youtube</code>) по умолчанию применяет методы обхода DPI ко всему проходящему через него трафику. Это может приводить к тому, что сайты, которые и так доступны без блокировок, начинают работать некорректно: зависают, выдают ошибки соединения или не открываются вовсе.</p>
+      <p>Причина обычно кроется в конфликте методов десинхронизации (дробление пакетов, модификация MSS, подмена регистра SNI и т.п.) с особенностями CDN или API конкретного сервиса. Решение — добавить проблемный домен в список исключений.</p>
+    </section>
+
+    <section id="how-it-works">
+      <h2>Как это работает</h2>
+      <p>Когда домен попадает в список исключений, движок <code>tpws</code> или <code>nfqws</code> проверяет SNI (Server Name Indication) в TLS-рукопожатии или HTTP-заголовок <code>Host</code>. При совпадении с записью из списка исключений программа полностью прекращает любую модификацию пакетов и пропускает трафик в его исходном виде.</p>
+      <div class="callout info">
+        <span class="callout-title">Важно</span>
+        Поддомены учитываются автоматически. Запись <code>example.com</code> распространяет исключение на <code>api.example.com</code>, <code>cdn.example.com</code> и любые другие поддомены.
+      </div>
+    </section>
+
+    <hr>
+
+    <section id="windows">
+      <h2>Настройка в Windows</h2>
+      <p>Инструкция актуальна для популярных сборок <code>zapret-discord-youtube</code> и аналогичных GUI-сборок на базе WinDivert.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">Откройте папку с программой</div>
+          <p>Перейдите в директорию, куда была распакована сборка Zapret.</p>
+        </div>
+        <div class="step">
+          <div class="step-title">Найдите файл исключений</div>
+          <p>Откройте файл <code>lists\list-exclude-user.txt</code>. В некоторых сборках он может называться <code>zapret-hosts-user-exclude.txt</code>.</p>
+        </div>
+        <div class="step">
+          <div class="step-title">Добавьте нужные домены</div>
+          <p>Откройте файл в любом текстовом редакторе (Блокнот, VS Code и т.д.) и добавьте домены, каждый с новой строки:</p>
+<pre><code>example.com
+api.example.com
+cdn-service.com</code></pre>
+        </div>
+        <div class="step">
+          <div class="step-title">Сохраните файл</div>
+          <p>Убедитесь, что файл сохранён в кодировке UTF-8 без BOM.</p>
+        </div>
+        <div class="step">
+          <div class="step-title">Перезапустите службу</div>
+          <p>Запустите <code>service.bat</code> от имени администратора и выполните:</p>
+          <ul>
+            <li><strong>Remove Services</strong> — для сброса текущих правил;</li>
+            <li><strong>Install Service</strong> — для повторной установки с новой конфигурацией.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-title">Внимание</span>
+        В <code>service.bat</code> параметр <strong>IPSet Filter</strong> должен быть установлен в значение <code>loaded</code> или <code>none</code>. Если выбрано <code>any</code>, брандмауэр может принудительно применять правила ко всем IP-адресам, игнорируя текстовые списки исключений.
+      </div>
+    </section>
+
+    <section id="linux">
+      <h2>Настройка в Linux / OpenWRT</h2>
+      <p>Инструкция для оригинальной версии Zapret от bol-van.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-title">Откройте файл исключений</div>
+          <p>Стандартный путь:</p>
+<pre><code>/opt/zapret/ipset/zapret-hosts-user-exclude.txt</code></pre>
+          <p>Если Zapret установлен в другую директорию, ищите файл <code>zapret-hosts-user-exclude.txt</code> в папке <code>ipset</code>.</p>
+        </div>
+        <div class="step">
+          <div class="step-title">Добавьте домены</div>
+<pre><code>example.com
+api.example.com
+cdn-service.com</code></pre>
+          <p>Файл также поддерживает прямую запись IP-адресов и подсетей:</p>
+<pre><code>10.0.0.0/8
+172.16.0.0/12
+192.168.0.0/16</code></pre>
+        </div>
+        <div class="step">
+          <div class="step-title">Обновите списки и перезапустите</div>
+<pre><code># Обновить ipset
+/opt/zapret/ipset/create_ipset.sh
+
+# Перезапустить службу
+sudo systemctl restart zapret</code></pre>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-title">Режим фильтрации</span>
+        Если в <code>config</code> установлен <code>MODE_FILTER=hostlist</code>, исключения обрабатываются напрямую движком. В режиме <code>MODE_FILTER=ipset</code> скрипты резолвят домены из файла исключений и создают отдельный ipset <code>nozapret</code>, правила которого исключают указанные IP из обработки.
+      </div>
+    </section>
+
+    <section id="goodbyedpi">
+      <h2>Настройка в GoodbyeDPI</h2>
+      <p>GoodbyeDPI работает иначе: у него нет прямого «списка исключений», но есть параметр <code>--blacklist</code>, который ограничивает применение обхода только указанными доменами. Это фактически превращает GoodbyeDPI в «белый список».</p>
+
+      <div class="tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" data-tab="gb-black">Режим «только для списка»</button>
+          <button class="tab-btn" data-tab="gb-exclude">Режим «всё, кроме»</button>
+        </div>
+        <div class="tab-panel active" id="gb-black">
+          <p>Создайте текстовый файл <code>blocklist.txt</code> с доменами, которые <strong>нужно</strong> обходить:</p>
+<pre><code>blocked-site.com
+another-blocked.net</code></pre>
+          <p>Запустите GoodbyeDPI с параметром:</p>
+<pre><code>goodbyedpi.exe --blacklist blocklist.txt</code></pre>
+          <p>Все остальные домены (включая ваш нужный сайт) будут работать без модификации трафика.</p>
+        </div>
+        <div class="tab-panel" id="gb-exclude">
+          <p>GoodbyeDPI не поддерживает классический «exclude list». Если вам нужно, чтобы обход работал для большинства сайтов, но не для одного конкретного, используйте режим <code>--blacklist</code> с полным списком блокируемых ресурсов вашего региона.</p>
+          <p>Альтернатива — комбинировать GoodbyeDPI с системными правилами маршрутизации или файлом <code>hosts</code>, чтобы перенаправить нужный домен в обход драйвера WinDivert.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <section id="examples">
+      <h2>Примеры популярных доменов</h2>
+      <p>Ниже приведены типичные случаи, когда сайты приходится исключать из обработки Zapret.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Сервис</th>
+            <th>Домены для исключения</th>
+            <th>Причина</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Чат-боты (Qwen, Gemini)</td>
+            <td><code>qwen.ai</code>, <code>alibaba.com</code></td>
+            <td>Конфликт с методами дробления TLS</td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td><code>github.com</code>, <code>githubassets.com</code></td>
+            <td>Проблемы при использовании <code>--mss</code></td>
+          </tr>
+          <tr>
+            <td>VK / OK</td>
+            <td><code>vk.com</code>, <code>ok.ru</code></td>
+            <td>Не загружаются ресурсы полностью</td>
+          </tr>
+          <tr>
+            <td>Серверы обновлений</td>
+            <td><code>archive.ubuntu.com</code>, <code>update.microsoft.com</code></td>
+            <td>400 Bad Request при <code>apt update</code></td>
+          </tr>
+          <tr>
+            <td>Локальная сеть</td>
+            <td><code>192.168.0.0/16</code>, <code>10.0.0.0/8</code></td>
+            <td>Не нужно трогать внутренний трафик</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="syntax">
+      <h2>Синтаксис файла исключений</h2>
+      <p>Каждая запись — с новой строки. Поддерживаются следующие форматы:</p>
+      <ul>
+        <li><strong>Домен:</strong> <code>example.com</code> — включает все поддомены.</li>
+        <li><strong>Точный домен без поддоменов:</strong> <code>^example.com</code> — символ <code>^</code> отключает автоматическое расширение на поддомены.</li>
+        <li><strong>IPv4-адрес:</strong> <code>93.184.216.34</code></li>
+        <li><strong>IPv4-подсеть:</strong> <code>10.0.0.0/8</code></li>
+        <li><strong>IPv6-адрес:</strong> <code>2001:db8::1</code></li>
+        <li><strong>IPv6-префикс:</strong> <code>fc00::/7</code></li>
+      </ul>
+
+      <div class="callout danger">
+        <span class="callout-title">Запрещено</span>
+        Символы маски <code>*</code> (звёздочка) не поддерживаются. Запись <code>*.example.com</code> работать не будет. Используйте просто <code>example.com</code> — это автоматически распространится на все поддомены.
+      </div>
+    </section>
+
+    <section id="verification">
+      <h2>Проверка работоспособности</h2>
+      <p>После внесения изменений убедитесь, что исключения применились корректно.</p>
+
+      <h3>Для Linux</h3>
+      <p>Проверьте содержимое ipset <code>nozapret</code>:</p>
+<pre><code>sudo ipset list nozapret</code></pre>
+      <p>IP-адреса ваших исключённых доменов должны присутствовать в выводе.</p>
+
+      <h3>Для Windows</h3>
+      <p>Запустите <code>service.bat</code> и выберите <strong>Run Diagnostics</strong>. Диагностика покажет, какие списки загружены и нет ли конфликтов.</p>
+
+      <h3>Отладка через debug-режим</h3>
+      <p>Если сайт всё ещё работает некорректно, остановите службу и запустите движок вручную с флагом <code>--debug</code>:</p>
+<pre><code># Пример для tpws
+sudo /opt/zapret/tpws/tpws --user=root --port=988 \
+  --hostlist=/opt/zapret/ipset/zapret-hosts-user.txt \
+  --hostlist-exclude=/opt/zapret/ipset/zapret-hosts-user-exclude.txt \
+  --debug</code></pre>
+      <p>При обращении к сайту в выводе должно появиться:</p>
+<pre><code>Checking exclude hostlist
+Hostlist check for example.com : positive
+Not acting on this request</code></pre>
+      <p>Это подтверждает, что домен распознан как исключение и трафик не модифицируется.</p>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>Решение проблем</h2>
+
+      <h3>Сайт всё равно не открывается после добавления в исключения</h3>
+      <ul>
+        <li>Убедитесь, что вы перезапустили службу (<code>systemctl restart zapret</code> или переустановка сервиса в Windows).</li>
+        <li>Проверьте, что домен написан без опечаток и без символа <code>*</code>.</li>
+        <li>Очистите кэш DNS в браузере и операционной системе.</li>
+        <li>Убедитесь, что сайт работает при полностью отключённом Zapret — если нет, проблема не в исключениях.</li>
+      </ul>
+
+      <h3>Параметр <code>--mss</code> игнорирует хостлисты</h3>
+      <p>Если в стратегии используется модификация MSS, она применяется на этапе установления TCP-соединения, когда домен ещё неизвестен. В этом случае исключения по доменам не работают — нужно использовать IP-исключения или отказаться от <code>--mss</code>.</p>
+
+      <h3>Сайт использует несколько CDN-доменов</h3>
+      <p>Откройте DevTools (F12) → вкладка <strong>Network</strong> и посмотрите, к каким доменам подключается сайт. Все эти домены нужно добавить в список исключений. Например, для полноценной работы сервиса могут потребоваться:</p>
+<pre><code>example.com
+api.example.com
+cdn.example.com
+static.example.com
+third-party-cdn.net</code></pre>
+
+      <h3>Конфликт с другими VPN/прокси</h3>
+      <p>Zapret может конфликтовать с активными VPN-клиентами, прокси-расширениями или другими DPI-обходчиками. Отключите их перед диагностикой.</p>
+    </section>
+
+    <hr>
+
+    <footer style="padding: 24px 0; color: var(--text-muted); font-size: 13px;">
+      <p>Документация основана на официальных материалах проекта <a href="https://github.com/bol-van/zapret" target="_blank">bol-van/zapret</a> и обсуждениях сообщества.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabGroup = btn.closest('.tabs');
+      tabGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      tabGroup.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      tabGroup.querySelector('#' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Copy buttons for code blocks
+  document.querySelectorAll('pre').forEach(pre => {
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'Копировать';
+    btn.addEventListener('click', () => {
+      const code = pre.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Скопировано';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Копировать';
+          btn.classList.remove('copied');
+        }, 1800);
+      });
+    });
+    pre.appendChild(btn);
+  });
+
+  // Smooth scroll for sidebar links
+  document.querySelectorAll('.sidebar a').forEach(link => {
+    link.addEventListener('click', e => {
+      const href = link.getAttribute('href');
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
