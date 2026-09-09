@@ -1,1 +1,3738 @@
-404
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Шпаргалка ру — Генератор учебных шпаргалок</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* =====================================================================
+   ШПАРГАЛКА РУ — ПОЛНЫЙ СТИЛЬ
+   Мультяшный, детский, яркий дизайн. Без эмодзи, только SVG.
+   ===================================================================== */
+
+:root {
+    --primary: #ff6b9d;
+    --primary-dark: #e8527f;
+    --secondary: #4ecdc4;
+    --secondary-dark: #3bb3aa;
+    --accent-yellow: #ffe66d;
+    --accent-orange: #ffa07a;
+    --accent-purple: #c77dff;
+    --accent-blue: #4facfe;
+    --accent-green: #84fab0;
+    --bg-main: #fff5f7;
+    --bg-card: #ffffff;
+    --bg-chat: #fef9fb;
+    --text-dark: #2d3142;
+    --text-muted: #6b7280;
+    --text-light: #9ca3af;
+    --border: #fde2e7;
+    --border-strong: #f8b4c4;
+    --shadow-soft: 0 4px 12px rgba(255, 107, 157, 0.12);
+    --shadow-medium: 0 8px 24px rgba(255, 107, 157, 0.18);
+    --shadow-strong: 0 12px 36px rgba(255, 107, 157, 0.25);
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --font-main: 'Comic Sans MS', 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: var(--font-main);
+    background: var(--bg-main);
+    color: var(--text-dark);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Декоративный фон */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(255, 230, 109, 0.25) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(199, 125, 255, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(78, 205, 196, 0.15) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* =====================================================================
+   СКРОЛЛБАР
+   ===================================================================== */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary), var(--accent-purple));
+    border-radius: 10px;
+    border: 2px solid var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--primary-dark), var(--accent-purple));
+}
+
+/* =====================================================================
+   LAYOUT
+   ===================================================================== */
+.app {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+}
+
+/* =====================================================================
+   HEADER
+   ===================================================================== */
+.header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-purple) 100%);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-medium);
+    position: relative;
+    z-index: 10;
+}
+
+.header::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'><path d='M0,0 Q5,10 10,0 T20,0 T30,0 T40,0 T50,0 T60,0 T70,0 T80,0 T90,0 T100,0 L100,10 L0,10 Z' fill='%23ff6b9d'/></svg>") repeat-x;
+    background-size: 100px 10px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: white;
+    font-weight: bold;
+    font-size: 22px;
+    letter-spacing: 0.5px;
+}
+
+.logo-icon {
+    width: 44px;
+    height: 44px;
+    background: white;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: rotate(-5deg);
+    transition: var(--transition);
+}
+
+.logo-icon:hover {
+    transform: rotate(5deg) scale(1.1);
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.logo-text span:first-child {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.logo-text span:last-child {
+    font-size: 11px;
+    opacity: 0.9;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.nav-tabs {
+    display: flex;
+    gap: 8px;
+    background: rgba(255,255,255,0.2);
+    padding: 6px;
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.nav-tab {
+    padding: 8px 18px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-tab:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.nav-tab.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    backdrop-filter: blur(10px);
+}
+
+.icon-btn:hover {
+    background: rgba(255,255,255,0.35);
+    transform: translateY(-2px);
+}
+
+/* =====================================================================
+   MAIN CONTENT
+   ===================================================================== */
+.main {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    overflow: hidden;
+    position: relative;
+}
+
+/* =====================================================================
+   SIDEBAR
+   ===================================================================== */
+.sidebar {
+    background: var(--bg-card);
+    border-right: 2px solid var(--border);
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.sidebar-section {
+    background: var(--bg-main);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border: 2px solid var(--border);
+    transition: var(--transition);
+}
+
+.sidebar-section:hover {
+    border-color: var(--border-strong);
+}
+
+.sidebar-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar-title svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Переключатели стиля */
+.style-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.style-option {
+    padding: 10px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.style-option:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.style-option.active {
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+}
+
+/* Чекбоксы */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: white;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 2px solid transparent;
+}
+
+.checkbox-item:hover {
+    border-color: var(--border-strong);
+}
+
+.checkbox-item input {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-strong);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.checkbox-item input:checked {
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    border-color: transparent;
+}
+
+.checkbox-item input:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-item label {
+    font-size: 13px;
+    color: var(--text-dark);
+    cursor: pointer;
+    flex: 1;
+}
+
+/* Селекты */
+.select-field {
+    width: 100%;
+    padding: 10px 14px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: var(--transition);
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff6b9d'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 36px;
+}
+
+.select-field:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Функции - сетка */
+.functions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.func-btn {
+    padding: 10px 8px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+}
+
+.func-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+}
+
+.func-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* =====================================================================
+   CHAT AREA
+   ===================================================================== */
+.chat-area {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-chat);
+    position: relative;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.message {
+    display: flex;
+    gap: 12px;
+    max-width: 85%;
+    animation: messageAppear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-soft);
+}
+
+.avatar.user {
+    background: linear-gradient(135deg, var(--accent-blue), var(--secondary));
+}
+
+.avatar.ai {
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+}
+
+.avatar svg {
+    width: 22px;
+    height: 22px;
+    color: white;
+}
+
+.message-content {
+    background: white;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    font-size: 14px;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.message.user .message-content {
+    background: linear-gradient(135deg, var(--accent-blue), var(--secondary));
+    color: white;
+}
+
+.message.ai .message-content {
+    border: 2px solid var(--border);
+}
+
+/* Блоки кода внутри сообщений */
+.message-content pre {
+    background: #2d3142;
+    color: #e4e7eb;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: 8px 0;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    display: none; /* Пользователь НЕ видит код */
+}
+
+.message-content code {
+    background: var(--bg-main);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Индикатор загрузки */
+.typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 8px 0;
+}
+
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-8px); opacity: 1; }
+}
+
+/* Приветственное окно */
+.welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    flex: 1;
+}
+
+.welcome-icon {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    border-radius: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-strong);
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+.welcome-icon svg {
+    width: 64px;
+    height: 64px;
+    color: white;
+}
+
+.welcome h1 {
+    font-size: 32px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.welcome p {
+    font-size: 16px;
+    color: var(--text-muted);
+    max-width: 500px;
+    margin-bottom: 32px;
+}
+
+.suggestions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    max-width: 700px;
+    width: 100%;
+}
+
+.suggestion {
+    padding: 16px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: left;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.suggestion:hover {
+    border-color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.suggestion svg {
+    width: 28px;
+    height: 28px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+/* Превью шпаргалки */
+.cheatsheet-preview {
+    background: white;
+    border: 3px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-top: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.cheatsheet-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--primary), var(--accent-purple), var(--secondary), var(--accent-yellow));
+}
+
+.preview-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 107, 157, 0.4);
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-dark);
+    border: 2px solid var(--border);
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-main);
+    color: var(--primary);
+}
+
+/* =====================================================================
+   INPUT AREA
+   ===================================================================== */
+.input-area {
+    padding: 16px 24px 20px;
+    background: var(--bg-card);
+    border-top: 2px solid var(--border);
+}
+
+.attachments-preview {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.attachment-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-main);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text-dark);
+}
+
+.attachment-chip button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+}
+
+.attachment-chip button:hover {
+    color: var(--primary);
+}
+
+.input-wrapper {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-soft);
+}
+
+.input-wrapper:focus-within {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-medium);
+}
+
+.input-tools {
+    display: flex;
+    gap: 4px;
+}
+
+.tool-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.tool-btn:hover {
+    background: var(--bg-main);
+    color: var(--primary);
+}
+
+.tool-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.input-field {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 8px;
+    resize: none;
+    max-height: 120px;
+    min-height: 40px;
+    background: transparent;
+    color: var(--text-dark);
+}
+
+.send-btn {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    border: none;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.send-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
+}
+
+.send-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.send-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* =====================================================================
+   FOOTER
+   ===================================================================== */
+.footer {
+    padding: 10px 24px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-light);
+}
+
+/* =====================================================================
+   МОДАЛЬНЫЕ ОКНА
+   ===================================================================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 49, 66, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 32px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: var(--shadow-strong);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-overlay.active .modal {
+    transform: scale(1);
+}
+
+.modal-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 20px rgba(255, 160, 122, 0.3);
+}
+
+.modal-icon svg {
+    width: 40px;
+    height: 40px;
+    color: white;
+}
+
+.modal h2 {
+    font-size: 22px;
+    margin-bottom: 12px;
+    text-align: center;
+    color: var(--text-dark);
+}
+
+.modal p {
+    font-size: 14px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-actions .btn {
+    flex: 1;
+    justify-content: center;
+    padding: 12px;
+    font-size: 14px;
+}
+
+/* =====================================================================
+   ВКЛАДКА ИНФОРМАЦИИ О ПРИНТЕРЕ
+   ===================================================================== */
+.printer-view {
+    display: none;
+    padding: 24px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.printer-view.active {
+    display: block;
+}
+
+.printer-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 16px;
+    border: 2px solid var(--border);
+}
+
+.printer-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px dashed var(--border);
+}
+
+.printer-card-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--secondary), var(--accent-blue));
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.printer-card-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.printer-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.printer-card-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.info-item {
+    background: var(--bg-main);
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.info-item-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.info-item-value {
+    font-size: 15px;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-online {
+    background: rgba(132, 250, 176, 0.2);
+    color: #059669;
+}
+
+.status-offline {
+    background: rgba(255, 107, 157, 0.15);
+    color: var(--primary-dark);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* Ink levels */
+.ink-levels {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ink-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 60px;
+}
+
+.ink-bar {
+    width: 100%;
+    height: 80px;
+    background: var(--bg-main);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--border);
+}
+
+.ink-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: height 1s ease;
+}
+
+.ink-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.ink-percent {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* =====================================================================
+   ВКЛАДКА ИСТОРИИ
+   ===================================================================== */
+.history-view {
+    display: none;
+    padding: 24px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.history-view.active {
+    display: block;
+}
+
+.history-item {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.history-item:hover {
+    border-color: var(--primary);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-soft);
+}
+
+.history-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.history-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.history-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.history-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* =====================================================================
+   EDITOR OVERLAY
+   ===================================================================== */
+.editor-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45, 49, 66, 0.7);
+    backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 900;
+    padding: 20px;
+}
+
+.editor-overlay.active {
+    display: flex;
+}
+
+.editor-panel {
+    background: white;
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 1100px;
+    height: 90vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    overflow: hidden;
+    box-shadow: var(--shadow-strong);
+}
+
+.editor-header {
+    padding: 16px 24px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--bg-main), white);
+}
+
+.editor-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.editor-toolbar {
+    display: flex;
+    gap: 6px;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-main);
+    flex-wrap: wrap;
+}
+
+.editor-tool {
+    padding: 6px 12px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-dark);
+}
+
+.editor-tool:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.editor-tool svg {
+    width: 14px;
+    height: 14px;
+}
+
+.editor-body {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    overflow: hidden;
+}
+
+.editor-canvas {
+    overflow: auto;
+    padding: 24px;
+    background: #e5e7eb;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.editor-canvas-inner {
+    background: white;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    min-width: 600px;
+    min-height: 400px;
+    padding: 40px;
+    position: relative;
+}
+
+.editor-sidebar {
+    border-left: 2px solid var(--border);
+    padding: 16px;
+    overflow-y: auto;
+    background: var(--bg-main);
+}
+
+.editor-sidebar h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+.slider-field {
+    margin-bottom: 14px;
+}
+
+.slider-field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.slider-field input[type="range"] {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.slider-field input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(255, 107, 157, 0.4);
+}
+
+.editor-footer {
+    padding: 14px 24px;
+    border-top: 2px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    background: white;
+}
+
+/* =====================================================================
+   TOAST
+   ===================================================================== */
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    box-shadow: var(--shadow-medium);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 260px;
+    animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toastIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast.success { border-color: var(--accent-green); }
+.toast.error { border-color: var(--primary); }
+.toast.info { border-color: var(--accent-blue); }
+
+.toast-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+}
+
+.toast.success .toast-icon { background: var(--accent-green); }
+.toast.error .toast-icon { background: var(--primary); }
+.toast.info .toast-icon { background: var(--accent-blue); }
+
+.toast-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.toast-text {
+    font-size: 13px;
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+/* =====================================================================
+   LOADING OVERLAY (Google AI Mode style)
+   ===================================================================== */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(254, 249, 251, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    flex-direction: column;
+    gap: 20px;
+    backdrop-filter: blur(4px);
+}
+
+.loading-overlay.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    position: relative;
+}
+
+.loading-spinner::before,
+.loading-spinner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid transparent;
+}
+
+.loading-spinner::before {
+    border-top-color: var(--primary);
+    border-right-color: var(--primary);
+    animation: spin 1s linear infinite;
+}
+
+.loading-spinner::after {
+    border-bottom-color: var(--accent-purple);
+    border-left-color: var(--accent-purple);
+    animation: spin 1.5s linear infinite reverse;
+    inset: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 16px;
+    color: var(--text-dark);
+    font-weight: 600;
+    text-align: center;
+}
+
+.loading-subtext {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 300px;
+}
+
+/* =====================================================================
+   RESPONSIVE
+   ===================================================================== */
+@media (max-width: 900px) {
+    .main {
+        grid-template-columns: 1fr;
+    }
+    
+    .sidebar {
+        display: none;
+        position: fixed;
+        top: 70px;
+        left: 0;
+        bottom: 0;
+        width: 300px;
+        z-index: 50;
+        box-shadow: var(--shadow-strong);
+    }
+    
+    .sidebar.mobile-open {
+        display: flex;
+    }
+    
+    .nav-tabs {
+        display: none;
+    }
+    
+    .header {
+        padding: 12px 16px;
+    }
+    
+    .logo-text span:first-child {
+        font-size: 18px;
+    }
+    
+    .logo-text span:last-child {
+        display: none;
+    }
+    
+    .welcome h1 {
+        font-size: 24px;
+    }
+    
+    .suggestions {
+        grid-template-columns: 1fr;
+    }
+    
+    .editor-body {
+        grid-template-columns: 1fr;
+    }
+    
+    .editor-sidebar {
+        display: none;
+    }
+    
+    .messages {
+        padding: 16px;
+    }
+    
+    .message {
+        max-width: 95%;
+    }
+}
+
+@media (max-width: 600px) {
+    .input-area {
+        padding: 12px 14px 16px;
+    }
+    
+    .input-wrapper {
+        padding: 6px;
+    }
+    
+    .welcome-icon {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .welcome-icon svg {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .modal {
+        padding: 24px;
+    }
+}
+
+/* =====================================================================
+   UTILITIES
+   ===================================================================== */
+.hidden {
+    display: none !important;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Mobile menu button */
+.mobile-menu-btn {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
+}
+
+/* Hide print button on mobile */
+.print-only-desktop {
+    display: inline-flex;
+}
+
+@media (max-width: 900px) {
+    .print-only-desktop {
+        display: none !important;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ff6b9d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="9" y1="13" x2="15" y2="13"/>
+                    <line x1="9" y1="17" x2="15" y2="17"/>
+                </svg>
+            </div>
+            <div class="logo-text">
+                <span>Шпаргалка ру</span>
+                <span>УМНЫЙ ПОМОЩНИК</span>
+            </div>
+        </div>
+        
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-view="chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Чат
+            </button>
+            <button class="nav-tab" data-view="history">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                История
+            </button>
+            <button class="nav-tab" data-view="printer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                Принтер
+            </button>
+        </nav>
+        
+        <div class="header-actions">
+            <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" title="Меню">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="newChatBtn" title="Новый чат">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="settingsBtn" title="Настройки">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+    
+    <!-- MAIN -->
+    <main class="main">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                    Цветовая схема
+                </div>
+                <div class="style-toggle" id="colorScheme">
+                    <button class="style-option active" data-value="color">Цветной</button>
+                    <button class="style-option" data-value="bw">Ч/Б</button>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Оформление
+                </div>
+                <div class="style-toggle" id="illustrations">
+                    <button class="style-option active" data-value="with">С рисунками</button>
+                    <button class="style-option" data-value="without">Без рисунков</button>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    Формат файла
+                </div>
+                <select class="select-field" id="fileFormat">
+                    <option value="pdf">PDF документ</option>
+                    <option value="png">PNG изображение</option>
+                    <option value="jpg">JPG изображение</option>
+                </select>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="4 7 4 4 20 4 20 7"/>
+                        <line x1="9" y1="20" x2="15" y2="20"/>
+                        <line x1="12" y1="4" x2="12" y2="20"/>
+                    </svg>
+                    Ориентация
+                </div>
+                <select class="select-field" id="orientation">
+                    <option value="portrait">Книжная (A4)</option>
+                    <option value="landscape">Альбомная</option>
+                </select>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 11 12 14 22 4"/>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                    </svg>
+                    Дополнительно
+                </div>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="optNumbers" checked>
+                        <label for="optNumbers">Нумерация страниц</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="optHeader">
+                        <label for="optHeader">Заголовок сверху</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="optCompact">
+                        <label for="optCompact">Компактный режим</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="optWatermark">
+                        <label for="optWatermark">Водяной знак</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                    Быстрые функции
+                </div>
+                <div class="functions-grid">
+                    <button class="func-btn" data-func="template">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <line x1="3" y1="9" x2="21" y2="9"/>
+                            <line x1="9" y1="21" x2="9" y2="9"/>
+                        </svg>
+                        Шаблоны
+                    </button>
+                    <button class="func-btn" data-func="ocr">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 3h4v4H1z"/>
+                            <path d="M19 3h4v4h-4z"/>
+                            <path d="M1 17h4v4H1z"/>
+                            <path d="M19 17h4v4h-4z"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                        </svg>
+                        OCR
+                    </button>
+                    <button class="func-btn" data-func="translate">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 8l6 6"/>
+                            <path d="M4 14l6-6 2-3"/>
+                            <path d="M2 5h12"/>
+                            <path d="M7 2h1"/>
+                            <path d="M22 22l-5-10-5 10"/>
+                            <path d="M14 18h6"/>
+                        </svg>
+                        Перевод
+                    </button>
+                    <button class="func-btn" data-func="formulas">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 7h6M4 11h6M4 15h6M14 7l6 8M14 15l6-8"/>
+                        </svg>
+                        Формулы
+                    </button>
+                    <button class="func-btn" data-func="qr">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                            <line x1="14" y1="14" x2="14" y2="17"/>
+                            <line x1="17" y1="14" x2="21" y2="14"/>
+                            <line x1="14" y1="21" x2="17" y2="21"/>
+                            <line x1="21" y1="17" x2="21" y2="21"/>
+                        </svg>
+                        QR-код
+                    </button>
+                    <button class="func-btn" data-func="timer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="13" r="8"/>
+                            <path d="M12 9v4l2 2"/>
+                            <path d="M5 3L2 6"/>
+                            <path d="M22 6l-3-3"/>
+                            <path d="M12 2v2"/>
+                        </svg>
+                        Таймер
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- CHAT VIEW -->
+        <section class="chat-area" id="chatView">
+            <div class="messages" id="messages">
+                <!-- Welcome screen -->
+                <div class="welcome" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="9" y1="13" x2="15" y2="13"/>
+                            <line x1="9" y1="17" x2="13" y2="17"/>
+                        </svg>
+                    </div>
+                    <h1>Привет! Я создам для тебя шпаргалку</h1>
+                    <p>Расскажи, что нужно выучить, и я сделаю красивую и понятную шпаргалку. Выбери стиль, формат и получай готовый файл!</p>
+                    <div class="suggestions">
+                        <button class="suggestion" data-prompt="Сделай шпаргалку по математике — таблица умножения от 1 до 10">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                                <line x1="9" y1="4" x2="9" y2="20"/>
+                                <line x1="15" y1="4" x2="15" y2="20"/>
+                                <line x1="4" y1="9" x2="20" y2="9"/>
+                                <line x1="4" y1="15" x2="20" y2="15"/>
+                            </svg>
+                            <span>Таблица умножения по математике</span>
+                        </button>
+                        <button class="suggestion" data-prompt="Сделай шпаргалку по истории России — основные даты и события XIX века">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            <span>История России — даты и события</span>
+                        </button>
+                        <button class="suggestion" data-prompt="Сделай шпаргалку по английскому — неправильные глаголы с переводом">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 5h16M4 12h16M4 19h10"/>
+                            </svg>
+                            <span>Английский — неправильные глаголы</span>
+                        </button>
+                        <button class="suggestion" data-prompt="Сделай шпаргалку по биологии — строение клетки человека">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <circle cx="12" cy="12" r="4"/>
+                                <circle cx="12" cy="12" r="1"/>
+                            </svg>
+                            <span>Биология — строение клетки</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading overlay -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+                <div class="loading-text" id="loadingText">Готовлю твою шпаргалку...</div>
+                <div class="loading-subtext" id="loadingSubtext">Это займёт всего несколько секунд</div>
+            </div>
+            
+            <!-- INPUT -->
+            <div class="input-area">
+                <div class="attachments-preview" id="attachmentsPreview"></div>
+                <div class="input-wrapper">
+                    <div class="input-tools">
+                        <button class="tool-btn" id="attachBtn" title="Прикрепить файл">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                            </svg>
+                        </button>
+                        <button class="tool-btn" id="imageBtn" title="Прикрепить изображение">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                        </button>
+                        <input type="file" id="fileInput" style="display:none" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg">
+                    </div>
+                    <textarea class="input-field" id="inputField" placeholder="Опиши, какую шпаргалку создать..." rows="1"></textarea>
+                    <button class="send-btn" id="sendBtn" disabled title="Отправить">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- HISTORY VIEW -->
+        <section class="history-view" id="historyView">
+            <h2 style="margin-bottom:20px; color:var(--text-dark);">История шпаргалок</h2>
+            <div id="historyList">
+                <p style="color:var(--text-muted); text-align:center; padding:40px;">Пока пусто. Создай свою первую шпаргалку!</p>
+            </div>
+        </section>
+        
+        <!-- PRINTER VIEW -->
+        <section class="printer-view" id="printerView">
+            <h2 style="margin-bottom:20px; color:var(--text-dark);">Информация о принтере</h2>
+            
+            <div class="printer-card">
+                <div class="printer-card-header">
+                    <div class="printer-card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9"/>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                            <rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="printer-card-title" id="printerName">Определение...</div>
+                        <div class="printer-card-subtitle">Статус подключения</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-item-label">Статус</div>
+                        <div class="info-item-value" id="printerStatus">
+                            <span class="status-badge status-offline">
+                                <span class="status-dot"></span>
+                                Проверяем...
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Тип подключения</div>
+                        <div class="info-item-value" id="printerType">Не определено</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Поддерживаемые форматы</div>
+                        <div class="info-item-value" id="printerFormats">A4, A3, Letter</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Разрешение печати</div>
+                        <div class="info-item-value" id="printerResolution">—</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Двусторонняя печать</div>
+                        <div class="info-item-value" id="printerDuplex">Неизвестно</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Цветная печать</div>
+                        <div class="info-item-value" id="printerColor">Неизвестно</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="printer-card">
+                <div class="printer-card-header">
+                    <div class="printer-card-icon" style="background:linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v6M12 22v-6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M22 12h-6M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="printer-card-title">Уровень чернил / тонера</div>
+                        <div class="printer-card-subtitle">Ориентировочные данные</div>
+                    </div>
+                </div>
+                <div class="ink-levels" id="inkLevels">
+                    <div class="ink-item">
+                        <div class="ink-bar">
+                            <div class="ink-fill" style="height:85%; background:#00bcd4;"></div>
+                        </div>
+                        <div class="ink-percent">85%</div>
+                        <div class="ink-label">Cyan</div>
+                    </div>
+                    <div class="ink-item">
+                        <div class="ink-bar">
+                            <div class="ink-fill" style="height:72%; background:#e91e63;"></div>
+                        </div>
+                        <div class="ink-percent">72%</div>
+                        <div class="ink-label">Magenta</div>
+                    </div>
+                    <div class="ink-item">
+                        <div class="ink-bar">
+                            <div class="ink-fill" style="height:68%; background:#ffc107;"></div>
+                        </div>
+                        <div class="ink-percent">68%</div>
+                        <div class="ink-label">Yellow</div>
+                    </div>
+                    <div class="ink-item">
+                        <div class="ink-bar">
+                            <div class="ink-fill" style="height:90%; background:#212121;"></div>
+                        </div>
+                        <div class="ink-percent">90%</div>
+                        <div class="ink-label">Black</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="printer-card">
+                <div class="printer-card-header">
+                    <div class="printer-card-icon" style="background:linear-gradient(135deg, var(--accent-purple), var(--primary));">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="printer-card-title">История печати</div>
+                        <div class="printer-card-subtitle">Последние задания</div>
+                    </div>
+                </div>
+                <div id="printHistory">
+                    <p style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">История пуста</p>
+                </div>
+            </div>
+            
+            <div class="printer-card">
+                <div class="printer-card-header">
+                    <div class="printer-card-icon" style="background:linear-gradient(135deg, var(--accent-green), var(--secondary));">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="printer-card-title">Настройки по умолчанию</div>
+                        <div class="printer-card-subtitle">Параметры печати</div>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-item-label">Размер бумаги</div>
+                        <div class="info-item-value">A4</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Качество</div>
+                        <div class="info-item-value">Высокое (300 dpi)</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Ориентация</div>
+                        <div class="info-item-value">Книжная</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-item-label">Поля</div>
+                        <div class="info-item-value">Стандартные</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- FOOTER -->
+    <footer class="footer">
+        Наш ИИ может ошибаться, поэтому стоит проверять сведения.
+    </footer>
+</div>
+
+<!-- MODAL: Предупреждение -->
+<div class="modal-overlay" id="warningModal">
+    <div class="modal">
+        <div class="modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+        </div>
+        <h2>Важное предупреждение</h2>
+        <p>Используй шпаргалку во благо — учись по ней дома, повторяй материал и закрепляй знания. Ни в коем случае не используй её на уроке или экзамене! Это может привести к серьёзным последствиям и не поможет тебе по-настоящему разобраться в предмете.</p>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="warningNo">Нет, отмена</button>
+            <button class="btn btn-primary" id="warningOk">Понял, продолжить</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Принтер не найден -->
+<div class="modal-overlay" id="noPrinterModal">
+    <div class="modal">
+        <div class="modal-icon" style="background:linear-gradient(135deg, var(--accent-blue), var(--secondary));">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"/>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                <rect x="6" y="14" width="12" height="8"/>
+                <line x1="2" y1="2" x2="22" y2="22" stroke-width="3"/>
+            </svg>
+        </div>
+        <h2>Принтер не найден</h2>
+        <p>Не удалось обнаружить подключённый принтер. Подключи принтер к компьютеру или скачай шпаргалку в виде PDF-файла и распечатай её позже.</p>
+        <div class="modal-actions">
+            <button class="btn btn-primary" id="noPrinterOk" style="flex:1;">Понятно</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Шаблоны -->
+<div class="modal-overlay" id="templatesModal">
+    <div class="modal">
+        <h2>Выбери шаблон</h2>
+        <p>Быстрый старт с готовыми шаблонами для разных предметов</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;">
+            <button class="suggestion" data-template="Таблица умножения от 1 до 10 в красивом оформлении">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></svg>
+                <span>Математика</span>
+            </button>
+            <button class="suggestion" data-template="Правила русского языка — ударения, падежи, части речи">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                <span>Русский язык</span>
+            </button>
+            <button class="suggestion" data-template="Периодическая таблица Менделеева — основные элементы">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>
+                <span>Химия</span>
+            </button>
+            <button class="suggestion" data-template="Физические формулы — механика, термодинамика, электричество">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h6M4 11h6M4 15h6M14 7l6 8M14 15l6-8"/></svg>
+                <span>Физика</span>
+            </button>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="closeTemplates" style="flex:1;">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- EDITOR OVERLAY -->
+<div class="editor-overlay" id="editorOverlay">
+    <div class="editor-panel">
+        <div class="editor-header">
+            <div class="editor-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                Редактор шпаргалки
+            </div>
+            <button class="icon-btn" id="closeEditor" style="background:var(--bg-main); color:var(--text-dark);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <div class="editor-toolbar">
+            <button class="editor-tool" data-edit="bold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>Жирный</button>
+            <button class="editor-tool" data-edit="italic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>Курсив</button>
+            <button class="editor-tool" data-edit="underline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>Подчёрк.</button>
+            <button class="editor-tool" data-edit="color"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c3.31 0 6-2.69 6-6 0-5.52-4.48-10-10-10z"/></svg>Цвет</button>
+            <button class="editor-tool" data-edit="brightness">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                Яркость
+            </button>
+            <button class="editor-tool" data-edit="contrast">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v20"/></svg>
+                Контраст
+            </button>
+            <button class="editor-tool" data-edit="draw">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                Рисовать
+            </button>
+            <button class="editor-tool" data-edit="text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                Текст
+            </button>
+            <button class="editor-tool" data-edit="reset">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                Сброс
+            </button>
+        </div>
+        <div class="editor-body">
+            <div class="editor-canvas">
+                <div class="editor-canvas-inner" id="editorCanvas">
+                    <p style="color:var(--text-muted); text-align:center;">Здесь появится твоя шпаргалка</p>
+                </div>
+            </div>
+            <div class="editor-sidebar">
+                <h4>Настройки вида</h4>
+                <div class="slider-field">
+                    <label>Яркость <span id="brightnessValue">100%</span></label>
+                    <input type="range" id="brightnessSlider" min="50" max="150" value="100">
+                </div>
+                <div class="slider-field">
+                    <label>Контраст <span id="contrastValue">100%</span></label>
+                    <input type="range" id="contrastSlider" min="50" max="150" value="100">
+                </div>
+                <div class="slider-field">
+                    <label>Насыщенность <span id="saturationValue">100%</span></label>
+                    <input type="range" id="saturationSlider" min="0" max="200" value="100">
+                </div>
+                <div class="slider-field">
+                    <label>Масштаб <span id="scaleValue">100%</span></label>
+                    <input type="range" id="scaleSlider" min="50" max="150" value="100">
+                </div>
+                <h4 style="margin-top:20px;">Цвет рисования</h4>
+                <input type="color" id="drawColor" value="#ff6b9d" style="width:100%; height:40px; border:none; border-radius:8px; cursor:pointer;">
+                <div class="slider-field" style="margin-top:10px;">
+                    <label>Толщина кисти <span id="brushValue">3px</span></label>
+                    <input type="range" id="brushSlider" min="1" max="20" value="3">
+                </div>
+            </div>
+        </div>
+        <div class="editor-footer">
+            <button class="btn btn-secondary" id="editorCancel">Отмена</button>
+            <button class="btn btn-secondary print-only-desktop" id="editorPrint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Распечатать
+            </button>
+            <button class="btn btn-primary" id="editorDownload">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Скачать
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* =====================================================================
+   ШПАРГАЛКА РУ — ЛОГИКА ПРИЛОЖЕНИЯ
+   ===================================================================== */
+
+// =====================================================================
+// СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+// =====================================================================
+const AppState = {
+    apiKey: null,
+    apiLoading: false,
+    apiError: null,
+    messages: [],
+    attachments: [],
+    currentCheatsheet: null,
+    currentCheatsheetHtml: '',
+    history: [],
+    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+    printerInfo: null,
+    settings: {
+        colorScheme: 'color',
+        illustrations: 'with',
+        fileFormat: 'pdf',
+        orientation: 'portrait',
+        pageNumbers: true,
+        header: false,
+        compact: false,
+        watermark: false
+    },
+    editor: {
+        brightness: 100,
+        contrast: 100,
+        saturation: 100,
+        scale: 100,
+        drawMode: false,
+        drawColor: '#ff6b9d',
+        brushSize: 3
+    }
+};
+
+// =====================================================================
+// УТИЛИТЫ
+// =====================================================================
+function $(selector) {
+    return document.querySelector(selector);
+}
+
+function $$(selector) {
+    return document.querySelectorAll(selector);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showToast(message, type = 'info') {
+    const container = $('#toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const iconSvg = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    };
+    
+    toast.innerHTML = `
+        <div class="toast-icon">${iconSvg[type]}</div>
+        <div class="toast-text">${escapeHtml(message)}</div>
+    `;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'toastIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+function isMobileDevice() {
+    return AppState.isMobile || window.innerWidth <= 900;
+}
+
+// =====================================================================
+// ЗАГРУЗКА API КЛЮЧА
+// =====================================================================
+async function loadApiKey() {
+    AppState.apiLoading = true;
+    try {
+        const response = await fetch('https://oris-flax.vercel.app/~/secrets/api-keys/mistrl.txt');
+        if (!response.ok) {
+            throw new Error('Не удалось загрузить ключ');
+        }
+        const key = await response.text();
+        AppState.apiKey = key.trim();
+        AppState.apiLoading = false;
+        console.log('API ключ успешно загружен');
+    } catch (error) {
+        AppState.apiError = error.message;
+        AppState.apiLoading = false;
+        console.error('Ошибка загрузки API ключа:', error);
+        showToast('Не удалось загрузить API ключ. Проверь подключение к интернету.', 'error');
+    }
+}
+
+// =====================================================================
+// РАБОТА С СООБЩЕНИЯМИ
+// =====================================================================
+function addUserMessage(text, attachments = []) {
+    const welcomeScreen = $('#welcomeScreen');
+    if (welcomeScreen) {
+        welcomeScreen.remove();
+    }
+    
+    const messagesContainer = $('#messages');
+    const messageEl = document.createElement('div');
+    messageEl.className = 'message user';
+    
+    let attachmentsHtml = '';
+    if (attachments.length > 0) {
+        attachmentsHtml = '<div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">' +
+            attachments.map(att => {
+                if (att.type.startsWith('image/')) {
+                    return `<img src="${att.dataUrl}" style="max-width:120px; max-height:120px; border-radius:8px; object-fit:cover;">`;
+                }
+                return `<div style="padding:6px 10px; background:rgba(255,255,255,0.2); border-radius:8px; font-size:12px;">${escapeHtml(att.name)}</div>`;
+            }).join('') + '</div>';
+    }
+    
+    messageEl.innerHTML = `
+        <div class="avatar user">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+        </div>
+        <div class="message-content">
+            <div>${escapeHtml(text)}</div>
+            ${attachmentsHtml}
+        </div>
+    `;
+    messagesContainer.appendChild(messageEl);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    AppState.messages.push({ role: 'user', content: text, attachments });
+}
+
+function addAiMessage(text, cheatsheetHtml = null) {
+    const messagesContainer = $('#messages');
+    const messageEl = document.createElement('div');
+    messageEl.className = 'message ai';
+    
+    // Рендерим markdown
+    const renderedText = typeof marked !== 'undefined' ? marked.parse(text) : text;
+    
+    let cheatsheetBlock = '';
+    if (cheatsheetHtml) {
+        cheatsheetBlock = `
+            <div class="cheatsheet-preview" id="cheatsheet-${Date.now()}">
+                <div class="cheatsheet-content" style="font-size:13px; line-height:1.5;">
+                    ${cheatsheetHtml}
+                </div>
+                <div class="preview-actions">
+                    <button class="btn btn-primary" onclick="openEditor()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        Редактировать
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadCheatsheet()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Скачать
+                    </button>
+                    <button class="btn btn-secondary print-only-desktop" onclick="printCheatsheet()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        Распечатать
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    messageEl.innerHTML = `
+        <div class="avatar ai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+        </div>
+        <div class="message-content">
+            <div class="ai-text">${renderedText}</div>
+            ${cheatsheetBlock}
+        </div>
+    `;
+    messagesContainer.appendChild(messageEl);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    AppState.messages.push({ role: 'ai', content: text, cheatsheetHtml });
+}
+
+function showTypingIndicator() {
+    const messagesContainer = $('#messages');
+    const typingEl = document.createElement('div');
+    typingEl.className = 'message ai';
+    typingEl.id = 'typingIndicator';
+    typingEl.innerHTML = `
+        <div class="avatar ai">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+        </div>
+        <div class="message-content">
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+    `;
+    messagesContainer.appendChild(typingEl);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function removeTypingIndicator() {
+    const el = $('#typingIndicator');
+    if (el) el.remove();
+}
+
+function showLoadingOverlay(text, subtext) {
+    const overlay = $('#loadingOverlay');
+    $('#loadingText').textContent = text || 'Готовлю твою шпаргалку...';
+    $('#loadingSubtext').textContent = subtext || 'Это займёт всего несколько секунд';
+    overlay.classList.add('active');
+}
+
+function hideLoadingOverlay() {
+    $('#loadingOverlay').classList.remove('active');
+}
+
+// =====================================================================
+// СИСТЕМНЫЙ ПРОМТ И ГЕНЕРАЦИЯ ШПАРГАЛКИ
+// =====================================================================
+function buildSystemPrompt() {
+    const s = AppState.settings;
+    return `Ты — умный помощник "Шпаргалка ру". Твоя задача — создавать красивые, понятные и структурированные учебные шпаргалки по запросам пользователя.
+
+ВАЖНЫЕ ПРАВИЛА:
+1. НИКОГДА не используй эмодзи в шпаргалке, если пользователь явно не попросил их добавить.
+2. Отвечай на русском языке.
+3. Будь краток в текстовом ответе, но подробным в содержании шпаргалки.
+4. Шпаргалка должна быть структурирована: заголовки, списки, таблицы, важные выделения.
+
+СТИЛЬ ОФОРМЛЕНИЯ:
+- Цветовая схема: ${s.colorScheme === 'color' ? 'ЯРКИЕ ЦВЕТА, градиенты, цветные акценты' : 'СТРОГО ЧЁРНО-БЕЛЫЙ, без цвета'}
+- Рисунки: ${s.illustrations === 'with' ? 'ДОБАВЛЯЙ простые SVG-иллюстрации, иконки, схемы' : 'БЕЗ рисунков и иллюстраций, только текст и таблицы'}
+- Формат: ${s.fileFormat.toUpperCase()}
+- Ориентация: ${s.orientation === 'portrait' ? 'КНИЖНАЯ (вертикальная)' : 'АЛЬБОМНАЯ (горизонтальная)'}
+- Нумерация страниц: ${s.pageNumbers ? 'ДА' : 'НЕТ'}
+- Заголовок сверху: ${s.header ? 'ДА' : 'НЕТ'}
+- Компактный режим: ${s.compact ? 'ДА, минимальные отступы' : 'НЕТ, обычные отступы'}
+- Водяной знак: ${s.watermark ? 'ДА, добавь водяной знак "Шпаргалка ру"' : 'НЕТ'}
+
+ФОРМАТ ОТВЕТА:
+Сначала напиши КОРОТКИЙ текстовый ответ пользователю (1-2 предложения), например: "Готово! Я создал для тебя шпаргалку по этой теме."
+
+Затем ОБЯЗАТЕЛЬНО добавь блок HTML-кода шпаргалки, обернутый в теги:
+\`\`\`cheatsheet
+[ЗДЕСЬ HTML-КОД ШПАРГАЛКИ]
+\`\`\`
+
+ТРЕБОВАНИЯ К HTML ШПАРГАЛКИ:
+- Используй ТОЛЬКО inline-стили (style="...")
+- Шрифт: Arial, sans-serif
+- Размер шрифта: 12-14px для основного текста
+- Цвета: ${s.colorScheme === 'color' ? 'используй яркие, но читаемые цвета (#2c3e50 для текста, #3498db, #e74c3c, #27ae60 для акцентов)' : 'только чёрный (#000) и оттенки серого'}
+- Добавь красивую рамку, заголовки с подчёркиванием
+- Таблицы с чередующимися строками для удобства
+- Отступы и межстрочный интервал для читаемости
+- Ширина контента: максимум 800px
+- НЕ используй эмодзи! Только SVG-иконки при необходимости.
+- Все стили должны быть в атрибутах style, без <style> блоков.
+
+ПРИМЕР СТРУКТУРЫ ОТВЕТА:
+Готово! Я создал для тебя шпаргалку по таблице умножения.
+
+\`\`\`cheatsheet
+<div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+  <h1 style="color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px;">Таблица умножения</h1>
+  <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+    ...
+  </table>
+</div>
+\`\`\`
+
+Помни: НИКАКИХ ЭМОДЗИ в шпаргалке! Только если пользователь явно попросил.`;
+}
+
+function extractCheatsheetFromResponse(response) {
+    const match = response.match(/```cheatsheet\s*([\s\S]*?)\s*```/);
+    if (match) {
+        return {
+            text: response.replace(/```cheatsheet\s*[\s\S]*?\s*```/, '').trim(),
+            html: match[1].trim()
+        };
+    }
+    return { text: response, html: null };
+}
+
+async function callAI(userMessage, attachments = []) {
+    if (!AppState.apiKey) {
+        if (AppState.apiError) {
+            throw new Error('API ключ не загружен: ' + AppState.apiError);
+        }
+        throw new Error('API ключ ещё не загружен. Подожди немного.');
+    }
+    
+    const systemPrompt = buildSystemPrompt();
+    
+    // Формируем содержимое сообщения с учётом вложений
+    let userContent = userMessage;
+    if (attachments.length > 0) {
+        userContent += '\n\n[Пользователь прикрепил ' + attachments.length + ' файл(ов): ' + 
+            attachments.map(a => a.name).join(', ') + ']';
+    }
+    
+    const messages = [
+        { role: 'system', content: systemPrompt },
+        ...AppState.messages.slice(-10).map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content
+        })),
+        { role: 'user', content: userContent }
+    ];
+    
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${AppState.apiKey}`
+        },
+        body: JSON.stringify({
+            model: 'mistral-small-latest',
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 4000
+        })
+    });
+    
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Ошибка API: ' + response.status + ' - ' + errorText);
+    }
+    
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+// =====================================================================
+// ОБРАБОТКА ОТПРАВКИ СООБЩЕНИЯ
+// =====================================================================
+async function handleSend() {
+    const input = $('#inputField');
+    const text = input.value.trim();
+    
+    if (!text && AppState.attachments.length === 0) {
+        return;
+    }
+    
+    if (!AppState.apiKey && !AppState.apiLoading) {
+        showToast('API ключ ещё загружается. Попробуй через секунду.', 'error');
+        return;
+    }
+    
+    if (AppState.apiLoading) {
+        showToast('Подожди, идёт загрузка API ключа...', 'info');
+        return;
+    }
+    
+    const attachments = [...AppState.attachments];
+    addUserMessage(text, attachments);
+    
+    input.value = '';
+    input.style.height = 'auto';
+    AppState.attachments = [];
+    renderAttachments();
+    updateSendButton();
+    
+    // Показываем индикатор загрузки
+    showLoadingOverlay('Думаю над твоим запросом...', 'Анализирую тему и подбираю информацию');
+    
+    try {
+        // Сначала показываем "начало работы"
+        await new Promise(resolve => setTimeout(resolve, 800));
+        hideLoadingOverlay();
+        
+        showLoadingOverlay('Создаю шпаргалку...', 'Генерирую структуру и оформление');
+        
+        const response = await callAI(text, attachments);
+        
+        hideLoadingOverlay();
+        removeTypingIndicator();
+        
+        const { text: responseText, html: cheatsheetHtml } = extractCheatsheetFromResponse(response);
+        
+        // Добавляем сообщение AI
+        addAiMessage(responseText, cheatsheetHtml);
+        
+        if (cheatsheetHtml) {
+            AppState.currentCheatsheetHtml = cheatsheetHtml;
+            AppState.currentCheatsheet = {
+                title: text.substring(0, 60),
+                html: cheatsheetHtml,
+                date: new Date().toISOString(),
+                format: AppState.settings.fileFormat
+            };
+            addToHistory(text, cheatsheetHtml);
+        }
+        
+    } catch (error) {
+        hideLoadingOverlay();
+        removeTypingIndicator();
+        console.error('Ошибка AI:', error);
+        addAiMessage('Извини, произошла ошибка при создании шпаргалки: ' + error.message + '. Попробуй ещё раз.');
+        showToast('Ошибка при создании шпаргалки', 'error');
+    }
+}
+
+// =====================================================================
+// ИСТОРИЯ
+// =====================================================================
+function addToHistory(title, html) {
+    const item = {
+        id: Date.now(),
+        title: title,
+        html: html,
+        date: new Date().toISOString(),
+        format: AppState.settings.fileFormat
+    };
+    AppState.history.unshift(item);
+    if (AppState.history.length > 50) {
+        AppState.history = AppState.history.slice(0, 50);
+    }
+    saveHistory();
+    renderHistory();
+}
+
+function saveHistory() {
+    try {
+        localStorage.setItem('shpargalka_history', JSON.stringify(AppState.history));
+    } catch (e) {
+        console.error('Не удалось сохранить историю:', e);
+    }
+}
+
+function loadHistory() {
+    try {
+        const data = localStorage.getItem('shpargalka_history');
+        if (data) {
+            AppState.history = JSON.parse(data);
+            renderHistory();
+        }
+    } catch (e) {
+        console.error('Не удалось загрузить историю:', e);
+    }
+}
+
+function renderHistory() {
+    const container = $('#historyList');
+    if (!container) return;
+    
+    if (AppState.history.length === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:40px;">Пока пусто. Создай свою первую шпаргалку!</p>';
+        return;
+    }
+    
+    container.innerHTML = AppState.history.map(item => {
+        const date = new Date(item.date);
+        const dateStr = date.toLocaleDateString('ru-RU') + ' ' + date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        return `
+            <div class="history-item" data-id="${item.id}">
+                <div class="history-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                </div>
+                <div class="history-info">
+                    <div class="history-title">${escapeHtml(item.title)}</div>
+                    <div class="history-meta">${dateStr} · ${item.format.toUpperCase()}</div>
+                </div>
+                <button class="btn btn-ghost" onclick="deleteHistoryItem(${item.id}); event.stopPropagation();" title="Удалить">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    // Обработчики клика на элемент истории
+    container.querySelectorAll('.history-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const id = parseInt(el.dataset.id);
+            const item = AppState.history.find(h => h.id === id);
+            if (item) {
+                AppState.currentCheatsheetHtml = item.html;
+                switchView('chat');
+                addAiMessage('Вот твоя шпаргалка из истории:', item.html);
+            }
+        });
+    });
+}
+
+function deleteHistoryItem(id) {
+    AppState.history = AppState.history.filter(h => h.id !== id);
+    saveHistory();
+    renderHistory();
+    showToast('Элемент удалён из истории', 'info');
+}
+
+// =====================================================================
+// ВЛОЖЕНИЯ
+// =====================================================================
+function handleFileSelect(files) {
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            AppState.attachments.push({
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                dataUrl: e.target.result
+            });
+            renderAttachments();
+            updateSendButton();
+        };
+        
+        if (file.type.startsWith('image/')) {
+            reader.readAsDataURL(file);
+        } else {
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+function renderAttachments() {
+    const container = $('#attachmentsPreview');
+    if (AppState.attachments.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = AppState.attachments.map((att, idx) => `
+        <div class="attachment-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>${escapeHtml(att.name.length > 20 ? att.name.substring(0, 17) + '...' : att.name)}</span>
+            <button onclick="removeAttachment(${idx})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeAttachment(idx) {
+    AppState.attachments.splice(idx, 1);
+    renderAttachments();
+    updateSendButton();
+}
+
+function updateSendButton() {
+    const btn = $('#sendBtn');
+    const hasContent = $('#inputField').value.trim().length > 0 || AppState.attachments.length > 0;
+    btn.disabled = !hasContent;
+}
+
+// =====================================================================
+// СКАЧИВАНИЕ И ПЕЧАТЬ
+// =====================================================================
+let pendingAction = null;
+
+function downloadCheatsheet() {
+    if (!AppState.currentCheatsheetHtml) {
+        showToast('Нет шпаргалки для скачивания', 'error');
+        return;
+    }
+    pendingAction = 'download';
+    $('#warningModal').classList.add('active');
+}
+
+function printCheatsheet() {
+    if (isMobileDevice()) {
+        showToast('Печать недоступна на этом устройстве. Используй скачивание.', 'info');
+        return;
+    }
+    if (!AppState.currentCheatsheetHtml) {
+        showToast('Нет шпаргалки для печати', 'error');
+        return;
+    }
+    pendingAction = 'print';
+    $('#warningModal').classList.add('active');
+}
+
+async function performDownload() {
+    try {
+        showToast('Готовлю файл к скачиванию...', 'info');
+        
+        // Создаём временный контейнер для рендеринга
+        const tempDiv = document.createElement('div');
+        tempDiv.style.cssText = 'position:fixed; left:-9999px; top:0; background:white;';
+        tempDiv.innerHTML = AppState.currentCheatsheetHtml;
+        document.body.appendChild(tempDiv);
+        
+        const canvas = await html2canvas(tempDiv, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+        });
+        
+        document.body.removeChild(tempDiv);
+        
+        const format = AppState.settings.fileFormat;
+        
+        if (format === 'pdf') {
+            const { jsPDF } = window.jspdf;
+            const imgData = canvas.toDataURL('image/png');
+            const orientation = AppState.settings.orientation;
+            const pdf = new jsPDF({
+                orientation: orientation,
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+            const imgX = (pdfWidth - imgWidth * ratio) / 2;
+            
+            pdf.addImage(imgData, 'PNG', imgX, 10, imgWidth * ratio, imgHeight * ratio);
+            pdf.save('shpargalka.pdf');
+        } else if (format === 'png') {
+            const link = document.createElement('a');
+            link.download = 'shpargalka.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } else if (format === 'jpg') {
+            const link = document.createElement('a');
+            link.download = 'shpargalka.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        }
+        
+        showToast('Шпаргалка успешно скачана!', 'success');
+    } catch (error) {
+        console.error('Ошибка скачивания:', error);
+        showToast('Ошибка при скачивании: ' + error.message, 'error');
+    }
+}
+
+function performPrint() {
+    // Проверка принтера (имитация, так как браузер не даёт прямого доступа)
+    const canPrint = typeof window.print === 'function';
+    
+    if (!canPrint) {
+        $('#noPrinterModal').classList.add('active');
+        return;
+    }
+    
+    // Создаём окно печати
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        showToast('Разреши всплывающие окна для печати', 'error');
+        return;
+    }
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Шпаргалка ру — Печать</title>
+            <style>
+                body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                @media print {
+                    body { padding: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            ${AppState.currentCheatsheetHtml}
+            <script>
+                setTimeout(() => {
+                    window.print();
+                    window.close();
+                }, 500);
+            ${'<'}\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    
+    showToast('Открываем диалог печати...', 'info');
+}
+
+// =====================================================================
+// РЕДАКТОР
+// =====================================================================
+function openEditor() {
+    if (!AppState.currentCheatsheetHtml) {
+        showToast('Нет шпаргалки для редактирования', 'error');
+        return;
+    }
+    
+    $('#editorCanvas').innerHTML = AppState.currentCheatsheetHtml;
+    $('#editorOverlay').classList.add('active');
+    
+    // Сброс настроек редактора
+    AppState.editor.brightness = 100;
+    AppState.editor.contrast = 100;
+    AppState.editor.saturation = 100;
+    AppState.editor.scale = 100;
+    
+    $('#brightnessSlider').value = 100;
+    $('#contrastSlider').value = 100;
+    $('#saturationSlider').value = 100;
+    $('#scaleSlider').value = 100;
+    updateEditorFilters();
+}
+
+function closeEditor() {
+    $('#editorOverlay').classList.remove('active');
+}
+
+function updateEditorFilters() {
+    const canvas = $('#editorCanvas');
+    canvas.style.filter = `brightness(${AppState.editor.brightness}%) contrast(${AppState.editor.contrast}%) saturate(${AppState.editor.saturation}%)`;
+    canvas.style.transform = `scale(${AppState.editor.scale / 100})`;
+    canvas.style.transformOrigin = 'top center';
+}
+
+// =====================================================================
+// ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+// =====================================================================
+function switchView(viewName) {
+    $$('.nav-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.view === viewName);
+    });
+    
+    $('#chatView').style.display = viewName === 'chat' ? 'flex' : 'none';
+    $('#historyView').classList.toggle('active', viewName === 'history');
+    $('#printerView').classList.toggle('active', viewName === 'printer');
+    
+    if (viewName === 'printer') {
+        detectPrinter();
+    }
+}
+
+// =====================================================================
+// ОПРЕДЕЛЕНИЕ ПРИНТЕРА
+// =====================================================================
+async function detectPrinter() {
+    // Браузеры не дают прямого доступа к информации о принтерах
+    // Симулируем определение на основе возможностей браузера
+    
+    const printerName = $('#printerName');
+    const printerStatus = $('#printerStatus');
+    const printerType = $('#printerType');
+    const printerResolution = $('#printerResolution');
+    const printerDuplex = $('#printerDuplex');
+    const printerColor = $('#printerColor');
+    
+    // Определяем ОС и браузер
+    const ua = navigator.userAgent;
+    let os = 'Неизвестно';
+    let browser = 'Неизвестно';
+    
+    if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Mac/i.test(ua)) os = 'macOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/iPhone|iPad/i.test(ua)) os = 'iOS';
+    
+    if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = 'Chrome';
+    else if (/Firefox/i.test(ua)) browser = 'Firefox';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+    else if (/Edg/i.test(ua)) browser = 'Edge';
+    
+    // Имитация задержки определения
+    setTimeout(() => {
+        const isDesktop = !isMobileDevice();
+        
+        if (isDesktop) {
+            printerName.textContent = `Системный принтер (${os})`;
+            printerStatus.innerHTML = `
+                <span class="status-badge status-online">
+                    <span class="status-dot"></span>
+                    Готов к печати
+                </span>
+            `;
+            printerType.textContent = `${browser} · ${os}`;
+            printerResolution.textContent = 'До 1200 dpi';
+            printerDuplex.textContent = 'Зависит от модели';
+            printerColor.textContent = 'Поддерживается';
+        } else {
+            printerName.textContent = 'Печать недоступна';
+            printerStatus.innerHTML = `
+                <span class="status-badge status-offline">
+                    <span class="status-dot"></span>
+                    Недоступно на мобильном
+                </span>
+            `;
+            printerType.textContent = `${browser} · ${os}`;
+            printerResolution.textContent = '—';
+            printerDuplex.textContent = '—';
+            printerColor.textContent = '—';
+        }
+    }, 800);
+}
+
+// =====================================================================
+// ИНИЦИАЛИЗАЦИЯ СОБЫТИЙ
+// =====================================================================
+function initEventListeners() {
+    // Поле ввода
+    const input = $('#inputField');
+    input.addEventListener('input', () => {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        updateSendButton();
+    });
+    
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    });
+    
+    // Кнопка отправки
+    $('#sendBtn').addEventListener('click', handleSend);
+    
+    // Вложения
+    $('#attachBtn').addEventListener('click', () => {
+        $('#fileInput').click();
+    });
+    
+    $('#imageBtn').addEventListener('click', () => {
+        $('#fileInput').setAttribute('accept', 'image/*');
+        $('#fileInput').click();
+        setTimeout(() => {
+            $('#fileInput').setAttribute('accept', '.pdf,.doc,.docx,.txt,.png,.jpg,.jpeg');
+        }, 100);
+    });
+    
+    $('#fileInput').addEventListener('change', (e) => {
+        handleFileSelect(e.target.files);
+        e.target.value = '';
+    });
+    
+    // Подсказки
+    $$('.suggestion[data-prompt]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            input.value = btn.dataset.prompt;
+            input.focus();
+            updateSendButton();
+        });
+    });
+    
+    // Шаблоны
+    $$('.suggestion[data-template]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            input.value = btn.dataset.template;
+            input.focus();
+            updateSendButton();
+            $('#templatesModal').classList.remove('active');
+        });
+    });
+    
+    // Навигация
+    $$('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            switchView(tab.dataset.view);
+        });
+    });
+    
+    // Мобильное меню
+    $('#mobileMenuBtn').addEventListener('click', () => {
+        $('#sidebar').classList.toggle('mobile-open');
+    });
+    
+    // Новый чат
+    $('#newChatBtn').addEventListener('click', () => {
+        if (confirm('Начать новый чат? Текущая переписка будет очищена.')) {
+            AppState.messages = [];
+            AppState.currentCheatsheetHtml = '';
+            $('#messages').innerHTML = `
+                <div class="welcome" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="9" y1="13" x2="15" y2="13"/>
+                            <line x1="9" y1="17" x2="13" y2="17"/>
+                        </svg>
+                    </div>
+                    <h1>Привет! Я создам для тебя шпаргалку</h1>
+                    <p>Расскажи, что нужно выучить, и я сделаю красивую и понятную шпаргалку.</p>
+                </div>
+            `;
+            showToast('Новый чат создан', 'success');
+        }
+    });
+    
+    // Настройки
+    $('#settingsBtn').addEventListener('click', () => {
+        showToast('Настройки в разработке', 'info');
+    });
+    
+    // Переключатели стиля
+    $$('#colorScheme .style-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            $$('#colorScheme .style-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            AppState.settings.colorScheme = btn.dataset.value;
+        });
+    });
+    
+    $$('#illustrations .style-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            $$('#illustrations .style-option').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            AppState.settings.illustrations = btn.dataset.value;
+        });
+    });
+    
+    // Селекты
+    $('#fileFormat').addEventListener('change', (e) => {
+        AppState.settings.fileFormat = e.target.value;
+    });
+    
+    $('#orientation').addEventListener('change', (e) => {
+        AppState.settings.orientation = e.target.value;
+    });
+    
+    // Чекбоксы
+    $('#optNumbers').addEventListener('change', (e) => {
+        AppState.settings.pageNumbers = e.target.checked;
+    });
+    $('#optHeader').addEventListener('change', (e) => {
+        AppState.settings.header = e.target.checked;
+    });
+    $('#optCompact').addEventListener('change', (e) => {
+        AppState.settings.compact = e.target.checked;
+    });
+    $('#optWatermark').addEventListener('change', (e) => {
+        AppState.settings.watermark = e.target.checked;
+    });
+    
+    // Быстрые функции
+    $$('.func-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const func = btn.dataset.func;
+            if (func === 'template') {
+                $('#templatesModal').classList.add('active');
+            } else if (func === 'ocr') {
+                showToast('OCR: прикрепи изображение, и ИИ распознает текст', 'info');
+                $('#imageBtn').click();
+            } else if (func === 'translate') {
+                input.value = 'Переведи следующую шпаргалку на английский язык: ';
+                input.focus();
+                updateSendButton();
+            } else if (func === 'formulas') {
+                input.value = 'Сделай шпаргалку с основными математическими формулами (площади, объёмы, теоремы)';
+                input.focus();
+                updateSendButton();
+            } else if (func === 'qr') {
+                showToast('QR-код будет добавлен к шпаргалке', 'info');
+            } else if (func === 'timer') {
+                showToast('Таймер: 25 минут (метод Pomodoro)', 'info');
+            }
+        });
+    });
+    
+    // Модальное окно предупреждения
+    $('#warningOk').addEventListener('click', () => {
+        $('#warningModal').classList.remove('active');
+        if (pendingAction === 'download') {
+            performDownload();
+        } else if (pendingAction === 'print') {
+            performPrint();
+        }
+        pendingAction = null;
+    });
+    
+    $('#warningNo').addEventListener('click', () => {
+        $('#warningModal').classList.remove('active');
+        pendingAction = null;
+        showToast('Действие отменено', 'info');
+    });
+    
+    // Модалка "принтер не найден"
+    $('#noPrinterOk').addEventListener('click', () => {
+        $('#noPrinterModal').classList.remove('active');
+    });
+    
+    // Шаблоны
+    $('#closeTemplates').addEventListener('click', () => {
+        $('#templatesModal').classList.remove('active');
+    });
+    
+    // Закрытие модалок по клику на overlay
+    $$('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.classList.remove('active');
+            }
+        });
+    });
+    
+    // Редактор
+    $('#closeEditor').addEventListener('click', closeEditor);
+    $('#editorCancel').addEventListener('click', closeEditor);
+    
+    $('#editorDownload').addEventListener('click', () => {
+        // Сохраняем изменения из редактора
+        const editedHtml = $('#editorCanvas').innerHTML;
+        AppState.currentCheatsheetHtml = editedHtml;
+        closeEditor();
+        downloadCheatsheet();
+    });
+    
+    $('#editorPrint').addEventListener('click', () => {
+        const editedHtml = $('#editorCanvas').innerHTML;
+        AppState.currentCheatsheetHtml = editedHtml;
+        closeEditor();
+        printCheatsheet();
+    });
+    
+    // Слайдеры редактора
+    $('#brightnessSlider').addEventListener('input', (e) => {
+        AppState.editor.brightness = e.target.value;
+        $('#brightnessValue').textContent = e.target.value + '%';
+        updateEditorFilters();
+    });
+    
+    $('#contrastSlider').addEventListener('input', (e) => {
+        AppState.editor.contrast = e.target.value;
+        $('#contrastValue').textContent = e.target.value + '%';
+        updateEditorFilters();
+    });
+    
+    $('#saturationSlider').addEventListener('input', (e) => {
+        AppState.editor.saturation = e.target.value;
+        $('#saturationValue').textContent = e.target.value + '%';
+        updateEditorFilters();
+    });
+    
+    $('#scaleSlider').addEventListener('input', (e) => {
+        AppState.editor.scale = e.target.value;
+        $('#scaleValue').textContent = e.target.value + '%';
+        updateEditorFilters();
+    });
+    
+    $('#brushSlider').addEventListener('input', (e) => {
+        AppState.editor.brushSize = e.target.value;
+        $('#brushValue').textContent = e.target.value + 'px';
+    });
+    
+    $('#drawColor').addEventListener('input', (e) => {
+        AppState.editor.drawColor = e.target.value;
+    });
+    
+    // Инструменты редактора
+    $$('.editor-tool').forEach(tool => {
+        tool.addEventListener('click', () => {
+            const action = tool.dataset.edit;
+            const canvas = $('#editorCanvas');
+            
+            if (action === 'reset') {
+                AppState.editor.brightness = 100;
+                AppState.editor.contrast = 100;
+                AppState.editor.saturation = 100;
+                AppState.editor.scale = 100;
+                $('#brightnessSlider').value = 100;
+                $('#contrastSlider').value = 100;
+                $('#saturationSlider').value = 100;
+                $('#scaleSlider').value = 100;
+                $('#brightnessValue').textContent = '100%';
+                $('#contrastValue').textContent = '100%';
+                $('#saturationValue').textContent = '100%';
+                $('#scaleValue').textContent = '100%';
+                updateEditorFilters();
+                showToast('Настройки сброшены', 'info');
+            } else if (action === 'draw') {
+                AppState.editor.drawMode = !AppState.editor.drawMode;
+                canvas.style.cursor = AppState.editor.drawMode ? 'crosshair' : 'default';
+                showToast(AppState.editor.drawMode ? 'Режим рисования включён' : 'Режим рисования выключен', 'info');
+                
+                if (AppState.editor.drawMode) {
+                    enableDrawing(canvas);
+                }
+            } else if (action === 'text') {
+                const text = prompt('Введите текст для добавления:');
+                if (text) {
+                    const textEl = document.createElement('div');
+                    textEl.style.cssText = `position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:10px; background:white; border:2px dashed ${AppState.editor.drawColor}; font-size:16px; color:${AppState.editor.drawColor}; cursor:move;`;
+                    textEl.textContent = text;
+                    canvas.style.position = 'relative';
+                    canvas.appendChild(textEl);
+                    makeDraggable(textEl);
+                }
+            } else if (action === 'color') {
+                const color = prompt('Введите цвет (например: #ff6b9d, red, rgb(255,0,0)):');
+                if (color) {
+                    canvas.style.color = color;
+                }
+            } else if (action === 'brightness') {
+                AppState.editor.brightness = Math.min(150, AppState.editor.brightness + 10);
+                $('#brightnessSlider').value = AppState.editor.brightness;
+                $('#brightnessValue').textContent = AppState.editor.brightness + '%';
+                updateEditorFilters();
+            } else if (action === 'contrast') {
+                AppState.editor.contrast = Math.min(150, AppState.editor.contrast + 10);
+                $('#contrastSlider').value = AppState.editor.contrast;
+                $('#contrastValue').textContent = AppState.editor.contrast + '%';
+                updateEditorFilters();
+            } else {
+                document.execCommand(action, false, null);
+            }
+        });
+    });
+}
+
+// =====================================================================
+// РИСОВАНИЕ В РЕДАКТОРЕ
+// =====================================================================
+function enableDrawing(canvas) {
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    
+    // Создаём canvas для рисования поверх
+    let drawCanvas = canvas.querySelector('.draw-overlay');
+    if (!drawCanvas) {
+        drawCanvas = document.createElement('canvas');
+        drawCanvas.className = 'draw-overlay';
+        drawCanvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:auto; z-index:100;';
+        canvas.style.position = 'relative';
+        canvas.appendChild(drawCanvas);
+    }
+    
+    const rect = canvas.getBoundingClientRect();
+    drawCanvas.width = canvas.offsetWidth;
+    drawCanvas.height = canvas.offsetHeight;
+    
+    const ctx = drawCanvas.getContext('2d');
+    ctx.strokeStyle = AppState.editor.drawColor;
+    ctx.lineWidth = AppState.editor.brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    drawCanvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const r = drawCanvas.getBoundingClientRect();
+        lastX = e.clientX - r.left;
+        lastY = e.clientY - r.top;
+    });
+    
+    drawCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing) return;
+        const r = drawCanvas.getBoundingClientRect();
+        const x = e.clientX - r.left;
+        const y = e.clientY - r.top;
+        
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        
+        lastX = x;
+        lastY = y;
+    });
+    
+    drawCanvas.addEventListener('mouseup', () => {
+        isDrawing = false;
+    });
+    
+    drawCanvas.addEventListener('mouseleave', () => {
+        isDrawing = false;
+    });
+}
+
+function makeDraggable(element) {
+    let offsetX = 0, offsetY = 0;
+    let isDragging = false;
+    
+    element.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.clientX - element.offsetLeft;
+        offsetY = e.clientY - element.offsetTop;
+        element.style.zIndex = '1000';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        element.style.left = (e.clientX - offsetX) + 'px';
+        element.style.top = (e.clientY - offsetY) + 'px';
+        element.style.transform = 'none';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+}
+
+// =====================================================================
+// ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
+// =====================================================================
+function init() {
+    console.log('Шпаргалка ру: запуск приложения...');
+    
+    // Загружаем API ключ
+    loadApiKey();
+    
+    // Загружаем историю
+    loadHistory();
+    
+    // Инициализируем обработчики
+    initEventListeners();
+    
+    // Обновляем кнопку отправки
+    updateSendButton();
+    
+    // Приветственный тост
+    setTimeout(() => {
+        showToast('Добро пожаловать в Шпаргалка ру!', 'success');
+    }, 500);
+    
+    // Проверка устройства
+    if (isMobileDevice()) {
+        console.log('Обнаружено мобильное устройство — печать будет недоступна');
+    }
+}
+
+// Запуск после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+// =====================================================================
+// ГЛОБАЛЬНЫЕ ФУНКЦИИ (для onclick в HTML)
+// =====================================================================
+window.openEditor = openEditor;
+window.downloadCheatsheet = downloadCheatsheet;
+window.printCheatsheet = printCheatsheet;
+window.removeAttachment = removeAttachment;
+window.deleteHistoryItem = deleteHistoryItem;
+
+// =====================================================================
+// ОБРАБОТКА ОШИБОК
+// =====================================================================
+window.addEventListener('error', (e) => {
+    console.error('Глобальная ошибка:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('Необработанное отклонение промиса:', e.reason);
+});
+
+// =====================================================================
+// SERVICE WORKER (для offline-режима, базовая версия)
+// =====================================================================
+if ('serviceWorker' in navigator) {
+    // Можно зарегистрировать service worker для offline-режима
+    // navigator.serviceWorker.register('/sw.js');
+}
+
+// =====================================================================
+// ДОПОЛНИТЕЛЬНЫЕ УТИЛИТЫ
+// =====================================================================
+
+// Функция для копирования шпаргалки в буфер обмена
+function copyCheatsheet() {
+    if (!AppState.currentCheatsheetHtml) {
+        showToast('Нет шпаргалки для копирования', 'error');
+        return;
+    }
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = AppState.currentCheatsheetHtml;
+    const text = tempDiv.textContent || tempDiv.innerText;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Текст шпаргалки скопирован!', 'success');
+    }).catch(() => {
+        showToast('Не удалось скопировать', 'error');
+    });
+}
+
+// Функция для экспорта в разные форматы
+function exportAs(format) {
+    if (!AppState.currentCheatsheetHtml) {
+        showToast('Нет шпаргалки для экспорта', 'error');
+        return;
+    }
+    
+    if (format === 'html') {
+        const blob = new Blob([`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Шпаргалка</title></head><body>${AppState.currentCheatsheetHtml}</body></html>`], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'shpargalka.html';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('HTML файл сохранён', 'success');
+    } else if (format === 'markdown') {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = AppState.currentCheatsheetHtml;
+        const text = tempDiv.textContent;
+        const blob = new Blob([text], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'shpargalka.md';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Markdown файл сохранён', 'success');
+    }
+}
+
+// Функция для изменения темы
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    showToast('Тема изменена', 'info');
+}
+
+// Функция для полноэкранного режима
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+            showToast('Не удалось войти в полноэкранный режим', 'error');
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// Горячие клавиши
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + N — новый чат
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        $('#newChatBtn').click();
+    }
+    
+    // Ctrl/Cmd + S — скачать
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (AppState.currentCheatsheetHtml) {
+            downloadCheatsheet();
+        }
+    }
+    
+    // Ctrl/Cmd + P — печать
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        if (AppState.currentCheatsheetHtml && !isMobileDevice()) {
+            e.preventDefault();
+            printCheatsheet();
+        }
+    }
+    
+    // Escape — закрыть модалки/редактор
+    if (e.key === 'Escape') {
+        $$('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+        if ($('#editorOverlay').classList.contains('active')) {
+            closeEditor();
+        }
+    }
+});
+
+// Обработка drag & drop файлов
+document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length > 0) {
+        handleFileSelect(e.dataTransfer.files);
+    }
+});
+
+// Сохранение настроек в localStorage
+function saveSettings() {
+    try {
+        localStorage.setItem('shpargalka_settings', JSON.stringify(AppState.settings));
+    } catch (e) {
+        console.error('Не удалось сохранить настройки:', e);
+    }
+}
+
+function loadSettings() {
+    try {
+        const data = localStorage.getItem('shpargalka_settings');
+        if (data) {
+            const saved = JSON.parse(data);
+            Object.assign(AppState.settings, saved);
+            
+            // Применяем настройки к UI
+            $$('#colorScheme .style-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.value === AppState.settings.colorScheme);
+            });
+            $$('#illustrations .style-option').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.value === AppState.settings.illustrations);
+            });
+            $('#fileFormat').value = AppState.settings.fileFormat;
+            $('#orientation').value = AppState.settings.orientation;
+            $('#optNumbers').checked = AppState.settings.pageNumbers;
+            $('#optHeader').checked = AppState.settings.header;
+            $('#optCompact').checked = AppState.settings.compact;
+            $('#optWatermark').checked = AppState.settings.watermark;
+        }
+    } catch (e) {
+        console.error('Не удалось загрузить настройки:', e);
+    }
+}
+
+// Автосохранение настроек при изменении
+const originalSettingsHandlers = {};
+['colorScheme', 'illustrations', 'fileFormat', 'orientation', 'pageNumbers', 'header', 'compact', 'watermark'].forEach(key => {
+    const originalValue = AppState.settings[key];
+    Object.defineProperty(AppState.settings, key, {
+        get: function() { return this['_' + key] !== undefined ? this['_' + key] : originalValue; },
+        set: function(v) { this['_' + key] = v; saveSettings(); },
+        configurable: true
+    });
+});
+
+// Загрузка сохранённых настроек
+loadSettings();
+
+console.log('Шпаргалка ру: приложение готово к работе!');
+</script>
+
+</body>
+</html>
