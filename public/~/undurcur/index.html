@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>UndeCur — Game Cursor Studio</title>
+    <link rel="icon" type="image/x-icon" href="https://oris-flax.vercel.app/~/undercur-i/i.ico">
+    <meta
+        name="description"
+        content="UndeCur — пиксельная игра, созданная на PowerPoint. Узнайте историю черной руки, похитившей курсор."
+    >
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        :root {
+            --black: #090909;
+            --dark: #111111;
+            --panel: #181818;
+            --gray: #777;
+            --light-gray: #bdbdbd;
+            --white: #f1f1f1;
+            --red: #a51e28;
+            --bright-red: #e3323d;
+            --green: #74bd62;
+            --yellow: #d9bd62;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            color: var(--white);
+            background:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+                var(--black);
+            background-size: 8px 8px;
+            font-family: Arial, sans-serif;
+            image-rendering: pixelated;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,0.025) 0,
+                rgba(255,255,255,0.025) 1px,
+                transparent 1px,
+                transparent 4px
+            );
+        }
+
+        h1,
+        h2,
+        h3,
+        .pixel-font,
+        nav a,
+        .button {
+            font-family: "Press Start 2P", monospace;
+        }
+
+        header {
+            min-height: 720px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 6px solid var(--red);
+            background:
+                radial-gradient(circle at 50% 42%, rgba(119, 0, 0, .25), transparent 28%),
+                linear-gradient(180deg, #050505, #171010 70%, #090909);
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            opacity: .18;
+            background:
+                linear-gradient(45deg, transparent 45%, #fff 46%, transparent 47%),
+                linear-gradient(-45deg, transparent 45%, #fff 46%, transparent 47%);
+            background-size: 32px 32px;
+            mask-image: linear-gradient(to bottom, transparent, black, transparent);
+        }
+
+        .hero {
+            position: relative;
+            z-index: 2;
+            width: min(1100px, 92%);
+            text-align: center;
+        }
+
+        .studio-name {
+            color: var(--gray);
+            letter-spacing: 3px;
+            font-size: 12px;
+            margin-bottom: 36px;
+        }
+
+        .logo {
+            margin: 0;
+            color: var(--white);
+            font-size: clamp(38px, 8vw, 92px);
+            letter-spacing: 5px;
+            text-shadow:
+                6px 6px 0 #000,
+                10px 10px 0 var(--red);
+        }
+
+        .subtitle {
+            max-width: 690px;
+            margin: 35px auto;
+            color: var(--light-gray);
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        .cursor-scene {
+            width: 190px;
+            height: 130px;
+            margin: 20px auto 35px;
+            position: relative;
+        }
+
+        .hole {
+            position: absolute;
+            left: 40px;
+            bottom: 15px;
+            width: 115px;
+            height: 48px;
+            background: #000;
+            border: 5px solid #282828;
+            box-shadow: inset 0 0 0 5px #090909;
+        }
+
+        .hand {
+            position: absolute;
+            left: 78px;
+            bottom: 36px;
+            width: 62px;
+            height: 70px;
+            background: #080808;
+            border: 5px solid #333;
+            clip-path: polygon(
+                30% 100%, 12% 75%, 8% 50%, 20% 36%,
+                31% 43%, 32% 8%, 45% 4%, 51% 40%,
+                58% 0%, 72% 4%, 70% 44%,
+                80% 15%, 94% 21%, 84% 55%,
+                91% 45%, 100% 56%, 83% 83%,
+                72% 100%
+            );
+            transform: rotate(-14deg);
+        }
+
+        .cursor {
+            position: absolute;
+            top: 2px;
+            right: 24px;
+            width: 0;
+            height: 0;
+            border-left: 17px solid transparent;
+            border-right: 17px solid transparent;
+            border-bottom: 64px solid white;
+            transform: rotate(-34deg);
+            filter: drop-shadow(4px 4px 0 #000);
+        }
+
+        .cursor::after {
+            content: "";
+            position: absolute;
+            left: -11px;
+            top: 14px;
+            width: 11px;
+            height: 39px;
+            background: #111;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 18px 24px;
+            color: #fff;
+            background: var(--red);
+            border: 4px solid #ef5d66;
+            box-shadow: 7px 7px 0 #000;
+            text-decoration: none;
+            font-size: 12px;
+            line-height: 1.5;
+            transition: .15s ease;
+        }
+
+        .button:hover {
+            transform: translate(4px, 4px);
+            box-shadow: 3px 3px 0 #000;
+            background: var(--bright-red);
+        }
+
+        .button.secondary {
+            background: #252525;
+            border-color: #666;
+        }
+
+        nav {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 24px;
+            background: rgba(0,0,0,.78);
+            border-bottom: 2px solid #2c2c2c;
+        }
+
+        nav a {
+            color: var(--light-gray);
+            font-size: 10px;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            color: var(--bright-red);
+        }
+
+        section {
+            width: min(1100px, 92%);
+            margin: 0 auto;
+            padding: 100px 0;
+        }
+
+        .section-title {
+            margin: 0 0 42px;
+            color: var(--bright-red);
+            font-size: clamp(20px, 4vw, 34px);
+            line-height: 1.5;
+            text-shadow: 4px 4px 0 #000;
+        }
+
+        .section-title::before {
+            content: "> ";
+            color: var(--white);
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1.2fr .8fr;
+            gap: 45px;
+            align-items: start;
+        }
+
+        .text-box,
+        .info-card,
+        .warning,
+        .download-box {
+            background: var(--panel);
+            border: 4px solid #343434;
+            box-shadow: 8px 8px 0 #000;
+        }
+
+        .text-box {
+            padding: 30px;
+            color: #d2d2d2;
+            line-height: 1.8;
+            font-size: 17px;
+        }
+
+        .info-card {
+            padding: 28px;
+        }
+
+        .info-card div {
+            padding: 17px 0;
+            border-bottom: 2px dashed #444;
+        }
+
+        .info-card div:last-child {
+            border-bottom: 0;
+        }
+
+        .info-label {
+            display: block;
+            color: var(--gray);
+            font-family: "Press Start 2P", monospace;
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        .info-value {
+            color: var(--white);
+            font-size: 16px;
+        }
+
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .screenshot {
+            min-height: 210px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #0c0c0c;
+            border: 5px solid #353535;
+            box-shadow: 7px 7px 0 #000;
+        }
+
+        .screenshot img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 210px;
+            object-fit: cover;
+            image-rendering: pixelated;
+        }
+
+        .placeholder {
+            padding: 25px;
+            color: #696969;
+            text-align: center;
+            font-family: "Press Start 2P", monospace;
+            font-size: 10px;
+            line-height: 1.8;
+        }
+
+        .warning {
+            padding: 28px;
+            border-color: #745b20;
+            background: #211c0d;
+            color: #e5d29a;
+            line-height: 1.7;
+        }
+
+        .warning-title {
+            display: block;
+            margin-bottom: 15px;
+            color: var(--yellow);
+            font-family: "Press Start 2P", monospace;
+            font-size: 12px;
+        }
+
+        .download-box {
+            padding: 45px 30px;
+            text-align: center;
+            border-color: var(--red);
+            background:
+                linear-gradient(135deg, rgba(165,30,40,.18), transparent),
+                var(--panel);
+        }
+
+        .download-box p {
+            max-width: 650px;
+            margin: 0 auto 30px;
+            color: #c6c6c6;
+            line-height: 1.7;
+            font-size: 17px;
+        }
+
+        .telegram-name {
+            display: inline-block;
+            margin-top: 26px;
+            color: var(--bright-red);
+            font-family: "Press Start 2P", monospace;
+            font-size: 12px;
+        }
+
+        footer {
+            padding: 35px 20px;
+            text-align: center;
+            color: #666;
+            background: #050505;
+            border-top: 3px solid #282828;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 760px) {
+            header {
+                min-height: 680px;
+            }
+
+            nav {
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                font-size: 8px;
+            }
+
+            .about-grid,
+            .screenshots {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                padding: 70px 0;
+            }
+
+            .subtitle {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header id="home">
+        <nav>
+            <a href="#home">Главная</a>
+            <a href="#about">Об игре</a>
+            <a href="#screenshots">Скриншоты</a>
+            <a href="#download">Скачать</a>
+        </nav>
+
+        <div class="hero">
+            <div class="studio-name">UNDERCUR GAMES STUDIO PRESENTS</div>
+
+            <div class="cursor-scene" aria-hidden="true">
+                <div class="cursor"></div>
+                <div class="hand"></div>
+                <div class="hole"></div>
+            </div>
+
+            <h1 class="logo">UNDECUR</h1>
+
+            <p class="subtitle">
+                Курсор исчез. Из темной дыры появилась черная рука
+                и унесла его с собой. Что произошло дальше —
+                узнайте в самой игре.
+            </p>
+
+            <a class="button" href="#download">Узнать больше</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="about">
+            <h2 class="section-title">Об игре</h2>
+
+            <div class="about-grid">
+                <div class="text-box">
+                    <p>
+                        UndeCur — легкая и быстрая пиксельная игра,
+                        созданная на PowerPoint.
+                    </p>
+
+                    <p>
+                        Игроку предстоит узнать историю обычного курсора,
+                        которого черная рука схватила и унесла в неизвестность.
+                        Сюжет раскрывается постепенно, прямо во время прохождения.
+                    </p>
+
+                    <p>
+                        Игра пока находится в альфа- и бета-версии.
+                        В будущем планируется второй акт, который продолжит историю.
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <div>
+                        <span class="info-label">Название</span>
+                        <span class="info-value">UndeCur</span>
+                    </div>
+
+                    <div>
+                        <span class="info-label">Жанр</span>
+                        <span class="info-value">Пиксельная история</span>
+                    </div>
+
+                    <div>
+                        <span class="info-label">Движок</span>
+                        <span class="info-value">PowerPoint</span>
+                    </div>
+
+                    <div>
+                        <span class="info-label">Статус</span>
+                        <span class="info-value">Альфа / бета-версия</span>
+                    </div>
+
+                    <div>
+                        <span class="info-label">В планах</span>
+                        <span class="info-value">Акт 2</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="screenshots">
+            <h2 class="section-title">Скриншоты из игры</h2>
+
+            <div class="screenshots">
+                <div class="screenshot">
+                    <img src="https://oris-flax.vercel.app/~/undercur-i/screenshot-1.png" alt="Скриншот из игры UndeCur">
+                </div>
+
+                <div class="screenshot">
+                    <img src="https://oris-flax.vercel.app/~/undercur-i/screenshot-2.png" alt="Скриншот из игры UndeCur">
+                </div>
+
+                <div class="screenshot">
+                    <img src="https://oris-flax.vercel.app/~/undercur-i/screenshot-3.png" alt="Скриншот из игры UndeCur">
+                </div>
+
+                <div class="screenshot">
+                    <img src="https://oris-flax.vercel.app/~/undercur-i/screenshot-4.png" alt="Скриншот из игры UndeCur">
+                </div>
+
+
+                <div class="screenshot">
+                    <div class="placeholder">
+                        НОВЫЕ СКРИНШОТЫ<br>
+                        СКОРО
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="warning">
+                <span class="warning-title">Важное предупреждение</span>
+
+                Игра находится в альфа- и бета-версии.
+                Game Cursor Studio пока не советует скачивать игру,
+                поскольку она еще не доделана и может содержать ошибки.
+            </div>
+        </section>
+
+        <section id="download">
+            <div class="download-box">
+                <h2 class="section-title">Скачать игру</h2>
+
+                <p>
+                    Скачать текущую версию UndeCur можно только через
+                    официальный Telegram-бот проекта.
+                </p>
+
+                <a
+                    class="button"
+                    href="https://t.me/undercur_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Открыть Telegram-бота
+                </a>
+
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        UnderCur Games Studio<br>
+        UndeCur находится в разработке
+    </footer>
+</body>
+</html>
