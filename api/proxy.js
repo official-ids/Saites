@@ -71,15 +71,12 @@ const MODULE_PATHS = {
     DOWNLOADER: '../downloader',
     REDIRECTS: '../redirects',
     NOTIFICATIONS: '../notifications',
-    ROBLOX: '../roblox',
-    YOUTUBE: '../youtube',
     MONITOR: '../monitor',
     DEPLOYMENTS: '../deployments',
     JSON_STUDIO: '../json_studio',
     REVIEW: '../review',
     GRADE: '../grade',
     SCRIPTBLOX: '../scriptblox',
-    UNDERCUR: '../undercur'
 };
 
 /**
@@ -95,10 +92,6 @@ const redirectsRouter = require(MODULE_PATHS.REDIRECTS);
 
 const notificationsRouter = require(MODULE_PATHS.NOTIFICATIONS);
 
-const robloxRouter = require(MODULE_PATHS.ROBLOX);
-
-const youtubeRouter = require(MODULE_PATHS.YOUTUBE);
-
 const monitorRouter = require(MODULE_PATHS.MONITOR);
 
 const deploymentsRouter = require(MODULE_PATHS.DEPLOYMENTS);
@@ -110,8 +103,6 @@ const reviewRouter = require(MODULE_PATHS.REVIEW);
 const gradeRouter = require(MODULE_PATHS.GRADE);
 
 const scriptbloxRouter = require(MODULE_PATHS.SCRIPTBLOX);
-
-const undercurRouter = require(MODULE_PATHS.UNDERCUR);
 
 
 
@@ -1281,15 +1272,12 @@ app.use('/api/redirects', redirectsRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/downloader', downloaderRouter);
 app.use('/api/notifications', notificationsRouter);
-app.use('/api/roblox', robloxRouter);
-app.use('/api/youtube', youtubeRouter);
 app.use('/api/monitor', monitorRouter);
 app.use('/api/deployments', deploymentsRouter);
 app.use('/api/json_studio', jsonStudioRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/grade', gradeRouter);
 app.use('/api/scriptblox', scriptbloxRouter);
-app.use('/api/undercur', undercurRouter);
 
 // -----------------------------
 // Dynamic Page: Downloader

@@ -13,6 +13,10 @@ const VERSIONS_API =
 
 const OFFICIAL_CHANNEL = "@undercurgame";
 
+const NEWS_CHANNEL =
+  process.env.UNDERCUR_NEWS_CHANNEL || "@undercurgame";
+
+
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function telegram(method, body = {}) {
@@ -438,6 +442,34 @@ if (text.startsWith("/news ")) {
     );
   }
 
+  const newsMessage =
+    `📰 Новость UnderCur\n\n${newsText}`;
+
+  // Публикация новости в основной канал
+  let channelSent = false;
+
+  try {
+    const channelResult = await sendMessage(
+      NEWS_CHANNEL,
+      newsMessage
+    );
+
+    channelSent = channelResult.ok === true;
+
+    if (!channelSent) {
+      console.error(
+        "Channel news delivery error:",
+        channelResult
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Channel news delivery error:",
+      error.message
+    );
+  }
+
+  // Рассылка новости пользователям
   const users =
     (await kv.smembers("undercur:users")) || [];
 
@@ -451,12 +483,14 @@ if (text.startsWith("/news ")) {
     }
 
     try {
-      await sendMessage(
+      const result = await sendMessage(
         recipientId,
-        `📰 Новость UnderCur\n\n${newsText}`
+        newsMessage
       );
 
-      sent++;
+      if (result.ok) {
+        sent++;
+      }
     } catch (error) {
       console.error(
         "News delivery error:",
@@ -467,9 +501,14 @@ if (text.startsWith("/news ")) {
 
   return sendMessage(
     chatId,
-    `✅ Новость отправлена.\nПолучателей: ${sent}.`
+    `✅ Новость обработана.\n\n` +
+      `📢 Канал: ${
+        channelSent ? "опубликовано" : "ошибка публикации"
+      }\n` +
+      `👤 Получателей: ${sent}.`
   );
 }
+
 
 if (command === "/news") {
   const user = await getUser(userId);
