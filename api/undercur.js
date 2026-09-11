@@ -420,71 +420,77 @@ async function processCommand(message, text) {
     return versionsMessage(chatId);
   }
 
-  if (command === "/news") {
-    const user = await getUser(userId);
-
+if (text.startsWith("/news ")) {
+  if (!isAdmin(userId)) {
     return sendMessage(
       chatId,
-      "📰 Новости UnderCur\n\n" +
-        "Здесь будут появляться новости проекта.",
-      {
-        reply_markup: newsKeyboard(user.news !== false),
-      }
+      "⛔ У вас нет прав для публикации новостей."
     );
   }
 
-  if (command === "/news" && isAdmin(userId)) {
+  const newsText = text.slice("/news ".length).trim();
+
+  if (!newsText) {
     return sendMessage(
       chatId,
-      "Использование:\n/news Текст новости"
+      "Напишите текст новости:\n\n" +
+        "/news Текст новости"
     );
   }
 
-  if (text.startsWith("/news ") && isAdmin(userId)) {
-    const newsText = text.slice(6).trim();
+  const users =
+    (await kv.smembers("undercur:users")) || [];
 
-    if (!newsText) {
-      return sendMessage(chatId, "Напишите текст новости.");
+  let sent = 0;
+
+  for (const recipientId of users) {
+    const recipient = await getUser(recipientId);
+
+    if (recipient.news === false) {
+      continue;
     }
 
-    const users =
-      (await kv.smembers("undercur:users")) || [];
+    try {
+      await sendMessage(
+        recipientId,
+        `📰 Новость UnderCur\n\n${newsText}`
+      );
 
-    let sent = 0;
-
-    for (const userId of users) {
-      const user = await getUser(userId);
-
-      if (user.news === false) continue;
-
-      try {
-        await sendMessage(
-          userId,
-          `📰 Новость UnderCur\n\n${newsText}`
-        );
-
-        sent++;
-      } catch (error) {
-        console.error(
-          "News delivery error:",
-          error.message
-        );
-      }
+      sent++;
+    } catch (error) {
+      console.error(
+        "News delivery error:",
+        error.message
+      );
     }
-
-    return sendMessage(
-      chatId,
-      `Новость отправлена. Получателей: ${sent}.`
-    );
   }
 
   return sendMessage(
     chatId,
-    "Используйте меню ниже.",
+    `✅ Новость отправлена.\nПолучателей: ${sent}.`
+  );
+}
+
+if (command === "/news") {
+  const user = await getUser(userId);
+
+  return sendMessage(
+    chatId,
+    "📰 Новости UnderCur\n\n" +
+      "Здесь будут появляться новости проекта.",
     {
-      reply_markup: mainKeyboard(),
+      reply_markup: newsKeyboard(user.news !== false),
     }
   );
+}
+
+return sendMessage(
+  chatId,
+  "Используйте меню ниже.",
+  {
+    reply_markup: mainKeyboard(),
+  }
+);
 }
 
 async function processCallback(callback) {
