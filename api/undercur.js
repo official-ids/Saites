@@ -1,6 +1,6 @@
 const { kv } = require("@vercel/kv");
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN1;
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
 const ADMIN_IDS = String(process.env.UNDERCUR_ADMIN_IDS || "")
   .split(",")
