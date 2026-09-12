@@ -46,6 +46,15 @@ async function sendMessage(chatId, text, extra = {}) {
   });
 }
 
+async function copyMessage(toChatId, fromChatId, messageId, extra = {}) {
+  return telegram("copyMessage", {
+    chat_id: toChatId,
+    from_chat_id: fromChatId,
+    message_id: messageId,
+    ...extra,
+  });
+}
+
 async function editMessage(chatId, messageId, text, extra = {}) {
   return telegram("editMessageText", {
     chat_id: chatId,
@@ -403,6 +412,110 @@ async function sendHelp(chatId, messageId = null) {
   });
 }
 
+async function publishNews(message) {
+  const users =
+    (await kv.smembers("undercur:users")) || [];
+
+  let channelSent = false;
+  let sent = 0;
+
+  // Получаем текст подписи или текста новости
+  let caption = message.caption || message.text || "";
+
+  // Удаляем /news из начала сообщения
+  caption = caption
+    .replace(/^\/news(?:@\w+)?\s*/i, "")
+    .trim();
+
+  const extra = {};
+
+  // Для текста, фото, GIF, видео и голосового
+  if (
+    message.text ||
+    message.caption ||
+    message.photo ||
+    message.animation ||
+    message.voice ||
+    message.video ||
+    message.document
+  ) {
+    extra.caption = caption;
+
+    // Сохраняем форматирование и premium-эмоджи
+    const entities =
+      message.caption_entities ||
+      message.entities;
+
+    if (entities) {
+      extra.caption_entities = entities
+        .map((entity) => {
+          const commandLength = message.caption
+            ? message.caption.match(/^\/news(?:@\w+)?\s*/i)?.[0]?.length || 0
+            : 0;
+
+          return {
+            ...entity,
+            offset: Math.max(0, entity.offset - commandLength),
+          };
+        })
+        .filter((entity) => entity.length > 0);
+    }
+  }
+
+  // У видеосообщений подписи быть не может
+  if (message.video_note) {
+    delete extra.caption;
+    delete extra.caption_entities;
+  }
+
+  // Копируем сообщение в канал
+  try {
+    const result = await copyMessage(
+      NEWS_CHANNEL,
+      message.chat.id,
+      message.message_id,
+      extra
+    );
+
+    channelSent = result.ok === true;
+  } catch (error) {
+    console.error("Ошибка публикации в канал:", error.message);
+  }
+
+  // Рассылаем сообщение пользователям
+  for (const recipientId of users) {
+    const recipient = await getUser(recipientId);
+
+    if (recipient.news === false) {
+      continue;
+    }
+
+    try {
+      const result = await copyMessage(
+        recipientId,
+        message.chat.id,
+        message.message_id,
+        extra
+      );
+
+      if (result.ok) {
+        sent++;
+      }
+    } catch (error) {
+      console.error(
+        "Ошибка рассылки пользователю:",
+        error.message
+      );
+    }
+  }
+
+  return {
+    channelSent,
+    sent,
+  };
+}
+
+
 async function processCommand(message, text) {
   const chatId = message.chat.id;
   const userId = message.from.id;
@@ -424,7 +537,7 @@ async function processCommand(message, text) {
     return versionsMessage(chatId);
   }
 
-if (text.startsWith("/news ")) {
+if (/^\/news(?:@\w+)?(?:\s|$)/i.test(text)) {
   if (!isAdmin(userId)) {
     return sendMessage(
       chatId,
@@ -432,80 +545,17 @@ if (text.startsWith("/news ")) {
     );
   }
 
-  const newsText = text.slice("/news ".length).trim();
-
-  if (!newsText) {
-    return sendMessage(
-      chatId,
-      "Напишите текст новости:\n\n" +
-        "/news Текст новости"
-    );
-  }
-
-  const newsMessage =
-    `📰 Новость UnderCur\n\n${newsText}`;
-
-  // Публикация новости в основной канал
-  let channelSent = false;
-
-  try {
-    const channelResult = await sendMessage(
-      NEWS_CHANNEL,
-      newsMessage
-    );
-
-    channelSent = channelResult.ok === true;
-
-    if (!channelSent) {
-      console.error(
-        "Channel news delivery error:",
-        channelResult
-      );
-    }
-  } catch (error) {
-    console.error(
-      "Channel news delivery error:",
-      error.message
-    );
-  }
-
-  // Рассылка новости пользователям
-  const users =
-    (await kv.smembers("undercur:users")) || [];
-
-  let sent = 0;
-
-  for (const recipientId of users) {
-    const recipient = await getUser(recipientId);
-
-    if (recipient.news === false) {
-      continue;
-    }
-
-    try {
-      const result = await sendMessage(
-        recipientId,
-        newsMessage
-      );
-
-      if (result.ok) {
-        sent++;
-      }
-    } catch (error) {
-      console.error(
-        "News delivery error:",
-        error.message
-      );
-    }
-  }
+  const result = await publishNews(message);
 
   return sendMessage(
     chatId,
-    `✅ Новость обработана.\n\n` +
+    "✅ Новость обработана.\n\n" +
       `📢 Канал: ${
-        channelSent ? "опубликовано" : "ошибка публикации"
+        result.channelSent
+          ? "опубликовано"
+          : "ошибка публикации"
       }\n` +
-      `👤 Получателей: ${sent}.`
+      `👤 Получателей: ${result.sent}.`
   );
 }
 
@@ -642,7 +692,10 @@ async function processCallback(callback) {
 async function processText(message) {
   const userId = message.from.id;
   const chatId = message.chat.id;
-  const text = message.text || "";
+
+  // Для обычного текста используется message.text,
+  // для фото/GIF/видео/голосового — message.caption
+  const text = message.text || message.caption || "";
 
   if (text.startsWith("/")) {
     return processCommand(message, text);
@@ -687,6 +740,7 @@ async function processText(message) {
   );
 }
 
+
 module.exports = async function handler(req, res) {
   if (req.method === "GET") {
     return res.status(200).json({
@@ -713,27 +767,25 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  try {
-    const update = req.body;
+try {
+  const update = req.body;
 
-    if (update.callback_query) {
-      await processCallback(update.callback_query);
-    } else if (update.message) {
-      await saveUser(update.message.from.id);
-
-      if (update.message.text) {
-        await processText(update.message);
-      }
-    }
-
-    return res.status(200).json({
-      ok: true,
-    });
-  } catch (error) {
-    console.error("UnderCur handler error:", error);
-
-    return res.status(200).json({
-      ok: false,
-    });
+  if (update.callback_query) {
+    await processCallback(update.callback_query);
+  } else if (update.message) {
+    await saveUser(update.message.from.id);
+    await processText(update.message);
   }
+
+  return res.status(200).json({
+    ok: true,
+  });
+} catch (error) {
+  console.error("UnderCur handler error:", error);
+
+  return res.status(200).json({
+    ok: false,
+  });
+}
+
 };
