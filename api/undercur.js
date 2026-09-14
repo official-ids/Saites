@@ -16,7 +16,6 @@ const OFFICIAL_CHANNEL = "@undercurgame";
 const NEWS_CHANNEL =
   process.env.UNDERCUR_NEWS_CHANNEL || "@undercurgame";
 
-
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 async function telegram(method, body = {}) {
@@ -413,108 +412,97 @@ async function sendHelp(chatId, messageId = null) {
 }
 
 async function publishNews(message) {
-  const users =
-    (await kv.smembers("undercur:users")) || [];
-
+  const users = (await kv.smembers("undercur:users")) || [];
   let channelSent = false;
   let sent = 0;
 
-  // Получаем текст подписи или текста новости
-  let caption = message.caption || message.text || "";
+  const rawContent = message.caption || message.text || "";
+  const commandMatch = rawContent.match(/^\/news(?:@\w+)?\s*/i);
+  const commandLength = commandMatch ? commandMatch[0].length : 0;
+  
+  const prefix = "📰 Новость UnderCur\n\n";
+  const cleanedContent = rawContent.slice(commandLength).trim();
+  const finalContent = prefix + cleanedContent;
 
-  // Удаляем /news из начала сообщения
-  caption = caption
-    .replace(/^\/news(?:@\w+)?\s*/i, "")
-    .trim();
+  const isMedia = message.photo || message.animation || message.voice || message.video || message.document;
 
   const extra = {};
+  
+  // Новая функция: поддержка форматирования статьи (HTML) для длинных постов
+  if (!isMedia) {
+    extra.parse_mode = "HTML";
+    extra.disable_web_page_preview = false; // Разрешаем предпросмотр ссылок для статей
+  }
 
-  // Для текста, фото, GIF, видео и голосового
-  if (
-    message.text ||
-    message.caption ||
-    message.photo ||
-    message.animation ||
-    message.voice ||
-    message.video ||
-    message.document
-  ) {
-    extra.caption = caption;
-
-    // Сохраняем форматирование и premium-эмоджи
-    const entities =
-      message.caption_entities ||
-      message.entities;
-
+  if (isMedia) {
+    extra.caption = finalContent;
+    const entities = message.caption_entities || message.entities;
     if (entities) {
       extra.caption_entities = entities
-        .map((entity) => {
-          const commandLength = message.caption
-            ? message.caption.match(/^\/news(?:@\w+)?\s*/i)?.[0]?.length || 0
-            : 0;
-
-          return {
-            ...entity,
-            offset: Math.max(0, entity.offset - commandLength),
-          };
-        })
+        .map((entity) => ({
+          ...entity,
+          offset: Math.max(0, entity.offset - commandLength + prefix.length),
+        }))
+        .filter((entity) => entity.length > 0);
+    }
+    if (message.video_note) {
+      delete extra.caption;
+      delete extra.caption_entities;
+    }
+  } else {
+    if (message.entities) {
+      extra.entities = message.entities
+        .map((entity) => ({
+          ...entity,
+          offset: Math.max(0, entity.offset - commandLength + prefix.length),
+        }))
         .filter((entity) => entity.length > 0);
     }
   }
 
-  // У видеосообщений подписи быть не может
-  if (message.video_note) {
-    delete extra.caption;
-    delete extra.caption_entities;
-  }
+  // Новая функция: кнопка "Поделиться" для удобного репоста новости
+  const channelUsername = NEWS_CHANNEL.replace(/^@/, '');
+  extra.reply_markup = {
+    inline_keyboard: [
+      [{ text: "📢 Поделиться новостью", url: `https://t.me/${channelUsername}` }]
+    ]
+  };
 
-  // Копируем сообщение в канал
+  // Публикация в канал
   try {
-    const result = await copyMessage(
-      NEWS_CHANNEL,
-      message.chat.id,
-      message.message_id,
-      extra
-    );
-
+    let result;
+    if (isMedia) {
+      result = await copyMessage(NEWS_CHANNEL, message.chat.id, message.message_id, extra);
+    } else {
+      // Исправление бага: для текстовых сообщений используем sendMessage, 
+      // так как copyMessage игнорирует параметр caption и копирует исходный текст вместе с "/news"
+      result = await sendMessage(NEWS_CHANNEL, finalContent, extra);
+    }
     channelSent = result.ok === true;
   } catch (error) {
     console.error("Ошибка публикации в канал:", error.message);
   }
 
-  // Рассылаем сообщение пользователям
+  // Рассылка пользователям
   for (const recipientId of users) {
     const recipient = await getUser(recipientId);
-
-    if (recipient.news === false) {
-      continue;
-    }
+    if (recipient.news === false) continue;
 
     try {
-      const result = await copyMessage(
-        recipientId,
-        message.chat.id,
-        message.message_id,
-        extra
-      );
-
-      if (result.ok) {
-        sent++;
+      let result;
+      if (isMedia) {
+        result = await copyMessage(recipientId, message.chat.id, message.message_id, extra);
+      } else {
+        result = await sendMessage(recipientId, finalContent, extra);
       }
+      if (result.ok) sent++;
     } catch (error) {
-      console.error(
-        "Ошибка рассылки пользователю:",
-        error.message
-      );
+      console.error("Ошибка рассылки пользователю:", error.message);
     }
   }
 
-  return {
-    channelSent,
-    sent,
-  };
+  return { channelSent, sent };
 }
-
 
 async function processCommand(message, text) {
   const chatId = message.chat.id;
@@ -530,6 +518,25 @@ async function processCommand(message, text) {
     return sendHelp(chatId);
   }
 
+  if (command === "/stats") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для использования этой команды.");
+    }
+    const users = (await kv.smembers("undercur:users")) || [];
+    let newsEnabled = 0;
+    for (const uId of users) {
+      const user = await getUser(uId);
+      if (user.news !== false) newsEnabled++;
+    }
+    return sendMessage(
+      chatId,
+      `📊 Статистика UnderCur\n\n` +
+      `👥 Всего пользователей: ${users.length}\n` +
+      `🔔 Подписано на новости: ${newsEnabled}\n` +
+      `🔕 Отписано от новостей: ${users.length - newsEnabled}`
+    );
+  }
+
   if (
     command === "/versions" ||
     command === "/versoins"
@@ -537,49 +544,48 @@ async function processCommand(message, text) {
     return versionsMessage(chatId);
   }
 
-if (/^\/news(?:@\w+)?(?:\s|$)/i.test(text)) {
-  if (!isAdmin(userId)) {
+  if (/^\/news(?:@\w+)?(?:\s|$)/i.test(text)) {
+    if (!isAdmin(userId)) {
+      return sendMessage(
+        chatId,
+        "⛔ У вас нет прав для публикации новостей."
+      );
+    }
+
+    const result = await publishNews(message);
+
     return sendMessage(
       chatId,
-      "⛔ У вас нет прав для публикации новостей."
+      "✅ Новость обработана.\n\n" +
+        `📢 Канал: ${
+          result.channelSent
+            ? "опубликовано"
+            : "ошибка публикации"
+        }\n` +
+        `👤 Получателей: ${result.sent}.`
     );
   }
 
-  const result = await publishNews(message);
+  if (command === "/news") {
+    const user = await getUser(userId);
+
+    return sendMessage(
+      chatId,
+      "📰 Новости UnderCur\n\n" +
+        "Здесь будут появляться новости проекта.",
+      {
+        reply_markup: newsKeyboard(user.news !== false),
+      }
+    );
+  }
 
   return sendMessage(
     chatId,
-    "✅ Новость обработана.\n\n" +
-      `📢 Канал: ${
-        result.channelSent
-          ? "опубликовано"
-          : "ошибка публикации"
-      }\n` +
-      `👤 Получателей: ${result.sent}.`
-  );
-}
-
-
-if (command === "/news") {
-  const user = await getUser(userId);
-
-  return sendMessage(
-    chatId,
-    "📰 Новости UnderCur\n\n" +
-      "Здесь будут появляться новости проекта.",
+    "Используйте меню ниже.",
     {
-      reply_markup: newsKeyboard(user.news !== false),
+      reply_markup: mainKeyboard(),
     }
   );
-}
-
-return sendMessage(
-  chatId,
-  "Используйте меню ниже.",
-  {
-    reply_markup: mainKeyboard(),
-  }
-);
 }
 
 async function processCallback(callback) {
@@ -693,8 +699,6 @@ async function processText(message) {
   const userId = message.from.id;
   const chatId = message.chat.id;
 
-  // Для обычного текста используется message.text,
-  // для фото/GIF/видео/голосового — message.caption
   const text = message.text || message.caption || "";
 
   if (text.startsWith("/")) {
@@ -740,7 +744,6 @@ async function processText(message) {
   );
 }
 
-
 module.exports = async function handler(req, res) {
   if (req.method === "GET") {
     return res.status(200).json({
@@ -767,25 +770,24 @@ module.exports = async function handler(req, res) {
     });
   }
 
-try {
-  const update = req.body;
+  try {
+    const update = req.body;
 
-  if (update.callback_query) {
-    await processCallback(update.callback_query);
-  } else if (update.message) {
-    await saveUser(update.message.from.id);
-    await processText(update.message);
+    if (update.callback_query) {
+      await processCallback(update.callback_query);
+    } else if (update.message) {
+      await saveUser(update.message.from.id);
+      await processText(update.message);
+    }
+
+    return res.status(200).json({
+      ok: true,
+    });
+  } catch (error) {
+    console.error("UnderCur handler error:", error);
+
+    return res.status(200).json({
+      ok: false,
+    });
   }
-
-  return res.status(200).json({
-    ok: true,
-  });
-} catch (error) {
-  console.error("UnderCur handler error:", error);
-
-  return res.status(200).json({
-    ok: false,
-  });
-}
-
 };
