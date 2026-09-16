@@ -2043,17 +2043,45 @@ async function resetCodeCommand(chatId, userId, codeName) {
     );
   }
 
-  const count = (code.usedBy || []).length;
+  const oldUsedCount = (code.usedBy || []).length;
+  
+  // Сбрасываем использования в коде
   code.usedBy = [];
   await saveCode(name, code);
   
-  await logAction("code_reset", { userId: String(userId), extra: `${name} (${count})` });
+  // 🔥 НОВОЕ: Очищаем этот код у ВСЕХ пользователей
+  const allUsers = await getAllUsers();
+  let usersCleared = 0;
+  
+  for (const uid of allUsers) {
+    const user = await getUser(uid);
+    if (!user.usedCodes || user.usedCodes.length === 0) continue;
+    
+    // Фильтруем: убираем этот код из списка активаций
+    const beforeLength = user.usedCodes.length;
+    user.usedCodes = user.usedCodes.filter(item => {
+      const itemName = typeof item === "string" ? item : item.name;
+      return itemName.toUpperCase() !== name;
+    });
+    
+    if (user.usedCodes.length < beforeLength) {
+      await saveUser(uid, { usedCodes: user.usedCodes });
+      usersCleared++;
+    }
+  }
+  
+  await logAction("code_reset", { 
+    userId: String(userId), 
+    extra: `${name} (${oldUsedCount} → 0, users: ${usersCleared})` 
+  });
 
   return sendMessage(
     chatId,
     `🔄 <b>Использования сброшены!</b>\n\n` +
       `Код <code>${name}</code> можно активировать снова.\n` +
-      `Сброшено активаций: ${count}`,
+      `📊 Сброшено:\n` +
+      `• Активаций в коде: ${oldUsedCount}\n` +
+      `• Пользователей обновлено: ${usersCleared}`,
     { parse_mode: "HTML" }
   );
 }
