@@ -480,6 +480,30 @@ async function sendDocument(chatId, document, caption = "", extra = {}) {
   });
 }
 
+/**
+ * Отправляет видео
+ */
+async function sendVideo(chatId, video, caption = "", extra = {}) {
+  return telegram("sendVideo", {
+    chat_id: chatId,
+    video,
+    caption,
+    ...extra,
+  });
+}
+
+/**
+ * Отправляет GIF/анимацию
+ */
+async function sendAnimation(chatId, animation, caption = "", extra = {}) {
+  return telegram("sendAnimation", {
+    chat_id: chatId,
+    animation,
+    caption,
+    ...extra,
+  });
+}
+
 // ============================================
 // 5. СИСТЕМА ЛОГИРОВАНИЯ
 // ============================================
@@ -1456,16 +1480,37 @@ async function activateCode(chatId, userId, username, codeName) {
     extra: code.name,
   });
 
-  const rewardText = code.reward || "Награда не указана.";
-  const categoryIcon = CATEGORY_ICONS[code.category] || "";
+const rewardText = code.reward || "Награда не указана.";
+const categoryIcon = CATEGORY_ICONS[code.category] || "";
+const successMessage =
+  `✅ <b>Код успешно активирован!</b>\n\n` +
+  `${categoryIcon} <b>Промокод:</b> <code>${code.name}</code>\n\n` +
+  `<i>Всего твоих активаций: ${user.activations}</i>`;
 
-  const message =
-    `✅ <b>Код успешно активирован!</b>\n\n` +
-    `${categoryIcon} <b>Промокод:</b> <code>${code.name}</code>\n\n` +
-    `🎉 <b>Твоя награда:</b>\n${rewardText}\n\n` +
-    `<i>Всего твоих активаций: ${user.activations}</i>`;
+// Сначала отправляем сообщение об успешной активации
+await sendMessage(chatId, successMessage, { parse_mode: "HTML" });
 
-  return sendMessage(chatId, message, { parse_mode: "HTML" });
+// Затем отправляем награду (медиа или текст)
+if (code.rewardMedia && code.rewardMediaType) {
+  const caption = rewardText ? `🎉 <b>Твоя награда:</b>\n${rewardText}` : "";
+  
+  if (code.rewardMediaType === "photo") {
+    return sendPhoto(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+  } else if (code.rewardMediaType === "video") {
+    return sendVideo(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+  } else if (code.rewardMediaType === "document") {
+    return sendDocument(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+  } else if (code.rewardMediaType === "animation") {
+    return sendAnimation(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+  }
+}
+
+// Если медиа нет, отправляем просто текст
+return sendMessage(
+  chatId,
+  `🎉 <b>Твоя награда:</b>\n${rewardText}`,
+  { parse_mode: "HTML" }
+);
 }
 
 /**
