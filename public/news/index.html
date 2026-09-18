@@ -3408,6 +3408,8 @@ img {
             var container = document.getElementById('chatHistoryList');
             container.innerHTML = '';
 
+            if (!Array.isArray(state.chats)) state.chats = [];
+
             if (state.chats.length === 0) {
                 container.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-tertiary);text-align:center">Нет диалогов</div>';
                 return;
@@ -5067,7 +5069,7 @@ img {
                 '</div>';
 
                 if (needed > 0) {
-                    html += '<div class="converter-result" style="background:var(--warning-soft);color:var(--warning)">Для получения оценки ' + target + ' нужно ещё ' + needed + ' пят' + (needed === 1 ? 'ёрка' : 'ёрок) + '</div>';
+                    html += '<div class="converter-result" style="background:var(--warning-soft);color:var(--warning)">Для получения оценки ' + target + ' нужно ещё ' + needed + ' пят' + (needed === 1 ? 'ёрка' : 'ёрок') + '</div>';
                 } else {
                     html += '<div class="converter-result" style="background:var(--success-soft);color:var(--success)">Вы уже имеете оценку ' + roundedAvg + ' или выше!</div>';
                 }
