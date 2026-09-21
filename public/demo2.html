@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undercur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Обычный режим - просто черный экран */
+        #main-mode {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        /* Режим субтитров */
+        #subtitle-mode {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+        }
+
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 177.77vh;
+            height: 100vh;
+            min-width: 100vw;
+            min-height: 56.25vw;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            border: none;
+        }
+
+        .subtitle-overlay {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+            width: 90%;
+            pointer-events: none;
+        }
+
+        .subtitle-text {
+            font-size: 2em;
+            color: #fff;
+            text-shadow: 
+                2px 2px 4px rgba(0, 0, 0, 1),
+                -1px -1px 2px rgba(0, 0, 0, 1),
+                1px -1px 2px rgba(0, 0, 0, 1),
+                -1px 1px 2px rgba(0, 0, 0, 1),
+                1px 1px 2px rgba(0, 0, 0, 1);
+            font-weight: bold;
+            line-height: 1.6;
+            white-space: pre-line;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .subtitle-text.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .subtitle-text {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Обычный режим - черный экран -->
+    <div id="main-mode"></div>
+
+    <!-- Режим субтитров -->
+    <div id="subtitle-mode">
+        <div class="video-container">
+            <iframe 
+                id="yt-video"
+                src=""
+                allow="autoplay; encrypted-media" 
+                allowfullscreen>
+            </iframe>
+        </div>
+        <div class="subtitle-overlay">
+            <div class="subtitle-text" id="subtitle-text"></div>
+        </div>
+    </div>
+
+    <script>
+        // Проверка URL параметров
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageParam = urlParams.get('p');
+
+        const mainMode = document.getElementById('main-mode');
+        const subtitleMode = document.getElementById('subtitle-mode');
+        const subtitleText = document.getElementById('subtitle-text');
+        const videoFrame = document.getElementById('yt-video');
+
+        if (pageParam === 'sub') {
+            // Режим субтитров
+            mainMode.style.display = 'none';
+            subtitleMode.style.display = 'block';
+            
+            // Загружаем видео с задержкой
+            setTimeout(() => {
+                videoFrame.src = "https://www.youtube.com/embed/FtutLA63Cp8?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=FtutLA63Cp8&disablekb=1&fs=0&iv_load_policy=3&playsinline=1&enablejsapi=1";
+            }, 1000);
+            
+            // Титры в конце
+            const creditsText = `Beta тестеры:
+greenkx
+
+Те кто поддержал проект:
+1. greenkx: 30 Руб.
+2. Влад: 11 Руб.
+3. София: 10 Руб.
+
+Музыка:
+Субтитры: Bad Apple
+Главное меню: C418-subwoofer-lullaby
+Боссы: E1M1 - At Doom's Gate
+
+Разработчик:
+Иван
+
+Если остались вопросы пишите нам
+https://t.me/undercur_bot
+
+Спасибо за игру`;
+
+            // Показываем титры через 3 минуты (180 секунд)
+            setTimeout(() => {
+                subtitleText.textContent = creditsText;
+                subtitleText.classList.add('visible');
+            }, 180000);
+
+        } else {
+            // Обычный режим - черный экран
+            mainMode.style.display = 'block';
+            subtitleMode.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
