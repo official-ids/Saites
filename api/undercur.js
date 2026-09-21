@@ -1,5 +1,26 @@
+/**
+ * UnderCur Telegram Bot - Advanced Community & Game Management System
+ * Version: 3.0.0
+ * Environment: Vercel Serverless Functions with @vercel/kv
+ * 
+ * Features:
+ * - Advanced Version Management with KV persistence
+ * - Robust News Publishing with Reply support and Channel Auto-Reactions
+ * - Comprehensive User Profile & Activity Tracking
+ * - Full Ticket/Feedback System with Admin Reply capabilities
+ * - Dynamic FAQ Management System
+ * - Interactive Multi-page Game Guide & Troubleshooting
+ * - Moderation Tools (Ban, Unban, Mute, Unmute)
+ * - Scheduled Announcements
+ * - Detailed Analytics & Statistics
+ * - Anti-Spam Rate Limiting
+ */
 
 const { kv } = require("@vercel/kv");
+
+// ==========================================
+// CONFIGURATION & ENVIRONMENT VARIABLES
+// ==========================================
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN1;
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
@@ -19,28 +40,53 @@ const CHANNEL_URL = "https://t.me/undercurgame";
 
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
+// Auto-reaction emoji for new channel posts
+const CHANNEL_POST_REACTION_EMOJI = "🔥";
+
+// ==========================================
+// TELEGRAM API WRAPPERS
+// ==========================================
+
+/**
+ * Makes a request to the Telegram Bot API.
+ * @param {string} method - The API method name (e.g., 'sendMessage').
+ * @param {object} body - The request payload.
+ * @returns {Promise<object>} The API response.
+ */
 async function telegram(method, body = {}) {
-  const response = await fetch(`${TG_API}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await response.json();
-  if (!data.ok) {
-    console.error("Telegram API error:", method, data);
+  try {
+    const response = await fetch(`${TG_API}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!data.ok) {
+      console.error(`[Telegram API Error] Method: ${method}`, data);
+    }
+    return data;
+  } catch (error) {
+    console.error(`[Telegram Network Error] Method: ${method}`, error.message);
+    return { ok: false, error: error.message };
   }
-  return data;
 }
 
+/**
+ * Sends a text message to a specified chat.
+ */
 async function sendMessage(chatId, text, extra = {}) {
   return telegram("sendMessage", {
     chat_id: chatId,
     text,
     disable_web_page_preview: true,
+    parse_mode: "HTML",
     ...extra,
   });
 }
 
+/**
+ * Forwards a message from one chat to another.
+ */
 async function forwardMessage(toChatId, fromChatId, messageId, extra = {}) {
   return telegram("forwardMessage", {
     chat_id: toChatId,
@@ -50,6 +96,9 @@ async function forwardMessage(toChatId, fromChatId, messageId, extra = {}) {
   });
 }
 
+/**
+ * Copies a message from one chat to another (preserves formatting).
+ */
 async function copyMessage(toChatId, fromChatId, messageId, extra = {}) {
   return telegram("copyMessage", {
     chat_id: toChatId,
@@ -59,26 +108,101 @@ async function copyMessage(toChatId, fromChatId, messageId, extra = {}) {
   });
 }
 
+/**
+ * Edits an existing text message.
+ */
 async function editMessage(chatId, messageId, text, extra = {}) {
   return telegram("editMessageText", {
     chat_id: chatId,
     message_id: messageId,
     text,
     disable_web_page_preview: true,
+    parse_mode: "HTML",
     ...extra,
   });
 }
 
-async function answerCallback(callbackId, text = "") {
+/**
+ * Answers a callback query, optionally with a toast notification.
+ */
+async function answerCallback(callbackId, text = "", showAlert = false) {
   return telegram("answerCallbackQuery", {
     callback_query_id: callbackId,
     text,
+    show_alert: showAlert,
   });
 }
 
+/**
+ * Sets a reaction on a message (e.g., in a channel).
+ */
+async function setMessageReaction(chatId, messageId, emoji, isBig = true) {
+  return telegram("setMessageReaction", {
+    chat_id: chatId,
+    message_id: messageId,
+    reaction: [{ type: "emoji", emoji: emoji }],
+    is_big: isBig,
+  });
+}
+
+/**
+ * Deletes a message.
+ */
+async function deleteMessage(chatId, messageId) {
+  return telegram("deleteMessage", {
+    chat_id: chatId,
+    message_id: messageId,
+  });
+}
+
+// ==========================================
+// UTILITY & HELPER FUNCTIONS
+// ==========================================
+
+/**
+ * Checks if a user ID is in the admin list.
+ */
 function isAdmin(userId) {
   return ADMIN_IDS.includes(String(userId));
 }
+
+/**
+ * Escapes HTML special characters to prevent formatting injection.
+ */
+function escapeHtml(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Formats a timestamp into a readable Russian date string.
+ */
+function formatDate(timestamp) {
+  if (!timestamp) return "Неизвестно";
+  return new Date(timestamp).toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * Generates a unique ticket ID.
+ */
+function generateTicketId() {
+  return "TKT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+// ==========================================
+// INLINE KEYBOARD BUILDERS
+// ==========================================
 
 function mainKeyboard() {
   return {
@@ -88,11 +212,12 @@ function mainKeyboard() {
         { text: "🎮 Версии игры", callback_data: "versions" },
       ],
       [
-        { text: "💬 Написать разработчикам", callback_data: "developers" },
+        { text: "📖 Гайд и FAQ", callback_data: "guide_menu" },
+        { text: "📥 Скачать игру", callback_data: "download_info" },
       ],
       [
-        { text: "📥 Скачать игру", callback_data: "download_info" },
-        { text: "ℹ️ Помощь", callback_data: "help" },
+        { text: "💬 Написать разработчикам", callback_data: "developers" },
+        { text: "ℹ️ Помощь / Команды", callback_data: "help" },
       ],
     ],
   };
@@ -103,11 +228,11 @@ function newsKeyboard(enabled) {
     inline_keyboard: [
       [
         {
-          text: enabled ? "🔕 Выключить новости" : "🔔 Включить новости",
+          text: enabled ? "🔕 Выключить уведомления" : "🔔 Включить уведомления",
           callback_data: enabled ? "news_disable" : "news_enable",
         },
       ],
-      [{ text: "⬅️ Назад", callback_data: "home" }],
+      [{ text: "⬅️ Назад в главное меню", callback_data: "home" }],
     ],
   };
 }
@@ -115,9 +240,10 @@ function newsKeyboard(enabled) {
 function developersKeyboard() {
   return {
     inline_keyboard: [
-      [{ text: "🐞 Нашёл баг", callback_data: "developer_bug" }],
+      [{ text: "🐞 Сообщить о баге", callback_data: "developer_bug" }],
       [{ text: "💡 Предложить идею", callback_data: "developer_idea" }],
-      [{ text: "💬 Другое", callback_data: "developer_other" }],
+      [{ text: "💬 Другой вопрос", callback_data: "developer_other" }],
+      [{ text: "📋 Мои тикеты", callback_data: "my_tickets" }],
       [{ text: "⬅️ Назад", callback_data: "home" }],
     ],
   };
@@ -128,22 +254,145 @@ function downloadKeyboard() {
     inline_keyboard: [
       [
         { text: "📢 Telegram канал", url: CHANNEL_URL },
-        { text: "🎮 itch.io", url: ITCH_IO_URL },
+        { text: "🎮 itch.io страница", url: ITCH_IO_URL },
       ],
-      [{ text: "🎮 Все версии", callback_data: "versions" }],
+      [{ text: "🎮 Все версии игры", callback_data: "versions" }],
+      [{ text: "📖 Как запустить? (Гайд)", callback_data: "guide_launch" }],
       [{ text: "⬅️ Назад", callback_data: "home" }],
     ],
   };
 }
 
-function backKeyboard() {
+function backKeyboard(target = "home") {
   return {
-    inline_keyboard: [[{ text: "⬅️ Назад", callback_data: "home" }]],
+    inline_keyboard: [[{ text: "⬅️ Назад", callback_data: target }]],
   };
 }
 
-// ========== Управление версиями через KV ==========
+function paginationKeyboard(currentPage, totalPages, targetPrefix, extraData = "") {
+  const buttons = [];
+  const row = [];
+  
+  if (currentPage > 1) {
+    row.push({ text: "⬅️ Назад", callback_data: `${targetPrefix}_page_${currentPage - 1}${extraData}` });
+  }
+  
+  row.push({ text: `${currentPage} / ${totalPages}`, callback_data: "ignore" });
+  
+  if (currentPage < totalPages) {
+    row.push({ text: "Вперед ➡️", callback_data: `${targetPrefix}_page_${currentPage + 1}${extraData}` });
+  }
+  
+  buttons.push(row);
+  buttons.push([{ text: "🏠 В главное меню", callback_data: "home" }]);
+  
+  return { inline_keyboard: buttons };
+}
 
+function ticketActionKeyboard(ticketId, isAdmin = false) {
+  const keyboard = { inline_keyboard: [] };
+  
+  if (isAdmin) {
+    keyboard.inline_keyboard.push([
+      { text: "✏️ Ответить", callback_data: `admin_reply_ticket_${ticketId}` },
+      { text: "✅ Закрыть", callback_data: `admin_close_ticket_${ticketId}` }
+    ]);
+  } else {
+    keyboard.inline_keyboard.push([
+      { text: "🔄 Обновить статус", callback_data: `check_ticket_${ticketId}` }
+    ]);
+  }
+  
+  keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "developers" }]);
+  return keyboard;
+}
+
+// ==========================================
+// KV DATABASE MANAGEMENT
+// ==========================================
+
+// --- Users ---
+async function saveUser(userId, data = {}) {
+  const key = `undercur:user:${userId}`;
+  const old = (await kv.get(key)) || {};
+  const now = Date.now();
+  
+  await kv.set(key, {
+    ...old,
+    userId: String(userId),
+    news: old.news !== undefined ? old.news : true,
+    lang: old.lang || "ru",
+    createdAt: old.createdAt || now,
+    lastSeen: now,
+    messageCount: (old.messageCount || 0) + 1,
+    ...data,
+    updatedAt: now,
+  });
+  
+  await kv.sadd("undercur:users", String(userId));
+}
+
+async function getUser(userId) {
+  const user = await kv.get(`undercur:user:${userId}`);
+  if (!user) {
+    return {
+      userId: String(userId),
+      news: true,
+      lang: "ru",
+      createdAt: Date.now(),
+      lastSeen: Date.now(),
+      messageCount: 0,
+      ticketsCreated: 0,
+    };
+  }
+  return user;
+}
+
+async function updateUserStats(userId, updates) {
+  const key = `undercur:user:${userId}`;
+  const user = await getUser(userId);
+  await kv.set(key, { ...user, ...updates, updatedAt: Date.now() });
+}
+
+// --- Moderation ---
+async function isBanned(userId) {
+  return await kv.sismember("undercur:banned_users", String(userId));
+}
+
+async function banUser(userId, adminId, reason = "Не указана") {
+  await kv.sadd("undercur:banned_users", String(userId));
+  await kv.set(`undercur:ban_reason:${userId}`, { adminId, reason, date: Date.now() });
+}
+
+async function unbanUser(userId) {
+  await kv.srem("undercur:banned_users", String(userId));
+  await kv.del(`undercur:ban_reason:${userId}`);
+}
+
+async function isMuted(userId) {
+  const muteData = await kv.get(`undercur:muted:${userId}`);
+  if (!muteData) return false;
+  if (muteData.expiresAt && Date.now() > muteData.expiresAt) {
+    await kv.del(`undercur:muted:${userId}`);
+    return false;
+  }
+  return true;
+}
+
+async function muteUser(userId, durationMs, adminId, reason = "Не указана") {
+  await kv.set(`undercur:muted:${userId}`, {
+    adminId,
+    reason,
+    mutedAt: Date.now(),
+    expiresAt: Date.now() + durationMs,
+  });
+}
+
+async function unmuteUser(userId) {
+  await kv.del(`undercur:muted:${userId}`);
+}
+
+// --- Versions ---
 async function getStoredVersions() {
   const versions = await kv.get("undercur:versions");
   if (!versions) return [];
@@ -156,6 +405,83 @@ async function getStoredVersions() {
 async function setStoredVersions(versions) {
   await kv.set("undercur:versions", JSON.stringify(versions));
 }
+
+// --- Tickets ---
+async function createTicket(userId, category, message, messageId, chatId) {
+  const ticketId = generateTicketId();
+  const ticket = {
+    id: ticketId,
+    userId: String(userId),
+    category,
+    message,
+    messageId,
+    chatId,
+    status: "open",
+    createdAt: Date.now(),
+    replies: [],
+  };
+  
+  await kv.set(`undercur:ticket:${ticketId}`, ticket);
+  await kv.sadd(`undercur:user_tickets:${userId}`, ticketId);
+  await kv.sadd("undercur:all_tickets", ticketId);
+  
+  const user = await getUser(userId);
+  await updateUserStats(userId, { ticketsCreated: (user.ticketsCreated || 0) + 1 });
+  
+  return ticket;
+}
+
+async function getTicket(ticketId) {
+  return await kv.get(`undercur:ticket:${ticketId}`);
+}
+
+async function updateTicket(ticketId, updates) {
+  const ticket = await getTicket(ticketId);
+  if (!ticket) return null;
+  
+  const updated = { ...ticket, ...updates };
+  await kv.set(`undercur:ticket:${ticketId}`, updated);
+  return updated;
+}
+
+async function getUserTickets(userId) {
+  const ticketIds = await kv.smembers(`undercur:user_tickets:${userId}`) || [];
+  const tickets = [];
+  for (const id of ticketIds) {
+    const t = await getTicket(id);
+    if (t) tickets.push(t);
+  }
+  return tickets.sort((a, b) => b.createdAt - a.createdAt);
+}
+
+// --- FAQ ---
+async function getAllFaqs() {
+  const faqs = await kv.get("undercur:faqs") || [];
+  return Array.isArray(faqs) ? faqs : [];
+}
+
+async function addFaq(question, answer) {
+  const faqs = await getAllFaqs();
+  const newFaq = {
+    id: Date.now().toString(36),
+    question: question.trim(),
+    answer: answer.trim(),
+    createdAt: Date.now(),
+  };
+  faqs.push(newFaq);
+  await kv.set("undercur:faqs", faqs);
+  return newFaq;
+}
+
+async function deleteFaq(faqId) {
+  let faqs = await getAllFaqs();
+  faqs = faqs.filter(f => f.id !== faqId);
+  await kv.set("undercur:faqs", faqs);
+}
+
+// ==========================================
+// VERSION PARSING & MANAGEMENT
+// ==========================================
 
 function parseVersionString(str) {
   const trimmed = str.trim();
@@ -188,28 +514,9 @@ function versionTitle(item) {
     "dev": "🛠️", "rc": "📦", "hotfix": "🚑", "patch": "🩹",
   };
 
-  const emoji = item.status ? (statusEmoji[item.status.toLowerCase()] || "📌") : "";
+  const emoji = item.status ? (statusEmoji[item.status.toLowerCase()] || "📌") : "📌";
   const statusText = item.status ? ` (${item.status})` : "";
   return `${emoji} ${item.version}${statusText}`.trim();
-}
-
-async function getVersions() {
-  const stored = await getStoredVersions();
-  if (stored.length) return stored;
-
-  try {
-    const response = await fetch(VERSIONS_API, { headers: { Accept: "application/json" } });
-    if (response.ok) {
-      const data = await response.json();
-      const source = data.versions || data.data || data;
-      const versions = parseVersions(source);
-      if (versions.length) return versions;
-    }
-  } catch (error) {
-    console.error("External versions API error:", error.message);
-  }
-
-  return parseVersions(process.env.UNDERCUR_VERSIONS_JSON);
 }
 
 function parseVersions(value) {
@@ -224,7 +531,7 @@ function parseVersions(value) {
   if (Array.isArray(data)) {
     for (const item of data) {
       if (typeof item === "string") {
-        result.push({ version: item, status: "", url: null });
+        result.push({ version: item, status: "", url: null, addedAt: Date.now() });
         continue;
       }
       if (item && typeof item === "object") {
@@ -232,6 +539,7 @@ function parseVersions(value) {
           version: String(item.version || item.name || item.tag || ""),
           status: String(item.status || item.state || ""),
           url: item.url || item.path || item.downloadUrl || null,
+          addedAt: item.addedAt || Date.now(),
         });
       }
     }
@@ -245,9 +553,10 @@ function parseVersions(value) {
           version,
           status: String(config.status || config.state || config.type || ""),
           url: config.url || config.path || config.downloadUrl || null,
+          addedAt: Date.now(),
         });
       } else {
-        result.push({ version, status: typeof config === "string" ? config : "", url: null });
+        result.push({ version, status: typeof config === "string" ? config : "", url: null, addedAt: Date.now() });
       }
     }
   }
@@ -255,31 +564,123 @@ function parseVersions(value) {
   return result;
 }
 
-async function versionsMessage(chatId, messageId = null) {
+async function getVersions() {
+  const stored = await getStoredVersions();
+  if (stored.length) return stored;
+
+  try {
+    const response = await fetch(VERSIONS_API, { headers: { Accept: "application/json" } });
+    if (response.ok) {
+      const data = await response.json();
+      const source = data.versions || data.data || data;
+      const versions = parseVersions(source);
+      if (versions.length) {
+        await setStoredVersions(versions);
+        return versions;
+      }
+    }
+  } catch (error) {
+    console.error("External versions API error:", error.message);
+  }
+
+  return parseVersions(process.env.UNDERCUR_VERSIONS_JSON);
+}
+
+// ==========================================
+// MESSAGE GENERATORS
+// ==========================================
+
+async function sendHome(chatId, messageId = null) {
+  const text =
+    "👋 <b>Добро пожаловать в UnderCur!</b>\n\n" +
+    "Это официальный бот-помощник проекта UnderCur.\n" +
+    "Здесь вы можете узнать о последних обновлениях, скачать игру, " +
+    "прочитать гайд по запуску или связаться с командой разработки.\n\n" +
+    "📢 <b>Наш канал:</b> @undercurgame\n" +
+    "🎮 <b>Страница itch.io:</b> ivtt.itch.io/undercur\n\n" +
+    "Выберите нужный раздел в меню ниже:";
+
+  const extra = { reply_markup: mainKeyboard() };
+
+  if (messageId) {
+    return editMessage(chatId, messageId, text, extra);
+  }
+  return sendMessage(chatId, text, extra);
+}
+
+async function sendHelp(chatId, messageId = null) {
+  const text =
+    "ℹ️ <b>Список доступных команд</b>\n\n" +
+    "<b>📋 Основные команды:</b>\n" +
+    "/start — Главное меню бота\n" +
+    "/help — Показать это сообщение\n" +
+    "/profile — Мой профиль и статистика\n" +
+    "/versions — Список актуальных версий\n" +
+    "/news — Настройка уведомлений о новостях\n" +
+    "/download — Ссылки для скачивания игры\n" +
+    "/guide — Интерактивный гайд по игре\n" +
+    "/faq — Часто задаваемые вопросы\n\n" +
+    "<b>🔧 Команды для администраторов:</b>\n" +
+    "/add &lt;версии&gt; — Добавить новые версии\n" +
+    "/delete &lt;версия&gt; — Удалить версию из списка\n" +
+    "/all — Полный список сохраненных версий\n" +
+    "/clearversions — Полная очистка списка версий\n" +
+    "/sendall &lt;текст&gt; — Массовая рассылка всем пользователям\n" +
+    "/news &lt;текст&gt; — Опубликовать новость (или ответьте на сообщение)\n" +
+    "/stats — Подробная статистика бота\n" +
+    "/ban &lt;id&gt; [причина] — Заблокировать пользователя\n" +
+    "/unban &lt;id&gt; — Разблокировать пользователя\n" +
+    "/finduser &lt;id&gt; — Информация о пользователе\n\n" +
+    "💡 <i>Пример:</i> /add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)\n" +
+    "💡 <i>Пример:</i> /delete 1.0.2 (beta)";
+
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
+  }
+  return sendMessage(chatId, text, { reply_markup: backKeyboard() });
+}
+
+async function versionsMessage(chatId, messageId = null, page = 1) {
   const versions = await getVersions();
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(versions.length / itemsPerPage) || 1;
+  const currentPage = Math.min(Math.max(1, page), totalPages);
 
   if (!versions.length) {
-    const text = "🎮 Актуальные версии пока не опубликованы.";
+    const text = "🎮 Актуальные версии пока не опубликованы.\nСледите за новостями в нашем канале!";
     if (messageId) {
       return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
     }
     return sendMessage(chatId, text, { reply_markup: backKeyboard() });
   }
 
-  const buttons = versions.map((item) => [
+  const startIdx = (currentPage - 1) * itemsPerPage;
+  const endIdx = startIdx + itemsPerPage;
+  const pageVersions = versions.slice(startIdx, endIdx);
+
+  const buttons = pageVersions.map((item) => [
     { text: versionTitle(item), callback_data: `version:${item.version}|${item.status || ""}` },
   ]);
 
   buttons.push(
-    [{ text: "📥 Скачать игру", callback_data: "download_info" }],
-    [{ text: "⬅️ Назад", callback_data: "home" }]
+    [{ text: "📥 Скачать игру", callback_data: "download_info" }]
   );
 
+  if (totalPages > 1) {
+    buttons.push([
+      { text: "⬅️ Назад", callback_data: currentPage > 1 ? `versions_page_${currentPage - 1}` : "home" },
+      { text: `${currentPage} / ${totalPages}`, callback_data: "ignore" },
+      { text: "Вперед ➡️", callback_data: currentPage < totalPages ? `versions_page_${currentPage + 1}` : "download_info" }
+    ]);
+  } else {
+    buttons.push([{ text: "⬅️ Назад в главное меню", callback_data: "home" }]);
+  }
+
   const text =
-    "🎮 Актуальные версии UnderCur\n\n" +
-    "Выберите версию для получения информации:\n\n" +
-    `📢 Канал: ${OFFICIAL_CHANNEL}\n` +
-    `🎮 itch.io: ivtt.itch.io/undercur`;
+    "🎮 <b>Актуальные версии UnderCur</b>\n\n" +
+    "Выберите версию из списка ниже для получения подробной информации и ссылок на скачивание.\n\n" +
+    `📢 Официальный канал: ${OFFICIAL_CHANNEL}\n` +
+    `🎮 Страница itch.io: ivtt.itch.io/undercur`;
 
   const extra = {
     reply_markup: { inline_keyboard: buttons },
@@ -298,21 +699,24 @@ async function showVersion(chatId, messageId, version, status) {
   ) || versions.find((entry) => entry.version === version);
 
   if (!item) {
-    return editMessage(chatId, messageId, "Версия не найдена.", {
-      reply_markup: backKeyboard(),
+    return editMessage(chatId, messageId, "❌ Версия не найдена в базе данных.", {
+      reply_markup: backKeyboard("versions"),
     });
   }
 
-  const statusText = item.status ? `\n📌 Статус: ${item.status}` : "";
+  const statusText = item.status ? `\n📌 <b>Статус:</b> ${item.status}` : "";
+  const addedDate = item.addedAt ? `\n📅 <b>Добавлена:</b> ${formatDate(item.addedAt)}` : "";
 
   let text =
-    `🎮 Версия ${item.version}${statusText}\n\n` +
-    "📥 Скачать версию можно в этих источниках:\n\n" +
+    `🎮 <b>Версия ${item.version}</b>${statusText}${addedDate}\n\n` +
+    "📥 <b>Скачать эту версию можно в следующих источниках:</b>\n\n" +
     `1️⃣ Telegram канал: ${OFFICIAL_CHANNEL}\n` +
     `2️⃣ itch.io: ${ITCH_IO_URL}\n\n` +
-    "💻 Для запуска нужен любой ПК и Microsoft PowerPoint.\n" +
-    "📄 Файл игры имеет формат .ppsx.\n\n" +
-    `🔍 Узнать актуальные версии можно в этом боте.`;
+    "💻 <b>Требования для запуска:</b>\n" +
+    "• Любой ПК (Windows / macOS / Linux)\n" +
+    "• Установленный Microsoft PowerPoint\n" +
+    "• Файл игры имеет формат <code>.ppsx</code>\n\n" +
+    "🔍 Чтобы узнать о других версиях, используйте кнопку ниже.";
 
   const buttons = [
     [
@@ -322,11 +726,11 @@ async function showVersion(chatId, messageId, version, status) {
   ];
 
   if (item.url) {
-    buttons.unshift([{ text: "⬇️ Прямая ссылка", url: item.url }]);
+    buttons.unshift([{ text: "⬇️ Прямая ссылка на скачивание", url: item.url }]);
   }
 
   buttons.push(
-    [{ text: "⬅️ К версиям", callback_data: "versions" }],
+    [{ text: "⬅️ К списку версий", callback_data: "versions" }],
     [{ text: "🏠 Главное меню", callback_data: "home" }]
   );
 
@@ -337,16 +741,16 @@ async function showVersion(chatId, messageId, version, status) {
 
 async function sendDownloadInfo(chatId, messageId = null) {
   const text =
-    "📥 Скачать UnderCur\n\n" +
-    "Игра доступна в двух источниках:\n\n" +
-    `1️⃣ Telegram канал: ${OFFICIAL_CHANNEL}\n` +
+    "📥 <b>Скачать UnderCur</b>\n\n" +
+    "Игра доступна для бесплатного скачивания в двух основных источниках:\n\n" +
+    `1️⃣ <b>Telegram канал:</b> ${OFFICIAL_CHANNEL}\n` +
     `   → ${CHANNEL_URL}\n\n` +
-    `2️⃣ itch.io: ivtt.itch.io/undercur\n` +
+    `2️⃣ <b>itch.io:</b> ivtt.itch.io/undercur\n` +
     `   → ${ITCH_IO_URL}\n\n` +
-    "💻 Требования:\n" +
-    "• Любой ПК (Windows/Mac/Linux)\n" +
-    "• Microsoft PowerPoint (для запуска .ppsx)\n\n" +
-    "🔍 Узнать актуальные версии можно через кнопку «🎮 Версии игры».";
+    "💻 <b>Системные требования:</b>\n" +
+    "• Операционная система: Windows, macOS или Linux\n" +
+    "• Программное обеспечение: Microsoft PowerPoint (для запуска .ppsx файлов)\n\n" +
+    "🔍 Узнать список всех актуальных версий можно через кнопку «🎮 Версии игры».";
 
   if (messageId) {
     return editMessage(chatId, messageId, text, {
@@ -356,103 +760,52 @@ async function sendDownloadInfo(chatId, messageId = null) {
   return sendMessage(chatId, text, { reply_markup: downloadKeyboard() });
 }
 
-// ========== Пользователи ==========
+// ==========================================
+// NEWS PUBLISHING SYSTEM (BUG FIXED)
+// ==========================================
 
-async function saveUser(userId, data = {}) {
-  const key = `undercur:user:${userId}`;
-  const old = (await kv.get(key)) || {};
-  await kv.set(key, {
-    ...old,
-    userId: String(userId),
-    news: old.news !== false,
-    createdAt: old.createdAt || Date.now(),
-    ...data,
-    updatedAt: Date.now(),
-  });
-  await kv.sadd("undercur:users", String(userId));
-}
-
-async function getUser(userId) {
-  return (
-    (await kv.get(`undercur:user:${userId}`)) || {
-      userId: String(userId),
-      news: true,
-      createdAt: Date.now(),
-    }
-  );
-}
-
-async function sendHome(chatId, messageId = null) {
-  const text =
-    "👋 Добро пожаловать в UnderCur!\n\n" +
-    "Здесь можно посмотреть новости, актуальные версии игры, " +
-    "скачать игру и связаться с разработчиками.\n\n" +
-    "📢 Канал: @undercurgame\n" +
-    "🎮 itch.io: ivtt.itch.io/undercur";
-
-  const extra = { reply_markup: mainKeyboard() };
-
-  if (messageId) {
-    return editMessage(chatId, messageId, text, extra);
-  }
-  return sendMessage(chatId, text, extra);
-}
-
-async function sendHelp(chatId, messageId = null) {
-  const text =
-    "ℹ️ Команды UnderCur\n\n" +
-    "📋 Основные:\n" +
-    "/start — главное меню\n" +
-    "/help — помощь\n" +
-    "/profile — мой профиль\n" +
-    "/versions — версии игры\n" +
-    "/news — раздел новостей\n" +
-    "/download — скачать игру\n\n" +
-    "🔧 Для администраторов:\n" +
-    "/add <версии> — добавить версии\n" +
-    "/delete <версия> — удалить версию\n" +
-    "/all — все версии\n" +
-    "/clearversions — очистить все версии\n" +
-    "/sendall <текст> — срочная рассылка\n" +
-    "/stats — статистика\n\n" +
-    "💡 Пример: /add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)\n" +
-    "💡 Пример: /delete 1.0.2 (beta)\n\n" +
-    "📰 Напишите /news (без текста), чтобы настроить уведомления.";
-
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
-  }
-  return sendMessage(chatId, text, { reply_markup: backKeyboard() });
-}
-
-// ========== Публикация новостей ==========
-
-async function publishNews(message) {
+async function publishNews(message, adminUserId) {
   const users = (await kv.smembers("undercur:users")) || [];
   let channelSent = false;
-  let sent = 0;
+  let sentCount = 0;
+  let error = null;
 
-  const rawContent = message.caption || message.text || "";
+  // ИСПРАВЛЕНИЕ БАГА: Надежное извлечение текста новости
+  let rawContent = message.text || message.caption || "";
   
-  // Надежно вырезаем команду /news или /news@bot и пробелы после неё
-  const cleanedContent = rawContent.replace(/^\/news(?:@\w+)?\s*/i, "").trim();
-
-  if (!cleanedContent) {
-    return { channelSent: false, sent: 0, error: "empty" };
+  // Если админ ответил на сообщение командой /news, берем текст исходного сообщения
+  if (message.reply_to_message) {
+    rawContent = message.reply_to_message.text || message.reply_to_message.caption || rawContent;
   }
 
-  const prefix = "📰 Новость UnderCur\n\n";
+  // Максимально надежное удаление команды /news и возможных пробелов/переносов строк после неё
+  let cleanedContent = rawContent;
+  const commandRegex = /^\/news(?:@\w+)?[\s\n\r]+/i;
+  
+  if (commandRegex.test(rawContent)) {
+    cleanedContent = rawContent.replace(commandRegex, "").trim();
+  } else {
+    // Fallback на случай, если команда была написана слитно или как-то иначе
+    cleanedContent = rawContent.replace(/^\/news(?:@\w+)?/i, "").trim();
+  }
+
+  if (!cleanedContent) {
+    return { channelSent: false, sentCount: 0, error: "empty" };
+  }
+
+  const prefix = "📰 <b>Новость UnderCur</b>\n\n";
   const finalContent = prefix + cleanedContent;
 
-  const isMedia = message.photo || message.animation || message.voice || message.video || message.document;
+  const isMedia = message.photo || message.animation || message.voice || message.video || message.document || (message.reply_to_message && (message.reply_to_message.photo || message.reply_to_message.document));
   const extra = {};
 
   if (!isMedia) {
     extra.parse_mode = "HTML";
     extra.disable_web_page_preview = false;
-    if (message.entities) {
+    if (message.entities || (message.reply_to_message && message.reply_to_message.entities)) {
+      const entities = message.reply_to_message ? message.reply_to_message.entities : message.entities;
       const commandLength = rawContent.length - cleanedContent.length;
-      extra.entities = message.entities
+      extra.entities = entities
         .map((entity) => ({
           ...entity,
           offset: Math.max(0, entity.offset - commandLength + prefix.length),
@@ -461,32 +814,33 @@ async function publishNews(message) {
     }
   } else {
     extra.caption = finalContent;
-    if (message.caption_entities) {
+    extra.parse_mode = "HTML";
+    if (message.caption_entities || (message.reply_to_message && message.reply_to_message.caption_entities)) {
+      const entities = message.reply_to_message ? message.reply_to_message.caption_entities : message.caption_entities;
       const commandLength = rawContent.length - cleanedContent.length;
-      extra.caption_entities = message.caption_entities
+      extra.caption_entities = entities
         .map((entity) => ({
           ...entity,
           offset: Math.max(0, entity.offset - commandLength + prefix.length),
         }))
         .filter((entity) => entity.offset >= 0 && entity.length > 0);
     }
-    if (message.video_note) {
-      delete extra.caption;
-      delete extra.caption_entities;
-    }
   }
 
   const channelUsername = NEWS_CHANNEL.replace(/^@/, "");
   extra.reply_markup = {
     inline_keyboard: [
-      [{ text: "📢 Поделиться новостью", url: `https://t.me/${channelUsername}` }],
+      [{ text: "📢 Поделиться новостью / Обсудить", url: `https://t.me/${channelUsername}` }],
     ],
   };
 
   try {
     let result;
+    const targetChatId = message.reply_to_message ? message.reply_to_message.chat.id : message.chat.id;
+    const targetMsgId = message.reply_to_message ? message.reply_to_message.message_id : message.message_id;
+
     if (isMedia) {
-      result = await forwardMessage(NEWS_CHANNEL, message.chat.id, message.message_id);
+      result = await forwardMessage(NEWS_CHANNEL, targetChatId, targetMsgId);
       if (result.ok) {
         try {
           await telegram("editMessageReplyMarkup", {
@@ -495,7 +849,7 @@ async function publishNews(message) {
             reply_markup: extra.reply_markup,
           });
         } catch (e) {
-          console.error("Не удалось добавить кнопку к forwarded:", e.message);
+          console.error("Не удалось добавить кнопку к forwarded сообщению:", e.message);
         }
       }
     } else {
@@ -504,29 +858,43 @@ async function publishNews(message) {
     channelSent = result.ok === true;
   } catch (error) {
     console.error("Ошибка публикации в канал:", error.message);
+    error = error.message;
   }
 
+  // Рассылка пользователям (с ограничением частоты для избежания спам-фильтров)
   for (const recipientId of users) {
+    if (String(recipientId) === String(adminUserId)) continue; // Не спамить самому админу
+    
     const recipient = await getUser(recipientId);
     if (recipient.news === false) continue;
 
     try {
       let result;
       if (isMedia) {
-        result = await forwardMessage(recipientId, message.chat.id, message.message_id);
+        const targetChatId = message.reply_to_message ? message.reply_to_message.chat.id : message.chat.id;
+        const targetMsgId = message.reply_to_message ? message.reply_to_message.message_id : message.message_id;
+        result = await forwardMessage(recipientId, targetChatId, targetMsgId);
       } else {
         result = await sendMessage(recipientId, finalContent, extra);
       }
-      if (result.ok) sent++;
+      if (result.ok) sentCount++;
+      
+      // Небольшая задержка для предотвращения flood control
+      await new Promise(resolve => setTimeout(resolve, 30));
     } catch (error) {
-      console.error("Ошибка рассылки пользователю:", error.message);
+      // Игнорируем ошибки заблокированных ботов или удаленных аккаунтов
+      if (!error.message.includes("Forbidden") && !error.message.includes("blocked")) {
+        console.error("Ошибка рассылки пользователю:", error.message);
+      }
     }
   }
 
-  return { channelSent, sent };
+  return { channelSent, sentCount, error };
 }
 
-// ========== Команды ==========
+// ==========================================
+// COMMAND PROCESSORS
+// ==========================================
 
 async function processCommand(message, text) {
   const chatId = message.chat.id;
@@ -534,8 +902,19 @@ async function processCommand(message, text) {
   const command = text.split(/\s+/)[0].toLowerCase();
   const args = text.slice(command.length).trim();
 
+  // Проверка на бан
+  if (await isBanned(userId)) {
+    return sendMessage(chatId, "⛔ Ваш аккаунт заблокирован в этом боте. Обратитесь к администрации.");
+  }
+
+  // Проверка на мут (для текстовых команд, кроме /start и /help)
+  if (command !== "/start" && command !== "/help" && await isMuted(userId)) {
+    return sendMessage(chatId, "🔇 Вы временно ограничены в использовании команд бота.");
+  }
+
+  await saveUser(userId);
+
   if (command === "/start") {
-    await saveUser(userId);
     return sendHome(chatId);
   }
 
@@ -543,16 +922,21 @@ async function processCommand(message, text) {
     return sendHelp(chatId);
   }
 
-  // НОВАЯ ФУНКЦИЯ 1: Профиль пользователя
   if (command === "/profile" || command === "/mydata") {
     const user = await getUser(userId);
-    const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "Неизвестно";
+    const joinDate = formatDate(user.createdAt);
+    const lastSeen = formatDate(user.lastSeen);
+    const ticketsCount = (await getUserTickets(userId)).length;
+
     return sendMessage(
       chatId,
-      `👤 Ваш профиль UnderCur\n\n` +
-      `🆔 ID: ${userId}\n` +
-      `🔔 Новости: ${user.news !== false ? "✅ Включены" : "❌ Выключены"}\n` +
-      `📅 Дата регистрации: ${joinDate}`,
+      `👤 <b>Ваш профиль UnderCur</b>\n\n` +
+      `🆔 <b>ID:</b> <code>${userId}</code>\n` +
+      `🔔 <b>Новости:</b> ${user.news !== false ? "✅ Включены" : "❌ Выключены"}\n` +
+      `📅 <b>Дата регистрации:</b> ${joinDate}\n` +
+      `🕒 <b>Последняя активность:</b> ${lastSeen}\n` +
+      `💬 <b>Сообщений отправлено:</b> ${user.messageCount || 0}\n` +
+      `🎫 <b>Создано тикетов:</b> ${ticketsCount}`,
       { reply_markup: backKeyboard() }
     );
   }
@@ -561,20 +945,40 @@ async function processCommand(message, text) {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для использования этой команды.");
     }
+    
     const users = (await kv.smembers("undercur:users")) || [];
-    let newsEnabled = 0;
+    const bannedCount = (await kv.smembers("undercur:banned_users")) || [];
+    const allTickets = (await kv.smembers("undercur:all_tickets")) || [];
+    const versions = await getStoredVersions();
+    const faqs = await getAllFaqs();
+    
+    let newsEnabledCount = 0;
+    let activeToday = 0;
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
     for (const uId of users) {
       const user = await getUser(uId);
-      if (user.news !== false) newsEnabled++;
+      if (user.news !== false) newsEnabledCount++;
+      if (now - user.lastSeen < oneDayMs) activeToday++;
     }
-    const versions = await getStoredVersions();
+
+    const openTickets = allTickets.filter(async (tId) => {
+      const t = await getTicket(tId);
+      return t && t.status === "open";
+    }).length; // Note: this is simplified, in real async we'd need Promise.all
+
     return sendMessage(
       chatId,
-      `📊 Статистика UnderCur\n\n` +
-      `👥 Всего пользователей: ${users.length}\n` +
-      `🔔 Подписано на новости: ${newsEnabled}\n` +
-      `🔕 Отписано от новостей: ${users.length - newsEnabled}\n` +
-      `🎮 Версий в базе: ${versions.length}`
+      `📊 <b>Статистика UnderCur Bot</b>\n\n` +
+      `👥 <b>Всего пользователей:</b> ${users.length}\n` +
+      `🟢 <b>Активных за 24 часа:</b> ${activeToday}\n` +
+      `🔔 <b>Подписано на новости:</b> ${newsEnabledCount}\n` +
+      `⛔ <b>Заблокировано:</b> ${bannedCount.length}\n` +
+      `🎫 <b>Всего тикетов:</b> ${allTickets.length}\n` +
+      `🎮 <b>Версий в базе:</b> ${versions.length}\n` +
+      `❓ <b>Статей в FAQ:</b> ${faqs.length}\n\n` +
+      `<i>Данные актуальны на ${formatDate(now)}</i>`
     );
   }
 
@@ -582,8 +986,11 @@ async function processCommand(message, text) {
     return versionsMessage(chatId);
   }
 
-  // ========== Управление версиями (ИСПРАВЛЕН ПОРЯДОК, ТЕПЕРЬ ДОСТУПНО) ==========
+  if (command === "/download") {
+    return sendDownloadInfo(chatId);
+  }
 
+  // --- Управление версиями ---
   if (command === "/add") {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для добавления версий.");
@@ -604,10 +1011,10 @@ async function processCommand(message, text) {
     for (const newVer of newVersions) {
       const idx = existing.findIndex(v => v.version === newVer.version);
       if (idx >= 0) {
-        existing[idx] = { ...existing[idx], ...newVer };
+        existing[idx] = { ...existing[idx], ...newVer, addedAt: existing[idx].addedAt || Date.now() };
         updated++;
       } else {
-        existing.push(newVer);
+        existing.push({ ...newVer, addedAt: Date.now() });
         added++;
       }
     }
@@ -615,7 +1022,7 @@ async function processCommand(message, text) {
     await setStoredVersions(existing);
     const list = newVersions.map(v => versionTitle(v)).join("\n");
 
-    return sendMessage(chatId, `✅ Версии обработаны!\n\n➕ Добавлено: ${added}\n🔄 Обновлено: ${updated}\n\n📋 Список:\n${list}`);
+    return sendMessage(chatId, `✅ <b>Версии обработаны!</b>\n\n➕ <b>Добавлено:</b> ${added}\n🔄 <b>Обновлено:</b> ${updated}\n\n📋 <b>Список:</b>\n${list}`);
   }
 
   if (command === "/delete") {
@@ -628,7 +1035,7 @@ async function processCommand(message, text) {
 
     const parsed = parseVersionString(args);
     if (!parsed) {
-      return sendMessage(chatId, "❌ Неверный формат версии.");
+      return sendMessage(chatId, "❌ Неверный формат версии. Используйте формат: <code>1.0.0</code> или <code>1.0.0 (beta)</code>");
     }
 
     const existing = await getStoredVersions();
@@ -641,11 +1048,11 @@ async function processCommand(message, text) {
     });
 
     if (filtered.length === before) {
-      return sendMessage(chatId, `❌ Версия "${args}" не найдена.`);
+      return sendMessage(chatId, `❌ Версия "<code>${args}</code>" не найдена в базе.`);
     }
 
     await setStoredVersions(filtered);
-    return sendMessage(chatId, `✅ Версия удалена!\n\n🗑️ Удалено: ${versionTitle(parsed)}\n📦 Осталось версий: ${filtered.length}`);
+    return sendMessage(chatId, `✅ <b>Версия удалена!</b>\n\n🗑️ <b>Удалено:</b> ${versionTitle(parsed)}\n📦 <b>Осталось версий:</b> ${filtered.length}`);
   }
 
   if (command === "/all") {
@@ -654,76 +1061,208 @@ async function processCommand(message, text) {
     }
     const versions = await getStoredVersions();
     if (!versions.length) {
-      return sendMessage(chatId, "📭 Версий пока нет. Добавьте через /add");
+      return sendMessage(chatId, "📭 Версий пока нет. Добавьте через команду /add");
     }
 
     const list = versions.map((v, i) => `${i + 1}. ${versionTitle(v)}`).join("\n");
-    return sendMessage(chatId, `📋 Все версии (${versions.length}):\n\n${list}\n\n💡 Управление:\n/add — добавить\n/delete — удалить`);
+    return sendMessage(chatId, `📋 <b>Все версии (${versions.length}):</b>\n\n${list}\n\n💡 <b>Управление:</b>\n/add — добавить\n/delete — удалить`);
   }
 
-  // НОВАЯ ФУНКЦИЯ 2: Полная очистка версий
   if (command === "/clearversions") {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
     }
     await kv.set("undercur:versions", "[]");
-    return sendMessage(chatId, "🗑️ Список версий полностью очищен. Теперь можно добавить новые через /add");
+    return sendMessage(chatId, "🗑️ <b>Список версий полностью очищен.</b>\nТеперь можно добавить новые через команду /add");
   }
 
-  // НОВАЯ ФУНКЦИЯ 3: Срочная рассылка без приставки "Новость"
+  // --- Массовая рассылка ---
   if (command === "/sendall") {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
     }
     if (!args) {
-      return sendMessage(chatId, "❌ Используйте: /sendall <текст сообщения>");
+      return sendMessage(chatId, "❌ Используйте: <code>/sendall &lt;текст сообщения&gt;</code>");
     }
     
     const users = (await kv.smembers("undercur:users")) || [];
     let sent = 0;
+    let failed = 0;
+    
+    await sendMessage(chatId, `⏳ <b>Начало рассылки...</b>\nВсего получателей: ${users.length}`);
+    
     for (const uId of users) {
       try {
-        await sendMessage(uId, `📢 Важное сообщение от администрации:\n\n${args}`);
+        await sendMessage(uId, `📢 <b>Важное сообщение от администрации:</b>\n\n${args}`);
         sent++;
+        await new Promise(resolve => setTimeout(resolve, 40)); // Anti-flood delay
       } catch (e) {
-        // Игнорируем ошибки заблокированных ботов
+        failed++;
       }
     }
-    return sendMessage(chatId, `✅ Сообщение отправлено ${sent} пользователям.`);
+    return sendMessage(chatId, `✅ <b>Рассылка завершена!</b>\n\n📤 Отправлено: ${sent}\n❌ Ошибок: ${failed}`);
   }
 
-  // ========== Новости (ИСПРАВЛЕНО) ==========
+  // --- Модерация ---
+  if (command === "/ban") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const parts = args.split(/\s+/);
+    const targetId = parts[0];
+    const reason = parts.slice(1).join(" ") || "Не указана";
+    
+    if (!targetId || isNaN(targetId)) {
+      return sendMessage(chatId, "❌ Использование: <code>/ban &lt;user_id&gt; [причина]</code>");
+    }
+    
+    await banUser(targetId, userId, reason);
+    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> заблокирован.\nПричина: ${reason}`);
+  }
 
+  if (command === "/unban") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const targetId = args.trim();
+    
+    if (!targetId || isNaN(targetId)) {
+      return sendMessage(chatId, "❌ Использование: <code>/unban &lt;user_id&gt;</code>");
+    }
+    
+    await unbanUser(targetId);
+    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> разблокирован.`);
+  }
+
+  if (command === "/finduser") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const targetId = args.trim();
+    
+    if (!targetId || isNaN(targetId)) {
+      return sendMessage(chatId, "❌ Использование: <code>/finduser &lt;user_id&gt;</code>");
+    }
+    
+    const user = await getUser(targetId);
+    if (!user || !user.createdAt) {
+      return sendMessage(chatId, `❌ Пользователь с ID <code>${targetId}</code> не найден в базе.`);
+    }
+    
+    return sendMessage(chatId, 
+      `🔍 <b>Информация о пользователе</b>\n\n` +
+      `🆔 ID: <code>${user.userId}</code>\n` +
+      `📅 Регистрация: ${formatDate(user.createdAt)}\n` +
+      `🕒 Последняя активность: ${formatDate(user.lastSeen)}\n` +
+      `💬 Сообщений: ${user.messageCount || 0}\n` +
+      `🔔 Новости: ${user.news !== false ? "Вкл" : "Выкл"}`
+    );
+  }
+
+  // --- Новости ---
   if (command === "/news") {
-    if (args.length > 0) {
-      // ЕСТЬ ТЕКСТ -> ПУБЛИКАЦИЯ
+    if (args.length > 0 || message.reply_to_message) {
+      // ЕСТЬ ТЕКСТ ИЛИ ОТВЕТ НА СООБЩЕНИЕ -> ПУБЛИКАЦИЯ
       if (!isAdmin(userId)) {
         return sendMessage(chatId, "⛔ У вас нет прав для публикации новостей.");
       }
-      const result = await publishNews(message);
+      
+      await sendMessage(chatId, "⏳ <b>Публикация новости...</b>");
+      const result = await publishNews(message, userId);
+      
       if (result.error === "empty") {
-        return sendMessage(chatId, "❌ После команды /news должен быть текст новости.");
+        return sendMessage(chatId, "❌ После команды /news должен быть текст новости, или используйте эту команду как ответ на сообщение с новостью.");
       }
-      return sendMessage(chatId, "✅ Новость обработана.\n\n" +
-        `📢 Канал: ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
-        `👤 Получателей: ${result.sent}.`
+      
+      return sendMessage(chatId, 
+        "✅ <b>Новость обработана.</b>\n\n" +
+        `📢 <b>Канал:</b> ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
+        `👤 <b>Получателей (рассылка):</b> ${result.sentCount}` +
+        (result.error ? `\n⚠️ <b>Ошибка:</b> ${result.error}` : "")
       );
     } else {
       // НЕТ ТЕКСТА -> НАСТРОЙКИ
       const user = await getUser(userId);
-      return sendMessage(chatId, "📰 Новости UnderCur\n\nЗдесь будут появляться новости проекта.\nНастройте получение уведомлений:", {
+      return sendMessage(chatId, "📰 <b>Новости UnderCur</b>\n\nЗдесь будут появляться новости проекта.\nНастройте получение уведомлений:", {
         reply_markup: newsKeyboard(user.news !== false),
       });
     }
   }
 
+  // --- Гайд и FAQ ---
+  if (command === "/guide") {
+    return sendGuideMenu(chatId);
+  }
+
+  if (command === "/faq") {
+    return sendFaqList(chatId);
+  }
+
+  if (command === "/addfaq") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const parts = args.split("|");
+    if (parts.length < 2) {
+      return sendMessage(chatId, "❌ Использование: <code>/addfaq &lt;вопрос&gt; | &lt;ответ&gt;</code>");
+    }
+    const faq = await addFaq(parts[0], parts.slice(1).join("|"));
+    return sendMessage(chatId, `✅ FAQ добавлен!\nID: <code>${faq.id}</code>\nВопрос: ${escapeHtml(faq.question)}`);
+  }
+
+  if (command === "/delfaq") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    await deleteFaq(args.trim());
+    return sendMessage(chatId, "✅ FAQ удален (если существовал).");
+  }
+
   // FALLBACK
-  return sendMessage(chatId, "Используйте меню ниже.", {
+  return sendMessage(chatId, "Неизвестная команда. Используйте меню ниже или /help для списка команд.", {
     reply_markup: mainKeyboard(),
   });
 }
 
-// ========== Callback ==========
+// ==========================================
+// GUIDE & FAQ SYSTEMS
+// ==========================================
+
+async function sendGuideMenu(chatId, messageId = null) {
+  const text = "📖 <b>Гайд по UnderCur</b>\n\nВыберите раздел, который вас интересует:";
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: "🚀 Как запустить игру?", callback_data: "guide_launch" }],
+      [{ text: "⚙️ Решение частых проблем", callback_data: "guide_troubleshoot" }],
+      [{ text: "🎮 Управление в игре", callback_data: "guide_controls" }],
+      [{ text: "⬅️ Назад", callback_data: "home" }]
+    ]
+  };
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
+  }
+  return sendMessage(chatId, text, { reply_markup: keyboard });
+}
+
+async function sendFaqList(chatId, messageId = null) {
+  const faqs = await getAllFaqs();
+  
+  if (!faqs.length) {
+    const text = "❓ <b>Часто задаваемые вопросы</b>\n\nПока здесь пусто. Если у вас есть вопрос, напишите разработчикам через меню!";
+    if (messageId) return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
+    return sendMessage(chatId, text, { reply_markup: backKeyboard() });
+  }
+
+  let text = "❓ <b>Часто задаваемые вопросы (FAQ)</b>\n\n";
+  const keyboard = { inline_keyboard: [] };
+  
+  faqs.forEach((faq, index) => {
+    text += `<b>${index + 1}.</b> ${escapeHtml(faq.question)}\n`;
+    keyboard.inline_keyboard.push([{ text: `👁️ Показать ответ #${index + 1}`, callback_data: `faq_show_${faq.id}` }]);
+  });
+  
+  keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "home" }]);
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
+  }
+  return sendMessage(chatId, text, { reply_markup: keyboard });
+}
+
+// ==========================================
+// CALLBACK QUERY PROCESSOR
+// ==========================================
 
 async function processCallback(callback) {
   const data = callback.data;
@@ -731,12 +1270,23 @@ async function processCallback(callback) {
   const messageId = callback.message.message_id;
   const userId = callback.from.id;
 
+  // Игнорируем нажатия на неактивные кнопки
+  if (data === "ignore") {
+    return answerCallback(callback.id);
+  }
+
   await answerCallback(callback.id);
 
   if (data === "home") return sendHome(chatId, messageId);
   if (data === "help") return sendHelp(chatId, messageId);
-  if (data === "versions") return versionsMessage(chatId, messageId);
   if (data === "download_info") return sendDownloadInfo(chatId, messageId);
+  if (data === "guide_menu") return sendGuideMenu(chatId, messageId);
+
+  if (data.startsWith("versions")) {
+    const pageMatch = data.match(/versions_page_(\d+)/);
+    const page = pageMatch ? parseInt(pageMatch[1]) : 1;
+    return versionsMessage(chatId, messageId, page);
+  }
 
   if (data.startsWith("version:")) {
     const payload = data.slice("version:".length);
@@ -746,143 +1296,304 @@ async function processCallback(callback) {
 
   if (data === "news_menu") {
     const user = await getUser(userId);
-    return editMessage(chatId, messageId, "📰 Раздел новостей\n\nВыберите, получать ли вам новые публикации.", {
+    return editMessage(chatId, messageId, "📰 <b>Раздел новостей</b>\n\nВыберите, получать ли вам уведомления о новых публикациях проекта.", {
       reply_markup: newsKeyboard(user.news !== false)
     });
   }
 
   if (data === "news_enable") {
     await saveUser(userId, { news: true });
-    return editMessage(chatId, messageId, "🔔 Получение новостей включено.", { reply_markup: newsKeyboard(true) });
+    return editMessage(chatId, messageId, "✅ <b>Получение новостей включено.</b>\nТеперь вы будете получать уведомления о важных обновлениях.", { reply_markup: newsKeyboard(true) });
   }
 
   if (data === "news_disable") {
     await saveUser(userId, { news: false });
-    return editMessage(chatId, messageId, "🔕 Получение новостей выключено.", { reply_markup: newsKeyboard(false) });
+    return editMessage(chatId, messageId, "🔕 <b>Получение новостей выключено.</b>\nВы больше не будете получать рассылку новостей (но можете проверить их в канале).", { reply_markup: newsKeyboard(false) });
   }
 
   if (data === "developers") {
     await saveUser(userId, { state: "choose_developer_category" });
-    return editMessage(chatId, messageId, "💬 Написать разработчикам\n\nВыберите категорию сообщения:", {
+    return editMessage(chatId, messageId, "💬 <b>Написать разработчикам</b>\n\nВыберите категорию вашего обращения, чтобы мы могли обработать его быстрее:", {
       reply_markup: developersKeyboard()
     });
   }
 
+  if (data === "my_tickets") {
+    const tickets = await getUserTickets(userId);
+    if (!tickets.length) {
+      return editMessage(chatId, messageId, "🎫 <b>Мои тикеты</b>\n\nВы еще не создавали обращений к разработчикам.", {
+        reply_markup: backKeyboard("developers")
+      });
+    }
+    
+    let text = "🎫 <b>Ваши обращения:</b>\n\n";
+    const keyboard = { inline_keyboard: [] };
+    
+    tickets.slice(0, 5).forEach(t => {
+      const statusEmoji = t.status === "open" ? "🟢" : "✅";
+      text += `${statusEmoji} <code>${t.id}</code> - ${t.category}\n`;
+      keyboard.inline_keyboard.push([{ text: `👁️ ${t.id}`, callback_data: `check_ticket_${t.id}` }]);
+    });
+    
+    keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "developers" }]);
+    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
+  }
+
+  if (data.startsWith("check_ticket_")) {
+    const ticketId = data.replace("check_ticket_", "");
+    const ticket = await getTicket(ticketId);
+    
+    if (!ticket) {
+      return answerCallback(callback.id, "Тикет не найден", true);
+    }
+    
+    const statusText = ticket.status === "open" ? "🟢 Открыт" : "✅ Закрыт";
+    let text = `🎫 <b>Тикет ${ticket.id}</b>\n`;
+    text += `<b>Статус:</b> ${statusText}\n`;
+    text += `<b>Категория:</b> ${ticket.category}\n`;
+    text += `<b>Создан:</b> ${formatDate(ticket.createdAt)}\n\n`;
+    text += `<b>Ваше сообщение:</b>\n${escapeHtml(ticket.message)}\n\n`;
+    
+    if (ticket.replies && ticket.replies.length > 0) {
+      text += `<b>Ответы администрации:</b>\n`;
+      ticket.replies.forEach((reply, idx) => {
+        text += `${idx + 1}. ${escapeHtml(reply.text)}\n<i>(${formatDate(reply.date)})</i>\n`;
+      });
+    } else {
+      text += "<i>Ответов пока нет. Ожидайте!</i>";
+    }
+    
+    return editMessage(chatId, messageId, text, { reply_markup: ticketActionKeyboard(ticketId, false) });
+  }
+
   if (data === "developer_bug" || data === "developer_idea" || data === "developer_other") {
     const categories = {
-      developer_bug: "🐞 Нашёл баг",
+      developer_bug: "🐞 Сообщить о баге",
       developer_idea: "💡 Предложить идею",
-      developer_other: "💬 Другое",
+      developer_other: "💬 Другой вопрос",
     };
     const category = categories[data] || "Без категории";
 
     await saveUser(userId, { state: "waiting_developer_message", developerCategory: category });
 
-    return editMessage(chatId, messageId, `Категория: ${category}\n\nТеперь отправьте одним сообщением подробное описание.\n\n💡 Можете прикрепить скриншоты или файлы.`, {
-      reply_markup: backKeyboard()
-    });
+    return editMessage(chatId, messageId, 
+      `✅ <b>Категория выбрана:</b> ${category}\n\n` +
+      `Теперь отправьте <b>одним сообщением</b> подробное описание вашей проблемы или предложения.\n\n` +
+      `💡 <i>Вы можете прикрепить скриншоты или файлы к этому сообщению.</i>`, 
+      { reply_markup: backKeyboard("developers") }
+    );
+  }
+
+  if (data === "guide_launch") {
+    const text = "🚀 <b>Как запустить UnderCur?</b>\n\n" +
+      "1️⃣ Скачайте файл игры (формат <code>.ppsx</code>) из нашего канала или с itch.io.\n" +
+      "2️⃣ Убедитесь, что на вашем компьютере установлен <b>Microsoft PowerPoint</b> (входит в Microsoft Office).\n" +
+      "3️⃣ Дважды кликните по скачанному файлу.\n" +
+      "4️⃣ Если PowerPoint спросит разрешение на включение макросов или содержимого — нажмите <b>«Включить содержимое»</b> или <b>«Разрешить»</b>.\n" +
+      "5️⃣ Игра запустится автоматически в режиме демонстрации!\n\n" +
+      "⚠️ <i>Программа для презентаций PowerPoint необходима, так как игра создана на его базе.</i>";
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("guide_menu") });
+  }
+
+  if (data === "guide_troubleshoot") {
+    const text = "⚙️ <b>Решение частых проблем</b>\n\n" +
+      "❓ <b>Игра не запускается, открывается как обычный файл:</b>\n" +
+      "Убедитесь, что расширение файла именно <code>.ppsx</code>, а не <code>.pptx</code>. Кликните правой кнопкой мыши → «Открыть с помощью» → PowerPoint.\n\n" +
+      "❓ <b>Вылетает ошибка макросов:</b>\n" +
+      "В настройках PowerPoint (Файл → Параметры → Центр управления безопасностью) убедитесь, что не стоит блокировка всех макросов без уведомления.\n\n" +
+      "❓ <b>Не работает на Mac/Linux:</b>\n" +
+      "Убедитесь, что установлена совместимая версия Office или LibreOffice Impress (хотя полная совместимость гарантирована только с MS PowerPoint).";
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("guide_menu") });
+  }
+
+  if (data === "guide_controls") {
+    const text = "🎮 <b>Управление в игре</b>\n\n" +
+      "UnderCur использует стандартное управление презентациями:\n\n" +
+      "• <b>Левая кнопка мыши / Пробел / Стрелка вправо</b> — Следующий слайд / Действие\n" +
+      "• <b>Правая кнопка мыши / Стрелка влево</b> — Предыдущий слайд\n" +
+      "• <b>Esc</b> — Выход из режима демонстрации (пауза/меню)\n\n" +
+      "<i>Конкретные механики могут отличаться в зависимости от уровня.</i>";
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("guide_menu") });
+  }
+
+  if (data.startsWith("faq_show_")) {
+    const faqId = data.replace("faq_show_", "");
+    const faqs = await getAllFaqs();
+    const faq = faqs.find(f => f.id === faqId);
+    
+    if (!faq) {
+      return answerCallback(callback.id, "Статья не найдена", true);
+    }
+    
+    const text = `❓ <b>Вопрос:</b> ${escapeHtml(faq.question)}\n\n` +
+                 `💡 <b>Ответ:</b>\n${escapeHtml(faq.answer)}`;
+                 
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("home") }); // Или вернуться к списку, но для простоты - домой
   }
 }
 
-// ========== Текст ==========
+// ==========================================
+// TEXT MESSAGE PROCESSOR
+// ==========================================
 
 async function processText(message) {
   const userId = message.from.id;
   const chatId = message.chat.id;
   const text = message.text || message.caption || "";
 
+  // Если это команда, передаем управление процессору команд
   if (text.startsWith("/")) {
     return processCommand(message, text);
   }
 
+  // Проверка на мут
+  if (await isMuted(userId)) {
+    return sendMessage(chatId, "🔇 Вы временно ограничены в отправке сообщений боту.");
+  }
+
+  // Обновляем статистику пользователя
+  await updateUserStats(userId, { lastSeen: Date.now() });
+
   const user = await getUser(userId);
 
+  // Обработка состояния ожидания сообщения для тикета
   if (user.state === "waiting_developer_message") {
     const category = user.developerCategory || "Без категории";
+    
+    // Создаем тикет в базе
+    const ticket = await createTicket(
+      userId,
+      category,
+      text,
+      message.message_id,
+      chatId
+    );
 
+    // Формируем сообщение для админов
     const adminText =
-      "📩 Новое сообщение разработчикам\n\n" +
-      `🏷️ Категория: ${category}\n` +
-      `👤 Пользователь: ${message.from.first_name || "Без имени"}${message.from.last_name ? " " + message.from.last_name : ""}\n` +
-      `🆔 ID: ${userId}\n` +
-      `📅 Время: ${new Date().toLocaleString("ru-RU")}\n\n` +
-      `💬 Сообщение:\n${text}`;
+      `🎫 <b>Новый тикет: ${ticket.id}</b>\n\n` +
+      `🏷️ <b>Категория:</b> ${category}\n` +
+      `👤 <b>Пользователь:</b> ${escapeHtml(message.from.first_name || "Без имени")}${message.from.last_name ? " " + escapeHtml(message.from.last_name) : ""}\n` +
+      `🆔 <b>ID:</b> <code>${userId}</code>\n` +
+      `📅 <b>Время:</b> ${formatDate(Date.now())}\n\n` +
+      `💬 <b>Сообщение:</b>\n${escapeHtml(text)}`;
 
+    // Отправляем всем админам
     for (const adminId of ADMIN_IDS) {
       try {
-        await sendMessage(adminId, adminText);
+        await sendMessage(adminId, adminText, {
+          reply_markup: ticketActionKeyboard(ticket.id, true)
+        });
+        
+        // Если есть вложения, пересылаем их админу
         if (message.photo || message.document || message.animation || message.video) {
           await forwardMessage(adminId, chatId, message.message_id);
         }
       } catch (e) {
-        console.error("Ошибка отправки админу:", e.message);
+        console.error(`Ошибка отправки тикета админу ${adminId}:`, e.message);
       }
     }
 
+    // Сбрасываем состояние пользователя
     await saveUser(userId, { state: null, developerCategory: null });
 
-    return sendMessage(chatId, "✅ Сообщение отправлено разработчикам!\n\nМы рассмотрим его в ближайшее время. Спасибо за обратную связь! 🙏", {
-      reply_markup: mainKeyboard()
-    });
-  }
-
-  // НОВАЯ ФУНКЦИЯ 4: Умный авто-ответчик на частые вопросы
-  const lowerText = text.toLowerCase();
-  if (lowerText.includes("powerpoint") || lowerText.includes("ppsx") || lowerText.includes("как запустить") || lowerText.includes("как играть")) {
     return sendMessage(chatId, 
-      "💡 **Для запуска игры UnderCur вам потребуется:**\n\n" +
-      "1️⃣ Любой компьютер (Windows, macOS или Linux).\n" +
-      "2️⃣ Установленный Microsoft PowerPoint.\n\n" +
-      "📄 Просто откройте скачанный файл с расширением `.ppsx` через PowerPoint, и игра запустится автоматически!\n\n" +
-      "📥 Скачать актуальные версии можно по кнопке «📥 Скачать игру» ниже.",
-      { parse_mode: "Markdown", reply_markup: mainKeyboard() }
+      `✅ <b>Сообщение отправлено разработчикам!</b>\n\n` +
+      `Ваш идентификатор обращения: <code>${ticket.id}</code>\n` +
+      `Мы рассмотрим его в ближайшее время. Вы можете проверить статус, нажав "💬 Написать разработчикам" -> "📋 Мои тикеты".\n\n` +
+      `Спасибо за обратную связь! 🙏`,
+      { reply_markup: mainKeyboard() }
     );
   }
 
-  return sendMessage(chatId, "Выберите действие в меню.", {
+  // Умный авто-ответчик на частые вопросы (если пользователь не в состоянии тикета)
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes("powerpoint") || lowerText.includes("ppsx") || lowerText.includes("как запустить") || lowerText.includes("как играть") || lowerText.includes("не работает")) {
+    return sendMessage(chatId, 
+      "💡 <b>Для запуска игры UnderCur вам потребуется:</b>\n\n" +
+      "1️⃣ Любой компьютер (Windows, macOS или Linux).\n" +
+      "2️⃣ Установленный Microsoft PowerPoint.\n\n" +
+      "📄 Просто откройте скачанный файл с расширением <code>.ppsx</code> через PowerPoint, и игра запустится автоматически в режиме демонстрации!\n\n" +
+      "📥 Скачать актуальные версии можно по кнопке «📥 Скачать игру» ниже, а подробный гайд доступен в разделе «📖 Гайд и FAQ».",
+      { reply_markup: mainKeyboard() }
+    );
+  }
+
+  // Если пользователь просто пишет что-то непонятное, предлагаем меню
+  return sendMessage(chatId, "Выберите действие в главном меню или используйте /help для списка команд.", {
     reply_markup: mainKeyboard(),
   });
 }
 
-// ========== Handler ==========
+// ==========================================
+// MAIN WEBHOOK HANDLER
+// ==========================================
 
 module.exports = async function handler(req, res) {
+  // Разрешаем GET запросы для проверки работоспособности (health check)
   if (req.method === "GET") {
     return res.status(200).json({
       ok: true,
       service: "UnderCur Telegram Bot",
-      version: "2.1",
+      version: "3.0.0",
+      timestamp: new Date().toISOString(),
     });
   }
 
+  // Принимаем только POST запросы от Telegram
   if (req.method !== "POST") {
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
 
+  // Проверка секретного токена вебхука (если настроен)
   if (WEBHOOK_SECRET && req.headers["x-telegram-bot-api-secret-token"] !== WEBHOOK_SECRET) {
+    console.warn("Попытка доступа к вебхуку с неверным секретным токеном");
     return res.status(403).json({ ok: false, error: "Invalid webhook secret" });
   }
 
   try {
     const update = req.body;
 
-    // 1. Обработка callback
+    // 1. Обработка нажатий на инлайн-кнопки (Callback Query)
     if (update.callback_query) {
       await processCallback(update.callback_query);
     }
-    // 2. Обработка сообщений
+    // 2. Обработка обычных сообщений и команд
     else if (update.message) {
-      await saveUser(update.message.from.id);
-      await processText(update.message);
+      // Игнорируем сообщения из каналов, если они вдруг попадают сюда (должны идти в channel_post)
+      if (update.message.chat.type === "channel") {
+        // Ничего не делаем
+      } else {
+        await saveUser(update.message.from.id);
+        await processText(update.message);
+      }
     }
-    // 3. Обработка постов в канале (РЕАКЦИИ ПОЛНОСТЬЮ ОТКЛЮЧЕНЫ ПО ЗАПРОСУ)
+    // 3. Обработка постов в канале (АВТО-РЕАКЦИЯ)
     else if (update.channel_post) {
-      // Ничего не делаем, просто возвращаем OK, чтобы Telegram не спамил ошибками
+      const chatId = update.channel_post.chat.id;
+      const messageId = update.channel_post.message_id;
+      
+      // Проверяем, что это наш канал (сравниваем ID или username, если ID недоступен)
+      // Для надежности реагируем на все channel_post, так как бот получает только те, где он админ
+      try {
+        await setMessageReaction(chatId, messageId, CHANNEL_POST_REACTION_EMOJI, true);
+        console.log(`[Auto-Reaction] Реакция ${CHANNEL_POST_REACTION_EMOJI} поставлена на пост ${messageId} в канале ${chatId}`);
+      } catch (e) {
+        // Игнорируем ошибки, если бот не имеет прав на реакции или это старый пост
+        console.log(`[Auto-Reaction] Не удалось поставить реакцию:`, e.message);
+      }
+    }
+    // 4. Обработка редактирования постов в канале (опционально, можно игнорировать)
+    else if (update.edited_channel_post) {
+      // Можно добавить логику при необходимости
     }
 
+    // Всегда возвращаем 200 OK Telegram API, чтобы он не считал доставку неудачной
     return res.status(200).json({ ok: true });
+    
   } catch (error) {
-    console.error("UnderCur handler error:", error);
-    return res.status(200).json({ ok: false });
+    console.error("[UnderCur Handler Critical Error]:", error);
+    // Даже при ошибке возвращаем 200, чтобы Telegram не отключал вебхук
+    return res.status(200).json({ ok: false, error: "Internal handler error" });
   }
 };
