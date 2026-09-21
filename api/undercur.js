@@ -71,6 +71,15 @@ async function answerCallback(callbackId, text = "") {
   });
 }
 
+async function setMessageReaction(chatId, messageId, emoji = "👍") {
+  return telegram("setMessageReaction", {
+    chat_id: chatId,
+    message_id: messageId,
+    reaction: [{ type: "emoji", emoji: emoji }],
+    is_big: false, // Поставь true, если хочешь большую анимированную реакцию
+  });
+}
+
 function isAdmin(userId) {
   return ADMIN_IDS.includes(String(userId));
 }
@@ -761,8 +770,7 @@ module.exports = async function handler(req, res) {
 
   if (
     WEBHOOK_SECRET &&
-    req.headers["x-telegram-bot-api-secret-token"] !==
-      WEBHOOK_SECRET
+    req.headers["x-telegram-bot-api-secret-token"] !== WEBHOOK_SECRET
   ) {
     return res.status(403).json({
       ok: false,
@@ -773,11 +781,25 @@ module.exports = async function handler(req, res) {
   try {
     const update = req.body;
 
+    // 1. Обработка нажатий на кнопки
     if (update.callback_query) {
       await processCallback(update.callback_query);
-    } else if (update.message) {
+    } 
+    // 2. Обработка обычных сообщений от пользователей
+    else if (update.message) {
       await saveUser(update.message.from.id);
       await processText(update.message);
+    } 
+    // 3. НОВОЕ: Обработка ЛЮБОГО нового поста в канале
+    else if (update.channel_post) {
+      const post = update.channel_post;
+      
+      // Проверяем, что пост именно в нашем канале (сравниваем username без @)
+      const targetChannel = NEWS_CHANNEL.replace(/^@/, '');
+      if (post.chat.username === targetChannel) {
+        // Ставим реакцию 👍 на новый пост
+        await setMessageReaction(post.chat.id, post.message_id, "👍");
+      }
     }
 
     return res.status(200).json({
