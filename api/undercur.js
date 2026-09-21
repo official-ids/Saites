@@ -1,3 +1,4 @@
+
 const { kv } = require("@vercel/kv");
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN1;
@@ -17,17 +18,6 @@ const ITCH_IO_URL = "https://ivtt.itch.io/undercur";
 const CHANNEL_URL = "https://t.me/undercurgame";
 
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
-
-// Доступные реакции (все кроме отрицательных)
-const AVAILABLE_REACTIONS = [
-  "👍", "🔥", "❤️", "🎉", "💯", "🤩", "😍", "🥰",
-  "😎", "🙌", "💪", "✨", "🌟", "⭐", "🚀", "💎",
-  "🎮", "🎯", "🏆", "👏", "🤝", "💫", "🌈", "🦄",
-  "🐱", "🐶", "🦊", "🐻", "🐼", "🐨", "🦁", "🐸",
-  "🍕", "🍔", "🍟", "🌮", "🍩", "🎂", "🍰", "☕",
-  "🎵", "🎶", "🎸", "🎹", "🥁", "🎺", "🎻", "🎤",
-  "💡", "💭", "🔔", "📢", "📣", "📯", "🎪", "🎨"
-];
 
 async function telegram(method, body = {}) {
   const response = await fetch(`${TG_API}/${method}`, {
@@ -86,32 +76,8 @@ async function answerCallback(callbackId, text = "") {
   });
 }
 
-async function setMessageReaction(chatId, messageId, emoji = "👍") {
-  return telegram("setMessageReaction", {
-    chat_id: chatId,
-    message_id: messageId,
-    reaction: [{ type: "emoji", emoji }],
-    is_big: false,
-  });
-}
-
-async function setMultipleReactions(chatId, messageId, emojis = []) {
-  if (!emojis.length) return;
-  return telegram("setMessageReaction", {
-    chat_id: chatId,
-    message_id: messageId,
-    reaction: emojis.map(e => ({ type: "emoji", emoji: e })),
-    is_big: false,
-  });
-}
-
 function isAdmin(userId) {
   return ADMIN_IDS.includes(String(userId));
-}
-
-function getRandomReactions(count = 2) {
-  const shuffled = [...AVAILABLE_REACTIONS].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
 }
 
 function mainKeyboard() {
@@ -195,7 +161,6 @@ function parseVersionString(str) {
   const trimmed = str.trim();
   if (!trimmed) return null;
 
-  // Формат: "1.0.1 (beta)" или "1.0.1 beta" или просто "1.0.1"
   const match = trimmed.match(/^([\d][\d\w.\-]*)\s*(?:\(([^)]+)\)|(\S+))?$/);
   if (!match) return null;
 
@@ -206,7 +171,6 @@ function parseVersionString(str) {
 }
 
 function parseMultipleVersions(input) {
-  // Поддерживаем разделители: запятая, новая строка, точка с запятой
   const parts = input.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
   const results = [];
 
@@ -220,14 +184,8 @@ function parseMultipleVersions(input) {
 
 function versionTitle(item) {
   const statusEmoji = {
-    "beta": "🧪",
-    "fix": "🔧",
-    "stable": "✅",
-    "alpha": "🔬",
-    "dev": "🛠️",
-    "rc": "📦",
-    "hotfix": "🚑",
-    "patch": "🩹",
+    "beta": "🧪", "fix": "🔧", "stable": "✅", "alpha": "🔬",
+    "dev": "🛠️", "rc": "📦", "hotfix": "🚑", "patch": "🩹",
   };
 
   const emoji = item.status ? (statusEmoji[item.status.toLowerCase()] || "📌") : "";
@@ -236,11 +194,9 @@ function versionTitle(item) {
 }
 
 async function getVersions() {
-  // Сначала пробуем KV
   const stored = await getStoredVersions();
   if (stored.length) return stored;
 
-  // Затем внешний API
   try {
     const response = await fetch(VERSIONS_API, { headers: { Accept: "application/json" } });
     if (response.ok) {
@@ -253,7 +209,6 @@ async function getVersions() {
     console.error("External versions API error:", error.message);
   }
 
-  // Затем env
   return parseVersions(process.env.UNDERCUR_VERSIONS_JSON);
 }
 
@@ -410,6 +365,7 @@ async function saveUser(userId, data = {}) {
     ...old,
     userId: String(userId),
     news: old.news !== false,
+    createdAt: old.createdAt || Date.now(),
     ...data,
     updatedAt: Date.now(),
   });
@@ -421,6 +377,7 @@ async function getUser(userId) {
     (await kv.get(`undercur:user:${userId}`)) || {
       userId: String(userId),
       news: true,
+      createdAt: Date.now(),
     }
   );
 }
@@ -447,6 +404,7 @@ async function sendHelp(chatId, messageId = null) {
     "📋 Основные:\n" +
     "/start — главное меню\n" +
     "/help — помощь\n" +
+    "/profile — мой профиль\n" +
     "/versions — версии игры\n" +
     "/news — раздел новостей\n" +
     "/download — скачать игру\n\n" +
@@ -454,10 +412,12 @@ async function sendHelp(chatId, messageId = null) {
     "/add <версии> — добавить версии\n" +
     "/delete <версия> — удалить версию\n" +
     "/all — все версии\n" +
+    "/clearversions — очистить все версии\n" +
+    "/sendall <текст> — срочная рассылка\n" +
     "/stats — статистика\n\n" +
     "💡 Пример: /add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)\n" +
     "💡 Пример: /delete 1.0.2 (beta)\n\n" +
-    "📰 Новости можно включить или выключить в разделе «Новости».";
+    "📰 Напишите /news (без текста), чтобы настроить уведомления.";
 
   if (messageId) {
     return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
@@ -473,45 +433,46 @@ async function publishNews(message) {
   let sent = 0;
 
   const rawContent = message.caption || message.text || "";
-  const commandMatch = rawContent.match(/^\/news(?:@\w+)?\s*/i);
-  const commandLength = commandMatch ? commandMatch[0].length : 0;
+  
+  // Надежно вырезаем команду /news или /news@bot и пробелы после неё
+  const cleanedContent = rawContent.replace(/^\/news(?:@\w+)?\s*/i, "").trim();
+
+  if (!cleanedContent) {
+    return { channelSent: false, sent: 0, error: "empty" };
+  }
 
   const prefix = "📰 Новость UnderCur\n\n";
-  const cleanedContent = rawContent.slice(commandLength).trim();
   const finalContent = prefix + cleanedContent;
 
   const isMedia = message.photo || message.animation || message.voice || message.video || message.document;
-
   const extra = {};
 
   if (!isMedia) {
     extra.parse_mode = "HTML";
     extra.disable_web_page_preview = false;
-  }
-
-  if (isMedia) {
-    extra.caption = finalContent;
-    const entities = message.caption_entities || message.entities;
-    if (entities) {
-      extra.caption_entities = entities
-        .map((entity) => ({
-          ...entity,
-          offset: Math.max(0, entity.offset - commandLength + prefix.length),
-        }))
-        .filter((entity) => entity.length > 0);
-    }
-    if (message.video_note) {
-      delete extra.caption;
-      delete extra.caption_entities;
-    }
-  } else {
     if (message.entities) {
+      const commandLength = rawContent.length - cleanedContent.length;
       extra.entities = message.entities
         .map((entity) => ({
           ...entity,
           offset: Math.max(0, entity.offset - commandLength + prefix.length),
         }))
-        .filter((entity) => entity.length > 0);
+        .filter((entity) => entity.offset >= 0 && entity.length > 0);
+    }
+  } else {
+    extra.caption = finalContent;
+    if (message.caption_entities) {
+      const commandLength = rawContent.length - cleanedContent.length;
+      extra.caption_entities = message.caption_entities
+        .map((entity) => ({
+          ...entity,
+          offset: Math.max(0, entity.offset - commandLength + prefix.length),
+        }))
+        .filter((entity) => entity.offset >= 0 && entity.length > 0);
+    }
+    if (message.video_note) {
+      delete extra.caption;
+      delete extra.caption_entities;
     }
   }
 
@@ -522,14 +483,11 @@ async function publishNews(message) {
     ],
   };
 
-  // Публикация в канал — используем forwardMessage для сохранения премиум-эмоджи
   try {
     let result;
     if (isMedia) {
-      // Для медиа используем forwardMessage чтобы сохранить премиум-эмоджи
       result = await forwardMessage(NEWS_CHANNEL, message.chat.id, message.message_id);
       if (result.ok) {
-        // Если нужно добавить кнопку — редактируем сообщение
         try {
           await telegram("editMessageReplyMarkup", {
             chat_id: NEWS_CHANNEL,
@@ -548,7 +506,6 @@ async function publishNews(message) {
     console.error("Ошибка публикации в канал:", error.message);
   }
 
-  // Рассылка пользователям — используем forwardMessage для сохранения премиум-эмоджи
   for (const recipientId of users) {
     const recipient = await getUser(recipientId);
     if (recipient.news === false) continue;
@@ -556,7 +513,6 @@ async function publishNews(message) {
     try {
       let result;
       if (isMedia) {
-        // Используем forwardMessage для сохранения премиум-эмоджи
         result = await forwardMessage(recipientId, message.chat.id, message.message_id);
       } else {
         result = await sendMessage(recipientId, finalContent, extra);
@@ -587,8 +543,18 @@ async function processCommand(message, text) {
     return sendHelp(chatId);
   }
 
-  if (command === "/download") {
-    return sendDownloadInfo(chatId);
+  // НОВАЯ ФУНКЦИЯ 1: Профиль пользователя
+  if (command === "/profile" || command === "/mydata") {
+    const user = await getUser(userId);
+    const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString("ru-RU") : "Неизвестно";
+    return sendMessage(
+      chatId,
+      `👤 Ваш профиль UnderCur\n\n` +
+      `🆔 ID: ${userId}\n` +
+      `🔔 Новости: ${user.news !== false ? "✅ Включены" : "❌ Выключены"}\n` +
+      `📅 Дата регистрации: ${joinDate}`,
+      { reply_markup: backKeyboard() }
+    );
   }
 
   if (command === "/stats") {
@@ -608,8 +574,7 @@ async function processCommand(message, text) {
       `👥 Всего пользователей: ${users.length}\n` +
       `🔔 Подписано на новости: ${newsEnabled}\n` +
       `🔕 Отписано от новостей: ${users.length - newsEnabled}\n` +
-      `🎮 Версий в базе: ${versions.length}\n` +
-      `📅 Дата: ${new Date().toLocaleDateString("ru-RU")}`
+      `🎮 Версий в базе: ${versions.length}`
     );
   }
 
@@ -617,35 +582,19 @@ async function processCommand(message, text) {
     return versionsMessage(chatId);
   }
 
-  // ========== Управление версиями ==========
+  // ========== Управление версиями (ИСПРАВЛЕН ПОРЯДОК, ТЕПЕРЬ ДОСТУПНО) ==========
 
   if (command === "/add") {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для добавления версий.");
     }
-
     if (!args) {
-      return sendMessage(
-        chatId,
-        "❌ Укажите версии для добавления.\n\n" +
-        "💡 Примеры:\n" +
-        "`/add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)`\n" +
-        "`/add 2.0.0 (stable)`\n" +
-        "`/add 1.5.0 (alpha)`",
-        { parse_mode: "Markdown" }
-      );
+      return sendMessage(chatId, "❌ Укажите версии для добавления.\n\n💡 Пример: `/add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)`", { parse_mode: "Markdown" });
     }
 
     const newVersions = parseMultipleVersions(args);
-
     if (!newVersions.length) {
-      return sendMessage(
-        chatId,
-        "❌ Не удалось распознать ни одной версии.\n\n" +
-        "💡 Формат: номер версии и статус в скобках\n" +
-        "Пример: `1.0.1, 1.0.2 (beta), 1.0.3 (fix)`",
-        { parse_mode: "Markdown" }
-      );
+      return sendMessage(chatId, "❌ Не удалось распознать ни одной версии.\n\n💡 Пример: `1.0.1, 1.0.2 (beta)`", { parse_mode: "Markdown" });
     }
 
     const existing = await getStoredVersions();
@@ -664,32 +613,17 @@ async function processCommand(message, text) {
     }
 
     await setStoredVersions(existing);
-
     const list = newVersions.map(v => versionTitle(v)).join("\n");
 
-    return sendMessage(
-      chatId,
-      `✅ Версии обработаны!\n\n` +
-      `➕ Добавлено: ${added}\n` +
-      `🔄 Обновлено: ${updated}\n\n` +
-      `📋 Список:\n${list}`
-    );
+    return sendMessage(chatId, `✅ Версии обработаны!\n\n➕ Добавлено: ${added}\n🔄 Обновлено: ${updated}\n\n📋 Список:\n${list}`);
   }
 
   if (command === "/delete") {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для удаления версий.");
     }
-
     if (!args) {
-      return sendMessage(
-        chatId,
-        "❌ Укажите версию для удаления.\n\n" +
-        "💡 Примеры:\n" +
-        "`/delete 1.0.1`\n" +
-        "`/delete 1.0.2 (beta)`",
-        { parse_mode: "Markdown" }
-      );
+      return sendMessage(chatId, "❌ Укажите версию для удаления.\n\n💡 Пример: `/delete 1.0.2 (beta)`", { parse_mode: "Markdown" });
     }
 
     const parsed = parseVersionString(args);
@@ -711,67 +645,79 @@ async function processCommand(message, text) {
     }
 
     await setStoredVersions(filtered);
-
-    return sendMessage(
-      chatId,
-      `✅ Версия удалена!\n\n` +
-      `🗑️ Удалено: ${versionTitle(parsed)}\n` +
-      `📦 Осталось версий: ${filtered.length}`
-    );
+    return sendMessage(chatId, `✅ Версия удалена!\n\n🗑️ Удалено: ${versionTitle(parsed)}\n📦 Осталось версий: ${filtered.length}`);
   }
 
   if (command === "/all") {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ У вас нет прав для просмотра всех версий.");
     }
-
     const versions = await getStoredVersions();
-
     if (!versions.length) {
       return sendMessage(chatId, "📭 Версий пока нет. Добавьте через /add");
     }
 
-    const list = versions
-      .map((v, i) => `${i + 1}. ${versionTitle(v)}`)
-      .join("\n");
-
-    const text =
-      `📋 Все версии (${versions.length}):\n\n${list}\n\n` +
-      `💡 Управление:\n` +
-      `/add — добавить\n` +
-      `/delete — удалить`;
-
-    return sendMessage(chatId, text);
+    const list = versions.map((v, i) => `${i + 1}. ${versionTitle(v)}`).join("\n");
+    return sendMessage(chatId, `📋 Все версии (${versions.length}):\n\n${list}\n\n💡 Управление:\n/add — добавить\n/delete — удалить`);
   }
 
-  // ========== Новости ==========
-
-  if (/^\/news(?:@\w+)?(?:\s|$)/i.test(text)) {
+  // НОВАЯ ФУНКЦИЯ 2: Полная очистка версий
+  if (command === "/clearversions") {
     if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для публикации новостей.");
+      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
     }
-
-    const result = await publishNews(message);
-
-    return sendMessage(
-      chatId,
-      "✅ Новость обработана.\n\n" +
-      `📢 Канал: ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
-      `👤 Получателей: ${result.sent}.`
-    );
+    await kv.set("undercur:versions", "[]");
+    return sendMessage(chatId, "🗑️ Список версий полностью очищен. Теперь можно добавить новые через /add");
   }
+
+  // НОВАЯ ФУНКЦИЯ 3: Срочная рассылка без приставки "Новость"
+  if (command === "/sendall") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
+    }
+    if (!args) {
+      return sendMessage(chatId, "❌ Используйте: /sendall <текст сообщения>");
+    }
+    
+    const users = (await kv.smembers("undercur:users")) || [];
+    let sent = 0;
+    for (const uId of users) {
+      try {
+        await sendMessage(uId, `📢 Важное сообщение от администрации:\n\n${args}`);
+        sent++;
+      } catch (e) {
+        // Игнорируем ошибки заблокированных ботов
+      }
+    }
+    return sendMessage(chatId, `✅ Сообщение отправлено ${sent} пользователям.`);
+  }
+
+  // ========== Новости (ИСПРАВЛЕНО) ==========
 
   if (command === "/news") {
-    const user = await getUser(userId);
-    return sendMessage(
-      chatId,
-      "📰 Новости UnderCur\n\n" +
-      "Здесь будут появляться новости проекта.\n" +
-      "Настройте получение уведомлений:",
-      { reply_markup: newsKeyboard(user.news !== false) }
-    );
+    if (args.length > 0) {
+      // ЕСТЬ ТЕКСТ -> ПУБЛИКАЦИЯ
+      if (!isAdmin(userId)) {
+        return sendMessage(chatId, "⛔ У вас нет прав для публикации новостей.");
+      }
+      const result = await publishNews(message);
+      if (result.error === "empty") {
+        return sendMessage(chatId, "❌ После команды /news должен быть текст новости.");
+      }
+      return sendMessage(chatId, "✅ Новость обработана.\n\n" +
+        `📢 Канал: ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
+        `👤 Получателей: ${result.sent}.`
+      );
+    } else {
+      // НЕТ ТЕКСТА -> НАСТРОЙКИ
+      const user = await getUser(userId);
+      return sendMessage(chatId, "📰 Новости UnderCur\n\nЗдесь будут появляться новости проекта.\nНастройте получение уведомлений:", {
+        reply_markup: newsKeyboard(user.news !== false),
+      });
+    }
   }
 
+  // FALLBACK
   return sendMessage(chatId, "Используйте меню ниже.", {
     reply_markup: mainKeyboard(),
   });
@@ -800,34 +746,26 @@ async function processCallback(callback) {
 
   if (data === "news_menu") {
     const user = await getUser(userId);
-    return editMessage(
-      chatId, messageId,
-      "📰 Раздел новостей\n\nВыберите, получать ли вам новые публикации.",
-      { reply_markup: newsKeyboard(user.news !== false) }
-    );
+    return editMessage(chatId, messageId, "📰 Раздел новостей\n\nВыберите, получать ли вам новые публикации.", {
+      reply_markup: newsKeyboard(user.news !== false)
+    });
   }
 
   if (data === "news_enable") {
     await saveUser(userId, { news: true });
-    return editMessage(chatId, messageId, "🔔 Получение новостей включено.", {
-      reply_markup: newsKeyboard(true),
-    });
+    return editMessage(chatId, messageId, "🔔 Получение новостей включено.", { reply_markup: newsKeyboard(true) });
   }
 
   if (data === "news_disable") {
     await saveUser(userId, { news: false });
-    return editMessage(chatId, messageId, "🔕 Получение новостей выключено.", {
-      reply_markup: newsKeyboard(false),
-    });
+    return editMessage(chatId, messageId, "🔕 Получение новостей выключено.", { reply_markup: newsKeyboard(false) });
   }
 
   if (data === "developers") {
     await saveUser(userId, { state: "choose_developer_category" });
-    return editMessage(
-      chatId, messageId,
-      "💬 Написать разработчикам\n\nВыберите категорию сообщения:",
-      { reply_markup: developersKeyboard() }
-    );
+    return editMessage(chatId, messageId, "💬 Написать разработчикам\n\nВыберите категорию сообщения:", {
+      reply_markup: developersKeyboard()
+    });
   }
 
   if (data === "developer_bug" || data === "developer_idea" || data === "developer_other") {
@@ -838,17 +776,11 @@ async function processCallback(callback) {
     };
     const category = categories[data] || "Без категории";
 
-    await saveUser(userId, {
-      state: "waiting_developer_message",
-      developerCategory: category,
-    });
+    await saveUser(userId, { state: "waiting_developer_message", developerCategory: category });
 
-    return editMessage(
-      chatId, messageId,
-      `Категория: ${category}\n\nТеперь отправьте одним сообщением подробное описание.\n\n` +
-      `💡 Можете прикрепить скриншоты или файлы.`,
-      { reply_markup: backKeyboard() }
-    );
+    return editMessage(chatId, messageId, `Категория: ${category}\n\nТеперь отправьте одним сообщением подробное описание.\n\n💡 Можете прикрепить скриншоты или файлы.`, {
+      reply_markup: backKeyboard()
+    });
   }
 }
 
@@ -879,7 +811,6 @@ async function processText(message) {
     for (const adminId of ADMIN_IDS) {
       try {
         await sendMessage(adminId, adminText);
-        // Пересылаем оригинальное сообщение админам
         if (message.photo || message.document || message.animation || message.video) {
           await forwardMessage(adminId, chatId, message.message_id);
         }
@@ -890,10 +821,21 @@ async function processText(message) {
 
     await saveUser(userId, { state: null, developerCategory: null });
 
-    return sendMessage(
-      chatId,
-      "✅ Сообщение отправлено разработчикам!\n\nМы рассмотрим его в ближайшее время. Спасибо за обратную связь! 🙏",
-      { reply_markup: mainKeyboard() }
+    return sendMessage(chatId, "✅ Сообщение отправлено разработчикам!\n\nМы рассмотрим его в ближайшее время. Спасибо за обратную связь! 🙏", {
+      reply_markup: mainKeyboard()
+    });
+  }
+
+  // НОВАЯ ФУНКЦИЯ 4: Умный авто-ответчик на частые вопросы
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes("powerpoint") || lowerText.includes("ppsx") || lowerText.includes("как запустить") || lowerText.includes("как играть")) {
+    return sendMessage(chatId, 
+      "💡 **Для запуска игры UnderCur вам потребуется:**\n\n" +
+      "1️⃣ Любой компьютер (Windows, macOS или Linux).\n" +
+      "2️⃣ Установленный Microsoft PowerPoint.\n\n" +
+      "📄 Просто откройте скачанный файл с расширением `.ppsx` через PowerPoint, и игра запустится автоматически!\n\n" +
+      "📥 Скачать актуальные версии можно по кнопке «📥 Скачать игру» ниже.",
+      { parse_mode: "Markdown", reply_markup: mainKeyboard() }
     );
   }
 
@@ -909,7 +851,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       service: "UnderCur Telegram Bot",
-      version: "2.0",
+      version: "2.1",
     });
   }
 
@@ -933,28 +875,9 @@ module.exports = async function handler(req, res) {
       await saveUser(update.message.from.id);
       await processText(update.message);
     }
-    // 3. Обработка постов в канале
+    // 3. Обработка постов в канале (РЕАКЦИИ ПОЛНОСТЬЮ ОТКЛЮЧЕНЫ ПО ЗАПРОСУ)
     else if (update.channel_post) {
-      const post = update.channel_post;
-      const targetChannel = NEWS_CHANNEL.replace(/^@/, "");
-
-      if (post.chat.username === targetChannel) {
-        // Ставим случайные реакции на пост
-        const reactions = getRandomReactions(2);
-        await setMultipleReactions(post.chat.id, post.message_id, reactions);
-
-        // Логируем новый пост
-        console.log(`📢 Новый пост в канале: ${post.message_id}`);
-      }
-    }
-    // 4. Обработка редактирования сообщений бота (реакции на свои)
-    else if (update.edited_message) {
-      const msg = update.edited_message;
-      if (msg.from && msg.from.is_bot) {
-        // Ставим реакцию на отредактированное сообщение бота
-        const reaction = AVAILABLE_REACTIONS[Math.floor(Math.random() * AVAILABLE_REACTIONS.length)];
-        await setMessageReaction(msg.chat.id, msg.message_id, reaction);
-      }
+      // Ничего не делаем, просто возвращаем OK, чтобы Telegram не спамил ошибками
     }
 
     return res.status(200).json({ ok: true });
