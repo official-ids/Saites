@@ -61,44 +61,56 @@
             border: none;
         }
 
-        .subtitle-overlay {
+        .subtitle-container {
             position: absolute;
-            bottom: 10%;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            text-align: center;
             z-index: 10;
-            width: 90%;
-            pointer-events: none;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            overflow: hidden;
+            height: 150px;
+        }
+
+        .subtitle-wrapper {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            will-change: transform;
         }
 
         .subtitle-text {
-            font-size: 1.8em;
+            font-size: 2.2em;
             color: #fff;
             text-shadow: 
-                2px 2px 4px rgba(0, 0, 0, 1),
-                -1px -1px 2px rgba(0, 0, 0, 1);
+                3px 3px 6px rgba(0, 0, 0, 1),
+                2px 2px 4px rgba(0, 0, 0, 0.9);
             font-weight: bold;
-            line-height: 1.8;
-            white-space: pre-line;
+            line-height: 1.6;
+            padding: 10px 20px;
             opacity: 0;
-            transition: opacity 1s ease;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
         }
 
-        .subtitle-text.visible {
-            opacity: 1 !important;
+        .subtitle-text.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .subtitle-text.hide {
+            opacity: 0;
+            transform: translateY(-50px);
         }
 
         @media (max-width: 768px) {
             .subtitle-text {
-                font-size: 1.2em;
+                font-size: 1.4em;
             }
-            .subtitle-overlay {
-                bottom: 5%;
-                padding: 10px;
+            .subtitle-container {
+                height: 100px;
+                bottom: 50px;
             }
         }
     </style>
@@ -117,13 +129,14 @@
                 allowfullscreen>
             </iframe>
         </div>
-        <div class="subtitle-overlay">
-            <div class="subtitle-text" id="subtitle-text"></div>
+        <div class="subtitle-container">
+            <div class="subtitle-wrapper">
+                <div class="subtitle-text" id="subtitle-text"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Проверка URL параметров
         const urlParams = new URLSearchParams(window.location.search);
         const pageParam = urlParams.get('p');
 
@@ -132,50 +145,79 @@
         const subtitleText = document.getElementById('subtitle-text');
         const videoFrame = document.getElementById('yt-video');
 
+        // Все субтитры по порядку
+        const subtitles = [
+            "Beta тестеры:",
+            "greenkx",
+            "",
+            "Те кто поддержал проект:",
+            "1. greenkx: 30 Руб.",
+            "2. Влад: 11 Руб.",
+            "3. София: 10 Руб.",
+            "",
+            "Музыка:",
+            "Субтитры: Bad Apple",
+            "Главное меню: C418-subwoofer-lullaby",
+            "Боссы: E1M1 - At Doom's Gate",
+            "",
+            "Разработчик:",
+            "Иван",
+            "",
+            "Если остались вопросы пишите нам",
+            "https://t.me/undercur_bot",
+            "",
+            "Спасибо за игру"
+        ];
+
         if (pageParam === 'sub') {
-            // Режим субтитров
             mainMode.style.display = 'none';
             subtitleMode.style.display = 'block';
             
-            // Загружаем видео с ЗВУКОМ (убрал mute=1)
+            // Загружаем видео со звуком
             setTimeout(() => {
-                videoFrame.src = "https://www.youtube.com/embed/FtutLA63Cp8?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=0&disablekb=1&fs=1&iv_load_policy=3&playsinline=0&enablejsapi=1";
+                videoFrame.src = "https://www.youtube.com/embed/FtutLA63Cp8?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=0&disablekb=1&fs=1&iv_load_policy=3&playsinline=0";
             }, 500);
             
-            // Титры
-            const creditsText = `Beta тестеры:
-greenkx
-
-Те кто поддержал проект:
-1. greenkx: 30 Руб.
-2. Влад: 11 Руб.
-3. София: 10 Руб.
-
-Музыка:
-Субтитры: Bad Apple
-Главное меню: C418-subwoofer-lullaby
-Боссы: E1M1 - At Doom's Gate
-
-Разработчик:
-Иван
-
-Если остались вопросы пишите нам
-https://t.me/undercur_bot
-
-Спасибо за игру`;
-
-            // Показываем титры в конце видео (3:30 = 210 секунд)
+            let currentIndex = 0;
+            
+            function showNextSubtitle() {
+                if (currentIndex >= subtitles.length) {
+                    // Начать сначала если дошли до конца
+                    currentIndex = 0;
+                }
+                
+                const text = subtitles[currentIndex];
+                
+                // Скрываем текущий
+                subtitleText.classList.remove('show');
+                subtitleText.classList.add('hide');
+                
+                setTimeout(() => {
+                    // Меняем текст
+                    subtitleText.textContent = text;
+                    
+                    // Показываем новый
+                    subtitleText.classList.remove('hide');
+                    subtitleText.classList.add('show');
+                    
+                    currentIndex++;
+                    
+                    // Следующий субтитр через 2.5 секунды
+                    setTimeout(showNextSubtitle, 2500);
+                }, 800);
+            }
+            
+            // Начинаем показ через 3 минуты (когда видео почти закончится)
             setTimeout(() => {
-                subtitleText.textContent = creditsText;
-                subtitleText.classList.add('visible');
-                console.log("Showing credits!");
-            }, 210000);
-
-            // Для тестирования - раскомментируйте строку ниже чтобы увидеть титры сразу:
-            // subtitleText.textContent = creditsText; subtitleText.classList.add('visible');
+                subtitleText.textContent = subtitles[0];
+                setTimeout(() => {
+                    subtitleText.classList.add('show');
+                    currentIndex = 1;
+                    setTimeout(showNextSubtitle, 2500);
+                }, 100);
+            }, 200000); // 200 секунд = 3:20
 
         } else {
-            // Обычный режим - черный экран
             mainMode.style.display = 'block';
             subtitleMode.style.display = 'none';
         }
