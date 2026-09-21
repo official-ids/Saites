@@ -70,31 +70,35 @@
             z-index: 10;
             width: 90%;
             pointer-events: none;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
         }
 
         .subtitle-text {
-            font-size: 2em;
+            font-size: 1.8em;
             color: #fff;
             text-shadow: 
                 2px 2px 4px rgba(0, 0, 0, 1),
-                -1px -1px 2px rgba(0, 0, 0, 1),
-                1px -1px 2px rgba(0, 0, 0, 1),
-                -1px 1px 2px rgba(0, 0, 0, 1),
-                1px 1px 2px rgba(0, 0, 0, 1);
+                -1px -1px 2px rgba(0, 0, 0, 1);
             font-weight: bold;
-            line-height: 1.6;
+            line-height: 1.8;
             white-space: pre-line;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 1s ease;
         }
 
         .subtitle-text.visible {
-            opacity: 1;
+            opacity: 1 !important;
         }
 
         @media (max-width: 768px) {
             .subtitle-text {
-                font-size: 1.3em;
+                font-size: 1.2em;
+            }
+            .subtitle-overlay {
+                bottom: 5%;
+                padding: 10px;
             }
         }
     </style>
@@ -109,7 +113,7 @@
             <iframe 
                 id="yt-video"
                 src=""
-                allow="autoplay; encrypted-media" 
+                allow="autoplay; encrypted-media; fullscreen" 
                 allowfullscreen>
             </iframe>
         </div>
@@ -133,12 +137,12 @@
             mainMode.style.display = 'none';
             subtitleMode.style.display = 'block';
             
-            // Загружаем видео с задержкой
+            // Загружаем видео с ЗВУКОМ (убрал mute=1)
             setTimeout(() => {
-                videoFrame.src = "https://www.youtube.com/embed/FtutLA63Cp8?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=1&playlist=FtutLA63Cp8&disablekb=1&fs=0&iv_load_policy=3&playsinline=1&enablejsapi=1";
-            }, 1000);
+                videoFrame.src = "https://www.youtube.com/embed/FtutLA63Cp8?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&loop=0&disablekb=1&fs=1&iv_load_policy=3&playsinline=0&enablejsapi=1";
+            }, 500);
             
-            // Титры в конце
+            // Титры
             const creditsText = `Beta тестеры:
 greenkx
 
@@ -160,11 +164,15 @@ https://t.me/undercur_bot
 
 Спасибо за игру`;
 
-            // Показываем титры через 3 минуты (180 секунд)
+            // Показываем титры в конце видео (3:30 = 210 секунд)
             setTimeout(() => {
                 subtitleText.textContent = creditsText;
                 subtitleText.classList.add('visible');
-            }, 180000);
+                console.log("Showing credits!");
+            }, 210000);
+
+            // Для тестирования - раскомментируйте строку ниже чтобы увидеть титры сразу:
+            // subtitleText.textContent = creditsText; subtitleText.classList.add('visible');
 
         } else {
             // Обычный режим - черный экран
