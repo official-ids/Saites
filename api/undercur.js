@@ -536,8 +536,11 @@ async function processReferral(newUserId, referrerId) {
 // --- Version Subscriptions ---
 async function subscribeToVersion(userId, version) {
   const user = await getUser(userId);
-  if (!user.versionSubscriptions.includes(version)) {
-    user.versionSubscriptions.push(version);
+  const subs = user.versionSubscriptions || [];
+  
+  if (!subs.includes(version)) {
+    subs.push(version);
+    user.versionSubscriptions = subs;
     await kv.set(`undercur:user:${userId}`, user);
     return true;
   }
@@ -546,9 +549,12 @@ async function subscribeToVersion(userId, version) {
 
 async function unsubscribeFromVersion(userId, version) {
   const user = await getUser(userId);
-  const idx = user.versionSubscriptions.indexOf(version);
+  const subs = user.versionSubscriptions || [];
+  const idx = subs.indexOf(version);
+  
   if (idx >= 0) {
-    user.versionSubscriptions.splice(idx, 1);
+    subs.splice(idx, 1);
+    user.versionSubscriptions = subs;
     await kv.set(`undercur:user:${userId}`, user);
     return true;
   }
@@ -557,29 +563,35 @@ async function unsubscribeFromVersion(userId, version) {
 
 async function notifyVersionSubscribers(version, versionData) {
   const users = (await kv.smembers("undercur:users")) || [];
+  console.log(`[DEBUG notify] Проверка подписчиков для версии: ${version}. Всего пользователей в БД: ${users.length}`);
+  
   let notified = 0;
   
   for (const uId of users) {
     const user = await getUser(uId);
-    if (user.versionSubscriptions.includes(version) || 
-        user.versionSubscriptions.includes("*")) {
+    const subs = user.versionSubscriptions || [];
+    
+    console.log(`[DEBUG notify] Пользователь ${uId} имеет подписки:`, subs);
+
+    if (subs.includes(version) || subs.includes("*")) {
       try {
-        const statusText = versionData.status ? ` (${versionData.status})` : "";
+        const statusText = (versionData && versionData.status) ? ` (${versionData.status})` : "";
         await sendMessage(uId, 
-          ` <b>Вышла новая версия!</b>\n\n` +
+          `🚀 <b>Вышла новая версия!</b>\n\n` +
           `Версия: <b>${version}${statusText}</b>\n` +
           `Дата: ${formatDate(Date.now())}\n\n` +
-          ` Скачать: ${ITCH_IO_URL}\n` +
+          `📥 Скачать: ${ITCH_IO_URL}\n` +
           `📢 Канал: ${CHANNEL_URL}\n\n` +
           `<i>Чтобы отписаться: /unwatch ${version}</i>`
         );
         notified++;
       } catch (e) {
-        console.error("Ошибка уведомления:", e.message);
+        console.error(`[Notify Error] Не удалось отправить пользователю ${uId}:`, e.message);
       }
     }
   }
   
+  console.log(`[DEBUG notify] Итого успешно уведомлено пользователей: ${notified}`);
   return notified;
 }
 
@@ -1783,12 +1795,13 @@ async function processCommand(message, text) {
     await setStoredVersions(existing);
     const list = newVersions.map(v => versionTitle(v)).join("\n");
 
-    // Уведомляем подписчиков
+    // Уведомляем подписчиков и считаем реальное количество
+    let totalNotified = 0;
     for (const newVer of newVersions) {
-      await notifyVersionSubscribers(newVer.version, newVer);
+      totalNotified += await notifyVersionSubscribers(newVer.version, newVer);
     }
 
-    return sendMessage(chatId, `✅ <b>Версии обработаны!</b>\n\n➕ <b>Добавлено:</b> ${added}\n🔄 <b>Обновлено:</b> ${updated}\n\n📋 <b>Список:</b>\n${list}\n\n <b>Подписчики уведомлены!</b>`);
+    return sendMessage(chatId, `✅ <b>Версии обработаны!</b>\n\n➕ <b>Добавлено:</b> ${added}\n🔄 <b>Обновлено:</b> ${updated}\n\n📋 <b>Список:</b>\n${list}\n\n🔔 <b>Уведомлено подписчиков:</b> ${totalNotified}`);
   }
 
   if (command === "/delete") {
