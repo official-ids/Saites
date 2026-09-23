@@ -44,6 +44,75 @@ const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 const CHANNEL_POST_REACTION_EMOJI = "🔥";
 
 // ==========================================
+// BADGE SYSTEM CONFIGURATION
+// ==========================================
+
+const BADGES = {
+  // Реферальные бейджи
+  "ref_1": { id: "ref_1", emoji: "🌱", name: "Новичок", desc: "Пригласил 1 друга" },
+  "ref_5": { id: "ref_5", emoji: "", name: "Садовод", desc: "Пригласил 5 друзей" },
+  "ref_10": { id: "ref_10", emoji: "🌳", name: "Дерево", desc: "Пригласил 10 друзей" },
+  "ref_25": { id: "ref_25", emoji: "", name: "Лесник", desc: "Пригласил 25 друзей" },
+  "ref_50": { id: "ref_50", emoji: "🌍", name: "Популярный", desc: "Пригласил 50 друзей" },
+  
+  // Бейджи активности
+  "early_adopter": { id: "early_adopter", emoji: "🏆", name: "Первопроходец", desc: "Один из первых пользователей" },
+  "active_7": { id: "active_7", emoji: "📅", name: "Неделька", desc: "Активен 7 дней" },
+  "active_30": { id: "active_30", emoji: "🗓️", name: "Месяц", desc: "Активен 30 дней" },
+  "active_90": { id: "active_90", emoji: "📆", name: "Квартал", desc: "Активен 90 дней" },
+  "active_365": { id: "active_365", emoji: "🎉", name: "Годовалый", desc: "Активен 365 дней" },
+  
+  // Бейджи взаимодействия
+  "bug_hunter_1": { id: "bug_hunter_1", emoji: "", name: "Охотник", desc: "Нашёл 1 баг" },
+  "bug_hunter_5": { id: "bug_hunter_5", emoji: "️", name: "Паук", desc: "Нашёл 5 багов" },
+  "bug_hunter_10": { id: "bug_hunter_10", emoji: "🦂", name: "Скорпион", desc: "Нашёл 10 багов" },
+  "idea_master_1": { id: "idea_master_1", emoji: "💡", name: "Идейный", desc: "Предложил 1 идею" },
+  "idea_master_5": { id: "idea_master_5", emoji: "✨", name: "Генератор", desc: "Предложил 5 идей" },
+  
+  // Бейджи версий
+  "beta_tester": { id: "beta_tester", emoji: "🧪", name: "Тестировщик", desc: "Участвовал в бета-тесте" },
+  "version_collector": { id: "version_collector", emoji: "📦", name: "Коллекционер", desc: "Скачал 5 версий" },
+  
+  // Специальные бейджи
+  "supporter": { id: "supporter", emoji: "❤️", name: "Поддержавший", desc: "Поддержал проект" },
+  "legend": { id: "legend", emoji: "👑", name: "Легенда", desc: "Особый статус" },
+  "helper": { id: "helper", emoji: "", name: "Помощник", desc: "Помог другим пользователям" },
+  "speedster": { id: "speedster", emoji: "⚡", name: "Спринтер", desc: "Быстрый ответ" },
+  "night_owl": { id: "night_owl", emoji: "", name: "Сова", desc: "Активен ночью" },
+};
+
+// ==========================================
+// PROMO/SERVICE CONFIGURATION
+// ==========================================
+
+const PROMO_SERVICES = {
+  "itch_io": { 
+    id: "itch_io", 
+    name: "🎮 Страница на itch.io", 
+    url: ITCH_IO_URL,
+    desc: "Наша игра на платформе itch.io"
+  },
+  "community": { 
+    id: "community", 
+    name: " Наше сообщество", 
+    url: "https://t.me/undercurcommunity", // ЗАМЕНИ НА СВОЮ ССЫЛКУ
+    desc: "Присоединяйся к нашему комьюнити"
+  },
+  "tg_channel": { 
+    id: "tg_channel", 
+    name: "📢 Telegram канал", 
+    url: CHANNEL_URL,
+    desc: "Подпишись на наш канал"
+  },
+  "promo_code": { 
+    id: "promo_code", 
+    name: "🎁 Промокод", 
+    url: null, // Будет генерироваться
+    desc: "Получи промокод на бонусы"
+  },
+};
+
+// ==========================================
 // TELEGRAM API WRAPPERS
 // ==========================================
 
@@ -217,6 +286,10 @@ function mainKeyboard() {
       ],
       [
         { text: "💬 Написать разработчикам", callback_data: "developers" },
+        { text: "🏆 Достижения", callback_data: "my_badges" },
+      ],
+      [
+        { text: "🎁 Промокоды", callback_data: "promo_list" },
         { text: "ℹ️ Помощь / Команды", callback_data: "help" },
       ],
     ],
@@ -307,6 +380,57 @@ function ticketActionKeyboard(ticketId, isAdmin = false) {
   return keyboard;
 }
 
+function shareBotKeyboard(userId) {
+  const botUsername = process.env.BOT_USERNAME || "undercur_bot";
+  const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
+  
+  return {
+    inline_keyboard: [
+      [
+        { text: "📋 Скопировать ссылку", url: refLink },
+      ],
+      [
+        { text: " Мои достижения", callback_data: "my_badges" },
+      ],
+      [{ text: "⬅️ Назад", callback_data: "home" }],
+    ],
+  };
+}
+
+function versionSubscribeKeyboard(version, isSubscribed) {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: isSubscribed ? "🔕 Отписаться" : "🔔 Подписаться",
+          callback_data: isSubscribed ? `unwatch_${version}` : `watch_${version}`,
+        },
+      ],
+      [{ text: "⬅️ Назад к версиям", callback_data: "versions" }],
+    ],
+  };
+}
+
+function promoKeyboard() {
+  const buttons = Object.values(PROMO_SERVICES).map(service => [
+    { text: service.name, url: service.url || `https://t.me/${process.env.BOT_USERNAME || "undercur_bot"}?start=promo_${service.id}` },
+  ]);
+  
+  buttons.push([{ text: "️ Назад", callback_data: "home" }]);
+  
+  return { inline_keyboard: buttons };
+}
+
+function badgeKeyboard() {
+  return {
+    inline_keyboard: [
+      [{ text: " Все бейджи", callback_data: "all_badges_list" }],
+      [{ text: "🔗 Пригласить друга", callback_data: "share_bot" }],
+      [{ text: "⬅️ Назад", callback_data: "home" }],
+    ],
+  };
+}
+
 // ==========================================
 // KV DATABASE MANAGEMENT
 // ==========================================
@@ -325,6 +449,10 @@ async function saveUser(userId, data = {}) {
     createdAt: old.createdAt || now,
     lastSeen: now,
     messageCount: (old.messageCount || 0) + 1,
+    badges: old.badges || [],
+    referrals: old.referrals || [],
+    referredBy: old.referredBy || null,
+    versionSubscriptions: old.versionSubscriptions || [],
     ...data,
     updatedAt: now,
   });
@@ -343,6 +471,10 @@ async function getUser(userId) {
       lastSeen: Date.now(),
       messageCount: 0,
       ticketsCreated: 0,
+      badges: [],
+      referrals: [],
+      referredBy: null,
+      versionSubscriptions: [],
     };
   }
   return user;
@@ -352,6 +484,161 @@ async function updateUserStats(userId, updates) {
   const key = `undercur:user:${userId}`;
   const user = await getUser(userId);
   await kv.set(key, { ...user, ...updates, updatedAt: Date.now() });
+}
+
+// --- Badges ---
+async function awardBadge(userId, badgeId) {
+  const user = await getUser(userId);
+  if (!user.badges.includes(badgeId)) {
+    user.badges.push(badgeId);
+    await kv.set(`undercur:user:${userId}`, user);
+    return true;
+  }
+  return false;
+}
+
+async function getUserBadges(userId) {
+  const user = await getUser(userId);
+  return user.badges.map(bid => BADGES[bid]).filter(Boolean);
+}
+
+// --- Referrals ---
+async function processReferral(newUserId, referrerId) {
+  if (!referrerId || String(newUserId) === String(referrerId)) return false;
+  
+  const newUser = await getUser(newUserId);
+  if (newUser.referredBy) return false; // Уже есть реферер
+  
+  const referrer = await getUser(referrerId);
+  
+  // Записываем реферера
+  newUser.referredBy = String(referrerId);
+  await kv.set(`undercur:user:${newUserId}`, newUser);
+  
+  // Добавляем в список рефералов
+  referrer.referrals.push({
+    userId: String(newUserId),
+    date: Date.now(),
+  });
+  await kv.set(`undercur:user:${referrerId}`, referrer);
+  
+  // Проверяем и выдаём бейджи
+  const refCount = referrer.referrals.length;
+  if (refCount >= 1) await awardBadge(referrerId, "ref_1");
+  if (refCount >= 5) await awardBadge(referrerId, "ref_5");
+  if (refCount >= 10) await awardBadge(referrerId, "ref_10");
+  if (refCount >= 25) await awardBadge(referrerId, "ref_25");
+  if (refCount >= 50) await awardBadge(referrerId, "ref_50");
+  
+  return true;
+}
+
+// --- Version Subscriptions ---
+async function subscribeToVersion(userId, version) {
+  const user = await getUser(userId);
+  if (!user.versionSubscriptions.includes(version)) {
+    user.versionSubscriptions.push(version);
+    await kv.set(`undercur:user:${userId}`, user);
+    return true;
+  }
+  return false;
+}
+
+async function unsubscribeFromVersion(userId, version) {
+  const user = await getUser(userId);
+  const idx = user.versionSubscriptions.indexOf(version);
+  if (idx >= 0) {
+    user.versionSubscriptions.splice(idx, 1);
+    await kv.set(`undercur:user:${userId}`, user);
+    return true;
+  }
+  return false;
+}
+
+async function notifyVersionSubscribers(version, versionData) {
+  const users = (await kv.smembers("undercur:users")) || [];
+  let notified = 0;
+  
+  for (const uId of users) {
+    const user = await getUser(uId);
+    if (user.versionSubscriptions.includes(version) || 
+        user.versionSubscriptions.includes("*")) {
+      try {
+        const statusText = versionData.status ? ` (${versionData.status})` : "";
+        await sendMessage(uId, 
+          ` <b>Вышла новая версия!</b>\n\n` +
+          `Версия: <b>${version}${statusText}</b>\n` +
+          `Дата: ${formatDate(Date.now())}\n\n` +
+          ` Скачать: ${ITCH_IO_URL}\n` +
+          `📢 Канал: ${CHANNEL_URL}\n\n` +
+          `<i>Чтобы отписаться: /unwatch ${version}</i>`
+        );
+        notified++;
+      } catch (e) {
+        console.error("Ошибка уведомления:", e.message);
+      }
+    }
+  }
+  
+  return notified;
+}
+
+// --- Scheduled Posts ---
+async function schedulePost(date, time, text, channelId = NEWS_CHANNEL) {
+  const scheduledPosts = (await kv.get("undercur:scheduled_posts")) || [];
+  const post = {
+    id: Date.now().toString(36),
+    date,
+    time,
+    text,
+    channelId,
+    createdAt: Date.now(),
+    status: "pending",
+  };
+  scheduledPosts.push(post);
+  await kv.set("undercur:scheduled_posts", scheduledPosts);
+  return post;
+}
+
+async function getScheduledPosts() {
+  return (await kv.get("undercur:scheduled_posts")) || [];
+}
+
+async function cancelScheduledPost(postId) {
+  let posts = await getScheduledPosts();
+  const before = posts.length;
+  posts = posts.filter(p => p.id !== postId);
+  await kv.set("undercur:scheduled_posts", posts);
+  return before - posts.length;
+}
+
+async function checkAndPublishScheduledPosts() {
+  const posts = await getScheduledPosts();
+  const now = new Date();
+  const published = [];
+  
+  for (const post of posts) {
+    if (post.status === "pending") {
+      const postDate = new Date(`${post.date}T${post.time}`);
+      if (postDate <= now) {
+        try {
+          await sendMessage(post.channelId, post.text);
+          post.status = "published";
+          post.publishedAt = Date.now();
+          published.push(post);
+        } catch (e) {
+          console.error("Ошибка публикации запланированного поста:", e.message);
+          post.status = "failed";
+        }
+      }
+    }
+  }
+  
+  if (published.length > 0) {
+    await kv.set("undercur:scheduled_posts", posts);
+  }
+  
+  return published;
 }
 
 // --- Moderation ---
@@ -428,6 +715,17 @@ async function createTicket(userId, category, message, messageId, chatId) {
   const user = await getUser(userId);
   await updateUserStats(userId, { ticketsCreated: (user.ticketsCreated || 0) + 1 });
   
+  // Проверяем бейджи за тикеты
+  const ticketCount = (user.ticketsCreated || 0) + 1;
+  if (category === "🐞 Сообщить о баге") {
+    if (ticketCount >= 1) await awardBadge(userId, "bug_hunter_1");
+    if (ticketCount >= 5) await awardBadge(userId, "bug_hunter_5");
+    if (ticketCount >= 10) await awardBadge(userId, "bug_hunter_10");
+  } else if (category === "💡 Предложить идею") {
+    if (ticketCount >= 1) await awardBadge(userId, "idea_master_1");
+    if (ticketCount >= 5) await awardBadge(userId, "idea_master_5");
+  }
+  
   return ticket;
 }
 
@@ -477,6 +775,58 @@ async function deleteFaq(faqId) {
   let faqs = await getAllFaqs();
   faqs = faqs.filter(f => f.id !== faqId);
   await kv.set("undercur:faqs", faqs);
+}
+
+async function searchFaqs(query) {
+  const faqs = await getAllFaqs();
+  const lowerQuery = query.toLowerCase();
+  
+  return faqs.filter(faq => 
+    faq.question.toLowerCase().includes(lowerQuery) ||
+    faq.answer.toLowerCase().includes(lowerQuery)
+  );
+}
+
+// --- Promo Codes ---
+async function generatePromoCode(code, reward, maxUses = 100) {
+  const promo = {
+    code: code.toUpperCase(),
+    reward,
+    maxUses,
+    usedBy: [],
+    createdAt: Date.now(),
+    active: true,
+  };
+  
+  await kv.set(`undercur:promo:${code.toUpperCase()}`, promo);
+  return promo;
+}
+
+async function usePromoCode(userId, code) {
+  const promo = await kv.get(`undercur:promo:${code.toUpperCase()}`);
+  if (!promo) return { success: false, error: "not_found" };
+  if (!promo.active) return { success: false, error: "inactive" };
+  if (promo.usedBy.includes(String(userId))) return { success: false, error: "already_used" };
+  if (promo.usedBy.length >= promo.maxUses) return { success: false, error: "max_uses" };
+  
+  promo.usedBy.push(String(userId));
+  await kv.set(`undercur:promo:${code.toUpperCase()}`, promo);
+  
+  // Награждаем пользователя (можно расширить)
+  await awardBadge(userId, "supporter");
+  
+  return { success: true, reward: promo.reward };
+}
+
+async function getAllPromoCodes() {
+  // Получаем все ключи с префиксом undercur:promo:
+  const keys = await kv.keys("undercur:promo:*");
+  const promos = [];
+  for (const key of keys) {
+    const promo = await kv.get(key);
+    if (promo) promos.push(promo);
+  }
+  return promos;
 }
 
 // ==========================================
@@ -611,28 +961,48 @@ async function sendHome(chatId, messageId = null) {
 async function sendHelp(chatId, messageId = null) {
   const text =
     "ℹ️ <b>Список доступных команд</b>\n\n" +
-    "<b>📋 Основные команды:</b>\n" +
+    "<b>📋 Основные:</b>\n" +
     "/start — Главное меню бота\n" +
     "/help — Показать это сообщение\n" +
     "/profile — Мой профиль и статистика\n" +
-    "/versions — Список актуальных версий\n" +
-    "/news — Настройка уведомлений о новостях\n" +
-    "/download — Ссылки для скачивания игры\n" +
     "/guide — Интерактивный гайд по игре\n" +
-    "/faq — Часто задаваемые вопросы\n\n" +
+    "/faq [запрос] — Часто задаваемые вопросы (с поиском)\n\n" +
+    
+    "<b>🎮 Версии и скачивание:</b>\n" +
+    "/versions — Список актуальных версий\n" +
+    "/download — Ссылки для скачивания игры\n" +
+    "/watch <версия> — Подписаться на выход версии (или *)\n" +
+    "/unwatch <версия> — Отписаться от версии\n" +
+    "/mysubs — Мои активные подписки на версии\n\n" +
+    
+    "<b>🏆 Сообщество и бонусы:</b>\n" +
+    "/badges — Мои достижения и бейджи\n" +
+    "/share — Получить реферальную ссылку для приглашения\n" +
+    "/promolist — Список доступных промокодов и акций\n" +
+    "/promo <код> — Активировать промокод\n" +
+    "/news — Настройка уведомлений о новостях\n\n" +
+    
     "<b>🔧 Команды для администраторов:</b>\n" +
-    "/add &lt;версии&gt; — Добавить новые версии\n" +
-    "/delete &lt;версия&gt; — Удалить версию из списка\n" +
+    "/add <версии> — Добавить новые версии\n" +
+    "/delete <версия> — Удалить версию из списка\n" +
     "/all — Полный список сохраненных версий\n" +
     "/clearversions — Полная очистка списка версий\n" +
-    "/sendall &lt;текст&gt; — Массовая рассылка всем пользователям\n" +
-    "/news &lt;текст&gt; — Опубликовать новость (или ответьте на сообщение)\n" +
+    "/news <текст> — Опубликовать новость (или ответ на сообщение)\n" +
+    "/schedule <ГГГГ-ММ-ДД> <ЧЧ:ММ> <текст> — Запланировать пост\n" +
+    "/unschedule <id> — Отменить запланированный пост\n" +
+    "/scheduled — Список запланированных постов\n" +
+    "/genpromo <КОД> <награда> [лимит] — Создать новый промокод\n" +
+    "/promos — Список всех созданных промокодов\n" +
+    "/sendall <текст> — Массовая рассылка всем пользователям\n" +
     "/stats — Подробная статистика бота\n" +
-    "/ban &lt;id&gt; [причина] — Заблокировать пользователя\n" +
-    "/unban &lt;id&gt; — Разблокировать пользователя\n" +
-    "/finduser &lt;id&gt; — Информация о пользователе\n\n" +
-    "💡 <i>Пример:</i> /add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)\n" +
-    "💡 <i>Пример:</i> /delete 1.0.2 (beta)";
+    "/ban <id> [причина] — Заблокировать пользователя\n" +
+    "/unban <id> — Разблокировать пользователя\n" +
+    "/finduser <id> — Информация о пользователе\n\n" +
+    
+    "💡 <i>Пример:</i> /add 1.0.1, 1.0.2 (beta)\n" +
+    "💡 <i>Пример:</i> /watch 2.0\n" +
+    "💡 <i>Пример:</i> /faq как запустить\n" +
+    "💡 <i>Пример:</i> /schedule 2026-10-01 15:00 Релиз новой версии!";
 
   if (messageId) {
     return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
@@ -893,329 +1263,7 @@ async function publishNews(message, adminUserId) {
 }
 
 // ==========================================
-// COMMAND PROCESSORS
-// ==========================================
-
-async function processCommand(message, text) {
-  const chatId = message.chat.id;
-  const userId = message.from.id;
-  const command = text.split(/\s+/)[0].toLowerCase();
-  const args = text.slice(command.length).trim();
-
-  // Проверка на бан
-  if (await isBanned(userId)) {
-    return sendMessage(chatId, "⛔ Ваш аккаунт заблокирован в этом боте. Обратитесь к администрации.");
-  }
-
-  // Проверка на мут (для текстовых команд, кроме /start и /help)
-  if (command !== "/start" && command !== "/help" && await isMuted(userId)) {
-    return sendMessage(chatId, "🔇 Вы временно ограничены в использовании команд бота.");
-  }
-
-  await saveUser(userId);
-
-  if (command === "/start") {
-    return sendHome(chatId);
-  }
-
-  if (command === "/help") {
-    return sendHelp(chatId);
-  }
-
-  if (command === "/profile" || command === "/mydata") {
-    const user = await getUser(userId);
-    const joinDate = formatDate(user.createdAt);
-    const lastSeen = formatDate(user.lastSeen);
-    const ticketsCount = (await getUserTickets(userId)).length;
-
-    return sendMessage(
-      chatId,
-      `👤 <b>Ваш профиль UnderCur</b>\n\n` +
-      `🆔 <b>ID:</b> <code>${userId}</code>\n` +
-      `🔔 <b>Новости:</b> ${user.news !== false ? "✅ Включены" : "❌ Выключены"}\n` +
-      `📅 <b>Дата регистрации:</b> ${joinDate}\n` +
-      `🕒 <b>Последняя активность:</b> ${lastSeen}\n` +
-      `💬 <b>Сообщений отправлено:</b> ${user.messageCount || 0}\n` +
-      `🎫 <b>Создано тикетов:</b> ${ticketsCount}`,
-      { reply_markup: backKeyboard() }
-    );
-  }
-
-  if (command === "/stats") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для использования этой команды.");
-    }
-    
-    const users = (await kv.smembers("undercur:users")) || [];
-    const bannedCount = (await kv.smembers("undercur:banned_users")) || [];
-    const allTickets = (await kv.smembers("undercur:all_tickets")) || [];
-    const versions = await getStoredVersions();
-    const faqs = await getAllFaqs();
-    
-    let newsEnabledCount = 0;
-    let activeToday = 0;
-    const now = Date.now();
-    const oneDayMs = 24 * 60 * 60 * 1000;
-
-    for (const uId of users) {
-      const user = await getUser(uId);
-      if (user.news !== false) newsEnabledCount++;
-      if (now - user.lastSeen < oneDayMs) activeToday++;
-    }
-
-    const openTickets = allTickets.filter(async (tId) => {
-      const t = await getTicket(tId);
-      return t && t.status === "open";
-    }).length; // Note: this is simplified, in real async we'd need Promise.all
-
-    return sendMessage(
-      chatId,
-      `📊 <b>Статистика UnderCur Bot</b>\n\n` +
-      `👥 <b>Всего пользователей:</b> ${users.length}\n` +
-      `🟢 <b>Активных за 24 часа:</b> ${activeToday}\n` +
-      `🔔 <b>Подписано на новости:</b> ${newsEnabledCount}\n` +
-      `⛔ <b>Заблокировано:</b> ${bannedCount.length}\n` +
-      `🎫 <b>Всего тикетов:</b> ${allTickets.length}\n` +
-      `🎮 <b>Версий в базе:</b> ${versions.length}\n` +
-      `❓ <b>Статей в FAQ:</b> ${faqs.length}\n\n` +
-      `<i>Данные актуальны на ${formatDate(now)}</i>`
-    );
-  }
-
-  if (command === "/versions" || command === "/versoins") {
-    return versionsMessage(chatId);
-  }
-
-  if (command === "/download") {
-    return sendDownloadInfo(chatId);
-  }
-
-  // --- Управление версиями ---
-  if (command === "/add") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для добавления версий.");
-    }
-    if (!args) {
-      return sendMessage(chatId, "❌ Укажите версии для добавления.\n\n💡 Пример: `/add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)`", { parse_mode: "Markdown" });
-    }
-
-    const newVersions = parseMultipleVersions(args);
-    if (!newVersions.length) {
-      return sendMessage(chatId, "❌ Не удалось распознать ни одной версии.\n\n💡 Пример: `1.0.1, 1.0.2 (beta)`", { parse_mode: "Markdown" });
-    }
-
-    const existing = await getStoredVersions();
-    let added = 0;
-    let updated = 0;
-
-    for (const newVer of newVersions) {
-      const idx = existing.findIndex(v => v.version === newVer.version);
-      if (idx >= 0) {
-        existing[idx] = { ...existing[idx], ...newVer, addedAt: existing[idx].addedAt || Date.now() };
-        updated++;
-      } else {
-        existing.push({ ...newVer, addedAt: Date.now() });
-        added++;
-      }
-    }
-
-    await setStoredVersions(existing);
-    const list = newVersions.map(v => versionTitle(v)).join("\n");
-
-    return sendMessage(chatId, `✅ <b>Версии обработаны!</b>\n\n➕ <b>Добавлено:</b> ${added}\n🔄 <b>Обновлено:</b> ${updated}\n\n📋 <b>Список:</b>\n${list}`);
-  }
-
-  if (command === "/delete") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для удаления версий.");
-    }
-    if (!args) {
-      return sendMessage(chatId, "❌ Укажите версию для удаления.\n\n💡 Пример: `/delete 1.0.2 (beta)`", { parse_mode: "Markdown" });
-    }
-
-    const parsed = parseVersionString(args);
-    if (!parsed) {
-      return sendMessage(chatId, "❌ Неверный формат версии. Используйте формат: <code>1.0.0</code> или <code>1.0.0 (beta)</code>");
-    }
-
-    const existing = await getStoredVersions();
-    const before = existing.length;
-
-    const filtered = existing.filter(v => {
-      if (v.version !== parsed.version) return true;
-      if (parsed.status && v.status !== parsed.status) return true;
-      return false;
-    });
-
-    if (filtered.length === before) {
-      return sendMessage(chatId, `❌ Версия "<code>${args}</code>" не найдена в базе.`);
-    }
-
-    await setStoredVersions(filtered);
-    return sendMessage(chatId, `✅ <b>Версия удалена!</b>\n\n🗑️ <b>Удалено:</b> ${versionTitle(parsed)}\n📦 <b>Осталось версий:</b> ${filtered.length}`);
-  }
-
-  if (command === "/all") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для просмотра всех версий.");
-    }
-    const versions = await getStoredVersions();
-    if (!versions.length) {
-      return sendMessage(chatId, "📭 Версий пока нет. Добавьте через команду /add");
-    }
-
-    const list = versions.map((v, i) => `${i + 1}. ${versionTitle(v)}`).join("\n");
-    return sendMessage(chatId, `📋 <b>Все версии (${versions.length}):</b>\n\n${list}\n\n💡 <b>Управление:</b>\n/add — добавить\n/delete — удалить`);
-  }
-
-  if (command === "/clearversions") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
-    }
-    await kv.set("undercur:versions", "[]");
-    return sendMessage(chatId, "🗑️ <b>Список версий полностью очищен.</b>\nТеперь можно добавить новые через команду /add");
-  }
-
-  // --- Массовая рассылка ---
-  if (command === "/sendall") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
-    }
-    if (!args) {
-      return sendMessage(chatId, "❌ Используйте: <code>/sendall &lt;текст сообщения&gt;</code>");
-    }
-    
-    const users = (await kv.smembers("undercur:users")) || [];
-    let sent = 0;
-    let failed = 0;
-    
-    await sendMessage(chatId, `⏳ <b>Начало рассылки...</b>\nВсего получателей: ${users.length}`);
-    
-    for (const uId of users) {
-      try {
-        await sendMessage(uId, `📢 <b>Важное сообщение от администрации:</b>\n\n${args}`);
-        sent++;
-        await new Promise(resolve => setTimeout(resolve, 40)); // Anti-flood delay
-      } catch (e) {
-        failed++;
-      }
-    }
-    return sendMessage(chatId, `✅ <b>Рассылка завершена!</b>\n\n📤 Отправлено: ${sent}\n❌ Ошибок: ${failed}`);
-  }
-
-  // --- Модерация ---
-  if (command === "/ban") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const parts = args.split(/\s+/);
-    const targetId = parts[0];
-    const reason = parts.slice(1).join(" ") || "Не указана";
-    
-    if (!targetId || isNaN(targetId)) {
-      return sendMessage(chatId, "❌ Использование: <code>/ban &lt;user_id&gt; [причина]</code>");
-    }
-    
-    await banUser(targetId, userId, reason);
-    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> заблокирован.\nПричина: ${reason}`);
-  }
-
-  if (command === "/unban") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const targetId = args.trim();
-    
-    if (!targetId || isNaN(targetId)) {
-      return sendMessage(chatId, "❌ Использование: <code>/unban &lt;user_id&gt;</code>");
-    }
-    
-    await unbanUser(targetId);
-    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> разблокирован.`);
-  }
-
-  if (command === "/finduser") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const targetId = args.trim();
-    
-    if (!targetId || isNaN(targetId)) {
-      return sendMessage(chatId, "❌ Использование: <code>/finduser &lt;user_id&gt;</code>");
-    }
-    
-    const user = await getUser(targetId);
-    if (!user || !user.createdAt) {
-      return sendMessage(chatId, `❌ Пользователь с ID <code>${targetId}</code> не найден в базе.`);
-    }
-    
-    return sendMessage(chatId, 
-      `🔍 <b>Информация о пользователе</b>\n\n` +
-      `🆔 ID: <code>${user.userId}</code>\n` +
-      `📅 Регистрация: ${formatDate(user.createdAt)}\n` +
-      `🕒 Последняя активность: ${formatDate(user.lastSeen)}\n` +
-      `💬 Сообщений: ${user.messageCount || 0}\n` +
-      `🔔 Новости: ${user.news !== false ? "Вкл" : "Выкл"}`
-    );
-  }
-
-  // --- Новости ---
-  if (command === "/news") {
-    if (args.length > 0 || message.reply_to_message) {
-      // ЕСТЬ ТЕКСТ ИЛИ ОТВЕТ НА СООБЩЕНИЕ -> ПУБЛИКАЦИЯ
-      if (!isAdmin(userId)) {
-        return sendMessage(chatId, "⛔ У вас нет прав для публикации новостей.");
-      }
-      
-      await sendMessage(chatId, "⏳ <b>Публикация новости...</b>");
-      const result = await publishNews(message, userId);
-      
-      if (result.error === "empty") {
-        return sendMessage(chatId, "❌ После команды /news должен быть текст новости, или используйте эту команду как ответ на сообщение с новостью.");
-      }
-      
-      return sendMessage(chatId, 
-        "✅ <b>Новость обработана.</b>\n\n" +
-        `📢 <b>Канал:</b> ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
-        `👤 <b>Получателей (рассылка):</b> ${result.sentCount}` +
-        (result.error ? `\n⚠️ <b>Ошибка:</b> ${result.error}` : "")
-      );
-    } else {
-      // НЕТ ТЕКСТА -> НАСТРОЙКИ
-      const user = await getUser(userId);
-      return sendMessage(chatId, "📰 <b>Новости UnderCur</b>\n\nЗдесь будут появляться новости проекта.\nНастройте получение уведомлений:", {
-        reply_markup: newsKeyboard(user.news !== false),
-      });
-    }
-  }
-
-  // --- Гайд и FAQ ---
-  if (command === "/guide") {
-    return sendGuideMenu(chatId);
-  }
-
-  if (command === "/faq") {
-    return sendFaqList(chatId);
-  }
-
-  if (command === "/addfaq") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const parts = args.split("|");
-    if (parts.length < 2) {
-      return sendMessage(chatId, "❌ Использование: <code>/addfaq &lt;вопрос&gt; | &lt;ответ&gt;</code>");
-    }
-    const faq = await addFaq(parts[0], parts.slice(1).join("|"));
-    return sendMessage(chatId, `✅ FAQ добавлен!\nID: <code>${faq.id}</code>\nВопрос: ${escapeHtml(faq.question)}`);
-  }
-
-  if (command === "/delfaq") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    await deleteFaq(args.trim());
-    return sendMessage(chatId, "✅ FAQ удален (если существовал).");
-  }
-
-  // FALLBACK
-  return sendMessage(chatId, "Неизвестная команда. Используйте меню ниже или /help для списка команд.", {
-    reply_markup: mainKeyboard(),
-  });
-}
-
-// ==========================================
-// GUIDE & FAQ SYSTEMS
+// GUIDE & FAQ SYSTEMS (ВОССТАНОВЛЕНО)
 // ==========================================
 
 async function sendGuideMenu(chatId, messageId = null) {
@@ -1258,6 +1306,717 @@ async function sendFaqList(chatId, messageId = null) {
     return editMessage(chatId, messageId, text, { reply_markup: keyboard });
   }
   return sendMessage(chatId, text, { reply_markup: keyboard });
+}
+
+// ==========================================
+// NEW FEATURE MESSAGE GENERATORS
+// ==========================================
+
+async function sendBadgesMenu(chatId, messageId = null) {
+  const user = await getUser(chatId);
+  const userBadges = await getUserBadges(chatId);
+  
+  let text = "🏆 <b>Ваши достижения</b>\n\n";
+  
+  if (userBadges.length === 0) {
+    text += "Пока нет полученных бейджей.\n\n";
+    text += "<b>Как получить:</b>\n";
+    text += "• Пригласи друзей (реферальная система)\n";
+    text += "• Будь активен в боте\n";
+    text += "• Находи баги и предлагай идеи\n";
+    text += "• Участвуй в бета-тестах\n";
+  } else {
+    text += `<b>Получено: ${userBadges.length}</b>\n\n`;
+    userBadges.forEach(badge => {
+      text += `${badge.emoji} <b>${badge.name}</b>\n<i>${badge.desc}</i>\n\n`;
+    });
+  }
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: badgeKeyboard() });
+  }
+  return sendMessage(chatId, text, { reply_markup: badgeKeyboard() });
+}
+
+async function sendShareBot(chatId, messageId = null) {
+  const user = await getUser(chatId);
+  const botUsername = process.env.BOT_USERNAME || "undercur_bot";
+  const refLink = `https://t.me/${botUsername}?start=ref_${chatId}`;
+  const refCount = user.referrals ? user.referrals.length : 0;
+  
+  const text = 
+    "🔗 <b>Пригласи друзей и получи награды!</b>\n\n" +
+    "Отправь эту ссылку друзьям:\n" +
+    `<code>${refLink}</code>\n\n` +
+    "🎁 <b>Награды за приглашения:</b>\n" +
+    "🌱 1 друг — бейдж «Новичок»\n" +
+    "🌿 5 друзей — бейдж «Садовод»\n" +
+    "🌳 10 друзей — бейдж «Дерево»\n" +
+    "🌲 25 друзей — бейдж «Лесник»\n" +
+    "🌍 50 друзей — бейдж «Популярный»\n\n" +
+    `📊 <b>Твои приглашения:</b> ${refCount}\n\n` +
+    "<b>📝 Готовое сообщение для отправки:</b>\n" +
+    "🎮 Привет! Играю в UnderCur — крутая игра на PowerPoint!\n" +
+    "Присоединяйся: " + refLink;
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("home") });
+  }
+  return sendMessage(chatId, text, { reply_markup: backKeyboard("home") });
+}
+
+async function sendPromoList(chatId, messageId = null) {
+  const text = 
+    "🎁 <b>Промокоды и акции</b>\n\n" +
+    "📝 <b>Как использовать:</b>\n" +
+    "Отправь команду: <code>/promo CODE</code>\n\n" +
+    "🔗 <b>Наши ресурсы:</b>\n" +
+    `• itch.io: ${ITCH_IO_URL}\n` +
+    `• Telegram: ${CHANNEL_URL}\n\n` +
+    "💡 <i>Следи за новостями — там появляются промокоды!</i>";
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: promoKeyboard() });
+  }
+  return sendMessage(chatId, text, { reply_markup: promoKeyboard() });
+}
+
+async function sendScheduledPostsList(chatId, messageId = null, isAdmin = false) {
+  if (!isAdmin) {
+    return sendMessage(chatId, "⛔ У вас нет прав для просмотра запланированных постов.");
+  }
+  
+  const posts = await getScheduledPosts();
+  
+  if (posts.length === 0) {
+    const text = "📅 <b>Запланированные посты</b>\n\nПока нет запланированных публикаций.\n\n" +
+      "<b>Как создать:</b>\n" +
+      "<code>/schedule 2026-09-25 12:00 Текст новости</code>";
+    
+    if (messageId) {
+      return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
+    }
+    return sendMessage(chatId, text, { reply_markup: backKeyboard() });
+  }
+  
+  let text = "📅 <b>Запланированные посты</b>\n\n";
+  const keyboard = { inline_keyboard: [] };
+  
+  posts.forEach((post, idx) => {
+    const statusEmoji = post.status === "pending" ? "⏳" : post.status === "published" ? "✅" : "❌";
+    text += `${idx + 1}. ${statusEmoji} <b>${post.date} ${post.time}</b>\n`;
+    text += `<i>${escapeHtml(post.text.substring(0, 50))}...</i>\n\n`;
+    
+    if (post.status === "pending") {
+      keyboard.inline_keyboard.push([{ 
+        text: `❌ Отменить #${post.id}`, 
+        callback_data: `unschedule_${post.id}` 
+      }]);
+    }
+  });
+  
+  keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "home" }]);
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
+  }
+  return sendMessage(chatId, text, { reply_markup: keyboard });
+}
+
+async function sendFaqSearch(chatId, query, messageId = null) {
+  const results = await searchFaqs(query);
+  
+  if (results.length === 0) {
+    const text = `🔍 <b>Поиск по FAQ: "${escapeHtml(query)}"</b>\n\n` +
+      "Ничего не найдено. Попробуйте другой запрос или задайте вопрос разработчикам.";
+    
+    if (messageId) {
+      return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("home") });
+    }
+    return sendMessage(chatId, text, { reply_markup: backKeyboard("home") });
+  }
+  
+  let text = `🔍 <b>Результаты поиска: "${escapeHtml(query)}"</b>\n\n`;
+  const keyboard = { inline_keyboard: [] };
+  
+  results.slice(0, 5).forEach((faq, idx) => {
+    text += `<b>${idx + 1}.</b> ${escapeHtml(faq.question)}\n`;
+    keyboard.inline_keyboard.push([{ 
+      text: `👁️ Показать #${idx + 1}`, 
+      callback_data: `faq_show_${faq.id}` 
+    }]);
+  });
+  
+  keyboard.inline_keyboard.push([{ text: "⬅️ Назад к списку FAQ", callback_data: "home" }]);
+  
+  if (messageId) {
+    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
+  }
+  return sendMessage(chatId, text, { reply_markup: keyboard });
+}
+
+// ==========================================
+// COMMAND PROCESSORS
+// ==========================================
+
+// ==========================================
+// COMMAND PROCESSORS
+// ==========================================
+
+async function processCommand(message, text) {
+  const chatId = message.chat.id;
+  const userId = message.from.id;
+  const command = text.split(/\s+/)[0].toLowerCase();
+  const args = text.slice(command.length).trim();
+
+  // Проверка на бан
+  if (await isBanned(userId)) {
+    return sendMessage(chatId, " Ваш аккаунт заблокирован в этом боте. Обратитесь к администрации.");
+  }
+
+  // Проверка на мут (для текстовых команд, кроме /start и /help)
+  if (command !== "/start" && command !== "/help" && await isMuted(userId)) {
+    return sendMessage(chatId, "🔇 Вы временно ограничены в использовании команд бота.");
+  }
+
+  // Проверяем запланированные посты
+  await checkAndPublishScheduledPosts();
+
+  await saveUser(userId);
+
+  // Обработка реферальной ссылки в /start
+  if (command === "/start") {
+    if (args.startsWith("ref_")) {
+      const referrerId = args.replace("ref_", "");
+      const isNewUser = await processReferral(userId, referrerId);
+      
+      if (isNewUser) {
+        await sendMessage(chatId, " <b>Вы зарегистрировались по реферальной ссылке!</b>\n\n" +
+          "Теперь вы будете получать уведомления, а ваш друг получит бейдж за приглашение.");
+        
+        // Уведомляем реферера
+        try {
+          await sendMessage(referrerId, 
+            `🎊 <b>Новый реферал!</b>\n\n` +
+            `Пользователь <code>${userId}</code> зарегистрировался по вашей ссылке.\n` +
+            `Всего приглашений: ${(await getUser(referrerId)).referrals.length}`
+          );
+        } catch (e) {
+          // Игнорируем ошибки
+        }
+      }
+    } else if (args.startsWith("promo_")) {
+      const promoId = args.replace("promo_", "");
+      const service = PROMO_SERVICES[promoId];
+      if (service) {
+        return sendMessage(chatId, 
+          `🎁 <b>${service.name}</b>\n\n` +
+          `${service.desc}\n\n` +
+          `🔗 <b>Ссылка:</b> ${service.url || "Доступно в боте"}`
+        );
+      }
+    }
+    
+    return sendHome(chatId);
+  }
+
+  if (command === "/help") {
+    return sendHelp(chatId);
+  }
+
+  if (command === "/profile" || command === "/mydata") {
+    const user = await getUser(userId);
+    const joinDate = formatDate(user.createdAt);
+    const lastSeen = formatDate(user.lastSeen);
+    const ticketsCount = (await getUserTickets(userId)).length;
+    const badgeCount = user.badges ? user.badges.length : 0;
+    const refCount = user.referrals ? user.referrals.length : 0;
+    const subCount = user.versionSubscriptions ? user.versionSubscriptions.length : 0;
+
+    return sendMessage(
+      chatId,
+      `👤 <b>Ваш профиль UnderCur</b>\n\n` +
+      `🆔 <b>ID:</b> <code>${userId}</code>\n` +
+      `🔔 <b>Новости:</b> ${user.news !== false ? "✅ Включены" : "❌ Выключены"}\n` +
+      `📅 <b>Дата регистрации:</b> ${joinDate}\n` +
+      `🕒 <b>Последняя активность:</b> ${lastSeen}\n` +
+      `💬 <b>Сообщений отправлено:</b> ${user.messageCount || 0}\n` +
+      `🎫 <b>Создано тикетов:</b> ${ticketsCount}\n` +
+      `🏆 <b>Бейджей:</b> ${badgeCount}\n` +
+      `👥 <b>Приглашено друзей:</b> ${refCount}\n` +
+      `🔔 <b>Подписок на версии:</b> ${subCount}\n\n` +
+      `<b>Команды:</b>\n` +
+      `/badges — мои достижения\n` +
+      `/share — пригласить друга\n` +
+      `/promolist — промокоды`,
+      { reply_markup: backKeyboard() }
+    );
+  }
+
+  if (command === "/badges" || command === "/achievements") {
+    return sendBadgesMenu(chatId);
+  }
+
+  if (command === "/share" || command === "/invite") {
+    return sendShareBot(chatId);
+  }
+
+  if (command === "/promolist" || command === "/promos") {
+    return sendPromoList(chatId);
+  }
+
+  if (command === "/promo") {
+    if (!args) {
+      return sendMessage(chatId, "❌ Использование: <code>/promo CODE</code>\n\n" +
+        "Пример: <code>/promo SUMMER2026</code>");
+    }
+    
+    const result = await usePromoCode(userId, args);
+    
+    if (result.success) {
+      return sendMessage(chatId, 
+        `✅ <b>Промокод активирован!</b>\n\n` +
+        `🎁 <b>Награда:</b> ${result.reward}\n\n` +
+        "Проверьте свои бейджи: /badges");
+    } else {
+      const errors = {
+        "not_found": "Промокод не найден",
+        "inactive": "Промокод неактивен",
+        "already_used": "Вы уже использовали этот промокод",
+        "max_uses": "Промокод больше недоступен",
+      };
+      return sendMessage(chatId, `❌ ${errors[result.error] || "Ошибка активации"}`);
+    }
+  }
+
+  if (command === "/watch") {
+    if (!args) {
+      return sendMessage(chatId, "❌ Использование: <code>/watch VERSION</code>\n\n" +
+        "Пример: <code>/watch 2.0</code>\n" +
+        "Или: <code>/watch *</code> — подписаться на все версии");
+    }
+    
+    const subscribed = await subscribeToVersion(userId, args);
+    
+    if (subscribed) {
+      return sendMessage(chatId, 
+        `✅ <b>Подписка оформлена!</b>\n\n` +
+        `Вы будете получать уведомления о версии: <code>${args}</code>\n\n` +
+        `<i>Чтобы отписаться: /unwatch ${args}</i>`);
+    } else {
+      return sendMessage(chatId, "Вы уже подписаны на эту версию.");
+    }
+  }
+
+  if (command === "/unwatch") {
+    if (!args) {
+      return sendMessage(chatId, "❌ Использование: <code>/unwatch VERSION</code>");
+    }
+    
+    const unsubscribed = await unsubscribeFromVersion(userId, args);
+    
+    if (unsubscribed) {
+      return sendMessage(chatId, `✅ Вы отписались от версии: <code>${args}</code>`);
+    } else {
+      return sendMessage(chatId, "Вы не были подписаны на эту версию.");
+    }
+  }
+
+  if (command === "/mysubs" || command === "/subscriptions") {
+    const user = await getUser(userId);
+    const subs = user.versionSubscriptions || [];
+    
+    if (subs.length === 0) {
+      return sendMessage(chatId, "🔔 <b>Ваши подписки</b>\n\n" +
+        "Вы не подписаны ни на одну версию.\n\n" +
+        "Используйте: <code>/watch VERSION</code>");
+    }
+    
+    let text = " <b>Ваши подписки на версии:</b>\n\n";
+    subs.forEach((v, i) => {
+      text += `${i + 1}. <code>${v}</code>\n`;
+    });
+    
+    return sendMessage(chatId, text);
+  }
+
+  if (command === "/schedule") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
+    }
+    
+    // Формат: /schedule 2026-09-25 12:00 Текст новости
+    const parts = args.split(/\s+/);
+    if (parts.length < 3) {
+      return sendMessage(chatId, 
+        "❌ Использование: <code>/schedule DATE TIME TEXT</code>\n\n" +
+        "Пример: <code>/schedule 2026-09-25 12:00 Новая версия игры!</code>");
+    }
+    
+    const date = parts[0];
+    const time = parts[1];
+    const text = parts.slice(2).join(" ");
+    
+    const post = await schedulePost(date, time, text);
+    
+    return sendMessage(chatId, 
+      `✅ <b>Пост запланирован!</b>\n\n` +
+      `📅 Дата: ${date}\n` +
+      ` Время: ${time}\n` +
+      `📝 ID: <code>${post.id}</code>\n\n` +
+      `<i>Отменить: /unschedule ${post.id}</i>`);
+  }
+
+  if (command === "/unschedule") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
+    }
+    
+    if (!args) {
+      return sendMessage(chatId, "❌ Использование: <code>/unschedule POST_ID</code>");
+    }
+    
+    const deleted = await cancelScheduledPost(args);
+    
+    if (deleted > 0) {
+      return sendMessage(chatId, `✅ Пост отменён.`);
+    } else {
+      return sendMessage(chatId, "Пост не найден или уже опубликован.");
+    }
+  }
+
+  if (command === "/scheduled") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
+    }
+    return sendScheduledPostsList(chatId, null, true);
+  }
+
+  if (command === "/faq") {
+    if (args) {
+      return sendFaqSearch(chatId, args);
+    }
+    return sendFaqList(chatId);
+  }
+  
+
+  if (command === "/stats") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для использования этой команды.");
+    }
+    
+    const users = (await kv.smembers("undercur:users")) || [];
+    const bannedCount = (await kv.smembers("undercur:banned_users")) || [];
+    const allTickets = (await kv.smembers("undercur:all_tickets")) || [];
+    const versions = await getStoredVersions();
+    const faqs = await getAllFaqs();
+    const scheduledPosts = await getScheduledPosts();
+    
+    let newsEnabledCount = 0;
+    let activeToday = 0;
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+
+    for (const uId of users) {
+      const user = await getUser(uId);
+      if (user.news !== false) newsEnabledCount++;
+      if (now - user.lastSeen < oneDayMs) activeToday++;
+    }
+
+    return sendMessage(
+      chatId,
+      `📊 <b>Статистика UnderCur Bot</b>\n\n` +
+      `👥 <b>Всего пользователей:</b> ${users.length}\n` +
+      ` <b>Активных за 24 часа:</b> ${activeToday}\n` +
+      `🔔 <b>Подписано на новости:</b> ${newsEnabledCount}\n` +
+      `⛔ <b>Заблокировано:</b> ${bannedCount.length}\n` +
+      `🎫 <b>Всего тикетов:</b> ${allTickets.length}\n` +
+      ` <b>Версий в базе:</b> ${versions.length}\n` +
+      `❓ <b>Статей в FAQ:</b> ${faqs.length}\n` +
+      ` <b>Запланировано постов:</b> ${scheduledPosts.length}\n\n` +
+      `<i>Данные актуальны на ${formatDate(now)}</i>`
+    );
+  }
+
+  if (command === "/versions" || command === "/versoins") {
+    return versionsMessage(chatId);
+  }
+
+  if (command === "/download") {
+    return sendDownloadInfo(chatId);
+  }
+
+  // --- Управление версиями ---
+  if (command === "/add") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для добавления версий.");
+    }
+    if (!args) {
+      return sendMessage(chatId, "❌ Укажите версии для добавления.\n\n💡 Пример: `/add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)`", { parse_mode: "Markdown" });
+    }
+
+    const newVersions = parseMultipleVersions(args);
+    if (!newVersions.length) {
+      return sendMessage(chatId, "❌ Не удалось распознать ни одной версии.\n\n Пример: `1.0.1, 1.0.2 (beta)`", { parse_mode: "Markdown" });
+    }
+
+    const existing = await getStoredVersions();
+    let added = 0;
+    let updated = 0;
+
+    for (const newVer of newVersions) {
+      const idx = existing.findIndex(v => v.version === newVer.version);
+      if (idx >= 0) {
+        existing[idx] = { ...existing[idx], ...newVer, addedAt: existing[idx].addedAt || Date.now() };
+        updated++;
+      } else {
+        existing.push({ ...newVer, addedAt: Date.now() });
+        added++;
+      }
+    }
+
+    await setStoredVersions(existing);
+    const list = newVersions.map(v => versionTitle(v)).join("\n");
+
+    // Уведомляем подписчиков
+    for (const newVer of newVersions) {
+      await notifyVersionSubscribers(newVer.version, newVer);
+    }
+
+    return sendMessage(chatId, `✅ <b>Версии обработаны!</b>\n\n➕ <b>Добавлено:</b> ${added}\n🔄 <b>Обновлено:</b> ${updated}\n\n📋 <b>Список:</b>\n${list}\n\n <b>Подписчики уведомлены!</b>`);
+  }
+
+  if (command === "/delete") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, " У вас нет прав для удаления версий.");
+    }
+    if (!args) {
+      return sendMessage(chatId, "❌ Укажите версию для удаления.\n\n💡 Пример: `/delete 1.0.2 (beta)`", { parse_mode: "Markdown" });
+    }
+
+    const parsed = parseVersionString(args);
+    if (!parsed) {
+      return sendMessage(chatId, "❌ Неверный формат версии. Используйте формат: <code>1.0.0</code> или <code>1.0.0 (beta)</code>");
+    }
+
+    const existing = await getStoredVersions();
+    const before = existing.length;
+
+    const filtered = existing.filter(v => {
+      if (v.version !== parsed.version) return true;
+      if (parsed.status && v.status !== parsed.status) return true;
+      return false;
+    });
+
+    if (filtered.length === before) {
+      return sendMessage(chatId, `❌ Версия "<code>${args}</code>" не найдена в базе.`);
+    }
+
+    await setStoredVersions(filtered);
+    return sendMessage(chatId, `✅ <b>Версия удалена!</b>\n\n🗑️ <b>Удалено:</b> ${versionTitle(parsed)}\n <b>Осталось версий:</b> ${filtered.length}`);
+  }
+
+  if (command === "/all") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, " У вас нет прав для просмотра всех версий.");
+    }
+    const versions = await getStoredVersions();
+    if (!versions.length) {
+      return sendMessage(chatId, "📭 Версий пока нет. Добавьте через команду /add");
+    }
+
+    const list = versions.map((v, i) => `${i + 1}. ${versionTitle(v)}`).join("\n");
+    return sendMessage(chatId, `📋 <b>Все версии (${versions.length}):</b>\n\n${list}\n\n💡 <b>Управление:</b>\n/add — добавить\n/delete — удалить`);
+  }
+
+  if (command === "/clearversions") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
+    }
+    await kv.set("undercur:versions", "[]");
+    return sendMessage(chatId, "🗑️ <b>Список версий полностью очищен.</b>\nТеперь можно добавить новые через команду /add");
+  }
+
+  // --- Массовая рассылка ---
+  if (command === "/sendall") {
+    if (!isAdmin(userId)) {
+      return sendMessage(chatId, " У вас нет прав для этой команды.");
+    }
+    if (!args) {
+      return sendMessage(chatId, "❌ Используйте: <code>/sendall &lt;текст сообщения&gt;</code>");
+    }
+    
+    const users = (await kv.smembers("undercur:users")) || [];
+    let sent = 0;
+    let failed = 0;
+    
+    await sendMessage(chatId, `⏳ <b>Начало рассылки...</b>\nВсего получателей: ${users.length}`);
+    
+    for (const uId of users) {
+      try {
+        await sendMessage(uId, `📢 <b>Важное сообщение от администрации:</b>\n\n${args}`);
+        sent++;
+        await new Promise(resolve => setTimeout(resolve, 40)); // Anti-flood delay
+      } catch (e) {
+        failed++;
+      }
+    }
+    return sendMessage(chatId, `✅ <b>Рассылка завершена!</b>\n\n📤 Отправлено: ${sent}\n❌ Ошибок: ${failed}`);
+  }
+
+  // --- Модерация ---
+  if (command === "/ban") {
+    if (!isAdmin(userId)) return sendMessage(chatId, " Недостаточно прав.");
+    const parts = args.split(/\s+/);
+    const targetId = parts[0];
+    const reason = parts.slice(1).join(" ") || "Не указана";
+    
+    if (!targetId || isNaN(targetId)) {
+      return sendMessage(chatId, "❌ Использование: <code>/ban &lt;user_id&gt; [причина]</code>");
+    }
+    
+    await banUser(targetId, userId, reason);
+    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> заблокирован.\nПричина: ${reason}`);
+  }
+
+  if (command === "/unban") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const targetId = args.trim();
+    
+    if (!targetId || isNaN(targetId)) {
+      return sendMessage(chatId, " Использование: <code>/unban &lt;user_id&gt;</code>");
+    }
+    
+    await unbanUser(targetId);
+    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> разблокирован.`);
+  }
+
+  if (command === "/finduser") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const targetId = args.trim();
+    
+    if (!targetId || isNaN(targetId)) {
+      return sendMessage(chatId, "❌ Использование: <code>/finduser &lt;user_id&gt;</code>");
+    }
+    
+    const user = await getUser(targetId);
+    if (!user || !user.createdAt) {
+      return sendMessage(chatId, `❌ Пользователь с ID <code>${targetId}</code> не найден в базе.`);
+    }
+    
+    const badgeCount = user.badges ? user.badges.length : 0;
+    const refCount = user.referrals ? user.referrals.length : 0;
+    
+    return sendMessage(chatId, 
+      `🔍 <b>Информация о пользователе</b>\n\n` +
+      `🆔 ID: <code>${user.userId}</code>\n` +
+      `📅 Регистрация: ${formatDate(user.createdAt)}\n` +
+      ` Последняя активность: ${formatDate(user.lastSeen)}\n` +
+      `💬 Сообщений: ${user.messageCount || 0}\n` +
+      `🔔 Новости: ${user.news !== false ? "Вкл" : "Выкл"}\n` +
+      `🏆 Бейджей: ${badgeCount}\n` +
+      `👥 Рефералов: ${refCount}`
+    );
+  }
+
+  // --- Новости ---
+  if (command === "/news") {
+    if (args.length > 0 || message.reply_to_message) {
+      // ЕСТЬ ТЕКСТ ИЛИ ОТВЕТ НА СООБЩЕНИЕ -> ПУБЛИКАЦИЯ
+      if (!isAdmin(userId)) {
+        return sendMessage(chatId, "⛔ У вас нет прав для публикации новостей.");
+      }
+      
+      await sendMessage(chatId, "⏳ <b>Публикация новости...</b>");
+      const result = await publishNews(message, userId);
+      
+      if (result.error === "empty") {
+        return sendMessage(chatId, "❌ После команды /news должен быть текст новости, или используйте эту команду как ответ на сообщение с новостью.");
+      }
+      
+      return sendMessage(chatId, 
+        "✅ <b>Новость обработана.</b>\n\n" +
+        `📢 <b>Канал:</b> ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
+        `👤 <b>Получателей (рассылка):</b> ${result.sentCount}` +
+        (result.error ? `\n⚠️ <b>Ошибка:</b> ${result.error}` : "")
+      );
+    } else {
+      // НЕТ ТЕКСТА -> НАСТРОЙКИ
+      const user = await getUser(userId);
+      return sendMessage(chatId, "📰 <b>Новости UnderCur</b>\n\nЗдесь будут появляться новости проекта.\nНастройте получение уведомлений:", {
+        reply_markup: newsKeyboard(user.news !== false),
+      });
+    }
+  }
+
+  // --- Гайд и FAQ ---
+  if (command === "/guide") {
+    return sendGuideMenu(chatId);
+  }
+
+  if (command === "/addfaq") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    const parts = args.split("|");
+    if (parts.length < 2) {
+      return sendMessage(chatId, "❌ Использование: <code>/addfaq &lt;вопрос&gt; | &lt;ответ&gt;</code>");
+    }
+    const faq = await addFaq(parts[0], parts.slice(1).join("|"));
+    return sendMessage(chatId, `✅ FAQ добавлен!\nID: <code>${faq.id}</code>\nВопрос: ${escapeHtml(faq.question)}`);
+  }
+
+  if (command === "/delfaq") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    await deleteFaq(args.trim());
+    return sendMessage(chatId, "✅ FAQ удален (если существовал).");
+  }
+
+  // --- Promo Codes Admin ---
+  if (command === "/genpromo") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    
+    const parts = args.split(/\s+/);
+    if (parts.length < 2) {
+      return sendMessage(chatId, 
+        "❌ Использование: <code>/genpromo CODE REWARD [MAX_USES]</code>\n\n" +
+        "Пример: <code>/genpromo SUMMER2026 \"Бонус 100 монет\" 100</code>");
+    }
+    
+    const code = parts[0];
+    const reward = parts[1];
+    const maxUses = parseInt(parts[2]) || 100;
+    
+    const promo = await generatePromoCode(code, reward, maxUses);
+    
+    return sendMessage(chatId, 
+      `✅ <b>Промокод создан!</b>\n\n` +
+      `🎁 <b>Код:</b> <code>${promo.code}</code>\n` +
+      `💰 <b>Награда:</b> ${promo.reward}\n` +
+      ` <b>Лимит:</b> ${promo.maxUses} использований`);
+  }
+
+  if (command === "/promos") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
+    
+    const promos = await getAllPromoCodes();
+    
+    if (promos.length === 0) {
+      return sendMessage(chatId, " <b>Промокоды</b>\n\nПока нет созданных промокодов.");
+    }
+    
+    let text = " <b>Все промокоды:</b>\n\n";
+    promos.forEach((p, i) => {
+      const status = p.active ? "✅" : "❌";
+      text += `${i + 1}. ${status} <code>${p.code}</code> — ${p.reward}\n`;
+      text += `<i>Использовано: ${p.usedBy.length}/${p.maxUses}</i>\n\n`;
+    });
+    
+    return sendMessage(chatId, text);
+  }
+
+  // FALLBACK
+  return sendMessage(chatId, "Неизвестная команда. Используйте меню ниже или /help для списка команд.", {
+    reply_markup: mainKeyboard(),
+  });
 }
 
 // ==========================================
@@ -1316,6 +2075,10 @@ async function processCallback(callback) {
     return editMessage(chatId, messageId, "💬 <b>Написать разработчикам</b>\n\nВыберите категорию вашего обращения, чтобы мы могли обработать его быстрее:", {
       reply_markup: developersKeyboard()
     });
+  }
+
+  if (data === "promo_list") {
+    return sendPromoList(chatId, messageId);
   }
 
   if (data === "my_tickets") {
@@ -1425,9 +2188,76 @@ async function processCallback(callback) {
     }
     
     const text = `❓ <b>Вопрос:</b> ${escapeHtml(faq.question)}\n\n` +
-                 `💡 <b>Ответ:</b>\n${escapeHtml(faq.answer)}`;
+                 ` <b>Ответ:</b>\n${escapeHtml(faq.answer)}`;
                  
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("home") }); // Или вернуться к списку, но для простоты - домой
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("faq") });
+  }
+
+  // --- Badge System Callbacks ---
+  if (data === "my_badges") {
+    return sendBadgesMenu(chatId, messageId);
+  }
+
+  if (data === "all_badges_list") {
+    const allBadges = Object.values(BADGES);
+    let text = "🏆 <b>Все доступные бейджи</b>\n\n";
+    
+    const userBadges = await getUserBadges(userId);
+    const userBadgeIds = userBadges.map(b => b.id);
+    
+    allBadges.forEach((badge, idx) => {
+      const obtained = userBadgeIds.includes(badge.id) ? "✅" : "⬜";
+      text += `${obtained} ${badge.emoji} <b>${badge.name}</b>\n<i>${badge.desc}</i>\n\n`;
+    });
+    
+    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("my_badges") });
+  }
+
+  if (data === "share_bot") {
+    return sendShareBot(chatId, messageId);
+  }
+
+  // --- Version Subscription Callbacks ---
+  if (data.startsWith("watch_")) {
+    const version = data.replace("watch_", "");
+    const subscribed = await subscribeToVersion(userId, version);
+    
+    if (subscribed) {
+      await answerCallback(callback.id, `Подписан на ${version}`);
+      // Обновляем сообщение с версиями
+      return versionsMessage(chatId, messageId);
+    } else {
+      await answerCallback(callback.id, "Вы уже подписаны", true);
+    }
+  }
+
+  if (data.startsWith("unwatch_")) {
+    const version = data.replace("unwatch_", "");
+    const unsubscribed = await unsubscribeFromVersion(userId, version);
+    
+    if (unsubscribed) {
+      await answerCallback(callback.id, `Отписан от ${version}`);
+      return versionsMessage(chatId, messageId);
+    } else {
+      await answerCallback(callback.id, "Вы не были подписаны", true);
+    }
+  }
+
+  // --- Scheduled Posts Callbacks ---
+  if (data.startsWith("unschedule_")) {
+    if (!isAdmin(userId)) {
+      return answerCallback(callback.id, "Нет прав", true);
+    }
+    
+    const postId = data.replace("unschedule_", "");
+    const deleted = await cancelScheduledPost(postId);
+    
+    if (deleted > 0) {
+      await answerCallback(callback.id, "Пост отменён");
+      return sendScheduledPostsList(chatId, messageId, true);
+    } else {
+      await answerCallback(callback.id, "Ошибка отмены", true);
+    }
   }
 }
 
