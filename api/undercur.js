@@ -1131,7 +1131,7 @@ async function sendDownloadInfo(chatId, messageId = null) {
 }
 
 // ==========================================
-// NEWS PUBLISHING SYSTEM (BUG FIXED)
+// NEWS PUBLISHING SYSTEM (BUG FIXED: copyMessage instead of forwardMessage)
 // ==========================================
 
 async function publishNews(message, adminUserId) {
@@ -1140,58 +1140,62 @@ async function publishNews(message, adminUserId) {
   let sentCount = 0;
   let error = null;
 
-  // ИСПРАВЛЕНИЕ БАГА: Надежное извлечение текста новости
+  // 1. Надежное извлечение текста или подписи (caption)
   let rawContent = message.text || message.caption || "";
   
-  // Если админ ответил на сообщение командой /news, берем текст исходного сообщения
   if (message.reply_to_message) {
     rawContent = message.reply_to_message.text || message.reply_to_message.caption || rawContent;
   }
 
-  // Максимально надежное удаление команды /news и возможных пробелов/переносов строк после неё
+  // 2. Максимально надежное удаление команды /news
   let cleanedContent = rawContent;
   const commandRegex = /^\/news(?:@\w+)?[\s\n\r]+/i;
   
   if (commandRegex.test(rawContent)) {
     cleanedContent = rawContent.replace(commandRegex, "").trim();
   } else {
-    // Fallback на случай, если команда была написана слитно или как-то иначе
     cleanedContent = rawContent.replace(/^\/news(?:@\w+)?/i, "").trim();
   }
 
-  if (!cleanedContent) {
+  // Если после удаления команды ничего не осталось (и это не просто медиа без текста)
+  if (!cleanedContent && !message.photo && !message.video && !message.document && !message.animation && !message.voice) {
     return { channelSent: false, sentCount: 0, error: "empty" };
   }
 
   const prefix = "📰 <b>Новость UnderCur</b>\n\n";
-  const finalContent = prefix + cleanedContent;
+  const finalContent = cleanedContent ? prefix + cleanedContent : prefix + "Новость без текста (медиа)";
 
-  const isMedia = message.photo || message.animation || message.voice || message.video || message.document || (message.reply_to_message && (message.reply_to_message.photo || message.reply_to_message.document));
+  // 3. Определяем, есть ли медиа
+  const isMedia = message.photo || message.animation || message.voice || message.video || message.document || message.video_note || 
+                  (message.reply_to_message && (message.reply_to_message.photo || message.reply_to_message.document || message.reply_to_message.video || message.reply_to_message.animation));
+  
   const extra = {};
 
   if (!isMedia) {
+    // Текстовое сообщение
     extra.parse_mode = "HTML";
     extra.disable_web_page_preview = false;
-    if (message.entities || (message.reply_to_message && message.reply_to_message.entities)) {
-      const entities = message.reply_to_message ? message.reply_to_message.entities : message.entities;
+    const sourceEntities = message.reply_to_message ? message.reply_to_message.entities : message.entities;
+    if (sourceEntities) {
       const commandLength = rawContent.length - cleanedContent.length;
-      extra.entities = entities
+      extra.entities = sourceEntities
         .map((entity) => ({
           ...entity,
-          offset: Math.max(0, entity.offset - commandLength + prefix.length),
+          offset: Math.max(0, entity.offset - commandLength + (cleanedContent ? prefix.length : 0)),
         }))
         .filter((entity) => entity.offset >= 0 && entity.length > 0);
     }
   } else {
+    // Медиа-сообщение (используем caption)
     extra.caption = finalContent;
     extra.parse_mode = "HTML";
-    if (message.caption_entities || (message.reply_to_message && message.reply_to_message.caption_entities)) {
-      const entities = message.reply_to_message ? message.reply_to_message.caption_entities : message.caption_entities;
+    const sourceCaptionEntities = message.reply_to_message ? message.reply_to_message.caption_entities : message.caption_entities;
+    if (sourceCaptionEntities) {
       const commandLength = rawContent.length - cleanedContent.length;
-      extra.caption_entities = entities
+      extra.caption_entities = sourceCaptionEntities
         .map((entity) => ({
           ...entity,
-          offset: Math.max(0, entity.offset - commandLength + prefix.length),
+          offset: Math.max(0, entity.offset - commandLength + (cleanedContent ? prefix.length : 0)),
         }))
         .filter((entity) => entity.offset >= 0 && entity.length > 0);
     }
@@ -1210,18 +1214,13 @@ async function publishNews(message, adminUserId) {
     const targetMsgId = message.reply_to_message ? message.reply_to_message.message_id : message.message_id;
 
     if (isMedia) {
-      result = await forwardMessage(NEWS_CHANNEL, targetChatId, targetMsgId);
-      if (result.ok) {
-        try {
-          await telegram("editMessageReplyMarkup", {
-            chat_id: NEWS_CHANNEL,
-            message_id: result.result.message_id,
-            reply_markup: extra.reply_markup,
-          });
-        } catch (e) {
-          console.error("Не удалось добавить кнопку к forwarded сообщению:", e.message);
-        }
-      }
+      // ИСПРАВЛЕНИЕ: Используем copyMessage вместо forwardMessage, чтобы заменить caption
+      result = await copyMessage(NEWS_CHANNEL, targetChatId, targetMsgId, {
+        caption: extra.caption,
+        parse_mode: extra.parse_mode,
+        caption_entities: extra.caption_entities,
+        reply_markup: extra.reply_markup,
+      });
     } else {
       result = await sendMessage(NEWS_CHANNEL, finalContent, extra);
     }
@@ -1231,9 +1230,9 @@ async function publishNews(message, adminUserId) {
     error = error.message;
   }
 
-  // Рассылка пользователям (с ограничением частоты для избежания спам-фильтров)
+  // Рассылка пользователям
   for (const recipientId of users) {
-    if (String(recipientId) === String(adminUserId)) continue; // Не спамить самому админу
+    if (String(recipientId) === String(adminUserId)) continue;
     
     const recipient = await getUser(recipientId);
     if (recipient.news === false) continue;
@@ -1243,16 +1242,22 @@ async function publishNews(message, adminUserId) {
       if (isMedia) {
         const targetChatId = message.reply_to_message ? message.reply_to_message.chat.id : message.chat.id;
         const targetMsgId = message.reply_to_message ? message.reply_to_message.message_id : message.message_id;
-        result = await forwardMessage(recipientId, targetChatId, targetMsgId);
+        
+        // ИСПРАВЛЕНИЕ: Используем copyMessage и для рассылки, чтобы убрать /news из caption
+        result = await copyMessage(recipientId, targetChatId, targetMsgId, {
+          caption: extra.caption,
+          parse_mode: extra.parse_mode,
+          caption_entities: extra.caption_entities,
+        });
       } else {
         result = await sendMessage(recipientId, finalContent, extra);
       }
+      
       if (result.ok) sentCount++;
       
       // Небольшая задержка для предотвращения flood control
       await new Promise(resolve => setTimeout(resolve, 30));
     } catch (error) {
-      // Игнорируем ошибки заблокированных ботов или удаленных аккаунтов
       if (!error.message.includes("Forbidden") && !error.message.includes("blocked")) {
         console.error("Ошибка рассылки пользователю:", error.message);
       }
