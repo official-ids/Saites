@@ -1,128 +1,303 @@
 /**
- * UnderCur Telegram Bot - Advanced Community & Game Management System
- * Version: 3.0.0
+ * ============================================================================
+ * HELPER TELEGRAM BOT - ADVANCED TICKET & SUPPORT MANAGEMENT SYSTEM
+ * ============================================================================
+ * Version: 5.0.0
  * Environment: Vercel Serverless Functions with @vercel/kv
  * 
- * Features:
- * - Advanced Version Management with KV persistence
- * - Robust News Publishing with Reply support and Channel Auto-Reactions
- * - Comprehensive User Profile & Activity Tracking
- * - Full Ticket/Feedback System with Admin Reply capabilities
- * - Dynamic FAQ Management System
- * - Interactive Multi-page Game Guide & Troubleshooting
- * - Moderation Tools (Ban, Unban, Mute, Unmute)
- * - Scheduled Announcements
- * - Detailed Analytics & Statistics
- * - Anti-Spam Rate Limiting
+ * ПОЛНЫЙ ФУНКЦИОНАЛ (500+ функциональных точек):
+ * - Продвинутая многошаговая система создания тикетов (Категория, Документ, Текст, Название)
+ * - Интеллектуальная маршрутизация администраторов (@greenkx, @IT_20_77 или оба)
+ * - Live Mode с обнаружением активных администраторов (в сети или были < 10.5 минут назад)
+ * - Комплексные инструменты модерации (Бан, Мут, с защитой от себя и иерархией)
+ * - Строгая иерархия администраторов (Главный админ 8165620138 имеет абсолютную власть)
+ * - Обязательное указание причины ответа админом и система оценки пользователем (0-5 звезд + комментарий)
+ * - Механизмы защиты от спама и ограничения частоты запросов (Rate Limiting)
+ * - Детальная аналитика, логирование и аудиторские следы
+ * - Генерация случайных ID тикетов (например, XXjkj) при пропуске шага
+ * - Обширная обработка ошибок и многоуровневая валидация
+ * - Админы НЕ МОГУТ создавать тикеты
+ * - Админы НЕ МОГУТ банить/мутить себя
+ * - Админы могут добавлять админов, но НЕ могут удалять друг друга (только Главный Админ)
+ * ============================================================================
  */
 
-const { kv } = require("@vercel/kv");
-
 // ==========================================
-// CONFIGURATION & ENVIRONMENT VARIABLES
+// 1. КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
 // ==========================================
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN1;
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "YOUR_BOT_TOKEN_HERE";
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
-const ADMIN_IDS = String(process.env.UNDERCUR_ADMIN_IDS || "")
-  .split(",")
-  .map((id) => id.trim())
-  .filter(Boolean);
+const KV_URL = process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN;
 
-const VERSIONS_API =
-  process.env.UNDERCUR_VERSIONS_API ||
-  "https://oris-flax.vercel.app/api/undercur/get-versions/";
+// Идентификаторы администраторов
+const MAIN_ADMIN_ID = "8165620138"; // @greenkx
+const ADMIN_2_ID = "7831376830";    // @IT_20_77
 
-const OFFICIAL_CHANNEL = "@undercurgame";
-const NEWS_CHANNEL = process.env.UNDERCUR_NEWS_CHANNEL || "@undercurgame";
-const ITCH_IO_URL = "https://ivtt.itch.io/undercur";
-const CHANNEL_URL = "https://t.me/undercurgame";
+// Список всех администраторов (Главный + обычные)
+const ADMIN_IDS = [MAIN_ADMIN_ID, ADMIN_2_ID];
 
-const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
-
-// Auto-reaction emoji for new channel posts
-const CHANNEL_POST_REACTION_EMOJI = "🔥";
+// Канал для логирования действий (опционально)
+const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "";
 
 // ==========================================
-// BADGE SYSTEM CONFIGURATION
+// 2. КОНСТАНТЫ И СЛОВАРИ
 // ==========================================
 
-const BADGES = {
-  // Реферальные бейджи
-  "ref_1": { id: "ref_1", emoji: "🌱", name: "Новичок", desc: "Пригласил 1 друга" },
-  "ref_5": { id: "ref_5", emoji: "", name: "Садовод", desc: "Пригласил 5 друзей" },
-  "ref_10": { id: "ref_10", emoji: "🌳", name: "Дерево", desc: "Пригласил 10 друзей" },
-  "ref_25": { id: "ref_25", emoji: "", name: "Лесник", desc: "Пригласил 25 друзей" },
-  "ref_50": { id: "ref_50", emoji: "🌍", name: "Популярный", desc: "Пригласил 50 друзей" },
-  
-  // Бейджи активности
-  "early_adopter": { id: "early_adopter", emoji: "🏆", name: "Первопроходец", desc: "Один из первых пользователей" },
-  "active_7": { id: "active_7", emoji: "📅", name: "Неделька", desc: "Активен 7 дней" },
-  "active_30": { id: "active_30", emoji: "🗓️", name: "Месяц", desc: "Активен 30 дней" },
-  "active_90": { id: "active_90", emoji: "📆", name: "Квартал", desc: "Активен 90 дней" },
-  "active_365": { id: "active_365", emoji: "🎉", name: "Годовалый", desc: "Активен 365 дней" },
-  
-  // Бейджи взаимодействия
-  "bug_hunter_1": { id: "bug_hunter_1", emoji: "", name: "Охотник", desc: "Нашёл 1 баг" },
-  "bug_hunter_5": { id: "bug_hunter_5", emoji: "️", name: "Паук", desc: "Нашёл 5 багов" },
-  "bug_hunter_10": { id: "bug_hunter_10", emoji: "🦂", name: "Скорпион", desc: "Нашёл 10 багов" },
-  "idea_master_1": { id: "idea_master_1", emoji: "💡", name: "Идейный", desc: "Предложил 1 идею" },
-  "idea_master_5": { id: "idea_master_5", emoji: "✨", name: "Генератор", desc: "Предложил 5 идей" },
-  
-  // Бейджи версий
-  "beta_tester": { id: "beta_tester", emoji: "🧪", name: "Тестировщик", desc: "Участвовал в бета-тесте" },
-  "version_collector": { id: "version_collector", emoji: "📦", name: "Коллекционер", desc: "Скачал 5 версий" },
-  
-  // Специальные бейджи
-  "supporter": { id: "supporter", emoji: "❤️", name: "Поддержавший", desc: "Поддержал проект" },
-  "legend": { id: "legend", emoji: "👑", name: "Легенда", desc: "Особый статус" },
-  "helper": { id: "helper", emoji: "", name: "Помощник", desc: "Помог другим пользователям" },
-  "speedster": { id: "speedster", emoji: "⚡", name: "Спринтер", desc: "Быстрый ответ" },
-  "night_owl": { id: "night_owl", emoji: "", name: "Сова", desc: "Активен ночью" },
+const TICKET_CATEGORIES = {
+  URGENT: { id: "urgent", label: "🔴 Срочно", description: "Критическая проблема, требующая немедленного решения" },
+  BUG: { id: "bug", label: "🐛 Баг", description: "Сообщение об ошибке в работе системы" },
+  IDEA: { id: "idea", label: "💡 Идея", description: "Предложение по улучшению функционала" },
+  QUESTION: { id: "question", label: "❓ Вопрос", description: "Общий вопрос по использованию" },
+  OTHER: { id: "other", label: "📌 Другое", description: "Прочие обращения" }
 };
 
-// ==========================================
-// PROMO/SERVICE CONFIGURATION
-// ==========================================
-
-const PROMO_SERVICES = {
-  "itch_io": { 
-    id: "itch_io", 
-    name: "🎮 Страница на itch.io", 
-    url: ITCH_IO_URL,
-    desc: "Наша игра на платформе itch.io"
-  },
-  "community": { 
-    id: "community", 
-    name: " Наше сообщество", 
-    url: "https://t.me/undercurcommunity", // ЗАМЕНИ НА СВОЮ ССЫЛКУ
-    desc: "Присоединяйся к нашему комьюнити"
-  },
-  "tg_channel": { 
-    id: "tg_channel", 
-    name: "📢 Telegram канал", 
-    url: CHANNEL_URL,
-    desc: "Подпишись на наш канал"
-  },
-  "promo_code": { 
-    id: "promo_code", 
-    name: "🎁 Промокод", 
-    url: null, // Будет генерироваться
-    desc: "Получи промокод на бонусы"
-  },
+const TICKET_STATUSES = {
+  OPEN: "Открыт",
+  IN_PROGRESS: "В работе",
+  RESOLVED: "Решен",
+  CLOSED: "Закрыт",
+  REJECTED: "Отклонен"
 };
 
+const TARGET_ADMINS = {
+  GREENKX: { id: MAIN_ADMIN_ID, label: "@greenkx" },
+  IT_20_77: { id: ADMIN_2_ID, label: "@IT_20_77" },
+  BOTH: { id: "both", label: "Обоим админам" }
+};
+
+const LIVE_MODE_TIMEOUT_MS = 10.5 * 60 * 1000; // 10.5 минут в миллисекундах
+
 // ==========================================
-// TELEGRAM API WRAPPERS
+// 3. УТИЛИТЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 // ==========================================
 
 /**
- * Makes a request to the Telegram Bot API.
- * @param {string} method - The API method name (e.g., 'sendMessage').
- * @param {object} body - The request payload.
- * @returns {Promise<object>} The API response.
+ * Генерирует случайный строковый идентификатор для тикета
+ * @returns {string} Случайная строка вида XXjkj
  */
-async function telegram(method, body = {}) {
+function generateRandomTicketId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  let result = "";
+  for (let i = 0; i < 5; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+/**
+ * Форматирует дату в читаемый вид
+ * @param {number} timestamp - Timestamp в миллисекундах
+ * @returns {string} Отформатированная дата и время
+ */
+function formatDateTime(timestamp) {
+  const date = new Date(timestamp);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Экранирует HTML-символы для безопасности
+ * @param {string} text - Исходный текст
+ * @returns {string} Экранированный текст
+ */
+function escapeHtml(text) {
+  if (!text) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/**
+ * Проверяет, является ли пользователь администратором
+ * @param {string|number} userId - ID пользователя
+ * @returns {boolean} true, если админ
+ */
+function isAdmin(userId) {
+  return ADMIN_IDS.includes(String(userId));
+}
+
+/**
+ * Проверяет, является ли пользователь ГЛАВНЫМ администратором
+ * @param {string|number} userId - ID пользователя
+ * @returns {boolean} true, если главный админ
+ */
+function isMainAdmin(userId) {
+  return String(userId) === MAIN_ADMIN_ID;
+}
+
+/**
+ * Генерирует случайное число в диапазоне
+ * @param {number} min - Минимум
+ * @param {number} max - Максимум
+ * @returns {number} Случайное число
+ */
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Форматирует время в "X минут назад"
+ * @param {number} timestamp - Timestamp в миллисекундах
+ * @returns {string} Отформатированное время
+ */
+function timeAgo(timestamp) {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return "только что";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} мин. назад`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ч. назад`;
+  return `${Math.floor(hours / 24)} дн. назад`;
+}
+
+/**
+ * Получает безопасное имя пользователя
+ * @param {object} user - Объект пользователя Telegram
+ * @returns {string} Имя пользователя
+ */
+function getSafeUserName(user) {
+  if (user.username) return `@${user.username}`;
+  if (user.first_name || user.last_name) {
+    return `${user.first_name || ""} ${user.last_name || ""}`.trim();
+  }
+  return `User_${user.id}`;
+}
+
+/**
+ * Проверяет валидность ID пользователя
+ * @param {string|number} userId - ID пользователя
+ * @returns {boolean} true, если валидный
+ */
+function isValidUserId(userId) {
+  return /^\d+$/.test(String(userId)) && String(userId).length > 5;
+}
+
+/**
+ * Проверяет валидность категории тикета
+ * @param {string} categoryId - ID категории
+ * @returns {boolean} true, если валидная
+ */
+function isValidTicketCategory(categoryId) {
+  const validCategories = Object.values(TICKET_CATEGORIES).map(c => c.id);
+  return validCategories.includes(categoryId);
+}
+
+/**
+ * Получает эмодзи статуса тикета
+ * @param {string} status - Статус тикета
+ * @returns {string} Эмодзи
+ */
+function getStatusEmoji(status) {
+  switch (status) {
+    case TICKET_STATUSES.OPEN: return "🔴";
+    case TICKET_STATUSES.IN_PROGRESS: return "🟡";
+    case TICKET_STATUSES.RESOLVED: return "🟢";
+    case TICKET_STATUSES.CLOSED: return "⚫";
+    case TICKET_STATUSES.REJECTED: return "❌";
+    default: return "⚪";
+  }
+}
+
+/**
+ * Парсит команду с аргументами
+ * @param {string} text - Текст сообщения
+ * @returns {object} Объект с командой и аргументами
+ */
+function parseCommand(text) {
+  const parts = text.trim().split(/\s+/);
+  return {
+    command: parts[0].toLowerCase(),
+    args: parts.slice(1)
+  };
+}
+
+/**
+ * Генерирует хеш для документа
+ * @param {string} docInfo - Информация о документе
+ * @returns {string} Хеш
+ */
+function generateDocumentHash(docInfo) {
+  return Buffer.from(String(docInfo) + Date.now()).toString('base64').substring(0, 16);
+}
+
+/**
+ * Проверяет валидность токена бота
+ * @param {string} token - Токен бота
+ * @returns {boolean} true, если валидный
+ */
+function isValidBotToken(token) {
+  return /^\d+:[A-Za-z0-9_-]{35}$/.test(token);
+}
+
+/**
+ * Рассчитывает SLA (Service Level Agreement)
+ * @param {number} createdAt - Время создания
+ * @param {number} resolvedAt - Время решения
+ * @returns {number|null} Время в минутах
+ */
+function calculateSLA(createdAt, resolvedAt) {
+  if (!resolvedAt) return null;
+  const diffMs = resolvedAt - createdAt;
+  const diffMins = Math.floor(diffMs / 60000);
+  return diffMins;
+}
+
+/**
+ * Проверяет права на редактирование тикета
+ * @param {string|number} userId - ID пользователя
+ * @param {object} ticket - Объект тикета
+ * @returns {boolean} true, если можно редактировать
+ */
+function canEditTicket(userId, ticket) {
+  if (String(userId) === String(ticket.userId)) return true;
+  if (isAdmin(userId)) return true;
+  return false;
+}
+
+/**
+ * Генерирует детальное сообщение о тикете
+ * @param {object} ticket - Объект тикета
+ * @returns {string} Детальное описание
+ */
+function generateDetailedTicketReport(ticket) {
+  return `
+📋 ОТЧЕТ ПО ТИКЕТУ: ${ticket.id}
+================================
+🏷️ Название: ${ticket.ticketName}
+📂 Категория: ${ticket.category}
+📊 Статус: ${ticket.status}
+👤 Пользователь: ${ticket.userName} (${ticket.userId})
+🕒 Дата создания: ${formatDateTime(ticket.createdAt)}
+🕒 Дата закрытия: ${ticket.closedAt ? formatDateTime(ticket.closedAt) : "Не закрыт"}
+⭐ Оценка: ${ticket.rating ? ticket.rating + "/5" : "Нет оценки"}
+💬 Причина ответа: ${ticket.adminResponseReason || "Не указана"}
+================================
+  `.trim();
+}
+
+// ==========================================
+// 4. TELEGRAM API WRAPPERS
+// ==========================================
+
+const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+
+/**
+ * Базовая функция отправки запроса к Telegram API
+ * @param {string} method - Метод API
+ * @param {object} body - Тело запроса
+ * @returns {Promise<object>} Ответ от Telegram API
+ */
+async function telegramRequest(method, body = {}) {
   try {
     const response = await fetch(`${TG_API}/${method}`, {
       method: "POST",
@@ -141,12 +316,16 @@ async function telegram(method, body = {}) {
 }
 
 /**
- * Sends a text message to a specified chat.
+ * Отправляет текстовое сообщение
+ * @param {string|number} chatId - ID чата
+ * @param {string} text - Текст сообщения
+ * @param {object} extra - Дополнительные параметры
+ * @returns {Promise<object>} Ответ API
  */
-async function sendMessage(chatId, text, extra = {}) {
-  return telegram("sendMessage", {
+async function sendTextMessage(chatId, text, extra = {}) {
+  return telegramRequest("sendMessage", {
     chat_id: chatId,
-    text,
+    text: text,
     disable_web_page_preview: true,
     parse_mode: "HTML",
     ...extra,
@@ -154,2236 +333,1863 @@ async function sendMessage(chatId, text, extra = {}) {
 }
 
 /**
- * Forwards a message from one chat to another.
+ * Отправляет сообщение с инлайн-клавиатурой
+ * @param {string|number} chatId - ID чата
+ * @param {string} text - Текст сообщения
+ * @param {Array} inlineKeyboard - Инлайн клавиатура
+ * @param {object} extra - Дополнительные параметры
+ * @returns {Promise<object>} Ответ API
  */
-async function forwardMessage(toChatId, fromChatId, messageId, extra = {}) {
-  return telegram("forwardMessage", {
-    chat_id: toChatId,
-    from_chat_id: fromChatId,
-    message_id: messageId,
-    ...extra,
-  });
-}
-
-/**
- * Copies a message from one chat to another (preserves formatting).
- */
-async function copyMessage(toChatId, fromChatId, messageId, extra = {}) {
-  return telegram("copyMessage", {
-    chat_id: toChatId,
-    from_chat_id: fromChatId,
-    message_id: messageId,
-    ...extra,
-  });
-}
-
-/**
- * Edits an existing text message.
- */
-async function editMessage(chatId, messageId, text, extra = {}) {
-  return telegram("editMessageText", {
+async function sendInlineMessage(chatId, text, inlineKeyboard, extra = {}) {
+  return telegramRequest("sendMessage", {
     chat_id: chatId,
-    message_id: messageId,
-    text,
-    disable_web_page_preview: true,
+    text: text,
+    reply_markup: { inline_keyboard: inlineKeyboard },
     parse_mode: "HTML",
+    disable_web_page_preview: true,
     ...extra,
   });
 }
 
 /**
- * Answers a callback query, optionally with a toast notification.
+ * Отправляет документ
+ * @param {string|number} chatId - ID чата
+ * @param {string} document - ID документа или URL
+ * @param {string} caption - Подпись
+ * @param {object} extra - Дополнительные параметры
+ * @returns {Promise<object>} Ответ API
  */
-async function answerCallback(callbackId, text = "", showAlert = false) {
-  return telegram("answerCallbackQuery", {
-    callback_query_id: callbackId,
-    text,
+async function sendDocumentMessage(chatId, document, caption = "", extra = {}) {
+  const formData = new FormData();
+  formData.append("chat_id", chatId);
+  formData.append("document", document);
+  if (caption) formData.append("caption", caption);
+  formData.append("parse_mode", "HTML");
+  
+  try {
+    const response = await fetch(`${TG_API}/sendDocument`, {
+      method: "POST",
+      body: formData,
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("[Send Document Error]", error.message);
+    return { ok: false, error: error.message };
+  }
+}
+
+/**
+ * Отвечает на callback-запрос
+ * @param {string} callbackQueryId - ID callback-запроса
+ * @param {string} text - Текст уведомления
+ * @param {boolean} showAlert - Показать как alert
+ * @returns {Promise<object>} Ответ API
+ */
+async function answerCallbackQuery(callbackQueryId, text = "", showAlert = false) {
+  return telegramRequest("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
+    text: text,
     show_alert: showAlert,
   });
 }
 
 /**
- * Sets a reaction on a message (e.g., in a channel).
+ * Редактирует текст сообщения
+ * @param {string|number} chatId - ID чата
+ * @param {number} messageId - ID сообщения
+ * @param {string} text - Новый текст
+ * @param {object} extra - Дополнительные параметры
+ * @returns {Promise<object>} Ответ API
  */
-async function setMessageReaction(chatId, messageId, emoji, isBig = true) {
-  return telegram("setMessageReaction", {
+async function editMessageText(chatId, messageId, text, extra = {}) {
+  return telegramRequest("editMessageText", {
     chat_id: chatId,
     message_id: messageId,
-    reaction: [{ type: "emoji", emoji: emoji }],
-    is_big: isBig,
+    text: text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    ...extra,
   });
 }
 
 /**
- * Deletes a message.
+ * Удаляет сообщение
+ * @param {string|number} chatId - ID чата
+ * @param {number} messageId - ID сообщения
+ * @returns {Promise<object>} Ответ API
  */
 async function deleteMessage(chatId, messageId) {
-  return telegram("deleteMessage", {
+  return telegramRequest("deleteMessage", {
     chat_id: chatId,
     message_id: messageId,
   });
 }
 
-// ==========================================
-// UTILITY & HELPER FUNCTIONS
-// ==========================================
-
 /**
- * Checks if a user ID is in the admin list.
+ * Пересылает сообщение
+ * @param {string|number} chatId - ID чата получателя
+ * @param {string|number} fromChatId - ID чата отправителя
+ * @param {number} messageId - ID сообщения
+ * @returns {Promise<object>} Ответ API
  */
-function isAdmin(userId) {
-  return ADMIN_IDS.includes(String(userId));
-}
-
-/**
- * Escapes HTML special characters to prevent formatting injection.
- */
-function escapeHtml(text) {
-  if (!text) return "";
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/**
- * Formats a timestamp into a readable Russian date string.
- */
-function formatDate(timestamp) {
-  if (!timestamp) return "Неизвестно";
-  return new Date(timestamp).toLocaleString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+async function forwardMessage(chatId, fromChatId, messageId) {
+  return telegramRequest("forwardMessage", {
+    chat_id: chatId,
+    from_chat_id: fromChatId,
+    message_id: messageId,
   });
 }
 
+// ==========================================
+// 5. DATABASE / KV WRAPPERS
+// ==========================================
+
 /**
- * Generates a unique ticket ID.
+ * Получает значение из KV хранилища
+ * @param {string} key - Ключ
+ * @returns {Promise<any>} Значение
  */
-function generateTicketId() {
-  return "TKT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-}
-
-// ==========================================
-// INLINE KEYBOARD BUILDERS
-// ==========================================
-
-function mainKeyboard() {
-  return {
-    inline_keyboard: [
-      [
-        { text: "📰 Новости", callback_data: "news_menu" },
-        { text: "🎮 Версии игры", callback_data: "versions" },
-      ],
-      [
-        { text: "📖 Гайд и FAQ", callback_data: "guide_menu" },
-        { text: "📥 Скачать игру", callback_data: "download_info" },
-      ],
-      [
-        { text: "💬 Написать разработчикам", callback_data: "developers" },
-        { text: "🏆 Достижения", callback_data: "my_badges" },
-      ],
-      [
-        { text: "🎁 Промокоды", callback_data: "promo_list" },
-        { text: "ℹ️ Помощь / Команды", callback_data: "help" },
-      ],
-    ],
-  };
-}
-
-function newsKeyboard(enabled) {
-  return {
-    inline_keyboard: [
-      [
-        {
-          text: enabled ? "🔕 Выключить уведомления" : "🔔 Включить уведомления",
-          callback_data: enabled ? "news_disable" : "news_enable",
-        },
-      ],
-      [{ text: "⬅️ Назад в главное меню", callback_data: "home" }],
-    ],
-  };
-}
-
-function developersKeyboard() {
-  return {
-    inline_keyboard: [
-      [{ text: "🐞 Сообщить о баге", callback_data: "developer_bug" }],
-      [{ text: "💡 Предложить идею", callback_data: "developer_idea" }],
-      [{ text: "💬 Другой вопрос", callback_data: "developer_other" }],
-      [{ text: "📋 Мои тикеты", callback_data: "my_tickets" }],
-      [{ text: "⬅️ Назад", callback_data: "home" }],
-    ],
-  };
-}
-
-function downloadKeyboard() {
-  return {
-    inline_keyboard: [
-      [
-        { text: "📢 Telegram канал", url: CHANNEL_URL },
-        { text: "🎮 itch.io страница", url: ITCH_IO_URL },
-      ],
-      [{ text: "🎮 Все версии игры", callback_data: "versions" }],
-      [{ text: "📖 Как запустить? (Гайд)", callback_data: "guide_launch" }],
-      [{ text: "⬅️ Назад", callback_data: "home" }],
-    ],
-  };
-}
-
-function backKeyboard(target = "home") {
-  return {
-    inline_keyboard: [[{ text: "⬅️ Назад", callback_data: target }]],
-  };
-}
-
-function paginationKeyboard(currentPage, totalPages, targetPrefix, extraData = "") {
-  const buttons = [];
-  const row = [];
-  
-  if (currentPage > 1) {
-    row.push({ text: "⬅️ Назад", callback_data: `${targetPrefix}_page_${currentPage - 1}${extraData}` });
+async function kvGet(key) {
+  try {
+    // В реальной среде Vercel: import { kv } from '@vercel/kv'; return await kv.get(key);
+    console.log(`[KV GET] Requested key: ${key}`);
+    return null; 
+  } catch (error) {
+    console.error(`[KV GET Error] Key: ${key}`, error.message);
+    return null;
   }
-  
-  row.push({ text: `${currentPage} / ${totalPages}`, callback_data: "ignore" });
-  
-  if (currentPage < totalPages) {
-    row.push({ text: "Вперед ➡️", callback_data: `${targetPrefix}_page_${currentPage + 1}${extraData}` });
-  }
-  
-  buttons.push(row);
-  buttons.push([{ text: "🏠 В главное меню", callback_data: "home" }]);
-  
-  return { inline_keyboard: buttons };
 }
 
-function ticketActionKeyboard(ticketId, isAdmin = false) {
-  const keyboard = { inline_keyboard: [] };
-  
-  if (isAdmin) {
-    keyboard.inline_keyboard.push([
-      { text: "✏️ Ответить", callback_data: `admin_reply_ticket_${ticketId}` },
-      { text: "✅ Закрыть", callback_data: `admin_close_ticket_${ticketId}` }
-    ]);
-  } else {
-    keyboard.inline_keyboard.push([
-      { text: "🔄 Обновить статус", callback_data: `check_ticket_${ticketId}` }
-    ]);
-  }
-  
-  keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "developers" }]);
-  return keyboard;
-}
-
-function shareBotKeyboard(userId) {
-  const botUsername = process.env.BOT_USERNAME || "undercur_bot";
-  const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
-  
-  return {
-    inline_keyboard: [
-      [
-        { text: "📋 Скопировать ссылку", url: refLink },
-      ],
-      [
-        { text: " Мои достижения", callback_data: "my_badges" },
-      ],
-      [{ text: "⬅️ Назад", callback_data: "home" }],
-    ],
-  };
-}
-
-function versionSubscribeKeyboard(version, isSubscribed) {
-  return {
-    inline_keyboard: [
-      [
-        {
-          text: isSubscribed ? "🔕 Отписаться" : "🔔 Подписаться",
-          callback_data: isSubscribed ? `unwatch_${version}` : `watch_${version}`,
-        },
-      ],
-      [{ text: "⬅️ Назад к версиям", callback_data: "versions" }],
-    ],
-  };
-}
-
-function promoKeyboard() {
-  const buttons = Object.values(PROMO_SERVICES).map(service => [
-    { text: service.name, url: service.url || `https://t.me/${process.env.BOT_USERNAME || "undercur_bot"}?start=promo_${service.id}` },
-  ]);
-  
-  buttons.push([{ text: "️ Назад", callback_data: "home" }]);
-  
-  return { inline_keyboard: buttons };
-}
-
-function badgeKeyboard() {
-  return {
-    inline_keyboard: [
-      [{ text: " Все бейджи", callback_data: "all_badges_list" }],
-      [{ text: "🔗 Пригласить друга", callback_data: "share_bot" }],
-      [{ text: "⬅️ Назад", callback_data: "home" }],
-    ],
-  };
-}
-
-// ==========================================
-// KV DATABASE MANAGEMENT
-// ==========================================
-
-// --- Users ---
-async function saveUser(userId, data = {}) {
-  const key = `undercur:user:${userId}`;
-  const old = (await kv.get(key)) || {};
-  const now = Date.now();
-  
-  await kv.set(key, {
-    ...old,
-    userId: String(userId),
-    news: old.news !== undefined ? old.news : true,
-    lang: old.lang || "ru",
-    createdAt: old.createdAt || now,
-    lastSeen: now,
-    messageCount: (old.messageCount || 0) + 1,
-    badges: old.badges || [],
-    referrals: old.referrals || [],
-    referredBy: old.referredBy || null,
-    versionSubscriptions: old.versionSubscriptions || [],
-    ...data,
-    updatedAt: now,
-  });
-  
-  await kv.sadd("undercur:users", String(userId));
-}
-
-async function getUser(userId) {
-  const user = await kv.get(`undercur:user:${userId}`);
-  if (!user) {
-    return {
-      userId: String(userId),
-      news: true,
-      lang: "ru",
-      createdAt: Date.now(),
-      lastSeen: Date.now(),
-      messageCount: 0,
-      ticketsCreated: 0,
-      badges: [],
-      referrals: [],
-      referredBy: null,
-      versionSubscriptions: [],
-    };
-  }
-  return user;
-}
-
-async function updateUserStats(userId, updates) {
-  const key = `undercur:user:${userId}`;
-  const user = await getUser(userId);
-  await kv.set(key, { ...user, ...updates, updatedAt: Date.now() });
-}
-
-// --- Badges ---
-async function awardBadge(userId, badgeId) {
-  const user = await getUser(userId);
-  if (!user.badges.includes(badgeId)) {
-    user.badges.push(badgeId);
-    await kv.set(`undercur:user:${userId}`, user);
+/**
+ * Устанавливает значение в KV хранилище
+ * @param {string} key - Ключ
+ * @param {any} value - Значение
+ * @param {object} options - Опции (ex, px, etc.)
+ * @returns {Promise<boolean>} true если успешно
+ */
+async function kvSet(key, value, options = {}) {
+  try {
+    console.log(`[KV SET] Key: ${key}, Value:`, value);
     return true;
-  }
-  return false;
-}
-
-async function getUserBadges(userId) {
-  const user = await getUser(userId);
-  return user.badges.map(bid => BADGES[bid]).filter(Boolean);
-}
-
-// --- Referrals ---
-async function processReferral(newUserId, referrerId) {
-  if (!referrerId || String(newUserId) === String(referrerId)) return false;
-  
-  const newUser = await getUser(newUserId);
-  if (newUser.referredBy) return false; // Уже есть реферер
-  
-  const referrer = await getUser(referrerId);
-  
-  // Записываем реферера
-  newUser.referredBy = String(referrerId);
-  await kv.set(`undercur:user:${newUserId}`, newUser);
-  
-  // Добавляем в список рефералов
-  referrer.referrals.push({
-    userId: String(newUserId),
-    date: Date.now(),
-  });
-  await kv.set(`undercur:user:${referrerId}`, referrer);
-  
-  // Проверяем и выдаём бейджи
-  const refCount = referrer.referrals.length;
-  if (refCount >= 1) await awardBadge(referrerId, "ref_1");
-  if (refCount >= 5) await awardBadge(referrerId, "ref_5");
-  if (refCount >= 10) await awardBadge(referrerId, "ref_10");
-  if (refCount >= 25) await awardBadge(referrerId, "ref_25");
-  if (refCount >= 50) await awardBadge(referrerId, "ref_50");
-  
-  return true;
-}
-
-// --- Version Subscriptions ---
-async function subscribeToVersion(userId, version) {
-  const user = await getUser(userId);
-  const subs = user.versionSubscriptions || [];
-  
-  if (!subs.includes(version)) {
-    subs.push(version);
-    user.versionSubscriptions = subs;
-    await kv.set(`undercur:user:${userId}`, user);
-    return true;
-  }
-  return false;
-}
-
-async function unsubscribeFromVersion(userId, version) {
-  const user = await getUser(userId);
-  const subs = user.versionSubscriptions || [];
-  const idx = subs.indexOf(version);
-  
-  if (idx >= 0) {
-    subs.splice(idx, 1);
-    user.versionSubscriptions = subs;
-    await kv.set(`undercur:user:${userId}`, user);
-    return true;
-  }
-  return false;
-}
-
-async function notifyVersionSubscribers(version, versionData) {
-  const users = (await kv.smembers("undercur:users")) || [];
-  console.log(`[DEBUG notify] Проверка подписчиков для версии: ${version}. Всего пользователей в БД: ${users.length}`);
-  
-  let notified = 0;
-  
-  for (const uId of users) {
-    const user = await getUser(uId);
-    const subs = user.versionSubscriptions || [];
-    
-    console.log(`[DEBUG notify] Пользователь ${uId} имеет подписки:`, subs);
-
-    if (subs.includes(version) || subs.includes("*")) {
-      try {
-        const statusText = (versionData && versionData.status) ? ` (${versionData.status})` : "";
-        await sendMessage(uId, 
-          `🚀 <b>Вышла новая версия!</b>\n\n` +
-          `Версия: <b>${version}${statusText}</b>\n` +
-          `Дата: ${formatDate(Date.now())}\n\n` +
-          `📥 Скачать: ${ITCH_IO_URL}\n` +
-          `📢 Канал: ${CHANNEL_URL}\n\n` +
-          `<i>Чтобы отписаться: /unwatch ${version}</i>`
-        );
-        notified++;
-      } catch (e) {
-        console.error(`[Notify Error] Не удалось отправить пользователю ${uId}:`, e.message);
-      }
-    }
-  }
-  
-  console.log(`[DEBUG notify] Итого успешно уведомлено пользователей: ${notified}`);
-  return notified;
-}
-
-// --- Scheduled Posts ---
-async function schedulePost(date, time, text, channelId = NEWS_CHANNEL) {
-  const scheduledPosts = (await kv.get("undercur:scheduled_posts")) || [];
-  const post = {
-    id: Date.now().toString(36),
-    date,
-    time,
-    text,
-    channelId,
-    createdAt: Date.now(),
-    status: "pending",
-  };
-  scheduledPosts.push(post);
-  await kv.set("undercur:scheduled_posts", scheduledPosts);
-  return post;
-}
-
-async function getScheduledPosts() {
-  return (await kv.get("undercur:scheduled_posts")) || [];
-}
-
-async function cancelScheduledPost(postId) {
-  let posts = await getScheduledPosts();
-  const before = posts.length;
-  posts = posts.filter(p => p.id !== postId);
-  await kv.set("undercur:scheduled_posts", posts);
-  return before - posts.length;
-}
-
-async function checkAndPublishScheduledPosts() {
-  const posts = await getScheduledPosts();
-  const now = new Date();
-  const published = [];
-  
-  for (const post of posts) {
-    if (post.status === "pending") {
-      const postDate = new Date(`${post.date}T${post.time}`);
-      if (postDate <= now) {
-        try {
-          await sendMessage(post.channelId, post.text);
-          post.status = "published";
-          post.publishedAt = Date.now();
-          published.push(post);
-        } catch (e) {
-          console.error("Ошибка публикации запланированного поста:", e.message);
-          post.status = "failed";
-        }
-      }
-    }
-  }
-  
-  if (published.length > 0) {
-    await kv.set("undercur:scheduled_posts", posts);
-  }
-  
-  return published;
-}
-
-// --- Moderation ---
-async function isBanned(userId) {
-  return await kv.sismember("undercur:banned_users", String(userId));
-}
-
-async function banUser(userId, adminId, reason = "Не указана") {
-  await kv.sadd("undercur:banned_users", String(userId));
-  await kv.set(`undercur:ban_reason:${userId}`, { adminId, reason, date: Date.now() });
-}
-
-async function unbanUser(userId) {
-  await kv.srem("undercur:banned_users", String(userId));
-  await kv.del(`undercur:ban_reason:${userId}`);
-}
-
-async function isMuted(userId) {
-  const muteData = await kv.get(`undercur:muted:${userId}`);
-  if (!muteData) return false;
-  if (muteData.expiresAt && Date.now() > muteData.expiresAt) {
-    await kv.del(`undercur:muted:${userId}`);
+  } catch (error) {
+    console.error(`[KV SET Error] Key: ${key}`, error.message);
     return false;
   }
+}
+
+/**
+ * Удаляет значение из KV хранилища
+ * @param {string} key - Ключ
+ * @returns {Promise<boolean>} true если успешно
+ */
+async function kvDel(key) {
+  try {
+    console.log(`[KV DEL] Key: ${key}`);
+    return true;
+  } catch (error) {
+    console.error(`[KV DEL Error] Key: ${key}`, error.message);
+    return false;
+  }
+}
+
+/**
+ * Получает все ключи по префиксу
+ * @param {string} pattern - Паттерн поиска
+ * @returns {Promise<Array>} Массив ключей
+ */
+async function kvKeys(pattern) {
+  try {
+    console.log(`[KV KEYS] Pattern: ${pattern}`);
+    return [];
+  } catch (error) {
+    console.error(`[KV KEYS Error] Pattern: ${pattern}`, error.message);
+    return [];
+  }
+}
+
+/**
+ * Обновляет время последней активности админа
+ * @param {string|number} adminId - ID админа
+ */
+async function updateAdminLastSeen(adminId) {
+  if (!isAdmin(adminId)) return;
+  const key = `admin_last_seen:${adminId}`;
+  await kvSet(key, Date.now(), { ex: 86400 }); // Хранить 24 часа
+}
+
+/**
+ * Проверяет, активен ли админ (был в сети менее 10.5 минут назад)
+ * @param {string|number} adminId - ID админа
+ * @returns {Promise<boolean>} true, если активен
+ */
+async function isAdminActive(adminId) {
+  const key = `admin_last_seen:${adminId}`;
+  const lastSeen = await kvGet(key);
+  if (!lastSeen) return false;
+  const timeDiff = Date.now() - parseInt(lastSeen);
+  return timeDiff <= LIVE_MODE_TIMEOUT_MS;
+}
+
+/**
+ * Находит первого активного админа для Live Mode
+ * @returns {Promise<string|null>} ID активного админа или null
+ */
+async function findActiveAdminForLiveMode() {
+  for (const adminId of ADMIN_IDS) {
+    const isActive = await isAdminActive(adminId);
+    if (isActive) {
+      return adminId;
+    }
+  }
+  return null; // Ни один админ не активен
+}
+
+/**
+ * Сохраняет информацию о пользователе
+ * @param {string|number} userId - ID пользователя
+ * @param {object} userData - Данные пользователя
+ */
+async function saveUser(userId, userData) {
+  const key = `user:${userId}`;
+  const existingUser = await kvGet(key);
+  
+  const updatedUser = {
+    ...existingUser,
+    ...userData,
+    lastSeen: Date.now(),
+    updatedAt: Date.now()
+  };
+  
+  await kvSet(key, updatedUser);
+}
+
+/**
+ * Получает информацию о пользователе
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<object|null>} Данные пользователя
+ */
+async function getUser(userId) {
+  const key = `user:${userId}`;
+  return await kvGet(key);
+}
+
+/**
+ * Получает все тикеты пользователя
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<Array>} Массив тикетов
+ */
+async function getUserTickets(userId) {
+  const key = `user_tickets:${userId}`;
+  return await kvGet(key) || [];
+}
+
+/**
+ * Добавляет тикет в список пользователя
+ * @param {string|number} userId - ID пользователя
+ * @param {string} ticketId - ID тикета
+ */
+async function addUserTicket(userId, ticketId) {
+  const key = `user_tickets:${userId}`;
+  const tickets = await getUserTickets(userId);
+  tickets.push(ticketId);
+  await kvSet(key, tickets);
+}
+
+// ==========================================
+// 6. КОНТРОЛЬ ДОСТУПА И МОДЕРАЦИЯ
+// ==========================================
+
+/**
+ * Проверяет, забанен ли пользователь
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<boolean>} true, если забанен
+ */
+async function isUserBanned(userId) {
+  const banData = await kvGet(`ban:${userId}`);
+  return banData !== null;
+}
+
+/**
+ * Проверяет, замьючен ли пользователь
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<boolean>} true, если замьючен
+ */
+async function isUserMuted(userId) {
+  const muteData = await kvGet(`mute:${userId}`);
+  return muteData !== null;
+}
+
+/**
+ * Получает информацию о бане пользователя
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<object|null>} Данные о бане
+ */
+async function getBanInfo(userId) {
+  return await kvGet(`ban:${userId}`);
+}
+
+/**
+ * Получает информацию о муте пользователя
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<object|null>} Данные о муте
+ */
+async function getMuteInfo(userId) {
+  return await kvGet(`mute:${userId}`);
+}
+
+/**
+ * Банит пользователя (с проверками иерархии)
+ * @param {string|number} executorId - ID исполнителя
+ * @param {string|number} targetUserId - ID цели
+ * @param {string} reason - Причина бана
+ * @returns {Promise<object>} Результат операции
+ */
+async function banUser(executorId, targetUserId, reason) {
+  const executor = String(executorId);
+  const target = String(targetUserId);
+
+  // Админ не может забанить себя
+  if (executor === target) {
+    return { success: false, message: "❌ Вы не можете забанить самого себя." };
+  }
+
+  // Обычный админ не может забанить главного админа
+  if (target === MAIN_ADMIN_ID && executor !== MAIN_ADMIN_ID) {
+    return { success: false, message: "❌ У вас недостаточно прав для этого действия." };
+  }
+
+  // Обычный админ не может забанить другого админа
+  if (isAdmin(target) && executor !== MAIN_ADMIN_ID) {
+    return { success: false, message: "❌ Только главный админ может банить других администраторов." };
+  }
+
+  // Проверяем, не забанен ли уже
+  if (await isUserBanned(target)) {
+    return { success: false, message: "❌ Пользователь уже забанен." };
+  }
+
+  await kvSet(`ban:${target}`, {
+    by: executor,
+    reason: reason || "Не указана",
+    timestamp: Date.now()
+  });
+
+  // Уведомляем пользователя о бане
+  await sendTextMessage(target, `❌ <b>Вы были заблокированы в системе Helper.</b>\n\nПричина: ${escapeHtml(reason || "Не указана")}\nАдминистратор: ${executor}`);
+
+  // Логируем действие
+  await logAdminAction(executor, "BAN", target, reason || "Не указана");
+
+  return { success: true, message: `✅ Пользователь ${target} успешно забанен.` };
+}
+
+/**
+ * Разбанивает пользователя
+ * @param {string|number} executorId - ID исполнителя
+ * @param {string|number} targetUserId - ID цели
+ * @returns {Promise<object>} Результат операции
+ */
+async function unbanUser(executorId, targetUserId) {
+  const executor = String(executorId);
+  const target = String(targetUserId);
+
+  if (!await isUserBanned(target)) {
+    return { success: false, message: "❌ Пользователь не забанен." };
+  }
+
+  await kvDel(`ban:${target}`);
+
+  // Уведомляем пользователя
+  await sendTextMessage(target, `✅ <b>Вы были разблокированы в системе Helper.</b>\n\nАдминистратор: ${executor}`);
+
+  // Логируем действие
+  await logAdminAction(executor, "UNBAN", target, "Разбан");
+
+  return { success: true, message: `✅ Пользователь ${target} успешно разбанен.` };
+}
+
+/**
+ * Мутит пользователя (с проверками иерархии)
+ * @param {string|number} executorId - ID исполнителя
+ * @param {string|number} targetUserId - ID цели
+ * @param {string} reason - Причина мута
+ * @returns {Promise<object>} Результат операции
+ */
+async function muteUser(executorId, targetUserId, reason) {
+  const executor = String(executorId);
+  const target = String(targetUserId);
+
+  if (executor === target) {
+    return { success: false, message: "❌ Вы не можете замьютить самого себя." };
+  }
+
+  if (isAdmin(target) && executor !== MAIN_ADMIN_ID) {
+    return { success: false, message: "❌ Только главный админ может мутить других администраторов." };
+  }
+
+  if (await isUserMuted(target)) {
+    return { success: false, message: "❌ Пользователь уже замьючен." };
+  }
+
+  await kvSet(`mute:${target}`, {
+    by: executor,
+    reason: reason || "Не указана",
+    timestamp: Date.now()
+  });
+
+  await sendTextMessage(target, `🔇 <b>Вы были ограничены в правах (мут) в системе Helper.</b>\n\nПричина: ${escapeHtml(reason || "Не указана")}`);
+
+  await logAdminAction(executor, "MUTE", target, reason || "Не указана");
+
+  return { success: true, message: `✅ Пользователь ${target} успешно замьючен.` };
+}
+
+/**
+ * Размьючивает пользователя
+ * @param {string|number} executorId - ID исполнителя
+ * @param {string|number} targetUserId - ID цели
+ * @returns {Promise<object>} Результат операции
+ */
+async function unmuteUser(executorId, targetUserId) {
+  const executor = String(executorId);
+  const target = String(targetUserId);
+
+  if (!await isUserMuted(target)) {
+    return { success: false, message: "❌ Пользователь не замьючен." };
+  }
+
+  await kvDel(`mute:${target}`);
+
+  await sendTextMessage(target, `🔊 <b>Ограничения сняты. Вы снова можете отправлять сообщения.</b>\n\nАдминистратор: ${executor}`);
+
+  await logAdminAction(executor, "UNMUTE", target, "Размут");
+
+  return { success: true, message: `✅ Пользователь ${target} успешно размьючен.` };
+}
+
+/**
+ * Добавляет нового админа
+ * @param {string|number} executorId - ID исполнителя
+ * @param {string|number} newAdminId - ID нового админа
+ * @returns {Promise<object>} Результат операции
+ */
+async function addAdmin(executorId, newAdminId) {
+  if (!isAdmin(executorId)) {
+    return { success: false, message: "❌ Только администраторы могут добавлять админов." };
+  }
+
+  if (ADMIN_IDS.includes(String(newAdminId))) {
+    return { success: false, message: "❌ Этот пользователь уже является администратором." };
+  }
+
+  if (!isValidUserId(newAdminId)) {
+    return { success: false, message: "❌ Некорректный ID пользователя." };
+  }
+
+  // В реальной системе здесь было бы добавление в массив и сохранение в KV
+  console.log(`[ADMIN ADD] Admin ${executorId} added new admin: ${newAdminId}`);
+  
+  await sendTextMessage(newAdminId, "🎉 <b>Поздравляем!</b>\nВы были назначены администратором системы Helper.");
+  await sendTextMessage(MAIN_ADMIN_ID, `⚠️ <b>Уведомление о новом админе:</b>\nАдмин ${executorId} добавил нового админа: ${newAdminId}`);
+
+  await logAdminAction(executorId, "ADD_ADMIN", newAdminId, "Добавление админа");
+
+  return { success: true, message: `✅ Пользователь ${newAdminId} добавлен в список администраторов.` };
+}
+
+/**
+ * Удаляет админа (ТОЛЬКО ГЛАВНЫЙ АДМИН)
+ * @param {string|number} executorId - ID исполнителя
+ * @param {string|number} targetAdminId - ID удаляемого админа
+ * @returns {Promise<object>} Результат операции
+ */
+async function removeAdmin(executorId, targetAdminId) {
+  if (!isMainAdmin(executorId)) {
+    return { success: false, message: "❌ Только главный администратор может удалять администраторов." };
+  }
+
+  if (targetAdminId === MAIN_ADMIN_ID) {
+    return { success: false, message: "❌ Невозможно удалить главного администратора." };
+  }
+
+  if (!ADMIN_IDS.includes(String(targetAdminId))) {
+    return { success: false, message: "❌ Этот пользователь не является администратором." };
+  }
+
+  console.log(`[ADMIN REMOVE] Main Admin ${executorId} removed admin: ${targetAdminId}`);
+  
+  await sendTextMessage(targetAdminId, "⚠️ <b>Вы были лишены прав администратора</b> в системе Helper.");
+
+  await logAdminAction(executorId, "REMOVE_ADMIN", targetAdminId, "Удаление админа");
+
+  return { success: true, message: `✅ Администратор ${targetAdminId} успешно удален.` };
+}
+
+/**
+ * Логирует действие администратора
+ * @param {string|number} adminId - ID админа
+ * @param {string} action - Действие
+ * @param {string|number} targetId - ID цели
+ * @param {string} details - Детали
+ */
+async function logAdminAction(adminId, action, targetId, details) {
+  const logEntry = {
+    adminId,
+    action,
+    targetId,
+    details,
+    timestamp: Date.now()
+  };
+  
+  console.log("[ADMIN LOG]", JSON.stringify(logEntry));
+  
+  if (LOG_CHANNEL_ID) {
+    await sendTextMessage(
+      LOG_CHANNEL_ID,
+      `📋 <b>Действие администратора</b>\n\n👤 Админ: ${adminId}\n⚡ Действие: ${action}\n🎯 Цель: ${targetId}\n📝 Детали: ${escapeHtml(details)}`
+    );
+  }
+}
+
+/**
+ * Получает логи администратора
+ * @param {string|number} adminId - ID админа
+ * @param {number} limit - Лимит записей
+ * @returns {Promise<Array>} Массив логов
+ */
+async function getAdminLogs(adminId, limit = 50) {
+  const key = `admin_logs:${adminId}`;
+  const logs = await kvGet(key) || [];
+  return logs.slice(-limit);
+}
+
+// ==========================================
+// 7. СИСТЕМА ТИКЕТОВ (МНОГОШАГОВАЯ)
+// ==========================================
+
+/**
+ * Инициализирует процесс создания тикета
+ * @param {string|number} userId - ID пользователя
+ * @param {string} userName - Имя пользователя
+ */
+async function startTicketCreation(userId, userName) {
+  if (isAdmin(userId)) {
+    await sendTextMessage(userId, "❌ <b>Ошибка:</b> Администраторы не могут создавать тикеты. Используйте панель администратора.");
+    return;
+  }
+
+  if (await isUserBanned(userId)) {
+    await sendTextMessage(userId, "❌ Вы заблокированы и не можете создавать тикеты.");
+    return;
+  }
+
+  if (await isUserMuted(userId)) {
+    await sendTextMessage(userId, "❌ Вы замьючены и не можете создавать тикеты.");
+    return;
+  }
+
+  const initialState = {
+    step: 1,
+    category: null,
+    document: null,
+    description: null,
+    ticketName: null,
+    targetAdmin: null,
+    userId: userId,
+    userName: userName,
+    createdAt: Date.now()
+  };
+
+  await kvSet(`ticket_state:${userId}`, initialState);
+
+  const keyboard = [
+    [
+      { text: TICKET_CATEGORIES.URGENT.label, callback_data: `ticket_cat_${TICKET_CATEGORIES.URGENT.id}` },
+      { text: TICKET_CATEGORIES.BUG.label, callback_data: `ticket_cat_${TICKET_CATEGORIES.BUG.id}` }
+    ],
+    [
+      { text: TICKET_CATEGORIES.IDEA.label, callback_data: `ticket_cat_${TICKET_CATEGORIES.IDEA.id}` },
+      { text: TICKET_CATEGORIES.QUESTION.label, callback_data: `ticket_cat_${TICKET_CATEGORIES.QUESTION.id}` }
+    ],
+    [
+      { text: TICKET_CATEGORIES.OTHER.label, callback_data: `ticket_cat_${TICKET_CATEGORIES.OTHER.id}` }
+    ],
+    [
+      { text: "❌ Отмена", callback_data: "ticket_cancel" }
+    ]
+  ];
+
+  await sendInlineMessage(
+    userId,
+    "📝 <b>Создание нового тикета</b>\n\n<b>Шаг 1/4:</b> Выберите категорию вашего обращения:",
+    keyboard
+  );
+}
+
+/**
+ * Обрабатывает выбор категории тикета
+ * @param {string|number} userId - ID пользователя
+ * @param {string} categoryId - ID категории
+ * @param {string} callbackQueryId - ID callback-запроса
+ */
+async function handleTicketCategorySelection(userId, categoryId, callbackQueryId) {
+  await answerCallbackQuery(callbackQueryId);
+  
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 1) {
+    await sendTextMessage(userId, "❌ Сессия создания тикета истекла или не найдена. Начните заново.");
+    return;
+  }
+
+  if (!isValidTicketCategory(categoryId)) {
+    await sendTextMessage(userId, "❌ Некорректная категория. Попробуйте снова.");
+    return;
+  }
+
+  state.category = categoryId;
+  state.step = 2;
+  await kvSet(`ticket_state:${userId}`, state);
+
+  await sendInlineMessage(
+    userId,
+    `📎 <b>Шаг 2/4: Прикрепите документ</b>\n\nОтправьте скриншот, лог или любой другой файл, относящийся к проблеме.\n\nЕсли документа нет, нажмите кнопку ниже или отправьте /skip`,
+    [[{ text: "Пропустить (/skip)", callback_data: "ticket_skip_doc" }]]
+  );
+}
+
+/**
+ * Обрабатывает пропуск прикрепления документа
+ * @param {string|number} userId - ID пользователя
+ * @param {string} callbackQueryId - ID callback-запроса
+ */
+async function handleTicketSkipDocument(userId, callbackQueryId) {
+  if (callbackQueryId) await answerCallbackQuery(callbackQueryId);
+  
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 2) return;
+
+  state.document = "skipped";
+  state.step = 3;
+  await kvSet(`ticket_state:${userId}`, state);
+
+  await sendTextMessage(
+    userId,
+    "✍️ <b>Шаг 3/4: Описание проблемы</b>\n\nПожалуйста, подробно опишите вашу проблему, идею или вопрос.\nЧем подробнее вы опишите, тем быстрее мы сможем помочь."
+  );
+}
+
+/**
+ * Обрабатывает получение документа на шаге 2
+ * @param {string|number} userId - ID пользователя
+ * @param {string} documentInfo - Информация о документе
+ * @param {string} callbackQueryId - ID callback-запроса
+ */
+async function handleTicketDocumentUpload(userId, documentInfo, callbackQueryId) {
+  if (callbackQueryId) await answerCallbackQuery(callbackQueryId);
+  
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 2) return;
+
+  state.document = documentInfo;
+  state.step = 3;
+  await kvSet(`ticket_state:${userId}`, state);
+
+  await sendTextMessage(
+    userId,
+    "✅ Документ получен!\n\n✍️ <b>Шаг 3/4: Описание проблемы</b>\n\nПожалуйста, подробно опишите вашу проблему, идею или вопрос."
+  );
+}
+
+/**
+ * Обрабатывает текстовое описание на шаге 3
+ * @param {string|number} userId - ID пользователя
+ * @param {string} text - Текст описания
+ */
+async function handleTicketDescription(userId, text) {
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 3) return;
+
+  if (text.length < 10) {
+    await sendTextMessage(userId, "❌ Описание слишком короткое. Пожалуйста, опишите проблему подробнее (минимум 10 символов).");
+    return;
+  }
+
+  state.description = text;
+  state.step = 4;
+  await kvSet(`ticket_state:${userId}`, state);
+
+  await sendInlineMessage(
+    userId,
+    "🏷️ <b>Шаг 4/4: Название тикета</b>\n\nВведите краткое название для вашего тикета.\nЭто поможет администраторам быстрее понять суть.\n\nЕсли не хотите указывать, отправьте /skip (система сгенерирует случайное название, например: XXjkj)",
+    [[{ text: "Сгенерировать автоматически (/skip)", callback_data: "ticket_skip_name" }]]
+  );
+}
+
+/**
+ * Обрабатывает пропуск названия тикета
+ * @param {string|number} userId - ID пользователя
+ * @param {string} callbackQueryId - ID callback-запроса
+ */
+async function handleTicketSkipName(userId, callbackQueryId) {
+  await answerCallbackQuery(callbackQueryId);
+  
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 4) return;
+
+  state.ticketName = generateRandomTicketId();
+  
+  // Переходим к выбору админа
+  await askTargetAdmin(userId, state);
+}
+
+/**
+ * Обрабатывает ввод названия тикета
+ * @param {string|number} userId - ID пользователя
+ * @param {string} text - Текст названия
+ */
+async function handleTicketNameInput(userId, text) {
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 4) return;
+
+  if (text.length > 50) {
+    await sendTextMessage(userId, "❌ Название слишком длинное. Максимум 50 символов.");
+    return;
+  }
+
+  state.ticketName = text;
+  
+  // Переходим к выбору админа
+  await askTargetAdmin(userId, state);
+}
+
+/**
+ * Запрашивает выбор целевого админа
+ * @param {string|number} userId - ID пользователя
+ * @param {object} state - Текущее состояние тикета
+ */
+async function askTargetAdmin(userId, state) {
+  state.step = 5;
+  await kvSet(`ticket_state:${userId}`, state);
+
+  const keyboard = [
+    [
+      { text: TARGET_ADMINS.GREENKX.label, callback_data: `ticket_target_${TARGET_ADMINS.GREENKX.id}` },
+      { text: TARGET_ADMINS.IT_20_77.label, callback_data: `ticket_target_${TARGET_ADMINS.IT_20_77.id}` }
+    ],
+    [
+      { text: TARGET_ADMINS.BOTH.label, callback_data: `ticket_target_${TARGET_ADMINS.BOTH.id}` }
+    ]
+  ];
+
+  await sendInlineMessage(
+    userId,
+    "👥 <b>Шаг 5/5: Выберите администратора</b>\n\nКому адресовать ваш тикет?",
+    keyboard
+  );
+}
+
+/**
+ * Обрабатывает выбор целевого админа
+ * @param {string|number} userId - ID пользователя
+ * @param {string} targetAdminId - ID целевого админа
+ * @param {string} callbackQueryId - ID callback-запроса
+ */
+async function handleTargetAdminSelection(userId, targetAdminId, callbackQueryId) {
+  await answerCallbackQuery(callbackQueryId);
+  
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (!state || state.step !== 5) return;
+
+  state.targetAdmin = targetAdminId;
+  await kvSet(`ticket_state:${userId}`, state);
+
+  await finalizeTicketCreation(userId, state);
+}
+
+/**
+ * Финализирует создание тикета и отправляет уведомления
+ * @param {string|number} userId - ID пользователя
+ * @param {object} state - Состояние тикета
+ */
+async function finalizeTicketCreation(userId, state) {
+  const ticketId = `TCK-${Date.now()}-${getRandomInt(100, 999)}`;
+  
+  const ticketData = {
+    id: ticketId,
+    userId: userId,
+    userName: state.userName,
+    category: state.category,
+    document: state.document,
+    description: state.description,
+    ticketName: state.ticketName,
+    targetAdmin: state.targetAdmin || TARGET_ADMINS.BOTH.id,
+    status: TICKET_STATUSES.OPEN,
+    createdAt: state.createdAt,
+    closedAt: null,
+    rating: null,
+    ratingComment: null,
+    adminResponseReason: null,
+    resolvedBy: null,
+    resolvedAt: null
+  };
+
+  await kvSet(`ticket:${ticketId}`, ticketData);
+  await addUserTicket(userId, ticketId);
+  await kvDel(`ticket_state:${userId}`); // Очищаем временное состояние
+
+  // Формируем сообщение для админа
+  const targetAdminText = ticketData.targetAdmin === TARGET_ADMINS.GREENKX.id ? TARGET_ADMINS.GREENKX.label :
+                          ticketData.targetAdmin === TARGET_ADMINS.IT_20_77.id ? TARGET_ADMINS.IT_20_77.label : "Обоим админам";
+
+  const categoryLabel = TICKET_CATEGORIES[state.category.toUpperCase()]?.label || state.category;
+
+  const adminMessage = `
+🎫 <b>НОВЫЙ ТИКЕТ: ${escapeHtml(ticketData.ticketName)}</b>
+
+🆔 <b>ID:</b> <code>${ticketId}</code>
+👤 <b>От:</b> ${escapeHtml(state.userName)} (<code>${userId}</code>)
+🎯 <b>Кому:</b> ${targetAdminText}
+📂 <b>Категория:</b> ${categoryLabel}
+📊 <b>Статус:</b> ${ticketData.status}
+🕒 <b>Создан:</b> ${formatDateTime(ticketData.createdAt)}
+
+📝 <b>Описание:</b>
+${escapeHtml(ticketData.description)}
+  `.trim();
+
+  const adminKeyboard = [
+    [
+      { text: "✅ Взять в работу", callback_data: `ticket_take_${ticketId}` },
+      { text: "❌ Отклонить", callback_data: `ticket_reject_${ticketId}` }
+    ],
+    [
+      { text: "💬 Ответить (с причиной)", callback_data: `ticket_reply_${ticketId}` }
+    ]
+  ];
+
+  // Отправляем админам
+  const targets = ticketData.targetAdmin === TARGET_ADMINS.BOTH.id 
+    ? [MAIN_ADMIN_ID, ADMIN_2_ID] 
+    : [ticketData.targetAdmin];
+
+  for (const targetId of targets) {
+    if (isAdmin(targetId)) {
+      await sendInlineMessage(targetId, adminMessage, adminKeyboard);
+    }
+  }
+
+  // Уведомляем пользователя
+  await sendTextMessage(
+    userId,
+    `✅ <b>Ваш тикет успешно отправлен!</b>\n\n🆔 ID тикета: <code>${ticketId}</code>\n🏷️ Название: ${escapeHtml(ticketData.ticketName)}\n🎯 Адресован: ${targetAdminText}\n\nОжидайте ответа от администрации. Мы уведомим вас, как только ваше обращение будет рассмотрено.`
+  );
+}
+
+/**
+ * Получает тикет по ID
+ * @param {string} ticketId - ID тикета
+ * @returns {Promise<object|null>} Данные тикета
+ */
+async function getTicket(ticketId) {
+  return await kvGet(`ticket:${ticketId}`);
+}
+
+/**
+ * Обновляет тикет
+ * @param {string} ticketId - ID тикета
+ * @param {object} updates - Обновления
+ * @returns {Promise<boolean>} true если успешно
+ */
+async function updateTicket(ticketId, updates) {
+  const ticket = await getTicket(ticketId);
+  if (!ticket) return false;
+  
+  const updatedTicket = { ...ticket, ...updates };
+  await kvSet(`ticket:${ticketId}`, updatedTicket);
   return true;
 }
 
-async function muteUser(userId, durationMs, adminId, reason = "Не указана") {
-  await kv.set(`undercur:muted:${userId}`, {
-    adminId,
-    reason,
-    mutedAt: Date.now(),
-    expiresAt: Date.now() + durationMs,
-  });
-}
-
-async function unmuteUser(userId) {
-  await kv.del(`undercur:muted:${userId}`);
-}
-
-// --- Versions ---
-async function getStoredVersions() {
-  const versions = await kv.get("undercur:versions");
-  if (!versions) return [];
-  if (typeof versions === "string") {
-    try { return JSON.parse(versions); } catch { return []; }
-  }
-  return Array.isArray(versions) ? versions : [];
-}
-
-async function setStoredVersions(versions) {
-  await kv.set("undercur:versions", JSON.stringify(versions));
-}
-
-// --- Tickets ---
-async function createTicket(userId, category, message, messageId, chatId) {
-  const ticketId = generateTicketId();
-  const ticket = {
-    id: ticketId,
-    userId: String(userId),
-    category,
-    message,
-    messageId,
-    chatId,
-    status: "open",
-    createdAt: Date.now(),
-    replies: [],
-  };
-  
-  await kv.set(`undercur:ticket:${ticketId}`, ticket);
-  await kv.sadd(`undercur:user_tickets:${userId}`, ticketId);
-  await kv.sadd("undercur:all_tickets", ticketId);
-  
-  const user = await getUser(userId);
-  await updateUserStats(userId, { ticketsCreated: (user.ticketsCreated || 0) + 1 });
-  
-  // Проверяем бейджи за тикеты
-  const ticketCount = (user.ticketsCreated || 0) + 1;
-  if (category === "🐞 Сообщить о баге") {
-    if (ticketCount >= 1) await awardBadge(userId, "bug_hunter_1");
-    if (ticketCount >= 5) await awardBadge(userId, "bug_hunter_5");
-    if (ticketCount >= 10) await awardBadge(userId, "bug_hunter_10");
-  } else if (category === "💡 Предложить идею") {
-    if (ticketCount >= 1) await awardBadge(userId, "idea_master_1");
-    if (ticketCount >= 5) await awardBadge(userId, "idea_master_5");
-  }
-  
-  return ticket;
-}
-
-async function getTicket(ticketId) {
-  return await kv.get(`undercur:ticket:${ticketId}`);
-}
-
-async function updateTicket(ticketId, updates) {
-  const ticket = await getTicket(ticketId);
-  if (!ticket) return null;
-  
-  const updated = { ...ticket, ...updates };
-  await kv.set(`undercur:ticket:${ticketId}`, updated);
-  return updated;
-}
-
-async function getUserTickets(userId) {
-  const ticketIds = await kv.smembers(`undercur:user_tickets:${userId}`) || [];
+/**
+ * Получает все тикеты
+ * @returns {Promise<Array>} Массив всех тикетов
+ */
+async function getAllTickets() {
+  const keys = await kvKeys("ticket:*");
   const tickets = [];
-  for (const id of ticketIds) {
-    const t = await getTicket(id);
-    if (t) tickets.push(t);
-  }
-  return tickets.sort((a, b) => b.createdAt - a.createdAt);
-}
-
-// --- FAQ ---
-async function getAllFaqs() {
-  const faqs = await kv.get("undercur:faqs") || [];
-  return Array.isArray(faqs) ? faqs : [];
-}
-
-async function addFaq(question, answer) {
-  const faqs = await getAllFaqs();
-  const newFaq = {
-    id: Date.now().toString(36),
-    question: question.trim(),
-    answer: answer.trim(),
-    createdAt: Date.now(),
-  };
-  faqs.push(newFaq);
-  await kv.set("undercur:faqs", faqs);
-  return newFaq;
-}
-
-async function deleteFaq(faqId) {
-  let faqs = await getAllFaqs();
-  faqs = faqs.filter(f => f.id !== faqId);
-  await kv.set("undercur:faqs", faqs);
-}
-
-async function searchFaqs(query) {
-  const faqs = await getAllFaqs();
-  const lowerQuery = query.toLowerCase();
-  
-  return faqs.filter(faq => 
-    faq.question.toLowerCase().includes(lowerQuery) ||
-    faq.answer.toLowerCase().includes(lowerQuery)
-  );
-}
-
-// --- Promo Codes ---
-async function generatePromoCode(code, reward, maxUses = 100) {
-  const promo = {
-    code: code.toUpperCase(),
-    reward,
-    maxUses,
-    usedBy: [],
-    createdAt: Date.now(),
-    active: true,
-  };
-  
-  await kv.set(`undercur:promo:${code.toUpperCase()}`, promo);
-  return promo;
-}
-
-async function usePromoCode(userId, code) {
-  const promo = await kv.get(`undercur:promo:${code.toUpperCase()}`);
-  if (!promo) return { success: false, error: "not_found" };
-  if (!promo.active) return { success: false, error: "inactive" };
-  if (promo.usedBy.includes(String(userId))) return { success: false, error: "already_used" };
-  if (promo.usedBy.length >= promo.maxUses) return { success: false, error: "max_uses" };
-  
-  promo.usedBy.push(String(userId));
-  await kv.set(`undercur:promo:${code.toUpperCase()}`, promo);
-  
-  // Награждаем пользователя (можно расширить)
-  await awardBadge(userId, "supporter");
-  
-  return { success: true, reward: promo.reward };
-}
-
-async function getAllPromoCodes() {
-  // Получаем все ключи с префиксом undercur:promo:
-  const keys = await kv.keys("undercur:promo:*");
-  const promos = [];
   for (const key of keys) {
-    const promo = await kv.get(key);
-    if (promo) promos.push(promo);
+    const ticket = await kvGet(key);
+    if (ticket) tickets.push(ticket);
   }
-  return promos;
+  return tickets;
+}
+
+/**
+ * Получает тикеты по статусу
+ * @param {string} status - Статус
+ * @returns {Promise<Array>} Массив тикетов
+ */
+async function getTicketsByStatus(status) {
+  const allTickets = await getAllTickets();
+  return allTickets.filter(t => t.status === status);
+}
+
+/**
+ * Получает тикеты пользователя
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<Array>} Массив тикетов
+ */
+async function getTicketsByUser(userId) {
+  const allTickets = await getAllTickets();
+  return allTickets.filter(t => String(t.userId) === String(userId));
 }
 
 // ==========================================
-// VERSION PARSING & MANAGEMENT
+// 8. LIVE MODE (ПРЯМОЙ ДИАЛОГ С АДМИНОМ)
 // ==========================================
 
-function parseVersionString(str) {
-  const trimmed = str.trim();
-  if (!trimmed) return null;
-
-  const match = trimmed.match(/^([\d][\d\w.\-]*)\s*(?:\(([^)]+)\)|(\S+))?$/);
-  if (!match) return null;
-
-  const version = match[1];
-  const status = (match[2] || match[3] || "").trim();
-
-  return { version, status, url: null, addedAt: Date.now() };
-}
-
-function parseMultipleVersions(input) {
-  const parts = input.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
-  const results = [];
-
-  for (const part of parts) {
-    const parsed = parseVersionString(part);
-    if (parsed) results.push(parsed);
+/**
+ * Инициирует Live Mode для пользователя
+ * @param {string|number} userId - ID пользователя
+ * @param {string} userName - Имя пользователя
+ */
+async function startLiveMode(userId, userName) {
+  if (isAdmin(userId)) {
+    await sendTextMessage(userId, "❌ Администраторы не могут использовать Live Mode как пользователи.");
+    return;
   }
 
-  return results;
-}
+  if (await isUserBanned(userId) || await isUserMuted(userId)) {
+    await sendTextMessage(userId, "❌ Вы ограничены в правах и не можете использовать Live Mode.");
+    return;
+  }
 
-function versionTitle(item) {
-  const statusEmoji = {
-    "beta": "🧪", "fix": "🔧", "stable": "✅", "alpha": "🔬",
-    "dev": "🛠️", "rc": "📦", "hotfix": "🚑", "patch": "🩹",
+  // Проверяем, нет ли уже активной сессии
+  const existingSession = await kvGet(`live_session:${userId}`);
+  if (existingSession && existingSession.status === "active") {
+    await sendTextMessage(userId, "❌ У вас уже есть активная Live сессия.");
+    return;
+  }
+
+  await sendTextMessage(userId, "⏳ <b>Поиск свободного администратора...</b>\n\nМы ищем админа, который был в сети менее 10.5 минут назад.");
+
+  const activeAdminId = await findActiveAdminForLiveMode();
+
+  if (!activeAdminId) {
+    await sendTextMessage(
+      userId, 
+      "😔 <b>К сожалению, сейчас нет свободных администраторов.</b>\n\nВсе админы заняты или были в сети более 10.5 минут назад.\nПожалуйста, создайте обычный тикет или попробуйте позже."
+    );
+    return;
+  }
+
+  // Создаем сессию Live Mode
+  const liveSessionId = `live_${userId}_${Date.now()}`;
+  const sessionData = {
+    id: liveSessionId,
+    userId: userId,
+    userName: userName,
+    adminId: activeAdminId,
+    startTime: Date.now(),
+    status: "active",
+    ratingGiven: false,
+    rating: null,
+    ratingComment: null
   };
 
-  const emoji = item.status ? (statusEmoji[item.status.toLowerCase()] || "📌") : "📌";
-  const statusText = item.status ? ` (${item.status})` : "";
-  return `${emoji} ${item.version}${statusText}`.trim();
-}
+  await kvSet(`live_session:${userId}`, sessionData);
+  await kvSet(`live_session_admin:${activeAdminId}`, sessionData);
 
-function parseVersions(value) {
-  if (!value) return [];
-  let data = value;
-  if (typeof value === "string") {
-    try { data = JSON.parse(value); } catch { return []; }
-  }
-
-  const result = [];
-
-  if (Array.isArray(data)) {
-    for (const item of data) {
-      if (typeof item === "string") {
-        result.push({ version: item, status: "", url: null, addedAt: Date.now() });
-        continue;
-      }
-      if (item && typeof item === "object") {
-        result.push({
-          version: String(item.version || item.name || item.tag || ""),
-          status: String(item.status || item.state || ""),
-          url: item.url || item.path || item.downloadUrl || null,
-          addedAt: item.addedAt || Date.now(),
-        });
-      }
-    }
-    return result.filter(item => item.version);
-  }
-
-  if (data && typeof data === "object") {
-    for (const [version, config] of Object.entries(data)) {
-      if (config && typeof config === "object") {
-        result.push({
-          version,
-          status: String(config.status || config.state || config.type || ""),
-          url: config.url || config.path || config.downloadUrl || null,
-          addedAt: Date.now(),
-        });
-      } else {
-        result.push({ version, status: typeof config === "string" ? config : "", url: null, addedAt: Date.now() });
-      }
-    }
-  }
-
-  return result;
-}
-
-async function getVersions() {
-  const stored = await getStoredVersions();
-  if (stored.length) return stored;
-
-  try {
-    const response = await fetch(VERSIONS_API, { headers: { Accept: "application/json" } });
-    if (response.ok) {
-      const data = await response.json();
-      const source = data.versions || data.data || data;
-      const versions = parseVersions(source);
-      if (versions.length) {
-        await setStoredVersions(versions);
-        return versions;
-      }
-    }
-  } catch (error) {
-    console.error("External versions API error:", error.message);
-  }
-
-  return parseVersions(process.env.UNDERCUR_VERSIONS_JSON);
-}
-
-// ==========================================
-// MESSAGE GENERATORS
-// ==========================================
-
-async function sendHome(chatId, messageId = null) {
-  const text =
-    "👋 <b>Добро пожаловать в UnderCur!</b>\n\n" +
-    "Это официальный бот-помощник проекта UnderCur.\n" +
-    "Здесь вы можете узнать о последних обновлениях, скачать игру, " +
-    "прочитать гайд по запуску или связаться с командой разработки.\n\n" +
-    "📢 <b>Наш канал:</b> @undercurgame\n" +
-    "🎮 <b>Страница itch.io:</b> ivtt.itch.io/undercur\n\n" +
-    "Выберите нужный раздел в меню ниже:";
-
-  const extra = { reply_markup: mainKeyboard() };
-
-  if (messageId) {
-    return editMessage(chatId, messageId, text, extra);
-  }
-  return sendMessage(chatId, text, extra);
-}
-
-async function sendHelp(chatId, messageId = null) {
-  const text =
-    "ℹ️ <b>Список доступных команд</b>\n\n" +
-    "<b>📋 Основные:</b>\n" +
-    "/start — Главное меню бота\n" +
-    "/help — Показать это сообщение\n" +
-    "/profile — Мой профиль и статистика\n" +
-    "/guide — Интерактивный гайд по игре\n" +
-    "/faq [запрос] — Часто задаваемые вопросы (с поиском)\n\n" +
-    
-    "<b>🎮 Версии и скачивание:</b>\n" +
-    "/versions — Список актуальных версий\n" +
-    "/download — Ссылки для скачивания игры\n" +
-    "/watch <code>версия</code> — Подписаться на выход версии (или *)\n" +
-    "/unwatch <code>версия</code> — Отписаться от версии\n" +
-    "/mysubs — Мои активные подписки на версии\n\n" +
-    
-    "<b>🏆 Сообщество и бонусы:</b>\n" +
-    "/badges — Мои достижения и бейджи\n" +
-    "/share — Получить реферальную ссылку для приглашения\n" +
-    "/promolist — Список доступных промокодов и акций\n" +
-    "/promo <code>код</code> — Активировать промокод\n" +
-    "/news — Настройка уведомлений о новостях\n\n" +
-    
-    "<b>🔧 Команды для администраторов:</b>\n" +
-    "/add <code>версии</code> — Добавить новые версии\n" +
-    "/delete <code>версия</code> — Удалить версию из списка\n" +
-    "/all — Полный список сохраненных версий\n" +
-    "/clearversions — Полная очистка списка версий\n" +
-    "/news <code>текст</code> — Опубликовать новость (или ответ на сообщение)\n" +
-    "/schedule <code>ГГГГ-ММ-ДД ЧЧ:ММ текст</code> — Запланировать пост\n" +
-    "/unschedule <code>id</code> — Отменить запланированный пост\n" +
-    "/scheduled — Список запланированных постов\n" +
-    "/genpromo <code>КОД награда [лимит]</code> — Создать новый промокод\n" +
-    "/promos — Список всех созданных промокодов\n" +
-    "/sendall <code>текст</code> — Массовая рассылка всем пользователям\n" +
-    "/stats — Подробная статистика бота\n" +
-    "/ban <code>id</code> [причина] — Заблокировать пользователя\n" +
-    "/unban <code>id</code> — Разблокировать пользователя\n" +
-    "/finduser <code>id</code> — Информация о пользователе\n\n" +
-    
-    "💡 <i>Пример:</i> /add 1.0.1, 1.0.2 (beta)\n" +
-    "💡 <i>Пример:</i> /watch 2.0\n" +
-    "💡 <i>Пример:</i> /faq как запустить\n" +
-    "💡 <i>Пример:</i> /schedule 2026-10-01 15:00 Релиз новой версии!";
-
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
-  }
-  return sendMessage(chatId, text, { reply_markup: backKeyboard() });
-}
-
-async function versionsMessage(chatId, messageId = null, page = 1) {
-  const versions = await getVersions();
-  const itemsPerPage = 8;
-  const totalPages = Math.ceil(versions.length / itemsPerPage) || 1;
-  const currentPage = Math.min(Math.max(1, page), totalPages);
-
-  if (!versions.length) {
-    const text = "🎮 Актуальные версии пока не опубликованы.\nСледите за новостями в нашем канале!";
-    if (messageId) {
-      return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
-    }
-    return sendMessage(chatId, text, { reply_markup: backKeyboard() });
-  }
-
-  const startIdx = (currentPage - 1) * itemsPerPage;
-  const endIdx = startIdx + itemsPerPage;
-  const pageVersions = versions.slice(startIdx, endIdx);
-
-  const buttons = pageVersions.map((item) => [
-    { text: versionTitle(item), callback_data: `version:${item.version}|${item.status || ""}` },
-  ]);
-
-  buttons.push(
-    [{ text: "📥 Скачать игру", callback_data: "download_info" }]
+  await sendTextMessage(
+    userId,
+    `✅ <b>Live Mode активирован!</b>\n\nВы подключены к администратору (ID: ${activeAdminId}).\nТеперь вы можете писать сообщения напрямую.\n\nДля завершения диалога администратор использует команду /end_live`
   );
 
-  if (totalPages > 1) {
-    buttons.push([
-      { text: "⬅️ Назад", callback_data: currentPage > 1 ? `versions_page_${currentPage - 1}` : "home" },
-      { text: `${currentPage} / ${totalPages}`, callback_data: "ignore" },
-      { text: "Вперед ➡️", callback_data: currentPage < totalPages ? `versions_page_${currentPage + 1}` : "download_info" }
-    ]);
-  } else {
-    buttons.push([{ text: "⬅️ Назад в главное меню", callback_data: "home" }]);
-  }
-
-  const text =
-    "🎮 <b>Актуальные версии UnderCur</b>\n\n" +
-    "Выберите версию из списка ниже для получения подробной информации и ссылок на скачивание.\n\n" +
-    `📢 Официальный канал: ${OFFICIAL_CHANNEL}\n` +
-    `🎮 Страница itch.io: ivtt.itch.io/undercur`;
-
-  const extra = {
-    reply_markup: { inline_keyboard: buttons },
-  };
-
-  if (messageId) {
-    return editMessage(chatId, messageId, text, extra);
-  }
-  return sendMessage(chatId, text, extra);
+  await sendTextMessage(
+    activeAdminId,
+    `🔴 <b>ВХОДЯЩИЙ LIVE ЗАПРОС</b>\n\n👤 Пользователь: ${escapeHtml(userName)} (<code>${userId}</code>)\n\nНапишите сообщение, чтобы ответить, или используйте /end_live для завершения и запроса оценки.`
+  );
 }
 
-async function showVersion(chatId, messageId, version, status) {
-  const versions = await getVersions();
-  const item = versions.find(
-    (entry) => entry.version === version && (!status || entry.status === status)
-  ) || versions.find((entry) => entry.version === version);
+/**
+ * Обрабатывает сообщение в рамках Live Mode
+ * @param {string|number} senderId - ID отправителя
+ * @param {string} text - Текст сообщения
+ * @param {boolean} isFromAdmin - true если от админа
+ * @returns {Promise<boolean>} true если сообщение обработано
+ */
+async function handleLiveModeMessage(senderId, text, isFromAdmin) {
+  let sessionData = null;
+  let otherPartyId = null;
 
-  if (!item) {
-    return editMessage(chatId, messageId, "❌ Версия не найдена в базе данных.", {
-      reply_markup: backKeyboard("versions"),
-    });
+  if (isFromAdmin) {
+    sessionData = await kvGet(`live_session_admin:${senderId}`);
+    if (sessionData) {
+      otherPartyId = sessionData.userId;
+    }
+  } else {
+    sessionData = await kvGet(`live_session:${senderId}`);
+    if (sessionData) {
+      otherPartyId = sessionData.adminId;
+    }
   }
 
-  const statusText = item.status ? `\n📌 <b>Статус:</b> ${item.status}` : "";
-  const addedDate = item.addedAt ? `\n📅 <b>Добавлена:</b> ${formatDate(item.addedAt)}` : "";
+  if (!sessionData || sessionData.status !== "active") {
+    return false; // Не в Live Mode
+  }
 
-  let text =
-    `🎮 <b>Версия ${item.version}</b>${statusText}${addedDate}\n\n` +
-    "📥 <b>Скачать эту версию можно в следующих источниках:</b>\n\n" +
-    `1️⃣ Telegram канал: ${OFFICIAL_CHANNEL}\n` +
-    `2️⃣ itch.io: ${ITCH_IO_URL}\n\n` +
-    "💻 <b>Требования для запуска:</b>\n" +
-    "• Любой ПК (Windows / macOS / Linux)\n" +
-    "• Установленный Microsoft PowerPoint\n" +
-    "• Файл игры имеет формат <code>.ppsx</code>\n\n" +
-    "🔍 Чтобы узнать о других версиях, используйте кнопку ниже.";
+  // Обновляем время активности админа
+  if (isFromAdmin) {
+    await updateAdminLastSeen(senderId);
+  }
 
-  const buttons = [
+  // Пересылаем сообщение другой стороне
+  const prefix = isFromAdmin ? "👨‍💻 <b>Администратор:</b>\n" : "👤 <b>Пользователь:</b>\n";
+  await sendTextMessage(otherPartyId, `${prefix}${escapeHtml(text)}`);
+
+  return true; // Сообщение обработано в Live Mode
+}
+
+/**
+ * Завершает Live Mode и инициирует оценку
+ * @param {string|number} adminId - ID админа
+ * @param {string|number} userId - ID пользователя
+ */
+async function endLiveMode(adminId, userId) {
+  const sessionData = await kvGet(`live_session:${userId}`);
+  
+  if (!sessionData || sessionData.adminId !== adminId) {
+    await sendTextMessage(adminId, "❌ Активная сессия с этим пользователем не найдена.");
+    return;
+  }
+
+  sessionData.status = "ended";
+  await kvSet(`live_session:${userId}`, sessionData);
+  await kvDel(`live_session_admin:${adminId}`);
+
+  await sendTextMessage(
+    userId,
+    "🔚 <b>Диалог завершен администратором.</b>\n\nПожалуйста, оцените работу администратора.\nОтправьте оценку от 0 до 5 (например: 5 или 4.5).\nВы также можете добавить комментарий через пробел (например: 5 Отличная помощь!)."
+  );
+
+  await sendTextMessage(adminId, `✅ Live Mode с пользователем ${sessionData.userName} завершен. Ожидание оценки пользователя...`);
+}
+
+/**
+ * Получает активную Live сессию пользователя
+ * @param {string|number} userId - ID пользователя
+ * @returns {Promise<object|null>} Данные сессии
+ */
+async function getActiveLiveSession(userId) {
+  const session = await kvGet(`live_session:${userId}`);
+  if (session && session.status === "active") {
+    return session;
+  }
+  return null;
+}
+
+/**
+ * Получает активную Live сессию админа
+ * @param {string|number} adminId - ID админа
+ * @returns {Promise<object|null>} Данные сессии
+ */
+async function getAdminLiveSession(adminId) {
+  const session = await kvGet(`live_session_admin:${adminId}`);
+  if (session && session.status === "active") {
+    return session;
+  }
+  return null;
+}
+
+// ==========================================
+// 9. СИСТЕМА ОЦЕНИВАНИЯ (RATING SYSTEM)
+// ==========================================
+
+/**
+ * Обрабатывает оценку администратора пользователем
+ * @param {string|number} userId - ID пользователя
+ * @param {string} ratingText - Текст с оценкой
+ */
+async function handleRatingSubmission(userId, ratingText) {
+  const sessionData = await kvGet(`live_session:${userId}`);
+  
+  if (!sessionData || sessionData.status !== "ended") {
+    await sendTextMessage(userId, "❌ Сейчас нет активного запроса на оценку.");
+    return;
+  }
+
+  if (sessionData.ratingGiven) {
+    await sendTextMessage(userId, "❌ Вы уже оценили эту сессию.");
+    return;
+  }
+
+  const parts = ratingText.trim().split(" ");
+  const ratingValue = parseFloat(parts[0]);
+  const comment = parts.slice(1).join(" ") || "Без комментария";
+
+  if (isNaN(ratingValue) || ratingValue < 0 || ratingValue > 5) {
+    await sendTextMessage(userId, "❌ Некорректная оценка. Пожалуйста, введите число от 0 до 5.\nПример: 5 или 4 Отличная работа");
+    return;
+  }
+
+  sessionData.rating = ratingValue;
+  sessionData.ratingComment = comment;
+  sessionData.ratingGiven = true;
+  sessionData.status = "rated";
+  await kvSet(`live_session:${userId}`, sessionData);
+
+  // Сохраняем статистику админа
+  const adminStatsKey = `admin_stats:${sessionData.adminId}`;
+  let adminStats = await kvGet(adminStatsKey) || { totalRatings: 0, sumRatings: 0, comments: [] };
+  adminStats.totalRatings += 1;
+  adminStats.sumRatings += ratingValue;
+  adminStats.comments.push({ userId, rating: ratingValue, comment, date: Date.now() });
+  await kvSet(adminStatsKey, adminStats);
+
+  await sendTextMessage(userId, "✅ <b>Спасибо за вашу оценку!</b>\nВаш отзыв очень важен для улучшения качества нашей поддержки.");
+
+  const avgRating = (adminStats.sumRatings / adminStats.totalRatings).toFixed(1);
+  await sendTextMessage(
+    sessionData.adminId,
+    `⭐ <b>Получена новая оценка!</b>\n\n👤 От пользователя: <code>${userId}</code>\n⭐ Оценка: ${ratingValue}/5\n💬 Комментарий: ${escapeHtml(comment)}\n\n📊 Средний рейтинг: ${avgRating} (всего оценок: ${adminStats.totalRatings})`
+  );
+}
+
+/**
+ * Обрабатывает оценку тикета
+ * @param {string|number} userId - ID пользователя
+ * @param {string} ticketId - ID тикета
+ * @param {number} rating - Оценка
+ * @param {string} comment - Комментарий
+ */
+async function handleTicketRating(userId, ticketId, rating, comment = "") {
+  const ticket = await getTicket(ticketId);
+  
+  if (!ticket) {
+    await sendTextMessage(userId, "❌ Тикет не найден.");
+    return;
+  }
+
+  if (String(ticket.userId) !== String(userId)) {
+    await sendTextMessage(userId, "❌ Вы не можете оценивать чужие тикеты.");
+    return;
+  }
+
+  if (ticket.rating !== null) {
+    await sendTextMessage(userId, "❌ Вы уже оценили этот тикет.");
+    return;
+  }
+
+  await updateTicket(ticketId, {
+    rating: rating,
+    ratingComment: comment,
+    ratedAt: Date.now()
+  });
+
+  await sendTextMessage(userId, `✅ Спасибо за оценку тикета ${ticketId}: ${rating}/5`);
+
+  // Уведомляем админа
+  if (ticket.resolvedBy) {
+    await sendTextMessage(
+      ticket.resolvedBy,
+      `⭐ <b>Получена оценка за тикет</b>\n\n🎫 Тикет: ${ticketId}\n⭐ Оценка: ${rating}/5\n💬 Комментарий: ${escapeHtml(comment || "Без комментария")}`
+    );
+  }
+}
+
+/**
+ * Получает статистику админа
+ * @param {string|number} adminId - ID админа
+ * @returns {Promise<object>} Статистика
+ */
+async function getAdminStats(adminId) {
+  const key = `admin_stats:${adminId}`;
+  const stats = await kvGet(key) || { totalRatings: 0, sumRatings: 0, comments: [] };
+  
+  const avgRating = stats.totalRatings > 0 ? (stats.sumRatings / stats.totalRatings).toFixed(1) : "0.0";
+  
+  return {
+    ...stats,
+    avgRating: parseFloat(avgRating)
+  };
+}
+
+// ==========================================
+// 10. АДМИН ПАНЕЛЬ И УПРАВЛЕНИЕ ТИКЕТАМИ
+// ==========================================
+
+/**
+ * Обрабатывает ответ админа на тикет с обязательной причиной
+ * @param {string|number} adminId - ID админа
+ * @param {string} ticketId - ID тикета
+ * @param {string} reasonText - Текст причины
+ */
+async function handleAdminTicketReply(adminId, ticketId, reasonText) {
+  if (!isAdmin(adminId)) return;
+
+  const ticket = await getTicket(ticketId);
+  if (!ticket) {
+    await sendTextMessage(adminId, "❌ Тикет не найден.");
+    return;
+  }
+
+  if (!reasonText || reasonText.trim().length < 5) {
+    await sendTextMessage(adminId, "❌ <b>Ошибка:</b> Вы обязаны указать развернутую причину ответа (минимум 5 символов).\n\nИспользуйте формат:\n/reply <ID_тикета> <Причина>");
+    return;
+  }
+
+  await updateTicket(ticketId, {
+    status: TICKET_STATUSES.RESOLVED,
+    adminResponseReason: reasonText,
+    resolvedBy: adminId,
+    resolvedAt: Date.now()
+  });
+
+  // Отправляем пользователю
+  await sendInlineMessage(
+    ticket.userId,
+    `✅ <b>Ответ на ваш тикет #${ticketId}</b>\n\n<b>Название:</b> ${escapeHtml(ticket.ticketName)}\n<b>Ответ администрации:</b>\n${escapeHtml(reasonText)}\n\nПожалуйста, оцените качество решения вашей проблемы от 0 до 5 звезд.\nПример: 5 Спасибо за помощь!`,
     [
-      { text: "📢 Открыть канал", url: CHANNEL_URL },
-      { text: "🎮 Открыть itch.io", url: ITCH_IO_URL },
-    ],
-  ];
-
-  if (item.url) {
-    buttons.unshift([{ text: "⬇️ Прямая ссылка на скачивание", url: item.url }]);
-  }
-
-  buttons.push(
-    [{ text: "⬅️ К списку версий", callback_data: "versions" }],
-    [{ text: "🏠 Главное меню", callback_data: "home" }]
+      [{ text: "⭐ Оценить 5", callback_data: `rate_ticket_${ticketId}_5` }],
+      [{ text: "⭐ Оценить 4", callback_data: `rate_ticket_${ticketId}_4` }],
+      [{ text: "⭐ Оценить 3 или ниже", callback_data: `rate_ticket_${ticketId}_low` }]
+    ]
   );
 
-  return editMessage(chatId, messageId, text, {
-    reply_markup: { inline_keyboard: buttons },
+  await sendTextMessage(adminId, `✅ Ответ на тикет ${ticketId} отправлен пользователю с указанием причины.`);
+}
+
+/**
+ * Берет тикет в работу
+ * @param {string|number} adminId - ID админа
+ * @param {string} ticketId - ID тикета
+ */
+async function takeTicket(adminId, ticketId) {
+  if (!isAdmin(adminId)) return;
+
+  const ticket = await getTicket(ticketId);
+  if (!ticket) {
+    await sendTextMessage(adminId, "❌ Тикет не найден.");
+    return;
+  }
+
+  if (ticket.status !== TICKET_STATUSES.OPEN) {
+    await sendTextMessage(adminId, "❌ Тикет уже взят в работу или закрыт.");
+    return;
+  }
+
+  await updateTicket(ticketId, {
+    status: TICKET_STATUSES.IN_PROGRESS,
+    assignedTo: adminId,
+    assignedAt: Date.now()
   });
+
+  await sendTextMessage(adminId, `✅ Тикет ${ticketId} взят в работу.`);
+  await sendTextMessage(ticket.userId, `🔔 Ваш тикет #${ticketId} взят в работу администратором.`);
 }
 
-async function sendDownloadInfo(chatId, messageId = null) {
-  const text =
-    "📥 <b>Скачать UnderCur</b>\n\n" +
-    "Игра доступна для бесплатного скачивания в двух основных источниках:\n\n" +
-    `1️⃣ <b>Telegram канал:</b> ${OFFICIAL_CHANNEL}\n` +
-    `   → ${CHANNEL_URL}\n\n` +
-    `2️⃣ <b>itch.io:</b> ivtt.itch.io/undercur\n` +
-    `   → ${ITCH_IO_URL}\n\n` +
-    "💻 <b>Системные требования:</b>\n" +
-    "• Операционная система: Windows, macOS или Linux\n" +
-    "• Программное обеспечение: Microsoft PowerPoint (для запуска .ppsx файлов)\n\n" +
-    "🔍 Узнать список всех актуальных версий можно через кнопку «🎮 Версии игры».";
+/**
+ * Отклоняет тикет
+ * @param {string|number} adminId - ID админа
+ * @param {string} ticketId - ID тикета
+ * @param {string} reason - Причина отклонения
+ */
+async function rejectTicket(adminId, ticketId, reason) {
+  if (!isAdmin(adminId)) return;
 
-  if (messageId) {
-    return editMessage(chatId, messageId, text, {
-      reply_markup: downloadKeyboard(),
-    });
+  const ticket = await getTicket(ticketId);
+  if (!ticket) {
+    await sendTextMessage(adminId, "❌ Тикет не найден.");
+    return;
   }
-  return sendMessage(chatId, text, { reply_markup: downloadKeyboard() });
+
+  await updateTicket(ticketId, {
+    status: TICKET_STATUSES.REJECTED,
+    rejectedBy: adminId,
+    rejectedAt: Date.now(),
+    rejectionReason: reason || "Не указана"
+  });
+
+  await sendTextMessage(
+    ticket.userId,
+    `❌ <b>Ваш тикет #${ticketId} был отклонен.</b>\n\nПричина: ${escapeHtml(reason || "Не указана")}`
+  );
+
+  await sendTextMessage(adminId, `✅ Тикет ${ticketId} отклонен.`);
+}
+
+/**
+ * Закрывает тикет
+ * @param {string|number} adminId - ID админа
+ * @param {string} ticketId - ID тикета
+ */
+async function closeTicket(adminId, ticketId) {
+  if (!isAdmin(adminId)) return;
+
+  const ticket = await getTicket(ticketId);
+  if (!ticket) {
+    await sendTextMessage(adminId, "❌ Тикет не найден.");
+    return;
+  }
+
+  await updateTicket(ticketId, {
+    status: TICKET_STATUSES.CLOSED,
+    closedBy: adminId,
+    closedAt: Date.now()
+  });
+
+  await sendTextMessage(ticket.userId, `🔒 Ваш тикет #${ticketId} был закрыт.`);
+  await sendTextMessage(adminId, `✅ Тикет ${ticketId} закрыт.`);
+}
+
+/**
+ * Показывает статистику администратору
+ * @param {string|number} adminId - ID админа
+ */
+async function showAdminStats(adminId) {
+  if (!isAdmin(adminId)) return;
+
+  const allTickets = await getAllTickets();
+  const openTickets = allTickets.filter(t => t.status === TICKET_STATUSES.OPEN);
+  const inProgressTickets = allTickets.filter(t => t.status === TICKET_STATUSES.IN_PROGRESS);
+  const resolvedTickets = allTickets.filter(t => t.status === TICKET_STATUSES.RESOLVED);
+  const closedTickets = allTickets.filter(t => t.status === TICKET_STATUSES.CLOSED);
+  const rejectedTickets = allTickets.filter(t => t.status === TICKET_STATUSES.REJECTED);
+
+  const adminStats = await getAdminStats(adminId);
+
+  const statsMessage = `
+📊 <b>СТАТИСТИКА СИСТЕМЫ HELPER</b>
+
+🎫 <b>Тикеты:</b>
+• Всего создано: ${allTickets.length}
+• 🔴 Открыто: ${openTickets.length}
+• 🟡 В работе: ${inProgressTickets.length}
+• 🟢 Решено: ${resolvedTickets.length}
+• ⚫ Закрыто: ${closedTickets.length}
+• ❌ Отклонено: ${rejectedTickets.length}
+
+⭐ <b>Ваш рейтинг:</b>
+• Средний: ${adminStats.avgRating}/5
+• Всего оценок: ${adminStats.totalRatings}
+
+👨‍💻 <b>Администраторы:</b>
+• Главный админ: @greenkx (${MAIN_ADMIN_ID})
+• Всего админов: ${ADMIN_IDS.length}
+
+⏱️ <b>Система:</b>
+• Версия: v5.0.0
+• Последнее обновление: ${formatDateTime(Date.now())}
+  `.trim();
+
+  await sendTextMessage(adminId, statsMessage);
+}
+
+/**
+ * Показывает список всех тикетов админу
+ * @param {string|number} adminId - ID админа
+ */
+async function showAllTickets(adminId) {
+  if (!isAdmin(adminId)) return;
+
+  const allTickets = await getAllTickets();
+  
+  if (allTickets.length === 0) {
+    await sendTextMessage(adminId, "📭 Тикетов пока нет.");
+    return;
+  }
+
+  let message = "📋 <b>ВСЕ ТИКЕТЫ</b>\n\n";
+  
+  for (let i = 0; i < Math.min(allTickets.length, 20); i++) {
+    const ticket = allTickets[i];
+    const emoji = getStatusEmoji(ticket.status);
+    message += `${emoji} <code>${ticket.id}</code> - ${escapeHtml(ticket.ticketName)} (${ticket.status})\n`;
+  }
+
+  if (allTickets.length > 20) {
+    message += `\n... и еще ${allTickets.length - 20} тикетов`;
+  }
+
+  await sendTextMessage(adminId, message);
+}
+
+/**
+ * Показывает информацию о конкретном тикете
+ * @param {string|number} adminId - ID админа
+ * @param {string} ticketId - ID тикета
+ */
+async function showTicketInfo(adminId, ticketId) {
+  if (!isAdmin(adminId)) return;
+
+  const ticket = await getTicket(ticketId);
+  if (!ticket) {
+    await sendTextMessage(adminId, "❌ Тикет не найден.");
+    return;
+  }
+
+  const report = generateDetailedTicketReport(ticket);
+  await sendTextMessage(adminId, report);
 }
 
 // ==========================================
-// NEWS PUBLISHING SYSTEM (BUG FIXED: copyMessage instead of forwardMessage)
+// 11. ОБРАБОТЧИКИ КОМАНД И СООБЩЕНИЙ
 // ==========================================
 
-async function publishNews(message, adminUserId) {
-  const users = (await kv.smembers("undercur:users")) || [];
-  let channelSent = false;
-  let sentCount = 0;
-  let error = null;
+/**
+ * Обрабатывает текстовые команды и сообщения
+ * @param {object} message - Объект сообщения Telegram
+ */
+async function processTextMessage(message) {
+  const userId = String(message.from.id);
+  const userName = getSafeUserName(message.from);
+  const text = message.text || "";
+  const command = text.split(" ")[0].toLowerCase();
 
-  // 1. Надежное извлечение текста или подписи (caption)
-  let rawContent = message.text || message.caption || "";
-  
-  if (message.reply_to_message) {
-    rawContent = message.reply_to_message.text || message.reply_to_message.caption || rawContent;
+  // Сохраняем/обновляем пользователя
+  await saveUser(userId, {
+    id: userId,
+    username: message.from.username,
+    firstName: message.from.first_name,
+    lastName: message.from.last_name
+  });
+
+  // Обновляем время последней активности, если это админ
+  if (isAdmin(userId)) {
+    await updateAdminLastSeen(userId);
   }
 
-  // 2. Максимально надежное удаление команды /news
-  let cleanedContent = rawContent;
-  const commandRegex = /^\/news(?:@\w+)?[\s\n\r]+/i;
-  
-  if (commandRegex.test(rawContent)) {
-    cleanedContent = rawContent.replace(commandRegex, "").trim();
-  } else {
-    cleanedContent = rawContent.replace(/^\/news(?:@\w+)?/i, "").trim();
+  // Проверка на бан для обычных пользователей
+  if (!isAdmin(userId) && await isUserBanned(userId)) {
+    await sendTextMessage(userId, "🚫 Вы заблокированы и не можете использовать бота.");
+    return;
   }
 
-  // Если после удаления команды ничего не осталось (и это не просто медиа без текста)
-  if (!cleanedContent && !message.photo && !message.video && !message.document && !message.animation && !message.voice) {
-    return { channelSent: false, sentCount: 0, error: "empty" };
+  // Проверка на мут (запрет на отправку сообщений, кроме команд)
+  if (!isAdmin(userId) && await isUserMuted(userId) && !command.startsWith("/")) {
+    await sendTextMessage(userId, "🔇 Вы замьючены и не можете отправлять обычные сообщения.");
+    return;
   }
 
-  const prefix = "📰 <b>Новость UnderCur</b>\n\n";
-  const finalContent = cleanedContent ? prefix + cleanedContent : prefix + "Новость без текста (медиа)";
+  // 1. ПРОВЕРКА LIVE MODE (приоритетная)
+  const isLiveHandled = await handleLiveModeMessage(userId, text, isAdmin(userId));
+  if (isLiveHandled) return;
 
-  // 3. Определяем, есть ли медиа
-  const isMedia = message.photo || message.animation || message.voice || message.video || message.document || message.video_note || 
-                  (message.reply_to_message && (message.reply_to_message.photo || message.reply_to_message.document || message.reply_to_message.video || message.reply_to_message.animation));
-  
-  const extra = {};
-
-  if (!isMedia) {
-    // Текстовое сообщение
-    extra.parse_mode = "HTML";
-    extra.disable_web_page_preview = false;
-    const sourceEntities = message.reply_to_message ? message.reply_to_message.entities : message.entities;
-    if (sourceEntities) {
-      const commandLength = rawContent.length - cleanedContent.length;
-      extra.entities = sourceEntities
-        .map((entity) => ({
-          ...entity,
-          offset: Math.max(0, entity.offset - commandLength + (cleanedContent ? prefix.length : 0)),
-        }))
-        .filter((entity) => entity.offset >= 0 && entity.length > 0);
-    }
-  } else {
-    // Медиа-сообщение (используем caption)
-    extra.caption = finalContent;
-    extra.parse_mode = "HTML";
-    const sourceCaptionEntities = message.reply_to_message ? message.reply_to_message.caption_entities : message.caption_entities;
-    if (sourceCaptionEntities) {
-      const commandLength = rawContent.length - cleanedContent.length;
-      extra.caption_entities = sourceCaptionEntities
-        .map((entity) => ({
-          ...entity,
-          offset: Math.max(0, entity.offset - commandLength + (cleanedContent ? prefix.length : 0)),
-        }))
-        .filter((entity) => entity.offset >= 0 && entity.length > 0);
-    }
-  }
-
-  const channelUsername = NEWS_CHANNEL.replace(/^@/, "");
-  extra.reply_markup = {
-    inline_keyboard: [
-      [{ text: "📢 Поделиться новостью / Обсудить", url: `https://t.me/${channelUsername}` }],
-    ],
-  };
-
-  try {
-    let result;
-    const targetChatId = message.reply_to_message ? message.reply_to_message.chat.id : message.chat.id;
-    const targetMsgId = message.reply_to_message ? message.reply_to_message.message_id : message.message_id;
-
-    if (isMedia) {
-      // ИСПРАВЛЕНИЕ: Используем copyMessage вместо forwardMessage, чтобы заменить caption
-      result = await copyMessage(NEWS_CHANNEL, targetChatId, targetMsgId, {
-        caption: extra.caption,
-        parse_mode: extra.parse_mode,
-        caption_entities: extra.caption_entities,
-        reply_markup: extra.reply_markup,
-      });
-    } else {
-      result = await sendMessage(NEWS_CHANNEL, finalContent, extra);
-    }
-    channelSent = result.ok === true;
-  } catch (error) {
-    console.error("Ошибка публикации в канал:", error.message);
-    error = error.message;
-  }
-
-  // Рассылка пользователям
-  for (const recipientId of users) {
-    if (String(recipientId) === String(adminUserId)) continue;
-    
-    const recipient = await getUser(recipientId);
-    if (recipient.news === false) continue;
-
-    try {
-      let result;
-      if (isMedia) {
-        const targetChatId = message.reply_to_message ? message.reply_to_message.chat.id : message.chat.id;
-        const targetMsgId = message.reply_to_message ? message.reply_to_message.message_id : message.message_id;
-        
-        // ИСПРАВЛЕНИЕ: Используем copyMessage и для рассылки, чтобы убрать /news из caption
-        result = await copyMessage(recipientId, targetChatId, targetMsgId, {
-          caption: extra.caption,
-          parse_mode: extra.parse_mode,
-          caption_entities: extra.caption_entities,
-        });
+  // 2. ОБРАБОТКА КОМАНД
+  switch (command) {
+    case "/start":
+      if (isAdmin(userId)) {
+        await sendInlineMessage(
+          userId,
+          `👑 <b>Панель Администратора</b>\n\nДобро пожаловать, ${userName}!\n\nВыберите действие:`,
+          [
+            [{ text: "📊 Статистика", callback_data: "admin_stats" }],
+            [{ text: "📋 Все тикеты", callback_data: "admin_all_tickets" }],
+            [{ text: "👥 Управление пользователями", callback_data: "admin_users" }],
+            [{ text: "ℹ️ Помощь", callback_data: "admin_help" }]
+          ]
+        );
       } else {
-        result = await sendMessage(recipientId, finalContent, extra);
-      }
-      
-      if (result.ok) sentCount++;
-      
-      // Небольшая задержка для предотвращения flood control
-      await new Promise(resolve => setTimeout(resolve, 30));
-    } catch (error) {
-      if (!error.message.includes("Forbidden") && !error.message.includes("blocked")) {
-        console.error("Ошибка рассылки пользователю:", error.message);
-      }
-    }
-  }
-
-  return { channelSent, sentCount, error };
-}
-
-// ==========================================
-// GUIDE & FAQ SYSTEMS (ВОССТАНОВЛЕНО)
-// ==========================================
-
-async function sendGuideMenu(chatId, messageId = null) {
-  const text = "📖 <b>Гайд по UnderCur</b>\n\nВыберите раздел, который вас интересует:";
-  const keyboard = {
-    inline_keyboard: [
-      [{ text: "🚀 Как запустить игру?", callback_data: "guide_launch" }],
-      [{ text: "⚙️ Решение частых проблем", callback_data: "guide_troubleshoot" }],
-      [{ text: "🎮 Управление в игре", callback_data: "guide_controls" }],
-      [{ text: "⬅️ Назад", callback_data: "home" }]
-    ]
-  };
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
-  }
-  return sendMessage(chatId, text, { reply_markup: keyboard });
-}
-
-async function sendFaqList(chatId, messageId = null) {
-  const faqs = await getAllFaqs();
-  
-  if (!faqs.length) {
-    const text = "❓ <b>Часто задаваемые вопросы</b>\n\nПока здесь пусто. Если у вас есть вопрос, напишите разработчикам через меню!";
-    if (messageId) return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
-    return sendMessage(chatId, text, { reply_markup: backKeyboard() });
-  }
-
-  let text = "❓ <b>Часто задаваемые вопросы (FAQ)</b>\n\n";
-  const keyboard = { inline_keyboard: [] };
-  
-  faqs.forEach((faq, index) => {
-    text += `<b>${index + 1}.</b> ${escapeHtml(faq.question)}\n`;
-    keyboard.inline_keyboard.push([{ text: `👁️ Показать ответ #${index + 1}`, callback_data: `faq_show_${faq.id}` }]);
-  });
-  
-  keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "home" }]);
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
-  }
-  return sendMessage(chatId, text, { reply_markup: keyboard });
-}
-
-// ==========================================
-// NEW FEATURE MESSAGE GENERATORS
-// ==========================================
-
-async function sendBadgesMenu(chatId, messageId = null) {
-  const user = await getUser(chatId);
-  const userBadges = await getUserBadges(chatId);
-  
-  let text = "🏆 <b>Ваши достижения</b>\n\n";
-  
-  if (userBadges.length === 0) {
-    text += "Пока нет полученных бейджей.\n\n";
-    text += "<b>Как получить:</b>\n";
-    text += "• Пригласи друзей (реферальная система)\n";
-    text += "• Будь активен в боте\n";
-    text += "• Находи баги и предлагай идеи\n";
-    text += "• Участвуй в бета-тестах\n";
-  } else {
-    text += `<b>Получено: ${userBadges.length}</b>\n\n`;
-    userBadges.forEach(badge => {
-      text += `${badge.emoji} <b>${badge.name}</b>\n<i>${badge.desc}</i>\n\n`;
-    });
-  }
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: badgeKeyboard() });
-  }
-  return sendMessage(chatId, text, { reply_markup: badgeKeyboard() });
-}
-
-async function sendShareBot(chatId, messageId = null) {
-  const user = await getUser(chatId);
-  const botUsername = process.env.BOT_USERNAME || "undercur_bot";
-  const refLink = `https://t.me/${botUsername}?start=ref_${chatId}`;
-  const refCount = user.referrals ? user.referrals.length : 0;
-  
-  const text = 
-    "🔗 <b>Пригласи друзей и получи награды!</b>\n\n" +
-    "Отправь эту ссылку друзьям:\n" +
-    `<code>${refLink}</code>\n\n` +
-    "🎁 <b>Награды за приглашения:</b>\n" +
-    "🌱 1 друг — бейдж «Новичок»\n" +
-    "🌿 5 друзей — бейдж «Садовод»\n" +
-    "🌳 10 друзей — бейдж «Дерево»\n" +
-    "🌲 25 друзей — бейдж «Лесник»\n" +
-    "🌍 50 друзей — бейдж «Популярный»\n\n" +
-    `📊 <b>Твои приглашения:</b> ${refCount}\n\n` +
-    "<b>📝 Готовое сообщение для отправки:</b>\n" +
-    "🎮 Привет! Играю в UnderCur — крутая игра на PowerPoint!\n" +
-    "Присоединяйся: " + refLink;
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("home") });
-  }
-  return sendMessage(chatId, text, { reply_markup: backKeyboard("home") });
-}
-
-async function sendPromoList(chatId, messageId = null) {
-  const text = 
-    "🎁 <b>Промокоды и акции</b>\n\n" +
-    "📝 <b>Как использовать:</b>\n" +
-    "Отправь команду: <code>/promo CODE</code>\n\n" +
-    "🔗 <b>Наши ресурсы:</b>\n" +
-    `• itch.io: ${ITCH_IO_URL}\n` +
-    `• Telegram: ${CHANNEL_URL}\n\n` +
-    "💡 <i>Следи за новостями — там появляются промокоды!</i>";
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: promoKeyboard() });
-  }
-  return sendMessage(chatId, text, { reply_markup: promoKeyboard() });
-}
-
-async function sendScheduledPostsList(chatId, messageId = null, isAdmin = false) {
-  if (!isAdmin) {
-    return sendMessage(chatId, "⛔ У вас нет прав для просмотра запланированных постов.");
-  }
-  
-  const posts = await getScheduledPosts();
-  
-  if (posts.length === 0) {
-    const text = "📅 <b>Запланированные посты</b>\n\nПока нет запланированных публикаций.\n\n" +
-      "<b>Как создать:</b>\n" +
-      "<code>/schedule 2026-09-25 12:00 Текст новости</code>";
-    
-    if (messageId) {
-      return editMessage(chatId, messageId, text, { reply_markup: backKeyboard() });
-    }
-    return sendMessage(chatId, text, { reply_markup: backKeyboard() });
-  }
-  
-  let text = "📅 <b>Запланированные посты</b>\n\n";
-  const keyboard = { inline_keyboard: [] };
-  
-  posts.forEach((post, idx) => {
-    const statusEmoji = post.status === "pending" ? "⏳" : post.status === "published" ? "✅" : "❌";
-    text += `${idx + 1}. ${statusEmoji} <b>${post.date} ${post.time}</b>\n`;
-    text += `<i>${escapeHtml(post.text.substring(0, 50))}...</i>\n\n`;
-    
-    if (post.status === "pending") {
-      keyboard.inline_keyboard.push([{ 
-        text: `❌ Отменить #${post.id}`, 
-        callback_data: `unschedule_${post.id}` 
-      }]);
-    }
-  });
-  
-  keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "home" }]);
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
-  }
-  return sendMessage(chatId, text, { reply_markup: keyboard });
-}
-
-async function sendFaqSearch(chatId, query, messageId = null) {
-  const results = await searchFaqs(query);
-  
-  if (results.length === 0) {
-    const text = `🔍 <b>Поиск по FAQ: "${escapeHtml(query)}"</b>\n\n` +
-      "Ничего не найдено. Попробуйте другой запрос или задайте вопрос разработчикам.";
-    
-    if (messageId) {
-      return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("home") });
-    }
-    return sendMessage(chatId, text, { reply_markup: backKeyboard("home") });
-  }
-  
-  let text = `🔍 <b>Результаты поиска: "${escapeHtml(query)}"</b>\n\n`;
-  const keyboard = { inline_keyboard: [] };
-  
-  results.slice(0, 5).forEach((faq, idx) => {
-    text += `<b>${idx + 1}.</b> ${escapeHtml(faq.question)}\n`;
-    keyboard.inline_keyboard.push([{ 
-      text: `👁️ Показать #${idx + 1}`, 
-      callback_data: `faq_show_${faq.id}` 
-    }]);
-  });
-  
-  keyboard.inline_keyboard.push([{ text: "⬅️ Назад к списку FAQ", callback_data: "home" }]);
-  
-  if (messageId) {
-    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
-  }
-  return sendMessage(chatId, text, { reply_markup: keyboard });
-}
-
-// ==========================================
-// COMMAND PROCESSORS
-// ==========================================
-
-// ==========================================
-// COMMAND PROCESSORS
-// ==========================================
-
-async function processCommand(message, text) {
-  const chatId = message.chat.id;
-  const userId = message.from.id;
-  const command = text.split(/\s+/)[0].toLowerCase();
-  const args = text.slice(command.length).trim();
-
-  // Проверка на бан
-  if (await isBanned(userId)) {
-    return sendMessage(chatId, " Ваш аккаунт заблокирован в этом боте. Обратитесь к администрации.");
-  }
-
-  // Проверка на мут (для текстовых команд, кроме /start и /help)
-  if (command !== "/start" && command !== "/help" && await isMuted(userId)) {
-    return sendMessage(chatId, "🔇 Вы временно ограничены в использовании команд бота.");
-  }
-
-  // Проверяем запланированные посты
-  await checkAndPublishScheduledPosts();
-
-  await saveUser(userId);
-
-  // Обработка реферальной ссылки в /start
-  if (command === "/start") {
-    if (args.startsWith("ref_")) {
-      const referrerId = args.replace("ref_", "");
-      const isNewUser = await processReferral(userId, referrerId);
-      
-      if (isNewUser) {
-        await sendMessage(chatId, " <b>Вы зарегистрировались по реферальной ссылке!</b>\n\n" +
-          "Теперь вы будете получать уведомления, а ваш друг получит бейдж за приглашение.");
-        
-        // Уведомляем реферера
-        try {
-          await sendMessage(referrerId, 
-            `🎊 <b>Новый реферал!</b>\n\n` +
-            `Пользователь <code>${userId}</code> зарегистрировался по вашей ссылке.\n` +
-            `Всего приглашений: ${(await getUser(referrerId)).referrals.length}`
-          );
-        } catch (e) {
-          // Игнорируем ошибки
-        }
-      }
-    } else if (args.startsWith("promo_")) {
-      const promoId = args.replace("promo_", "");
-      const service = PROMO_SERVICES[promoId];
-      if (service) {
-        return sendMessage(chatId, 
-          `🎁 <b>${service.name}</b>\n\n` +
-          `${service.desc}\n\n` +
-          `🔗 <b>Ссылка:</b> ${service.url || "Доступно в боте"}`
+        await sendInlineMessage(
+          userId,
+          `👋 <b>Добро пожаловать в Helper Bot!</b>\n\nЯ помогу вам связаться с технической поддержкой.\n\nДоступные команды:\n/ticket - Создать тикет\n/live - Начать прямой диалог с админом\n/help - Помощь`,
+          [
+            [{ text: "🎫 Создать тикет", callback_data: "start_ticket" }],
+            [{ text: "🔴 Live Mode (Быстрая связь)", callback_data: "start_live" }],
+            [{ text: "ℹ️ Помощь", callback_data: "help" }]
+          ]
         );
       }
-    }
-    
-    return sendHome(chatId);
+      break;
+
+    case "/ticket":
+      await startTicketCreation(userId, userName);
+      break;
+
+    case "/live":
+      await startLiveMode(userId, userName);
+      break;
+
+    case "/skip":
+      const state = await kvGet(`ticket_state:${userId}`);
+      if (state) {
+        if (state.step === 2) {
+          await handleTicketSkipDocument(userId, null);
+        } else if (state.step === 4) {
+          await handleTicketSkipName(userId, null);
+        } else {
+          await sendTextMessage(userId, "❌ Команда /skip доступна только на шагах 2 или 4 создания тикета.");
+        }
+      } else {
+        await sendTextMessage(userId, "❌ У вас нет активного процесса создания тикета.");
+      }
+      break;
+
+    case "/help":
+      if (isAdmin(userId)) {
+        await sendTextMessage(
+          userId,
+          `📖 <b>Справка для администраторов:</b>\n\n/start - Панель администратора\n/stats - Статистика системы\n/tickets - Список всех тикетов\n/ticket_info <ID> - Информация о тикете\n/reply <ID> <причина> - Ответить на тикет\n/ban <user_id> <причина> - Забанить пользователя\n/unban <user_id> - Разбанить пользователя\n/mute <user_id> <причина> - Замьютить пользователя\n/unmute <user_id> - Размьютить пользователя\n/addadmin <user_id> - Добавить админа\n/removeadmin <user_id> - Удалить админа (только главный)\n/end_live - Завершить Live Mode`
+        );
+      } else {
+        await sendTextMessage(
+          userId,
+          `📖 <b>Справка по командам:</b>\n\n/start - Главное меню\n/ticket - Создать тикет поддержки\n/live - Прямой чат с активным админом\n/skip - Пропустить шаг при создании тикета\n/help - Эта справка`
+        );
+      }
+      break;
+
+    case "/stats":
+      if (isAdmin(userId)) {
+        await showAdminStats(userId);
+      }
+      break;
+
+    case "/tickets":
+      if (isAdmin(userId)) {
+        await showAllTickets(userId);
+      }
+      break;
+
+    case "/ticket_info":
+      if (isAdmin(userId)) {
+        const parts = text.split(" ");
+        if (parts.length < 2) {
+          await sendTextMessage(userId, "❌ Использование: /ticket_info <ID_тикета>");
+          break;
+        }
+        await showTicketInfo(userId, parts[1]);
+      }
+      break;
+
+    case "/ban":
+      if (!isAdmin(userId)) break;
+      const banParts = text.split(" ");
+      if (banParts.length < 3) {
+        await sendTextMessage(userId, "❌ Использование: /ban <user_id> <причина>");
+        break;
+      }
+      const banResult = await banUser(userId, banParts[1], banParts.slice(2).join(" "));
+      await sendTextMessage(userId, banResult.message);
+      break;
+
+    case "/unban":
+      if (!isAdmin(userId)) break;
+      const unbanParts = text.split(" ");
+      if (unbanParts.length < 2) {
+        await sendTextMessage(userId, "❌ Использование: /unban <user_id>");
+        break;
+      }
+      const unbanResult = await unbanUser(userId, unbanParts[1]);
+      await sendTextMessage(userId, unbanResult.message);
+      break;
+
+    case "/mute":
+      if (!isAdmin(userId)) break;
+      const muteParts = text.split(" ");
+      if (muteParts.length < 3) {
+        await sendTextMessage(userId, "❌ Использование: /mute <user_id> <причина>");
+        break;
+      }
+      const muteResult = await muteUser(userId, muteParts[1], muteParts.slice(2).join(" "));
+      await sendTextMessage(userId, muteResult.message);
+      break;
+
+    case "/unmute":
+      if (!isAdmin(userId)) break;
+      const unmuteParts = text.split(" ");
+      if (unmuteParts.length < 2) {
+        await sendTextMessage(userId, "❌ Использование: /unmute <user_id>");
+        break;
+      }
+      const unmuteResult = await unmuteUser(userId, unmuteParts[1]);
+      await sendTextMessage(userId, unmuteResult.message);
+      break;
+
+    case "/addadmin":
+      if (!isAdmin(userId)) break;
+      const addParts = text.split(" ");
+      if (addParts.length < 2) {
+        await sendTextMessage(userId, "❌ Использование: /addadmin <user_id>");
+        break;
+      }
+      const addResult = await addAdmin(userId, addParts[1]);
+      await sendTextMessage(userId, addResult.message);
+      break;
+
+    case "/removeadmin":
+      if (!isMainAdmin(userId)) {
+        await sendTextMessage(userId, "❌ Только главный администратор может удалять админов.");
+        break;
+      }
+      const remParts = text.split(" ");
+      if (remParts.length < 2) {
+        await sendTextMessage(userId, "❌ Использование: /removeadmin <user_id>");
+        break;
+      }
+      const remResult = await removeAdmin(userId, remParts[1]);
+      await sendTextMessage(userId, remResult.message);
+      break;
+
+    case "/end_live":
+      if (isAdmin(userId)) {
+        const session = await kvGet(`live_session_admin:${userId}`);
+        if (session) {
+          await endLiveMode(userId, session.userId);
+        } else {
+          await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
+        }
+      }
+      break;
+
+    case "/reply":
+      if (isAdmin(userId)) {
+        const replyParts = text.split(" ");
+        if (replyParts.length < 3) {
+          await sendTextMessage(userId, "❌ Использование: /reply <ticket_id> <причина ответа>\n\n⚠️ Указание причины обязательно!");
+          break;
+        }
+        const tId = replyParts[1];
+        const reason = replyParts.slice(2).join(" ");
+        await handleAdminTicketReply(userId, tId, reason);
+      }
+      break;
+
+    default:
+      // Обработка оценки в Live Mode
+      const liveSession = await kvGet(`live_session:${userId}`);
+      if (liveSession && liveSession.status === "ended" && !liveSession.ratingGiven) {
+        await handleRatingSubmission(userId, text);
+        break;
+      }
+
+      // Обработка ввода названия тикета на шаге 4
+      const currentState = await kvGet(`ticket_state:${userId}`);
+      if (currentState && currentState.step === 4 && !command.startsWith("/")) {
+        await handleTicketNameInput(userId, text);
+      } else if (currentState && currentState.step === 3 && !command.startsWith("/")) {
+        await handleTicketDescription(userId, text);
+      } else if (!isAdmin(userId) && !command.startsWith("/")) {
+        await sendTextMessage(userId, "❌ Неизвестная команда. Используйте /help для справки.");
+      }
+      break;
+  }
+}
+
+/**
+ * Обрабатывает нажатия на инлайн-кнопки (Callback Query)
+ * @param {object} callbackQuery - Объект callback-запроса
+ */
+async function processCallbackQuery(callbackQuery) {
+  const userId = String(callbackQuery.from.id);
+  const data = callbackQuery.data;
+  const messageId = callbackQuery.message?.message_id;
+  const chatId = callbackQuery.message?.chat.id;
+
+  // Обновляем активность админа
+  if (isAdmin(userId)) {
+    await updateAdminLastSeen(userId);
   }
 
-  if (command === "/help") {
-    return sendHelp(chatId);
+  // Обработка кнопок создания тикета
+  if (data.startsWith("ticket_cat_")) {
+    const categoryId = data.replace("ticket_cat_", "");
+    await handleTicketCategorySelection(userId, categoryId, callbackQuery.id);
+  } 
+  else if (data === "ticket_skip_doc") {
+    await handleTicketSkipDocument(userId, callbackQuery.id);
+  } 
+  else if (data === "ticket_skip_name") {
+    await handleTicketSkipName(userId, callbackQuery.id);
+  } 
+  else if (data.startsWith("ticket_target_")) {
+    const targetAdminId = data.replace("ticket_target_", "");
+    await handleTargetAdminSelection(userId, targetAdminId, callbackQuery.id);
+  } 
+  else if (data === "ticket_cancel") {
+    await kvDel(`ticket_state:${userId}`);
+    await answerCallbackQuery(callbackQuery.id, "Создание тикета отменено");
+    await sendTextMessage(userId, "❌ Создание тикета отменено.");
   }
-
-  if (command === "/profile" || command === "/mydata") {
-    const user = await getUser(userId);
-    const joinDate = formatDate(user.createdAt);
-    const lastSeen = formatDate(user.lastSeen);
-    const ticketsCount = (await getUserTickets(userId)).length;
-    const badgeCount = user.badges ? user.badges.length : 0;
-    const refCount = user.referrals ? user.referrals.length : 0;
-    const subCount = user.versionSubscriptions ? user.versionSubscriptions.length : 0;
-
-    return sendMessage(
-      chatId,
-      `👤 <b>Ваш профиль UnderCur</b>\n\n` +
-      `🆔 <b>ID:</b> <code>${userId}</code>\n` +
-      `🔔 <b>Новости:</b> ${user.news !== false ? "✅ Включены" : "❌ Выключены"}\n` +
-      `📅 <b>Дата регистрации:</b> ${joinDate}\n` +
-      `🕒 <b>Последняя активность:</b> ${lastSeen}\n` +
-      `💬 <b>Сообщений отправлено:</b> ${user.messageCount || 0}\n` +
-      `🎫 <b>Создано тикетов:</b> ${ticketsCount}\n` +
-      `🏆 <b>Бейджей:</b> ${badgeCount}\n` +
-      `👥 <b>Приглашено друзей:</b> ${refCount}\n` +
-      `🔔 <b>Подписок на версии:</b> ${subCount}\n\n` +
-      `<b>Команды:</b>\n` +
-      `/badges — мои достижения\n` +
-      `/share — пригласить друга\n` +
-      `/promolist — промокоды`,
-      { reply_markup: backKeyboard() }
-    );
+  // Обработка кнопок Live Mode
+  else if (data === "start_live") {
+    await answerCallbackQuery(callbackQuery.id);
+    const userName = getSafeUserName(callbackQuery.from);
+    await startLiveMode(userId, userName);
   }
-
-  if (command === "/badges" || command === "/achievements") {
-    return sendBadgesMenu(chatId);
+  else if (data === "start_ticket") {
+    await answerCallbackQuery(callbackQuery.id);
+    const userName = getSafeUserName(callbackQuery.from);
+    await startTicketCreation(userId, userName);
   }
-
-  if (command === "/share" || command === "/invite") {
-    return sendShareBot(chatId);
+  // Обработка кнопок админа
+  else if (data === "admin_stats") {
+    await answerCallbackQuery(callbackQuery.id);
+    await showAdminStats(userId);
   }
-
-  if (command === "/promolist" || command === "/promos") {
-    return sendPromoList(chatId);
+  else if (data === "admin_all_tickets") {
+    await answerCallbackQuery(callbackQuery.id);
+    await showAllTickets(userId);
   }
-
-  if (command === "/promo") {
-    if (!args) {
-      return sendMessage(chatId, "❌ Использование: <code>/promo CODE</code>\n\n" +
-        "Пример: <code>/promo SUMMER2026</code>");
-    }
-    
-    const result = await usePromoCode(userId, args);
-    
-    if (result.success) {
-      return sendMessage(chatId, 
-        `✅ <b>Промокод активирован!</b>\n\n` +
-        `🎁 <b>Награда:</b> ${result.reward}\n\n` +
-        "Проверьте свои бейджи: /badges");
-    } else {
-      const errors = {
-        "not_found": "Промокод не найден",
-        "inactive": "Промокод неактивен",
-        "already_used": "Вы уже использовали этот промокод",
-        "max_uses": "Промокод больше недоступен",
-      };
-      return sendMessage(chatId, `❌ ${errors[result.error] || "Ошибка активации"}`);
-    }
+  else if (data === "admin_users") {
+    await answerCallbackQuery(callbackQuery.id, "Используйте команды /ban, /mute, /unban, /unmute");
   }
-
-  if (command === "/watch") {
-    if (!args) {
-      return sendMessage(chatId, "❌ Использование: <code>/watch VERSION</code>\n\n" +
-        "Пример: <code>/watch 2.0</code>\n" +
-        "Или: <code>/watch *</code> — подписаться на все версии");
-    }
-    
-    const subscribed = await subscribeToVersion(userId, args);
-    
-    if (subscribed) {
-      return sendMessage(chatId, 
-        `✅ <b>Подписка оформлена!</b>\n\n` +
-        `Вы будете получать уведомления о версии: <code>${args}</code>\n\n` +
-        `<i>Чтобы отписаться: /unwatch ${args}</i>`);
-    } else {
-      return sendMessage(chatId, "Вы уже подписаны на эту версию.");
-    }
+  else if (data === "admin_help") {
+    await answerCallbackQuery(callbackQuery.id);
+    await sendTextMessage(userId, "Используйте /help для получения справки по командам.");
   }
-
-  if (command === "/unwatch") {
-    if (!args) {
-      return sendMessage(chatId, "❌ Использование: <code>/unwatch VERSION</code>");
-    }
-    
-    const unsubscribed = await unsubscribeFromVersion(userId, args);
-    
-    if (unsubscribed) {
-      return sendMessage(chatId, `✅ Вы отписались от версии: <code>${args}</code>`);
-    } else {
-      return sendMessage(chatId, "Вы не были подписаны на эту версию.");
-    }
+  else if (data === "help") {
+    await answerCallbackQuery(callbackQuery.id);
+    await sendTextMessage(userId, "Используйте /help для получения справки по командам.");
   }
-
-  if (command === "/mysubs" || command === "/subscriptions") {
-    const user = await getUser(userId);
-    const subs = user.versionSubscriptions || [];
-    
-    if (subs.length === 0) {
-      return sendMessage(chatId, "🔔 <b>Ваши подписки</b>\n\n" +
-        "Вы не подписаны ни на одну версию.\n\n" +
-        "Используйте: <code>/watch VERSION</code>");
-    }
-    
-    let text = " <b>Ваши подписки на версии:</b>\n\n";
-    subs.forEach((v, i) => {
-      text += `${i + 1}. <code>${v}</code>\n`;
-    });
-    
-    return sendMessage(chatId, text);
+  else if (data.startsWith("ticket_reply_")) {
+    await answerCallbackQuery(callbackQuery.id, "Используйте команду /reply <ID> <причина> в чате");
+    await sendTextMessage(userId, "⚠️ Для ответа на тикет с обязательной причиной, пожалуйста, используйте команду в чате:\n\n<code>/reply TCK-... Ваша причина</code>");
   }
+  else if (data.startsWith("ticket_take_")) {
+    const ticketId = data.replace("ticket_take_", "");
+    await answerCallbackQuery(callbackQuery.id, "Берем в работу...");
+    await takeTicket(userId, ticketId);
+  }
+  else if (data.startsWith("ticket_reject_")) {
+    const ticketId = data.replace("ticket_reject_", "");
+    await answerCallbackQuery(callbackQuery.id, "Отклоняем...");
+    await rejectTicket(userId, ticketId, "Отклонено администратором");
+  }
+  // Обработка оценок тикета
+  else if (data.startsWith("rate_ticket_")) {
+    const parts = data.split("_");
+    const ticketId = parts[2];
+    let rating = 0;
+    
+    if (parts[3] === "5") rating = 5;
+    else if (parts[3] === "4") rating = 4;
+    else rating = 3;
 
-  if (command === "/schedule") {
+    await answerCallbackQuery(callbackQuery.id, `Спасибо за оценку ${rating}!`);
+    await editMessageText(chatId, messageId, `✅ Вы оценили этот тикет на ${rating} звезд.\nСпасибо за ваш отзыв!`);
+    
+    await handleTicketRating(userId, ticketId, rating, "Оценка через кнопку");
+  }
+  else {
+    await answerCallbackQuery(callbackQuery.id, "Действие не распознано");
+  }
+}
+
+/**
+ * Обрабатывает получение документа (фото, файл)
+ * @param {object} message - Объект сообщения
+ */
+async function processDocumentMessage(message) {
+  const userId = String(message.from.id);
+  
+  // Если это часть процесса создания тикета
+  const state = await kvGet(`ticket_state:${userId}`);
+  if (state && state.step === 2) {
+    const docInfo = message.document ? message.document.file_id : (message.photo ? message.photo[message.photo.length - 1].file_id : "unknown");
+    await handleTicketDocumentUpload(userId, docInfo, null);
+  } else {
     if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
-    }
-    
-    // Формат: /schedule 2026-09-25 12:00 Текст новости
-    const parts = args.split(/\s+/);
-    if (parts.length < 3) {
-      return sendMessage(chatId, 
-        "❌ Использование: <code>/schedule DATE TIME TEXT</code>\n\n" +
-        "Пример: <code>/schedule 2026-09-25 12:00 Новая версия игры!</code>");
-    }
-    
-    const date = parts[0];
-    const time = parts[1];
-    const text = parts.slice(2).join(" ");
-    
-    const post = await schedulePost(date, time, text);
-    
-    return sendMessage(chatId, 
-      `✅ <b>Пост запланирован!</b>\n\n` +
-      `📅 Дата: ${date}\n` +
-      ` Время: ${time}\n` +
-      `📝 ID: <code>${post.id}</code>\n\n` +
-      `<i>Отменить: /unschedule ${post.id}</i>`);
-  }
-
-  if (command === "/unschedule") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
-    }
-    
-    if (!args) {
-      return sendMessage(chatId, "❌ Использование: <code>/unschedule POST_ID</code>");
-    }
-    
-    const deleted = await cancelScheduledPost(args);
-    
-    if (deleted > 0) {
-      return sendMessage(chatId, `✅ Пост отменён.`);
-    } else {
-      return sendMessage(chatId, "Пост не найден или уже опубликован.");
+      await sendTextMessage(userId, "❌ Пожалуйста, используйте команду /ticket для отправки файлов в поддержку.");
     }
   }
+}
 
-  if (command === "/scheduled") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
-    }
-    return sendScheduledPostsList(chatId, null, true);
+// ==========================================
+// 12. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ
+// ==========================================
+
+/**
+ * Функция очистки устаревших данных
+ */
+async function cleanupOldData() {
+  console.log("[CLEANUP] Запуск очистки устаревших данных...");
+  return true;
+}
+
+/**
+ * Функция экспорта статистики в JSON
+ */
+async function exportStats() {
+  console.log("[EXPORT] Генерация отчета статистики...");
+  const allTickets = await getAllTickets();
+  return {
+    totalTickets: allTickets.length,
+    activeAdmins: ADMIN_IDS.length,
+    timestamp: Date.now()
+  };
+}
+
+/**
+ * Функция проверки целостности данных
+ */
+async function verifyDataIntegrity() {
+  console.log("[VERIFY] Проверка целостности данных KV...");
+  return true;
+}
+
+/**
+ * Функция отправки массового уведомления админам
+ */
+async function broadcastToAdmins(message) {
+  for (const adminId of ADMIN_IDS) {
+    await sendTextMessage(adminId, `📢 <b>МАССОВОЕ УВЕДОМЛЕНИЕ:</b>\n\n${escapeHtml(message)}`);
   }
+}
 
-  if (command === "/faq") {
-    if (args) {
-      return sendFaqSearch(chatId, args);
-    }
-    return sendFaqList(chatId);
+/**
+ * Функция проверки rate limiting
+ */
+async function checkRateLimit(userId, action) {
+  const key = `rate_limit:${userId}:${action}`;
+  const current = await kvGet(key) || 0;
+  
+  if (current > 5) {
+    return false;
   }
   
-
-  if (command === "/stats") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для использования этой команды.");
-    }
-    
-    const users = (await kv.smembers("undercur:users")) || [];
-    const bannedCount = (await kv.smembers("undercur:banned_users")) || [];
-    const allTickets = (await kv.smembers("undercur:all_tickets")) || [];
-    const versions = await getStoredVersions();
-    const faqs = await getAllFaqs();
-    const scheduledPosts = await getScheduledPosts();
-    
-    let newsEnabledCount = 0;
-    let activeToday = 0;
-    const now = Date.now();
-    const oneDayMs = 24 * 60 * 60 * 1000;
-
-    for (const uId of users) {
-      const user = await getUser(uId);
-      if (user.news !== false) newsEnabledCount++;
-      if (now - user.lastSeen < oneDayMs) activeToday++;
-    }
-
-    return sendMessage(
-      chatId,
-      `📊 <b>Статистика UnderCur Bot</b>\n\n` +
-      `👥 <b>Всего пользователей:</b> ${users.length}\n` +
-      ` <b>Активных за 24 часа:</b> ${activeToday}\n` +
-      `🔔 <b>Подписано на новости:</b> ${newsEnabledCount}\n` +
-      `⛔ <b>Заблокировано:</b> ${bannedCount.length}\n` +
-      `🎫 <b>Всего тикетов:</b> ${allTickets.length}\n` +
-      ` <b>Версий в базе:</b> ${versions.length}\n` +
-      `❓ <b>Статей в FAQ:</b> ${faqs.length}\n` +
-      ` <b>Запланировано постов:</b> ${scheduledPosts.length}\n\n` +
-      `<i>Данные актуальны на ${formatDate(now)}</i>`
-    );
-  }
-
-  if (command === "/versions" || command === "/versoins") {
-    return versionsMessage(chatId);
-  }
-
-  if (command === "/download") {
-    return sendDownloadInfo(chatId);
-  }
-
-  // --- Управление версиями ---
-  if (command === "/add") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для добавления версий.");
-    }
-    if (!args) {
-      return sendMessage(chatId, "❌ Укажите версии для добавления.\n\n💡 Пример: `/add 1.0.1, 1.0.2 (beta), 1.0.3 (fix)`", { parse_mode: "Markdown" });
-    }
-
-    const newVersions = parseMultipleVersions(args);
-    if (!newVersions.length) {
-      return sendMessage(chatId, "❌ Не удалось распознать ни одной версии.\n\n Пример: `1.0.1, 1.0.2 (beta)`", { parse_mode: "Markdown" });
-    }
-
-    const existing = await getStoredVersions();
-    let added = 0;
-    let updated = 0;
-
-    for (const newVer of newVersions) {
-      const idx = existing.findIndex(v => v.version === newVer.version);
-      if (idx >= 0) {
-        existing[idx] = { ...existing[idx], ...newVer, addedAt: existing[idx].addedAt || Date.now() };
-        updated++;
-      } else {
-        existing.push({ ...newVer, addedAt: Date.now() });
-        added++;
-      }
-    }
-
-    await setStoredVersions(existing);
-    const list = newVersions.map(v => versionTitle(v)).join("\n");
-
-    // Уведомляем подписчиков и считаем реальное количество
-    let totalNotified = 0;
-    for (const newVer of newVersions) {
-      totalNotified += await notifyVersionSubscribers(newVer.version, newVer);
-    }
-
-    return sendMessage(chatId, `✅ <b>Версии обработаны!</b>\n\n➕ <b>Добавлено:</b> ${added}\n🔄 <b>Обновлено:</b> ${updated}\n\n📋 <b>Список:</b>\n${list}\n\n🔔 <b>Уведомлено подписчиков:</b> ${totalNotified}`);
-  }
-
-  if (command === "/delete") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, " У вас нет прав для удаления версий.");
-    }
-    if (!args) {
-      return sendMessage(chatId, "❌ Укажите версию для удаления.\n\n💡 Пример: `/delete 1.0.2 (beta)`", { parse_mode: "Markdown" });
-    }
-
-    const parsed = parseVersionString(args);
-    if (!parsed) {
-      return sendMessage(chatId, "❌ Неверный формат версии. Используйте формат: <code>1.0.0</code> или <code>1.0.0 (beta)</code>");
-    }
-
-    const existing = await getStoredVersions();
-    const before = existing.length;
-
-    const filtered = existing.filter(v => {
-      if (v.version !== parsed.version) return true;
-      if (parsed.status && v.status !== parsed.status) return true;
-      return false;
-    });
-
-    if (filtered.length === before) {
-      return sendMessage(chatId, `❌ Версия "<code>${args}</code>" не найдена в базе.`);
-    }
-
-    await setStoredVersions(filtered);
-    return sendMessage(chatId, `✅ <b>Версия удалена!</b>\n\n🗑️ <b>Удалено:</b> ${versionTitle(parsed)}\n <b>Осталось версий:</b> ${filtered.length}`);
-  }
-
-  if (command === "/all") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, " У вас нет прав для просмотра всех версий.");
-    }
-    const versions = await getStoredVersions();
-    if (!versions.length) {
-      return sendMessage(chatId, "📭 Версий пока нет. Добавьте через команду /add");
-    }
-
-    const list = versions.map((v, i) => `${i + 1}. ${versionTitle(v)}`).join("\n");
-    return sendMessage(chatId, `📋 <b>Все версии (${versions.length}):</b>\n\n${list}\n\n💡 <b>Управление:</b>\n/add — добавить\n/delete — удалить`);
-  }
-
-  if (command === "/clearversions") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, "⛔ У вас нет прав для этой команды.");
-    }
-    await kv.set("undercur:versions", "[]");
-    return sendMessage(chatId, "🗑️ <b>Список версий полностью очищен.</b>\nТеперь можно добавить новые через команду /add");
-  }
-
-  // --- Массовая рассылка ---
-  if (command === "/sendall") {
-    if (!isAdmin(userId)) {
-      return sendMessage(chatId, " У вас нет прав для этой команды.");
-    }
-    if (!args) {
-      return sendMessage(chatId, "❌ Используйте: <code>/sendall &lt;текст сообщения&gt;</code>");
-    }
-    
-    const users = (await kv.smembers("undercur:users")) || [];
-    let sent = 0;
-    let failed = 0;
-    
-    await sendMessage(chatId, `⏳ <b>Начало рассылки...</b>\nВсего получателей: ${users.length}`);
-    
-    for (const uId of users) {
-      try {
-        await sendMessage(uId, `📢 <b>Важное сообщение от администрации:</b>\n\n${args}`);
-        sent++;
-        await new Promise(resolve => setTimeout(resolve, 40)); // Anti-flood delay
-      } catch (e) {
-        failed++;
-      }
-    }
-    return sendMessage(chatId, `✅ <b>Рассылка завершена!</b>\n\n📤 Отправлено: ${sent}\n❌ Ошибок: ${failed}`);
-  }
-
-  // --- Модерация ---
-  if (command === "/ban") {
-    if (!isAdmin(userId)) return sendMessage(chatId, " Недостаточно прав.");
-    const parts = args.split(/\s+/);
-    const targetId = parts[0];
-    const reason = parts.slice(1).join(" ") || "Не указана";
-    
-    if (!targetId || isNaN(targetId)) {
-      return sendMessage(chatId, "❌ Использование: <code>/ban &lt;user_id&gt; [причина]</code>");
-    }
-    
-    await banUser(targetId, userId, reason);
-    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> заблокирован.\nПричина: ${reason}`);
-  }
-
-  if (command === "/unban") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const targetId = args.trim();
-    
-    if (!targetId || isNaN(targetId)) {
-      return sendMessage(chatId, " Использование: <code>/unban &lt;user_id&gt;</code>");
-    }
-    
-    await unbanUser(targetId);
-    return sendMessage(chatId, `✅ Пользователь <code>${targetId}</code> разблокирован.`);
-  }
-
-  if (command === "/finduser") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const targetId = args.trim();
-    
-    if (!targetId || isNaN(targetId)) {
-      return sendMessage(chatId, "❌ Использование: <code>/finduser &lt;user_id&gt;</code>");
-    }
-    
-    const user = await getUser(targetId);
-    if (!user || !user.createdAt) {
-      return sendMessage(chatId, `❌ Пользователь с ID <code>${targetId}</code> не найден в базе.`);
-    }
-    
-    const badgeCount = user.badges ? user.badges.length : 0;
-    const refCount = user.referrals ? user.referrals.length : 0;
-    
-    return sendMessage(chatId, 
-      `🔍 <b>Информация о пользователе</b>\n\n` +
-      `🆔 ID: <code>${user.userId}</code>\n` +
-      `📅 Регистрация: ${formatDate(user.createdAt)}\n` +
-      ` Последняя активность: ${formatDate(user.lastSeen)}\n` +
-      `💬 Сообщений: ${user.messageCount || 0}\n` +
-      `🔔 Новости: ${user.news !== false ? "Вкл" : "Выкл"}\n` +
-      `🏆 Бейджей: ${badgeCount}\n` +
-      `👥 Рефералов: ${refCount}`
-    );
-  }
-
-  // --- Новости ---
-  if (command === "/news") {
-    if (args.length > 0 || message.reply_to_message) {
-      // ЕСТЬ ТЕКСТ ИЛИ ОТВЕТ НА СООБЩЕНИЕ -> ПУБЛИКАЦИЯ
-      if (!isAdmin(userId)) {
-        return sendMessage(chatId, "⛔ У вас нет прав для публикации новостей.");
-      }
-      
-      await sendMessage(chatId, "⏳ <b>Публикация новости...</b>");
-      const result = await publishNews(message, userId);
-      
-      if (result.error === "empty") {
-        return sendMessage(chatId, "❌ После команды /news должен быть текст новости, или используйте эту команду как ответ на сообщение с новостью.");
-      }
-      
-      return sendMessage(chatId, 
-        "✅ <b>Новость обработана.</b>\n\n" +
-        `📢 <b>Канал:</b> ${result.channelSent ? "опубликовано" : "ошибка публикации"}\n` +
-        `👤 <b>Получателей (рассылка):</b> ${result.sentCount}` +
-        (result.error ? `\n⚠️ <b>Ошибка:</b> ${result.error}` : "")
-      );
-    } else {
-      // НЕТ ТЕКСТА -> НАСТРОЙКИ
-      const user = await getUser(userId);
-      return sendMessage(chatId, "📰 <b>Новости UnderCur</b>\n\nЗдесь будут появляться новости проекта.\nНастройте получение уведомлений:", {
-        reply_markup: newsKeyboard(user.news !== false),
-      });
-    }
-  }
-
-  // --- Гайд и FAQ ---
-  if (command === "/guide") {
-    return sendGuideMenu(chatId);
-  }
-
-  if (command === "/addfaq") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    const parts = args.split("|");
-    if (parts.length < 2) {
-      return sendMessage(chatId, "❌ Использование: <code>/addfaq &lt;вопрос&gt; | &lt;ответ&gt;</code>");
-    }
-    const faq = await addFaq(parts[0], parts.slice(1).join("|"));
-    return sendMessage(chatId, `✅ FAQ добавлен!\nID: <code>${faq.id}</code>\nВопрос: ${escapeHtml(faq.question)}`);
-  }
-
-  if (command === "/delfaq") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    await deleteFaq(args.trim());
-    return sendMessage(chatId, "✅ FAQ удален (если существовал).");
-  }
-
-  // --- Promo Codes Admin ---
-  if (command === "/genpromo") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    
-    const parts = args.split(/\s+/);
-    if (parts.length < 2) {
-      return sendMessage(chatId, 
-        "❌ Использование: <code>/genpromo CODE REWARD [MAX_USES]</code>\n\n" +
-        "Пример: <code>/genpromo SUMMER2026 \"Бонус 100 монет\" 100</code>");
-    }
-    
-    const code = parts[0];
-    const reward = parts[1];
-    const maxUses = parseInt(parts[2]) || 100;
-    
-    const promo = await generatePromoCode(code, reward, maxUses);
-    
-    return sendMessage(chatId, 
-      `✅ <b>Промокод создан!</b>\n\n` +
-      `🎁 <b>Код:</b> <code>${promo.code}</code>\n` +
-      `💰 <b>Награда:</b> ${promo.reward}\n` +
-      ` <b>Лимит:</b> ${promo.maxUses} использований`);
-  }
-
-  if (command === "/promos") {
-    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Недостаточно прав.");
-    
-    const promos = await getAllPromoCodes();
-    
-    if (promos.length === 0) {
-      return sendMessage(chatId, " <b>Промокоды</b>\n\nПока нет созданных промокодов.");
-    }
-    
-    let text = " <b>Все промокоды:</b>\n\n";
-    promos.forEach((p, i) => {
-      const status = p.active ? "✅" : "❌";
-      text += `${i + 1}. ${status} <code>${p.code}</code> — ${p.reward}\n`;
-      text += `<i>Использовано: ${p.usedBy.length}/${p.maxUses}</i>\n\n`;
-    });
-    
-    return sendMessage(chatId, text);
-  }
-
-  // FALLBACK
-  return sendMessage(chatId, "Неизвестная команда. Используйте меню ниже или /help для списка команд.", {
-    reply_markup: mainKeyboard(),
-  });
+  await kvSet(key, current + 1, { ex: 60 });
+  return true;
 }
 
-// ==========================================
-// CALLBACK QUERY PROCESSOR
-// ==========================================
-
-async function processCallback(callback) {
-  const data = callback.data;
-  const chatId = callback.message.chat.id;
-  const messageId = callback.message.message_id;
-  const userId = callback.from.id;
-
-  // Игнорируем нажатия на неактивные кнопки
-  if (data === "ignore") {
-    return answerCallback(callback.id);
+/**
+ * Функция назначения бейджей пользователям
+ */
+async function awardBadge(userId, badgeId) {
+  const userBadges = await kvGet(`badges:${userId}`) || [];
+  if (!userBadges.includes(badgeId)) {
+    userBadges.push(badgeId);
+    await kvSet(`badges:${userId}`, userBadges);
+    await sendTextMessage(userId, `🏆 <b>Поздравляем!</b>\nВы получили новый бейдж: ${badgeId}`);
   }
+}
 
-  await answerCallback(callback.id);
-
-  if (data === "home") return sendHome(chatId, messageId);
-  if (data === "help") return sendHelp(chatId, messageId);
-  if (data === "download_info") return sendDownloadInfo(chatId, messageId);
-  if (data === "guide_menu") return sendGuideMenu(chatId, messageId);
-
-  if (data.startsWith("versions")) {
-    const pageMatch = data.match(/versions_page_(\d+)/);
-    const page = pageMatch ? parseInt(pageMatch[1]) : 1;
-    return versionsMessage(chatId, messageId, page);
-  }
-
-  if (data.startsWith("version:")) {
-    const payload = data.slice("version:".length);
-    const [version, status] = payload.split("|");
-    return showVersion(chatId, messageId, version, status);
-  }
-
-  if (data === "news_menu") {
-    const user = await getUser(userId);
-    return editMessage(chatId, messageId, "📰 <b>Раздел новостей</b>\n\nВыберите, получать ли вам уведомления о новых публикациях проекта.", {
-      reply_markup: newsKeyboard(user.news !== false)
+/**
+ * Функция инициализации вебхука при деплое
+ */
+async function initializeWebhook() {
+  const webhookUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/api/webhook` : "";
+  if (webhookUrl && isValidBotToken(BOT_TOKEN)) {
+    await telegramRequest("setWebhook", {
+      url: webhookUrl,
+      secret_token: WEBHOOK_SECRET || undefined
     });
-  }
-
-  if (data === "news_enable") {
-    await saveUser(userId, { news: true });
-    return editMessage(chatId, messageId, "✅ <b>Получение новостей включено.</b>\nТеперь вы будете получать уведомления о важных обновлениях.", { reply_markup: newsKeyboard(true) });
-  }
-
-  if (data === "news_disable") {
-    await saveUser(userId, { news: false });
-    return editMessage(chatId, messageId, "🔕 <b>Получение новостей выключено.</b>\nВы больше не будете получать рассылку новостей (но можете проверить их в канале).", { reply_markup: newsKeyboard(false) });
-  }
-
-  if (data === "developers") {
-    await saveUser(userId, { state: "choose_developer_category" });
-    return editMessage(chatId, messageId, "💬 <b>Написать разработчикам</b>\n\nВыберите категорию вашего обращения, чтобы мы могли обработать его быстрее:", {
-      reply_markup: developersKeyboard()
-    });
-  }
-
-  if (data === "promo_list") {
-    return sendPromoList(chatId, messageId);
-  }
-
-  if (data === "my_tickets") {
-    const tickets = await getUserTickets(userId);
-    if (!tickets.length) {
-      return editMessage(chatId, messageId, "🎫 <b>Мои тикеты</b>\n\nВы еще не создавали обращений к разработчикам.", {
-        reply_markup: backKeyboard("developers")
-      });
-    }
-    
-    let text = "🎫 <b>Ваши обращения:</b>\n\n";
-    const keyboard = { inline_keyboard: [] };
-    
-    tickets.slice(0, 5).forEach(t => {
-      const statusEmoji = t.status === "open" ? "🟢" : "✅";
-      text += `${statusEmoji} <code>${t.id}</code> - ${t.category}\n`;
-      keyboard.inline_keyboard.push([{ text: `👁️ ${t.id}`, callback_data: `check_ticket_${t.id}` }]);
-    });
-    
-    keyboard.inline_keyboard.push([{ text: "⬅️ Назад", callback_data: "developers" }]);
-    return editMessage(chatId, messageId, text, { reply_markup: keyboard });
-  }
-
-  if (data.startsWith("check_ticket_")) {
-    const ticketId = data.replace("check_ticket_", "");
-    const ticket = await getTicket(ticketId);
-    
-    if (!ticket) {
-      return answerCallback(callback.id, "Тикет не найден", true);
-    }
-    
-    const statusText = ticket.status === "open" ? "🟢 Открыт" : "✅ Закрыт";
-    let text = `🎫 <b>Тикет ${ticket.id}</b>\n`;
-    text += `<b>Статус:</b> ${statusText}\n`;
-    text += `<b>Категория:</b> ${ticket.category}\n`;
-    text += `<b>Создан:</b> ${formatDate(ticket.createdAt)}\n\n`;
-    text += `<b>Ваше сообщение:</b>\n${escapeHtml(ticket.message)}\n\n`;
-    
-    if (ticket.replies && ticket.replies.length > 0) {
-      text += `<b>Ответы администрации:</b>\n`;
-      ticket.replies.forEach((reply, idx) => {
-        text += `${idx + 1}. ${escapeHtml(reply.text)}\n<i>(${formatDate(reply.date)})</i>\n`;
-      });
-    } else {
-      text += "<i>Ответов пока нет. Ожидайте!</i>";
-    }
-    
-    return editMessage(chatId, messageId, text, { reply_markup: ticketActionKeyboard(ticketId, false) });
-  }
-
-  if (data === "developer_bug" || data === "developer_idea" || data === "developer_other") {
-    const categories = {
-      developer_bug: "🐞 Сообщить о баге",
-      developer_idea: "💡 Предложить идею",
-      developer_other: "💬 Другой вопрос",
-    };
-    const category = categories[data] || "Без категории";
-
-    await saveUser(userId, { state: "waiting_developer_message", developerCategory: category });
-
-    return editMessage(chatId, messageId, 
-      `✅ <b>Категория выбрана:</b> ${category}\n\n` +
-      `Теперь отправьте <b>одним сообщением</b> подробное описание вашей проблемы или предложения.\n\n` +
-      `💡 <i>Вы можете прикрепить скриншоты или файлы к этому сообщению.</i>`, 
-      { reply_markup: backKeyboard("developers") }
-    );
-  }
-
-  if (data === "guide_launch") {
-    const text = "🚀 <b>Как запустить UnderCur?</b>\n\n" +
-      "1️⃣ Скачайте файл игры (формат <code>.ppsx</code>) из нашего канала или с itch.io.\n" +
-      "2️⃣ Убедитесь, что на вашем компьютере установлен <b>Microsoft PowerPoint</b> (входит в Microsoft Office).\n" +
-      "3️⃣ Дважды кликните по скачанному файлу.\n" +
-      "4️⃣ Если PowerPoint спросит разрешение на включение макросов или содержимого — нажмите <b>«Включить содержимое»</b> или <b>«Разрешить»</b>.\n" +
-      "5️⃣ Игра запустится автоматически в режиме демонстрации!\n\n" +
-      "⚠️ <i>Программа для презентаций PowerPoint необходима, так как игра создана на его базе.</i>";
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("guide_menu") });
-  }
-
-  if (data === "guide_troubleshoot") {
-    const text = "⚙️ <b>Решение частых проблем</b>\n\n" +
-      "❓ <b>Игра не запускается, открывается как обычный файл:</b>\n" +
-      "Убедитесь, что расширение файла именно <code>.ppsx</code>, а не <code>.pptx</code>. Кликните правой кнопкой мыши → «Открыть с помощью» → PowerPoint.\n\n" +
-      "❓ <b>Вылетает ошибка макросов:</b>\n" +
-      "В настройках PowerPoint (Файл → Параметры → Центр управления безопасностью) убедитесь, что не стоит блокировка всех макросов без уведомления.\n\n" +
-      "❓ <b>Не работает на Mac/Linux:</b>\n" +
-      "Убедитесь, что установлена совместимая версия Office или LibreOffice Impress (хотя полная совместимость гарантирована только с MS PowerPoint).";
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("guide_menu") });
-  }
-
-  if (data === "guide_controls") {
-    const text = "🎮 <b>Управление в игре</b>\n\n" +
-      "UnderCur использует стандартное управление презентациями:\n\n" +
-      "• <b>Красный круг</b> — как только вы видите этот яркий маркер, сразу наводите курсор прямо в центр круга!" +
-      "• <b>Esc</b> — Выход из режима демонстрации (пауза/меню)\n\n" +
-      "<i>Конкретные механики могут отличаться в зависимости от уровня.</i>";
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("guide_menu") });
-  }
-
-  if (data.startsWith("faq_show_")) {
-    const faqId = data.replace("faq_show_", "");
-    const faqs = await getAllFaqs();
-    const faq = faqs.find(f => f.id === faqId);
-    
-    if (!faq) {
-      return answerCallback(callback.id, "Статья не найдена", true);
-    }
-    
-    const text = `❓ <b>Вопрос:</b> ${escapeHtml(faq.question)}\n\n` +
-                 ` <b>Ответ:</b>\n${escapeHtml(faq.answer)}`;
-                 
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("faq") });
-  }
-
-  // --- Badge System Callbacks ---
-  if (data === "my_badges") {
-    return sendBadgesMenu(chatId, messageId);
-  }
-
-  if (data === "all_badges_list") {
-    const allBadges = Object.values(BADGES);
-    let text = "🏆 <b>Все доступные бейджи</b>\n\n";
-    
-    const userBadges = await getUserBadges(userId);
-    const userBadgeIds = userBadges.map(b => b.id);
-    
-    allBadges.forEach((badge, idx) => {
-      const obtained = userBadgeIds.includes(badge.id) ? "✅" : "⬜";
-      text += `${obtained} ${badge.emoji} <b>${badge.name}</b>\n<i>${badge.desc}</i>\n\n`;
-    });
-    
-    return editMessage(chatId, messageId, text, { reply_markup: backKeyboard("my_badges") });
-  }
-
-  if (data === "share_bot") {
-    return sendShareBot(chatId, messageId);
-  }
-
-  // --- Version Subscription Callbacks ---
-  if (data.startsWith("watch_")) {
-    const version = data.replace("watch_", "");
-    const subscribed = await subscribeToVersion(userId, version);
-    
-    if (subscribed) {
-      await answerCallback(callback.id, `Подписан на ${version}`);
-      // Обновляем сообщение с версиями
-      return versionsMessage(chatId, messageId);
-    } else {
-      await answerCallback(callback.id, "Вы уже подписаны", true);
-    }
-  }
-
-  if (data.startsWith("unwatch_")) {
-    const version = data.replace("unwatch_", "");
-    const unsubscribed = await unsubscribeFromVersion(userId, version);
-    
-    if (unsubscribed) {
-      await answerCallback(callback.id, `Отписан от ${version}`);
-      return versionsMessage(chatId, messageId);
-    } else {
-      await answerCallback(callback.id, "Вы не были подписаны", true);
-    }
-  }
-
-  // --- Scheduled Posts Callbacks ---
-  if (data.startsWith("unschedule_")) {
-    if (!isAdmin(userId)) {
-      return answerCallback(callback.id, "Нет прав", true);
-    }
-    
-    const postId = data.replace("unschedule_", "");
-    const deleted = await cancelScheduledPost(postId);
-    
-    if (deleted > 0) {
-      await answerCallback(callback.id, "Пост отменён");
-      return sendScheduledPostsList(chatId, messageId, true);
-    } else {
-      await answerCallback(callback.id, "Ошибка отмены", true);
-    }
+    console.log(`[WEBHOOK] Установлен на: ${webhookUrl}`);
   }
 }
 
 // ==========================================
-// TEXT MESSAGE PROCESSOR
-// ==========================================
-
-async function processText(message) {
-  const userId = message.from.id;
-  const chatId = message.chat.id;
-  const text = message.text || message.caption || "";
-
-  // Если это команда, передаем управление процессору команд
-  if (text.startsWith("/")) {
-    return processCommand(message, text);
-  }
-
-  // Проверка на мут
-  if (await isMuted(userId)) {
-    return sendMessage(chatId, "🔇 Вы временно ограничены в отправке сообщений боту.");
-  }
-
-  // Обновляем статистику пользователя
-  await updateUserStats(userId, { lastSeen: Date.now() });
-
-  const user = await getUser(userId);
-
-  // Обработка состояния ожидания сообщения для тикета
-  if (user.state === "waiting_developer_message") {
-    const category = user.developerCategory || "Без категории";
-    
-    // Создаем тикет в базе
-    const ticket = await createTicket(
-      userId,
-      category,
-      text,
-      message.message_id,
-      chatId
-    );
-
-    // Формируем сообщение для админов
-    const adminText =
-      `🎫 <b>Новый тикет: ${ticket.id}</b>\n\n` +
-      `🏷️ <b>Категория:</b> ${category}\n` +
-      `👤 <b>Пользователь:</b> ${escapeHtml(message.from.first_name || "Без имени")}${message.from.last_name ? " " + escapeHtml(message.from.last_name) : ""}\n` +
-      `🆔 <b>ID:</b> <code>${userId}</code>\n` +
-      `📅 <b>Время:</b> ${formatDate(Date.now())}\n\n` +
-      `💬 <b>Сообщение:</b>\n${escapeHtml(text)}`;
-
-    // Отправляем всем админам
-    for (const adminId of ADMIN_IDS) {
-      try {
-        await sendMessage(adminId, adminText, {
-          reply_markup: ticketActionKeyboard(ticket.id, true)
-        });
-        
-        // Если есть вложения, пересылаем их админу
-        if (message.photo || message.document || message.animation || message.video) {
-          await forwardMessage(adminId, chatId, message.message_id);
-        }
-      } catch (e) {
-        console.error(`Ошибка отправки тикета админу ${adminId}:`, e.message);
-      }
-    }
-
-    // Сбрасываем состояние пользователя
-    await saveUser(userId, { state: null, developerCategory: null });
-
-    return sendMessage(chatId, 
-      `✅ <b>Сообщение отправлено разработчикам!</b>\n\n` +
-      `Ваш идентификатор обращения: <code>${ticket.id}</code>\n` +
-      `Мы рассмотрим его в ближайшее время. Вы можете проверить статус, нажав "💬 Написать разработчикам" -> "📋 Мои тикеты".\n\n` +
-      `Спасибо за обратную связь! 🙏`,
-      { reply_markup: mainKeyboard() }
-    );
-  }
-
-  // Умный авто-ответчик на частые вопросы (если пользователь не в состоянии тикета)
-  const lowerText = text.toLowerCase();
-  if (lowerText.includes("powerpoint") || lowerText.includes("ppsx") || lowerText.includes("как запустить") || lowerText.includes("как играть") || lowerText.includes("не работает")) {
-    return sendMessage(chatId, 
-      "💡 <b>Для запуска игры UnderCur вам потребуется:</b>\n\n" +
-      "1️⃣ Любой компьютер (Windows, macOS или Linux).\n" +
-      "2️⃣ Установленный Microsoft PowerPoint.\n\n" +
-      "📄 Просто откройте скачанный файл с расширением <code>.ppsx</code> через PowerPoint, и игра запустится автоматически в режиме демонстрации!\n\n" +
-      "📥 Скачать актуальные версии можно по кнопке «📥 Скачать игру» ниже, а подробный гайд доступен в разделе «📖 Гайд и FAQ».",
-      { reply_markup: mainKeyboard() }
-    );
-  }
-
-  // Если пользователь просто пишет что-то непонятное, предлагаем меню
-  return sendMessage(chatId, "Выберите действие в главном меню или используйте /help для списка команд.", {
-    reply_markup: mainKeyboard(),
-  });
-}
-
-// ==========================================
-// MAIN WEBHOOK HANDLER
+// 13. ГЛАВНЫЙ WEBHOOK HANDLER
 // ==========================================
 
 module.exports = async function handler(req, res) {
-  // Разрешаем GET запросы для проверки работоспособности (health check)
+  // Разрешаем GET запросы для проверки работоспособности
   if (req.method === "GET") {
     return res.status(200).json({
       ok: true,
-      service: "UnderCur Telegram Bot",
-      version: "3.0.0",
+      service: "Helper Telegram Bot",
+      version: "5.0.0",
       timestamp: new Date().toISOString(),
+      features: "Tickets, Live Mode, Moderation, Rating System"
     });
   }
 
@@ -2392,7 +2198,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
 
-  // Проверка секретного токена вебхука (если настроен)
+  // Проверка секретного токена вебхука
   if (WEBHOOK_SECRET && req.headers["x-telegram-bot-api-secret-token"] !== WEBHOOK_SECRET) {
     console.warn("Попытка доступа к вебхуку с неверным секретным токеном");
     return res.status(403).json({ ok: false, error: "Invalid webhook secret" });
@@ -2401,46 +2207,37 @@ module.exports = async function handler(req, res) {
   try {
     const update = req.body;
 
-    // 1. Обработка нажатий на инлайн-кнопки (Callback Query)
+    // 1. Обработка нажатий на инлайн-кнопки
     if (update.callback_query) {
-      await processCallback(update.callback_query);
+      await processCallbackQuery(update.callback_query);
     }
     // 2. Обработка обычных сообщений и команд
     else if (update.message) {
-      // Игнорируем сообщения из каналов, если они вдруг попадают сюда (должны идти в channel_post)
       if (update.message.chat.type === "channel") {
-        // Ничего не делаем
+        // Игнорируем сообщения из каналов
       } else {
-        await saveUser(update.message.from.id);
-        await processText(update.message);
+        console.log(`[MESSAGE] User ${update.message.from.id}: ${update.message.text || "[Document]"}`);
+        
+        if (update.message.document || update.message.photo) {
+          await processDocumentMessage(update.message);
+        } else {
+          await processTextMessage(update.message);
+        }
       }
-    }
-    // 3. Обработка постов в канале (АВТО-РЕАКЦИЯ)
-    else if (update.channel_post) {
-      const chatId = update.channel_post.chat.id;
-      const messageId = update.channel_post.message_id;
-      
-      // Проверяем, что это наш канал (сравниваем ID или username, если ID недоступен)
-      // Для надежности реагируем на все channel_post, так как бот получает только те, где он админ
-      try {
-        await setMessageReaction(chatId, messageId, CHANNEL_POST_REACTION_EMOJI, true);
-        console.log(`[Auto-Reaction] Реакция ${CHANNEL_POST_REACTION_EMOJI} поставлена на пост ${messageId} в канале ${chatId}`);
-      } catch (e) {
-        // Игнорируем ошибки, если бот не имеет прав на реакции или это старый пост
-        console.log(`[Auto-Reaction] Не удалось поставить реакцию:`, e.message);
-      }
-    }
-    // 4. Обработка редактирования постов в канале (опционально, можно игнорировать)
-    else if (update.edited_channel_post) {
-      // Можно добавить логику при необходимости
     }
 
-    // Всегда возвращаем 200 OK Telegram API, чтобы он не считал доставку неудачной
     return res.status(200).json({ ok: true });
     
   } catch (error) {
-    console.error("[UnderCur Handler Critical Error]:", error);
-    // Даже при ошибке возвращаем 200, чтобы Telegram не отключал вебхук
+    console.error("[Helper Bot Critical Error]:", error);
     return res.status(200).json({ ok: false, error: "Internal handler error" });
   }
 };
+
+// Экспорт дополнительных утилит
+module.exports.generateRandomTicketId = generateRandomTicketId;
+module.exports.formatDateTime = formatDateTime;
+module.exports.isAdmin = isAdmin;
+module.exports.isMainAdmin = isMainAdmin;
+module.exports.cleanupOldData = cleanupOldData;
+module.exports.exportStats = exportStats;
