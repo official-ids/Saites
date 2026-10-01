@@ -1089,22 +1089,24 @@ async function startLiveMode(userId, userName) {
   await kvSet(`helper:live_session:${userId}`, sessionData);
   await kvSet(`helper:live_session_admin:${activeAdminId}`, sessionData);
   
-  await sendTextMessage(
-    userId,
-    `✅ <b>Live Mode активирован!</b>\n\n` +
-    `Вы подключены к администратору.\n` +
-    `Теперь вы можете писать сообщения напрямую.\n\n` +
-    `Для завершения диалога используйте команду /endlive`
-  );
+await sendInlineMessage(
+  userId,
+  `✅ <b>Live Mode активирован!</b>\n\n` +
+  `Вы подключены к администратору.\n` +
+  `Теперь вы можете писать сообщения напрямую.\n\n` +
+  `Для завершения диалога нажмите кнопку ниже или используйте /endlive`,
+  [[{ text: "🔚 Завершить диалог", callback_data: "live_end_by_user" }]]
+);
   
-  await sendTextMessage(
-    activeAdminId,
-    `🔴 <b>ВХОДЯЩИЙ LIVE ЗАПРОС</b>\n\n` +
-    `👤 <b>Пользователь:</b> ${escapeHtml(userName)}\n` +
-    `🆔 <b>ID:</b> <code>${userId}</code>\n\n` +
-    `Напишите сообщение, чтобы ответить.\n` +
-    `Используйте /endlive для завершения диалога.`
-  );
+await sendInlineMessage(
+  activeAdminId,
+  `🔴 <b>ВХОДЯЩИЙ LIVE ЗАПРОС</b>\n\n` +
+  `👤 <b>Пользователь:</b> ${escapeHtml(userName)}\n` +
+  `🆔 <b>ID:</b> <code>${userId}</code>\n\n` +
+  `Напишите сообщение, чтобы ответить.\n` +
+  `Используйте /endlive для завершения диалога.`,
+  [[{ text: "🔚 Завершить диалог", callback_data: `live_end_by_admin_${userId}` }]]
+);
   
   // Логируем
   await logUserAction(userId, "LIVE_MODE_START", `Подключен к админу ${activeAdminId}`);
@@ -1112,8 +1114,15 @@ async function startLiveMode(userId, userName) {
 
 /**
  * Обрабатывает сообщение в Live Mode
+ * ВАЖНО: команды (текст начинающийся с "/") НЕ перехватываются,
+ * чтобы пользователь/админ могли использовать /endlive
  */
 async function handleLiveModeMessage(senderId, text, isFromAdmin) {
+  // 🔥 КРИТИЧНО: Не перехватываем команды — пусть их обрабатывает processTextMessage
+  if (typeof text === "string" && text.trim().startsWith("/")) {
+    return false;
+  }
+  
   let sessionData = null;
   let otherPartyId = null;
   
@@ -1159,13 +1168,19 @@ async function handleLiveModeMessage(senderId, text, isFromAdmin) {
 }
 
 /**
- * Завершает Live Mode
+ * Завершает Live Mode ПО ИНИЦИАТИВЕ АДМИНА и запрашивает оценку
  */
 async function endLiveMode(adminId, userId) {
   const sessionData = await kvGet(`helper:live_session:${userId}`);
   
-  if (!sessionData || sessionData.adminId !== adminId) {
+  if (!sessionData || sessionData.adminId !== String(adminId)) {
     await sendTextMessage(adminId, "❌ Активная сессия с этим пользователем не найдена.");
+    return;
+  }
+  
+  // ⚠️ Защита от повторного вызова
+  if (sessionData.status !== "active") {
+    await sendTextMessage(adminId, "⚠️ Эта сессия уже завершена.");
     return;
   }
   
@@ -1177,20 +1192,57 @@ async function endLiveMode(adminId, userId) {
   
   await sendTextMessage(
     userId,
-    "🔚 <b>Диалог завершен администратором.</b>\n\n" +
+    "🔚 <b>Диалог завершён администратором.</b>\n\n" +
     "Пожалуйста, оцените работу администратора.\n" +
-    "Отправьте оценку от 0 до 5 (например: 5 или 4.5).\n" +
-    "Вы также можете добавить комментарий через пробел.\n\n" +
+    "Отправьте оценку от 0 до 5 (например: <code>5</code> или <code>4.5</code>).\n" +
+    "Можно добавить комментарий через пробел.\n\n" +
     "Пример: <code>5 Отличная помощь!</code>"
   );
   
   await sendTextMessage(
     adminId,
-    `✅ Live Mode с пользователем ${sessionData.userName} завершен.\nОжидание оценки пользователя...`
+    `✅ Live Mode с пользователем ${sessionData.userName} завершён.\nОжидание оценки пользователя...`
+  );
+  
+  await logUserAction(userId, "LIVE_MODE_END", `Диалог с админом ${adminId} завершён`);
+}
+
+/**
+ * Завершает Live Mode ПО ИНИЦИАТИВЕ ПОЛЬЗОВАТЕЛЯ
+ * (пользователь не может «оценить админа» пока админ не закончит,
+ *  поэтому при выходе пользователя мы просто закрываем сессию)
+ */
+async function endLiveModeByUser(userId) {
+  const sessionData = await kvGet(`helper:live_session:${userId}`);
+  
+  if (!sessionData || sessionData.status !== "active") {
+    await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
+    return;
+  }
+  
+  sessionData.status = "ended_by_user";
+  sessionData.endTime = Date.now();
+  
+  await kvSet(`helper:live_session:${userId}`, sessionData);
+  await kvDel(`helper:live_session_admin:${sessionData.adminId}`);
+  
+  // Уведомляем админа
+  await sendTextMessage(
+    sessionData.adminId,
+    `🔚 <b>Пользователь ${escapeHtml(sessionData.userName)} (<code>${userId}</code>) завершил Live Mode.</b>\n\n` +
+    `Сессия закрыта.`
+  );
+  
+  // Уведомляем пользователя
+  await sendTextMessage(
+    userId,
+    "🔚 <b>Вы вышли из Live Mode.</b>\n\n" +
+    "Диалог с администратором завершён.\n" +
+    "Если нужна помощь — создайте новый тикет через /ticket."
   );
   
   // Логируем
-  await logUserAction(userId, "LIVE_MODE_END", `Диалог с админом ${adminId} завершен`);
+  await logUserAction(userId, "LIVE_MODE_END_BY_USER", `Пользователь завершил сессию с админом ${sessionData.adminId}`);
 }
 
 // ==========================================
@@ -2543,15 +2595,28 @@ async function processTextMessage(message) {
       await handleAdminTicketReply(userId, args[0], args.slice(1).join(" "));
       break;
       
-    case "/endlive":
-      if (!isAdmin(userId)) break;
-      const session = await kvGet(`helper:live_session_admin:${userId}`);
-      if (session) {
-        await endLiveMode(userId, session.userId);
-      } else {
-        await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
-      }
-      break;
+case "/endlive":
+  // Админ выходит из Live Mode
+  if (isAdmin(userId)) {
+    const session = await kvGet(`helper:live_session_admin:${userId}`);
+    if (session) {
+      await endLiveMode(userId, session.userId);
+    } else {
+      await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
+    }
+    break;
+  }
+  
+  // Пользователь выходит из Live Mode
+  {
+    const userSession = await kvGet(`helper:live_session:${userId}`);
+    if (userSession && userSession.status === "active") {
+      await endLiveModeByUser(userId);
+    } else {
+      await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
+    }
+  }
+  break;
       
     case "/addadmin":
       if (!isAdmin(userId)) break;
@@ -2720,6 +2785,24 @@ async function processCallbackQuery(callbackQuery) {
     await answerCallbackQuery(callbackQuery.id);
     await startTicketCreation(userId, userName);
   }
+  else if (data === "live_end_by_user") {
+  await answerCallbackQuery(callbackQuery.id);
+  const userSession = await kvGet(`helper:live_session:${userId}`);
+  if (userSession && userSession.status === "active") {
+    await endLiveModeByUser(userId);
+  } else {
+    await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
+  }
+}
+else if (data.startsWith("live_end_by_admin_")) {
+  if (!isAdmin(userId)) {
+    await answerCallbackQuery(callbackQuery.id, "Недостаточно прав", true);
+    break;
+  }
+  const targetUserId = data.replace("live_end_by_admin_", "");
+  await answerCallbackQuery(callbackQuery.id);
+  await endLiveMode(userId, targetUserId);
+}
   // ========== МЕНЮ ==========
   else if (data === "back_to_main") {
     await answerCallbackQuery(callbackQuery.id);
