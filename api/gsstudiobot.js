@@ -45,8 +45,8 @@ const CONFIG = {
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean),
-  BOT_USERNAME: process.env.GS_BOT_USERNAME || "GcStudioPromoBot",
-  CHANNEL_URL: process.env.GS_CHANNEL_URL || "https://t.me/your_channel",
+  BOT_USERNAME: process.env.GS_BOT_USERNAME || "TheGcStudio_bot",
+  CHANNEL_URL: process.env.GS_CHANNEL_URL || "https://t.me/undercurgame",
   
   // Таймауты
   FETCH_TIMEOUT: 7000,
