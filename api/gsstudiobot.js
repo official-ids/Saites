@@ -1774,9 +1774,9 @@ async function showLeaderboard(chatId) {
 }
 
 /**
- * 🔥 НОВОЕ: топ промокодов
+ * 🔥 ИСПРАВЛЕНО: топ промокодов с защитой секретных кодов
  */
-async function showTopCodes(chatId) {
+async function showTopCodes(chatId, isAdminUser = false) {
   const codeNames = await listCodeNames();
   
   if (codeNames.length === 0) {
@@ -1787,13 +1787,29 @@ async function showTopCodes(chatId) {
   
   for (const name of codeNames) {
     const code = await getCode(name);
-    if (code) {
-      codesWithStats.push({
-        name: code.name,
-        uses: (code.usedBy || []).length,
-        category: code.category,
-      });
+    if (!code) continue;
+    
+    // 🔒 Скрываем SECRET-коды от обычных пользователей
+    const category = code.category || "STANDARD";
+    if (!isAdminUser && category === "SECRET") {
+      continue; // вообще не показываем
     }
+    
+    codesWithStats.push({
+      name: code.name,
+      uses: (code.usedBy || []).length,
+      category,
+      isSecret: category === "SECRET",
+      isVip: category === "VIP",
+    });
+  }
+  
+  if (codesWithStats.length === 0) {
+    return sendMessage(
+      chatId,
+      `🏆 <b>Топ промокодов</b>\n\n📭 Пока нет публичных активаций.`,
+      { parse_mode: "HTML" }
+    );
   }
   
   codesWithStats.sort((a, b) => b.uses - a.uses);
@@ -1810,8 +1826,20 @@ async function showTopCodes(chatId) {
     else medal = `${index + 1}.`;
     
     const categoryIcon = CATEGORY_ICONS[code.category] || "📦";
-    text += `${medal} ${categoryIcon} <code>${escapeHtml(code.name)}</code> — <b>${code.uses}</b> активаций\n`;
+    
+    // 🔒 Маскируем имя для VIP-кодов (для обычных юзеров)
+    let displayName = code.name;
+    if (!isAdminUser && code.isVip) {
+      // Показываем только первые 3 буквы
+      displayName = code.name.slice(0, 3) + "***";
+    }
+    
+    text += `${medal} ${categoryIcon} <code>${escapeHtml(displayName)}</code> — <b>${code.uses}</b> активаций\n`;
   });
+  
+  if (!isAdminUser) {
+    text += `\n<i>🔐 Некоторые коды скрыты из соображений безопасности.</i>`;
+  }
   
   return sendMessage(chatId, text, { parse_mode: "HTML" });
 }
