@@ -26,7 +26,7 @@
 // 1. КОНФИГУРАЦИЯ И ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ
 // ==========================================
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "YOUR_BOT_TOKEN_HERE";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN1 || "8959289322:AAFZNRzPSJkLQ3jdl3ntTQe2Bve-1CgwVDQ";
 const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
 const KV_URL = process.env.KV_REST_API_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN;
