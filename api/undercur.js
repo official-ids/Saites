@@ -2595,20 +2595,18 @@ async function processTextMessage(message) {
       await handleAdminTicketReply(userId, args[0], args.slice(1).join(" "));
       break;
       
-case "/endlive":
-  // Админ выходит из Live Mode
+case "/endlive": {
+  // Определяем, кто пользователь — админ или обычный
   if (isAdmin(userId)) {
-    const session = await kvGet(`helper:live_session_admin:${userId}`);
-    if (session) {
-      await endLiveMode(userId, session.userId);
+    // --- АДМИН ---
+    const adminSession = await kvGet(`helper:live_session_admin:${userId}`);
+    if (adminSession && adminSession.status === "active") {
+      await endLiveMode(userId, adminSession.userId);
     } else {
       await sendTextMessage(userId, "❌ У вас нет активного Live Mode диалога.");
     }
-    break;
-  }
-  
-  // Пользователь выходит из Live Mode
-  {
+  } else {
+    // --- ПОЛЬЗОВАТЕЛЬ ---
     const userSession = await kvGet(`helper:live_session:${userId}`);
     if (userSession && userSession.status === "active") {
       await endLiveModeByUser(userId);
@@ -2617,6 +2615,7 @@ case "/endlive":
     }
   }
   break;
+}
       
     case "/addadmin":
       if (!isAdmin(userId)) break;
