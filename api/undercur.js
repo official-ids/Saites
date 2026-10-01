@@ -35,12 +35,12 @@ try {
 }
 
 // Переменные окружения
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "YOUR_BOT_TOKEN_HERE";
-const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "";
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN1 || "XXX";
+const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || "UnderCur_2026_secret";
 const KV_URL = process.env.KV_REST_API_URL || "";
 const KV_TOKEN = process.env.KV_REST_API_TOKEN || "";
-const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "";
-const BOT_USERNAME = process.env.BOT_USERNAME || "helper_support_bot";
+const LOG_CHANNEL_ID = process.env.LOG_CHANNEL_ID || "-1004459914519";
+const BOT_USERNAME = process.env.BOT_USERNAME || "undercur_bot";
 
 // ==========================================
 // 2. КОНСТАНТЫ И ИДЕНТИФИКАТОРЫ
