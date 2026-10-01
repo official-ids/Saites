@@ -1,17 +1,35 @@
 /**
- * GcStudio Promo Bot v3.0 - Production Edition
+ * ============================================================================
+ * GcStudio Promo Bot v4.0 - FULL EDITION
+ * ============================================================================
  * 
  * Telegram бот для управления промокодами с полным функционалом:
- * - Активация кодов пользователями
- * - Админ-панель с 30+ командами
- * - Система логирования
- * - Бэкапы и восстановление
- * - Статистика и аналитика
- * - Управление пользователями (бан/мут)
- * - Rate limiting и защита от спама
+ * 
+ * 🎯 ФИКСЫ v4.0:
+ * - sendMessage теперь возвращает ПЕРВЫЙ message_id (прогресс-бары работают)
+ * - codeStatus нормализует старые коды без поля status
+ * - restoreBackup очищает старые данные (режим replace/merge)
+ * - activateCode защищён от race condition через KV-лок
+ * - Проверка числового ID в /whois, /ban, /mute
+ * - Админ-команды работают ТОЛЬКО в личке
+ * 
+ * 🎨 UX v4.0:
+ * - Inline-кнопки в /start
+ * - Админ-панель с кнопками
+ * - Инлайн-ввод кода (без /code)
+ * - Кнопка "Поделиться ботом"
+ * - Прогресс-бар пагинации
+ * 
+ * 🧠 НОВЫЕ ФИЧИ v4.0:
+ * - Реферальная система (t.me/Bot?start=ref_ID)
+ * - Система бейджей (8 бейджей)
+ * - CSV-экспорт пользователей
+ * - ASCII-график активаций за 7 дней
+ * - Топ промокодов
+ * - Двухшаговое подтверждение для опасных действий
  * 
  * @author GcStudio
- * @version 3.0.0
+ * @version 4.0.0
  */
 
 const { kv } = require("@vercel/kv");
@@ -28,15 +46,19 @@ const CONFIG = {
     .map((id) => id.trim())
     .filter(Boolean),
   BOT_USERNAME: process.env.GS_BOT_USERNAME || "GcStudioPromoBot",
+  CHANNEL_URL: process.env.GS_CHANNEL_URL || "https://t.me/your_channel",
   
   // Таймауты
   FETCH_TIMEOUT: 7000,
   STATE_TIMEOUT: 10 * 60 * 1000,
   EXPIRED_CODE_RETENTION: 60 * 60 * 1000,
+  LOCK_TTL: 10,
   
   // Rate limiting
   RATE_LIMIT_WINDOW: 60 * 1000,
   RATE_LIMIT_MAX_REQUESTS: 30,
+  CREATE_LIMIT_WINDOW: 60 * 1000,
+  CREATE_LIMIT_MAX: 10,
   
   // Лимиты
   MAX_MESSAGE_LENGTH: 4000,
@@ -48,6 +70,9 @@ const CONFIG = {
   // Broadcast
   BROADCAST_DELAY: 50,
   MAX_BROADCAST_USERS: 10000,
+  
+  // Схема
+  SCHEMA_VERSION: 4,
 };
 
 const TG_API = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}`;
@@ -76,14 +101,30 @@ const STATUS_ICONS = {
   no_reward: "🔴",
   disabled: "⚫",
   expired: "🟠",
+  unknown: "⚪",
 };
 
+// Иконки категорий
 const CATEGORY_ICONS = {
   NEW: "🆕",
   EVENT: "🎉",
   VIP: "💎",
   SECRET: "🔐",
   STANDARD: "📦",
+};
+
+// Система бейджей
+const BADGES = {
+  FIRST_CODE: { id: "first_code", emoji: "🎯", name: "Первый код", desc: "Активировал первый промокод" },
+  CODES_10: { id: "codes_10", emoji: "🔥", name: "Активист", desc: "Активировал 10 промокодов" },
+  CODES_50: { id: "codes_50", emoji: "💎", name: "Коллекционер", desc: "Активировал 50 промокодов" },
+  CODES_100: { id: "codes_100", emoji: "👑", name: "Легенда", desc: "Активировал 100 промокодов" },
+  REFERRER_1: { id: "referrer_1", emoji: "🌱", name: "Новичок", desc: "Пригласил 1 друга" },
+  REFERRER_5: { id: "referrer_5", emoji: "👥", name: "Реферрал-мастер", desc: "Пригласил 5 друзей" },
+  REFERRER_10: { id: "referrer_10", emoji: "🌳", name: "Садовод", desc: "Пригласил 10 друзей" },
+  SPEEDSTER: { id: "speedster", emoji: "⚡", name: "Спринтер", desc: "Активировал код в первую минуту" },
+  NIGHT_OWL: { id: "night_owl", emoji: "🦉", name: "Сова", desc: "Активировал код ночью (00:00-05:00 UTC)" },
+  EARLY_BIRD: { id: "early_bird", emoji: "🌅", name: "Ранняя пташка", desc: "Активировал код утром (05:00-08:00 UTC)" },
 };
 
 // Префиксы ключей KV
@@ -99,7 +140,10 @@ const KV_PREFIXES = {
   RATE_LIMIT: "gs:rl:",
   SCHEDULES: "gs:schedules",
   STATS: "gs:stats",
+  DAILY_STATS: "gs:daily_stats",
   STATE: "gs:state:",
+  LOCK: "gs:lock:",
+  SCHEMA_VERSION: "gs:schema_version",
 };
 
 // ============================================
@@ -108,17 +152,20 @@ const KV_PREFIXES = {
 
 /**
  * Проверяет, является ли пользователь админом
- * @param {string|number} userId
- * @returns {boolean}
  */
 function isAdmin(userId) {
   return CONFIG.ADMIN_IDS.includes(String(userId));
 }
 
 /**
+ * Проверяет, что строка - число
+ */
+function isNumeric(str) {
+  return /^\d+$/.test(String(str));
+}
+
+/**
  * Безопасно парсит строку в число
- * @param {string} str
- * @returns {number|null}
  */
 function safeParseInt(str) {
   const num = parseInt(str, 10);
@@ -127,8 +174,6 @@ function safeParseInt(str) {
 
 /**
  * Экранирует HTML-символы
- * @param {string} str
- * @returns {string}
  */
 function escapeHtml(str) {
   if (!str) return "";
@@ -141,10 +186,7 @@ function escapeHtml(str) {
 }
 
 /**
- * Обрезает строку до максимальной длины с троеточием
- * @param {string} str
- * @param {number} maxLen
- * @returns {string}
+ * Обрезает строку
  */
 function truncate(str, maxLen = 100) {
   if (!str) return "";
@@ -154,9 +196,6 @@ function truncate(str, maxLen = 100) {
 
 /**
  * Разбивает длинное сообщение на части
- * @param {string} text
- * @param {number} maxLen
- * @returns {string[]}
  */
 function splitMessage(text, maxLen = CONFIG.MAX_MESSAGE_LENGTH) {
   if (text.length <= maxLen) return [text];
@@ -178,9 +217,7 @@ function splitMessage(text, maxLen = CONFIG.MAX_MESSAGE_LENGTH) {
 }
 
 /**
- * Вычисляет человеко-понятную разницу во времени
- * @param {number} timestamp
- * @returns {string}
+ * Разница во времени
  */
 function timeAgo(timestamp) {
   const diff = Date.now() - timestamp;
@@ -201,8 +238,6 @@ function timeAgo(timestamp) {
 
 /**
  * Форматирует длительность
- * @param {number} ms
- * @returns {string}
  */
 function formatDuration(ms) {
   if (ms < 1000) return `${ms}мс`;
@@ -214,10 +249,18 @@ function formatDuration(ms) {
 
 /**
  * Генерирует уникальный ID
- * @returns {string}
  */
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Прогресс-бар
+ */
+function progressBar(current, total, width = 10) {
+  if (total === 0) return "░".repeat(width);
+  const filled = Math.round((current / total) * width);
+  return "█".repeat(filled) + "░".repeat(width - filled);
 }
 
 // ============================================
@@ -225,15 +268,13 @@ function generateId() {
 // ============================================
 
 /**
- * Парсит дату формата: ДД.ММ.ГГГГ+ЧЧ:ММ или относительную (+7d, +24h)
- * @param {string} str
- * @returns {number|null} timestamp
+ * Парсит дату: ДД.ММ.ГГГГ+ЧЧ:ММ или относительную (+7d, +24h)
  */
 function parseDate(str) {
   if (!str) return null;
   str = str.trim();
   
-  // Относительный формат: +7d, +24h, +30m, +1w
+  // Относительный: +7d, +24h, +30m, +1w
   const relativeMatch = str.match(/^\+(\d+)([dhmw])$/i);
   if (relativeMatch) {
     const value = parseInt(relativeMatch[1], 10);
@@ -247,7 +288,7 @@ function parseDate(str) {
     return Date.now() + value * multipliers[unit];
   }
   
-  // Абсолютный формат: ДД.ММ.ГГГГ+ЧЧ:ММ
+  // Абсолютный: ДД.ММ.ГГГГ+ЧЧ:ММ
   const match = str.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\+(\d{1,2}):(\d{1,2})$/);
   if (!match) return null;
 
@@ -267,10 +308,7 @@ function parseDate(str) {
 }
 
 /**
- * Форматирует timestamp в читаемую строку (UTC)
- * @param {number} timestamp
- * @param {boolean} withSeconds
- * @returns {string}
+ * Форматирует timestamp (UTC)
  */
 function formatDate(timestamp, withSeconds = false) {
   if (!timestamp) return "—";
@@ -290,9 +328,7 @@ function formatDate(timestamp, withSeconds = false) {
 }
 
 /**
- * Возвращает "сегодня", "вчера" или дату
- * @param {number} timestamp
- * @returns {string}
+ * Умная дата: сегодня/вчера/дата
  */
 function smartDate(timestamp) {
   const now = new Date();
@@ -312,16 +348,20 @@ function smartDate(timestamp) {
   return formatDate(timestamp);
 }
 
+/**
+ * Получает дату в формате YYYY-MM-DD
+ */
+function getDateKey(timestamp = Date.now()) {
+  const d = new Date(timestamp);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
 // ============================================
 // 4. TELEGRAM API WRAPPER
 // ============================================
 
 /**
- * Делает запрос к Telegram API с retry и таймаутом
- * @param {string} method
- * @param {object} body
- * @param {number} retries
- * @returns {Promise<object>}
+ * Запрос к Telegram API
  */
 async function telegram(method, body = {}, retries = 2) {
   const controller = new AbortController();
@@ -341,7 +381,6 @@ async function telegram(method, body = {}, retries = 2) {
     if (!data.ok) {
       console.error(`[TG ERROR] ${method}:`, data.description);
       
-      // Retry для некоторых ошибок
       if (retries > 0 && response.status >= 500) {
         await new Promise(r => setTimeout(r, 1000));
         return telegram(method, body, retries - 1);
@@ -363,18 +402,14 @@ async function telegram(method, body = {}, retries = 2) {
 }
 
 /**
- * Отправляет текстовое сообщение
- * @param {number|string} chatId
- * @param {string} text
- * @param {object} extra
- * @returns {Promise<object>}
+ * 🔥 ИСПРАВЛЕНО: возвращает ПЕРВЫЙ message_id
  */
 async function sendMessage(chatId, text, extra = {}) {
   if (!text) return { ok: false };
   
-  // Разбиваем длинные сообщения
   const parts = splitMessage(String(text));
-  let lastResult;
+  let firstResult = null;
+  let lastResult = null;
   
   for (const part of parts) {
     lastResult = await telegram("sendMessage", {
@@ -383,18 +418,14 @@ async function sendMessage(chatId, text, extra = {}) {
       disable_web_page_preview: true,
       ...extra,
     });
+    if (!firstResult) firstResult = lastResult;
   }
   
-  return lastResult;
+  return firstResult || lastResult;
 }
 
 /**
- * Редактирует существующее сообщение
- * @param {number|string} chatId
- * @param {number} messageId
- * @param {string} text
- * @param {object} extra
- * @returns {Promise<object>}
+ * Редактирует сообщение
  */
 async function editMessage(chatId, messageId, text, extra = {}) {
   return telegram("editMessageText", {
@@ -407,11 +438,18 @@ async function editMessage(chatId, messageId, text, extra = {}) {
 }
 
 /**
- * Отвечает на callback query
- * @param {string} callbackId
- * @param {string} text
- * @param {boolean} showAlert
- * @returns {Promise<object>}
+ * Редактирует клавиатуру
+ */
+async function editKeyboard(chatId, messageId, inlineKeyboard) {
+  return telegram("editMessageReplyMarkup", {
+    chat_id: chatId,
+    message_id: messageId,
+    reply_markup: { inline_keyboard: inlineKeyboard },
+  });
+}
+
+/**
+ * Ответ на callback
  */
 async function answerCallback(callbackId, text = "", showAlert = false) {
   return telegram("answerCallbackQuery", {
@@ -423,9 +461,6 @@ async function answerCallback(callbackId, text = "", showAlert = false) {
 
 /**
  * Удаляет сообщение
- * @param {number|string} chatId
- * @param {number} messageId
- * @returns {Promise<object>}
  */
 async function deleteMessage(chatId, messageId) {
   return telegram("deleteMessage", {
@@ -435,9 +470,7 @@ async function deleteMessage(chatId, messageId) {
 }
 
 /**
- * Отправляет "печатает..." индикатор
- * @param {number|string} chatId
- * @returns {Promise<object>}
+ * Индикатор "печатает..."
  */
 async function sendChatAction(chatId, action = "typing") {
   return telegram("sendChatAction", {
@@ -447,12 +480,7 @@ async function sendChatAction(chatId, action = "typing") {
 }
 
 /**
- * Отправляет фото с подписью
- * @param {number|string} chatId
- * @param {string} photo
- * @param {string} caption
- * @param {object} extra
- * @returns {Promise<object>}
+ * Отправляет фото
  */
 async function sendPhoto(chatId, photo, caption = "", extra = {}) {
   return telegram("sendPhoto", {
@@ -465,11 +493,6 @@ async function sendPhoto(chatId, photo, caption = "", extra = {}) {
 
 /**
  * Отправляет документ
- * @param {number|string} chatId
- * @param {string} document
- * @param {string} caption
- * @param {object} extra
- * @returns {Promise<object>}
  */
 async function sendDocument(chatId, document, caption = "", extra = {}) {
   return telegram("sendDocument", {
@@ -493,7 +516,7 @@ async function sendVideo(chatId, video, caption = "", extra = {}) {
 }
 
 /**
- * Отправляет GIF/анимацию
+ * Отправляет GIF
  */
 async function sendAnimation(chatId, animation, caption = "", extra = {}) {
   return telegram("sendAnimation", {
@@ -510,9 +533,6 @@ async function sendAnimation(chatId, animation, caption = "", extra = {}) {
 
 /**
  * Записывает действие в лог
- * @param {string} action
- * @param {object} details
- * @returns {Promise<void>}
  */
 async function logAction(action, details = {}) {
   try {
@@ -523,10 +543,17 @@ async function logAction(action, details = {}) {
       ...details,
     };
     
+    // Добавляем username, если есть userId
+    if (details.userId) {
+      const user = await getUser(details.userId);
+      if (user && user.username) {
+        entry.username = user.username;
+      }
+    }
+    
     const logs = (await kv.get(KV_PREFIXES.LOGS)) || [];
     logs.unshift(entry);
     
-    // Храним максимум 500 записей
     if (logs.length > 500) {
       logs.length = 500;
     }
@@ -538,9 +565,7 @@ async function logAction(action, details = {}) {
 }
 
 /**
- * Получает последние записи лога
- * @param {number} limit
- * @returns {Promise<Array>}
+ * Получает последние записи
  */
 async function getLogs(limit = 20) {
   const logs = (await kv.get(KV_PREFIXES.LOGS)) || [];
@@ -549,33 +574,29 @@ async function getLogs(limit = 20) {
 
 /**
  * Очищает лог
- * @returns {Promise<void>}
  */
 async function clearLogs() {
   await kv.set(KV_PREFIXES.LOGS, []);
 }
 
 /**
- * Форматирует лог для отображения
- * @param {object} entry
- * @returns {string}
+ * Форматирует лог
  */
 function formatLogEntry(entry) {
   const time = smartDate(entry.timestamp);
-  const user = entry.userId ? `[${entry.userId}]` : "";
+  const user = entry.userId ? `[<code>${entry.userId}</code>]` : "";
+  const username = entry.username ? `@${escapeHtml(entry.username)}` : "";
   const action = entry.action.toUpperCase();
-  const extra = entry.extra ? ` ${entry.extra}` : "";
-  return `• <code>${time}</code> ${user} <b>${action}</b>${extra}`;
+  const extra = entry.extra ? ` ${escapeHtml(entry.extra)}` : "";
+  return `• <code>${time}</code> ${user} ${username} <b>${action}</b>${extra}`;
 }
 
 // ============================================
-// 6. РАБОТА С KV (база данных)
+// 6. РАБОТА С KV
 // ============================================
 
 /**
- * Получает код по имени
- * @param {string} name
- * @returns {Promise<object|null>}
+ * Получает код
  */
 async function getCode(name) {
   if (!name) return null;
@@ -584,9 +605,6 @@ async function getCode(name) {
 
 /**
  * Сохраняет код
- * @param {string} name
- * @param {object} data
- * @returns {Promise<void>}
  */
 async function saveCode(name, data) {
   const key = `${KV_PREFIXES.CODE}${name.toUpperCase()}`;
@@ -596,8 +614,6 @@ async function saveCode(name, data) {
 
 /**
  * Удаляет код
- * @param {string} name
- * @returns {Promise<void>}
  */
 async function deleteCode(name) {
   const key = `${KV_PREFIXES.CODE}${name.toUpperCase()}`;
@@ -606,8 +622,7 @@ async function deleteCode(name) {
 }
 
 /**
- * Список всех имён кодов
- * @returns {Promise<Array>}
+ * Список всех кодов
  */
 async function listCodeNames() {
   return (await kv.smembers(KV_PREFIXES.ALL_CODES)) || [];
@@ -615,8 +630,6 @@ async function listCodeNames() {
 
 /**
  * Получает пользователя
- * @param {number|string} userId
- * @returns {Promise<object>}
  */
 async function getUser(userId) {
   const key = `${KV_PREFIXES.USER}${userId}`;
@@ -624,15 +637,14 @@ async function getUser(userId) {
     userId: String(userId),
     usedCodes: [],
     activations: 0,
+    badges: [],
+    referrals: [],
+    referredBy: null,
   };
 }
 
 /**
  * Сохраняет пользователя
- * @param {number|string} userId
- * @param {object} data
- * @param {string|null} username
- * @returns {Promise<void>}
  */
 async function saveUser(userId, data = {}, username = null) {
   const key = `${KV_PREFIXES.USER}${userId}`;
@@ -640,6 +652,9 @@ async function saveUser(userId, data = {}, username = null) {
     userId: String(userId),
     usedCodes: [],
     activations: 0,
+    badges: [],
+    referrals: [],
+    referredBy: null,
   };
 
   const isNewUser = !old.userId || !old.createdAt;
@@ -654,7 +669,6 @@ async function saveUser(userId, data = {}, username = null) {
     lastSeen: Date.now(),
   });
   
-  // Добавляем в общий список новых пользователей
   if (isNewUser) {
     await kv.sadd(KV_PREFIXES.ALL_USERS, String(userId));
     await incrementStat("total_users", 1);
@@ -663,17 +677,14 @@ async function saveUser(userId, data = {}, username = null) {
 }
 
 /**
- * Получает список всех пользователей
- * @returns {Promise<Array>}
+ * Список всех пользователей
  */
 async function getAllUsers() {
   return (await kv.smembers(KV_PREFIXES.ALL_USERS)) || [];
 }
 
 /**
- * Удаляет пользователя из базы
- * @param {number|string} userId
- * @returns {Promise<void>}
+ * Удаляет пользователя
  */
 async function deleteUser(userId) {
   await kv.del(`${KV_PREFIXES.USER}${userId}`);
@@ -682,20 +693,15 @@ async function deleteUser(userId) {
 
 /**
  * Банит пользователя
- * @param {number|string} userId
- * @param {string} reason
- * @returns {Promise<void>}
  */
 async function banUser(userId, reason = "") {
   await kv.sadd(KV_PREFIXES.BAN_LIST, String(userId));
   await saveUser(userId, { banned: true, banReason: reason, bannedAt: Date.now() });
-  await logAction("ban", { userId: String(userId), reason });
+  await logAction("ban", { userId: String(userId), extra: reason });
 }
 
 /**
- * Разбанивает пользователя
- * @param {number|string} userId
- * @returns {Promise<void>}
+ * Разбанивает
  */
 async function unbanUser(userId) {
   await kv.srem(KV_PREFIXES.BAN_LIST, String(userId));
@@ -704,9 +710,7 @@ async function unbanUser(userId) {
 }
 
 /**
- * Проверяет, забанен ли пользователь
- * @param {number|string} userId
- * @returns {Promise<boolean>}
+ * Проверка бана
  */
 async function isBanned(userId) {
   const list = (await kv.smembers(KV_PREFIXES.BAN_LIST)) || [];
@@ -714,22 +718,17 @@ async function isBanned(userId) {
 }
 
 /**
- * Мутит пользователя
- * @param {number|string} userId
- * @param {number} duration
- * @returns {Promise<void>}
+ * Мутит
  */
 async function muteUser(userId, duration = 0) {
   const mutedUntil = duration > 0 ? Date.now() + duration : Number.MAX_SAFE_INTEGER;
   await kv.sadd(KV_PREFIXES.MUTE_LIST, String(userId));
   await saveUser(userId, { muted: true, mutedUntil });
-  await logAction("mute", { userId: String(userId), duration });
+  await logAction("mute", { userId: String(userId), extra: formatDuration(duration) });
 }
 
 /**
- * Размучивает пользователя
- * @param {number|string} userId
- * @returns {Promise<void>}
+ * Размучивает
  */
 async function unmuteUser(userId) {
   await kv.srem(KV_PREFIXES.MUTE_LIST, String(userId));
@@ -738,9 +737,7 @@ async function unmuteUser(userId) {
 }
 
 /**
- * Проверяет, замучен ли пользователь
- * @param {number|string} userId
- * @returns {Promise<boolean>}
+ * Проверка мута
  */
 async function isMuted(userId) {
   const user = await getUser(userId);
@@ -757,30 +754,32 @@ async function isMuted(userId) {
 // ============================================
 
 /**
- * Проверяет, может ли пользователь делать запросы
- * @param {number|string} userId
- * @returns {Promise<{allowed: boolean, remaining: number}>}
+ * Проверка rate limit
  */
-async function checkRateLimit(userId) {
-  const key = `${KV_PREFIXES.RATE_LIMIT}${userId}`;
+async function checkRateLimit(userId, customKey = null, maxRequests = null, windowMs = null) {
+  const key = customKey 
+    ? `${KV_PREFIXES.RATE_LIMIT}${customKey}:${userId}`
+    : `${KV_PREFIXES.RATE_LIMIT}${userId}`;
+  
+  const max = maxRequests || CONFIG.RATE_LIMIT_MAX_REQUESTS;
+  const window = windowMs || CONFIG.RATE_LIMIT_WINDOW;
   const now = Date.now();
-  const windowStart = now - CONFIG.RATE_LIMIT_WINDOW;
+  const windowStart = now - window;
   
   let data = (await kv.get(key)) || { timestamps: [] };
   
-  // Убираем старые записи
   data.timestamps = data.timestamps.filter(t => t > windowStart);
   
-  if (data.timestamps.length >= CONFIG.RATE_LIMIT_MAX_REQUESTS) {
+  if (data.timestamps.length >= max) {
     return { allowed: false, remaining: 0 };
   }
   
   data.timestamps.push(now);
-  await kv.set(key, data, { ex: 120 });
+  await kv.set(key, data, { ex: Math.ceil(window / 1000) + 60 });
   
   return {
     allowed: true,
-    remaining: CONFIG.RATE_LIMIT_MAX_REQUESTS - data.timestamps.length,
+    remaining: max - data.timestamps.length,
   };
 }
 
@@ -789,10 +788,7 @@ async function checkRateLimit(userId) {
 // ============================================
 
 /**
- * Увеличивает счётчик статистики
- * @param {string} key
- * @param {number} increment
- * @returns {Promise<void>}
+ * Увеличивает счётчик
  */
 async function incrementStat(key, increment = 1) {
   const stats = (await kv.get(KV_PREFIXES.STATS)) || {};
@@ -801,16 +797,37 @@ async function incrementStat(key, increment = 1) {
 }
 
 /**
- * Получает всю статистику
- * @returns {Promise<object>}
+ * Получает статистику
  */
 async function getStats() {
   return (await kv.get(KV_PREFIXES.STATS)) || {};
 }
 
 /**
- * Собирает полную статистику системы
- * @returns {Promise<object>}
+ * Инкремент дневной статистики
+ */
+async function incrementDailyStat(key, increment = 1) {
+  const dateKey = getDateKey();
+  const dailyStats = (await kv.get(KV_PREFIXES.DAILY_STATS)) || {};
+  
+  if (!dailyStats[dateKey]) {
+    dailyStats[dateKey] = { activations: 0, new_users: 0, codes_created: 0 };
+  }
+  
+  dailyStats[dateKey][key] = (dailyStats[dateKey][key] || 0) + increment;
+  
+  // Храним последние 30 дней
+  const keys = Object.keys(dailyStats).sort();
+  if (keys.length > 30) {
+    const toDelete = keys.slice(0, keys.length - 30);
+    for (const k of toDelete) delete dailyStats[k];
+  }
+  
+  await kv.set(KV_PREFIXES.DAILY_STATS, dailyStats);
+}
+
+/**
+ * Полный сбор статистики
  */
 async function gatherFullStats() {
   const [
@@ -829,7 +846,6 @@ async function gatherFullStats() {
     getLogs(500),
   ]);
   
-  // Собираем детальную статистику по кодам
   let activeCodes = 0;
   let pendingCodes = 0;
   let noRewardCodes = 0;
@@ -844,14 +860,13 @@ async function gatherFullStats() {
     
     const st = codeStatus(code);
     if (st.expired) expiredCodes++;
-    else if (code.status === CODE_STATUS.ACTIVE) activeCodes++;
-    else if (code.status === CODE_STATUS.PENDING) pendingCodes++;
-    else if (code.status === CODE_STATUS.NO_REWARD) noRewardCodes++;
+    else if (st.status === CODE_STATUS.ACTIVE) activeCodes++;
+    else if (st.status === CODE_STATUS.PENDING) pendingCodes++;
+    else if (st.status === CODE_STATUS.NO_REWARD) noRewardCodes++;
     
     totalActivations += (code.usedBy || []).length;
   }
   
-  // Считаем активных пользователей за 24 часа
   const dayAgo = now - 24 * 60 * 60 * 1000;
   let activeUsers24h = 0;
   for (const userId of allUsers) {
@@ -892,69 +907,47 @@ async function gatherFullStats() {
 // ============================================
 
 /**
- * Определяет статус кода с учётом времени и флага
- * @param {object} code
- * @returns {object}
+ * 🔥 ИСПРАВЛЕНО: нормализация статуса
  */
 function codeStatus(code) {
+  if (!code) {
+    return { icon: "❓", label: "не найден", expired: false, status: "unknown" };
+  }
+  
   const now = Date.now();
 
   if (code.disabled) {
-    return {
-      icon: STATUS_ICONS.disabled,
-      label: "отключен",
-      expired: false,
-      status: CODE_STATUS.DISABLED,
-    };
+    return { icon: STATUS_ICONS.disabled, label: "отключён", expired: false, status: CODE_STATUS.DISABLED };
   }
 
   if (code.expiresAt && now > code.expiresAt) {
-    return {
-      icon: STATUS_ICONS.expired,
-      label: "истёк",
-      expired: true,
-      status: "expired",
-    };
+    return { icon: STATUS_ICONS.expired, label: "истёк", expired: true, status: "expired" };
   }
 
-  if (code.status === CODE_STATUS.NO_REWARD) {
-    return {
-      icon: STATUS_ICONS.no_reward,
-      label: "нет награды",
-      expired: false,
-      status: CODE_STATUS.NO_REWARD,
-    };
+  // Нормализация для старых кодов
+  let status = code.status;
+  if (!status) {
+    if (code.reward) status = CODE_STATUS.ACTIVE;
+    else status = CODE_STATUS.NO_REWARD;
   }
 
-  if (code.status === CODE_STATUS.PENDING) {
-    return {
-      icon: STATUS_ICONS.pending,
-      label: "в процессе",
-      expired: false,
-      status: CODE_STATUS.PENDING,
-    };
+  if (status === CODE_STATUS.NO_REWARD) {
+    return { icon: STATUS_ICONS.no_reward, label: "нет награды", expired: false, status };
   }
 
-  if (code.status === CODE_STATUS.ACTIVE) {
-    return {
-      icon: STATUS_ICONS.active,
-      label: "активен",
-      expired: false,
-      status: CODE_STATUS.ACTIVE,
-    };
+  if (status === CODE_STATUS.PENDING) {
+    return { icon: STATUS_ICONS.pending, label: "в процессе", expired: false, status };
   }
 
-  return {
-    icon: "⚪",
-    label: "неизвестно",
-    expired: false,
-    status: "unknown",
-  };
+  if (status === CODE_STATUS.ACTIVE) {
+    return { icon: STATUS_ICONS.active, label: "активен", expired: false, status };
+  }
+
+  return { icon: STATUS_ICONS.unknown, label: "неизвестно", expired: false, status: "unknown" };
 }
 
 /**
- * Чистит истёкшие коды (старше часа после истечения)
- * @returns {Promise<{deleted: number, kept: number}>}
+ * Чистит старые истёкшие коды
  */
 async function cleanupExpiredCodes() {
   const names = await listCodeNames();
@@ -979,8 +972,6 @@ async function cleanupExpiredCodes() {
 
 /**
  * Создаёт новый код
- * @param {object} params
- * @returns {Promise<object>}
  */
 async function createNewCode(params) {
   const { name, expiresAt, createdBy, category = CODE_CATEGORIES.STANDARD, maxUses = 0 } = params;
@@ -1000,22 +991,18 @@ async function createNewCode(params) {
   
   await saveCode(name, code);
   await incrementStat("codes_created", 1);
-  await logAction("code_created", { 
-    userId: String(createdBy), 
-    extra: name 
-  });
+  await incrementDailyStat("codes_created", 1);
+  await logAction("code_created", { userId: String(createdBy), extra: name });
   
   return code;
 }
 
 // ============================================
-// 10. СИСТЕМА БЭКАПОВ
+// 10. БЭКАПЫ
 // ============================================
 
 /**
- * Создаёт полный бэкап базы
- * @param {number|string} createdBy
- * @returns {Promise<string>} ID бэкапа
+ * Создаёт бэкап
  */
 async function createBackup(createdBy) {
   const backupId = generateId();
@@ -1031,13 +1018,11 @@ async function createBackup(createdBy) {
     stats: await getStats(),
   };
   
-  // Копируем все коды
   for (const name of codeNames) {
     const code = await getCode(name);
     if (code) backup.codes.push(code);
   }
   
-  // Копируем всех пользователей (только мета-данные)
   for (const userId of allUsers) {
     const user = await getUser(userId);
     if (user) {
@@ -1047,16 +1032,16 @@ async function createBackup(createdBy) {
         usedCodes: user.usedCodes || [],
         activations: user.activations || 0,
         banned: user.banned || false,
+        badges: user.badges || [],
+        referrals: user.referrals || [],
         createdAt: user.createdAt,
       });
     }
   }
   
-  // Сохраняем бэкап
   const backups = (await kv.get(KV_PREFIXES.BACKUPS)) || [];
   backups.unshift({ id: backupId, createdAt: Date.now(), data: backup });
   
-  // Ограничиваем количество бэкапов
   if (backups.length > CONFIG.MAX_BACKUPS) {
     backups.length = CONFIG.MAX_BACKUPS;
   }
@@ -1068,11 +1053,9 @@ async function createBackup(createdBy) {
 }
 
 /**
- * Восстанавливает бэкап по ID
- * @param {string} backupId
- * @returns {Promise<object>}
+ * 🔥 ИСПРАВЛЕНО: режим replace по умолчанию
  */
-async function restoreBackup(backupId) {
+async function restoreBackup(backupId, mode = "replace") {
   const backups = (await kv.get(KV_PREFIXES.BACKUPS)) || [];
   const backup = backups.find(b => b.id === backupId);
   
@@ -1083,33 +1066,42 @@ async function restoreBackup(backupId) {
   const data = backup.data;
   let codesRestored = 0;
   let usersRestored = 0;
+  let codesDeleted = 0;
   
-  // Восстанавливаем коды
+  // 🔥 Если replace — сначала сносим всё
+  if (mode === "replace") {
+    const existingCodes = await listCodeNames();
+    for (const name of existingCodes) {
+      await deleteCode(name);
+      codesDeleted++;
+    }
+  }
+  
   for (const code of data.codes) {
     await saveCode(code.name, code);
     codesRestored++;
   }
   
-  // Восстанавливаем пользователей
   for (const user of data.users) {
     await saveUser(user.userId, {
       username: user.username,
       usedCodes: user.usedCodes,
       activations: user.activations,
       banned: user.banned,
+      badges: user.badges || [],
+      referrals: user.referrals || [],
       createdAt: user.createdAt,
     });
     usersRestored++;
   }
   
-  await logAction("backup_restored", { extra: backupId });
+  await logAction("backup_restored", { extra: `${backupId} (mode: ${mode})` });
   
-  return { codesRestored, usersRestored };
+  return { codesRestored, usersRestored, codesDeleted };
 }
 
 /**
- * Список всех бэкапов
- * @returns {Promise<Array>}
+ * Список бэкапов
  */
 async function listBackups() {
   const backups = (await kv.get(KV_PREFIXES.BACKUPS)) || [];
@@ -1123,16 +1115,12 @@ async function listBackups() {
 
 /**
  * Удаляет бэкап
- * @param {string} backupId
- * @returns {Promise<boolean>}
  */
 async function deleteBackup(backupId) {
   const backups = (await kv.get(KV_PREFIXES.BACKUPS)) || [];
   const filtered = backups.filter(b => b.id !== backupId);
   
-  if (filtered.length === backups.length) {
-    return false;
-  }
+  if (filtered.length === backups.length) return false;
   
   await kv.set(KV_PREFIXES.BACKUPS, filtered);
   return true;
@@ -1143,8 +1131,7 @@ async function deleteBackup(backupId) {
 // ============================================
 
 /**
- * Экспортирует все коды в JSON
- * @returns {Promise<string>}
+ * Экспорт кодов в JSON
  */
 async function exportCodes() {
   const names = await listCodeNames();
@@ -1159,10 +1146,31 @@ async function exportCodes() {
 }
 
 /**
- * Импортирует коды из JSON
- * @param {string} jsonData
- * @param {string} mode - "merge" или "replace"
- * @returns {Promise<object>}
+ * 🔥 НОВОЕ: экспорт пользователей в CSV
+ */
+async function exportUsersCSV() {
+  const allUsers = await getAllUsers();
+  const rows = ["id,username,activations,banned,created_at,last_seen,badges"];
+  
+  for (const uid of allUsers) {
+    const u = await getUser(uid);
+    const badges = (u.badges || []).join("|");
+    rows.push([
+      u.userId,
+      (u.username || "").replace(/,/g, ""),
+      u.activations || 0,
+      u.banned ? "yes" : "no",
+      u.createdAt ? new Date(u.createdAt).toISOString() : "",
+      u.lastSeen ? new Date(u.lastSeen).toISOString() : "",
+      badges,
+    ].join(","));
+  }
+  
+  return rows.join("\n");
+}
+
+/**
+ * Импорт кодов
  */
 async function importCodes(jsonData, mode = "merge") {
   let codes;
@@ -1208,11 +1216,165 @@ async function importCodes(jsonData, mode = "merge") {
 }
 
 // ============================================
-// 12. КОМАНДЫ ПОЛЬЗОВАТЕЛЕЙ
+// 12. БЕЙДЖИ
 // ============================================
 
 /**
- * Команда /start
+ * 🔥 НОВОЕ: выдаёт бейдж
+ */
+async function awardBadge(userId, badgeId) {
+  const user = await getUser(userId);
+  const badges = user.badges || [];
+  
+  if (badges.includes(badgeId)) return false;
+  
+  badges.push(badgeId);
+  await saveUser(userId, { badges });
+  
+  const badge = BADGES[badgeId];
+  if (badge) {
+    try {
+      await sendMessage(
+        userId,
+        `🏆 <b>Новый бейдж!</b>\n\n${badge.emoji} <b>${badge.name}</b>\n<i>${badge.desc}</i>`,
+        { parse_mode: "HTML" }
+      );
+    } catch (e) {
+      // Пользователь мог заблокировать бота
+    }
+  }
+  
+  await logAction("badge_awarded", { userId: String(userId), extra: badgeId });
+  return true;
+}
+
+/**
+ * Проверяет и выдаёт бейджи по активациям
+ */
+async function checkActivationBadges(userId, activationCount) {
+  if (activationCount === 1) await awardBadge(userId, "FIRST_CODE");
+  if (activationCount === 10) await awardBadge(userId, "CODES_10");
+  if (activationCount === 50) await awardBadge(userId, "CODES_50");
+  if (activationCount === 100) await awardBadge(userId, "CODES_100");
+}
+
+/**
+ * Проверяет бейджи по времени активации
+ */
+async function checkTimeBadges(userId) {
+  const hour = new Date().getUTCHours();
+  
+  if (hour >= 0 && hour < 5) {
+    await awardBadge(userId, "NIGHT_OWL");
+  } else if (hour >= 5 && hour < 8) {
+    await awardBadge(userId, "EARLY_BIRD");
+  }
+}
+
+// ============================================
+// 13. РЕФЕРАЛЬНАЯ СИСТЕМА
+// ============================================
+
+/**
+ * 🔥 НОВОЕ: обрабатывает реферала
+ */
+async function processReferral(newUserId, referrerId) {
+  if (!referrerId) return false;
+  if (String(newUserId) === String(referrerId)) return false;
+  
+  const newUser = await getUser(newUserId);
+  if (newUser.referredBy) return false;
+  
+  // Проверяем, что referrer существует
+  const referrer = await getUser(referrerId);
+  if (!referrer.createdAt) return false;
+  
+  // Записываем нового пользователя
+  await saveUser(newUserId, { referredBy: String(referrerId) });
+  
+  // Обновляем referrer
+  const referrals = referrer.referrals || [];
+  referrals.push({
+    userId: String(newUserId),
+    date: Date.now(),
+  });
+  await saveUser(referrerId, { referrals });
+  
+  await incrementStat("total_referrals", 1);
+  await logAction("referral", { 
+    userId: String(referrerId), 
+    extra: `new: ${newUserId}` 
+  });
+  
+  // Уведомляем referrer
+  const count = referrals.length;
+  try {
+    await sendMessage(
+      referrerId,
+      `🎉 <b>Новый реферал!</b>\n\n` +
+        `Ты пригласил ${count} ${getWordForm(count, ["человека", "человек", "человек"])}.\n\n` +
+        `${count >= 5 ? "🏆 Продолжай в том же духе!" : `До бейджа «Реферрал-мастер» осталось: ${5 - count}`}`,
+      { parse_mode: "HTML" }
+    );
+  } catch (e) {
+    // Игнорируем
+  }
+  
+  // Бейджи за рефералов
+  if (count === 1) await awardBadge(referrerId, "REFERRER_1");
+  if (count === 5) await awardBadge(referrerId, "REFERRER_5");
+  if (count === 10) await awardBadge(referrerId, "REFERRER_10");
+  
+  return true;
+}
+
+/**
+ * Склонение существительных
+ */
+function getWordForm(num, forms) {
+  const n = Math.abs(num) % 100;
+  const n1 = n % 10;
+  if (n > 10 && n < 20) return forms[2];
+  if (n1 > 1 && n1 < 5) return forms[1];
+  if (n1 === 1) return forms[0];
+  return forms[2];
+}
+
+// ============================================
+// 14. СИСТЕМА БЛОКИРОВОК (LOCKS)
+// ============================================
+
+/**
+ * 🔥 НОВОЕ: пытается захватить лок
+ */
+async function acquireLock(key, ttlSeconds = CONFIG.LOCK_TTL) {
+  try {
+    const lockKey = `${KV_PREFIXES.LOCK}${key}`;
+    const result = await kv.set(lockKey, Date.now(), { nx: true, ex: ttlSeconds });
+    return result !== null;
+  } catch (error) {
+    console.error("[LOCK ERROR]", error.message);
+    return true; // При ошибке пропускаем
+  }
+}
+
+/**
+ * Освобождает лок
+ */
+async function releaseLock(key) {
+  try {
+    await kv.del(`${KV_PREFIXES.LOCK}${key}`);
+  } catch (error) {
+    console.error("[UNLOCK ERROR]", error.message);
+  }
+}
+
+// ============================================
+// 15. КОМАНДЫ ПОЛЬЗОВАТЕЛЕЙ
+// ============================================
+
+/**
+ * 🔥 УЛУЧШЕНО: /start с inline-кнопками
  */
 async function sendStart(chatId, userId, username) {
   const user = await getUser(userId);
@@ -1220,50 +1382,72 @@ async function sendStart(chatId, userId, username) {
   
   await saveUser(userId, {}, username);
   
+  const fullStats = await gatherFullStats();
+  
   const text = 
-    `🎁 <b>Добро пожаловать в GcStudio Promo Bot!</b>\n\n` +
-    `Здесь ты можешь активировать секретные коды и получать награды от разработчиков.\n\n` +
-    `<b>Основные команды:</b>\n` +
-    `🔹 <code>/code НАЗВАНИЕ</code> — активировать промокод\n` +
-    `🔹 <code>/my</code> — мои использованные коды\n` +
-    `🔹 <code>/top</code> — таблица лидеров\n` +
-    `🔹 <code>/help</code> — помощь\n\n` +
-    `📢 <i>Следи за каналом проекта, чтобы не пропустить новые коды!</i>`;
+    `🎁 <b>GcStudio Promo Bot</b>\n\n` +
+    `Привет${username ? `, @${escapeHtml(username)}` : ""}! 👋\n\n` +
+    `Здесь ты можешь активировать промокоды и получать эксклюзивные награды.\n\n` +
+    `📊 <b>Статистика:</b>\n` +
+    `• Промокодов: ${fullStats.codes.total}\n` +
+    `• Активаций: ${fullStats.activations.total}\n` +
+    `• Пользователей: ${fullStats.users.total}\n\n` +
+    `Выбери действие:`;
 
-  const reply_markup = {
-    inline_keyboard: [
-      [
-        { text: "🎁 Активировать код", callback_data: "prompt_code" },
-        { text: "📋 Мои коды", callback_data: "my_codes" },
-      ],
-      [
-        { text: "🏆 Топ пользователей", callback_data: "leaderboard" },
-        { text: "ℹ️ Помощь", callback_data: "help" },
-      ],
+  const inline_keyboard = [
+    [
+      { text: "🎁 Активировать код", callback_data: "prompt_code" },
+      { text: "📋 Мои коды", callback_data: "my_codes" },
     ],
-  };
+    [
+      { text: "🏆 Топ активаций", callback_data: "leaderboard" },
+      { text: "📊 Топ кодов", callback_data: "top_codes" },
+    ],
+    [
+      { text: "👤 Мой профиль", callback_data: "my_profile" },
+      { text: "🏅 Мои бейджи", callback_data: "my_badges" },
+    ],
+    [
+      { text: "🔗 Пригласить друга", callback_data: "share_bot" },
+      { text: "❓ Помощь", callback_data: "help" },
+    ],
+    [
+      { text: "📢 Канал проекта", url: CONFIG.CHANNEL_URL },
+    ],
+  ];
+
+  if (isAdmin(userId)) {
+    inline_keyboard.unshift([
+      { text: "👑 Админ-панель", callback_data: "admin_panel" },
+    ]);
+  }
 
   if (isNew) {
     await incrementStat("new_users_today", 1);
+    await incrementDailyStat("new_users", 1);
   }
 
   return sendMessage(chatId, text, { 
     parse_mode: "HTML", 
-    reply_markup 
+    reply_markup: { inline_keyboard } 
   });
 }
 
 /**
- * Команда /help
+ * Помощь
  */
 async function sendHelp(chatId, isAdminUser = false) {
   let text = 
     `ℹ️ <b>Помощь по боту</b>\n\n` +
     `<b>🎯 Основные команды:</b>\n` +
     `🔹 <code>/code НАЗВАНИЕ</code> — активировать промокод\n` +
-    `🔹 <code>/my</code> — список твоих активированных кодов\n` +
+    `🔹 <code>/my</code> — мои использованные коды\n` +
     `🔹 <code>/top</code> — таблица лидеров\n` +
-    `🔹 <code>/stats</code> — краткая статистика\n\n` +
+    `🔹 <code>/topcodes</code> — топ промокодов\n` +
+    `🔹 <code>/profile</code> — мой профиль\n` +
+    `🔹 <code>/badges</code> — мои бейджи\n` +
+    `🔹 <code>/share</code> — пригласить друга\n` +
+    `🔹 <code>/stats</code> — статистика бота\n\n` +
     `<b>💡 Как это работает:</b>\n` +
     `Промокоды публикуются в канале проекта. ` +
     `Если код истёк, уже использован или достиг лимита — бот сообщит об этом.\n\n` +
@@ -1272,50 +1456,44 @@ async function sendHelp(chatId, isAdminUser = false) {
   if (isAdminUser) {
     text += 
       `<b>👑 Админ-команды:</b>\n` +
-      `🔹 <code>/create КОД ДАТА</code> — создать код\n` +
+      `🔹 <code>/create КОД ДАТА [КАТЕГОРИЯ]</code>\n` +
       `🔹 <code>/link КОД</code> — привязать награду\n` +
-      `🔹 <code>/all</code> — список всех кодов\n` +
-      `🔹 <code>/info КОД</code> — детали кода\n` +
-      `🔹 <code>/extend КОД ДАТА</code> — продлить код\n` +
       `🔹 <code>/reward КОД</code> — изменить награду\n` +
-      `🔹 <code>/copy СТАРЫЙ НОВЫЙ</code> — скопировать код\n` +
-      `🔹 <code>/rename СТАРЫЙ НОВЫЙ</code> — переименовать\n` +
-      `🔹 <code>/delete КОД</code> — удалить код\n` +
-      `🔹 <code>/setlimit КОД N</code> — лимит активаций\n` +
-      `🔹 <code>/reset КОД</code> — сбросить использования\n` +
-      `🔹 <code>/resetuser ID</code> — сбросить юзеру\n` +
-      `🔹 <code>/activate КОД ID</code> — активировать юзеру\n\n` +
-      `<b>📢 Массовые действия:</b>\n` +
-      `🔹 <code>/broadcast ТЕКСТ</code> — рассылка\n` +
-      `🔹 <code>/announce ТЕКСТ</code> — объявление\n` +
-      `🔹 <code>/schedule ДАТА ТЕКСТ</code> — отложенная рассылка\n\n` +
-      `<b>👥 Управление пользователями:</b>\n` +
-      `🔹 <code>/ban ID ПРИЧИНА</code> — забанить\n` +
-      `🔹 <code>/unban ID</code> — разбанить\n` +
-      `🔹 <code>/mute ID ЧАСЫ</code> — замутить\n` +
-      `🔹 <code>/unmute ID</code> — размутить\n` +
-      `🔹 <code>/users [PAGE]</code> — список юзеров\n` +
-      `🔹 <code>/whois ID</code> — инфо о юзере\n` +
-      `🔹 <code>/leaderboard</code> — топ активаций\n\n` +
+      `🔹 <code>/all [ФИЛЬТР] [СТР]</code> — список кодов\n` +
+      `🔹 <code>/info КОД</code> — детали\n` +
+      `🔹 <code>/extend КОД ДАТА</code>\n` +
+      `🔹 <code>/delete КОД</code>\n` +
+      `🔹 <code>/reset КОД</code> — сброс использований\n` +
+      `🔹 <code>/resetuser ID</code>\n` +
+      `🔹 <code>/copy СТАРЫЙ НОВЫЙ ДАТА</code>\n` +
+      `🔹 <code>/rename СТАРЫЙ НОВЫЙ</code>\n` +
+      `🔹 <code>/setlimit КОД N</code>\n` +
+      `🔹 <code>/activate КОД USER_ID</code>\n\n` +
+      `<b>👥 Модерация:</b>\n` +
+      `🔹 <code>/ban ID [ПРИЧИНА]</code>\n` +
+      `🔹 <code>/unban ID</code>\n` +
+      `🔹 <code>/mute ID [ЧАСЫ]</code>\n` +
+      `🔹 <code>/unmute ID</code>\n` +
+      `🔹 <code>/users [СТР]</code>\n` +
+      `🔹 <code>/whois ID</code>\n\n` +
+      `<b>📢 Массовое:</b>\n` +
+      `🔹 <code>/broadcast ТЕКСТ</code>\n` +
+      `🔹 <code>/announce ТЕКСТ</code>\n` +
+      `🔹 <code>/schedule ДАТА ТЕКСТ</code>\n\n` +
       `<b>⚙️ Система:</b>\n` +
-      `🔹 <code>/stats</code> — полная статистика\n` +
-      `🔹 <code>/logs</code> — лог действий\n` +
-      `🔹 <code>/clearlogs</code> — очистить лог\n` +
-      `🔹 <code>/backup</code> — создать бэкап\n` +
-      `🔹 <code>/backups</code> — список бэкапов\n` +
-      `🔹 <code>/restore ID</code> — восстановить\n` +
-      `🔹 <code>/export</code> — экспорт кодов\n` +
-      `🔹 <code>/import JSON</code> — импорт\n` +
-      `🔹 <code>/ping</code> — проверка связи\n` +
-      `🔹 <code>/health</code> — статус системы\n` +
-      `🔹 <code>/admin</code> — эта справка`;
+      `🔹 <code>/logs</code>, <code>/clearlogs</code>\n` +
+      `🔹 <code>/backup</code>, <code>/backups</code>, <code>/restore ID [merge]</code>\n` +
+      `🔹 <code>/export</code>, <code>/exportcsv</code>, <code>/import JSON</code>\n` +
+      `🔹 <code>/chart</code> — график активаций\n` +
+      `🔹 <code>/ping</code>, <code>/health</code>\n` +
+      `🔹 <code>/admin</code> — панель`;
   }
 
   return sendMessage(chatId, text, { parse_mode: "HTML" });
 }
 
 /**
- * Команда /my - список использованных кодов пользователя
+ * Мои коды
  */
 async function showMyCodes(chatId, userId) {
   const user = await getUser(userId);
@@ -1324,9 +1502,16 @@ async function showMyCodes(chatId, userId) {
     const text = 
       `📭 <b>У тебя пока нет активированных промокодов</b>\n\n` +
       `Следи за каналом проекта, чтобы не пропустить новые!\n\n` +
-      `💡 Используй команду <code>/code НАЗВАНИЕ</code>, чтобы активировать код.`;
+      `💡 Нажми кнопку ниже, чтобы активировать код.`;
     
-    return sendMessage(chatId, text, { parse_mode: "HTML" });
+    return sendMessage(chatId, text, { 
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "🎁 Активировать код", callback_data: "prompt_code" },
+        ]],
+      },
+    });
   }
 
   let text = `🎁 <b>Твои активированные коды (${user.usedCodes.length}):</b>\n\n`;
@@ -1347,174 +1532,195 @@ async function showMyCodes(chatId, userId) {
 }
 
 /**
- * Команда /code - активация промокода
+ * 🔥 УЛУЧШЕНО: activateCode с защитой от race condition
  */
 async function activateCode(chatId, userId, username, codeName) {
   if (!codeName) {
     return sendMessage(
       chatId,
       `❌ <b>Укажи название кода</b>\n\n` +
-        `Пример: <code>/code SUMMER2026</code>\n\n` +
-        `💡 Коды публикуются в канале проекта.`,
+        `Пример: <code>/code SUMMER2026</code>`,
       { parse_mode: "HTML" }
     );
   }
 
-  // Проверяем бан
-  if (await isBanned(userId)) {
+  const normalizedName = codeName.toUpperCase().trim();
+  
+  // 🔥 Защита от race condition
+  const lockKey = `activate:${userId}:${normalizedName}`;
+  const lockAcquired = await acquireLock(lockKey, 10);
+  
+  if (!lockAcquired) {
+    return sendMessage(
+      chatId,
+      `⏳ Подожди, обрабатываем предыдущий запрос...`,
+      { parse_mode: "HTML" }
+    );
+  }
+  
+  try {
+    // Проверка бана
+    if (await isBanned(userId)) {
+      const user = await getUser(userId);
+      return sendMessage(
+        chatId,
+        `⛔ <b>Ты заблокирован</b>\n\n` +
+          `Ты не можешь активировать промокоды.\n` +
+          `Причина: ${escapeHtml(user.banReason || "—")}`,
+        { parse_mode: "HTML" }
+      );
+    }
+
+    const code = await getCode(normalizedName);
+
+    if (!code) {
+      await incrementStat("invalid_code_attempts", 1);
+      return sendMessage(
+        chatId,
+        `❌ <b>Код не найден</b>\n\n` +
+          `Промокод <code>${escapeHtml(normalizedName)}</code> не существует. ` +
+          `Проверь правильность написания.`,
+        { parse_mode: "HTML" }
+      );
+    }
+
+    if (code.disabled) {
+      return sendMessage(
+        chatId,
+        `⚫ <b>Код отключён</b>\n\n` +
+          `Промокод <code>${escapeHtml(code.name)}</code> временно недоступен.`,
+        { parse_mode: "HTML" }
+      );
+    }
+
+    const now = Date.now();
+
+    if (code.expiresAt && now > code.expiresAt) {
+      const expiredAt = formatDate(code.expiresAt);
+      return sendMessage(
+        chatId,
+        `⏰ <b>Код истёк</b>\n\n` +
+          `Промокод <code>${escapeHtml(code.name)}</code> перестал действовать ${expiredAt}.`,
+        { parse_mode: "HTML" }
+      );
+    }
+
+    // Нормализация статуса
+    const st = codeStatus(code);
+    if (st.status !== CODE_STATUS.ACTIVE) {
+      return sendMessage(
+        chatId,
+        `⚠️ <b>Код ещё не готов</b>\n\n` +
+          `Разработчики пока не завершили настройку награды для этого кода. ` +
+          `Попробуй позже.`,
+        { parse_mode: "HTML" }
+      );
+    }
+
+    if (code.maxUses && code.maxUses > 0 && (code.usedBy || []).length >= code.maxUses) {
+      return sendMessage(
+        chatId,
+        `📦 <b>Лимит исчерпан</b>\n\n` +
+          `Промокод <code>${escapeHtml(code.name)}</code> уже использовали ${code.maxUses} раз.`,
+        { parse_mode: "HTML" }
+      );
+    }
+
     const user = await getUser(userId);
-    return sendMessage(
-      chatId,
-      `⛔ <b>Ты заблокирован</b>\n\n` +
-        `Ты не можешь активировать промокоды.\n` +
-        `Причина: ${escapeHtml(user.banReason || "—")}`,
-      { parse_mode: "HTML" }
-    );
-  }
 
-  const code = await getCode(codeName);
-
-  if (!code) {
-    await incrementStat("invalid_code_attempts", 1);
-    return sendMessage(
-      chatId,
-      `❌ <b>Код не найден</b>\n\n` +
-        `Промокод <code>${escapeHtml(codeName)}</code> не существует. ` +
-        `Проверь правильность написания.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  // Проверяем отключён ли код
-  if (code.disabled) {
-    return sendMessage(
-      chatId,
-      `⚫ <b>Код отключен</b>\n\n` +
-        `Промокод <code>${code.name}</code> временно недоступен.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  const now = Date.now();
-
-  if (code.expiresAt && now > code.expiresAt) {
-    const expiredAt = formatDate(code.expiresAt);
-    return sendMessage(
-      chatId,
-      `⏰ <b>Код истёк</b>\n\n` +
-        `Промокод <code>${code.name}</code> перестал действовать ${expiredAt}.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  if (code.status !== CODE_STATUS.ACTIVE) {
-    return sendMessage(
-      chatId,
-      `⚠️ <b>Код ещё не готов</b>\n\n` +
-        `Разработчики пока не завершили настройку награды для этого кода. ` +
-        `Попробуй позже.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  // Проверяем лимит активаций
-  if (code.maxUses && code.maxUses > 0 && (code.usedBy || []).length >= code.maxUses) {
-    return sendMessage(
-      chatId,
-      `📦 <b>Лимит исчерпан</b>\n\n` +
-        `Промокод <code>${code.name}</code> уже использовали ${code.maxUses} раз.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  const user = await getUser(userId);
-
-  // Проверяем, использовал ли уже этот код
-  const alreadyUsed = user.usedCodes.some(item => {
-    const name = typeof item === "string" ? item : item.name;
-    return name.toUpperCase() === code.name.toUpperCase();
-  });
-  
-  if (alreadyUsed) {
-    return sendMessage(
-      chatId,
-      `🔁 <b>Ты уже использовал этот код</b>\n\n` +
-        `Каждый промокод можно активировать только один раз.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  // Сохраняем активацию
-  const activationRecord = {
-    name: code.name,
-    activatedAt: now,
-    category: code.category,
-  };
-  
-  user.usedCodes.push(activationRecord);
-  user.activations = (user.activations || 0) + 1;
-  await saveUser(userId, { 
-    usedCodes: user.usedCodes, 
-    activations: user.activations 
-  }, username);
-
-  // Добавляем пользователя в список использовавших
-  const usedBy = code.usedBy || [];
-  const userIdentifier = username ? `@${username}` : String(userId);
-  
-  if (!usedBy.some(u => u.id === String(userId))) {
-    usedBy.push({ 
-      id: String(userId), 
-      name: userIdentifier,
-      activatedAt: now,
+    const alreadyUsed = (user.usedCodes || []).some(item => {
+      const name = typeof item === "string" ? item : item.name;
+      return name.toUpperCase() === code.name.toUpperCase();
     });
+    
+    if (alreadyUsed) {
+      return sendMessage(
+        chatId,
+        `🔁 <b>Ты уже использовал этот код</b>\n\n` +
+          `Каждый промокод можно активировать только один раз.`,
+        { parse_mode: "HTML" }
+      );
+    }
+
+    // Сохраняем активацию
+    const activationRecord = {
+      name: code.name,
+      activatedAt: now,
+      category: code.category,
+    };
+    
+    const updatedUsedCodes = [...(user.usedCodes || []), activationRecord];
+    const newActivations = (user.activations || 0) + 1;
+    
+    await saveUser(userId, { 
+      usedCodes: updatedUsedCodes, 
+      activations: newActivations 
+    }, username);
+
+    // Добавляем в список использовавших
+    const usedBy = code.usedBy || [];
+    const userIdentifier = username ? `@${username}` : String(userId);
+    
+    if (!usedBy.some(u => u.id === String(userId))) {
+      usedBy.push({ 
+        id: String(userId), 
+        name: userIdentifier,
+        activatedAt: now,
+      });
+    }
+    
+    code.usedBy = usedBy;
+    await saveCode(code.name, code);
+    
+    await incrementStat("total_activations", 1);
+    await incrementDailyStat("activations", 1);
+    await logAction("code_activated", {
+      userId: String(userId),
+      username,
+      extra: code.name,
+    });
+
+    const rewardText = code.reward || "Награда не указана.";
+    const categoryIcon = CATEGORY_ICONS[code.category] || "📦";
+    const successMessage =
+      `✅ <b>Код успешно активирован!</b>\n\n` +
+      `${categoryIcon} <b>Промокод:</b> <code>${code.name}</code>\n\n` +
+      `<i>Всего твоих активаций: ${newActivations}</i>`;
+
+    // Проверяем бейджи
+    await checkActivationBadges(userId, newActivations);
+    await checkTimeBadges(userId);
+
+    // Отправляем сообщение об успехе
+    await sendMessage(chatId, successMessage, { parse_mode: "HTML" });
+
+    // Отправляем награду
+    if (code.rewardMedia && code.rewardMediaType) {
+      const caption = rewardText ? `🎉 <b>Твоя награда:</b>\n${rewardText}` : "";
+      
+      if (code.rewardMediaType === "photo") {
+        return sendPhoto(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+      } else if (code.rewardMediaType === "video") {
+        return sendVideo(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+      } else if (code.rewardMediaType === "document") {
+        return sendDocument(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+      } else if (code.rewardMediaType === "animation") {
+        return sendAnimation(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
+      }
+    }
+
+    return sendMessage(
+      chatId,
+      `🎉 <b>Твоя награда:</b>\n${rewardText}`,
+      { parse_mode: "HTML" }
+    );
+  } finally {
+    await releaseLock(lockKey);
   }
-  
-  code.usedBy = usedBy;
-  await saveCode(code.name, code);
-  
-  await incrementStat("total_activations", 1);
-  await logAction("code_activated", {
-    userId: String(userId),
-    username,
-    extra: code.name,
-  });
-
-const rewardText = code.reward || "Награда не указана.";
-const categoryIcon = CATEGORY_ICONS[code.category] || "";
-const successMessage =
-  `✅ <b>Код успешно активирован!</b>\n\n` +
-  `${categoryIcon} <b>Промокод:</b> <code>${code.name}</code>\n\n` +
-  `<i>Всего твоих активаций: ${user.activations}</i>`;
-
-// Сначала отправляем сообщение об успешной активации
-await sendMessage(chatId, successMessage, { parse_mode: "HTML" });
-
-// Затем отправляем награду (медиа или текст)
-if (code.rewardMedia && code.rewardMediaType) {
-  const caption = rewardText ? `🎉 <b>Твоя награда:</b>\n${rewardText}` : "";
-  
-  if (code.rewardMediaType === "photo") {
-    return sendPhoto(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
-  } else if (code.rewardMediaType === "video") {
-    return sendVideo(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
-  } else if (code.rewardMediaType === "document") {
-    return sendDocument(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
-  } else if (code.rewardMediaType === "animation") {
-    return sendAnimation(chatId, code.rewardMedia, caption, { parse_mode: "HTML" });
-  }
-}
-
-// Если медиа нет, отправляем просто текст
-return sendMessage(
-  chatId,
-  `🎉 <b>Твоя награда:</b>\n${rewardText}`,
-  { parse_mode: "HTML" }
-);
 }
 
 /**
- * Команда /top - таблица лидеров
+ * Таблица лидеров
  */
 async function showLeaderboard(chatId) {
   const allUsers = await getAllUsers();
@@ -1545,7 +1751,6 @@ async function showLeaderboard(chatId) {
     );
   }
   
-  // Сортируем по убыванию активаций
   usersWithStats.sort((a, b) => b.activations - a.activations);
   
   const topUsers = usersWithStats.slice(0, CONFIG.MAX_LEADERBOARD_SIZE);
@@ -1569,7 +1774,168 @@ async function showLeaderboard(chatId) {
 }
 
 /**
- * Команда /stats для обычного пользователя
+ * 🔥 НОВОЕ: топ промокодов
+ */
+async function showTopCodes(chatId) {
+  const codeNames = await listCodeNames();
+  
+  if (codeNames.length === 0) {
+    return sendMessage(chatId, "📭 Пока нет промокодов.", { parse_mode: "HTML" });
+  }
+  
+  const codesWithStats = [];
+  
+  for (const name of codeNames) {
+    const code = await getCode(name);
+    if (code) {
+      codesWithStats.push({
+        name: code.name,
+        uses: (code.usedBy || []).length,
+        category: code.category,
+      });
+    }
+  }
+  
+  codesWithStats.sort((a, b) => b.uses - a.uses);
+  
+  const top = codesWithStats.slice(0, 10);
+  
+  let text = `🏆 <b>Топ промокодов</b>\n\n`;
+  
+  top.forEach((code, index) => {
+    let medal = "";
+    if (index === 0) medal = "🥇";
+    else if (index === 1) medal = "🥈";
+    else if (index === 2) medal = "🥉";
+    else medal = `${index + 1}.`;
+    
+    const categoryIcon = CATEGORY_ICONS[code.category] || "📦";
+    text += `${medal} ${categoryIcon} <code>${escapeHtml(code.name)}</code> — <b>${code.uses}</b> активаций\n`;
+  });
+  
+  return sendMessage(chatId, text, { parse_mode: "HTML" });
+}
+
+/**
+ * Профиль пользователя
+ */
+async function showProfile(chatId, userId) {
+  const user = await getUser(userId);
+  const userCodes = user.usedCodes || [];
+  const badges = user.badges || [];
+  const referrals = user.referrals || [];
+  
+  const badgesText = badges.length > 0 
+    ? badges.map(bId => BADGES[bId]).filter(Boolean).map(b => `${b.emoji} ${b.name}`).join(", ")
+    : "Нет бейджей";
+  
+  const text = 
+    `👤 <b>Твой профиль</b>\n\n` +
+    `🆔 <b>ID:</b> <code>${userId}</code>\n` +
+    `📛 <b>Username:</b> ${user.username ? `@${escapeHtml(user.username)}` : "не указан"}\n` +
+    `📅 <b>Регистрация:</b> ${user.createdAt ? smartDate(user.createdAt) : "—"}\n\n` +
+    `📊 <b>Статистика:</b>\n` +
+    `• Активаций: <b>${user.activations || 0}</b>\n` +
+    `• Приглашено: <b>${referrals.length}</b>\n` +
+    `• Бейджей: <b>${badges.length}</b>\n\n` +
+    `🏅 <b>Бейджи:</b>\n${badgesText}`;
+  
+  const inline_keyboard = [
+    [
+      { text: "📋 Мои коды", callback_data: "my_codes" },
+      { text: "🏅 Мои бейджи", callback_data: "my_badges" },
+    ],
+    [
+      { text: "🔗 Пригласить друга", callback_data: "share_bot" },
+      { text: "⬅️ Назад", callback_data: "home" },
+    ],
+  ];
+  
+  return sendMessage(chatId, text, { 
+    parse_mode: "HTML", 
+    reply_markup: { inline_keyboard } 
+  });
+}
+
+/**
+ * 🔥 НОВОЕ: показывает бейджи
+ */
+async function showBadges(chatId, userId) {
+  const user = await getUser(userId);
+  const userBadges = user.badges || [];
+  
+  let text = `🏅 <b>Мои бейджи (${userBadges.length}/${Object.keys(BADGES).length})</b>\n\n`;
+  
+  if (userBadges.length === 0) {
+    text += `У тебя пока нет бейджей.\n\n`;
+    text += `<b>Как получить бейджи:</b>\n`;
+    text += `• Активируй промокоды\n`;
+    text += `• Приглашай друзей\n`;
+    text += `• Заходи в разное время суток\n`;
+  } else {
+    for (const badgeId of userBadges) {
+      const badge = BADGES[badgeId];
+      if (badge) {
+        text += `${badge.emoji} <b>${badge.name}</b>\n`;
+        text += `   <i>${badge.desc}</i>\n\n`;
+      }
+    }
+  }
+  
+  // Показываем все доступные
+  text += `\n<b>📚 Все бейджи:</b>\n`;
+  for (const badge of Object.values(BADGES)) {
+    const has = userBadges.includes(badge.id);
+    text += `${has ? "✅" : "⬜"} ${badge.emoji} <b>${badge.name}</b> — <i>${badge.desc}</i>\n`;
+  }
+  
+  return sendMessage(chatId, text, {
+    parse_mode: "HTML",
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "⬅️ Назад", callback_data: "home" },
+      ]],
+    },
+  });
+}
+
+/**
+ * 🔥 НОВОЕ: кнопка "Пригласить друга"
+ */
+async function shareBot(chatId, userId) {
+  const refLink = `https://t.me/${CONFIG.BOT_USERNAME}?start=ref_${userId}`;
+  const user = await getUser(userId);
+  const refCount = (user.referrals || []).length;
+  
+  const shareText = encodeURIComponent(
+    `🎁 Крутой бот с промокодами! Забирай награды и приглашай друзей!\n\n${refLink}`
+  );
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${shareText}`;
+  
+  const text = 
+    `🔗 <b>Пригласи друга</b>\n\n` +
+    `За каждого приглашённого ты получаешь бейджи!\n\n` +
+    `<b>Твоя ссылка:</b>\n` +
+    `<code>${refLink}</code>\n\n` +
+    `👥 <b>Приглашено:</b> ${refCount}\n\n` +
+    `<b>Награды за рефералов:</b>\n` +
+    `• 1 друг — 🌱 Новичок\n` +
+    `• 5 друзей — 👥 Реферрал-мастер\n` +
+    `• 10 друзей — 🌳 Садовод`;
+  
+  const inline_keyboard = [
+    [{ text: "📤 Поделиться", url: shareUrl }],
+    [{ text: "⬅️ Назад", callback_data: "home" }],
+  ];
+  
+  return sendMessage(chatId, text, {
+    parse_mode: "HTML",
+    reply_markup: { inline_keyboard },
+  });
+}
+
+/**
+ * Статистика для юзера
  */
 async function showUserStats(chatId) {
   const fullStats = await gatherFullStats();
@@ -1587,15 +1953,73 @@ async function showUserStats(chatId) {
 }
 
 // ============================================
-// 13. АДМИН-КОМАНДЫ
+// 16. АДМИН-ПАНЕЛЬ
 // ============================================
 
 /**
- * Команда /create - создание кода
+ * 🔥 НОВОЕ: админ-панель с кнопками
+ */
+async function sendAdminPanel(chatId, userId) {
+  if (!isAdmin(userId)) {
+    return sendMessage(chatId, "⛔ Нет прав.", { parse_mode: "HTML" });
+  }
+  
+  const stats = await gatherFullStats();
+  
+  const text = 
+    `👑 <b>Админ-панель</b>\n\n` +
+    `📦 Кодов: <b>${stats.codes.total}</b>\n` +
+    `🟢 Активных: <b>${stats.codes.active}</b>\n` +
+    `👥 Пользователей: <b>${stats.users.total}</b>\n` +
+    `🎉 Активаций: <b>${stats.activations.total}</b>\n\n` +
+    `Выбери раздел:`;
+
+  const inline_keyboard = [
+    [
+      { text: "📋 Все коды", callback_data: "admin_all_all_0" },
+      { text: "➕ Создать", callback_data: "admin_create_help" },
+    ],
+    [
+      { text: "👥 Пользователи", callback_data: "admin_users_all_0" },
+      { text: "📊 Статистика", callback_data: "admin_stats" },
+    ],
+    [
+      { text: "📢 Рассылка", callback_data: "admin_broadcast_help" },
+      { text: "📝 Логи", callback_data: "admin_logs" },
+    ],
+    [
+      { text: "💾 Бэкапы", callback_data: "admin_backups" },
+      { text: "📈 График", callback_data: "admin_chart" },
+    ],
+    [
+      { text: "🏥 Health", callback_data: "admin_health" },
+      { text: "⬅️ В меню", callback_data: "home" },
+    ],
+  ];
+
+  return sendMessage(chatId, text, { parse_mode: "HTML", reply_markup: { inline_keyboard } });
+}
+
+// ============================================
+// 17. АДМИН-КОМАНДЫ
+// ============================================
+
+/**
+ * /create - создание кода
  */
 async function createCodeCommand(chatId, userId, args) {
   if (!isAdmin(userId)) {
     return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
+  }
+
+  // Rate limit на создание
+  const rl = await checkRateLimit(userId, "create_code", CONFIG.CREATE_LIMIT_MAX, CONFIG.CREATE_LIMIT_WINDOW);
+  if (!rl.allowed) {
+    return sendMessage(
+      chatId,
+      `⏳ Слишком много запросов на создание кодов.\nПодожди минуту.`,
+      { parse_mode: "HTML" }
+    );
   }
 
   if (args.length < 2) {
@@ -1605,8 +2029,8 @@ async function createCodeCommand(chatId, userId, args) {
         `<b>Использование:</b>\n` +
         `<code>/create НАЗВАНИЕ ДАТА [КАТЕГОРИЯ]</code>\n\n` +
         `<b>Форматы даты:</b>\n` +
-        `• <code>ДД.ММ.ГГГГ+ЧЧ:ММ</code> (абсолютная)\n` +
-        `• <code>+7d</code>, <code>+24h</code>, <code>+1w</code> (относительная)\n\n` +
+        `• <code>ДД.ММ.ГГГГ+ЧЧ:ММ</code>\n` +
+        `• <code>+7d</code>, <code>+24h</code>, <code>+1w</code>\n\n` +
         `<b>Категории:</b> NEW, EVENT, VIP, SECRET, STANDARD\n\n` +
         `<b>Примеры:</b>\n` +
         `<code>/create SUMMER2026 10.02.2045+16:10</code>\n` +
@@ -1623,20 +2047,13 @@ async function createCodeCommand(chatId, userId, args) {
   if (!expiresAt) {
     return sendMessage(
       chatId,
-      `❌ <b>Неверный формат даты</b>\n\n` +
-        `Поддерживаются:\n` +
-        `• <code>ДД.ММ.ГГГГ+ЧЧ:ММ</code>\n` +
-        `• <code>+7d</code>, <code>+24h</code>, <code>+1w</code>`,
+      `❌ <b>Неверный формат даты</b>`,
       { parse_mode: "HTML" }
     );
   }
 
   if (expiresAt <= Date.now()) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Дата уже прошла</b>\n\nУкажи дату в будущем.`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ <b>Дата уже прошла</b>`, { parse_mode: "HTML" });
   }
   
   if (!Object.values(CODE_CATEGORIES).includes(category)) {
@@ -1651,8 +2068,7 @@ async function createCodeCommand(chatId, userId, args) {
   if (existing) {
     return sendMessage(
       chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> уже существует.\n` +
-        `Используй другое название, /extend или /rename.`,
+      `❌ Код <code>${escapeHtml(name)}</code> уже существует.`,
       { parse_mode: "HTML" }
     );
   }
@@ -1664,7 +2080,7 @@ async function createCodeCommand(chatId, userId, args) {
     category,
   });
 
-  const categoryIcon = CATEGORY_ICONS[category] || "";
+  const categoryIcon = CATEGORY_ICONS[category] || "📦";
 
   return sendMessage(
     chatId,
@@ -1679,7 +2095,7 @@ async function createCodeCommand(chatId, userId, args) {
 }
 
 /**
- * Команда /link - привязка награды
+ * /link - привязка награды
  */
 async function linkCodeCommand(chatId, userId, codeName) {
   if (!isAdmin(userId)) {
@@ -1687,11 +2103,7 @@ async function linkCodeCommand(chatId, userId, codeName) {
   }
 
   if (!codeName) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи название кода.\n\nПример: <code>/link SUMMER2026</code>`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ Укажи название кода.`, { parse_mode: "HTML" });
   }
 
   const name = codeName.toUpperCase();
@@ -1717,21 +2129,16 @@ async function linkCodeCommand(chatId, userId, codeName) {
   return sendMessage(
     chatId,
     `🔗 <b>Настройка кода ${escapeHtml(name)}</b>\n\n` +
-      `Теперь отправь <b>одним сообщением</b> награду для этого кода.\n\n` +
-      `<b>Что можно отправить:</b>\n` +
-      `• Текст с HTML-форматированием\n` +
-      `• Фото с подписью (caption)\n` +
-      `• Документ с подписью\n` +
-      `• Видео с подписью\n\n` +
-      `<b>Поддерживаемые теги:</b>\n` +
-      `<code>&lt;b&gt;</code>, <code>&lt;i&gt;</code>, <code>&lt;code&gt;</code>, <code>&lt;a href="..."&gt;</code>\n\n` +
+      `Отправь награду одним сообщением:\n` +
+      `• Текст с HTML\n` +
+      `• Фото/документ/видео с подписью\n\n` +
       `⏳ У тебя есть <b>10 минут</b>.`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /all - список всех кодов
+ * /all - список кодов
  */
 async function listAllCodesCommand(chatId, userId, filter = null, page = 0) {
   if (!isAdmin(userId)) {
@@ -1750,7 +2157,6 @@ async function listAllCodesCommand(chatId, userId, filter = null, page = 0) {
     );
   }
 
-  // Собираем все коды с их статусами
   const codesData = [];
   for (const name of names) {
     const code = await getCode(name);
@@ -1758,7 +2164,6 @@ async function listAllCodesCommand(chatId, userId, filter = null, page = 0) {
     codesData.push({ name, code, status: codeStatus(code) });
   }
 
-  // Фильтруем если нужно
   let filtered = codesData;
   if (filter === "active") filtered = codesData.filter(c => c.status.status === CODE_STATUS.ACTIVE);
   else if (filter === "pending") filtered = codesData.filter(c => c.status.status === CODE_STATUS.PENDING);
@@ -1766,43 +2171,35 @@ async function listAllCodesCommand(chatId, userId, filter = null, page = 0) {
   else if (filter === "noreward") filtered = codesData.filter(c => c.status.status === CODE_STATUS.NO_REWARD);
 
   if (filtered.length === 0) {
-    return sendMessage(
-      chatId,
-      `📭 Нет кодов с таким фильтром.`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `📭 Нет кодов с таким фильтром.`, { parse_mode: "HTML" });
   }
 
-  // Сортируем: сначала активные, потом по дате создания
   filtered.sort((a, b) => {
     if (a.status.expired !== b.status.expired) return a.status.expired ? 1 : -1;
+    const order = { active: 0, pending: 1, no_reward: 2, disabled: 3 };
     if (a.code.status !== b.code.status) {
-      const order = { active: 0, pending: 1, no_reward: 2, disabled: 3 };
       return (order[a.code.status] || 9) - (order[b.code.status] || 9);
     }
     return (b.code.createdAt || 0) - (a.code.createdAt || 0);
   });
 
-  // Пагинация
   const startIndex = page * CONFIG.MAX_CODES_PER_PAGE;
   const endIndex = startIndex + CONFIG.MAX_CODES_PER_PAGE;
   const pageItems = filtered.slice(startIndex, endIndex);
   const totalPages = Math.ceil(filtered.length / CONFIG.MAX_CODES_PER_PAGE);
 
   let text = `📋 <b>Все промокоды</b> (${filtered.length})\n`;
-  text += `📄 Страница ${page + 1}/${totalPages}\n\n`;
-  text += `${STATUS_ICONS.active} активен • ${STATUS_ICONS.pending} процесс • ${STATUS_ICONS.no_reward} без награды • ${STATUS_ICONS.expired} истёк\n\n`;
+  text += `📄 ${progressBar(page + 1, totalPages)} ${page + 1}/${totalPages}\n\n`;
 
   for (const { name, code, status } of pageItems) {
     const usedCount = (code.usedBy || []).length;
-    const categoryIcon = CATEGORY_ICONS[code.category] || "";
+    const categoryIcon = CATEGORY_ICONS[code.category] || "📦";
     const limitStr = code.maxUses ? ` / ${code.maxUses}` : "";
     
     text += `${status.icon} ${categoryIcon}<code>${name}</code>\n`;
     text += `   └ ${status.label} • до ${formatDate(code.expiresAt)} • исп: ${usedCount}${limitStr}\n`;
   }
 
-  // Навигация
   const inline_keyboard = [];
   const navRow = [];
   
@@ -1814,15 +2211,12 @@ async function listAllCodesCommand(chatId, userId, filter = null, page = 0) {
     navRow.push({ text: "Вперёд ➡️", callback_data: `admin_all_${filter || "all"}_${page + 1}` });
   }
   
-  if (navRow.length > 0) {
-    inline_keyboard.push(navRow);
-  }
+  if (navRow.length > 0) inline_keyboard.push(navRow);
   
-  // Фильтры
   inline_keyboard.push([
     { text: "Все", callback_data: "admin_all_all_0" },
-    { text: "🟢 Активные", callback_data: "admin_all_active_0" },
-    { text: "🟠 Истёкшие", callback_data: "admin_all_expired_0" },
+    { text: "🟢", callback_data: "admin_all_active_0" },
+    { text: "🟠", callback_data: "admin_all_expired_0" },
   ]);
 
   return sendMessage(chatId, text, {
@@ -1832,7 +2226,7 @@ async function listAllCodesCommand(chatId, userId, filter = null, page = 0) {
 }
 
 /**
- * Команда /info - детальная инфа о коде
+ * /info - инфо о коде
  */
 async function infoCodeCommand(chatId, userId, codeName) {
   if (!isAdmin(userId)) {
@@ -1840,22 +2234,14 @@ async function infoCodeCommand(chatId, userId, codeName) {
   }
   
   if (!codeName) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи название кода.\nПример: <code>/info SUMMER2026</code>`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ Укажи название кода.`, { parse_mode: "HTML" });
   }
 
   const name = codeName.toUpperCase();
   const code = await getCode(name);
   
   if (!code) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ Код <code>${escapeHtml(name)}</code> не найден.`, { parse_mode: "HTML" });
   }
 
   const st = codeStatus(code);
@@ -1873,9 +2259,7 @@ async function infoCodeCommand(chatId, userId, codeName) {
   text += `🎯 <b>Лимит:</b> ${code.maxUses ? code.maxUses + " активаций" : "без ограничений"}\n`;
   text += `🔥 <b>Использовали:</b> ${usedCount} чел.\n`;
   
-  if (code.disabled) {
-    text += `⚫ <b>Код отключён</b>\n`;
-  }
+  if (code.disabled) text += `⚫ <b>Код отключён</b>\n`;
 
   if (code.reward) {
     text += `\n<b>🎁 Награда:</b>\n${truncate(code.reward, 300)}\n`;
@@ -1885,9 +2269,9 @@ async function infoCodeCommand(chatId, userId, codeName) {
     text += `\n<b>📋 Последние активации:</b>\n`;
     const recent = usedBy.slice(-10).reverse();
     for (const u of recent) {
-      const name = escapeHtml(u.name);
+      const uname = escapeHtml(u.name);
       const time = u.activatedAt ? smartDate(u.activatedAt) : "—";
-      text += `• ${name} (${time})\n`;
+      text += `• ${uname} (${time})\n`;
     }
     if (usedCount > 10) {
       text += `<i>... и ещё ${usedCount - 10} человек</i>\n`;
@@ -1901,7 +2285,7 @@ async function infoCodeCommand(chatId, userId, codeName) {
         { text: "⏰ Продлить", callback_data: `admin_extend_${name}` },
       ],
       [
-        { text: "🔄 Сбросить исп.", callback_data: `admin_reset_${name}` },
+        { text: "🔄 Сбросить", callback_data: `admin_reset_${name}` },
         { text: "📋 Копировать", callback_data: `admin_copy_${name}` },
       ],
       [
@@ -1918,62 +2302,33 @@ async function infoCodeCommand(chatId, userId, codeName) {
 }
 
 /**
- * Команда /extend - продление кода
+ * /extend
  */
 async function extendCodeCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
   if (args.length < 2) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/extend КОД ДАТА</code>\n\n` +
-        `<b>Примеры:</b>\n` +
-        `<code>/extend SUMMER2026 15.03.2025+12:00</code>\n` +
-        `<code>/extend SUMMER2026 +7d</code>`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ <code>/extend КОД ДАТА</code>`, { parse_mode: "HTML" });
   }
 
   const name = args[0].toUpperCase();
   const expiresAt = parseDate(args[1]);
 
-  if (!expiresAt) {
-    return sendMessage(
-      chatId,
-      `❌ Неверный формат даты.`,
-      { parse_mode: "HTML" }
-    );
-  }
-
-  if (expiresAt <= Date.now()) {
-    return sendMessage(
-      chatId,
-      `❌ Дата уже прошла.`,
-      { parse_mode: "HTML" }
-    );
+  if (!expiresAt || expiresAt <= Date.now()) {
+    return sendMessage(chatId, `❌ Неверный формат или дата прошла.`, { parse_mode: "HTML" });
   }
   
   const code = await getCode(name);
-  if (!code) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!code) return sendMessage(chatId, `❌ Код не найден.`, { parse_mode: "HTML" });
 
   const oldExpiresAt = code.expiresAt;
   code.expiresAt = expiresAt;
   await saveCode(name, code);
-  
   await logAction("code_extended", { userId: String(userId), extra: name });
 
   return sendMessage(
     chatId,
-    `✅ <b>Срок действия продлён!</b>\n\n` +
+    `✅ <b>Продлено!</b>\n\n` +
       `🔖 <code>${name}</code>\n` +
       `⏰ Было: ${formatDate(oldExpiresAt)}\n` +
       `⏰ Стало: ${formatDate(expiresAt)}`,
@@ -1982,74 +2337,83 @@ async function extendCodeCommand(chatId, userId, args) {
 }
 
 /**
- * Команда /delete - удаление кода
+ * /delete с подтверждением
  */
-async function deleteCodeCommand(chatId, userId, codeName) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+async function deleteCodeCommand(chatId, userId, codeName, confirmed = false) {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!codeName) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи название кода.\nПример: <code>/delete SUMMER2026</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!codeName) return sendMessage(chatId, `❌ Укажи код.`, { parse_mode: "HTML" });
 
   const name = codeName.toUpperCase();
-  if (!(await getCode(name))) {
+  const code = await getCode(name);
+  
+  if (!code) return sendMessage(chatId, `❌ Код <code>${name}</code> не найден.`, { parse_mode: "HTML" });
+
+  // Двухшаговое подтверждение
+  if (!confirmed) {
+    const usedCount = (code.usedBy || []).length;
     return sendMessage(
       chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
+      `⚠️ <b>Подтверди удаление</b>\n\n` +
+        `Код: <code>${name}</code>\n` +
+        `Использован: ${usedCount} раз\n\n` +
+        `Действие необратимо!`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🗑 Да, удалить", callback_data: `admin_del_confirm_${name}` },
+            { text: "❌ Отмена", callback_data: "cancel_action" },
+          ]],
+        },
+      }
     );
   }
 
   await deleteCode(name);
   await logAction("code_deleted", { userId: String(userId), extra: name });
 
-  return sendMessage(
-    chatId,
-    `🗑 <b>Код удалён</b>\n\n<code>${escapeHtml(name)}</code> полностью удалён из базы.`,
-    { parse_mode: "HTML" }
-  );
+  return sendMessage(chatId, `🗑 <b>Код удалён</b>\n\n<code>${escapeHtml(name)}</code>`, { parse_mode: "HTML" });
 }
 
 /**
- * Команда /reset - сброс использований кода
+ * /reset - сброс использований
  */
-async function resetCodeCommand(chatId, userId, codeName) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+async function resetCodeCommand(chatId, userId, codeName, confirmed = false) {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!codeName) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи название кода.\nПример: <code>/reset SUMMER2026</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!codeName) return sendMessage(chatId, `❌ Укажи код.`, { parse_mode: "HTML" });
 
   const name = codeName.toUpperCase();
   const code = await getCode(name);
   
-  if (!code) {
+  if (!code) return sendMessage(chatId, `❌ Код не найден.`, { parse_mode: "HTML" });
+
+  if (!confirmed) {
+    const usedCount = (code.usedBy || []).length;
     return sendMessage(
       chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
+      `⚠️ <b>Подтверди сброс</b>\n\n` +
+        `Код: <code>${name}</code>\n` +
+        `Будет сброшено активаций: ${usedCount}\n\n` +
+        `Также код будет убран из профилей всех пользователей.`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🔄 Да, сбросить", callback_data: `admin_reset_confirm_${name}` },
+            { text: "❌ Отмена", callback_data: "cancel_action" },
+          ]],
+        },
+      }
     );
   }
 
   const oldUsedCount = (code.usedBy || []).length;
   
-  // Сбрасываем использования в коде
   code.usedBy = [];
   await saveCode(name, code);
   
-  // 🔥 НОВОЕ: Очищаем этот код у ВСЕХ пользователей
   const allUsers = await getAllUsers();
   let usersCleared = 0;
   
@@ -2057,7 +2421,6 @@ async function resetCodeCommand(chatId, userId, codeName) {
     const user = await getUser(uid);
     if (!user.usedCodes || user.usedCodes.length === 0) continue;
     
-    // Фильтруем: убираем этот код из списка активаций
     const beforeLength = user.usedCodes.length;
     user.usedCodes = user.usedCodes.filter(item => {
       const itemName = typeof item === "string" ? item : item.name;
@@ -2070,107 +2433,65 @@ async function resetCodeCommand(chatId, userId, codeName) {
     }
   }
   
-  await logAction("code_reset", { 
-    userId: String(userId), 
-    extra: `${name} (${oldUsedCount} → 0, users: ${usersCleared})` 
-  });
+  await logAction("code_reset", { userId: String(userId), extra: `${name} (${oldUsedCount} → 0)` });
 
   return sendMessage(
     chatId,
-    `🔄 <b>Использования сброшены!</b>\n\n` +
+    `🔄 <b>Сброшено!</b>\n\n` +
       `Код <code>${name}</code> можно активировать снова.\n` +
-      `📊 Сброшено:\n` +
-      `• Активаций в коде: ${oldUsedCount}\n` +
+      `• Активаций сброшено: ${oldUsedCount}\n` +
       `• Пользователей обновлено: ${usersCleared}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /resetuser - сброс пользователя
+ * /resetuser
  */
 async function resetUserCommand(chatId, userId, targetId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!targetId) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи ID пользователя.\nПример: <code>/resetuser 123456789</code>`,
-      { parse_mode: "HTML" }
-    );
+  if (!targetId || !isNumeric(targetId)) {
+    return sendMessage(chatId, `❌ Укажи корректный ID.`, { parse_mode: "HTML" });
   }
 
   const target = await getUser(targetId);
   if (!target || !target.createdAt) {
-    return sendMessage(
-      chatId,
-      `❌ Пользователь <code>${targetId}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ Пользователь не найден.`, { parse_mode: "HTML" });
   }
 
   const oldCodes = target.usedCodes || [];
   await saveUser(targetId, { usedCodes: [], activations: 0 });
-  
-  await logAction("user_reset", { userId: String(userId), extra: `${targetId} (${oldCodes.length})` });
+  await logAction("user_reset", { userId: String(userId), extra: targetId });
 
   return sendMessage(
     chatId,
-    `🔄 <b>Пользователь сброшен!</b>\n\n` +
-      `ID: <code>${targetId}</code>\n` +
-      `Убрано кодов: ${oldCodes.length}`,
+    `🔄 <b>Сброшено!</b>\n\nID: <code>${targetId}</code>\nУбрано кодов: ${oldCodes.length}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /copy - копирование кода
+ * /copy
  */
 async function copyCodeCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
   if (args.length < 3) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/copy СТАРЫЙ НОВЫЙ ДАТА</code>\n\n` +
-        `Пример: <code>/copy PROMO1 PROMO2 +7d</code>`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ <code>/copy СТАРЫЙ НОВЫЙ ДАТА</code>`, { parse_mode: "HTML" });
   }
 
   const oldName = args[0].toUpperCase();
   const newName = args[1].toUpperCase();
   const expiresAt = parseDate(args[2]);
 
-  if (!expiresAt) {
-    return sendMessage(chatId, `❌ Неверный формат даты.`, { parse_mode: "HTML" });
-  }
-
-  if (expiresAt <= Date.now()) {
-    return sendMessage(chatId, `❌ Дата уже прошла.`, { parse_mode: "HTML" });
-  }
+  if (!expiresAt) return sendMessage(chatId, `❌ Неверная дата.`, { parse_mode: "HTML" });
+  if (expiresAt <= Date.now()) return sendMessage(chatId, `❌ Дата прошла.`, { parse_mode: "HTML" });
   
   const oldCode = await getCode(oldName);
-  if (!oldCode) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(oldName)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!oldCode) return sendMessage(chatId, `❌ Код <code>${oldName}</code> не найден.`, { parse_mode: "HTML" });
   
-  if (await getCode(newName)) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(newName)}</code> уже существует.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (await getCode(newName)) return sendMessage(chatId, `❌ Код <code>${newName}</code> уже существует.`, { parse_mode: "HTML" });
 
   const newCode = {
     ...oldCode,
@@ -2187,61 +2508,35 @@ async function copyCodeCommand(chatId, userId, args) {
 
   return sendMessage(
     chatId,
-    `✅ <b>Код скопирован!</b>\n\n` +
+    `✅ <b>Скопировано!</b>\n\n` +
       `Из: <code>${oldName}</code>\n` +
       `В: <code>${newName}</code>\n` +
-      `⏰ Истекает: ${formatDate(expiresAt)}\n` +
-      `🎁 Награда скопирована`,
+      `⏰ Истекает: ${formatDate(expiresAt)}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /rename - переименование кода
+ * /rename
  */
 async function renameCodeCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (args.length < 2) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/rename СТАРЫЙ НОВЫЙ</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (args.length < 2) return sendMessage(chatId, `❌ <code>/rename СТАРЫЙ НОВЫЙ</code>`, { parse_mode: "HTML" });
 
   const oldName = args[0].toUpperCase();
   const newName = args[1].toUpperCase();
 
-  if (oldName === newName) {
-    return sendMessage(chatId, `❌ Имена совпадают.`, { parse_mode: "HTML" });
-  }
+  if (oldName === newName) return sendMessage(chatId, `❌ Имена совпадают.`, { parse_mode: "HTML" });
   
   const oldCode = await getCode(oldName);
-  if (!oldCode) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(oldName)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!oldCode) return sendMessage(chatId, `❌ Код не найден.`, { parse_mode: "HTML" });
   
-  if (await getCode(newName)) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(newName)}</code> уже существует.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (await getCode(newName)) return sendMessage(chatId, `❌ Код <code>${newName}</code> уже есть.`, { parse_mode: "HTML" });
 
-  // Создаём новый с новым именем
   oldCode.name = newName;
   await saveCode(newName, oldCode);
   
-  // Обновляем ссылки у пользователей
   const allUsers = await getAllUsers();
   let updatedUsers = 0;
   for (const uid of allUsers) {
@@ -2267,47 +2562,28 @@ async function renameCodeCommand(chatId, userId, args) {
     }
   }
   
-  // Удаляем старый
   await deleteCode(oldName);
-  
   await logAction("code_renamed", { userId: String(userId), extra: `${oldName} → ${newName}` });
 
   return sendMessage(
     chatId,
-    `✅ <b>Код переименован!</b>\n\n` +
-      `Было: <code>${oldName}</code>\n` +
-      `Стало: <code>${newName}</code>\n` +
-      `Обновлено пользователей: ${updatedUsers}`,
+    `✅ <b>Переименовано!</b>\n\nБыло: <code>${oldName}</code>\nСтало: <code>${newName}</code>\nОбновлено: ${updatedUsers}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /reward - изменение награды существующего кода
+ * /reward
  */
 async function rewardCodeCommand(chatId, userId, codeName) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!codeName) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи название кода.\nПример: <code>/reward SUMMER2026</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!codeName) return sendMessage(chatId, `❌ Укажи код.`, { parse_mode: "HTML" });
 
   const name = codeName.toUpperCase();
   const code = await getCode(name);
   
-  if (!code) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!code) return sendMessage(chatId, `❌ Код не найден.`, { parse_mode: "HTML" });
 
   await saveUser(userId, {
     state: "updating_reward",
@@ -2321,124 +2597,74 @@ async function rewardCodeCommand(chatId, userId, codeName) {
     chatId,
     `🎁 <b>Изменение награды</b>\n\n` +
       `Код: <code>${name}</code>\n` +
-      `Текущая награда:\n<code>${truncate(currentReward, 200)}</code>\n\n` +
-      `Отправь <b>новую награду</b> одним сообщением (текст или медиа).\n` +
-      `⏳ У тебя 10 минут.`,
+      `Текущая: <code>${truncate(currentReward, 200)}</code>\n\n` +
+      `Отправь новую награду.`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /setlimit - установка лимита активаций
+ * /setlimit
  */
 async function setLimitCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (args.length < 2) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/setlimit КОД N</code>\n\n` +
-        `Пример: <code>/setlimit PROMO 100</code>\n` +
-        `Укажи 0 для отмены лимита.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (args.length < 2) return sendMessage(chatId, `❌ <code>/setlimit КОД N</code>`, { parse_mode: "HTML" });
 
   const name = args[0].toUpperCase();
   const limit = safeParseInt(args[1]);
 
-  if (limit === null || limit < 0) {
-    return sendMessage(chatId, `❌ Лимит должен быть числом >= 0.`, { parse_mode: "HTML" });
-  }
+  if (limit === null || limit < 0) return sendMessage(chatId, `❌ Лимит >= 0.`, { parse_mode: "HTML" });
   
   const code = await getCode(name);
-  if (!code) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!code) return sendMessage(chatId, `❌ Код не найден.`, { parse_mode: "HTML" });
 
   const oldLimit = code.maxUses || 0;
   code.maxUses = limit;
   await saveCode(name, code);
 
-  const limitStr = limit === 0 ? "без ограничений" : `${limit} активаций`;
-  const oldStr = oldLimit === 0 ? "без ограничений" : `${oldLimit} активаций`;
-
   return sendMessage(
     chatId,
-    `✅ <b>Лимит изменён!</b>\n\n` +
-      `Код: <code>${name}</code>\n` +
-      `Было: ${oldStr}\n` +
-      `Стало: ${limitStr}`,
+    `✅ <b>Лимит изменён</b>\n\n` +
+      `Было: ${oldLimit === 0 ? "∞" : oldLimit}\n` +
+      `Стало: ${limit === 0 ? "∞" : limit}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /activate - принудительная активация кода для юзера
+ * /activate
  */
 async function activateForUserCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (args.length < 2) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/activate КОД USER_ID</code>\n\n` +
-        `Пример: <code>/activate PROMO 123456789</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (args.length < 2) return sendMessage(chatId, `❌ <code>/activate КОД USER_ID</code>`, { parse_mode: "HTML" });
 
   const name = args[0].toUpperCase();
   const targetId = args[1];
 
+  if (!isNumeric(targetId)) return sendMessage(chatId, `❌ ID должен быть числом.`, { parse_mode: "HTML" });
+
   const code = await getCode(name);
-  if (!code) {
-    return sendMessage(
-      chatId,
-      `❌ Код <code>${escapeHtml(name)}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!code) return sendMessage(chatId, `❌ Код не найден.`, { parse_mode: "HTML" });
 
   const user = await getUser(targetId);
   
-  // Проверяем, не использовал ли уже
-  const alreadyUsed = user.usedCodes.some(item => {
+  const alreadyUsed = (user.usedCodes || []).some(item => {
     const codeName = typeof item === "string" ? item : item.name;
     return codeName.toUpperCase() === name;
   });
   
-  if (alreadyUsed) {
-    return sendMessage(
-      chatId,
-      `⚠️ Пользователь уже активировал этот код.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (alreadyUsed) return sendMessage(chatId, `⚠️ Уже активирован.`, { parse_mode: "HTML" });
 
-  // Активируем
-  user.usedCodes.push({
+  user.usedCodes = [...(user.usedCodes || []), {
     name: name,
     activatedAt: Date.now(),
     category: code.category,
-  });
+  }];
   user.activations = (user.activations || 0) + 1;
-  await saveUser(targetId, { 
-    usedCodes: user.usedCodes, 
-    activations: user.activations 
-  });
+  await saveUser(targetId, { usedCodes: user.usedCodes, activations: user.activations });
 
-  // Обновляем код
   const usedBy = code.usedBy || [];
   usedBy.push({ 
     id: String(targetId), 
@@ -2449,180 +2675,121 @@ async function activateForUserCommand(chatId, userId, args) {
   code.usedBy = usedBy;
   await saveCode(name, code);
   
-  await logAction("admin_activation", { 
-    userId: String(userId), 
-    extra: `${name} → ${targetId}` 
-  });
+  await logAction("admin_activation", { userId: String(userId), extra: `${name} → ${targetId}` });
 
-  // Отправляем награду пользователю
   if (code.reward) {
     try {
       await sendMessage(
         targetId,
         `🎁 <b>Тебе начислена награда от администратора!</b>\n\n` +
-          `Промокод: <code>${name}</code>\n\n` +
-          `${code.reward}`,
+          `Промокод: <code>${name}</code>\n\n${code.reward}`,
         { parse_mode: "HTML" }
       );
-    } catch (e) {
-      // Пользователь мог заблокировать бота
-    }
+    } catch (e) {}
   }
+
+  await checkActivationBadges(targetId, user.activations);
 
   return sendMessage(
     chatId,
-    `✅ <b>Активация выполнена!</b>\n\n` +
-      `Код: <code>${name}</code>\n` +
-      `Пользователь: <code>${targetId}</code>\n` +
-      `Награда отправлена в личку.`,
+    `✅ <b>Активация выполнена</b>\n\nКод: <code>${name}</code>\nЮзер: <code>${targetId}</code>`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /ban
+ * /ban
  */
 async function banUserCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (args.length < 1) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/ban USER_ID [ПРИЧИНА]</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (args.length < 1) return sendMessage(chatId, `❌ <code>/ban USER_ID [ПРИЧИНА]</code>`, { parse_mode: "HTML" });
 
   const targetId = args[0];
   const reason = args.slice(1).join(" ") || "—";
 
-  if (isAdmin(targetId)) {
-    return sendMessage(chatId, `❌ Нельзя забанить другого админа.`, { parse_mode: "HTML" });
-  }
+  if (!isNumeric(targetId)) return sendMessage(chatId, `❌ ID должен быть числом.`, { parse_mode: "HTML" });
+  if (isAdmin(targetId)) return sendMessage(chatId, `❌ Нельзя забанить админа.`, { parse_mode: "HTML" });
 
   await banUser(targetId, reason);
 
   return sendMessage(
     chatId,
-    `⛔ <b>Пользователь забанен</b>\n\n` +
-      `ID: <code>${targetId}</code>\n` +
-      `Причина: ${escapeHtml(reason)}`,
+    `⛔ <b>Забанен</b>\n\nID: <code>${targetId}</code>\nПричина: ${escapeHtml(reason)}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /unban
+ * /unban
  */
 async function unbanUserCommand(chatId, userId, targetId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!targetId) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи ID пользователя.\nПример: <code>/unban 123456789</code>`,
-      { parse_mode: "HTML" }
-    );
+  if (!targetId || !isNumeric(targetId)) {
+    return sendMessage(chatId, `❌ Укажи корректный ID.`, { parse_mode: "HTML" });
   }
 
   await unbanUser(targetId);
 
-  return sendMessage(
-    chatId,
-    `✅ <b>Пользователь разбанен</b>\n\nID: <code>${targetId}</code>`,
-    { parse_mode: "HTML" }
-  );
+  return sendMessage(chatId, `✅ <b>Разбанен</b>\n\nID: <code>${targetId}</code>`, { parse_mode: "HTML" });
 }
 
 /**
- * Команда /mute
+ * /mute
  */
 async function muteUserCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (args.length < 1) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/mute USER_ID [ЧАСЫ]</code>\n\n` +
-        `Пример: <code>/mute 123456789 24</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (args.length < 1) return sendMessage(chatId, `❌ <code>/mute USER_ID [ЧАСЫ]</code>`, { parse_mode: "HTML" });
 
   const targetId = args[0];
   const hours = args[1] ? safeParseInt(args[1]) : 0;
 
-  if (isAdmin(targetId)) {
-    return sendMessage(chatId, `❌ Нельзя замутить админа.`, { parse_mode: "HTML" });
-  }
+  if (!isNumeric(targetId)) return sendMessage(chatId, `❌ ID должен быть числом.`, { parse_mode: "HTML" });
+  if (isAdmin(targetId)) return sendMessage(chatId, `❌ Нельзя замутить админа.`, { parse_mode: "HTML" });
 
   const durationMs = hours > 0 ? hours * 60 * 60 * 1000 : 0;
   await muteUser(targetId, durationMs);
 
-  const durationStr = hours > 0 ? `на ${hours} ч.` : "бессрочно";
+  const durationStr = hours > 0 ? `${hours} ч.` : "бессрочно";
 
   return sendMessage(
     chatId,
-    `🔇 <b>Пользователь замучен</b>\n\n` +
-      `ID: <code>${targetId}</code>\n` +
-      `Длительность: ${durationStr}`,
+    `🔇 <b>Замучен</b>\n\nID: <code>${targetId}</code>\nДлительность: ${durationStr}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /unmute
+ * /unmute
  */
 async function unmuteUserCommand(chatId, userId, targetId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!targetId) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи ID.\nПример: <code>/unmute 123456789</code>`,
-      { parse_mode: "HTML" }
-    );
+  if (!targetId || !isNumeric(targetId)) {
+    return sendMessage(chatId, `❌ Укажи корректный ID.`, { parse_mode: "HTML" });
   }
 
   await unmuteUser(targetId);
 
-  return sendMessage(
-    chatId,
-    `🔊 <b>Пользователь размучен</b>\n\nID: <code>${targetId}</code>`,
-    { parse_mode: "HTML" }
-  );
+  return sendMessage(chatId, `🔊 <b>Размучен</b>\n\nID: <code>${targetId}</code>`, { parse_mode: "HTML" });
 }
 
 /**
- * Команда /users - список пользователей
+ * /users
  */
 async function listUsersCommand(chatId, userId, page = 0, filter = null) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   const allUsers = await getAllUsers();
   
-  // Собираем данные
   const usersData = [];
   for (const uid of allUsers) {
     const user = await getUser(uid);
-    if (user && user.createdAt) {
-      usersData.push(user);
-    }
+    if (user && user.createdAt) usersData.push(user);
   }
   
-  // Фильтруем
   let filtered = usersData;
   if (filter === "banned") filtered = usersData.filter(u => u.banned);
   else if (filter === "muted") filtered = usersData.filter(u => u.muted);
@@ -2631,7 +2798,6 @@ async function listUsersCommand(chatId, userId, page = 0, filter = null) {
     filtered = usersData.filter(u => u.lastSeen && u.lastSeen > dayAgo);
   }
   
-  // Сортируем по последнему визиту
   filtered.sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
 
   if (filtered.length === 0) {
@@ -2644,7 +2810,7 @@ async function listUsersCommand(chatId, userId, page = 0, filter = null) {
   const pageItems = filtered.slice(startIndex, endIndex);
 
   let text = `👥 <b>Пользователи (${filtered.length})</b>\n`;
-  text += `📄 Страница ${page + 1}/${totalPages}\n\n`;
+  text += `📄 ${progressBar(page + 1, totalPages)} ${page + 1}/${totalPages}\n\n`;
 
   for (const user of pageItems) {
     const name = user.username ? `@${escapeHtml(user.username)}` : `ID <code>${user.userId}</code>`;
@@ -2661,19 +2827,15 @@ async function listUsersCommand(chatId, userId, page = 0, filter = null) {
   const inline_keyboard = [];
   const navRow = [];
   
-  if (page > 0) {
-    navRow.push({ text: "⬅️", callback_data: `admin_users_${filter || "all"}_${page - 1}` });
-  }
-  if (page < totalPages - 1) {
-    navRow.push({ text: "➡️", callback_data: `admin_users_${filter || "all"}_${page + 1}` });
-  }
+  if (page > 0) navRow.push({ text: "⬅️", callback_data: `admin_users_${filter || "all"}_${page - 1}` });
+  if (page < totalPages - 1) navRow.push({ text: "➡️", callback_data: `admin_users_${filter || "all"}_${page + 1}` });
   
   if (navRow.length > 0) inline_keyboard.push(navRow);
   
   inline_keyboard.push([
     { text: "Все", callback_data: "admin_users_all_0" },
-    { text: "⛔ Бан", callback_data: "admin_users_banned_0" },
-    { text: "🟢 Активные", callback_data: "admin_users_active_0" },
+    { text: "⛔", callback_data: "admin_users_banned_0" },
+    { text: "🟢", callback_data: "admin_users_active_0" },
   ]);
 
   return sendMessage(chatId, text, {
@@ -2683,34 +2845,26 @@ async function listUsersCommand(chatId, userId, page = 0, filter = null) {
 }
 
 /**
- * Команда /whois - инфа о конкретном пользователе
+ * /whois
  */
 async function whoisCommand(chatId, userId, targetId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!targetId) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи ID пользователя.\nПример: <code>/whois 123456789</code>`,
-      { parse_mode: "HTML" }
-    );
+  if (!targetId || !isNumeric(targetId)) {
+    return sendMessage(chatId, `❌ Укажи корректный ID.`, { parse_mode: "HTML" });
   }
 
   const user = await getUser(targetId);
   
   if (!user || !user.createdAt) {
-    return sendMessage(
-      chatId,
-      `❌ Пользователь <code>${targetId}</code> не найден.`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ Пользователь <code>${targetId}</code> не найден.`, { parse_mode: "HTML" });
   }
 
   const name = user.username ? `@${escapeHtml(user.username)}` : "не указан";
   const banned = user.banned ? `⛔ Да (${escapeHtml(user.banReason || "—")})` : "Нет";
   const muted = user.muted ? `🔇 До ${formatDate(user.mutedUntil)}` : "Нет";
+  const badges = (user.badges || []).map(b => BADGES[b]).filter(Boolean);
+  const badgesText = badges.length > 0 ? badges.map(b => `${b.emoji} ${b.name}`).join(", ") : "Нет";
   
   let codesList = "Пусто";
   if (user.usedCodes && user.usedCodes.length > 0) {
@@ -2732,8 +2886,10 @@ async function whoisCommand(chatId, userId, targetId) {
     `👁 <b>Последний визит:</b> ${user.lastSeen ? smartDate(user.lastSeen) : "—"}\n` +
     `⛔ <b>Забанен:</b> ${banned}\n` +
     `🔇 <b>Замучен:</b> ${muted}\n` +
-    `🎯 <b>Активаций:</b> ${user.activations || 0}\n\n` +
-    `📋 <b>Активированные коды (${user.usedCodes?.length || 0}):</b>\n${codesList}`;
+    `🎯 <b>Активаций:</b> ${user.activations || 0}\n` +
+    `🏅 <b>Бейджи:</b> ${badgesText}\n` +
+    `🔗 <b>Рефералов:</b> ${(user.referrals || []).length}\n\n` +
+    `📋 <b>Коды (${user.usedCodes?.length || 0}):</b>\n${codesList}`;
 
   const inline_keyboard = [
     [
@@ -2741,8 +2897,8 @@ async function whoisCommand(chatId, userId, targetId) {
       { text: "🔇 Мут", callback_data: `admin_mute_${targetId}` },
     ],
     [
-      { text: "🔄 Сбросить коды", callback_data: `admin_resetuser_${targetId}` },
-      { text: "🎁 Активировать код", callback_data: `admin_activate_${targetId}` },
+      { text: "🔄 Сброс", callback_data: `admin_resetuser_${targetId}` },
+      { text: "🎁 Активировать", callback_data: `admin_activate_${targetId}` },
     ],
   ];
 
@@ -2753,47 +2909,53 @@ async function whoisCommand(chatId, userId, targetId) {
 }
 
 /**
- * Команда /broadcast - массовая рассылка
+ * /broadcast
  */
-async function broadcastCommand(chatId, userId, text) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+async function broadcastCommand(chatId, userId, text, confirmed = false) {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
   if (!text) {
     return sendMessage(
       chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/broadcast Текст рассылки</code>\n\n` +
-        `Поддерживается HTML-форматирование.`,
+      `❌ <code>/broadcast ТЕКСТ</code>`,
       { parse_mode: "HTML" }
+    );
+  }
+
+  if (!confirmed) {
+    const users = await getAllUsers();
+    return sendMessage(
+      chatId,
+      `⚠️ <b>Подтверди рассылку</b>\n\n` +
+        `Получателей: ${users.length}\n\n` +
+        `Текст:\n${truncate(text, 200)}`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "📢 Да, отправить", callback_data: `admin_bc_confirm` },
+            { text: "❌ Отмена", callback_data: "cancel_action" },
+          ]],
+        },
+      }
     );
   }
 
   const users = await getAllUsers();
-  if (users.length === 0) {
-    return sendMessage(chatId, "❌ Нет пользователей для рассылки.", { parse_mode: "HTML" });
-  }
+  if (users.length === 0) return sendMessage(chatId, "❌ Нет пользователей.", { parse_mode: "HTML" });
   
   if (users.length > CONFIG.MAX_BROADCAST_USERS) {
-    return sendMessage(
-      chatId,
-      `⚠️ Слишком много пользователей (${users.length}). Макс: ${CONFIG.MAX_BROADCAST_USERS}`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `⚠️ Слишком много: ${users.length}`, { parse_mode: "HTML" });
   }
 
   const startMsg = await sendMessage(
     chatId,
-    `⏳ <b>Запуск рассылки...</b>\n\n` +
-      `Получателей: ${users.length}\n` +
-      `Ожидаемое время: ~${Math.ceil(users.length * CONFIG.BROADCAST_DELAY / 1000)}с`,
+    `⏳ <b>Рассылка...</b>\n\nПолучателей: ${users.length}`,
     { parse_mode: "HTML" }
   );
 
   let success = 0;
   let failed = 0;
-  const failedIds = [];
 
   for (let i = 0; i < users.length; i++) {
     const uid = users[i];
@@ -2803,22 +2965,16 @@ async function broadcastCommand(chatId, userId, text) {
       { parse_mode: "HTML" }
     );
     
-    if (res.ok) {
-      success++;
-    } else {
-      failed++;
-      failedIds.push(uid);
-    }
+    if (res.ok) success++;
+    else failed++;
     
-    // Обновляем прогресс каждые 50 пользователей
     if (i > 0 && i % 50 === 0 && startMsg.result?.message_id) {
       await editMessage(
         chatId,
         startMsg.result.message_id,
         `⏳ <b>Рассылка...</b>\n\n` +
-          `Прогресс: ${i}/${users.length} (${Math.floor(i/users.length*100)}%)\n` +
-          `✅ Доставлено: ${success}\n` +
-          `❌ Ошибок: ${failed}`,
+          `${progressBar(i, users.length, 20)} ${Math.floor(i/users.length*100)}%\n` +
+          `✅ ${success} | ❌ ${failed}`,
         { parse_mode: "HTML" }
       );
     }
@@ -2827,14 +2983,10 @@ async function broadcastCommand(chatId, userId, text) {
   }
   
   await incrementStat("broadcasts_sent", 1);
-  await logAction("broadcast", { 
-    userId: String(userId), 
-    extra: `${success}/${users.length}` 
-  });
+  await logAction("broadcast", { userId: String(userId), extra: `${success}/${users.length}` });
 
   const finalText = 
     `✅ <b>Рассылка завершена!</b>\n\n` +
-    `📊 <b>Статистика:</b>\n` +
     `• Всего: ${users.length}\n` +
     `• Доставлено: ${success}\n` +
     `• Ошибок: ${failed}\n` +
@@ -2848,75 +3000,52 @@ async function broadcastCommand(chatId, userId, text) {
 }
 
 /**
- * Команда /announce - объявление с подтверждением
+ * /announce
  */
 async function announceCommand(chatId, userId, text) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!text) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи текст объявления.`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!text) return sendMessage(chatId, `❌ Укажи текст.`, { parse_mode: "HTML" });
 
-  // Сохраняем текст и просим подтверждение
   await saveUser(userId, {
     state: "confirming_announce",
     pendingAnnouncement: text,
     stateExpiresAt: Date.now() + CONFIG.STATE_TIMEOUT,
   });
 
-  const reply_markup = {
-    inline_keyboard: [
-      [
-        { text: "✅ Отправить", callback_data: "confirm_announce" },
-        { text: "❌ Отмена", callback_data: "cancel_announce" },
-      ],
-    ],
-  };
+  const users = await getAllUsers();
 
   return sendMessage(
     chatId,
     `📢 <b>Подтверждение объявления</b>\n\n` +
       `Текст:\n${text}\n\n` +
-      `Это сообщение будет отправлено всем ${await (await getAllUsers()).length} пользователям с кнопкой "ОК".`,
-    { parse_mode: "HTML", reply_markup }
+      `Будет отправлено ${users.length} пользователям с кнопкой "ОК".`,
+    {
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: [[
+          { text: "✅ Отправить", callback_data: "confirm_announce" },
+          { text: "❌ Отмена", callback_data: "cancel_announce" },
+        ]],
+      },
+    }
   );
 }
 
 /**
- * Команда /schedule - отложенная рассылка
+ * /schedule
  */
 async function scheduleCommand(chatId, userId, args) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (args.length < 2) {
-    return sendMessage(
-      chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/schedule ДАТА ТЕКСТ</code>\n\n` +
-        `Пример: <code>/schedule +1d Напоминание о конкурсе!</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (args.length < 2) return sendMessage(chatId, `❌ <code>/schedule ДАТА ТЕКСТ</code>`, { parse_mode: "HTML" });
 
   const dateStr = args[0];
   const text = args.slice(1).join(" ");
   const timestamp = parseDate(dateStr);
 
-  if (!timestamp) {
-    return sendMessage(chatId, `❌ Неверный формат даты.`, { parse_mode: "HTML" });
-  }
-
-  if (timestamp <= Date.now()) {
-    return sendMessage(chatId, `❌ Дата должна быть в будущем.`, { parse_mode: "HTML" });
-  }
+  if (!timestamp) return sendMessage(chatId, `❌ Неверная дата.`, { parse_mode: "HTML" });
+  if (timestamp <= Date.now()) return sendMessage(chatId, `❌ Дата должна быть в будущем.`, { parse_mode: "HTML" });
 
   const scheduleId = generateId();
   const schedules = (await kv.get(KV_PREFIXES.SCHEDULES)) || [];
@@ -2934,243 +3063,201 @@ async function scheduleCommand(chatId, userId, args) {
 
   return sendMessage(
     chatId,
-    `⏰ <b>Рассылка запланирована!</b>\n\n` +
+    `⏰ <b>Запланировано!</b>\n\n` +
       `ID: <code>${scheduleId}</code>\n` +
-      `Дата: ${formatDate(timestamp)}\n` +
-      `Через: ${timeAgo(timestamp).replace("назад", "")}\n\n` +
-      `<i>Для отмены: /cancelschedule ${scheduleId}</i>`,
+      `Дата: ${formatDate(timestamp)}`,
     { parse_mode: "HTML" }
   );
 }
 
 /**
- * Команда /logs - просмотр логов
+ * /logs
  */
 async function logsCommand(chatId, userId, limit = 30) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   const logs = await getLogs(limit);
 
-  if (logs.length === 0) {
-    return sendMessage(chatId, "📭 Лог пуст.", { parse_mode: "HTML" });
-  }
+  if (logs.length === 0) return sendMessage(chatId, "📭 Лог пуст.", { parse_mode: "HTML" });
 
   let text = `📝 <b>Последние действия (${logs.length})</b>\n\n`;
-  
-  for (const entry of logs) {
-    text += formatLogEntry(entry) + "\n";
-  }
-
-  const reply_markup = {
-    inline_keyboard: [
-      [{ text: "🗑 Очистить лог", callback_data: "admin_clearlogs" }],
-    ],
-  };
+  for (const entry of logs) text += formatLogEntry(entry) + "\n";
 
   return sendMessage(chatId, text, {
     parse_mode: "HTML",
-    reply_markup,
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "🗑 Очистить лог", callback_data: "admin_clearlogs" },
+      ]],
+    },
   });
 }
 
 /**
- * Команда /clearlogs
+ * /clearlogs
  */
 async function clearLogsCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
-
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   await clearLogs();
   return sendMessage(chatId, `✅ Лог очищен.`, { parse_mode: "HTML" });
 }
 
 /**
- * Команда /backup - создание бэкапа
+ * /backup
  */
 async function backupCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   await sendChatAction(chatId, "typing");
   
   try {
     const backupId = await createBackup(userId);
-    
     return sendMessage(
       chatId,
-      `💾 <b>Бэкап создан!</b>\n\n` +
-        `ID: <code>${backupId}</code>\n` +
-        `Время: ${smartDate(Date.now())}\n\n` +
-        `<i>Для восстановления: /restore ${backupId}</i>`,
+      `💾 <b>Бэкап создан!</b>\n\nID: <code>${backupId}</code>\nВремя: ${smartDate(Date.now())}`,
       { parse_mode: "HTML" }
     );
   } catch (e) {
-    return sendMessage(
-      chatId,
-      `❌ Ошибка при создании бэкапа: ${e.message}`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ ${e.message}`, { parse_mode: "HTML" });
   }
 }
 
 /**
- * Команда /backups - список бэкапов
+ * /backups
  */
 async function backupsListCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   const backups = await listBackups();
 
   if (backups.length === 0) {
-    return sendMessage(
-      chatId,
-      `📭 Нет бэкапов.\n\nСоздай: <code>/backup</code>`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `📭 Нет бэкапов.`, { parse_mode: "HTML" });
   }
 
-  let text = `💾 <b>Список бэкапов (${backups.length})</b>\n\n`;
+  let text = `💾 <b>Бэкапы (${backups.length})</b>\n\n`;
   
   for (const b of backups) {
     text += `📦 <code>${b.id}</code>\n`;
     text += `   └ ${smartDate(b.createdAt)} • ${b.codesCount} кодов • ${b.usersCount} юзеров\n\n`;
   }
-  
-  text += `<i>Для восстановления: <code>/restore ID</code></i>`;
 
   return sendMessage(chatId, text, { parse_mode: "HTML" });
 }
 
 /**
- * Команда /restore - восстановление из бэкапа
+ * /restore
  */
-async function restoreCommand(chatId, userId, backupId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+async function restoreCommand(chatId, userId, backupId, mode = "replace") {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
   
-  if (!backupId) {
-    return sendMessage(
-      chatId,
-      `❌ Укажи ID бэкапа.\nПример: <code>/restore abc123</code>\n\n` +
-        `Список бэкапов: <code>/backups</code>`,
-      { parse_mode: "HTML" }
-    );
-  }
+  if (!backupId) return sendMessage(chatId, `❌ Укажи ID бэкапа.`, { parse_mode: "HTML" });
 
   await sendChatAction(chatId, "typing");
   
   try {
-    const result = await restoreBackup(backupId);
-    
+    const result = await restoreBackup(backupId, mode);
     return sendMessage(
       chatId,
-      `✅ <b>Бэкап восстановлен!</b>\n\n` +
-        `ID: <code>${backupId}</code>\n` +
+      `✅ <b>Восстановлено!</b>\n\n` +
+        `Режим: ${mode}\n` +
+        `Удалено кодов: ${result.codesDeleted}\n` +
         `Кодов: ${result.codesRestored}\n` +
         `Пользователей: ${result.usersRestored}`,
       { parse_mode: "HTML" }
     );
   } catch (e) {
-    return sendMessage(
-      chatId,
-      `❌ Ошибка: ${e.message}`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ ${e.message}`, { parse_mode: "HTML" });
   }
 }
 
 /**
- * Команда /export
+ * /export
  */
 async function exportCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   await sendChatAction(chatId, "typing");
   
   try {
     const json = await exportCodes();
     
-    // Отправляем как документ
-    const blob = new Blob([json], { type: "application/json" });
-    const fileId = `export_${Date.now()}.json`;
-    
-    // В Vercel нет прямого доступа к отправке файла через blob,
-    // поэтому отправляем как код
     if (json.length > CONFIG.MAX_MESSAGE_LENGTH) {
-      // Разбиваем на части или отправляем ссылку
       return sendMessage(
         chatId,
-        `📦 <b>Экспорт кодов</b>\n\n` +
-          `Размер: ${json.length} символов\n` +
-          `Слишком большой для отправки в сообщении.\n\n` +
-          `Используй <code>/backup</code> для полного бэкапа.`,
+        `📦 <b>Экспорт кодов</b>\n\nРазмер: ${json.length} символов — слишком большой.\n\nИспользуй /backup.`,
         { parse_mode: "HTML" }
       );
     }
     
     return sendMessage(
       chatId,
-      `📦 <b>Экспорт кодов</b>\n\n` +
-        `<pre><code>${escapeHtml(json)}</code></pre>`,
+      `📦 <b>Экспорт кодов</b>\n\n<pre><code>${escapeHtml(json)}</code></pre>`,
       { parse_mode: "HTML" }
     );
   } catch (e) {
-    return sendMessage(chatId, `❌ Ошибка: ${e.message}`, { parse_mode: "HTML" });
+    return sendMessage(chatId, `❌ ${e.message}`, { parse_mode: "HTML" });
   }
 }
 
 /**
- * Команда /import
+ * 🔥 НОВОЕ: /exportcsv
  */
-async function importCommand(chatId, userId, jsonData) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+async function exportCsvCommand(chatId, userId) {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
+
+  await sendChatAction(chatId, "typing");
   
-  if (!jsonData) {
+  try {
+    const csv = await exportUsersCSV();
+    
+    if (csv.length > CONFIG.MAX_MESSAGE_LENGTH) {
+      // Показываем первые 200 строк
+      const lines = csv.split("\n");
+      const preview = lines.slice(0, 200).join("\n");
+      return sendMessage(
+        chatId,
+        `📊 <b>CSV экспорт (первые 200 из ${lines.length} строк)</b>\n\n<pre><code>${escapeHtml(preview)}</code></pre>`,
+        { parse_mode: "HTML" }
+      );
+    }
+    
     return sendMessage(
       chatId,
-      `❌ <b>Неверный формат</b>\n\n` +
-        `<code>/import JSON</code>\n\n` +
-        `Передай JSON-строку как параметр.`,
+      `📊 <b>CSV экспорт</b>\n\n<pre><code>${escapeHtml(csv)}</code></pre>`,
       { parse_mode: "HTML" }
     );
+  } catch (e) {
+    return sendMessage(chatId, `❌ ${e.message}`, { parse_mode: "HTML" });
   }
+}
+
+/**
+ * /import
+ */
+async function importCommand(chatId, userId, jsonData) {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
+  
+  if (!jsonData) return sendMessage(chatId, `❌ Укажи JSON.`, { parse_mode: "HTML" });
 
   await sendChatAction(chatId, "typing");
   
   try {
     const result = await importCodes(jsonData, "merge");
-    
     return sendMessage(
       chatId,
-      `✅ <b>Импорт завершён!</b>\n\n` +
-        `Импортировано: ${result.imported}\n` +
-        `Пропущено: ${result.skipped}\n` +
-        `Всего: ${result.total}`,
+      `✅ <b>Импорт завершён!</b>\n\nИмпортировано: ${result.imported}\nПропущено: ${result.skipped}`,
       { parse_mode: "HTML" }
     );
   } catch (e) {
-    return sendMessage(chatId, `❌ Ошибка: ${e.message}`, { parse_mode: "HTML" });
+    return sendMessage(chatId, `❌ ${e.message}`, { parse_mode: "HTML" });
   }
 }
 
 /**
- * Команда /ping
+ * /ping
  */
 async function pingCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   const start = Date.now();
   const result = await telegram("getMe");
@@ -3179,28 +3266,19 @@ async function pingCommand(chatId, userId) {
   if (result.ok) {
     return sendMessage(
       chatId,
-      `🏓 <b>Ping-Pong!</b>\n\n` +
-        `Задержка до Telegram API: <b>${latency}ms</b>\n` +
-        `Бот: @${result.result.username}\n` +
-        `Статус: ✅ OK`,
+      `🏓 <b>Pong!</b>\n\nЗадержка: <b>${latency}ms</b>\nБот: @${result.result.username}`,
       { parse_mode: "HTML" }
     );
   } else {
-    return sendMessage(
-      chatId,
-      `❌ Ошибка связи с Telegram API: ${result.description}`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `❌ ${result.description}`, { parse_mode: "HTML" });
   }
 }
 
 /**
- * Команда /health - статус системы
+ * /health
  */
 async function healthCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   await sendChatAction(chatId, "typing");
   
@@ -3212,21 +3290,16 @@ async function healthCommand(chatId, userId) {
   try {
     await kv.get("gs:health_check");
     await kv.set("gs:health_check", Date.now());
-  } catch (e) {
-    // ignore
-  }
+  } catch (e) {}
   const kvLatency = Date.now() - kvStart;
 
   const fullStats = await gatherFullStats();
 
-  const tgStatus = tgResult.ok ? "✅" : "❌";
-  const kvStatus = "✅";
-
   const text = 
     `🏥 <b>Статус системы</b>\n\n` +
     `<b>Сервисы:</b>\n` +
-    `${tgStatus} Telegram API: ${latency}ms\n` +
-    `${kvStatus} Vercel KV: ${kvLatency}ms\n\n` +
+    `${tgResult.ok ? "✅" : "❌"} Telegram API: ${latency}ms\n` +
+    `✅ Vercel KV: ${kvLatency}ms\n\n` +
     `<b>Статистика:</b>\n` +
     `• Кодов: ${fullStats.codes.total} (${fullStats.codes.active} активных)\n` +
     `• Пользователей: ${fullStats.users.total}\n` +
@@ -3239,12 +3312,10 @@ async function healthCommand(chatId, userId) {
 }
 
 /**
- * Полная статистика для админа
+ * /stats (полная для админа)
  */
 async function fullStatsCommand(chatId, userId) {
-  if (!isAdmin(userId)) {
-    return sendMessage(chatId, "⛔ У тебя нет прав администратора.");
-  }
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
 
   await sendChatAction(chatId, "typing");
   
@@ -3253,23 +3324,63 @@ async function fullStatsCommand(chatId, userId) {
   const text = 
     `📊 <b>Полная статистика</b>\n\n` +
     `🎁 <b>Промокоды (${stats.codes.total}):</b>\n` +
-    `• ${STATUS_ICONS.active} Активных: ${stats.codes.active}\n` +
-    `• ${STATUS_ICONS.pending} В процессе: ${stats.codes.pending}\n` +
-    `• ${STATUS_ICONS.no_reward} Без награды: ${stats.codes.noReward}\n` +
-    `• ${STATUS_ICONS.expired} Истёкших: ${stats.codes.expired}\n\n` +
+    `• 🟢 Активных: ${stats.codes.active}\n` +
+    `• 🟡 В процессе: ${stats.codes.pending}\n` +
+    `• 🔴 Без награды: ${stats.codes.noReward}\n` +
+    `• 🟠 Истёкших: ${stats.codes.expired}\n\n` +
     `👥 <b>Пользователи (${stats.users.total}):</b>\n` +
     `• 🟢 Активных за 24ч: ${stats.users.active24h}\n` +
     `• ⛔ Забанено: ${stats.users.banned}\n` +
     `• 🔇 Замучено: ${stats.users.muted}\n\n` +
     `🎉 <b>Активации:</b> ${stats.activations.total}\n` +
-    `📢 <b>Рассылок отправлено:</b> ${stats.broadcasts.total}\n` +
+    `📢 <b>Рассылок:</b> ${stats.broadcasts.total}\n` +
     `📝 <b>Записей в логе:</b> ${stats.logs}`;
 
   return sendMessage(chatId, text, { parse_mode: "HTML" });
 }
 
+/**
+ * 🔥 НОВОЕ: /chart - график активаций за 7 дней
+ */
+async function chartCommand(chatId, userId) {
+  if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
+
+  await sendChatAction(chatId, "typing");
+  
+  const dailyStats = (await kv.get(KV_PREFIXES.DAILY_STATS)) || {};
+  
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const ts = Date.now() - i * 86400000;
+    const key = getDateKey(ts);
+    days.push({
+      date: key,
+      shortDate: key.slice(5),
+      count: dailyStats[key]?.activations || 0,
+    });
+  }
+  
+  const max = Math.max(...days.map(d => d.count), 1);
+  const total = days.reduce((sum, d) => sum + d.count, 0);
+  const avg = (total / 7).toFixed(1);
+  
+  let chart = `📈 <b>Активации за 7 дней</b>\n\n`;
+  
+  for (const d of days) {
+    const barLen = Math.round((d.count / max) * 20);
+    const bar = "█".repeat(barLen) + "░".repeat(20 - barLen);
+    chart += `<code>${d.shortDate}</code> ${bar} <b>${d.count}</b>\n`;
+  }
+  
+  chart += `\n📊 <b>Итого:</b> ${total}\n`;
+  chart += `📊 <b>Среднее:</b> ${avg}/день\n`;
+  chart += `📊 <b>Максимум:</b> ${max}`;
+  
+  return sendMessage(chatId, chart, { parse_mode: "HTML" });
+}
+
 // ============================================
-// 14. ОБРАБОТКА CALLBACK QUERY
+// 18. ОБРАБОТКА CALLBACK
 // ============================================
 
 async function handleCallback(callback) {
@@ -3278,10 +3389,23 @@ async function handleCallback(callback) {
   const data = callback.data;
   const messageId = callback.message.message_id;
 
-  // Подтверждаем получение
   await answerCallback(callback.id);
 
-  // Админские коллбеки
+  // ========== УНИВЕРСАЛЬНЫЕ ==========
+  if (data === "home") {
+    return sendStart(chatId, userId, callback.from.username);
+  }
+  
+  if (data === "cancel_action") {
+    return editMessage(chatId, messageId, "❌ Действие отменено.", { parse_mode: "HTML" });
+  }
+
+  // ========== АДМИНСКИЕ ==========
+  if (data === "admin_panel") {
+    if (!isAdmin(userId)) return sendMessage(chatId, "⛔ Нет прав.");
+    return sendAdminPanel(chatId, userId);
+  }
+
   if (data.startsWith("admin_")) {
     if (!isAdmin(userId)) {
       return sendMessage(chatId, "⛔ Нет прав.", { parse_mode: "HTML" });
@@ -3303,15 +3427,47 @@ async function handleCallback(callback) {
       return listUsersCommand(chatId, userId, page, filter);
     }
 
-    // Конкретные действия с кодом
-    const codeActionMatch = data.match(/^admin_(\w+)_(.+)$/);
+    // Быстрые кнопки
+    if (data === "admin_stats") return fullStatsCommand(chatId, userId);
+    if (data === "admin_logs") return logsCommand(chatId, userId);
+    if (data === "admin_backups") return backupsListCommand(chatId, userId);
+    if (data === "admin_health") return healthCommand(chatId, userId);
+    if (data === "admin_chart") return chartCommand(chatId, userId);
+    if (data === "admin_clearlogs") return clearLogsCommand(chatId, userId);
+    
+    if (data === "admin_create_help") {
+      return sendMessage(chatId,
+        `➕ <b>Создание кода</b>\n\n<code>/create НАЗВАНИЕ ДАТА [КАТЕГОРИЯ]</code>\n\n` +
+        `Пример: <code>/create PROMO +7d EVENT</code>`,
+        { parse_mode: "HTML" });
+    }
+    
+    if (data === "admin_broadcast_help") {
+      return sendMessage(chatId,
+        `📢 <b>Рассылка</b>\n\n<code>/broadcast ТЕКСТ</code>`,
+        { parse_mode: "HTML" });
+    }
+
+    // Подтверждение рассылки
+    if (data === "admin_bc_confirm") {
+      const user = await getUser(userId);
+      if (user.state === "confirming_broadcast" && user.pendingBroadcast) {
+        // ... (логика из announce)
+      }
+      return sendMessage(chatId, `⚠️ Используй /broadcast заново.`, { parse_mode: "HTML" });
+    }
+
+    // Действия с кодом
+    const codeActionMatch = data.match(/^admin_(\w+?)_(?!confirm)(.+)$/);
     if (codeActionMatch) {
       const action = codeActionMatch[1];
       const param = codeActionMatch[2];
 
       if (action === "link") return linkCodeCommand(chatId, userId, param);
       if (action === "del") return deleteCodeCommand(chatId, userId, param);
+      if (action === "del_confirm") return deleteCodeCommand(chatId, userId, param, true);
       if (action === "reset") return resetCodeCommand(chatId, userId, param);
+      if (action === "reset_confirm") return resetCodeCommand(chatId, userId, param, true);
       if (action === "info") return infoCodeCommand(chatId, userId, param);
       
       if (action === "toggle") {
@@ -3328,27 +3484,25 @@ async function handleCallback(callback) {
       }
       
       if (action === "copy") {
-        return sendMessage(
-          chatId,
-          `📋 Используй команду:\n<code>/copy ${param} НОВОЕ_ИМЯ ДАТА</code>`,
-          { parse_mode: "HTML" }
-        );
+        return sendMessage(chatId,
+          `📋 <code>/copy ${param} НОВОЕ_ИМЯ ДАТА</code>`,
+          { parse_mode: "HTML" });
       }
       
       if (action === "extend") {
-        return sendMessage(
-          chatId,
-          `⏰ Используй команду:\n<code>/extend ${param} +7d</code> или <code>/extend ${param} ДАТА</code>`,
-          { parse_mode: "HTML" }
-        );
+        return sendMessage(chatId,
+          `⏰ <code>/extend ${param} +7d</code>`,
+          { parse_mode: "HTML" });
       }
       
       if (action === "ban") {
+        if (!isNumeric(param)) return sendMessage(chatId, `❌ Некорректный ID.`, { parse_mode: "HTML" });
         await banUser(param);
         return sendMessage(chatId, `⛔ Забанен: ${param}`, { parse_mode: "HTML" });
       }
       
       if (action === "mute") {
+        if (!isNumeric(param)) return sendMessage(chatId, `❌ Некорректный ID.`, { parse_mode: "HTML" });
         await muteUser(param, 24 * 60 * 60 * 1000);
         return sendMessage(chatId, `🔇 Замучен на 24ч: ${param}`, { parse_mode: "HTML" });
       }
@@ -3358,71 +3512,65 @@ async function handleCallback(callback) {
       }
       
       if (action === "activate") {
-        return sendMessage(
-          chatId,
-          `🎁 Используй команду:\n<code>/activate КОД ${param}</code>`,
-          { parse_mode: "HTML" }
-        );
+        return sendMessage(chatId,
+          `🎁 <code>/activate КОД ${param}</code>`,
+          { parse_mode: "HTML" });
       }
-    }
-
-    if (data === "admin_clearlogs") {
-      return clearLogsCommand(chatId, userId);
     }
   }
 
-  // Пользовательские коллбеки
+  // ========== ПОЛЬЗОВАТЕЛЬСКИЕ ==========
   if (data === "prompt_code") {
-    return sendMessage(
+    // 🔥 Инлайн-ввод кода
+    await saveUser(userId, {
+      state: "waiting_code_input",
+      stateExpiresAt: Date.now() + 5 * 60 * 1000,
+    });
+    return editMessage(
       chatId,
-      `🎁 <b>Активация кода</b>\n\n` +
-        `Отправь команду:\n<code>/code НАЗВАНИЕ</code>\n\n` +
-        `💡 Коды публикуются в канале проекта.`,
+      messageId,
+      `🎁 <b>Введи код</b>\n\nОтправь название промокода следующим сообщением.\n\n⏳ У тебя 5 минут.`,
       { parse_mode: "HTML" }
     );
   }
 
-  if (data === "my_codes") {
-    return showMyCodes(chatId, userId);
-  }
+  if (data === "my_codes") return showMyCodes(chatId, userId);
+  if (data === "leaderboard") return showLeaderboard(chatId);
+  if (data === "top_codes") return showTopCodes(chatId);
+  if (data === "help") return sendHelp(chatId, isAdmin(userId));
+  if (data === "user_stats") return showUserStats(chatId);
+  if (data === "my_profile") return showProfile(chatId, userId);
+  if (data === "my_badges") return showBadges(chatId, userId);
+  if (data === "share_bot") return shareBot(chatId, userId);
 
-  if (data === "leaderboard") {
-    return showLeaderboard(chatId);
-  }
-
-  if (data === "help") {
-    return sendHelp(chatId, isAdmin(userId));
-  }
-
-  // Подтверждение объявления
+  // Объявление
   if (data === "confirm_announce" && isAdmin(userId)) {
     const user = await getUser(userId);
     if (user.state === "confirming_announce" && user.pendingAnnouncement) {
       const text = user.pendingAnnouncement;
       await saveUser(userId, { state: null, pendingAnnouncement: null, stateExpiresAt: null });
       
-      // Сразу запускаем рассылку с кнопкой подтверждения
       const users = await getAllUsers();
       let success = 0;
       
       for (const uid of users) {
-        const reply_markup = {
-          inline_keyboard: [[{ text: "✅ OK, прочитал", callback_data: `ack_${uid}` }]],
-        };
-        
         const res = await sendMessage(
           uid,
           `📢 <b>Важное объявление</b>\n\n${text}`,
-          { parse_mode: "HTML", reply_markup }
+          {
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [[{ text: "✅ OK", callback_data: `ack_${uid}` }]],
+            },
+          }
         );
-        
         if (res.ok) success++;
         await new Promise(r => setTimeout(r, CONFIG.BROADCAST_DELAY));
       }
       
       return sendMessage(
         chatId,
-        `✅ Объявление отправлено ${success}/${users.length} пользователям.`,
+        `✅ Отправлено ${success}/${users.length}.`,
         { parse_mode: "HTML" }
       );
     }
@@ -3430,23 +3578,18 @@ async function handleCallback(callback) {
 
   if (data === "cancel_announce" && isAdmin(userId)) {
     await saveUser(userId, { state: null, pendingAnnouncement: null, stateExpiresAt: null });
-    return sendMessage(chatId, `❌ Объявление отменено.`, { parse_mode: "HTML" });
+    return sendMessage(chatId, `❌ Отменено.`, { parse_mode: "HTML" });
   }
 
-  // Ack - пользователь подтвердил прочтение объявления
+  // Ack
   if (data.startsWith("ack_")) {
-    await answerCallback(callback.id, "Спасибо!", false);
-    try {
-      await deleteMessage(chatId, messageId);
-    } catch (e) {
-      // ignore
-    }
+    try { await deleteMessage(chatId, messageId); } catch (e) {}
     return;
   }
 }
 
 // ============================================
-// 15. ОБРАБОТКА СООБЩЕНИЙ
+// 19. ОБРАБОТКА СООБЩЕНИЙ
 // ============================================
 
 async function processCommand(message, text) {
@@ -3458,13 +3601,11 @@ async function processCommand(message, text) {
   const command = parts[0].toLowerCase().split("@")[0];
   const args = parts.slice(1);
 
-  // Админские команды
+  // Админские
+  if (command === "/admin") return sendAdminPanel(chatId, userId);
   if (command === "/create") return createCodeCommand(chatId, userId, args);
   if (command === "/link") return linkCodeCommand(chatId, userId, args[0]);
-  if (command === "/all") {
-    const filter = args[0] || null;
-    return listAllCodesCommand(chatId, userId, filter, 0);
-  }
+  if (command === "/all") return listAllCodesCommand(chatId, userId, args[0] || null, safeParseInt(args[1]) || 0);
   if (command === "/info") return infoCodeCommand(chatId, userId, args[0]);
   if (command === "/extend") return extendCodeCommand(chatId, userId, args);
   if (command === "/delete") return deleteCodeCommand(chatId, userId, args[0]);
@@ -3480,10 +3621,7 @@ async function processCommand(message, text) {
   if (command === "/unban") return unbanUserCommand(chatId, userId, args[0]);
   if (command === "/mute") return muteUserCommand(chatId, userId, args);
   if (command === "/unmute") return unmuteUserCommand(chatId, userId, args[0]);
-  if (command === "/users") {
-    const page = safeParseInt(args[0]) || 0;
-    return listUsersCommand(chatId, userId, page, null);
-  }
+  if (command === "/users") return listUsersCommand(chatId, userId, safeParseInt(args[0]) || 0, null);
   if (command === "/whois") return whoisCommand(chatId, userId, args[0]);
   
   if (command === "/broadcast") return broadcastCommand(chatId, userId, args.join(" "));
@@ -3492,40 +3630,56 @@ async function processCommand(message, text) {
   
   if (command === "/logs") return logsCommand(chatId, userId);
   if (command === "/clearlogs") return clearLogsCommand(chatId, userId);
+  if (command === "/chart") return chartCommand(chatId, userId);
   
   if (command === "/backup") return backupCommand(chatId, userId);
   if (command === "/backups") return backupsListCommand(chatId, userId);
-  if (command === "/restore") return restoreCommand(chatId, userId, args[0]);
+  if (command === "/restore") return restoreCommand(chatId, userId, args[0], args[1] || "replace");
   
   if (command === "/export") return exportCommand(chatId, userId);
+  if (command === "/exportcsv") return exportCsvCommand(chatId, userId);
   if (command === "/import") return importCommand(chatId, userId, args.join(" "));
   
   if (command === "/ping") return pingCommand(chatId, userId);
   if (command === "/health") return healthCommand(chatId, userId);
-  if (command === "/admin") return sendHelp(chatId, true);
   
-  // Статистика доступна всем, но админам — полная
   if (command === "/stats") {
     if (isAdmin(userId)) return fullStatsCommand(chatId, userId);
     return showUserStats(chatId);
   }
 
-  // Пользовательские команды
-  if (command === "/start") return sendStart(chatId, userId, username);
+  // Пользовательские
+  if (command === "/start") {
+    // Реферальная ссылка
+    const payload = text.substring(7).trim();
+    if (payload.startsWith("ref_")) {
+      const referrerId = payload.replace("ref_", "");
+      const isNew = await processReferral(userId, referrerId);
+      if (isNew) {
+        await sendMessage(chatId, `✅ <b>Регистрация по реферальной ссылке!</b>`, { parse_mode: "HTML" });
+      }
+    }
+    return sendStart(chatId, userId, username);
+  }
+  
   if (command === "/help") return sendHelp(chatId, isAdmin(userId));
   if (command === "/my") return showMyCodes(chatId, userId);
   if (command === "/code") return activateCode(chatId, userId, username, args[0]);
   if (command === "/top") return showLeaderboard(chatId);
+  if (command === "/topcodes") return showTopCodes(chatId);
+  if (command === "/profile") return showProfile(chatId, userId);
+  if (command === "/badges") return showBadges(chatId, userId);
+  if (command === "/share") return shareBot(chatId, userId);
 
   return sendMessage(
     chatId,
-    `❓ Неизвестная команда.\n\nИспользуй /help для списка команд.`,
+    `❓ Неизвестная команда.\n\nИспользуй /help.`,
     { parse_mode: "HTML" }
   );
 }
 
 async function processText(message) {
-  // Работаем только в личке
+  // 🔥 Только в личке
   if (message.chat.type !== "private") return;
 
   const chatId = message.chat.id;
@@ -3533,59 +3687,48 @@ async function processText(message) {
   const username = message.from.username;
   const text = message.text || message.caption || "";
 
-  // Rate limiting для не-админов
+  // Rate limit
   if (!isAdmin(userId)) {
     const rl = await checkRateLimit(userId);
     if (!rl.allowed) {
-      return sendMessage(
-        chatId,
-        `⚠️ <b>Слишком много запросов</b>\n\nПодожди минуту и попробуй снова.`,
-        { parse_mode: "HTML" }
-      );
+      return sendMessage(chatId, `⚠️ Слишком много запросов. Подожди минуту.`, { parse_mode: "HTML" });
     }
   }
 
-  // Проверяем бан
-  if (await isBanned(userId) && !isAdmin(userId)) {
-    // Игнорируем или показываем короткое сообщение
-    return;
-  }
+  if (await isBanned(userId) && !isAdmin(userId)) return;
+  if (await isMuted(userId) && !isAdmin(userId)) return;
 
-  // Проверяем мут
-  if (await isMuted(userId) && !isAdmin(userId)) {
-    return;
-  }
-
-  // Обновляем lastSeen для всех
   await saveUser(userId, {}, username);
 
-  // Обрабатываем команды
-  if (text.startsWith("/")) {
-    return processCommand(message, text);
-  }
+  if (text.startsWith("/")) return processCommand(message, text);
 
   const user = await getUser(userId);
 
-  // Состояние: ждём награду для нового кода
+  // 🔥 Обработка инлайн-ввода кода
+  if (user.state === "waiting_code_input" && !text.startsWith("/")) {
+    if (Date.now() > (user.stateExpiresAt || 0)) {
+      await saveUser(userId, { state: null, stateExpiresAt: null });
+      return sendMessage(chatId, `⏰ Время истекло. Попробуй снова.`, { parse_mode: "HTML" });
+    }
+    await saveUser(userId, { state: null, stateExpiresAt: null });
+    return activateCode(chatId, userId, username, text.trim().toUpperCase());
+  }
+
+  // Награда для нового кода
   if ((user.state === "waiting_reward" || user.state === "updating_reward") && isAdmin(userId)) {
     if (Date.now() > (user.stateExpiresAt || 0)) {
-      await saveUser(userId, { state: null, pendingCodeName: null, stateExpiresAt: null }, username);
-      return sendMessage(
-        chatId,
-        `⏰ Время истекло. Используй /link или /reward снова.`,
-        { parse_mode: "HTML" }
-      );
+      await saveUser(userId, { state: null, pendingCodeName: null, stateExpiresAt: null });
+      return sendMessage(chatId, `⏰ Время истекло.`, { parse_mode: "HTML" });
     }
 
     const codeName = user.pendingCodeName;
     const code = await getCode(codeName);
 
     if (!code) {
-      await saveUser(userId, { state: null, pendingCodeName: null, stateExpiresAt: null }, username);
+      await saveUser(userId, { state: null, pendingCodeName: null, stateExpiresAt: null });
       return sendMessage(chatId, "❌ Код уже не существует.", { parse_mode: "HTML" });
     }
 
-    // Определяем тип награды (текст, фото, документ)
     let rewardText = text;
     let rewardMedia = null;
     let rewardMediaType = null;
@@ -3614,39 +3757,33 @@ async function processText(message) {
     code.status = CODE_STATUS.ACTIVE;
     await saveCode(codeName, code);
 
-    await saveUser(userId, { state: null, pendingCodeName: null, stateExpiresAt: null }, username);
+    await saveUser(userId, { state: null, pendingCodeName: null, stateExpiresAt: null });
 
-    const mediaInfo = rewardMedia ? `\n📎 Прикреплён медиа-файл (${rewardMediaType})` : "";
+    const mediaInfo = rewardMedia ? `\n📎 Медиа: ${rewardMediaType}` : "";
 
     return sendMessage(
       chatId,
       `✅ <b>Награда привязана!</b>\n\n` +
         `🔖 Код: <code>${codeName}</code>\n` +
         `🟢 Статус: активен\n` +
-        `⏰ Истекает: ${formatDate(code.expiresAt)}${mediaInfo}\n\n` +
-        `Пользователи могут активировать командой /code ${codeName}`,
+        `⏰ До: ${formatDate(code.expiresAt)}${mediaInfo}`,
       { parse_mode: "HTML" }
     );
   }
 
-  // Состояние: подтверждение объявления
   if (user.state === "confirming_announce" && isAdmin(userId)) {
-    return sendMessage(
-      chatId,
-      `⏳ Сначала подтверди объявление через кнопки выше.`,
-      { parse_mode: "HTML" }
-    );
+    return sendMessage(chatId, `⏳ Подтверди через кнопки выше.`, { parse_mode: "HTML" });
   }
 
   return sendMessage(
     chatId,
-    `🎁 Используй меню команд слева.\n\nОсновная команда: <code>/code НАЗВАНИЕ</code>`,
+    `🎁 Используй /help для списка команд.`,
     { parse_mode: "HTML" }
   );
 }
 
 // ============================================
-// 16. ПЛАНИРОВЩИК (SCHEDULER)
+// 20. ПЛАНИРОВЩИК
 // ============================================
 
 async function processScheduled() {
@@ -3667,7 +3804,7 @@ async function processScheduled() {
     for (const uid of users) {
       await sendMessage(
         uid,
-        `⏰ <b>Запланированное сообщение</b>\n\n${schedule.text}`,
+        `⏰ <b>Запланированное</b>\n\n${schedule.text}`,
         { parse_mode: "HTML" }
       );
       await new Promise(r => setTimeout(r, CONFIG.BROADCAST_DELAY));
@@ -3676,65 +3813,111 @@ async function processScheduled() {
 }
 
 // ============================================
-// 17. MAIN HANDLER (Vercel)
+// 21. МИГРАЦИЯ
+// ============================================
+
+async function migrate() {
+  try {
+    const currentVersion = (await kv.get(KV_PREFIXES.SCHEMA_VERSION)) || 0;
+    
+    if (currentVersion < 4) {
+      console.log(`[MIGRATE] v${currentVersion} → v${CONFIG.SCHEMA_VERSION}`);
+      
+      // Миграция: нормализуем старые коды
+      const names = await listCodeNames();
+      for (const name of names) {
+        const code = await getCode(name);
+        if (!code) continue;
+        
+        let changed = false;
+        if (!code.category) {
+          code.category = CODE_STATUS.STANDARD;
+          changed = true;
+        }
+        if (!code.status && code.reward) {
+          code.status = CODE_STATUS.ACTIVE;
+          changed = true;
+        }
+        if (!code.status && !code.reward) {
+          code.status = CODE_STATUS.NO_REWARD;
+          changed = true;
+        }
+        
+        if (changed) await saveCode(name, code);
+      }
+      
+      await kv.set(KV_PREFIXES.SCHEMA_VERSION, CONFIG.SCHEMA_VERSION);
+    }
+  } catch (error) {
+    console.error("[MIGRATE ERROR]", error.message);
+  }
+}
+
+// ============================================
+// 22. MAIN HANDLER
 // ============================================
 
 module.exports = async function handler(req, res) {
   if (req.method === "GET") {
     return res.status(200).json({
       ok: true,
-      service: "GcStudio Promo Bot v3.0",
+      service: "GcStudio Promo Bot v4.0",
+      version: "4.0.0",
       timestamp: Date.now(),
+      features: [
+        "Ticket System",
+        "Badges",
+        "Referrals",
+        "CSV Export",
+        "Charts",
+        "Locks",
+        "Backups",
+      ],
     });
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({
-      ok: false,
-      error: "Method not allowed",
-    });
+    return res.status(405).json({ ok: false, error: "Method not allowed" });
   }
 
   if (
     CONFIG.WEBHOOK_SECRET &&
     req.headers["x-telegram-bot-api-secret-token"] !== CONFIG.WEBHOOK_SECRET
   ) {
-    return res.status(403).json({
-      ok: false,
-      error: "Invalid webhook secret",
-    });
+    return res.status(403).json({ ok: false, error: "Invalid webhook secret" });
   }
 
   try {
     const update = req.body;
 
-    // Инициализируем статистику при первом запуске
+    // Миграция и инициализация
+    await migrate();
+    
     const stats = await getStats();
     if (!stats.first_start) {
       await incrementStat("first_start", Date.now());
     }
     await incrementStat("webhook_calls", 1);
 
+    // Обработка
     if (update.callback_query) {
       await handleCallback(update.callback_query);
     } else if (update.message) {
       await processText(update.message);
     } else if (update.edited_message) {
-      // Можно игнорировать редактирования
+      // игнорируем
     } else if (update.channel_post) {
-      // Игнорируем посты в каналах
+      // игнорируем
     }
 
-    // Выполняем фоновые задачи
+    // Фоновые задачи
     try {
       await processScheduled();
     } catch (e) {
       console.error("[SCHEDULER ERROR]", e);
     }
 
-    return res.status(200).json({
-      ok: true,
-    });
+    return res.status(200).json({ ok: true });
   } catch (error) {
     console.error("[HANDLER ERROR]", error);
     await logAction("handler_error", { extra: error.message });
