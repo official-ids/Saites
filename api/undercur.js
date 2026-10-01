@@ -2796,7 +2796,7 @@ async function processCallbackQuery(callbackQuery) {
 else if (data.startsWith("live_end_by_admin_")) {
   if (!isAdmin(userId)) {
     await answerCallbackQuery(callbackQuery.id, "Недостаточно прав", true);
-    break;
+    return;
   }
   const targetUserId = data.replace("live_end_by_admin_", "");
   await answerCallbackQuery(callbackQuery.id);
