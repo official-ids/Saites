@@ -2492,6 +2492,34 @@ async function processTextMessage(message) {
       }
     }
   }
+
+  // ========== ОБРАБОТКА ОЦЕНОК ==========
+if (!command.startsWith("/")) {
+  const ratingSession = await kvGet(`helper:rating_session:${userId}`);
+  const liveSession = await kvGet(`helper:live_session:${userId}`);
+  
+  // 🔥 Проверяем только СВЕЖИЕ сессии (не старше 24 часов)
+  const now = Date.now();
+  const MAX_AGE = 24 * 60 * 60 * 1000;
+  
+  if (ratingSession && ratingSession.status === "awaiting_rating") {
+    if (now - ratingSession.createdAt < MAX_AGE) {
+      await handleRatingSubmission(userId, text);
+      return;
+    } else {
+      await kvDel(`helper:rating_session:${userId}`);
+    }
+  }
+  
+  if (liveSession && liveSession.status === "ended" && !liveSession.ratingGiven) {
+    if (now - liveSession.startTime < MAX_AGE) {
+      await handleRatingSubmission(userId, text);
+      return;
+    } else {
+      await kvDel(`helper:live_session:${userId}`);
+    }
+  }
+}
   
   // ========== ОБРАБОТКА КОМАНД ==========
   switch (command) {
