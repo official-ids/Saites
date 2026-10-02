@@ -1251,6 +1251,7 @@ async function endLiveModeByUser(userId) {
 
 /**
  * Обрабатывает оценку администратора
+ * 🔥 ФИКС: после оценки сессия УДАЛЯЕТСЯ, чтобы не было повторных срабатываний
  */
 async function handleRatingSubmission(userId, ratingText) {
   // Проверяем Live Mode сессию
@@ -1259,15 +1260,25 @@ async function handleRatingSubmission(userId, ratingText) {
   // Проверяем сессию оценки тикета
   const ratingSession = await kvGet(`helper:rating_session:${userId}`);
   
-  const session = liveSession || ratingSession;
+  // 🔥 Выбираем активную сессию
+  let session = null;
+  let sessionKey = null;
   
-  if (!session) {
+  if (ratingSession && ratingSession.status === "awaiting_rating") {
+    session = ratingSession;
+    sessionKey = `helper:rating_session:${userId}`;
+  } else if (liveSession && liveSession.status === "ended" && !liveSession.ratingGiven) {
+    session = liveSession;
+    sessionKey = `helper:live_session:${userId}`;
+  }
+  
+  if (!session || !sessionKey) {
     await sendTextMessage(userId, "❌ Сейчас нет активного запроса на оценку.");
     return;
   }
   
   // Парсим оценку и комментарий
-  const parts = ratingText.trim().split(" ");
+  const parts = ratingText.trim().split(/\s+/);
   const ratingValue = parseFloat(parts[0]);
   const comment = parts.slice(1).join(" ") || "Без комментария";
   
@@ -1287,19 +1298,17 @@ async function handleRatingSubmission(userId, ratingText) {
   
   if (!adminId) {
     await sendTextMessage(userId, "❌ Ошибка: не удалось определить администратора.");
+    // 🔥 Удаляем битую сессию
+    await kvDel(sessionKey);
     return;
   }
   
-  // Обновляем сессию
-  session.rating = ratingValue;
-  session.ratingComment = comment;
-  session.status = "rated";
-  session.ratingGiven = true;
+  // 🔥 ВАЖНО: удаляем сессию СРАЗУ, чтобы не было повторных вызовов
+  await kvDel(sessionKey);
   
+  // На всякий случай чистим связанные ключи
   if (liveSession) {
-    await kvSet(`helper:live_session:${userId}`, session);
-  } else {
-    await kvDel(`helper:rating_session:${userId}`);
+    await kvDel(`helper:live_session_admin:${liveSession.adminId}`);
   }
   
   // Сохраняем статистику админа
