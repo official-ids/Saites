@@ -2627,7 +2627,7 @@ const response = await fetch('https://api.groq.com/openai/v1/chat/completions', 
         'Authorization': `Bearer ${AppState.apiKey}`
     },
     body: JSON.stringify({
-        model: 'llama-3.1-8b-instant', // Или 'llama3-8b-8192'
+        model: 'llama-3.3-70b-versatile',
         messages: messages,
         temperature: 0.7,
         max_tokens: 4000
