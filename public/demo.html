@@ -2362,24 +2362,39 @@ function isMobileDevice() {
 }
 
 // =====================================================================
-// ЗАГРУЗКА API КЛЮЧА
+// ЗАГРУЗКА API КЛЮЧА (БЕЗОПАСНЫЙ ВАРИАНТ ЧЕРЕЗ VERCEL API)
 // =====================================================================
 async function loadApiKey() {
     AppState.apiLoading = true;
     try {
-        const response = await fetch('https://oris-flax.vercel.app/~/secret/api-keys/mistral.txt');
+        // ⚠️ ВАЖНО: Замени 'ТВОЙ_СЕКРЕТНЫЙ_ТОКЕН_ЗДЕСЬ' на тот ADMIN_TOKEN, 
+        // который ты придумал и указал в настройках Vercel (Environment Variables)
+        const adminToken = 'ТВОЙ_СЕКРЕТНЫЙ_ТОКЕН_ЗДЕСЬ'; 
+        
+        const response = await fetch('https://oris-flax.vercel.app/api/get-key', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (!response.ok) {
-            throw new Error('Не удалось загрузить ключ');
+            // Пытаемся получить текст ошибки от сервера, если он есть
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Ошибка сервера: ${response.status}`);
         }
-        const key = await response.text();
-        AppState.apiKey = key.trim();
+        
+        const data = await response.json();
+        AppState.apiKey = data.key; // Получаем ключ из JSON ответа { key: "gsk_..." }
         AppState.apiLoading = false;
-        console.log('API ключ успешно загружен');
+        console.log('✅ API ключ успешно и безопасно загружен с Vercel');
+        
     } catch (error) {
         AppState.apiError = error.message;
         AppState.apiLoading = false;
-        console.error('Ошибка загрузки API ключа:', error);
-        showToast('Не удалось загрузить API ключ. Проверь подключение к интернету.', 'error');
+        console.error('❌ Ошибка загрузки API ключа:', error);
+        showToast('Не удалось загрузить API ключ. Проверь токен или настройки Vercel.', 'error');
     }
 }
 
