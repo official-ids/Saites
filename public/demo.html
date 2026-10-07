@@ -2575,17 +2575,41 @@ function buildSystemPrompt() {
 </div>
 \`\`\`
 
-Помни: НИКАКИХ ЭМОДЗИ в шпаргалке! Только если пользователь явно попросил.`;
+Помни: НИКАКИХ ЭМОДЗИ в шпаргалке! Только если пользователь явно попросил.
+
+КРИТИЧЕСКИ ВАЖНО: Ты ОБЯЗАН обернуть HTML-код шпаргалки ИМЕННО в блок \`\`\`cheatsheet ... \`\`\`. 
+НЕ используй \`\`\`html или \`\`\`xml. Если ты не используешь \`\`\`cheatsheet, приложение не сможет отобразить шпаргалку!`;
 }
 
 function extractCheatsheetFromResponse(response) {
-    const match = response.match(/```cheatsheet\s*([\s\S]*?)\s*```/);
+    // 1. Сначала ищем строгий тег ```cheatsheet
+    let match = response.match(/```cheatsheet\s*([\s\S]*?)\s*```/);
+    
+    // 2. Если не нашли, ищем стандартный ```html (модели часто грешат этим)
+    if (!match) {
+        match = response.match(/```html\s*([\s\S]*?)\s*```/i);
+    }
+    
+    // 3. Если и это не сработало, пытаемся выцепить большой кусок HTML, который начинается с <div или <h1
+    if (!match) {
+        const rawHtmlMatch = response.match(/(<div[\s\S]*?<\/div>|<h1[\s\S]*?<\/h1>)/);
+        if (rawHtmlMatch && rawHtmlMatch[0].length > 100) { 
+            return {
+                text: "Готово! Я создал шпаргалку (автоматически распознан HTML).",
+                html: rawHtmlMatch[0].trim()
+            };
+        }
+    }
+
+    // Если что-то нашли, возвращаем очищенный текст и HTML
     if (match) {
         return {
-            text: response.replace(/```cheatsheet\s*[\s\S]*?\s*```/, '').trim(),
+            text: response.replace(/```(?:cheatsheet|html)\s*[\s\S]*?\s*```/i, '').trim(),
             html: match[1].trim()
         };
     }
+    
+    // Если вообще ничего не похоже на HTML, возвращаем как есть
     return { text: response, html: null };
 }
 
