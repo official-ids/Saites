@@ -1,0 +1,3927 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Праздничных Открыток | Elegance Card Maker</title>
+    
+    <!-- Шрифты -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Базовые цвета (будут переопределяться скриптом) */
+            --primary-color: #2c3e50;
+            --secondary-color: #ecf0f1;
+            --accent-color: #d35400;
+            --text-main: #2c3e50;
+            --text-light: #ffffff;
+            --bg-gradient-start: #fdfbfb;
+            --bg-gradient-end: #ebedee;
+            --card-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --transition-speed: 0.4s;
+            
+            /* Темы праздников */
+            --theme-newyear-bg: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --theme-newyear-accent: #ffd700;
+            --theme-march-bg: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            --theme-march-accent: #ff6b6b;
+            --theme-victory-bg: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+            --theme-victory-accent: #cc0000;
+            --theme-birthday-bg: radial-gradient(circle at center, #fff5f5 0%, #ffebee 100%);
+            --theme-birthday-accent: #ff4081;
+            --theme-neutral-bg: linear-gradient(to bottom right, #fafafa, #f0f0f0);
+            --theme-neutral-accent: #3498db;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--bg-gradient-start);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            transition: background var(--transition-speed) ease;
+        }
+
+        /* Анимированный фон */
+        .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.6;
+            transition: all 1s ease-in-out;
+        }
+
+        canvas#bgCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Контейнер приложения */
+        .app-container {
+            width: 90%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 50px;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Заголовок */
+        header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            font-weight: 300;
+        }
+
+        /* Левая панель: Управление */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input[type="text"], textarea {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #fff;
+            outline: none;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            background: #1a252f;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-download {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-download:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+
+        /* Правая панель: Превью */
+        .preview-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px dashed #ccc;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .preview-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.7rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #cardCanvas {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            background: white;
+            transition: transform 0.3s ease;
+        }
+
+        #cardCanvas:hover {
+            transform: scale(1.01);
+        }
+
+        /* Модальное окно успеха */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .icon-success {
+            width: 60px;
+            height: 60px;
+            background: #2ecc71;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 30px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                padding: 20px;
+                margin-top: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Стилизация скроллбара */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #bbb; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999; 
+        }
+
+        /* Индикатор загрузки звука */
+        .sound-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 999;
+        }
+        .sound-indicator.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Фоновый холст для частиц -->
+    <div class="background-layer">
+        <canvas id="bgCanvas"></canvas>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <h1>Elegance Card Generator</h1>
+            <p class="subtitle">Создавайте уникальные поздравительные открытки мгновенно</p>
+        </header>
+
+        <!-- Панель управления -->
+        <section class="controls-panel">
+            <div class="form-group">
+                <label for="occasionSelect">Повод / Праздник</label>
+                <select id="occasionSelect">
+                    <option value="auto">Авто (по дате)</option>
+                    <optgroup label="Международные & Государственные РФ">
+                        <option value="new_year">Новый Год</option>
+                        <option value="christmas">Рождество</option>
+                        <option value="old_new_year">Старый Новый Год</option>
+                        <option value="defender_day">День Защитника Отечества (23 февраля)</option>
+                        <option value="womens_day">Международный женский день (8 Марта)</option>
+                        <option value="spring_labor">Весна и Труда (1 Мая)</option>
+                        <option value="victory_day">День Победы (9 Мая)</option>
+                        <option value="russia_day">День России (12 Июня)</option>
+                        <option value="unity_day">День народного единства (4 Ноября)</option>
+                        <option value="teacher_day">День Учителя</option>
+                        <option value="doctor_day">День Медика</option>
+                        <option value="police_day">День Полиции</option>
+                        <option value="taxi_driver_day">День Таксиста</option>
+                        <option value="students_day">День Студента (Татьянин день)</option>
+                        <option value="valentines_day">День Святого Валентина</option>
+                        <option value="mothers_day">День Матери</option>
+                        <option value="fathers_day">День Отца</option>
+                        <option value="grandparents_day">День Бабушек и Дедушек</option>
+                        <option value="knowledge_day">День Знаний (1 Сентября)</option>
+                        <option value="last_bell">Последний Звонок</option>
+                        <option value="graduation">Выпускной</option>
+                        <option value="wedding_anniversary">Годовщина Свадьбы</option>
+                        <option value="house_warming">Новоселье</option>
+                        <option value="promotion">Промоушен / Карьерный рост</option>
+                        <option value="retirement">Уход на пенсию</option>
+                        <option value="thanksgiving">Благодарность / Спасибо</option>
+                        <option value="get_well">Выздоровление / Поправляйся</option>
+                        <option value="congrats_job">Поступление на работу</option>
+                        <option value="license">Права / Лицензия</option>
+                        <option value="car">Покупка Автомобиля</option>
+                        <option value="travel">Отправление в Путешествие</option>
+                        <option value="return_travel">Возвращение из Поездки</option>
+                        <option value="name_day">Именины</option>
+                        <option value="friendship_day">День Дружбы</option>
+                        <option value="love_family_day">День Семьи, Любви и Верности</option>
+                        <option value="constitution_day">День Конституции РФ</option>
+                        <option value="flag_day">День Государственного Флага</option>
+                        <option value="cosmonautics_day">День Космонавтики</option>
+                        <option value="navigator_day">День Навигатора</option>
+                        <option value="journalist_day">День Журналиста</option>
+                        <option value="musician_day">День Музыканта</option>
+                        <option value="artist_day">День Художника</option>
+                        <option value="writer_day">День Писателя</option>
+                        <option value="poet_day">День Поэта</option>
+                        <option value="actor_day">День Актера</option>
+                        <option value="director_day">День Режиссера</option>
+                        <option value="producer_day">День Продюсера</option>
+                        <option value="designer_day">День Дизайнера</option>
+                        <option value="programmer_day">День Программиста</option>
+                        <option value="engineer_day">День Инженера</option>
+                        <option value="scientist_day">День Ученого</option>
+                        <option value="explorer_day">День Исследователя</option>
+                        <option value="adventurer_day">День Приключений</option>
+                        <option value="dream_day">День Мечтателя</option>
+                        <option value="smile_day">Всемирный День Улыбки</option>
+                        <option value="kindness_day">Всемирный День Доброты</option>
+                        <option value="peace_day">Международный День Мира</option>
+                        <option value="environment_day">Всемирный День Окружающей Среды</option>
+                        <option value="water_day">Всемирный День Воды</option>
+                        <option value="earth_day">День Земли</option>
+                        <option value="air_day">Международный День Воздуха</option>
+                        <option value="fire_day">День Огня</option>
+                        <option value="light_day">День Света</option>
+                        <option value="dark_day">День Тьмы (Мистицизм)</option>
+                        <option value="magic_day">День Магии</option>
+                        <option value="fantasy_day">День Фэнтези</option>
+                        <option value="scifi_day">День Научной Фантастики</option>
+                        <option value="horror_day">День Хоррора</option>
+                        <option value="comedy_day">День Комедии</option>
+                        <option value="drama_day">День Драмы</option>
+                        <option value="action_day">День Экшена</option>
+                        <option value="animation_day">День Анимации</option>
+                        <option value="cinema_day">День Кино</option>
+                        <option value="theater_day">День Театра</option>
+                        <option value="opera_day">День Оперы</option>
+                        <option value="ballet_day">День Балета</option>
+                        <option value="concert_day">День Концерта</option>
+                        <option value="festival_day">День Фестиваля</option>
+                        <option value="party_day">День Вечеринки</option>
+                        <option value="relax_day">День Релакса</option>
+                        <option value="meditation_day">День Медитации</option>
+                        <option value="yoga_day">День Йоги</option>
+                        <option value="sport_day">День Спорта</option>
+                        <option value="fitness_day">День Фитнеса</option>
+                        <option value="running_day">День Бега</option>
+                        <option value="swimming_day">День Плавания</option>
+                        <option value="cycling_day">День Велопробега</option>
+                        <option value="hiking_day">День Пеших Прогулок</option>
+                        <option value="camping_day">День Кемпинга</option>
+                        <option value="fishing_day">День Рыбалки</option>
+                        <option value="hunting_day">День Охоты</option>
+                        <option value="gardening_day">День Садовода</option>
+                        <option value="cooking_day">День Кулинарии</option>
+                        <option value="baking_day">День Выпечки</option>
+                        <option value="coffee_day">День Кофе</option>
+                        <option value="tea_day">День Чая</option>
+                        <option value="chocolate_day">День Шоколада</option>
+                        <option value="cake_day">День Торта</option>
+                        <option value="pizza_day">День Пиццы</option>
+                        <option value="burger_day">День Бургера</option>
+                        <option value="fruit_day">День Фруктов</option>
+                        <option value="vegetable_day">День Овощей</option>
+                        <option value="healthy_eating_day">День Здорового Питания</option>
+                        <option value="diet_day">Начало Диеты</option>
+                        <option value="cheat_meal">Читмилл (Разгрузка)</option>
+                        <option value="fasting_start">Начало Поста</option>
+                        <option value="fasting_end">Окончание Поста</option>
+                        <option value="lunar_new_year">Лунный Новый Год</option>
+                        <option value="diwali">Дивали (Фестиваль Огней)</option>
+                        <option value="hanukkah">Ханука</option>
+                        <option value="passover">Пасха Иудейская</option>
+                        <option value="eid_al_fitr">Ид аль-Фитр</option>
+                        <option value="eid_al_adha">Ид аль-Адха</option>
+                        <option value="ramadan_start">Начало Рамадана</option>
+                        <option value="vesak">Весак (День Будды)</option>
+                        <option value="holi">Холи (Фестиваль Красок)</option>
+                        <option value="oktoberfest">Октоберфест</option>
+                        <option value="st_patricks">День Святого Патрика</option>
+                        <option value="carnival">Карнавал</option>
+                        <option value="mardi_gras">Марди Гра</option>
+                        <option value="ash_wednesday">Пепельная Среда</option>
+                        <option value="good_friday">Страстная Пятница</option>
+                        <option value="easter_catholic">Католическая Пасха</option>
+                        <option value="easter_orthodox">Православная Пасха</option>
+                        <option value="ascension_day">Вознесение Господне</option>
+                        <option value="pentecost">Сошествие Святого Духа</option>
+                        <option value="trinity_sunday">Троица</option>
+                        <option value="corpus_christi">Тело Христово</option>
+                        <option value="assumption_mary">Успение Богородицы</option>
+                        <option value="all_saints">День Всех Святых</option>
+                        <option value="reformation_day">День Реформации</option>
+                        <option value="independence_us">Независимость США</option>
+                        <option value="canada_day">День Канады</option>
+                        <option value="australia_day">День Австралии</option>
+                        <option value="china_national">Национальный День Китая</option>
+                        <option value="india_independence">День Независимости Индии</option>
+                        <option value="japan_childrens">День Детей Японии</option>
+                        <option value="korea_lunar">Корейский Лунный Новый Год</option>
+                        <option value="vietnam_tet">Вьетнамский Тет</option>
+                        <option value="thailand_songkran">Тайский Сонгкран</option>
+                        <option value="philippines_independece">День Независимости Филиппин</option>
+                        <option value="singapore_national">Национальный День Сингапура</option>
+                        <option value="malaysia_merdeka">Мердека (Малайзия)</option>
+                        <option value="indonesia_independence">День Независимости Индонезии</option>
+                        <option value="brazil_independence">День Независимости Бразилии</option>
+                        <option value="argentina_independence">День Независимости Аргентины</option>
+                        <option value="mexico_independence">День Независимости Мексики</option>
+                        <option value="peru_independence">День Независимости Перу</option>
+                        <option value="colombia_independence">День Независимости Колумбии</option>
+                        <option value="venezuela_independence">День Независимости Венесуэлы</option>
+                        <option value="ecuador_independence">День Независимости Эквадора</option>
+                        <option value="bolivia_independence">День Независимости Боливии</option>
+                        <option value="paraguay_independence">День Независимости Парагвая</option>
+                        <option value="uruguay_independence">День Независимости Уругвая</option>
+                        <option value="chile_independence">День Независимости Чили</option>
+                        <option value="costa_rica_independence">День Независимости Коста-Рики</option>
+                        <option value="panama_independence">День Независимости Панамы</option>
+                        <option value="dominican_republic_independence">День Независимости Доминиканы</option>
+                        <option value="haiti_independence">День Независимости Гаити</option>
+                        <option value="jamaica_independence">День Независимости Ямайки</option>
+                        <option value="trinidad_tobago_independence">День Независимости Тринидада и Тобаго</option>
+                        <option value="barbados_independence">День Независимости Барбадоса</option>
+                        <option value="bahamas_independence">День Независимости Багамских Островов</option>
+                        <option value="belize_independence">День Независимости Белиза</option>
+                        <option value="guyana_independence">День Независимости Гайаны</option>
+                        <option value="suriname_independence">День Независимости Суринама</option>
+                        <option value="nigeria_independence">День Независимости Нигерии</option>
+                        <option value="kenya_independence">День Независимости Кении</option>
+                        <option value="south_africa_freedom">День Свободы ЮАР</option>
+                        <option value="egypt_revolution">Египетская Революция</option>
+                        <option value="morocco_throne">День Трона Марокко</option>
+                        <option value="tunisia_independence">День Независимости Туниса</option>
+                        <option value="algeria_independence">День Независимости Алжира</option>
+                        <option value="libya_independence">День Независимости Ливии</option>
+                        <option value="sudan_independence">День Независимости Судана</option>
+                        <option value="ethiopia_independence">День Независимости Эфиопии</option>
+                        <option value="somalia_independence">День Независимости Сомали</option>
+                        <option value="uganda_independence">День Независимости Уганды</option>
+                        <option value="zambia_independence">День Независимости Замбии</option>
+                        <option value="zimbabwe_independence">День Независимости Зимбабве</option>
+                        <option value="mozambique_independence">День Независимости Мозамбика</option>
+                        <option value="angola_independence">День Независимости Анголы</option>
+                        <option value="cameroon_independence">День Независимости Камеруна</option>
+                        <option value="senegal_independence">День Независимости Сенегала</option>
+                        <option value="ivory_coast_independence">День Независимости Берега Слоновой Кости</option>
+                        <option value="ghana_independence">День Независимости Ганы</option>
+                        <option value="sierra_leone_independence">День Независимости Сьерра-Леоне</option>
+                        <option value="liberia_independence">День Независимости Либерии</option>
+                        <option value="mauritania_independence">День Независимости Мавритании</option>
+                        <option value="gambia_independence">День Независимости Гамбии</option>
+                        <option value="guinea_bissau_independence">День Независимости Гвинеи-Бисау</option>
+                        <option value="cape_verde_independence">День Независимости Кабо-Верде</option>
+                        <option value=" sao_tome_principe_independence">День Независимости Сан-Томе и Принсипи</option>
+                        <option value="equatorial_guinea_independence">День Независимости Экваториальной Гвинеи</option>
+                        <option value="gabon_independence">День Независимости Габона</option>
+                        <option value="congo_democratic_independence">День Независимости ДР Конго</option>
+                        <option value="congo_rep_independence">День Независимости Республики Конго</option>
+                        <option value="rwanda_independence">День Независимости Руанды</option>
+                        <option value="burundi_independence">День Независимости Бурунди</option>
+                        <option value="tanzania_independence">День Независимости Танзании</option>
+                        <option value="madagascar_independence">День Независимости Мадагаскара</option>
+                        <option value="seychelles_independence">День Независимости Сейшел</option>
+                        <option value="mauritius_independence">День Независимости Маврикия</option>
+                        <option value="comoros_independence">День Независимости Коморских Островов</option>
+                        <option value="djibouti_independence">День Независимости Джибути</option>
+                        <option value="eritrea_independence">День Независимости Эритреи</option>
+                        <option value="south_sudan_independence">День Независимости Южного Судана</option>
+                        <option value="iceland_independence">День Независимости Исландии</option>
+                        <option value="ireland_st_patrick">День Святого Патрика (Ирландия)</option>
+                        <option value="norway_constitution">Конституционный День Норвегии</option>
+                        <option value="denmark_valdemar">День Королевы Дании</option>
+                        <option value="sweden_midsummer">Шведское Середина Лета</option>
+                        <option value="finnish_flag">День Флага Финляндии</option>
+                        <option value="estonian_independence">День Независимости Эстонии</option>
+                        <option value="latvian_independence">День Независимости Латвии</option>
+                        <option value="lithuanian_state">День Государственности Литвы</option>
+                        <option value="polish_constitution">День Конституции Польши</option>
+                        <option value="czech_vaclav">День Вацлава (Чехия)</option>
+                        <option value="slovak_uprising">Годовщина Словацкого Национального Восстания</option>
+                        <option value="hungarian_october">Октябрьская Революция Венгрии</option>
+                        <option value="romanian_unification">Объединение Румынии</option>
+                        <option value="bulgarian_unification">Объединение Болгарии</option>
+                        <option value="serbian_statehood">День Государственности Сербии</option>
+                        <option value="croatian_independence">День Независимости Хорватии</option>
+                        <option value="bosnian_independence">День Независимости Боснии и Герцеговины</option>
+                        <option value="montenegrin_kings">День Королей Черногории</option>
+                        <option value="albanian_independence">День Независимости Албании</option>
+                        <option value="macedonian_independence">День Независимости Северной Македонии</option>
+                        <option value="kosovo_declaration">Декларация Независимости Косово</option>
+                        <option value="greece_independence">День Независимости Греции</option>
+                        <option value="turkish_republic">День Турецкой Республики</option>
+                        <option value="israel_yom_haatzmaut">Йом ха-Ацмаут (Израиль)</option>
+                        <option value="lebanese_independence">День Независимости Ливана</option>
+                        <option value="syrian_independence">День Независимости Сирии</option>
+                        <option value="iraqi_independence">День Независимости Ирака</option>
+                        <option value="iran_islam">Исламская Республика Иран</option>
+                        <option value="afghan_independence">День Независимости Афганистана</option>
+                        <option value="pakistan_independence">День Независимости Пакистана</option>
+                        <option value="bangladesh_independence">День Независимости Бангладеш</option>
+                        <option value="srilanka_independence">День Независимости Шри-Ланки</option>
+                        <option value="nepal_constitution">День Конституции Непала</option>
+                        <option value="bhutan_druk">Национальный День Бутана</option>
+                        <option value="mongolian_naadam">Наадам (Монголия)</option>
+                        <option value="kazakhstan_independence">День Независимости Казахстана</option>
+                        <option value="uzbekistan_independence">День Независимости Узбекистана</option>
+                        <option value="turkmenistan_independence">День Независимости Туркменистана</option>
+                        <option value="tajikistan_independence">День Независимости Таджикистана</option>
+                        <option value="kyrgyzstan_independence">День Независимости Кыргызстана</option>
+                        <option value="azerbaijan_republic">День Республики Азербайджана</option>
+                        <option value="armenia_genocide_remembrance">Память о Геноциде армян</option>
+                        <option value="georgia_independence">День Независимости Грузии</option>
+                        <option value="belarus_peace">День Единения Беларуси и России</option>
+                        <option value="moldova_independence">День Независимости Молдовы</option>
+                        <option value="ukraine_independence">День Независимости Украины</option>
+                        <option value="russia_day_alt">День России (Альтернативный формат)</option>
+                        <option value="custom_occasion">Индивидуальный повод...</option>
+                    </optgroup>
+                    <optgroup label="Персональные события">
+                        <option value="birthday">День Рождения</option>
+                        <option value="anniversary_personal">Юбилей (Личный)</option>
+                        <option value="engagement">Помолвка</option>
+                        <option value="wedding">Свадьба</option>
+                        <option value="baby_shower">Ожидание малыша</option>
+                        <option value="child_birth">Рождение ребенка</option>
+                        <option value="first_steps">Первые шаги ребенка</option>
+                        <option value="first_words">Первые слова ребенка</option>
+                        <option value="school_entry">Поступление в школу</option>
+                        <option value="university_entry">Поступление в Университет</option>
+                        <option value="job_offer">Предложение работы</option>
+                        <option value="work_promotion">Повышение на работе</option>
+                        <option value="business_launch">Запуск бизнеса</option>
+                        <option value="project_completion">Завершение проекта</option>
+                        <option value="award_win">Получение награды</option>
+                        <option value="competition_win">Победа в конкурсе</option>
+                        <option value="exam_pass">Сдача экзамена</option>
+                        <option value="thesis_defense">Защита диплома/диссертации</option>
+                        <option value="publication">Выход публикации</option>
+                        <option value="art_exhibition">Персональная выставка</option>
+                        <option value="performance_success">Успешное выступление</option>
+                        <option value="sports_record">Спорт рекорд</option>
+                        <option value="marathon_finish">Финиш марафона</option>
+                        <option value="trip_return">Возвращение из дальней поездки</option>
+                        <option value="moving_city">Переезд в другой город</option>
+                        <option value="renovation_done">Ремонт закончен</option>
+                        <option value="pet_adoption">Усыновление питомца</option>
+                        <option value="pet_birthday">День рождения питомца</option>
+                        <option value="plant_growth">Цветение растения</option>
+                        <option value="recipe_perfect">Идеальный рецепт удался</option>
+                        <option value="gift_received">Получение подарка</option>
+                        <option value="letter_read">Прочтение важного письма</option>
+                        <option value="phone_call_good">Хороший телефонный разговор</option>
+                        <option value="meeting_friend">Встреча со старым другом</option>
+                        <option value="reunion_class">Воссоединение класса</option>
+                        <option value="reunion_college">Воссоединение колледжа</option>
+                        <option value="reunion_work">Воссоединение коллег</option>
+                        <option value="online_chat_fun">Веселый онлайн чат</option>
+                        <option value="game_level_up">Прохождение уровня в игре</option>
+                        <option value="achievement_unlocked">Разблокировка достижения</option>
+                        <option value="quest_complete">Завершение квеста</option>
+                        <option value="boss_defeated">Победа над боссом</option>
+                        <option value="raid_clear">Прохождение рейда</option>
+                        <option value="tournament_win">Победа в турнире</option>
+                        <option value="stream_followers">Набор подписчиков на стриме</option>
+                        <option value="video_views">Вирусное видео</option>
+                        <option value="blog_post_like">Много лайков на посте</option>
+                        <option value="comment_positive">Положительный комментарий</option>
+                        <option value="share_social">Репост в соцсетях</option>
+                        <option value="mention_brand">Упоминание бренда</option>
+                        <option value="collab_project">Коллаборация проект</option>
+                        <option value="mentor_mentee">Наставничество успех</option>
+                        <option value="teaching_first_lesson">Первый урок учителя</option>
+                        <option value="student_graduate">Выпуск ученика</option>
+                        <option value="parenting_milestone">Родительский этап</option>
+                        <option value="couple_quiet_time">Тихий вечер вдвоем</option>
+                        <option value="date_night">Свидание ночью</option>
+                        <option value="proposal_accepted">Предложение принято</option>
+                        <option value="honeymoon_start">Начало медового месяца</option>
+                        <option value="anniversary_marriage_small">Маленькая годовщина брака</option>
+                        <option value="silver_wedding">Серебряная свадьба (25 лет)</option>
+                        <option value="golden_wedding">Золотая свадьба (50 лет)</option>
+                        <option value="diamond_wedding">Алмазная свадьба (60 лет)</option>
+                        <option value="platinum_wedding">Платиновая свадьба (70 лет)</option>
+                        <option value="emerald_wedding">Изумрудная свадьба (55 лет)</option>
+                        <option value="ruby_wedding">Рубиновая свадьба (40 лет)</option>
+                        <option value="pearl_wedding">Жемчужная свадьба (30 лет)</option>
+                        <option value="porcelain_wedding">Фарфоровая свадьба (20 лет)</option>
+                        <option value="glass_wedding">Стеклянная свадьба (15 лет)</option>
+                        <option value="tin_wedding">Жестяная свадьба (10 лет)</option>
+                        <option value="wooden_wedding">Деревянная свадьба (5 лет)</option>
+                        <option value="paper_wedding">Бумажная свадьба (1 год)</option>
+                        <option value="cotton_wedding">Хлопковая свадьба (2 года)</option>
+                        <option value="leather_wedding">Кожаная свадьба (3 года)</option>
+                        <option value="linen_wedding">Льняная свадьба (4 года)</option>
+                        <option value="wool_wedding">Шерстяная свадьба (7 лет)</option>
+                        <option value="pottery_wedding">Керамическая свадьба (8 лет)</option>
+                        <option value="willow_wedding">Ивовая свадьба (9 лет)</option>
+                        <option value="pink_wedding">Розовая свадьба (11 лет)</option>
+                        <option value="silk_weddown">Шелковая свадьба (12 лет)</option>
+                        <option value="lace_wedding">Кружевная свадьба (13 лет)</option>
+                        <option value="ivory_wedding">Костяная свадьба (14 лет)</option>
+                        <option value="crystal_wedding">Хрустальная свадьба (15 лет)</option>
+                        <option value="china_wedding">Фарфоровая свадьба (20 лет)</option>
+                        <option value="nickel_wedding">Никелевая свадьба (21 год)</option>
+                        <option value="rose_wedding">Розовая свадьба (22 года)</option>
+                        <option value="royal_wedding">Царская свадьба (23 года)</option>
+                        <option value="spindle_wedding">Веретенная свадьба (24 года)</option>
+                        <option value="manuscript_wedding">Рукописная свадьба (25 лет)</option>
+                        <option value="moonstone_wedding">Лунная свадьба (26 лет)</option>
+                        <option value="machinery_wedding">Машинная свадьба (27 лет)</option>
+                        <option value="green_jade_wedding">Нефритовая свадьба (28 лет)</option>
+                        <option value="peacock_wedding">Павлинья свадьба (29 лет)</option>
+                        <option value="string_wedding">Шпагатная свадьба (31 год)</option>
+                        <option value="beef_wedding">Говяжья свадьба (32 года)</option>
+                        <option value="clover_wedding">Клеверная свадьба (33 года)</option>
+                        <option value="opal_wedding">Опаловая свадьба (34 года)</option>
+                        <option value="coral_wedding">Коралловая свадьба (35 лет)</option>
+                        <option value="jade_wedding">Яшмовая свадьба (36 лет)</option>
+                        <option value="flame_wedding">Пламенная свадьба (37 лет)</option>
+                        <option value="turquoise_wedding">Бирюзовая свадьба (38 лет)</option>
+                        <option value="maple_wedding">Кленовая свадьба (39 лет)</option>
+                        <option value="ruby_weddown_big">Рубиновая свадьба (40 лет)</option>
+                        <option value="mineral_wedding">Минеральная свадьба (41 год)</option>
+                        <option value="iron_wedding">Железная свадьба (42 года)</option>
+                        <option value="beryl_wedding">Берилловая свадьба (43 года)</option>
+                        <option value="topaz_wedding">Топазовая свадьба (44 года)</option>
+                        <option value="sapphire_wedding">Сапфировая свадьба (45 лет)</option>
+                        <option value="ruby_red_wedding">Красная рубиновая свадьба (46 лет)</option>
+                        <option value="gold_wool_wedding">Золотошерстяная свадьба (47 лет)</option>
+                        <option value="cedar_wedding">Кедровая свадьба (48 лет)</option>
+                        <option value="amber_weddown">Аметистовая свадьба (49 лет)</option>
+                        <option value="golden_weddown_big">Золотая свадьба (50 лет)</option>
+                        <option value="brass_wedding">Латунная свадьба (51 год)</option>
+                        <option value="blue_steel_wedding">Стальная синяя свадьба (52 года)</option>
+                        <option value="lead_wedding">Свинцовая свадьба (53 года)</option>
+                        <option value="tiger_eye_wedding">Глаз тигра свадьба (54 года)</option>
+                        <option value="emerald_weddown_big">Изумрудная свадьба (55 лет)</option>
+                        <option value="scarlet_wedding">Багровая свадьба (56 лет)</option>
+                        <option value="heavenly_blue_wedding">Небесно-голубая свадьба (57 лет)</option>
+                        <option value="yellow_topaz_wedding">Желтый топаз свадьба (58 лет)</option>
+                        <option value="white_steel_wedding">Белая сталь свадьба (59 лет)</option>
+                        <option value="diamond_weddown_big">Алмазная свадьба (60 лет)</option>
+                        <option value="cloud_wedding">Облачная свадьба (61 год)</option>
+                        <option value="eggshell_wedding">Яичная скорлупа свадьба (62 года)</option>
+                        <option value="wine_wedding">Винная свадьба (63 года)</option>
+                        <option value="amethyst_wedding">Аметистовая свадьба (64 года)</option>
+                        <option value="moon_wedding">Лунная свадьба (65 лет)</option>
+                        <option value="sun_wedding">Солнечная свадьба (66 лет)</option>
+                        <option value="star_wedding">Звездная свадьба (67 лет)</option>
+                        <option value="planet_wedding">Планетарная свадьба (68 лет)</option>
+                        <option value="galaxy_wedding">Галактическая свадьба (69 лет)</option>
+                        <option value="platinum_weddown_big">Платиновая свадьба (70 лет)</option>
+                        <option value="steel_wedding">Стальная свадьба (71 год)</option>
+                        <option value="rock_wedding">Каменная свадьба (72 года)</option>
+                        <option value="clay_wedding">Глиняная свадьба (73 года)</option>
+                        <option value="sand_wedding">Песчаная свадьба (74 года)</option>
+                        <option value="dust_wedding">Пылевая свадьба (75 лет)</option>
+                        <option value="wind_wedding">Ветреная свадьба (76 лет)</option>
+                        <option value="rain_wedding">Дождливая свадьба (77 лет)</option>
+                        <option value="snow_wedding">Снежная свадьба (78 лет)</option>
+                        <option value="ice_wedding">Ледяная свадьба (79 лет)</option>
+                        <option value="frost_wedding">Морозная свадьба (80 лет)</option>
+                        <option value="legendary_wedding">Легендарная свадьба (81+ лет)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="recipientType">Кому адресовано?</label>
+                <select id="recipientType">
+                    <option value="general">Общее обращение</option>
+                    <option value="daughter">Дочке</option>
+                    <option value="son">Сыну</option>
+                    <option value="mother">Маме</option>
+                    <option value="father">Папе</option>
+                    <option value="grandmother">Бабушке</option>
+                    <option value="grandfather">Дедушке</option>
+                    <option value="wife">Жене</option>
+                    <option value="husband">Мужу</option>
+                    <option value="girlfriend">Девушке</option>
+                    <option value="boyfriend">Парню</option>
+                    <option value="bestie">Лучшей подруге</option>
+                    <option value="brother">Брату</option>
+                    <option value="sister">Сестре</option>
+                    <option value="colleague">Коллеге</option>
+                    <option value="boss">Начальнику</option>
+                    <option value="employee">Подчиненному</option>
+                    <option value="teacher">Учителю</option>
+                    <option value="student">Студенту/Ученику</option>
+                    <option value="neighbor">Соседу</option>
+                    <option value="relative">Родственнику</option>
+                    <option value="friend">Другу</option>
+                    <option value="unknown">Незнакомцу / Общему кругу</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="recipientName">Имя получателя (если известно)</label>
+                <input type="text" id="recipientName" placeholder="Например: Анна, Иван, Мария...">
+            </div>
+
+            <div class="form-group">
+                <label for="senderName">Ваше имя (отправителя)</label>
+                <input type="text" id="senderName" placeholder="Например: С любовью, Ваш друг...">
+            </div>
+
+            <div class="form-group">
+                <label for="messageText">Текст поздравления (можно редактировать)</label>
+                <textarea id="messageText" placeholder="Здесь появится автоматически сгенерированный текст или ваш собственный..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="generateBtn">✨ Генерировать Текст</button>
+                <button class="btn btn-primary" id="renderCardBtn">🎨 Создать Открытку</button>
+            </div>
+            
+            <button class="btn btn-download" id="downloadBtn" disabled>⬇ Скачать Изображение (PNG)</button>
+        </section>
+
+        <!-- Панель превью -->
+        <section class="preview-panel">
+            <span class="preview-label">Live Preview</span>
+            <canvas id="cardCanvas" width="800" height="1000"></canvas>
+        </section>
+    </div>
+
+    <!-- Модалка успешной генерации -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-content">
+            <div class="icon-success">✓</div>
+            <h3>Открытка готова!</h3>
+            <p style="margin: 10px 0; color: #666;">Ваш шедевр создан. Не забудьте сохранить его.</p>
+            <button class="btn btn-primary" onclick="closeModal()">Отлично</button>
+        </div>
+    </div>
+
+    <!-- Индикатор звука -->
+    <div class="sound-indicator" id="soundIndicator">🔊 Sound Enabled</div>
+
+    <script>
+        /**
+         * КОНФИГУРАЦИЯ ПРАЗДНИКОВ И ТЕМАТИКИ
+         */
+        const holidaysConfig = {
+            new_year: {
+                month: 0, day: 1, // Январь
+                theme: 'winter_magic',
+                colors: ['#0f2027', '#203a43', '#2c5364'],
+                accent: '#ffd700',
+                particles: 'snow',
+                title: "С Новым Годом!",
+                messages: [
+                    "Пусть новый год принесет счастье, здоровье и благополучие.",
+                    "Желаю исполнения самых заветных желаний в наступающем году!",
+                    "Пусть каждый день нового года будет наполнен радостью и светом."
+                ]
+            },
+            christmas: {
+                month: 11, day: 25, // Декабрь
+                theme: 'warm_light',
+                colors: ['#2c3e50', '#34495e', '#1abc9c'],
+                accent: '#e74c3c',
+                particles: 'stars',
+                title: "Счастливого Рождества",
+                messages: [
+                    "Пусть волшебство Рождества наполнит ваш дом теплом и любовью.",
+                    "Мира вам, добра и благодати в этот святой праздник.",
+                    "С Рождеством! Пусть ангел хранит вашу семью."
+                ]
+            },
+            womens_day: {
+                month: 2, day: 8, // Март
+                theme: 'spring_floral',
+                colors: ['#ffecd2', '#fcb69f', '#ff9a9e'],
+                accent: '#ff6b6b',
+                particles: 'flowers',
+                title: "С 8 Марта!",
+                messages: [
+                    "Будьте всегда такими же прекрасными, нежными и любимыми!",
+                    "Пусть весна цветет в вашей душе круглый год.",
+                    "С Международным женским днем! Желаю счастья и улыбок."
+                ]
+            },
+            victory_day: {
+                month: 4, day: 9, // Май
+                theme: 'solemn_glory',
+                colors: ['#1a1a1a', '#4a4a4a', '#8e0e00'],
+                accent: '#cc0000',
+                particles: 'confetti_gold',
+                title: "С Днем Победы!",
+                messages: [
+                    "С великим праздником! Мирного неба и процветания.",
+                    "Помним гордимся. С 9 Мая!",
+                    "Спасибо за мирное небо над головой. С Победой!"
+                ]
+            },
+            birthday: {
+                special: true,
+                theme: 'celebration_pop',
+                colors: ['#ff9a9e', '#fad0c4', '#a18cd1'],
+                accent: '#ff4081',
+                particles: 'balloons',
+                title: "С Днем Рождения!",
+                messages: [
+                    "Пусть жизнь будет яркой красочной книгой, где каждая страница — радость.",
+                    "Желаю море смеха, любви и приключений в новом личном году!",
+                    "Ты удивительный человек. Пусть сбываются мечты!"
+                ]
+            },
+            wedding: {
+                special: true,
+                theme: 'romantic_soft',
+                colors: ['#fceabb', '#f8b500', '#fff'],
+                accent: '#d4af37',
+                particles: 'hearts',
+                title: "Союз сердец",
+                messages: [
+                    "Любите друг друга так сильно, как сегодня.",
+                    "Пусть ваш союз будет крепким и счастливым.",
+                    "Поздравляем с созданием новой семьи!"
+                ]
+            },
+            graduation: {
+                special: true,
+                theme: 'academic_prestige',
+                colors: ['#2c3e50', '#4ca1af', '#1abc9c'],
+                accent: '#f1c40f',
+                particles: 'caps',
+                title: "С Выпуском!",
+                messages: [
+                    "Впереди новые горизонты. Верьте в себя!",
+                    "Поздравляем с окончанием учебы. Удачи в карьере!",
+                    "Этот диплом — начало большого пути."
+                ]
+            },
+            russia_day: {
+                month: 5, day: 12,
+                theme: 'national_pride',
+                colors: ['#0039A6', '#FFFFFF', '#D52B1E'],
+                accent: '#FFCC00',
+                particles: 'flags_abstract',
+                title: "С Днем России!",
+                messages: [
+                    "Люби свою страну, береги её традиции.",
+                    "С национальным праздником! Процветания родной земле.",
+                    "Мы — часть великой истории. С 12 июня!"
+                ]
+            },
+            defender_day: {
+                month: 1, day: 23,
+                theme: 'strength_masculine',
+                colors: ['#2c3e50', '#3498db', '#95a5a6'],
+                accent: '#2ecc71',
+                particles: 'stars_green',
+                title: "С 23 Февраля!",
+                messages: [
+                    "Сила духа, мужество и честь — ваши главные качества.",
+                    "Поздравляем защитников! Крепкого здоровья и мира.",
+                    "Будьте всегда надежной опорой для близких."
+                ]
+            },
+            spring_labor: {
+                month: 4, day: 1,
+                theme: 'nature_awakening',
+                colors: ['#11998e', '#38ef7d', '#f9f9f9'],
+                accent: '#27ae60',
+                particles: 'leaves',
+                title: "С Праздником Весны и Труда!",
+                messages: [
+                    "Пусть труд приносит удовольствие, а отдых — радость.",
+                    "С наступлением настоящей весны! Цветите и пахните.",
+                    "Мира всем народам и дружбы народов!"
+                ]
+            },
+            unity_day: {
+                month: 10, day: 4,
+                theme: 'solidarity_history',
+                colors: ['#8e0e00', '#1f1c18', '#aa3b12'],
+                accent: '#ffc107',
+                particles: 'abstract_shapes',
+                title: "С Днем Народного Единства!",
+                messages: [
+                    "Вместе мы сила. Поздравляем с важным историческим днем.",
+                    "Пусть единство нашего народа будет нерушимым.",
+                    "С праздником согласия и взаимопонимания!"
+                ]
+            },
+            valentines_day: {
+                month: 1, day: 14,
+                theme: 'love_passion',
+                colors: ['#ff0844', '#ffb199', '#fff'],
+                accent: '#e91e63',
+                particles: 'roses',
+                title: "С Днем Всех Влюбленных!",
+                messages: [
+                    "Любовь — это самая сильная магия во вселенной.",
+                    "Пусть ваше сердце всегда будет полно тепла.",
+                    "С 14 февраля! Будьте вместе и любите ярко."
+                ]
+            },
+            teachers_day: {
+                month: 9, day: 5, // Первое воскресенье октября обычно, но фиксируем дату для примера
+                theme: 'intellectual_warmth',
+                colors: ['#f39c12', '#e67e22', '#ecf0f1'],
+                accent: '#2980b9',
+                particles: 'books',
+                title: "С Днем Учителя!",
+                messages: [
+                    "Спасибо за знания, терпение и мудрость.",
+                    "Быть учителем — значит зажигать огонь в душах детей.",
+                    "Поздравляем педагогов! Легких уроков и благодарных учеников."
+                ]
+            },
+            doctors_day: {
+                month: 9, day: 3, // Примерная дата
+                theme: 'medical_clean',
+                colors: ['#00bcd4', '#0097a7', '#ffffff'],
+                accent: '#4caf50',
+                particles: 'crosses',
+                title: "С Днем Медицинского Работника!",
+                messages: [
+                    "Спасибо за спасенные жизни и здоровые улыбки.",
+                    "Пусть ваша профессия остается призванием, а не просто работой.",
+                    "Здоровья тем, кто дарит здоровье другим."
+                ]
+            },
+            police_day: {
+                month: 10, day: 10,
+                theme: 'law_order',
+                colors: ['#2c3e50', '#34495e', '#f1c40f'],
+                accent: '#3498db',
+                particles: 'shields',
+                title: "С Днем Полиции!",
+                messages: [
+                    "Благодарим за безопасность и спокойствие граждан.",
+                    "Пусть служба будет честной, а жизнь безопасной.",
+                    "С профессиональным праздником, стражи порядка!"
+                ]
+            },
+            taxi_driver_day: {
+                month: 9, day: 22,
+                theme: 'urban_dynamic',
+                colors: ['#f1c40f', '#2c3e50', '#ecf0f1'],
+                accent: '#e74c3c',
+                particles: 'cars_simple',
+                title: "С Днем Таксиста!",
+                messages: [
+                    "Быстрых маршрутов и приятных пассажиров.",
+                    "Спасибо за комфорт и пунктуальность.",
+                    "Легкой дороги и высокого дохода!"
+                ]
+            },
+            students_day: {
+                month: 0, day: 25,
+                theme: 'youth_energy',
+                colors: ['#9b59b6', '#8e44ad', '#f1c40f'],
+                accent: '#3498db',
+                particles: 'notes_music',
+                title: "С Татьяниным Днем!",
+                messages: [
+                    "Пусть студенческие годы будут самыми яркими!",
+                    "Легкой сессии и верных друзей.",
+                    "Учись, мечтай и достигай!"
+                ]
+            },
+            mothers_day: {
+                month: 10, day: 24, // Последнее воскресенье ноября
+                theme: 'maternal_love',
+                colors: ['#fd79a8', '#fab1a0', '#ffeaa7'],
+                accent: '#e17055',
+                particles: 'tulips',
+                title: "С Днем Матери!",
+                messages: [
+                    "Мамина любовь — самое бескорыстное чувство на свете.",
+                    "Спасибо за тепло ваших рук и доброту сердца.",
+                    "Здоровья и долгих лет самым лучшим мамам."
+                ]
+            },
+            fathers_day: {
+                month: 5, day: 21, // Третье воскресенье июня
+                theme: 'paternal_strength',
+                colors: ['#576574', '#8395a7', '#dff9fb'],
+                accent: '#222f3e',
+                particles: 'tools',
+                title: "С Днем Отца!",
+                messages: [
+                    "Папа — это первый герой каждого ребенка.",
+                    "Спасибо за защиту, поддержку и мудрые советы.",
+                    "Крепкого здоровья и семейного благополучия."
+                ]
+            },
+            grandparents_day: {
+                month: 9, day: 1, // Первый октябрь
+                theme: 'wisdom_legacy',
+                colors: ['#e1b12c', '#fbc531', '#d980fa'],
+                accent: '#c44569',
+                particles: 'photos_frames',
+                title: "С Днем Бабушек и Дедушек!",
+                messages: [
+                    "Ваши руки помнят столько всего хорошего...",
+                    "Спасибо за сказки, пироги и безусловную любовь.",
+                    "Долгих лет жизни и бодрости духа!"
+                ]
+            },
+            knowledge_day: {
+                month: 8, day: 1,
+                theme: 'education_beginning',
+                colors: ['#00cec9', '#81ecec', '#ffffff'],
+                accent: '#0984e3',
+                particles: 'globes',
+                title: "С Днем Знаний!",
+                messages: [
+                    "Новый учебный год — новые возможности.",
+                    "Жадности до знаний и интереса к миру.",
+                    "Пусть школа станет вторым домом."
+                ]
+            },
+            last_bell: {
+                month: 4, day: 25, // Обычно май
+                theme: 'farewell_emotional',
+                colors: ['#ff7675', '#fab1a0', '#ffeaa7'],
+                accent: '#d63031',
+                particles: 'birds',
+                title: "С Последним Звонком!",
+                messages: [
+                    "Время пролетело незаметно. Летите свободно!",
+                    "Последний звонок — начало взрослой жизни.",
+                    "Не забывайте школьных друзей и учителей."
+                ]
+            },
+            retirement: {
+                special: true,
+                theme: 'peaceful_rest',
+                colors: ['#bdc3c7', '#95a5a6', '#ecf0f1'],
+                accent: '#27ae60',
+                particles: 'sunsets',
+                title: "С Уходом на Пенсию!",
+                messages: [
+                    "Заслуженный отдых начинается сейчас.",
+                    "Посвятите время себе, хобби и внукам.",
+                    "Спасибо за многолетний труд!"
+                ]
+            },
+            promotion: {
+                special: true,
+                theme: 'career_climb',
+                colors: ['#2980b9', '#6dd5fa', '#ffffff'],
+                accent: '#f39c12',
+                particles: 'stairs_graph',
+                title: "С Повышением!",
+                messages: [
+                    "Ваш профессионализм оценен по достоинству.",
+                    "Новые высоты ждут вас впереди.",
+                    "Удачи в новых обязанностях!"
+                ]
+            },
+            house_warming: {
+                special: true,
+                theme: 'home_comfort',
+                colors: ['#e67e22', '#f39c12', '#f1c40f'],
+                accent: '#27ae60',
+                particles: 'houses_keys',
+                title: "С Новосельем!",
+                messages: [
+                    "Пусть в новом доме царят уют и покой.",
+                    "Здесь будут жить только хорошие люди.",
+                    "Ключи от счастья уже у вас в руках."
+                ]
+            },
+            anniversary_personal: {
+                special: true,
+                theme: 'milestone_celebration',
+                colors: ['#9b59b6', '#8e44ad', '#f1c40f'],
+                accent: '#e74c3c',
+                particles: 'numbers_sparkle',
+                title: "С Юбилеем!",
+                messages: [
+                    "Возраст — это просто число, опыт — богатство.",
+                    "Поздравляем с красивой датой жизни!",
+                    "Пусть следующий год будет еще лучше предыдущего."
+                ]
+            },
+            engagement: {
+                special: true,
+                theme: 'promise_ring',
+                colors: ['#ffeaa7', '#fdcb6e', '#ffffff'],
+                accent: '#dfe6e9',
+                particles: 'rings',
+                title: "С Помолвкой!",
+                messages: [
+                    "Шаг навстречу вечной любви сделан.",
+                    "Готовьтесь к самому важному дню в жизни.",
+                    "Пусть кольцо сияет ярче звезд."
+                ]
+            },
+            baby_shower: {
+                special: true,
+                theme: 'soft_pastel',
+                colors: ['#a29bfe', '#6c5ce7', '#ffeaa7'],
+                accent: '#fd79a8',
+                particles: 'babies_boots',
+                title: "В ожидании чуда...",
+                messages: [
+                    "Скоро в семье станет на одного человека больше.",
+                    "Готовьте кроватку и терпение!",
+                    "Пусть малыш растет здоровым и счастливым."
+                ]
+            },
+            child_birth: {
+                special: true,
+                theme: 'new_life',
+                colors: ['#74b9ff', '#0984e3', '#ffffff'],
+                accent: '#00cec9',
+                particles: 'storks_clouds',
+                title: "С Рождением Малыша!",
+                messages: [
+                    "Мир стал добрее благодаря новому человеку.",
+                    "Поздравляем родителей с этим счастьем.",
+                    "Расти большим и сильным крохой!"
+                ]
+            },
+            first_steps: {
+                special: true,
+                theme: 'playful_child',
+                colors: ['#ff7675', '#fab1a0', '#55efc4'],
+                accent: '#fdcb6e',
+                particles: 'footprints',
+                title: "Первые Шаги!",
+                messages: [
+                    "Маленький шаг для ребенка, большой для нас.",
+                    "Поздравляем с первым самостоятельным движением.",
+                    "Держись крепче, ты справишься!"
+                ]
+            },
+            first_words: {
+                special: true,
+                theme: 'communication_start',
+                colors: ['#e17055', '#d63031', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'speech_bubbles',
+                title: "Первые Слова!",
+                messages: [
+                    "Тишина нарушена сладким голоском.",
+                    "Поздравляем с началом разговора.",
+                    "Что он сказал? Это было здорово!"
+                ]
+            },
+            school_entry: {
+                special: true,
+                theme: 'backpack_ready',
+                colors: ['#0984e3', '#74b9ff', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'books_backpacks',
+                title: "В Первый Класс!",
+                messages: [
+                    "Начинается новая глава жизни.",
+                    "Будь внимательным и послушным.",
+                    "Успехов в освоении азбуки и цифр!"
+                ]
+            },
+            university_entry: {
+                special: true,
+                theme: 'adult_student',
+                colors: ['#6c5ce7', '#a29bfe', '#ffffff'],
+                accent: '#00cec9',
+                particles: 'degrees_caps',
+                title: "Поступление в ВУЗ!",
+                messages: [
+                    "Двери знаний открыты для тебя.",
+                    "Выбрал правильный путь. Гордимся!",
+                    "Учитесь многому, живите интересно."
+                ]
+            },
+            job_offer: {
+                special: true,
+                theme: 'professional_start',
+                colors: ['#2d3436', '#636e72', '#ffffff'],
+                accent: '#00b894',
+                particles: 'briefcases',
+                title: "С Получением Работы!",
+                messages: [
+                    "Твой талант нашел свое применение.",
+                    "Удачи на первом рабочем месте.",
+                    "Строй карьеру уверенно."
+                ]
+            },
+            work_promotion: {
+                special: true,
+                theme: 'leadership',
+                colors: ['#e17055', '#d63031', '#ffeaa7'],
+                accent: '#fdcb6e',
+                particles: 'charts_up',
+                title: "С Назначением!",
+                messages: [
+                    "Руководство оценило твои усилия.",
+                    "Новая должность — новые вызовы.",
+                    "Веди команду к победе!"
+                ]
+            },
+            business_launch: {
+                special: true,
+                theme: 'entrepreneur_fire',
+                colors: ['#ff7675', '#e17055', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'rocket_ships',
+                title: "Запуск Бизнеса!",
+                messages: [
+                    "Смелый шаг в неизвестность оправдан.",
+                    "Пусть идея взлетит высоко.",
+                    "Успехов в развитии дела!"
+                ]
+            },
+            project_completion: {
+                special: true,
+                theme: 'finish_line',
+                colors: ['#00cec9', '#81ecec', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'checkmarks',
+                title: "Проект Завершен!",
+                messages: [
+                    "Работа выполнена блестяще.",
+                    "Можно выдохнуть и порадоваться результату.",
+                    "Гордитесь своим трудом."
+                ]
+            },
+            award_win: {
+                special: true,
+                theme: 'trophy_gold',
+                colors: ['#fdcb6e', '#e17055', '#ffffff'],
+                accent: '#d63031',
+                particles: 'medals',
+                title: "С Наградой!",
+                messages: [
+                    "Признание вашего мастерства заслужено.",
+                    "Эта статуэтка блестит благодаря вашему труду.",
+                    "Поздравляем с победой!"
+                ]
+            },
+            competition_win: {
+                special: true,
+                theme: 'victory_pose',
+                colors: ['#6c5ce7', '#a29bfe', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'confetti_color',
+                title: "Победа в Соревновании!",
+                messages: [
+                    "Ты лучший среди лучших.",
+                    "Титул завоеван честно и красиво.",
+                    "Так держать чемпионскую форму!"
+                ]
+            },
+            exam_pass: {
+                special: true,
+                theme: 'relief_exam',
+                colors: ['#74b9ff', '#0984e3', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'papers_ok',
+                title: "Экзамен Сдан!",
+                messages: [
+                    "Страх позади, оценка в дневнике.",
+                    "Ты справился с волнением и знанием.",
+                    "Поздравляем с успешной сдачей!"
+                ]
+            },
+            thesis_defense: {
+                special: true,
+                theme: 'scientific_defense',
+                colors: ['#2d3436', '#636e72', '#00b894'],
+                accent: '#e17055',
+                particles: 'microscopes',
+                title: "Защита Диплома!",
+                messages: [
+                    "Научная работа принята комиссией.",
+                    "Ты теперь специалист с большой буквы.",
+                    "Гордимся вашим интеллектом!"
+                ]
+            },
+            publication: {
+                special: true,
+                theme: 'literary_print',
+                colors: ['#dfe6e9', '#b2bec3', '#2d3436'],
+                accent: '#0984e3',
+                particles: 'open_books',
+                title: "Выход Публикации!",
+                messages: [
+                    "Твои мысли обрели материальную форму.",
+                    "Читатели оценят глубину замысла.",
+                    "Поздравляем с выходом статьи/книги!"
+                ]
+            },
+            art_exhibition: {
+                special: true,
+                theme: 'gallery_white',
+                colors: ['#ffffff', '#dfe6e9', '#6c5ce7'],
+                accent: '#e17055',
+                particles: 'paint_brushes',
+                title: "Персональная Выставка!",
+                messages: [
+                    "Твое искусство увидело свет рампы.",
+                    "Зрители восхищены талантом автора.",
+                    "Поздравляем с дебютом выставки!"
+                ]
+            },
+            performance_success: {
+                special: true,
+                theme: 'stage_spotlight',
+                colors: ['#2d3436', '#fdcb6e', '#e17055'],
+                accent: '#00cec9',
+                particles: 'curtains_open',
+                title: "Успешное Выступление!",
+                messages: [
+                    "Аплодисменты были громкими и искренними.",
+                    "Ты покорил публику своим искусством.",
+                    "Поздравляем с триумфом на сцене!"
+                ]
+            },
+            sports_record: {
+                special: true,
+                theme: 'athletic_power',
+                colors: ['#00b894', '#00cec9', '#ffffff'],
+                accent: '#e17055',
+                particles: 'stopwatches',
+                title: "Новый Рекорд!",
+                messages: [
+                    "Пределы возможного расширены тобой.",
+                    "Цифры говорят сами за себя.",
+                    "Поздравляем с спортивным достижением!"
+                ]
+            },
+            marathon_finish: {
+                special: true,
+                theme: 'endurance_run',
+                colors: ['#ff7675', '#fab1a0', '#ffeaa7'],
+                accent: '#0984e3',
+                particles: 'running_shoes',
+                title: "Финиш Марафона!",
+                messages: [
+                    "42 километра позади, слава впереди.",
+                    "Ты доказал силу своей воли.",
+                    "Поздравляем с финишем!"
+                ]
+            },
+            trip_return: {
+                special: true,
+                theme: 'wanderlust_home',
+                colors: ['#74b9ff', '#0984e3', '#dfe6e9'],
+                accent: '#fdcb6e',
+                particles: 'suitcases_plane',
+                title: "С Возвращением!",
+                messages: [
+                    "Дом милый дом после странствий.",
+                    "Рассказывайте впечатления друзьям.",
+                    "Поздравляем с удачным путешествием!"
+                ]
+            },
+            moving_city: {
+                special: true,
+                theme: 'fresh_start_geo',
+                colors: ['#6c5ce7', '#a29bfe', '#ffffff'],
+                accent: '#00b894',
+                particles: 'maps_pins',
+                title: "Переезд в Новый Город!",
+                messages: [
+                    "Новое место — новые истории.",
+                    "Пусть адаптация пройдет легко.",
+                    "Поздравляем с переменами!"
+                ]
+            },
+            renovation_done: {
+                special: true,
+                theme: 'clean_slates',
+                colors: ['#b2bec3', '#636e72', '#00cec9'],
+                accent: '#fdcb6e',
+                particles: 'rollers_paint',
+                title: "Ремонт Закончен!",
+                messages: [
+                    "Стены дышат свежестью, полы блестят.",
+                    "Усталость прошла, остался уют.",
+                    "Поздравляем с обновленным жильем!"
+                ]
+            },
+            pet_adoption: {
+                special: true,
+                theme: 'animal_love',
+                colors: ['#fab1a0', '#ff7675', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'paws_hearts',
+                title: "Новый Друг Появился!",
+                messages: [
+                    "В доме стало шумнее и веселее.",
+                    "Пусть питомец будет здоров и любим.",
+                    "Поздравляем с усыновлением!"
+                ]
+            },
+            pet_birthday: {
+                special: true,
+                theme: 'fur_party',
+                colors: ['#fdcb6e', '#e17055', '#74b9ff'],
+                accent: '#00cec9',
+                particles: 'bones_cakes',
+                title: "С Днем Рождения Питомца!",
+                messages: [
+                    "Хвостики виляют от радости.",
+                    "Еще один год преданности и игр.",
+                    "Поздравляем пушистого именинника!"
+                ]
+            },
+            plant_growth: {
+                special: true,
+                theme: 'botanical_green',
+                colors: ['#00b894', '#00cec9', '#55efc4'],
+                accent: '#fdcb6e',
+                particles: 'sprouts_leafs',
+                title: "Цветение Наступило!",
+                messages: [
+                    "Природа вознаградила за уход.",
+                    "Бутоны раскрылись в полной красе.",
+                    "Поздравляем садовода с успехом!"
+                ]
+            },
+            recipe_perfect: {
+                special: true,
+                theme: 'gastronomy_art',
+                colors: ['#e17055', '#d63031', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'chef_hats',
+                title: "Рецепт Удался!",
+                messages: [
+                    "Вкус превзошел все ожидания.",
+                    "Кулинарный шедевр готов.",
+                    "Поздравляем повара с триумфом!"
+                ]
+            },
+            gift_received: {
+                special: true,
+                theme: 'surprise_box',
+                colors: ['#6c5ce7', '#a29bfe', '#fdcb6e'],
+                accent: '#e17055',
+                particles: 'ribbons_boxes',
+                title: "Подарок Получен!",
+                messages: [
+                    "Улыбка говорит сама за себя.",
+                    "Приятный сюрприз доставил радость.",
+                    "Поздравляем с вниманием окружающих!"
+                ]
+            },
+            letter_read: {
+                special: true,
+                theme: 'epistolary_old',
+                colors: ['#dfe6e9', '#b2bec3', '#636e72'],
+                accent: '#0984e3',
+                particles: 'envelopes_stamp',
+                title: "Письмо Прочитано!",
+                messages: [
+                    "Слова тронули душу до глубины.",
+                    "Переписка продолжается успешно.",
+                    "Поздравляем с эмоциональным откликом!"
+                ]
+            },
+            phone_call_good: {
+                special: true,
+                theme: 'connection_voice',
+                colors: ['#00cec9', '#81ecec', '#ffffff'],
+                accent: '#e17055',
+                particles: 'phones_wave',
+                title: "Хороший Разговор!",
+                messages: [
+                    "Голос близкого человека согрел.",
+                    "Новости оказались положительными.",
+                    "Поздравляем с общением!"
+                ]
+            },
+            meeting_friend: {
+                special: true,
+                theme: 'nostalgia_meet',
+                colors: ['#fdcb6e', '#e17055', '#fab1a0'],
+                accent: '#6c5ce7',
+                particles: 'handshakes_coffee',
+                title: "Встреча с Другом!",
+                messages: [
+                    "Время лечит раны дружбой.",
+                    "Смеяться вместе — лучшее лекарство.",
+                    "Поздравляем с воссоединением!"
+                ]
+            },
+            reunion_class: {
+                special: true,
+                theme: 'school_memories',
+                colors: ['#74b9ff', '#0984e3', '#dfe6e9'],
+                accent: '#fdcb6e',
+                particles: 'chalkboards_photos',
+                title: "Встреча Одноклассников!",
+                messages: [
+                    "Прошли годы, но дружба крепнет.",
+                    "Вспоминаем школьные годы с улыбкой.",
+                    "Поздравляем с мероприятием!"
+                ]
+            },
+            reunion_college: {
+                special: true,
+                theme: 'uni_days',
+                colors: ['#6c5ce7', '#a29bfe', '#ffffff'],
+                accent: '#00b894',
+                particles: 'gowns_beers',
+                title: "Встреча Однокурсников!",
+                messages: [
+                    "Студенчество навсегда в сердце.",
+                    "Общаемся как будто вчера расстались.",
+                    "Поздравляем с ностальгией!"
+                ]
+            },
+            reunion_work: {
+                special: true,
+                theme: 'office_bonds',
+                colors: ['#b2bec3', '#636e72', '#00cec9'],
+                accent: '#e17055',
+                particles: 'desks_laptops',
+                title: "Встреча Коллег!",
+                messages: [
+                    "Команда мечты снова в сборе.",
+                    "Профессиональное братство сильнее времени.",
+                    "Поздравляем с встречей команды!"
+                ]
+            },
+            online_chat_fun: {
+                special: true,
+                theme: 'digital_smiles',
+                colors: ['#00b894', '#00cec9', '#55efc4'],
+                accent: '#fdcb6e',
+                particles: 'chat_bubbles_net',
+                title: "Веселый Онлайн!",
+                messages: [
+                    "Интернет соединил нас для смеха.",
+                    "Мемы и шутки подняли настроение.",
+                    "Поздравляем с виртуальным общением!"
+                ]
+            },
+            game_level_up: {
+                special: true,
+                theme: 'pixel_progress',
+                colors: ['#6c5ce7', '#a29bfe', '#fdcb6e'],
+                accent: '#e17055',
+                particles: 'joysticks_xp',
+                title: "Level Up!",
+                messages: [
+                    "Новый уровень пройден успешно.",
+                    "Опыт получен, навыки прокачаны.",
+                    "Поздравляем геймера с прогрессом!"
+                ]
+            },
+            achievement_unlocked: {
+                special: true,
+                theme: 'trophy_virtual',
+                colors: ['#fdcb6e', '#e17055', '#ffffff'],
+                accent: '#00b894',
+                particles: 'locks_open',
+                title: "Achievement Unlocked!",
+                messages: [
+                    "Достижение разблокировано.",
+                    "Сложная цель достигнута.",
+                    "Поздравляем с успехом в игре!"
+                ]
+            },
+            quest_complete: {
+                special: true,
+                theme: 'story_mode',
+                colors: ['#2d3436', '#636e72', '#0984e3'],
+                accent: '#fdcb6e',
+                particles: 'scrolls_map',
+                title: "Quest Complete!",
+                messages: [
+                    "История подошла к логическому концу.",
+                    "Герой выполнил свою миссию.",
+                    "Поздравляем с завершением квеста!"
+                ]
+            },
+            boss_defeated: {
+                special: true,
+                theme: 'battle_epic',
+                colors: ['#d63031', '#e17055', '#2d3436'],
+                accent: '#fdcb6e',
+                particles: 'swords_dragons',
+                title: "Boss Defeated!",
+                messages: [
+                    "Главный враг повержен.",
+                    "Лут выпал, слава досталась тебе.",
+                    "Поздравляем с победой над боссом!"
+                ]
+            },
+            raid_clear: {
+                special: true,
+                theme: 'team_strategy',
+                colors: ['#0984e3', '#74b9ff', '#2d3436'],
+                accent: '#e17055',
+                particles: 'shield_team',
+                title: "Raid Clear!",
+                messages: [
+                    "Команда действовала слаженно.",
+                    "Сложный данж пройден без потерь.",
+                    "Поздравляем рейдеров с успехом!"
+                ]
+            },
+            tournament_win: {
+                special: true,
+                theme: 'esports_stage',
+                colors: ['#6c5ce7', '#a29bfe', '#fdcb6e'],
+                accent: '#00b894',
+                particles: 'cup_esports',
+                title: "Tournament Won!",
+                messages: [
+                    "Кубок чемпионов твой.",
+                    "Лучшая игра сезона сыграна тобой.",
+                    "Поздравляем с турнирной победой!"
+                ]
+            },
+            stream_followers: {
+                special: true,
+                theme: 'broadcast_live',
+                colors: ['#e17055', '#d63031', '#ffffff'],
+                accent: '#00cec9',
+                particles: 'mic_camera',
+                title: "Followers Growth!",
+                messages: [
+                    "Аудитория растет быстро.",
+                    "Тебя смотрят и любят тысячи людей.",
+                    "Поздравляем стримера с успехом!"
+                ]
+            },
+            video_views: {
+                special: true,
+                theme: 'viral_content',
+                colors: ['#00b894', '#00cec9', '#fdcb6e'],
+                accent: '#d63031',
+                particles: 'play_button',
+                title: "Video Viral!",
+                messages: [
+                    "Миллионы просмотров подтверждают качество.",
+                    "Контент разошелся по сети.",
+                    "Поздравляем блогера с вирусностью!"
+                ]
+            },
+            blog_post_like: {
+                special: true,
+                theme: 'social_media_ui',
+                colors: ['#fd79a8', '#e84393', '#ffffff'],
+                accent: '#0984e3',
+                particles: 'thumbs_up',
+                title: "Lots of Likes!",
+                messages: [
+                    "Сердца пользователей бьются чаще.",
+                    "Пост набрал популярность.",
+                    "Поздравляем с активностью аудитории!"
+                ]
+            },
+            comment_positive: {
+                special: true,
+                theme: 'feedback_loop',
+                colors: ['#74b9ff', '#0984e3', '#dfe6e9'],
+                accent: '#00b894',
+                particles: 'speech_text',
+                title: "Positive Feedback!",
+                messages: [
+                    "Комментарии полны похвалы.",
+                    "Мнение читателей совпало с авторским.",
+                    "Поздравляем с хорошей обратной связью!"
+                ]
+            },
+            share_social: {
+                special: true,
+                theme: 'network_effect',
+                colors: ['#6c5ce7', '#a29bfe', '#fdcb6e'],
+                accent: '#e17055',
+                particles: 'arrows_share',
+                title: "Shared Everywhere!",
+                messages: [
+                    "Информация распространяется молниеносно.",
+                    "Тебя цитируют и перепечатывают.",
+                    "Поздравляем с виральным репостом!"
+                ]
+            },
+            mention_brand: {
+                special: true,
+                theme: 'marketing_impact',
+                colors: ['#2d3436', '#636e72', '#00cec9'],
+                accent: '#fdcb6e',
+                particles: '@_symbol',
+                title: "Brand Mentioned!",
+                messages: [
+                    "Бренд упоминается в инфополе.",
+                    "PR кампания работает эффективно.",
+                    "Поздравляем маркетологов с упоминанием!"
+                ]
+            },
+            collab_project: {
+                special: true,
+                theme: 'partnership_handshake',
+                colors: ['#00b894', '#00cec9', '#fdcb6e'],
+                accent: '#6c5ce7',
+                particles: 'hands_join',
+                title: "Collaboration Success!",
+                messages: [
+                    "Совместный проект дал плоды.",
+                    "Две силы объединились для лучшего результата.",
+                    "Поздравляем партнеров с коллабом!"
+                ]
+            },
+            mentor_mentee: {
+                special: true,
+                theme: 'guidance_path',
+                colors: ['#dfe6e9', '#b2bec3', '#0984e3'],
+                accent: '#e17055',
+                particles: 'lamp_book',
+                title: "Mentoring Milestone!",
+                messages: [
+                    "Ученик превзошел мастера в чем-то.",
+                    "Знания переданы успешно.",
+                    "Поздравляем наставника и ученика!"
+                ]
+            },
+            teaching_first_lesson: {
+                special: true,
+                theme: 'pedagogy_start',
+                colors: ['#fdcb6e', '#e17055', '#ffffff'],
+                accent: '#00b894',
+                particles: 'blackboard_chalk',
+                title: "First Lesson Taught!",
+                messages: [
+                    "Дебют преподавателя состоялся.",
+                    "Глаза учеников горели интересом.",
+                    "Поздравляем молодого педагога!"
+                ]
+            },
+            student_graduate: {
+                special: true,
+                theme: 'academy_exit',
+                colors: ['#6c5ce7', '#a29bfe', '#fdcb6e'],
+                accent: '#00cec9',
+                particles: 'cap_throw',
+                title: "Student Graduated!",
+                messages: [
+                    "Курс обучения завершен успешно.",
+                    "Выпускник получил квалификацию.",
+                    "Поздравляем студента с выпуском!"
+                ]
+            },
+            parenting_milestone: {
+                special: true,
+                theme: 'family_growth',
+                colors: ['#fab1a0', '#ff7675', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'cribs_toys',
+                title: "Parenting Stage Passed!",
+                messages: [
+                    "Очередной кризис миновал гладко.",
+                    "Родители стали опытнее.",
+                    "Поздравляем мам и пап с этапом!"
+                ]
+            },
+            couple_quiet_time: {
+                special: true,
+                theme: 'intimacy_sofa',
+                colors: ['#2d3436', '#636e72', '#fdcb6e'],
+                accent: '#e17055',
+                particles: 'candles_blankets',
+                title: "Quiet Time Together!",
+                messages: [
+                    "Тишина вдвоем дороже слов.",
+                    "Момент покоя укрепляет связь.",
+                    "Поздравляем пару с отдыхом!"
+                ]
+            },
+            date_night: {
+                special: true,
+                theme: 'romantic_dinner',
+                colors: ['#d63031', '#e17055', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'wine_glasses',
+                title: "Date Night Success!",
+                messages: [
+                    "Вечер прошел романтично и вкусно.",
+                    "Искры летали между вами.",
+                    "Поздравляем влюбленных с свиданием!"
+                ]
+            },
+            proposal_accepted: {
+                special: true,
+                theme: 'yes_answer',
+                colors: ['#ffeaa7', '#fdcb6e', '#ffffff'],
+                accent: '#e17055',
+                particles: 'ring_yes',
+                title: "Proposal Accepted!",
+                messages: [
+                    "Ответ был 'Да'!",
+                    "Счастье переполняет обоих.",
+                    "Поздравляем будущую семью!"
+                ]
+            },
+            honeymoon_start: {
+                special: true,
+                theme: 'tropical_escape',
+                colors: ['#00cec9', '#81ecec', '#fdcb6e'],
+                accent: '#e17055',
+                particles: 'beach_parasols',
+                title: "Honeymoon Begins!",
+                messages: [
+                    "Медовый месяц стартует ярко.",
+                    "Отдыхайте и наслаждайтесь обществом.",
+                    "Поздравляем молодоженов с поездкой!"
+                ]
+            },
+            silver_wedding: {
+                special: true,
+                theme: 'metallic_silver',
+                colors: ['#b2bec3', '#dfe6e9', '#ffffff'],
+                accent: '#6c5ce7',
+                particles: 'rings_silver',
+                title: "Silver Wedding Anniversary!",
+                messages: [
+                    "25 лет вместе — серебряный юбилей.",
+                    "Любовь стала прочнее металла.",
+                    "Поздравляем супругов с серебром!"
+                ]
+            },
+            golden_wedding: {
+                special: true,
+                theme: 'luxury_gold',
+                colors: ['#fdcb6e', '#e17055', '#ffffff'],
+                accent: '#d63031',
+                particles: 'crowns_gold',
+                title: "Golden Wedding Anniversary!",
+                messages: [
+                    "50 лет брака — золотой стандарт любви.",
+                    "Ваш союз сияет ярче золота.",
+                    "Поздравляем юбиляров с золотом!"
+                ]
+            },
+            diamond_wedding: {
+                special: true,
+                theme: 'sparkle_diamond',
+                colors: ['#ffffff', '#dfe6e9', '#74b9ff'],
+                accent: '#00cec9',
+                particles: 'gems_diamond',
+                title: "Diamond Wedding Anniversary!",
+                messages: [
+                    "60 лет неразрывной связи.",
+                    "Любовь тверже алмаза.",
+                    "Поздравляем с бриллиантовым рубежом!"
+                ]
+            },
+            platinum_wedding: {
+                special: true,
+                theme: 'rare_platinum',
+                colors: ['#dfe6e9', '#b2bec3', '#636e72'],
+                accent: '#0984e3',
+                particles: 'infinity_signs',
+                title: "Platinum Wedding Anniversary!",
+                messages: [
+                    "70 лет вместе — платиновый предел.",
+                    "Такой пары мало в мире.",
+                    "Поздравляем легенды с платиной!"
+                ]
+            },
+            emerald_wedding: {
+                special: true,
+                theme: 'green_emerald',
+                colors: ['#00b894', '#55efc4', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'stones_green',
+                title: "Emerald Wedding Anniversary!",
+                messages: [
+                    "55 лет свежести чувств.",
+                    "Изумрудная глубина отношений.",
+                    "Поздравляем с изумрудом!"
+                ]
+            },
+            ruby_wedding: {
+                special: true,
+                theme: 'red_ruby',
+                colors: ['#d63031', '#e17055', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'heart_red_gem',
+                title: "Ruby Wedding Anniversary!",
+                messages: [
+                    "40 лет пылкой страсти.",
+                    "Рубиновое сердце бьется ровно.",
+                    "Поздравляем с рубином!"
+                ]
+            },
+            pearl_wedding: {
+                special: true,
+                theme: 'white_pearl',
+                colors: ['#ffffff', '#dfe6e9', '#fab1a0'],
+                accent: '#6c5ce7',
+                particles: 'oysters_pearls',
+                title: "Pearl Wedding Anniversary!",
+                messages: [
+                    "30 лет гладкости и красоты союза.",
+                    "Жемчуг терпения и любви.",
+                    "Поздравляем с жемчугом!"
+                ]
+            },
+            porcelain_wedding: {
+                special: true,
+                theme: 'fragile_beauty',
+                colors: ['#ffffff', '#74b9ff', '#dfe6e9'],
+                accent: '#e17055',
+                particles: 'vases_delicate',
+                title: "Porcelain Wedding Anniversary!",
+                messages: [
+                    "20 лет изящества отношений.",
+                    "Берегите фарфор своего счастья.",
+                    "Поздравляем с фарфором!"
+                ]
+            },
+            glass_wedding: {
+                special: true,
+                theme: 'transparent_truth',
+                colors: ['#81ecec', '#00cec9', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'windows_light',
+                title: "Glass Wedding Anniversary!",
+                messages: [
+                    "15 лет прозрачности и ясности.",
+                    "Смотрите друг на друга сквозь призму любви.",
+                    "Поздравляем со стеклом!"
+                ]
+            },
+            tin_wedding: {
+                special: true,
+                theme: 'flexible_metal',
+                colors: ['#b2bec3', '#636e72', '#dfe6e9'],
+                accent: '#00b894',
+                particles: 'sheets_metal',
+                title: "Tin Wedding Anniversary!",
+                messages: [
+                    "10 лет гибкости и прочности.",
+                    "Жестяная свадьба отмечает стойкость.",
+                    "Поздравляем с оловом!"
+                ]
+            },
+            wooden_wedding: {
+                special: true,
+                theme: 'natural_wood',
+                colors: ['#e17055', '#d63031', '#fdcb6e'],
+                accent: '#00cec9',
+                particles: 'logs_trees',
+                title: "Wooden Wedding Anniversary!",
+                messages: [
+                    "5 лет корневой системы семьи.",
+                    "Дерево жизни крепнет с каждым годом.",
+                    "Поздравляем с деревом!"
+                ]
+            },
+            paper_wedding: {
+                special: true,
+                theme: 'blank_page',
+                colors: ['#ffffff', '#dfe6e9', '#74b9ff'],
+                accent: '#e17055',
+                particles: 'pages_folded',
+                title: "Paper Wedding Anniversary!",
+                messages: [
+                    "1 год чистой истории любви.",
+                    "Пишите свою сказку дальше.",
+                    "Поздравляем с бумагой!"
+                ]
+            },
+            cotton_wedding: {
+                special: true,
+                theme: 'soft_fabric',
+                colors: ['#ffffff', '#fab1a0', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'cotton_balls',
+                title: "Cotton Wedding Anniversary!",
+                messages: [
+                    "2 года мягкости и комфорта.",
+                    "Хлопковая нежность в отношениях.",
+                    "Поздравляем с хлопком!"
+                ]
+            },
+            leather_wedding: {
+                special: true,
+                theme: 'durable_skin',
+                colors: ['#2d3436', '#636e72', '#e17055'],
+                accent: '#fdcb6e',
+                particles: 'bags_leather',
+                title: "Leather Wedding Anniversary!",
+                messages: [
+                    "3 года эластичности и надежности.",
+                    "Кожа отношений стала прочнее.",
+                    "Поздравляем с кожей!"
+                ]
+            },
+            linen_wedding: {
+                special: true,
+                theme: 'breathing_fabric',
+                colors: ['#dfe6e9', '#b2bec3', '#74b9ff'],
+                accent: '#00cec9',
+                particles: 'cloth_weave',
+                title: "Linen Wedding Anniversary!",
+                messages: [
+                    "4 года легкости и свободы.",
+                    "Лён дышит любовью в доме.",
+                    "Поздравляем с льном!"
+                ]
+            },
+            wool_wedding: {
+                special: true,
+                theme: 'warm_thread',
+                colors: ['#fab1a0', '#ff7675', '#ffeaa7'],
+                accent: '#6c5ce7',
+                particles: 'yarn_balls',
+                title: "Wool Wedding Anniversary!",
+                messages: [
+                    "7 лет тепла и уюта.",
+                    "Шерстяная прочность связей.",
+                    "Поздравляем с шерстью!"
+                ]
+            },
+            pottery_wedding: {
+                special: true,
+                theme: 'crafted_clay',
+                colors: ['#e17055', '#d63031', '#fdcb6e'],
+                accent: '#00b894',
+                particles: 'pots_wheel',
+                title: "Pottery Wedding Anniversary!",
+                messages: [
+                    "8 лет формы и содержания.",
+                    "Керамика быта украшает жизнь.",
+                    "Поздравляем с керамикой!"
+                ]
+            },
+            willow_wedding: {
+                special: true,
+                theme: 'flexible_branch',
+                colors: ['#55efc4', '#00b894', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'branches_water',
+                title: "Willow Wedding Anniversary!",
+                messages: [
+                    "9 лет гибкости перед ветрами судьбы.",
+                    "Ива склоняется, но не ломается.",
+                    "Поздравляем с ивой!"
+                ]
+            },
+            pink_wedding: {
+                special: true,
+                theme: 'sweet_color',
+                colors: ['#fd79a8', '#e84393', '#ffffff'],
+                accent: '#00cec9',
+                particles: 'candy_flowers',
+                title: "Pink Wedding Anniversary!",
+                messages: [
+                    "11 лет розовой мечты.",
+                    "Нежность окрашивает дни.",
+                    "Поздравляем с розовым цветом!"
+                ]
+            },
+            silk_weddown: {
+                special: true,
+                theme: 'smooth_texture',
+                colors: ['#ffeaa7', '#fdcb6e', '#ffffff'],
+                accent: '#6c5ce7',
+                particles: 'fabric_flow',
+                title: "Silk Wedding Anniversary!",
+                messages: [
+                    "12 лет шелковой гладкости.",
+                    "Отношения скользят приятно.",
+                    "Поздравляем с шелком!"
+                ]
+            },
+            lace_wedding: {
+                special: true,
+                theme: 'intricate_pattern',
+                colors: ['#ffffff', '#dfe6e9', '#b2bec3'],
+                accent: '#e17055',
+                particles: 'net_patterns',
+                title: "Lace Wedding Anniversary!",
+                messages: [
+                    "13 лет тончайшего плетения судеб.",
+                    "Кружево деталей важно.",
+                    "Поздравляем с кружевом!"
+                ]
+            },
+            ivory_wedding: {
+                special: true,
+                theme: 'cream_smooth',
+                colors: ['#ffeaa7', '#fab1a0', '#ffffff'],
+                accent: '#00b894',
+                particles: 'elephant_trunk',
+                title: "Ivory Wedding Anniversary!",
+                messages: [
+                    "14 лет благородного оттенка.",
+                    "Кость слоновой ценности.",
+                    "Поздравляем с костью!"
+                ]
+            },
+            crystal_wedding: {
+                special: true,
+                theme: 'refraction_light',
+                colors: ['#74b9ff', '#0984e3', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'prisms_glass',
+                title: "Crystal Wedding Anniversary!",
+                messages: [
+                    "15 лет блеска и огранки.",
+                    "Хрусталь эмоций звучит чисто.",
+                    "Поздравляем с хрусталем!"
+                ]
+            },
+            china_wedding: {
+                special: true,
+                theme: 'fine_porcelain',
+                colors: ['#ffffff', '#dfe6e9', '#0984e3'],
+                accent: '#e17055',
+                particles: 'plates_teacups',
+                title: "China Wedding Anniversary!",
+                messages: [
+                    "20 лет изящества фарфора.",
+                    "Берегите хрупкое счастье.",
+                    "Поздравляем с фарфором!"
+                ]
+            },
+            nickel_wedding: {
+                special: true,
+                theme: 'grey_metal',
+                colors: ['#b2bec3', '#636e72', '#dfe6e9'],
+                accent: '#00cec9',
+                particles: 'coins_metal',
+                title: "Nickel Wedding Anniversary!",
+                messages: [
+                    "21 год устойчивости никеля.",
+                    "Металл не ржавеет от времени.",
+                    "Поздравляем с никелем!"
+                ]
+            },
+            blue_steel_wedding: {
+                special: true,
+                theme: 'strong_alloy',
+                colors: ['#0984e3', '#74b9ff', '#2d3436'],
+                accent: '#fdcb6e',
+                particles: 'girders_construction',
+                title: "Blue Steel Wedding Anniversary!",
+                messages: [
+                    "22 года закаленной стали.",
+                    "Синяя сталь символизирует верность.",
+                    "Поздравляем со сталью!"
+                ]
+            },
+            lead_wedding: {
+                special: true,
+                theme: 'heavy_weight',
+                colors: ['#636e72', '#2d3436', '#b2bec3'],
+                accent: '#00b894',
+                particles: 'weights_anchor',
+                title: "Lead Wedding Anniversary!",
+                messages: [
+                    "23 года тяжести ответственности.",
+                    "Свинец держит крепко.",
+                    "Поздравляем со свинцом!"
+                ]
+            },
+            tiger_eye_wedding: {
+                special: true,
+                theme: 'amber_gem',
+                colors: ['#fdcb6e', '#e17055', '#2d3436'],
+                accent: '#00cec9',
+                particles: 'eye_amulet',
+                title: "Tiger Eye Wedding Anniversary!",
+                messages: [
+                    "24 года пристального взгляда друг на друга.",
+                    "Глаз тигра видит суть.",
+                    "Поздравляем с кошачьим глазом!"
+                ]
+            },
+            rose_wedding: {
+                special: true,
+                theme: 'flower_bouquet',
+                colors: ['#d63031', '#e17055', '#ffffff'],
+                accent: '#00b894',
+                particles: 'roses_thorns',
+                title: "Rose Wedding Anniversary!",
+                messages: [
+                    "25 лет аромата роз.",
+                    "Шипы есть, но цветы красивы.",
+                    "Поздравляем с розами!"
+                ]
+            },
+            royal_wedding: {
+                special: true,
+                theme: 'crown_regalia',
+                colors: ['#6c5ce7', '#a29bfe', '#fdcb6e'],
+                accent: '#d63031',
+                particles: 'throne_robes',
+                title: "Royal Wedding Anniversary!",
+                messages: [
+                    "26 лет королевского достоинства.",
+                    "Ваш брак подобен монархии.",
+                    "Поздравляем с короной!"
+                ]
+            },
+            spindle_wedding: {
+                special: true,
+                theme: 'thread_work',
+                colors: ['#fab1a0', '#ff7675', '#ffeaa7'],
+                accent: '#0984e3',
+                particles: 'spinning_wheel',
+                title: "Spindle Wedding Anniversary!",
+                messages: [
+                    "27 лет непрерывной нити жизни.",
+                    "Веретено крутится равномерно.",
+                    "Поздравляем с веретеном!"
+                ]
+            },
+            manuscript_wedding: {
+                special: true,
+                theme: 'ancient_scroll',
+                colors: ['#dfe6e9', '#b2bec3', '#e17055'],
+                accent: '#6c5ce7',
+                particles: 'quill_ink',
+                title: "Manuscript Wedding Anniversary!",
+                messages: [
+                    "28 лет рукописной истории.",
+                    "Каждая буква важна в вашем тексте.",
+                    "Поздравляем с манускриптом!"
+                ]
+            },
+            moonstone_wedding: {
+                special: true,
+                theme: 'lunar_glow',
+                colors: ['#74b9ff', '#0984e3', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'moon_phases',
+                title: "Moonstone Wedding Anniversary!",
+                messages: [
+                    "29 лет таинственного света луны.",
+                    "Лунный камень защищает семью.",
+                    "Поздравляем с лунным камнем!"
+                ]
+            },
+            machinery_wedding: {
+                special: true,
+                theme: 'gear_works',
+                colors: ['#636e72', '#2d3436', '#fdcb6e'],
+                accent: '#00b894',
+                particles: 'cogs_engine',
+                title: "Machinery Wedding Anniversary!",
+                messages: [
+                    "30 лет точной механики быта.",
+                    "Шестеренки работают слаженно.",
+                    "Поздравляем с механизмом!"
+                ]
+            },
+            green_jade_weddown: {
+                special: true,
+                theme: 'stone_health',
+                colors: ['#00b894', '#55efc4', '#ffffff'],
+                accent: '#e17055',
+                particles: 'jade_carving',
+                title: "Green Jade Wedding Anniversary!",
+                messages: [
+                    "31 год здоровья нефрита.",
+                    "Зеленый жадеит приносит удачу.",
+                    "Поздравляем с нефритом!"
+                ]
+            },
+            peacock_wedding: {
+                special: true,
+                theme: 'colorful_feathers',
+                colors: ['#0984e3', '#00cec9', '#fdcb6e'],
+                accent: '#d63031',
+                particles: 'tail_fan',
+                title: "Peacock Wedding Anniversary!",
+                messages: [
+                    "32 года яркого оперения.",
+                    "Павлин хвостом красуется.",
+                    "Поздравляем с павлином!"
+                ]
+            },
+            string_wedding: {
+                special: true,
+                theme: 'knotted_rope',
+                colors: ['#b2bec3', '#636e72', '#dfe6e9'],
+                accent: '#e17055',
+                particles: 'ropes_knots',
+                title: "String Wedding Anniversary!",
+                messages: [
+                    "33 года крепких узлов.",
+                    "Шпагат связывает надежно.",
+                    "Поздравляем со шпагатом!"
+                ]
+            },
+            beef_wedding: {
+                special: true,
+                theme: 'meat_product',
+                colors: ['#d63031', '#e17055', '#ffeaa7'],
+                accent: '#00b894',
+                particles: 'steak_plate',
+                title: "Beef Wedding Anniversary!",
+                messages: [
+                    "34 года сытости и довольства.",
+                    "Говядина symbolizes abundance.",
+                    "Поздравляем с говядиной!"
+                ]
+            },
+            clover_wedding: {
+                special: true,
+                theme: 'luck_symbol',
+                colors: ['#00b894', '#55efc4', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'four_leaf',
+                title: "Clover Wedding Anniversary!",
+                messages: [
+                    "35 лет четырехлистного клевера.",
+                    "Удача сопутствует паре.",
+                    "Поздравляем с клевером!"
+                ]
+            },
+            opal_wedding: {
+                special: true,
+                theme: 'iridescent_gem',
+                colors: ['#a29bfe', '#6c5ce7', '#fdcb6e'],
+                accent: '#00cec9',
+                particles: 'gem_play_of_color',
+                title: "Opal Wedding Anniversary!",
+                messages: [
+                    "36 лет игры красок опала.",
+                    "Каждый грань неповторима.",
+                    "Поздравляем с опалом!"
+                ]
+            },
+            coral_weddown: {
+                special: true,
+                theme: 'marine_life',
+                colors: ['#e17055', '#d63031', '#74b9ff'],
+                accent: '#00b894',
+                particles: 'reefs_fish',
+                title: "Coral Wedding Anniversary!",
+                messages: [
+                    "37 лет морского коралла.",
+                    "Рифы любви растут медленно, но верно.",
+                    "Поздравляем с кораллом!"
+                ]
+            },
+            jade_wedding: {
+                special: true,
+                theme: 'precious_stone',
+                colors: ['#00b894', '#55efc4', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'stone_polished',
+                title: "Jade Wedding Anniversary!",
+                messages: [
+                    "38 года шлифованного нефрита.",
+                    "Ценность камня равна ценносте уз.",
+                    "Поздравляем с яшмой!"
+                ]
+            },
+            flame_weddown: {
+                special: true,
+                theme: 'fire_element',
+                colors: ['#d63031', '#e17055', '#fdcb6e'],
+                accent: '#0984e3',
+                particles: 'candle_flames',
+                title: "Flame Wedding Anniversary!",
+                messages: [
+                    "39 лет горящего пламени.",
+                    "Огонь страсти не гаснет.",
+                    "Поздравляем с пламенем!"
+                ]
+            },
+            turquoise_weddown: {
+                special: true,
+                theme: 'sea_color',
+                colors: ['#00cec9', '#81ecec', '#ffffff'],
+                accent: '#e17055',
+                particles: 'waves_beach',
+                title: "Turquoise Wedding Anniversary!",
+                messages: [
+                    "40 лет бирюзовой свежести.",
+                    "Цвет моря успокаивает душу.",
+                    "Поздравляем с бирюзой!"
+                ]
+            },
+            maple_weddown: {
+                special: true,
+                theme: 'autumn_tree',
+                colors: ['#e17055', '#d63031', '#fdcb6e'],
+                accent: '#00b894',
+                particles: 'falling_leaves',
+                title: "Maple Wedding Anniversary!",
+                messages: [
+                    "41 год кленовых листьев.",
+                    "Осенняя красота в зрелом возрасте.",
+                    "Поздравляем с кленом!"
+                ]
+            },
+            mineral_weddown: {
+                special: true,
+                theme: 'earth_core',
+                colors: ['#636e72', '#2d3436', '#b2bec3'],
+                accent: '#00cec9',
+                particles: 'rocks_crystals',
+                title: "Mineral Wedding Anniversary!",
+                messages: [
+                    "42 года природных минералов.",
+                    "Земные недра хранят тайны.",
+                    "Поздравляем с минералами!"
+                ]
+            },
+            iron_weddown: {
+                special: true,
+                theme: 'forged_strength',
+                colors: ['#2d3436', '#636e72', '#dfe6e9'],
+                accent: '#e17055',
+                particles: 'hammers_anvil',
+                title: "Iron Wedding Anniversary!",
+                messages: [
+                    "43 года железной хватки.",
+                    "Металл закалился в боях.",
+                    "Поздравляем с железом!"
+                ]
+            },
+            beryl_weddown: {
+                special: true,
+                theme: 'light_gem',
+                colors: ['#55efc4', '#00b894', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'faceted_stones',
+                title: "Beryl Wedding Anniversary!",
+                messages: [
+                    "44 года берилловой прозрачности.",
+                    "Кристаллы ловят солнечный свет.",
+                    "Поздравляем с бериллом!"
+                ]
+            },
+            topaz_weddown: {
+                special: true,
+                theme: 'orange_yellow',
+                colors: ['#fdcb6e', '#e17055', '#ffffff'],
+                accent: '#0984e3',
+                particles: 'jewelry_setting',
+                title: "Topaz Wedding Anniversary!",
+                messages: [
+                    "45 лет топазового сияния.",
+                    "Драгоценный камень статуса.",
+                    "Поздравляем с топазом!"
+                ]
+            },
+            sapphire_weddown: {
+                special: true,
+                theme: 'deep_blue',
+                colors: ['#0984e3', '#74b9ff', '#2d3436'],
+                accent: '#fdcb6e',
+                particles: 'sky_ocean',
+                title: "Sapphire Wedding Anniversary!",
+                messages: [
+                    "46 лет сапфировой глубины.",
+                    "Небо и вода отражаются в глазах.",
+                    "Поздравляем с сапфиром!"
+                ]
+            },
+            ruby_red_weddown: {
+                special: true,
+                theme: 'blood_passion',
+                colors: ['#d63031', '#e17055', '#ffffff'],
+                accent: '#00b894',
+                particles: 'hearts_arrows',
+                title: "Red Ruby Wedding Anniversary!",
+                messages: [
+                    "47 лет кроваво-красного рубина.",
+                    "Страсть кипит в жилах.",
+                    "Поздравляем с красным рубином!"
+                ]
+            },
+            gold_wool_weddown: {
+                special: true,
+                theme: 'mixed_texture',
+                colors: ['#fdcb6e', '#fab1a0', '#ffffff'],
+                accent: '#6c5ce7',
+                particles: 'threads_blend',
+                title: "Gold Wool Wedding Anniversary!",
+                messages: [
+                    "48 года сочетания роскоши и уюта.",
+                    "Золотая шерсть греет душу.",
+                    "Поздравляем с золотошерстью!"
+                ]
+            },
+            cedar_weddown: {
+                special: true,
+                theme: 'evergreen_forest',
+                colors: ['#00b894', '#55efc4', '#2d3436'],
+                accent: '#e17055',
+                particles: 'pine_cones',
+                title: "Cedar Wedding Anniversary!",
+                messages: [
+                    "49 лет кедровой долговечности.",
+                    "Вечнозеленые деревья символы стабильности.",
+                    "Поздравляем с кедром!"
+                ]
+            },
+            amber_weddown: {
+                special: true,
+                theme: 'resin_preserved',
+                colors: ['#fdcb6e', '#e17055', '#ffeaa7'],
+                accent: '#0984e3',
+                particles: 'insects_amber',
+                title: "Amber Wedding Anniversary!",
+                messages: [
+                    "50 лет янтарной памяти.",
+                    "Смола сохраняет моменты вечности.",
+                    "Поздравляем с янтарем!"
+                ]
+            },
+            brass_weddown: {
+                special: true,
+                theme: 'alloy_yellow',
+                colors: ['#fdcb6e', '#e17055', '#dfe6e9'],
+                accent: '#00b894',
+                particles: 'musical_instruments',
+                title: "Brass Wedding Anniversary!",
+                messages: [
+                    "51 год латунного звона.",
+                    "Сплав меди и цинка крепок.",
+                    "Поздравляем с латунью!"
+                ]
+            },
+            steel_weddown_blue: {
+                special: true,
+                theme: 'industrial_modern',
+                colors: ['#74b9ff', '#0984e3', '#2d3436'],
+                accent: '#fdcb6e',
+                particles: 'skyscrapers',
+                title: "Steel Blue Wedding Anniversary!",
+                messages: [
+                    "52 года синей стали.",
+                    "Промышленная мощь в отношениях.",
+                    "Поздравляем со стальной синевой!"
+                ]
+            },
+            lead_weddown_alt: {
+                special: true,
+                theme: 'dense_material',
+                colors: ['#636e72', '#2d3436', '#b2bec3'],
+                accent: '#e17055',
+                particles: 'fishing_weights',
+                title: "Lead Wedding Anniversary Alt!",
+                messages: [
+                    "53 год тяжелого свинца.",
+                    "Стабильность веса имеет значение.",
+                    "Поздравляем со свинцом повторно!"
+                ]
+            },
+            tiger_eye_weddown_alt: {
+                special: true,
+                theme: 'predator_focus',
+                colors: ['#fdcb6e', '#e17055', '#2d3436'],
+                accent: '#00cec9',
+                particles: 'wild_cats',
+                title: "Tiger Eye Wedding Anniversary Alt!",
+                messages: [
+                    "54 года взгляда хищника.",
+                    "Интуиция пары обострена.",
+                    "Поздравляем с тигриным взглядом!"
+                ]
+            },
+            scarlet_weddown: {
+                special: true,
+                theme: 'bright_red',
+                colors: ['#d63031', '#e17055', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'lipstick_marks',
+                title: "Scarlet Wedding Anniversary!",
+                messages: [
+                    "56 лет багряной любви.",
+                    "Цвет крови и огня.",
+                    "Поздравляем с багрянцем!"
+                ]
+            },
+            heavenly_blue_weddown: {
+                special: true,
+                theme: 'sky_ceiling',
+                colors: ['#74b9ff', '#0984e3', '#ffffff'],
+                accent: '#00b894',
+                particles: 'clouds_angels',
+                title: "Heavenly Blue Wedding Anniversary!",
+                messages: [
+                    "57 лет небесной голубизны.",
+                    "Близость к раю.",
+                    "Поздравляем с небесно-голубым!"
+                ]
+            },
+            yellow_topaz_weddown: {
+                special: true,
+                theme: 'sunshine_gem',
+                colors: ['#fdcb6e', '#ffeaa7', '#ffffff'],
+                accent: '#e17055',
+                particles: 'sun_rays',
+                title: "Yellow Topaz Wedding Anniversary!",
+                messages: [
+                    "58 лет желтого топаза.",
+                    "Солнечный свет в доме.",
+                    "Поздравляем с желтым топазом!"
+                ]
+            },
+            white_steel_weddown: {
+                special: true,
+                theme: 'pure_metal',
+                colors: ['#dfe6e9', '#b2bec3', '#ffffff'],
+                accent: '#0984e3',
+                particles: 'surgical_tools',
+                title: "White Steel Wedding Anniversary!",
+                messages: [
+                    "59 лет белой стали.",
+                    "Чистота помыслов и действий.",
+                    "Поздравляем с белой сталью!"
+                ]
+            },
+            cloud_weddown: {
+                special: true,
+                theme: 'fluffy_form',
+                colors: ['#ffffff', '#dfe6e9', '#74b9ff'],
+                accent: '#fdcb6e',
+                particles: 'cumulus_clouds',
+                title: "Cloud Wedding Anniversary!",
+                messages: [
+                    "61 год облачной легкости.",
+                    "Парим над проблемами.",
+                    "Поздравляем с облаками!"
+                ]
+            },
+            eggshell_weddown: {
+                special: true,
+                theme: 'delicate_shell',
+                colors: ['#ffeaa7', '#fab1a0', '#ffffff'],
+                accent: '#00b894',
+                particles: 'eggs_cracked',
+                title: "Eggshell Wedding Anniversary!",
+                messages: [
+                    "62 года яичной скорлупы.",
+                    "Хрупкость требует осторожности.",
+                    "Поздравляем со скорлупой!"
+                ]
+            },
+            wine_weddown: {
+                special: true,
+                theme: 'vineyard_taste',
+                colors: ['#6c5ce7', '#a29bfe', '#d63031'],
+                accent: '#fdcb6e',
+                particles: 'wine_bottles',
+                title: "Wine Wedding Anniversary!",
+                messages: [
+                    "63 года винного букета.",
+                    "Выдержка улучшает вкус.",
+                    "Поздравляем с вином!"
+                ]
+            },
+            amethyst_weddown: {
+                special: true,
+                theme: 'purple_quartz',
+                colors: ['#6c5ce7', '#a29bfe', '#ffffff'],
+                accent: '#00cec9',
+                particles: 'crystal_geodes',
+                title: "Amethyst Wedding Anniversary!",
+                messages: [
+                    "64 года аметистового спокойствия.",
+                    "Фиолетовый цвет мудрости.",
+                    "Поздравляем с аметистом!"
+                ]
+            },
+            moon_weddown: {
+                special: true,
+                theme: 'night_satellite',
+                colors: ['#dfe6e9', '#b2bec3', '#2d3436'],
+                accent: '#fdcb6e',
+                particles: 'phases_dark',
+                title: "Moon Wedding Anniversary!",
+                messages: [
+                    "65 лет лунного цикла.",
+                    "Свет в темноте ночи.",
+                    "Поздравляем с луной!"
+                ]
+            },
+            sun_weddown: {
+                special: true,
+                theme: 'day_star',
+                colors: ['#fdcb6e', '#e17055', '#ffffff'],
+                accent: '#0984e3',
+                particles: 'solar_flares',
+                title: "Sun Wedding Anniversary!",
+                messages: [
+                    "66 лет солнечной активности.",
+                    "Источник энергии пары.",
+                    "Поздравляем с солнцем!"
+                ]
+            },
+            star_weddown: {
+                special: true,
+                theme: 'celestial_body',
+                colors: ['#2d3436', '#636e72', '#fdcb6e'],
+                accent: '#00cec9',
+                particles: 'constellations',
+                title: "Star Wedding Anniversary!",
+                messages: [
+                    "67 лет звездного пути.",
+                    "Сияние далеко от земли.",
+                    "Поздравляем со звездами!"
+                ]
+            },
+            planet_weddown: {
+                special: true,
+                theme: 'orbital_motion',
+                colors: ['#0984e3', '#74b9ff', '#e17055'],
+                accent: '#00b894',
+                particles: 'planets_orbit',
+                title: "Planet Wedding Anniversary!",
+                messages: [
+                    "68 лет планетарного масштаба.",
+                    "Миры взаимодействуют.",
+                    "Поздравляем с планетами!"
+                ]
+            },
+            galaxy_weddown: {
+                special: true,
+                theme: 'space_expansion',
+                colors: ['#6c5ce7', '#a29bfe', '#2d3436'],
+                accent: '#fdcb6e',
+                particles: 'nebula_swirls',
+                title: "Galaxy Wedding Anniversary!",
+                messages: [
+                    "69 лет галактических размеров.",
+                    "Бескрайность любви.",
+                    "Поздравляем с галактикой!"
+                ]
+            },
+            rock_weddown: {
+                special: true,
+                theme: 'geological_base',
+                colors: ['#636e72', '#2d3436', '#b2bec3'],
+                accent: '#00b894',
+                particles: 'mountains_stones',
+                title: "Rock Wedding Anniversary!",
+                messages: [
+                    "72 года каменной основы.",
+                    "Скала непоколебима.",
+                    "Поздравляем с скалой!"
+                ]
+            },
+            clay_weddown: {
+                special: true,
+                theme: 'malleable_earth',
+                colors: ['#e17055', '#d63031', '#ffeaa7'],
+                accent: '#0984e3',
+                particles: 'pottery_raw',
+                title: "Clay Wedding Anniversary!",
+                messages: [
+                    "73 лет глиняной пластичности.",
+                    "Формируем характер вместе.",
+                    "Поздравляем с глиной!"
+                ]
+            },
+            sand_weddown: {
+                special: true,
+                theme: 'granular_flow',
+                colors: ['#fdcb6e', '#ffeaa7', '#fab1a0'],
+                accent: '#00cec9',
+                particles: 'hourglass_desert',
+                title: "Sand Wedding Anniversary!",
+                messages: [
+                    "74 года песчаных времен.",
+                    "Каждая секунда на счету.",
+                    "Поздравляем с песком!"
+                ]
+            },
+            dust_weddown: {
+                special: true,
+                theme: 'particles_air',
+                colors: ['#dfe6e9', '#b2bec3', '#636e72'],
+                accent: '#e17055',
+                particles: 'floating_motes',
+                title: "Dust Wedding Anniversary!",
+                messages: [
+                    "75 лет пыли веков.",
+                    "Мельчайшие частицы истории.",
+                    "Поздравляем с пылью!"
+                ]
+            },
+            wind_weddown: {
+                special: true,
+                theme: 'invisible_force',
+                colors: ['#81ecec', '#00cec9', '#ffffff'],
+                accent: '#fdcb6e',
+                particles: 'wind_lines',
+                title: "Wind Wedding Anniversary!",
+                messages: [
+                    "76 лет ветра перемен.",
+                    "Невидимая, но ощутимая сила.",
+                    "Поздравляем с ветром!"
+                ]
+            },
+            rain_weddown: {
+                special: true,
+                theme: 'water_drop',
+                colors: ['#74b9ff', '#0984e3', '#dfe6e9'],
+                accent: '#00b894',
+                particles: 'raindrops_window',
+                title: "Rain Wedding Anniversary!",
+                messages: [
+                    "77 лет дождевых капель.",
+                    "Очищение и обновление.",
+                    "Поздравляем с дождем!"
+                ]
+            },
+            snow_weddown: {
+                special: true,
+                theme: 'winter_freeze',
+                colors: ['#ffffff', '#dfe6e9', '#74b9ff'],
+                accent: '#e17055',
+                particles: 'snowflakes_macro',
+                title: "Snow Wedding Anniversary!",
+                messages: [
+                    "78 лет снежных узоров.",
+                    "Белоснежная чистота.",
+                    "Поздравляем со снегом!"
+                ]
+            },
+            ice_weddown: {
+                special: true,
+                theme: 'frozen_water',
+                colors: ['#81ecec', '#00cec9', '#ffffff'],
+                accent: '#0984e3',
+                particles: 'icicles_glacier',
+                title: "Ice Wedding Anniversary!",
+                messages: [
+                    "79 лет ледяной твердости.",
+                    "Замороженные моменты.",
+                    "Поздравляем со льдом!"
+                ]
+            },
+            frost_weddown: {
+                special: true,
+                theme: 'cold_pattern',
+                colors: ['#dfe6e9', '#b2bec3', '#74b9ff'],
+                accent: '#e17055',
+                particles: 'window_frost',
+                title: "Frost Wedding Anniversary!",
+                messages: [
+                    "80 лет инея на окнах.",
+                    "Холодная красота зимы.",
+                    "Поздравляем с морозом!"
+                ]
+            },
+            legendary_weddown: {
+                special: true,
+                theme: 'mythic_hero',
+                colors: ['#fdcb6e', '#e17055', '#6c5ce7'],
+                accent: '#00b894',
+                particles: 'dragons_myths',
+                title: "Legendary Wedding Anniversary!",
+                messages: [
+                    "81+ лет легендарного союза.",
+                    "Ваша история войдет в книги.",
+                    "Поздравляем легенды!"
+                ]
+            },
+            custom_occasion: {
+                special: true,
+                theme: 'neutral_elegant',
+                colors: ['#2c3e50', '#ecf0f1', '#3498db'],
+                accent: '#e74c3c',
+                particles: 'simple_dots',
+                title: "Поздравляем!",
+                messages: [
+                    "Поздравляем с важным событием!",
+                    "Желаем всего самого наилучшего.",
+                    "Пусть этот день запомнится надолго."
+                ]
+            }
+        };
+
+        /**
+         * ЛОГИКА ПРИЛОЖЕНИЯ
+         */
+        
+        let currentTheme = 'neutral';
+        let audioContext = null;
+        let isAudioInitialized = false;
+
+        // DOM Elements
+        const occasionSelect = document.getElementById('occasionSelect');
+        const recipientTypeSelect = document.getElementById('recipientType');
+        const recipientNameInput = document.getElementById('recipientName');
+        const senderNameInput = document.getElementById('senderName');
+        const messageTextArea = document.getElementById('messageText');
+        const generateBtn = document.getElementById('generateBtn');
+        const renderCardBtn = document.getElementById('renderCardBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const cardCanvas = document.getElementById('cardCanvas');
+        const bgCanvas = document.getElementById('bgCanvas');
+        const successModal = document.getElementById('successModal');
+        const soundIndicator = document.getElementById('soundIndicator');
+
+        const ctx = cardCanvas.getContext('2d');
+        const bgCtx = bgCanvas.getContext('2d');
+
+        // Инициализация размера канваса фона
+        function resizeBgCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBgCanvas);
+        resizeBgCanvas();
+
+        /**
+         * АУДИО СИСТЕМА (Web Audio API)
+         * Создает синтезированные звуки вместо файлов
+         */
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    showSoundIndicator();
+                });
+            }
+        }
+
+        function showSoundIndicator() {
+            soundIndicator.classList.add('visible');
+            setTimeout(() => {
+                soundIndicator.classList.remove('visible');
+            }, 2000);
+        }
+
+        function playTone(frequency, duration, type = 'sine', volume = 0.1) {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playSuccessChime() {
+            // Арпеджио До мажор
+            playTone(523.25, 0.3, 'triangle', 0.1); // C5
+            setTimeout(() => playTone(659.25, 0.3, 'triangle', 0.1), 100); // E5
+            setTimeout(() => playTone(783.99, 0.5, 'triangle', 0.1), 200); // G5
+            setTimeout(() => playTone(1046.50, 0.8, 'triangle', 0.1), 300); // C6
+        }
+
+        function playClickSound() {
+            playTone(800, 0.1, 'square', 0.05);
+        }
+
+        function playGenerateSound() {
+            playTone(400, 0.1, 'sawtooth', 0.05);
+            setTimeout(() => playTone(600, 0.1, 'sawtooth', 0.05), 50);
+        }
+
+        // Слушатель первого клика для инициализации аудио
+        document.body.addEventListener('click', () => {
+            if (!isAudioInitialized) {
+                initAudio();
+                isAudioInitialized = true;
+            }
+        }, { once: true });
+
+
+        /**
+         * ОПРЕДЕЛЕНИЕ АВТОМАТИЧЕСКОЙ ТЕНЫ ПО ДАТЕ
+         */
+        function getAutoHoliday() {
+            const now = new Date();
+            const month = now.getMonth(); // 0-11
+            const day = now.getDate();   // 1-31
+            
+            // Проверка основных дат
+            if (month === 0 && day <= 10) return 'new_year';
+            if (month === 11 && day >= 20) return 'christmas';
+            if (month === 2 && day === 8) return 'womens_day';
+            if (month === 4 && day === 9) return 'victory_day';
+            if (month === 4 && day === 1) return 'spring_labor';
+            if (month === 5 && day === 12) return 'russia_day';
+            if (month === 10 && day === 4) return 'unity_day';
+            if (month === 1 && day === 23) return 'defender_day';
+            if (month === 1 && day === 14) return 'valentines_day';
+            if (month === 9 && day === 5) return 'teachers_day'; // Упрощенно
+            if (month === 9 && day === 3) return 'doctors_day';
+            if (month === 10 && day === 10) return 'police_day';
+            if (month === 9 && day === 22) return 'taxi_driver_day';
+            if (month === 0 && day === 25) return 'students_day';
+            if (month === 10 && day === 24) return 'mothers_day'; // Упрощенно
+            if (month === 5 && day === 21) return 'fathers_day'; // Упрощенно
+            if (month === 9 && day === 1) return 'grandparents_day';
+            if (month === 8 && day === 1) return 'knowledge_day';
+            if (month === 4 && day === 25) return 'last_bell'; // Упрощенно
+            
+            return 'custom_occasion'; // Если нет конкретного праздника
+        }
+
+        /**
+         * ОБНОВЛЕНИЕ ТЕМАТИКИ САЙТА
+         */
+        function updateSiteTheme(holidayKey) {
+            const config = holidaysConfig[holidayKey] || holidaysConfig.custom_occasion;
+            const root = document.documentElement;
+            
+            // Установка цветовых переменных
+            root.style.setProperty('--primary-color', config.colors[0]);
+            root.style.setProperty('--secondary-color', config.colors[1] || '#ecf0f1');
+            root.style.setProperty('--accent-color', config.accent);
+            root.style.setProperty('--bg-gradient-start', config.theme === 'winter_magic' ? '#0f2027' : '#fdfbfb');
+            root.style.setProperty('--bg-gradient-end', config.theme === 'winter_magic' ? '#2c5364' : '#ebedee');
+            
+            // Обновление фона тела
+            if (config.theme === 'winter_magic') {
+                document.body.style.background = config.colors.join(', ');
+            } else {
+                document.body.style.background = `linear-gradient(135deg, ${config.colors[0]} 0%, ${config.colors[1] || '#fff'} 100%)`;
+            }
+
+            currentTheme = holidayKey;
+            startBackgroundAnimation(config.particles, config.accent);
+        }
+
+        /**
+         * ФОНОВАЯ АНИМАЦИЯ (ЧАСТИЦЫ)
+         */
+        let particlesArray = [];
+        let animationId;
+
+        class Particle {
+            constructor(type, color) {
+                this.x = Math.random() * bgCanvas.width;
+                this.y = Math.random() * bgCanvas.height;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = color;
+                this.type = type;
+                this.opacity = Math.random() * 0.5 + 0.2;
+                
+                if (type === 'snow') {
+                    this.speedY = Math.random() * 1 + 0.5; // Падает вниз
+                    this.speedX = Math.sin(this.y * 0.01) * 0.5; // Качается
+                } else if (type === 'balloons') {
+                    this.speedY = -(Math.random() * 1 + 0.5); // Летит вверх
+                }
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Перемотка если вышел за экран
+                if (this.y > bgCanvas.height) this.y = -10;
+                if (this.y < 0) this.y = bgCanvas.height;
+                if (this.x > bgCanvas.width) this.x = -10;
+                if (this.x < 0) this.x = bgCanvas.width;
+            }
+
+            draw(ctx) {
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                
+                if (this.type === 'snow' || this.type === 'stars') {
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'flowers' || this.type === 'hearts') {
+                    // Простая форма лепестка/сердца
+                    ctx.moveTo(this.x, this.y);
+                    ctx.bezierCurveTo(this.x - this.size*2, this.y - this.size*2, this.x + this.size*2, this.y - this.size*2, this.x, this.y + this.size*2);
+                    ctx.fill();
+                } else if (this.type === 'balloons') {
+                    ctx.ellipse(this.x, this.y, this.size, this.size * 1.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Нитка
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y + this.size * 1.2);
+                    ctx.lineTo(this.x, this.y + this.size * 3);
+                    ctx.stroke();
+                } else {
+                    ctx.rect(this.x, this.y, this.size, this.size);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function startBackgroundAnimation(particleType, accentColor) {
+            cancelAnimationFrame(animationId);
+            particlesArray = [];
+            const count = particleType === 'snow' ? 100 : 50;
+            
+            for (let i = 0; i < count; i++) {
+                particlesArray.push(new Particle(particleType, accentColor));
+            }
+
+            function animate() {
+                bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+                particlesArray.forEach(p => {
+                    p.update();
+                    p.draw(bgCtx);
+                });
+                animationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        /**
+         * ГЕНЕРАЦИЯ ТЕКСТА
+         */
+        function generateMessage() {
+            playGenerateSound();
+            const occasion = occasionSelect.value;
+            const recipient = recipientTypeSelect.value;
+            const name = recipientNameInput.value.trim();
+            const sender = senderNameInput.value.trim();
+            
+            let baseMessages = [];
+            let greeting = "";
+            let closing = "";
+
+            // Получаем базовые сообщения из конфига
+            if (holidaysConfig[occasion]) {
+                baseMessages = [...holidaysConfig[occasion].messages];
+            } else {
+                baseMessages = ["Поздравляем вас с этим замечательным событием!", "Желаем счастья и удачи!", "Пусть мечта сбудется!"];
+            }
+
+            // Добавляем персонализации в зависимости от типа получателя
+            const personalizations = {
+                daughter: ["Любимая доченька,", "Дорогая наша девочка,"],
+                son: ["Любимый сын,", "Дорогой наш мальчик,"],
+                mother: ["Милая мамочка,", "Дорогая мама,"],
+                father: ["Любимый папа,", "Дорогой отец,"],
+                grandmother: ["Дорогая бабушка,", "Любимая бабуля,"],
+                grandfather: ["Дорогой дедушка,", "Любимый дед,"],
+                wife: ["Моя дорогая жена,", "Любимая супруга,"],
+                husband: ["Мой дорогой муж,", "Любимый супруг,"],
+                girlfriend: ["Милая девушка,", "Дорогая подруга жизни,"],
+                boyfriend: ["Милый парень,", "Дорогой молодой человек,"],
+                bestie: ["Лучшая подруга,", "Дорогая подружка,"],
+                brother: ["Любимый брат,", "Дорогой братишка,"],
+                sister: ["Любимая сестра,", "Дорогая сестренка,"],
+                colleague: ["Уважаемый коллега,", "Дорогой партнер по работе,"],
+                boss: ["Уважаемый руководитель,", "Дорогой начальник,"],
+                employee: ["Уважаемый сотрудник,", "Дорогий работник,"],
+                teacher: ["Уважаемый учитель,", "Дорогой педагог,"],
+                student: ["Дорогой ученик,", "Уважаемый студент,"],
+                neighbor: ["Дорогой сосед,", "Уважаемый жилец,"],
+                relative: ["Дорогой родственник,", "Уважаемый член семьи,"],
+                friend: ["Дорогой друг,", "Любимый товарищ,"],
+                unknown: ["Дорогой именинник,", "Уважаемый виновник торжества,"],
+                general: ["Дорогие друзья,", "Уважаемые коллеги,"]
+            };
+
+            const closings = {
+                daughter: ["С любовью, родители", "Обнимаем крепко"],
+                son: ["С любовью, родители", "Гордимся тобой"],
+                mother: ["Твои дети", "С любовью всей семьей"],
+                father: ["Твои дети", "С уважением"],
+                default: ["С наилучшими пожеланиями", "С теплом души"]
+            };
+
+            // Выбор приветствия
+            if (personalizations[recipient]) {
+                greeting = personalizations[recipient][Math.floor(Math.random() * personalizations[recipient].length)];
+            } else {
+                greeting = "Дорогой ";
+            }
+
+            if (name) {
+                greeting += `${name}, `;
+            } else if (recipient !== 'general' && recipient !== 'unknown') {
+                 // Если имя не указано, оставляем просто обращение
+            } else {
+                greeting += "!";
+            }
+
+            // Выбор основного текста
+            const mainMsg = baseMessages[Math.floor(Math.random() * baseMessages.length)];
+
+            // Выбор подписи
+            let signOff = sender ? `\n\n${sender}` : "\n\n" + (closings[recipient] ? closings[recipient][Math.floor(Math.random() * closings[recipient].length)] : closings.default[Math.floor(Math.random() * closings.default.length)]);
+
+            const finalText = `${greeting}\n\n${mainMsg}${signOff}`;
+            
+            messageTextArea.value = finalText;
+        }
+
+        /**
+         * РЕНДЕРИНГ ОТКРЫТКИ НА CANVAS
+         */
+        function renderCard() {
+            playClickSound();
+            const width = 800;
+            const height = 1000;
+            cardCanvas.width = width;
+            cardCanvas.height = height;
+
+            const occasion = occasionSelect.value;
+            const config = holidaysConfig[occasion] || holidaysConfig.custom_occasion;
+            const text = messageTextArea.value;
+            const title = config.title;
+
+            // 1. Фон
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, config.colors[0]);
+            gradient.addColorStop(1, config.colors[1] || '#ffffff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Декоративные элементы (рамка)
+            ctx.strokeStyle = config.accent;
+            ctx.lineWidth = 10;
+            ctx.strokeRect(20, 20, width - 40, height - 40);
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(30, 30, width - 60, height - 60);
+
+            // 3. Заголовок
+            ctx.font = "bold 60px 'Cormorant Garamond', serif";
+            ctx.fillStyle = config.accent;
+            ctx.textAlign = "center";
+            ctx.shadowColor = "rgba(0,0,0,0.3)";
+            ctx.shadowBlur = 10;
+            ctx.fillText(title, width / 2, 150);
+
+            // 4. Основной текст
+            ctx.font = "30px 'Montserrat', sans-serif";
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowBlur = 5;
+            ctx.textAlign = "left";
+            
+            // Разбивка текста на строки
+            const words = text.split(' ');
+            let line = '';
+            let y = 250;
+            const lineHeight = 45;
+            const maxWidth = width - 100;
+
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                const testWidth = metrics.width;
+                
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, 50, y);
+                    line = words[n] + ' ';
+                    y += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, 50, y);
+
+            // 5. Подпись внизу справа
+            ctx.font = "italic 24px 'Cormorant Garamond', serif";
+            ctx.fillStyle = config.accent;
+            ctx.textAlign = "right";
+            ctx.fillText("— Generated by Elegance Cards", width - 50, height - 50);
+            
+            // 6. Тематические декорации (Елки, Цветы, Шары и т.д.)
+            // Передаем тип частиц из конфига как ключ для выбора стиля рисования
+            drawThematicDecorations(ctx, config.particles, config.accent, width, height);
+
+            enableDownload();
+            showModal();
+        }
+
+        function drawStaticParticles(ctx, type, color, w, h) {
+            ctx.save();
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = color;
+            for(let i=0; i<20; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const size = Math.random() * 20 + 5;
+                ctx.beginPath();
+                if(type === 'snow' || type === 'stars') {
+                    ctx.arc(x, y, size, 0, Math.PI*2);
+                } else {
+                    ctx.rect(x, y, size, size);
+                }
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        /**
+         * СКАЧИВАНИЕ
+         */
+        function enableDownload() {
+            downloadBtn.disabled = false;
+        }
+
+        function downloadImage() {
+            playSuccessChime();
+            const link = document.createElement('a');
+            link.download = `postcard_${Date.now()}.png`;
+            link.href = cardCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        /**
+         * МОДАЛЬНОЕ ОКНО
+         */
+        function showModal() {
+            successModal.classList.add('active');
+        }
+
+        function closeModal() {
+            successModal.classList.remove('active');
+        }
+
+                /**
+         * РИСОВАНИЕ ТЕМАТИЧЕСКИХ ДЕКОРАЦИЙ НА ОТКРЫТКЕ
+         */
+        function drawThematicDecorations(ctx, themeType, accentColor, w, h) {
+            ctx.save(); // Сохраняем состояние контекста
+            
+            switch(themeType) {
+                case 'snow': // Новый Год, Рождество, Старый Новый Год
+                    drawWinterScene(ctx, w, h);
+                    break;
+                    
+                case 'flowers': // 8 Марта, День Матери, Именины
+                    drawSpringFlowers(ctx, w, h, accentColor);
+                    break;
+                    
+                case 'confetti_gold': // День Победы, Юбилеи, Государственные праздники
+                    drawVictoryStyle(ctx, w, h);
+                    break;
+                    
+                case 'balloons': // День Рождения, Свадьба, Помолвка
+                    drawBirthdayParty(ctx, w, h, accentColor);
+                    break;
+                    
+                case 'hearts': // День Влюбленных, Свадьба, Любовь
+                    drawRomanticHearts(ctx, w, h, accentColor);
+                    break;
+                    
+                case 'stars': // Профессиональные праздники (Учитель, Врач, Программист)
+                    drawProfessionalStars(ctx, w, h, accentColor);
+                    break;
+
+                default:
+                    // Для остальных случаев рисуем элегантный абстрактный узор
+                    drawElegantAbstract(ctx, w, h, accentColor);
+            }
+            
+            ctx.restore(); // Восстанавливаем состояние
+        }
+
+        // --- СПЕЦИФИЧНЫЕ ФУНКЦИИ РИСОВАНИЯ ---
+
+        function drawWinterScene(ctx, w, h) {
+            // 1. Снежные холмы внизу
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.9;
+            ctx.beginPath();
+            ctx.moveTo(0, h);
+            ctx.lineTo(0, h - 150);
+            ctx.quadraticCurveTo(w / 4, h - 200, w / 2, h - 150);
+            ctx.quadraticCurveTo((w * 3) / 4, h - 100, w, h - 150);
+            ctx.lineTo(w, h);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            // 2. Елки слева и справа
+            drawTree(ctx, 100, h - 160, 60, '#2d5a27'); // Левая елка
+            drawTree(ctx, w - 100, h - 160, 60, '#2d5a27'); // Правая елка
+            drawTree(ctx, w / 2, h - 180, 80, '#1e3c1a'); // Центральная большая елка (за текстом, но видна сверху/снизу)
+
+            // 3. Падающий снег (статичный эффект для картинки)
+            ctx.fillStyle = '#ffffff';
+            for(let i=0; i<100; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const size = Math.random() * 3 + 1;
+                
+                // Рисуем шестилучевую снежинку или просто точку
+                if (size > 2) {
+                    drawSnowflake(ctx, x, y, size * 2);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // 4. Гирлянда сверху
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, 50);
+            ctx.bezierCurveTo(w/4, 100, 3*w/4, 0, w, 50);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Лампочки на гирлянде
+            const bulbPositions = [0.1, 0.3, 0.5, 0.7, 0.9];
+            bulbPositions.forEach(pos => {
+                const bx = pos * w;
+                const by = 50 + Math.sin(pos * Math.PI) * 20; // Примерное положение по кривой
+                ctx.fillStyle = ['#ff0000', '#00ff00', '#ffff00'][Math.floor(Math.random()*3)];
+                ctx.beginPath();
+                ctx.arc(bx, by, 4, 0, Math.PI*2);
+                ctx.fill();
+                // Блик
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.beginPath();
+                ctx.arc(bx-1, by-1, 1.5, 0, Math.PI*2);
+                ctx.fill();
+            });
+        }
+
+        function drawTree(ctx, x, baseY, height, color) {
+            ctx.fillStyle = color;
+            // Ствол
+            ctx.fillRect(x - 5, baseY, 10, 20);
+            // Крона (треугольники)
+            ctx.beginPath();
+            ctx.moveTo(x, baseY - height);
+            ctx.lineTo(x - height/2, baseY);
+            ctx.lineTo(x + height/2, baseY);
+            ctx.fill();
+            
+            // Второй ярус
+            ctx.beginPath();
+            ctx.moveTo(x, baseY - height - 20);
+            ctx.lineTo(x - height/3, baseY - 20);
+            ctx.lineTo(x + height/3, baseY - 20);
+            ctx.fill();
+            
+            // Звезда на верхушке
+            ctx.fillStyle = '#ffd700';
+            drawStar(ctx, x, baseY - height - 25, 5, 10, 5);
+        }
+
+        function drawSnowflake(ctx, x, y, radius) {
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * 60) * Math.PI / 180;
+                const ex = x + Math.cos(angle) * radius;
+                const ey = y + Math.sin(angle) * radius;
+                ctx.moveTo(x, y);
+                ctx.lineTo(ex, ey);
+                // Маленькие ответвления
+                const midX = x + Math.cos(angle) * (radius * 0.6);
+                const midY = y + Math.sin(angle) * (radius * 0.6);
+                ctx.moveTo(midX, midY);
+                ctx.lineTo(midX + Math.cos(angle + 0.5) * (radius * 0.3), midY + Math.sin(angle + 0.5) * (radius * 0.3));
+                ctx.moveTo(midX, midY);
+                ctx.lineTo(midX + Math.cos(angle - 0.5) * (radius * 0.3), midY + Math.sin(angle - 0.5) * (radius * 0.3));
+            }
+            ctx.stroke();
+        }
+
+        function drawSpringFlowers(ctx, w, h, color) {
+            // Фон: мягкий розовый/бежевый градиент уже есть, добавим цветы по углам
+            
+            // Тюльпан функция
+            function drawTulip(x, y, scale, hueShift) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.scale(scale, scale);
+                
+                // Стебель
+                ctx.strokeStyle = '#4caf50';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(10, -20, 0, -40);
+                ctx.stroke();
+                
+                // Лепестки
+                const petalColors = ['#ff6b6b', '#ffa502', '#ff4757'];
+                const pColor = petalColors[Math.abs(hueShift) % petalColors.length];
+                
+                ctx.fillStyle = pColor;
+                ctx.beginPath();
+                ctx.moveTo(0, -40);
+                ctx.bezierCurveTo(-15, -50, -10, -70, 0, -60);
+                ctx.bezierCurveTo(10, -70, 15, -50, 0, -40);
+                ctx.fill();
+                
+                // Центральный лепесток
+                ctx.fillStyle = adjustBrightness(pColor, -20);
+                ctx.beginPath();
+                ctx.moveTo(0, -40);
+                ctx.bezierCurveTo(-5, -55, 5, -55, 0, -40);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            // Разбросаем тюльпаны по нижним углам и сбоку
+            drawTulip(50, h - 50, 1.5, 0);
+            drawTulip(120, h - 30, 1.2, 1);
+            drawTulip(w - 50, h - 50, 1.5, 2);
+            drawTulip(w - 120, h - 30, 1.2, 0);
+            drawTulip(30, h/2, 1.0, 1); // Боковой цветок
+            
+            // Листики вокруг
+            ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+            for(let i=0; i<15; i++) {
+                const lx = Math.random() * w;
+                const ly = h - Math.random() * 100;
+                ctx.beginPath();
+                ctx.ellipse(lx, ly, 10, 5, Math.random(), 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        function drawVictoryStyle(ctx, w, h) {
+            // Георгиевская лента стилизация (черно-оранжевые полосы)
+            ctx.save();
+            ctx.globalAlpha = 0.15;
+            ctx.strokeStyle = '#ff8c00'; // Оранжевый
+            ctx.lineWidth = 20;
+            
+            // Диагональные линии
+            for(let i = -h; i < w + h; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i + h, h);
+                ctx.stroke();
+            }
+            
+            ctx.strokeStyle = '#000000'; // Черный
+            ctx.lineWidth = 10;
+            for(let i = -h; i < w + h; i += 40) {
+                ctx.beginPath();
+                ctx.moveTo(i + 15, 0);
+                ctx.lineTo(i + h + 15, h);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Звезды победы
+            ctx.fillStyle = '#cc0000';
+            drawStar(ctx, w/2, 100, 5, 30, 15); // Верхняя звезда
+            drawStar(ctx, 50, h - 50, 5, 20, 10);
+            drawStar(ctx, w - 50, h - 50, 5, 20, 10);
+            
+            // Вечный огонь (стилизация снизу)
+            const gradFire = ctx.createRadialGradient(w/2, h, 10, w/2, h, 100);
+            gradFire.addColorStop(0, 'rgba(255, 165, 0, 0.8)');
+            gradFire.addColorStop(0.5, 'rgba(255, 69, 0, 0.4)');
+            gradFire.addColorStop(1, 'rgba(255, 0, 0, 0)');
+            ctx.fillStyle = gradFire;
+            ctx.beginPath();
+            ctx.arc(w/2, h, 100, Math.PI, 0);
+            ctx.fill();
+        }
+
+        function drawBirthdayParty(ctx, w, h, color) {
+            // Воздушные шары
+            const balloonColors = ['#ff4081', '#00bcd4', '#ffeb3b', '#9c27b0', '#4caf50'];
+            
+            function drawBalloon(x, y, r, c) {
+                ctx.fillStyle = c;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
+                // Блик
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.beginPath();
+                ctx.arc(x - r/3, y - r/3, r/4, 0, Math.PI * 2);
+                ctx.fill();
+                // Узел
+                ctx.fillStyle = c;
+                ctx.beginPath();
+                ctx.moveTo(x - 5, y + r);
+                ctx.lineTo(x + 5, y + r);
+                ctx.lineTo(x, y + r + 10);
+                ctx.fill();
+                // Нитка
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, y + r + 10);
+                ctx.quadraticCurveTo(x + 20, y + r + 50, x, y + r + 100);
+                ctx.stroke();
+            }
+
+            drawBalloon(100, 150, 40, balloonColors[0]);
+            drawBalloon(w - 100, 150, 40, balloonColors[1]);
+            drawBalloon(200, 100, 30, balloonColors[2]);
+            drawBalloon(w - 200, 100, 30, balloonColors[3]);
+            
+            // Торт снизу
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(w/2 - 100, h - 80, 200, 60); // Основа торта
+            ctx.fillStyle = '#ff69b4'; // Глазурь
+            ctx.fillRect(w/2 - 100, h - 80, 200, 10);
+            
+            // Свечи
+            for(let i=0; i<5; i++) {
+                const cx = w/2 - 40 + i*20;
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillRect(cx, h - 100, 4, 20);
+                // Пламя
+                ctx.fillStyle = '#e67e22';
+                ctx.beginPath();
+                ctx.ellipse(cx + 2, h - 105, 3, 6, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+            
+            // Конфетти
+            ctx.globalAlpha = 0.6;
+            for(let i=0; i<50; i++) {
+                ctx.fillStyle = balloonColors[Math.floor(Math.random()*balloonColors.length)];
+                const rx = Math.random() * w;
+                const ry = Math.random() * h;
+                ctx.save();
+                ctx.translate(rx, ry);
+                ctx.rotate(Math.random() * Math.PI);
+                ctx.fillRect(-2, -4, 4, 8);
+                ctx.restore();
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawRomanticHearts(ctx, w, h, color) {
+            function drawHeart(x, y, size, fillCol) {
+                ctx.fillStyle = fillCol;
+                ctx.beginPath();
+                const topCurveHeight = size * 0.3;
+                ctx.moveTo(x, y + topCurveHeight);
+                // Левая дуга
+                ctx.bezierCurveTo(
+                  x, y, 
+                  x - size / 2, y, 
+                  x - size / 2, y + topCurveHeight
+                );
+                ctx.bezierCurveTo(
+                  x - size / 2, y + (size + topCurveHeight) / 2, 
+                  x, y + (size + topCurveHeight) / 2, 
+                  x, y + size
+                );
+                // Правая дуга
+                ctx.bezierCurveTo(
+                  x, y + (size + topCurveHeight) / 2, 
+                  x + size / 2, y + (size + topCurveHeight) / 2, 
+                  x + size / 2, y + topCurveHeight
+                );
+                ctx.bezierCurveTo(
+                  x + size / 2, y, 
+                  x, y, 
+                  x, y + topCurveHeight
+                );
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Большие сердца по углам
+            drawHeart(80, 80, 60, 'rgba(255, 105, 180, 0.3)');
+            drawHeart(w - 80, h - 80, 60, 'rgba(255, 105, 180, 0.3)');
+            
+            // Маленькие летающие сердечки
+            for(let i=0; i<10; i++) {
+                const hx = Math.random() * w;
+                const hy = Math.random() * h;
+                const hs = Math.random() * 10 + 5;
+                drawHeart(hx, hy, hs, color);
+            }
+            
+            // Розы (упрощенно спиралью)
+            function drawRose(x, y, r) {
+                ctx.strokeStyle = '#c0392b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for(let a=0; a<Math.PI*4; a+=0.1) {
+                    const rad = r * (1 - a/(Math.PI*4));
+                    const px = x + Math.cos(a) * rad;
+                    const py = y + Math.sin(a) * rad;
+                    if(a===0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+            drawRose(50, h/2, 20);
+            drawRose(w-50, h/2, 20);
+        }
+
+        function drawProfessionalStars(ctx, w, h, color) {
+            // Фон: сетка или книги/код (в зависимости от профессии, здесь универсально)
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.lineWidth = 1;
+            
+            // Горизонтальные линии (как страницы тетради или код)
+            for(let y=100; y<h; y+=40) {
+                ctx.beginPath();
+                ctx.moveTo(50, y);
+                ctx.lineTo(w-50, y);
+                ctx.stroke();
+            }
+            
+            // Звезды успеха
+            ctx.fillStyle = color;
+            drawStar(ctx, w/2, 120, 5, 25, 12);
+            drawStar(ctx, 100, h-100, 5, 15, 7);
+            drawStar(ctx, w-100, h-100, 5, 15, 7);
+            
+            // Текст "Best Wishes" фоном очень бледно
+            ctx.font = "bold 100px Arial";
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.textAlign = 'center';
+            ctx.fillText("SUCCESS", w/2, h/2);
+        }
+
+        function drawElegantAbstract(ctx, w, h, color) {
+            // Плавные волны
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.2;
+            
+            for(let i=0; i<5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, h/2 + i*20 - 50);
+                ctx.bezierCurveTo(w/4, h/2 + i*20 - 100, 3*w/4, h/2 + i*20, w, h/2 + i*20 - 50);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+            
+            // Угловые украшения
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 50, 0, Math.PI/2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(w, h, 50, Math.PI, Math.PI*1.5);
+            ctx.fill();
+        }
+
+        // Вспомогательная функция для звезды
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Вспомогательная для изменения яркости цвета (для тюльпанов)
+        function adjustBrightness(hex, percent) {
+            let num = parseInt(hex.replace("#",""), 16),
+            amt = Math.round(2.55 * percent),
+            R = (num >> 16) + amt,
+            B = (num >> 8 & 0x00FF) + amt,
+            G = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+        }
+
+        /**
+         * СОБЫТИЯ UI
+         */
+        occasionSelect.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'auto') {
+                const autoVal = getAutoHoliday();
+                updateSiteTheme(autoVal);
+                // Опционально установить выбранное значение обратно в селект для ясности? Нет, пусть останется Auto.
+            } else {
+                updateSiteTheme(val);
+            }
+        });
+
+        generateBtn.addEventListener('click', generateMessage);
+        renderCardBtn.addEventListener('click', renderCard);
+        downloadBtn.addEventListener('click', downloadImage);
+
+        // Инициализация при загрузке
+        window.onload = () => {
+            const autoHoliday = getAutoHoliday();
+            occasionSelect.value = 'auto';
+            updateSiteTheme(autoHoliday);
+            
+            // Предзаполнение поля именем для теста
+            recipientNameInput.placeholder = "Введите имя получателя...";
+        };
+
+    </script>
+</body>
+</html>
